@@ -1,6 +1,7 @@
 # EU Tax Legislation Database — local prototype
-#   docker compose up -d          starts PostgreSQL 17 + pgvector,
+#   docker compose up -d          starts PostgreSQL 17 + pgvector + pgAdmin,
 #                                 auto-applies schema.sql then seed.sql
+#   pgAdmin is available at       http://localhost:5050
 #   docker exec -i euromod-legislation-db psql -U jrc -d legislation < demo_queries.sql
 #   docker compose down -v        resets everything (schema is re-applied on next up)
 services:
@@ -12,7 +13,7 @@ services:
       POSTGRES_USER: jrc
       POSTGRES_PASSWORD: jrc
     ports:
-      - "5433:5432"   # 5433 on the host to avoid clashing with a local PostgreSQL
+      - "5434:5432"   # 5433 on the host to avoid clashing with a local PostgreSQL
     volumes:
       - ./schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
       - ./seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
@@ -23,5 +24,25 @@ services:
       timeout: 3s
       retries: 12
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: euromod-legislation-pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@euromod.eu
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+      PGPASS_FILE: /pgadmin4/pgpass
+    ports:
+      - "5050:80"
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./pgadmin/pgpass:/pgadmin4/pgpass:ro
+      - pgadmin-data:/var/lib/pgadmin
+
 volumes:
   pgdata:
+  pgadmin-data:
