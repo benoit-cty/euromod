@@ -19,51 +19,7 @@ Design principle, learned the hard way in OpenFisca-France (issue #1672, where o
 
 France's *Contribution différentielle sur les hauts revenus* (CDHR), rate 20%, created by the 2025 budget law. As one record (JSON view):
 
-```json
-{
-  "parameter": {
-    "country": "FR",
-    "model_target": "euromod://FR/tin_fr/def_const/$tinrt_cdhr",
-    "value_type": "scalar",
-    "unit": "/1",
-    "label": "Taux de la contribution différentielle sur les hauts revenus",
-    "short_label": "Taux de la CDHR",
-    "label_en": "Rate of the differential contribution on high incomes"
-  },
-  "values": [
-    {
-      "value": 0.20,
-      "valid_from": "2025-01-01",
-      "valid_to": null,
-      "last_confirmed_valid_on": "2026-02-23",
-      "legal_status": "enacted_in_force",
-      "source_type": "legislation",
-      "official_journal_date": "2025-02-15",
-      "confidence": 0.95,
-      "references": [
-        {
-          "title": "Loi de finances pour 2025, Article 10",
-          "href": "https://www.legifrance.gouv.fr/jorf/article_jo/JORFARTI000051168037"
-        },
-        {
-          "title": "Code général des impôts, Article 224",
-          "href": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051200465/2025-02-16",
-          "supporting_extract": "Le montant résultant de l'application d'un taux de 20 %",
-          "legal_unit_ref": "rag://FR/CGI/art224/v2025-02-16",
-          "extract_offsets": [1042, 1096]
-        }
-      ],
-      "lineage": {
-        "proposed_by": "pipeline",
-        "run_id": "2026-07-18T09:12Z#fr-042",
-        "model": "…",
-        "reviewed_by": null,
-        "review_status": "pending"
-      }
-    }
-  ]
-}
-```
+See [parameter_sample](Param_Schema\parameter_sample.jsonc)
 
 What each block buys us:
 
@@ -71,6 +27,7 @@ What each block buys us:
 - `values[]` — full history, one entry per effective date; `valid_to: null` = still in force. Point-in-time queries ("what was the rate on 2025-06-01?") are a filter, not an archaeology exercise. *Value + valid_from mandatory.*
 - `supporting_extract` + `legal_unit_ref` — the exact sentence stating the value, linked to the chunk stored in our RAG. A reviewer verifies in seconds, and we can *automatically* check that the cited text really contains the value (our anti-hallucination KPI). *Required at acceptance for legislation-sourced values.*
 - `legal_status` — the key extension beyond OpenFisca. OpenFisca stores only enacted law, which blocks work on next-year projections. Here a bill's parameter is a legitimate record with `legal_status: "bill_proposed"` — routed and displayed differently, never silently mixed with enacted values.
+- `label`, `short_label`, `description` — language-keyed dictionaries, not separate one-off translation fields. This keeps the EU-facing interface ready for original-language review and multilingual display without changing the schema each time we add a language.
 - `lineage` — filled automatically by the pipeline; no human ever types it. It's how we audit and evaluate the system (Activity 4).
 
 ### 2.1 A bracketed value (progressive schedule)
@@ -79,17 +36,58 @@ Most fiscal parameters aren't scalars — they're **scales**: income-tax bands, 
 
 ```json
 {
-  "parameter": {
+  "information": {
     "country": "FR",
     "model_target": "euromod://FR/tin_fr/def_const/$tinsc_bareme",
     "value_type": "bracket_schedule",
     "unit": "/1",
     "threshold_unit": "EUR",
-    "label": "Barème de l'impôt sur le revenu (par part de quotient familial)",
-    "short_label": "Barème IR",
-    "label_en": "Income tax rate schedule (per family-quotient share)"
+    "label": {
+      "fr": "Barème de l'impôt sur le revenu (par part de quotient familial)",
+      "en": "Income tax rate schedule (per family-quotient share)"
+    },
+    "short_label": {
+      "fr": "Barème IR",
+      "en": "Income tax schedule"
+    },
+    "description": {
+      "fr": "Barème progressif de l'impôt sur le revenu, avec un seuil inférieur et un taux pour chaque tranche.",
+      "en": "Progressive income-tax schedule, with a lower threshold and rate for each band."
+    },
+    "explanation" : {
+      "en": "Enforced by President following a strike."
+    },
+    "last_confirmed_valid_on": "2026-02-23",
   },
   "values": [
+    {
+      "value": [
+        { "threshold": 0,      "rate": 0.00 },
+        { "threshold": 11294,  "rate": 0.11 },
+        { "threshold": 28797,  "rate": 0.30 },
+        { "threshold": 82341,  "rate": 0.41 },
+        { "threshold": 177106, "rate": 0.45 }
+      ],
+      "valid_from": "2024-01-01",
+      "valid_to": "2024-12-31",
+      "legal_status": "enacted_in_force",
+      "source_type": "legislation",
+      "official_journal_date": "2025-02-15",
+      "confidence": 0.93,
+      "references": [
+        {
+          "title": "Code général des impôts, Article 197",
+          "href": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000047850595",
+          "jrc_database_id": "cb64e73f-a350-47b5-803c-7e37584c5e49",
+          "supporting_extract": "… le taux de : … 11 % pour la fraction supérieure à 11 294 € …",
+          "reviewer_note": "Refer to another document on specific notes."
+        }
+      ],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "review_status": "accepted"
+      }
+    },
     {
       "value": [
         { "threshold": 0,      "rate": 0.00 },
@@ -107,8 +105,8 @@ Most fiscal parameters aren't scalars — they're **scales**: income-tax bands, 
         {
           "title": "Code général des impôts, Article 197",
           "href": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051200000",
-          "supporting_extract": "… le taux de : … 11 % pour la fraction supérieure à 11 497 € …",
-          "legal_unit_ref": "rag://FR/CGI/art197/v2025-01-01"
+          "jrc_database_id": "cb64e73f-a350-47b5-803c-7e37584c5e49",
+          "supporting_extract": "… le taux de : … 11 % pour la fraction supérieure à 11 497 € …"
         }
       ],
       "lineage": {
@@ -145,7 +143,7 @@ Notes on the bracket shape:
 |---|---|---|
 | **Mandatory** | database (`NOT NULL`) | `country`, `model_target`, `value_type`, `unit`, `value`, `valid_from` |
 | **Acceptance-gated** | validation UI (can't click *Accept* without it) | `legal_status`; at least one `reference` **or** `source_type: national_team`; `supporting_extract` if legislation-sourced |
-| **Optional / auto-filled** | — | labels, `label_en`, `valid_to`, `official_journal_date`, signature date, `confidence`, notes, all of `lineage` (machine-filled), `metadata` (free-form, see §5.1) |
+| **Optional / auto-filled** | — | `label`, `short_label`, and `description` as language-keyed dictionaries, `valid_to`, `official_journal_date`, signature date, `confidence`, notes, all of `lineage` (machine-filled), `metadata` (free-form, see §5.1) |
 
 ## 5. Storage: database canonical, JSON as the exchange format
 
@@ -178,8 +176,9 @@ This gives us forward-compatibility without weakening the constraints that matte
 5. **Alignment with the Ireland JSON prototype** (Hannes): field-name mapping session — where do we diverge and why?
 6. **One DB or two?** Parameters in the RAG's PostgreSQL (proposed) vs. a separate store. Any infra constraint against co-location? (Luis — does this fit the MCP integration you're exploring?)
 7. **Uprating/indexation rules**: in scope as a `formula` value type in v1, or explicitly deferred?
-8. **Forward-compatibility** (`metadata`, §5.1): do you agree with a free-form `metadata JSONB` escape hatch on both tables, with the discipline that model-critical / review-gated fields are never allowed to live there? Any field you'd want promoted to a real column from day one rather than staged in `metadata`?
-9. **Who signs off** this schema, and does sign-off freeze v1.0?
+8. **Language fields**: should `label`, `short_label`, and `description` be language-keyed dictionaries using ISO/BCP 47 language codes (`fr`, `en`, `ga`, `de-AT`, ...)? Which languages are required at acceptance: original legal language only, English, or both?
+9. **Forward-compatibility** (`metadata`, §5.1): do you agree with a free-form `metadata JSONB` escape hatch on both tables, with the discipline that model-critical / review-gated fields are never allowed to live there? Any field you'd want promoted to a real column from day one rather than staged in `metadata`?
+10. **Who signs off** this schema, and does sign-off freeze v1.0?
 
 ## 7. What happens after validation
 
