@@ -1,0 +1,103 @@
+{
+  "information": {
+    "country": "FR", // Mandatory : country code like FR, BE, IT...
+    "model_target": "euromod://FR/tin_fr/def_const/$tinrt_cdhr", // Mandatory : path in the model
+    "spine_order": "4.5", // Spine order in Euromod
+    "value_type": "scalar", // Mandatory : scalar or bracket
+    // Unit of the parameter, /1 for a rate, /100 for a percentage, currency, month, year, people... Can also be country specific.
+    // Or can we have various currencies ?
+    "unit": "/1",
+    // Label in the Euromod interface
+    "label": {
+      "fr": "Taux de la contribution différentielle sur les hauts revenus",
+      "en": "Rate of the differential contribution on high incomes"
+    },
+    // Short label that can be use in the interface in the future
+    "short_label": {
+      "fr": "Taux de la CDHR",
+      "en": "CDHR rate"
+    },
+    // Long description to explain the parameter
+    "description": {
+      "fr": "Taux applicable pour calculer la contribution différentielle sur les hauts revenus.",
+      "en": "Rate used to calculate the differential contribution on high incomes."
+    },
+    // Explaination around the parameter itself or how it has evolved
+    "explanation" : {
+      "en": "Will remplace AER in july 2011."
+    },
+    // Last time the parameter have been check to be still valid
+    "last_confirmed_valid_on": "2026-02-23",
+  },
+  // Table of historical values
+  "values": [
+    {
+      "value": 0.10, // Mandatory : Could be a string if needed
+      "valid_from": "2023-01-01", // Mandatory : Start date
+      "valid_to": "2023-12-31", // Mandatory : End date, null for last available.
+    },
+    {
+      "value": 0.20,
+      "valid_from": "2025-01-01",
+      "valid_to": null,
+      /*
+      legal_status : Lifecycle status of the legal basis for this value.
+          "enum": [
+            "enacted_in_force",
+            "enacted_not_yet_in_force",
+            "adopted_pending_publication",
+            "bill_proposed",
+            "announced",
+            "national_team_estimate"
+          ],
+      */
+      "legal_status": "enacted_in_force",
+      /*
+      Type of source supporting the value:",
+          "enum": [
+            "legislation",
+            "national_team",
+            "administrative_guidance",
+            "official_statistics",
+            "parliamentary_bill",
+            "government_announcement",
+            "other"
+          ],
+      */
+      "source_type": "legislation",
+      "official_journal_date": "2025-02-15", // Date of official publication
+      // Table of leal references
+      "references": [
+        {
+          "title": "Loi de finances pour 2025, Article 10", // Name of the law
+          "href": "https://www.legifrance.gouv.fr/jorf/article_jo/JORFARTI000051168037",
+          "jrc_database_id": "cb64e73f-a350-47b5-803c-7e37584c5e49" // Link to the ID in the JRC RAG database
+        },
+        {
+          "title": "Code général des impôts, Article 224", // Name of the law
+          "href": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051200465/2025-02-16",
+          "supporting_extract": "Le montant résultant de l'application d'un taux de 20 %", // Extract of the text where the parameter was found
+          "extract_offsets": [1042, 1096], // Offsets in the text
+          "legal_unit_ref": "LEGIARTI000051200465", // ID of the article in country legislation database
+          "jrc_database_id": "cb64e73f-a350-47b5-803c-7e37584c5e49", // Link to the ID in the JRC RAG database
+          "reviewer_note": "Refer to another document on specific notes." // How we found the text
+        }
+      ],
+      // Technical part on how we found the references and values
+      "lineage": {
+        "proposed_by": "pipeline", // Actor that proposed the value: ["pipeline", "human", "national_team", "openfisca"]
+        "run_id": "2026-07-18T09:12Z#fr-042", // Identifier of the extraction or import run that produced the proposal
+        "prompt_version": "0.0.1", // Version identifier of the prompt or extraction configuration used by the pipeline
+        "agent_version": "0.0.1", // Version identifier of the agent pipeline used
+        "model": "bedrock/GML-5.2", // Model or tool name used by the pipeline to extract or propose the value
+        "model_answer": "",
+        "reviewed_by": null, // Identifier of the reviewer who made the latest review decision, or null if not yet reviewed.
+        "review_status": "pending", // Current review state of the proposal: ["pending", "accepted", "rejected", "needs_revision"]
+        "reviewed_at": null, // Timestamp of the latest review decision, or null if not yet reviewed
+        "review_note": null, // Optional note explaining the review decision
+        "confidence": 0.95, // Confidence score of the extraction
+        "retrieval_trace": null // Optional list of retrieved legal units, search queries, or chunk identifiers used when producing the proposal.
+      }
+    }
+  ]
+}
