@@ -1,0 +1,27 @@
+# EU Tax Legislation Database — local prototype
+#   docker compose up -d          starts PostgreSQL 17 + pgvector,
+#                                 auto-applies schema.sql then seed.sql
+#   docker exec -i euromod-legislation-db psql -U jrc -d legislation < demo_queries.sql
+#   docker compose down -v        resets everything (schema is re-applied on next up)
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: euromod-legislation-db
+    environment:
+      POSTGRES_DB: legislation
+      POSTGRES_USER: jrc
+      POSTGRES_PASSWORD: jrc
+    ports:
+      - "5433:5432"   # 5433 on the host to avoid clashing with a local PostgreSQL
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jrc -d legislation"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  pgdata:
