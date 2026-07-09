@@ -1,0 +1,23 @@
+{
+  "id": "fr_tinsc_bareme_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "agentic-workflow/data/parameters/fr_tinsc_bareme.json",
+  "as_of": "2025-06-01",
+  "difficulty": "table",
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "changed",
+    "value": [
+      { "threshold": 0, "rate": 0.0 },
+      { "threshold": 11497, "rate": 0.11 },
+      { "threshold": 29315, "rate": 0.30 },
+      { "threshold": 83823, "rate": 0.41 },
+      { "threshold": 180294, "rate": 0.45 }
+    ],
+    "citations": ["CGI, art. 197"]
+  },
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "LF2025 revalorised the income tax schedule (+1.8%): recorded 2024 thresholds (11294/28797/82341/177106) must be flagged as changed. Bracket-extraction case."
+}
