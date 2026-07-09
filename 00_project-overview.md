@@ -57,3 +57,58 @@ Build (with the JRC.B.2 IT team) a temporally-aware, multilingual RAG over fisca
 - `05_activity5_technical-report.md` — report skeleton
 - `06_kickoff-questions.md` — consolidated question list for the kick-off meeting
 - `07_risks-and-decisions.md` — risk register and decision log template
+
+```mermaid
+flowchart TD
+    subgraph SRC["External Source"]
+        TRI["Tricoteuses git mirror\n(DILA raw JSON, HTTPS)"]
+    end
+
+    subgraph INGEST["RAG/ingest — euromod_ingest package"]
+        CLI["CLI (Typer)\ninstrument / citation / tui / embeddings build"]
+        TUI["TUI (Textual)\ninteractive ingestion monitor"]
+        FR["FR adapter\nfetcher.py + parser.py + resolver.py"]
+        PIPE["core/pipeline.py\nresolve → fetch → parse → expand refs"]
+        LOADER["LegislationLoader\n(core/loader.py)"]
+        EMB["core/embeddings.py :::new\nBGE-M3 (torch/OpenVINO)\nhalfvec embeddings"]
+        MODELS["models/bge-m3 :::new\nlocal model + OpenVINO export script"]
+    end
+
+    subgraph DB["Postgres (pgvector/pgvector:pg17, port 5434)"]
+        SCHEMA["legislation DB\njurisdictions, instruments, units,\nchunks, embeddings (HNSW), fetch_runs"]
+        PGADMIN["pgAdmin (port 5050)"]
+        PHOENIX["Observability database"]
+    end
+
+    subgraph OBS["Observability"]
+        PHX["Arize Phoenix\n(ports 6006 UI/OTLP-HTTP, 4317 gRPC)"]
+    end
+
+    subgraph AGENT["agentic-workflow/pipeline :::new\neuromod_workflow (LangGraph)"]
+        RET["Retrieve"] --> PROP["Propose"] --> CRIT["Critique"] --> DIFF["Diff"]
+        QUEUE["Review queue\ndata/queue/*.json"]
+        DIFF --> QUEUE
+    end
+
+    subgraph UI["agentic-workflow/ui :::new\nTauri (Rust) + Svelte desktop app"]
+        REVIEW["Review tab\n(queue list, detail, diff)"]
+        AUDIT["Audit Log tab"]
+        DBEXPLORE["Database explorer tab"]
+    end
+
+    TRI --> FR --> PIPE --> LOADER --> SCHEMA
+    CLI --> PIPE
+    TUI --> PIPE
+    CLI --> EMB
+    MODELS --> EMB
+    SCHEMA --> EMB --> SCHEMA
+    SCHEMA <--> PGADMIN
+    SCHEMA --> RET
+    AGENT -. traces .-> PHX
+    QUEUE --> REVIEW
+    SCHEMA --> DBEXPLORE
+    REVIEW --> AUDIT
+    PHX-->PHOENIX
+
+    classDef new stroke-dasharray: 5 5,stroke:#e08800,color:inherit;
+```
