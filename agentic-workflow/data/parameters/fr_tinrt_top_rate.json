@@ -1,0 +1,31 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tin_fr/def_const/$tinrt_top",
+    "spine_order": "4.3",
+    "value_type": "scalar",
+    "unit": "/1",
+    "short_label": { "fr": "Taux marginal supérieur de l'IR", "en": "Top marginal income tax rate" },
+    "description": {
+      "fr": "Taux de la tranche supérieure du barème de l'impôt sur le revenu.",
+      "en": "Rate of the top bracket of the income tax schedule."
+    },
+    "last_confirmed_valid_on": "2024-06-01"
+  },
+  "values": [
+    {
+      "value": 0.45,
+      "valid_from": "2024-01-01",
+      "valid_to": null,
+      "legal_status": "enacted_in_force",
+      "source_type": "legislation",
+      "references": [
+        {
+          "title": "CGI, art. 197",
+          "href": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000048845959",
+          "legal_unit_ref": "LEGIARTI000006308305"
+        }
+      ]
+    }
+  ]
+}
