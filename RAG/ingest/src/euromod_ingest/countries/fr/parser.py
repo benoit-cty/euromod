@@ -25,7 +25,46 @@ def parse_dila_json(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> Parse
     data = json.loads(payload.decode("utf-8"))
     if ref.source_id.startswith("LEGIARTI") or ref.source_id.startswith("JORFARTI"):
         return _parse_article(data, ref, snapshot)
-    return ParsedDoc(ref=ref, metadata={"raw_type": _raw_type(data)})
+    if ref.source_id.startswith("JORFTEXT"):
+        return _parse_jorf_text(data, ref)
+    if ref.source_id.startswith("JORFSCTA"):
+        return _parse_jorf_section(data, ref)
+    return ParsedDoc(ref=ref, metadata={"raw_type": _raw_type(data), "child_refs": _child_refs(data)})
+
+
+def _parse_jorf_text(data: dict[str, Any], ref: SourceRef) -> ParsedDoc:
+    """Parse a JORF text root and expose its structural children."""
+    meta_commun = _dig(data, "META", "META_COMMUN") or {}
+    chronicle = _dig(data, "META", "META_SPEC", "META_TEXTE_CHRONICLE") or {}
+    version = _dig(data, "META", "META_SPEC", "META_TEXTE_VERSION") or {}
+    instrument = InstrumentIR(
+        jurisdiction=ref.jurisdiction,
+        source_code=ref.source_code,
+        instrument_type=(meta_commun.get("NATURE") or "loi").lower(),
+        national_id=meta_commun.get("ID") or ref.source_id,
+        eli=_eli_alias(meta_commun) or meta_commun.get("ID_ELI"),
+        title={"fr": version.get("TITREFULL") or version.get("TITRE") or ref.source_id},
+        adoption_date=_parse_date(chronicle.get("DATE_TEXTE")),
+        publication_date=_parse_date(chronicle.get("DATE_PUBLI")),
+        metadata={"nor": chronicle.get("NOR"), "num": chronicle.get("NUM")},
+    )
+    return ParsedDoc(
+        ref=ref,
+        instruments=[instrument],
+        metadata={"raw_type": _raw_type(data), "child_refs": _child_refs(data)},
+    )
+
+
+def _parse_jorf_section(data: dict[str, Any], ref: SourceRef) -> ParsedDoc:
+    """Parse a JORF section enough to continue structural expansion."""
+    return ParsedDoc(
+        ref=ref,
+        metadata={
+            "raw_type": "SECTION_TA",
+            "title": data.get("TITRE_TA"),
+            "child_refs": _child_refs(data),
+        },
+    )
 
 
 def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
@@ -41,7 +80,7 @@ def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> 
     citation = _citation(code_cid, article_number)
     html = bloc.get("CONTENU") or ""
     content = strip_html(html)
-    valid_from = _parse_date(meta_article.get("DATE_DEBUT")) or date.min
+    valid_from = _parse_date(meta_article.get("DATE_DEBUT")) or _parse_date(texte.get("@date_publi")) or date.min
     valid_to = _parse_date(meta_article.get("DATE_FIN"))
 
     unit = UnitIR(
@@ -50,13 +89,13 @@ def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> 
         citation=citation,
         ordinal=_ordinal(article_number),
         national_id=meta_commun.get("ID") or ref.source_id,
-        eli=meta_commun.get("ELI_ALIAS"),
+        eli=_eli_alias(meta_commun) or meta_commun.get("ID_ELI"),
         versions=[
             VersionIR(
                 valid_from=valid_from,
                 valid_to=valid_to,
                 source_version_id=ref.source_id,
-                eli_version=meta_commun.get("ELI_ALIAS"),
+            eli_version=_eli_alias(meta_commun) or meta_commun.get("ID_ELI"),
                 citation_label=citation,
                 fetch_snapshot_id=snapshot.id,
                 texts=[TextIR(lang="fr", content=content, content_html=html)],
@@ -69,10 +108,57 @@ def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> 
         source_code=ref.source_code,
         instrument_type="code" if code_cid.startswith("LEGITEXT") else "loi",
         national_id=code_cid,
-        title={"fr": texte.get("#text") or code_cid},
+        title={"fr": _text_title(texte) or code_cid},
         units=[unit],
     )
     return ParsedDoc(ref=ref, instruments=[instrument], metadata={"raw_type": _raw_type(data)})
+
+
+def _child_refs(data: dict[str, Any]) -> list[dict[str, str]]:
+    """Extract DILA structural child ids from JORF text or section payloads."""
+    struct = data.get("STRUCT") or data.get("STRUCTURE_TA") or {}
+    children: list[dict[str, str]] = []
+    for key, source_type in (("LIEN_ART", "article"), ("LIEN_SECTION_TA", "section")):
+        for item in _as_list(struct.get(key)):
+            source_id = item.get("@id")
+            if source_id:
+                children.append({
+                    "source_id": source_id,
+                    "source_type": source_type,
+                    "title": item.get("#text") or item.get("@num") or source_id,
+                })
+    return children
+
+
+def _text_title(texte: dict[str, Any]) -> str | None:
+    """Return the best French title from a DILA CONTEXTE.TEXTE object."""
+    titles = _as_list(texte.get("TITRE_TXT"))
+    for title in titles:
+        text = title.get("#text")
+        if text:
+            return text
+    return texte.get("#text")
+
+
+def _eli_alias(meta_commun: dict[str, Any]) -> str | None:
+    """Return a string ELI alias from DILA metadata when present."""
+    alias = meta_commun.get("ELI_ALIAS")
+    if isinstance(alias, dict):
+        return alias.get("ID_ELI_ALIAS")
+    if isinstance(alias, str):
+        return alias
+    return None
+
+
+def _as_list(value: Any) -> list[dict[str, Any]]:
+    """Normalize DILA fields that may be absent, single objects, or lists."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, dict)]
+    if isinstance(value, dict):
+        return [value]
+    return []
 
 
 def _dig(data: dict[str, Any], *keys: str) -> Any:
