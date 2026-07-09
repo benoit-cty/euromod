@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, datetime
+import os
 from pathlib import Path
 import re
 from threading import Thread
@@ -20,6 +21,9 @@ from euromod_ingest.core.db import PostgresSnapshotStore, create_fetch_run, fini
 from euromod_ingest.core.ir import CitationRef, SourceRef, Trigger
 from euromod_ingest.core.loader import LegislationLoader
 from euromod_ingest.core.snapshots import SnapshotClient
+
+
+DEFAULT_DATABASE_URL = os.getenv("EUROMOD_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation")
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,7 +121,13 @@ class PipelineTui(App):
                 yield Input(value="2025-06-01", placeholder="As-of date", id="as_of", classes="field")
             with Horizontal():
                 yield Input(value="FR-LEGI", placeholder="Source code", id="source_code", classes="field")
-                yield Input(placeholder="PostgreSQL URL; empty = preview only", id="database_url", password=True, classes="field")
+                yield Input(
+                    value=DEFAULT_DATABASE_URL,
+                    placeholder="PostgreSQL URL; clear for preview only",
+                    id="database_url",
+                    password=True,
+                    classes="field",
+                )
             yield Button("Run pipeline", id="run", variant="primary")
         with Vertical(id="steps"):
             yield Label("Step status")
@@ -129,7 +139,7 @@ class PipelineTui(App):
 
     def on_mount(self) -> None:
         """Write the initial guidance message once widgets are mounted."""
-        self._log("Ready. Empty database URL runs fetch/parse/expand as a preview and skips loading.")
+        self._log("Ready. Database load is enabled by default; clear the database URL for preview mode.")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Start an ingestion run when the user presses the run button."""

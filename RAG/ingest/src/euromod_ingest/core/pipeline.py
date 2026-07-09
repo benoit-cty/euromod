@@ -4,9 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
+from uuid import UUID
+
+import psycopg
 
 from euromod_ingest.countries.registry import get_adapter
-from euromod_ingest.core.ir import CitationRef, ParsedDoc, SourceRef, WorkItem
+from euromod_ingest.core.db import PostgresSnapshotStore, create_fetch_run, finish_fetch_run
+from euromod_ingest.core.ir import CitationRef, ParsedDoc, SourceRef, Trigger, WorkItem
+from euromod_ingest.core.loader import LegislationLoader, LoadStats
 from euromod_ingest.core.snapshots import SnapshotClient
 
 
@@ -16,6 +21,8 @@ class PipelineResult:
 
     parsed: list[ParsedDoc] = field(default_factory=list)
     queued: list[WorkItem] = field(default_factory=list)
+    loaded: list[LoadStats] = field(default_factory=list)
+    run_id: UUID | None = None
 
 
 def ingest_citation(jurisdiction: str, citation: str, as_of: date, http: SnapshotClient) -> PipelineResult:
@@ -25,16 +32,60 @@ def ingest_citation(jurisdiction: str, citation: str, as_of: date, http: Snapsho
     return _ingest_refs(adapter, refs, http)
 
 
-def ingest_instrument(jurisdiction: str, national_id: str, http: SnapshotClient) -> PipelineResult:
+def ingest_instrument(
+    jurisdiction: str,
+    national_id: str,
+    http: SnapshotClient,
+    source_code: str | None = None,
+) -> PipelineResult:
     """Fetch, parse, and expand a known national instrument identifier."""
+    jurisdiction_code = jurisdiction.upper()
     adapter = get_adapter(jurisdiction)
     ref = SourceRef(
-        jurisdiction=jurisdiction.upper(),
-        source_code=f"{jurisdiction.upper()}-LEGI",
+        jurisdiction=jurisdiction_code,
+        source_code=source_code or f"{jurisdiction_code}-LEGI",
         source_id=national_id,
         source_type="instrument",
     )
     return _ingest_refs(adapter, [ref], http)
+
+
+def run_database_ingest(
+    jurisdiction: str,
+    identifier: str,
+    database_url: str,
+    *,
+    mode: str = "instrument",
+    as_of: date | None = None,
+    source_code: str | None = None,
+    trigger: Trigger = Trigger.MANUAL,
+    skill_version: str = "cli-0.1",
+    frozen_label: str | None = None,
+) -> PipelineResult:
+    """Fetch, parse, and load one instrument or citation into PostgreSQL."""
+    jurisdiction_code = jurisdiction.upper()
+    resolved_source_code = source_code or f"{jurisdiction_code}-LEGI"
+    with psycopg.connect(database_url) as conn:
+        run_id = create_fetch_run(conn, resolved_source_code, skill_version, trigger, frozen_label)
+        result = PipelineResult(run_id=run_id)
+        try:
+            http = SnapshotClient(PostgresSnapshotStore(conn, run_id))
+            if mode == "citation":
+                if as_of is None:
+                    raise ValueError("citation ingestion requires as_of")
+                result = ingest_citation(jurisdiction_code, identifier, as_of, http)
+            elif mode == "instrument":
+                result = ingest_instrument(jurisdiction_code, identifier, http, resolved_source_code)
+            else:
+                raise ValueError(f"Unsupported ingestion mode: {mode}")
+            result.run_id = run_id
+            loader = LegislationLoader(conn)
+            result.loaded = [loader.load(doc) for doc in result.parsed]
+            finish_fetch_run(conn, run_id, "succeeded", _result_stats(result, trigger))
+        except Exception as exc:
+            finish_fetch_run(conn, run_id, "failed", {"trigger": trigger.value, "error": str(exc)})
+            raise
+    return result
 
 
 def _ingest_refs(adapter, refs: list[SourceRef], http: SnapshotClient) -> PipelineResult:
@@ -46,3 +97,17 @@ def _ingest_refs(adapter, refs: list[SourceRef], http: SnapshotClient) -> Pipeli
         result.parsed.append(parsed)
         result.queued.extend(adapter.expand(parsed))
     return result
+
+
+def _result_stats(result: PipelineResult, trigger: Trigger) -> dict[str, int | str]:
+    """Summarize an ingest result for fetch_runs.stats."""
+    return {
+        "trigger": trigger.value,
+        "parsed_docs": len(result.parsed),
+        "queued": len(result.queued),
+        "instruments": sum(item.instruments for item in result.loaded),
+        "units": sum(item.units for item in result.loaded),
+        "versions": sum(item.versions for item in result.loaded),
+        "texts": sum(item.texts for item in result.loaded),
+        "chunks": sum(item.chunks for item in result.loaded),
+    }

@@ -6,8 +6,9 @@ import asyncio
 from pathlib import Path
 
 from textual.widgets import Button
+from textual.widgets import Input
 
-from euromod_ingest.tui import PipelineTui
+from euromod_ingest.tui import DEFAULT_DATABASE_URL, PipelineTui
 
 
 def test_pipeline_tui_mounts_run_button() -> None:
@@ -18,6 +19,18 @@ def test_pipeline_tui_mounts_run_button() -> None:
         app = PipelineTui()
         async with app.run_test():
             assert str(app.query_one("#run", Button).label) == "Run pipeline"
+
+    asyncio.run(run_check())
+
+
+def test_pipeline_tui_defaults_to_database_load() -> None:
+    """The TUI starts with the local database URL filled in, not preview mode."""
+
+    async def run_check() -> None:
+        """Mount the app and inspect the database URL field."""
+        app = PipelineTui()
+        async with app.run_test():
+            assert app.query_one("#database_url", Input).value == DEFAULT_DATABASE_URL
 
     asyncio.run(run_check())
 
