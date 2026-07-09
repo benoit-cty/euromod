@@ -1,6 +1,6 @@
 # EU Tax Legislation Database — Model, Full-Text Search & Vector Search
 
-*Design document for the PostgreSQL legislation store backing the lazy, agent-populated RAG (see `10_retrieval-strategy-challenge.md`). Pilot countries: **FR, NL, LT, ES, IE, BE**; designed to extend to all 27 member states and to be reusable by other JRC services. Runnable prototype in [`db/`](db/) (schema, seed for all six countries, demo queries, docker-compose).*
+*Design document for the PostgreSQL legislation store backing the lazy, agent-populated RAG (see `10_retrieval-strategy-challenge.md`). Pilot countries: **FR, NL, LT, ES, IE, BE**; designed to extend to all 27 member states and to be reusable by other JRC services. Runnable prototype in [`db/`](db/) (schema, seed for all six countries, demo queries; the docker-compose lives at the repo root).*
 
 ---
 
@@ -106,9 +106,9 @@ Adding a member state costs **rows, not DDL**: one `jurisdictions` row, 1–2 `s
 ## 7. Running the prototype
 
 ```bash
-cd RAG/db
-docker compose up -d        # PostgreSQL 17 + pgvector on host port 5433; schema + seed auto-applied
-docker exec -i euromod-legislation-db psql -U jrc -d legislation < demo_queries.sql
+# from the repo root (docker-compose.yml lives there — it also runs pgAdmin and Phoenix)
+docker compose up -d        # PostgreSQL 17 + pgvector on host port 5434; schema + seed auto-applied
+docker exec -i euromod-legislation-db psql -U jrc -d legislation < RAG/db/demo_queries.sql
 docker compose down -v      # full reset
 ```
 

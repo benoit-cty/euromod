@@ -1,0 +1,66 @@
+# EUROMOD RAG stack — local prototype (run from the repo root)
+#   docker compose up -d          starts PostgreSQL 17 + pgvector + pgAdmin + Phoenix,
+#                                 auto-applies RAG/db/schema.sql then RAG/db/seed.sql
+#   pgAdmin is available at       http://localhost:5050
+#   Phoenix (LLM traces/evals) at http://localhost:6006
+#   docker exec -i euromod-legislation-db psql -U jrc -d legislation < RAG/db/demo_queries.sql
+#   docker compose down -v        resets everything (schema is re-applied on next up)
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: euromod-legislation-db
+    environment:
+      POSTGRES_DB: legislation
+      POSTGRES_USER: jrc
+      POSTGRES_PASSWORD: jrc
+    ports:
+      - "5434:5432"   # 5434 on the host to avoid clashing with a local PostgreSQL
+    volumes:
+      - ./RAG/db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./RAG/db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jrc -d legislation"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: euromod-legislation-pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@euromod.eu
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+      PGPASS_FILE: /pgadmin4/pgpass
+    ports:
+      - "5050:80"
+    volumes:
+      - ./RAG/db/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./RAG/db/pgadmin/pgpass:/pgadmin4/pgpass:ro
+      - pgadmin-data:/var/lib/pgadmin
+
+  # Arize Phoenix — LLM observability: traces for the agentic workflow and the
+  # query-time RAG (retrieval spans, token/cost), datasets + evals for the golden set.
+  # Instrument via OpenTelemetry: OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:6006
+  # (HTTP) or localhost:4317 (gRPC). Storage is SQLite in the phoenix-data volume;
+  # for a durable multi-user setup point PHOENIX_SQL_DATABASE_URL at a PostgreSQL db.
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: euromod-phoenix
+    environment:
+      PHOENIX_WORKING_DIR: /mnt/data
+    ports:
+      - "6006:6006"   # web UI + OTLP HTTP collector
+      - "4317:4317"   # OTLP gRPC collector
+    volumes:
+      - phoenix-data:/mnt/data
+
+volumes:
+  pgdata:
+  pgadmin-data:
+  phoenix-data:
