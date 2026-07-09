@@ -1,0 +1,17 @@
+# runtime artefacts of the workflow (queue/decisions/export are runtime state;
+# input parameters/ ARE tracked — they are the git-versioned parameter records)
+data/queue/
+data/export/
+data/decisions.jsonl
+.env
+
+# python
+pipeline/.venv/
+__pycache__/
+*.egg-info/
+
+# ui
+ui/node_modules/
+ui/dist/
+ui/src-tauri/target/
+ui/src-tauri/gen/schemas/
