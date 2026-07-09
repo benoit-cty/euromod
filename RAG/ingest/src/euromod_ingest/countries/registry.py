@@ -1,0 +1,22 @@
+"""Country adapter registry used by the pipeline and user interfaces."""
+
+from __future__ import annotations
+
+from euromod_ingest.countries.base import CountryAdapter
+from euromod_ingest.countries.fr.adapter import FrAdapter
+
+
+_ADAPTERS: dict[str, type[CountryAdapter]] = {
+    "FR": FrAdapter,
+}
+
+
+def get_adapter(jurisdiction: str) -> CountryAdapter:
+    """Return the adapter implementation for a jurisdiction code."""
+    try:
+        adapter_type = _ADAPTERS[jurisdiction.upper()]
+    except KeyError as exc:
+        supported = ", ".join(sorted(_ADAPTERS))
+        msg = f"Unsupported jurisdiction {jurisdiction!r}. Supported: {supported}"
+        raise ValueError(msg) from exc
+    return adapter_type()
