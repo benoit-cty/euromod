@@ -26,6 +26,25 @@ from euromod_ingest.core.snapshots import SnapshotClient
 DEFAULT_DATABASE_URL = os.getenv("EUROMOD_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation")
 
 
+def _format_fetch_progress(
+    source_id: str,
+    status_code: int | None,
+    byte_count: int,
+    content_hash: str,
+    snapshot_id: object,
+    fetched_count: int,
+    queue_count: int,
+    max_items: int,
+    discovered_count: int,
+) -> str:
+    """Build one live progress line for a completed fetch."""
+    return (
+        f"[cyan]fetch:[/cyan] {fetched_count}/{max_items} {source_id} "
+        f"status={status_code} bytes={byte_count} sha256={content_hash[:12]} "
+        f"snapshot={snapshot_id} queue={queue_count} discovered={discovered_count}"
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class RunConfig:
     """User-selected settings for one TUI pipeline run."""
@@ -36,6 +55,7 @@ class RunConfig:
     as_of: date | None
     source_code: str
     database_url: str | None
+    max_items: int
 
 
 @dataclass(slots=True)
@@ -70,7 +90,7 @@ class PipelineTui(App):
     #form {
         border: solid $accent;
         padding: 1;
-        height: 15;
+        height: 17;
     }
 
     .field {
@@ -111,16 +131,18 @@ class PipelineTui(App):
             with Horizontal():
                 yield Input(value="FR", placeholder="Jurisdiction", id="jurisdiction", classes="field")
                 yield Select(
-                    (("Direct DILA id", "direct"), ("Citation", "citation")),
-                    value="direct",
+                    (("Complete fiscal bill", "bill"), ("Direct DILA id", "direct"), ("Citation", "citation")),
+                    value="bill",
                     id="mode",
                     classes="field",
                 )
             with Horizontal():
-                yield Input(value="LEGIARTI000051212954", placeholder="DILA id or citation", id="identifier", classes="field")
+                yield Input(value="JORFTEXT000051168007", placeholder="DILA id or citation", id="identifier", classes="field")
                 yield Input(value="2025-06-01", placeholder="As-of date", id="as_of", classes="field")
             with Horizontal():
                 yield Input(value="FR-LEGI", placeholder="Source code", id="source_code", classes="field")
+                yield Input(value="500", placeholder="Max source items", id="max_items", classes="field")
+            with Horizontal():
                 yield Input(
                     value=DEFAULT_DATABASE_URL,
                     placeholder="PostgreSQL URL; clear for preview only",
@@ -164,6 +186,7 @@ class PipelineTui(App):
         identifier = self.query_one("#identifier", Input).value.strip()
         as_of_raw = self.query_one("#as_of", Input).value.strip()
         source_code = self.query_one("#source_code", Input).value.strip().upper()
+        max_items_raw = self.query_one("#max_items", Input).value.strip()
         database_url = self.query_one("#database_url", Input).value.strip() or None
         if not jurisdiction:
             raise ValueError("jurisdiction is required")
@@ -171,10 +194,13 @@ class PipelineTui(App):
             raise ValueError("identifier or citation is required")
         if not source_code:
             raise ValueError("source code is required")
+        max_items = int(max_items_raw) if max_items_raw else 500
+        if max_items < 1:
+            raise ValueError("max source items must be at least 1")
         as_of = date.fromisoformat(as_of_raw) if as_of_raw else None
         if mode == "citation" and as_of is None:
             raise ValueError("citation mode requires an as-of date")
-        return RunConfig(jurisdiction, mode, identifier, as_of, source_code, database_url)
+        return RunConfig(jurisdiction, mode, identifier, as_of, source_code, database_url, max_items)
 
     def _run_pipeline(self, config: RunConfig) -> None:
         """Run ingestion stages in a worker thread and report status to the UI."""
@@ -220,22 +246,60 @@ class PipelineTui(App):
             current_step = "fetch"
             self._mark_running("fetch")
             http = SnapshotClient(store)
-            snapshots = [(ref, adapter.fetch(ref, http)) for ref in refs]
+            snapshots = []
+            parsed_docs = []
+            queued = []
+            pending = list(refs)
+            seen: set[tuple[str, str]] = set()
+            while pending and len(seen) < config.max_items:
+                ref = pending.pop(0)
+                ref_key = (ref.source_code, ref.source_id)
+                if ref_key in seen:
+                    continue
+                seen.add(ref_key)
+                self.call_from_thread(
+                    self._log,
+                    f"[cyan]fetch:[/cyan] fetching {len(seen)}/{config.max_items} {ref.source_id} queue={len(pending)}",
+                )
+                snapshot = adapter.fetch(ref, http)
+                snapshots.append((ref, snapshot))
+                parsed = adapter.parse(snapshot.raw_content, ref, snapshot)
+                parsed_docs.append(parsed)
+                followups = adapter.expand(parsed)
+                queued.extend(followups)
+                pending.extend(item.ref for item in followups)
+                self._set_step_threadsafe("fetch", "running", f"Fetched {len(snapshots)}; queue {len(pending)}")
+                self.call_from_thread(
+                    self._log,
+                    _format_fetch_progress(
+                        source_id=ref.source_id,
+                        status_code=snapshot.http_status,
+                        byte_count=len(snapshot.raw_content),
+                        content_hash=snapshot.content_hash,
+                        snapshot_id=snapshot.id,
+                        fetched_count=len(snapshots),
+                        queue_count=len(pending),
+                        max_items=config.max_items,
+                        discovered_count=len(followups),
+                    ),
+                )
             self._mark_success("fetch", f"Fetched {len(snapshots)} snapshot(s)")
-            self.call_from_thread(self._log_snapshots, snapshots)
 
             current_step = "parse"
             self._mark_running("parse")
-            parsed_docs = [adapter.parse(snapshot.raw_content, ref, snapshot) for ref, snapshot in snapshots]
             instruments = sum(len(doc.instruments) for doc in parsed_docs)
             self._mark_success("parse", f"Parsed {instruments} instrument(s)")
             self.call_from_thread(self._log_parsed_docs, parsed_docs)
 
             current_step = "expand"
             self._mark_running("expand")
-            queued = [item for doc in parsed_docs for item in adapter.expand(doc)]
             self._mark_success("expand", f"Queued {len(queued)} follow-up item(s)")
             self.call_from_thread(self._log_queued_work, queued)
+            if pending:
+                self.call_from_thread(
+                    self._log,
+                    f"[yellow]expand:[/yellow] Stopped at max source items={config.max_items}; {len(pending)} item(s) remain",
+                )
 
             current_step = "load"
             self._mark_running("load")
@@ -316,7 +380,7 @@ class PipelineTui(App):
         self._log("[bold]run:[/bold] Starting ingestion pipeline")
         self._log(
             f"[cyan]run:[/cyan] jurisdiction={config.jurisdiction} mode={config.mode} "
-            f"source={config.source_code} as_of={as_of} persistence={persistence}"
+            f"source={config.source_code} as_of={as_of} persistence={persistence} max_items={config.max_items}"
         )
         self._log(f"[cyan]run:[/cyan] identifier={config.identifier}")
 

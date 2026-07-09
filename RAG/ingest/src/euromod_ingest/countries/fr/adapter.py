@@ -34,7 +34,21 @@ class FrAdapter:
 
     def expand(self, doc: ParsedDoc) -> list[WorkItem]:
         """Return follow-up work discovered from the parsed document."""
-        return []
+        work: list[WorkItem] = []
+        for child in doc.metadata.get("child_refs", []):
+            source_id = child["source_id"]
+            work.append(
+                WorkItem(
+                    ref=SourceRef(
+                        jurisdiction=doc.ref.jurisdiction,
+                        source_code=doc.ref.source_code,
+                        source_id=source_id,
+                        source_type=child["source_type"],
+                    ),
+                    reason=f"{doc.ref.source_id} contains {child['source_type']} {child.get('title') or source_id}",
+                )
+            )
+        return work
 
     def canary_facts(self) -> list[CanaryFact]:
         """Return French freshness canaries for supported fiscal years."""

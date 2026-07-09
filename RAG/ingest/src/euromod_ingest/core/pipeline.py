@@ -37,6 +37,7 @@ def ingest_instrument(
     national_id: str,
     http: SnapshotClient,
     source_code: str | None = None,
+    max_items: int = 500,
 ) -> PipelineResult:
     """Fetch, parse, and expand a known national instrument identifier."""
     jurisdiction_code = jurisdiction.upper()
@@ -47,7 +48,7 @@ def ingest_instrument(
         source_id=national_id,
         source_type="instrument",
     )
-    return _ingest_refs(adapter, [ref], http)
+    return _ingest_refs(adapter, [ref], http, max_items=max_items)
 
 
 def run_database_ingest(
@@ -61,6 +62,7 @@ def run_database_ingest(
     trigger: Trigger = Trigger.MANUAL,
     skill_version: str = "cli-0.1",
     frozen_label: str | None = None,
+    max_items: int = 500,
 ) -> PipelineResult:
     """Fetch, parse, and load one instrument or citation into PostgreSQL."""
     jurisdiction_code = jurisdiction.upper()
@@ -75,7 +77,7 @@ def run_database_ingest(
                     raise ValueError("citation ingestion requires as_of")
                 result = ingest_citation(jurisdiction_code, identifier, as_of, http)
             elif mode == "instrument":
-                result = ingest_instrument(jurisdiction_code, identifier, http, resolved_source_code)
+                result = ingest_instrument(jurisdiction_code, identifier, http, resolved_source_code, max_items=max_items)
             else:
                 raise ValueError(f"Unsupported ingestion mode: {mode}")
             result.run_id = run_id
@@ -88,14 +90,23 @@ def run_database_ingest(
     return result
 
 
-def _ingest_refs(adapter, refs: list[SourceRef], http: SnapshotClient) -> PipelineResult:
+def _ingest_refs(adapter, refs: list[SourceRef], http: SnapshotClient, max_items: int = 500) -> PipelineResult:
     """Run the common fetch-parse-expand loop for resolved source references."""
     result = PipelineResult()
-    for ref in refs:
+    pending = list(refs)
+    seen: set[tuple[str, str]] = set()
+    while pending and len(seen) < max_items:
+        ref = pending.pop(0)
+        ref_key = (ref.source_code, ref.source_id)
+        if ref_key in seen:
+            continue
+        seen.add(ref_key)
         snapshot = adapter.fetch(ref, http)
         parsed = adapter.parse(snapshot.raw_content, ref, snapshot)
         result.parsed.append(parsed)
-        result.queued.extend(adapter.expand(parsed))
+        followups = adapter.expand(parsed)
+        result.queued.extend(followups)
+        pending.extend(item.ref for item in followups)
     return result
 
 
