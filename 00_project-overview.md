@@ -61,7 +61,11 @@ Build (with the JRC.B.2 IT team) a temporally-aware, multilingual RAG over fisca
 ```mermaid
 flowchart TD
     subgraph SRC["External Source"]
-        TRI["Tricoteuses git mirror\n(DILA raw JSON, HTTPS)"]
+        subgraph CL["Country legislation"]
+            TRI["French legislation\nTricoteuses git mirror\n(DILA raw JSON, HTTPS)"]
+        end
+        EUROMOD["Euromod parameters"]
+        CR["Country Report"]
     end
 
     subgraph INGEST["RAG/ingest — euromod_ingest package"]
@@ -70,13 +74,14 @@ flowchart TD
         FR["FR adapter\nfetcher.py + parser.py + resolver.py"]
         PIPE["core/pipeline.py\nresolve → fetch → parse → expand refs"]
         LOADER["LegislationLoader\n(core/loader.py)"]
-        EMB["core/embeddings.py :::new\nBGE-M3 (torch/OpenVINO)\nhalfvec embeddings"]
-        MODELS["models/bge-m3 :::new\nlocal model + OpenVINO export script"]
+        EMB["core/embeddings.py\nBGE-M3 (torch/OpenVINO)\nhalfvec embeddings"]
+        MODELS["models/bge-m3\nlocal model + OpenVINO export script"]
         TRANSLATE["Translate all text to english"]
     end
 
     subgraph DB["Postgres (pgvector/pgvector:pg17, port 5434)"]
         SCHEMA["legislation DB\njurisdictions, instruments, units,\nchunks, embeddings (HNSW), fetch_runs"]
+        EVAL["Evaluation results"]
         PGADMIN["pgAdmin (port 5050)"]
         PHOENIX["Observability database"]
     end
@@ -84,17 +89,21 @@ flowchart TD
     subgraph OBS["Observability"]
         PHX["Arize Phoenix\n(ports 6006 UI/OTLP-HTTP, 4317 gRPC)"]
     end
+    subgraph EVAL_PIPELINE["Evaluations"]
+        EVAL_SCRIPT["Models evaluations"]
+    end
 
-    subgraph AGENT["agentic-workflow/pipeline :::new\neuromod_workflow (LangGraph)"]
+    subgraph AGENT["agentic-workflow/pipeline\neuromod_workflow (LangGraph)"]
         RET["Retrieve"] --> PROP["Propose"] --> CRIT["Critique"] --> DIFF["Diff"]
         QUEUE["Review queue\ndata/queue/*.json"]
         DIFF --> QUEUE
     end
 
-    subgraph UI["agentic-workflow/ui :::new\nTauri (Rust) + Svelte desktop app"]
+    subgraph UI["agentic-workflow/ui\nTauri (Rust) + Svelte desktop app"]
         REVIEW["Review tab\n(queue list, detail, diff)"]
         AUDIT["Audit Log tab"]
         DBEXPLORE["Database explorer tab"]
+        EVAL_RESULTS["Evaluation results summary"]
     end
 
     TRI --> FR --> PIPE --> LOADER --> SCHEMA
@@ -111,6 +120,8 @@ flowchart TD
     REVIEW --> AUDIT
     PHX-->PHOENIX
     TRANSLATE-->SCHEMA
+    EVAL-->EVAL_RESULTS
+    EVAL_SCRIPT-->EVAL
 
     classDef new stroke-dasharray: 5 5,stroke:#e08800,color:inherit;
 ```
