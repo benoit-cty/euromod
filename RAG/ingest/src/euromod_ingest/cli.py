@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date
 from typing import Annotated
 
@@ -14,14 +15,22 @@ from euromod_ingest.core.embeddings import (
     BGE_M3_MODEL,
     SentenceTransformerBackend,
     build_embeddings,
+    count_chunks_needing_embeddings,
 )
 from euromod_ingest.core.pipeline import PipelineResult, run_database_ingest
 from euromod_ingest.core.translate import (
+    DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS,
     DEFAULT_TARGET_LANG,
     LLMTranslationBackend,
     build_translations,
+    count_texts_needing_translation,
 )
 from euromod_ingest.tui import PipelineTui
+
+# Sentinel prefix for machine-readable progress lines (--progress-json). A
+# wrapping UI (the Tauri Ingest tab) matches this prefix on stdout and renders
+# a real progress bar instead of scrolling log text.
+PROGRESS_PREFIX = "@progress "
 
 
 app = typer.Typer(help="Archive-first legislation ingestion commands.")
@@ -93,6 +102,10 @@ def build_chunk_embeddings(
     device: Annotated[str | None, typer.Option("--device", help="Optional device, e.g. cpu, cuda, or CPU.")] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Count stale chunks without writing embeddings.")] = False,
     show_progress: Annotated[bool, typer.Option("--progress/--no-progress", help="Show live embedding progress.")] = True,
+    progress_json: Annotated[
+        bool,
+        typer.Option("--progress-json", help="Emit '@progress {json}' lines for wrapping UIs."),
+    ] = False,
     fix_mistral_regex: Annotated[
         bool,
         typer.Option("--fix-mistral-regex", help="Forward fix_mistral_regex=True to the tokenizer."),
@@ -118,15 +131,27 @@ def build_chunk_embeddings(
         )
     )
     with psycopg.connect(database_url) as conn:
-        stats = _build_embeddings_with_optional_progress(
-            conn=conn,
-            embedding_backend=embedding_backend,
-            model_id=model_id,
-            batch_size=batch_size,
-            limit=limit,
-            dry_run=dry_run,
-            show_progress=show_progress,
-        )
+        if progress_json:
+            total = count_chunks_needing_embeddings(conn, model_id=model_id, limit=limit)
+            stats = build_embeddings(
+                conn,
+                embedding_backend,
+                model_id=model_id,
+                batch_size=batch_size,
+                limit=limit,
+                dry_run=dry_run,
+                progress=_embedding_json_progress(total),
+            )
+        else:
+            stats = _build_embeddings_with_optional_progress(
+                conn=conn,
+                embedding_backend=embedding_backend,
+                model_id=model_id,
+                batch_size=batch_size,
+                limit=limit,
+                dry_run=dry_run,
+                show_progress=show_progress,
+            )
         conn.commit()
     if dry_run:
         typer.echo(
@@ -154,20 +179,44 @@ def run_translations(
     ] = "openrouter/google/gemma-4-31b-it:free",
     target_lang: Annotated[str, typer.Option("--target-lang", help="Target language (must exist in lang_fts_config).")] = DEFAULT_TARGET_LANG,
     limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
+    request_timeout: Annotated[
+        float | None,
+        typer.Option(
+            "--request-timeout",
+            min=1,
+            help="Per-provider-request timeout in seconds. Use 0 to disable.",
+        ),
+    ] = DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Count untranslated texts without calling the LLM.")] = False,
     show_progress: Annotated[bool, typer.Option("--progress/--no-progress", help="Show live translation progress.")] = True,
+    progress_json: Annotated[
+        bool,
+        typer.Option("--progress-json", help="Emit '@progress {json}' lines for wrapping UIs."),
+    ] = False,
 ) -> None:
     """Translate every unit text version missing a target-language rendering."""
-    backend = None if dry_run else LLMTranslationBackend(model)
+    timeout = None if request_timeout == 0 else request_timeout
+    backend = None if dry_run else LLMTranslationBackend(model, request_timeout=timeout)
     with psycopg.connect(database_url) as conn:
-        stats = _build_translations_with_optional_progress(
-            conn=conn,
-            backend=backend,
-            target_lang=target_lang,
-            limit=limit,
-            dry_run=dry_run,
-            show_progress=show_progress,
-        )
+        if progress_json:
+            total = count_texts_needing_translation(conn, target_lang=target_lang, limit=limit)
+            stats = build_translations(
+                conn,
+                backend,
+                target_lang=target_lang,
+                limit=limit,
+                dry_run=dry_run,
+                progress=_translation_json_progress(total),
+            )
+        else:
+            stats = _build_translations_with_optional_progress(
+                conn=conn,
+                backend=backend,
+                target_lang=target_lang,
+                limit=limit,
+                dry_run=dry_run,
+                show_progress=show_progress,
+            )
     action = "would_translate" if dry_run else "translated"
     typer.echo(
         f"scanned={stats.scanned} {action}={stats.scanned if dry_run else stats.translated} "
@@ -175,6 +224,58 @@ def run_translations(
     )
     if stats.failed:
         raise typer.Exit(code=1)
+
+
+def _emit_json_progress(payload: dict[str, object]) -> None:
+    """Print one '@progress {json}' line; typer.echo flushes so lines stream live."""
+    typer.echo(PROGRESS_PREFIX + json.dumps(payload, ensure_ascii=False))
+
+
+def _translation_json_progress(total: int):
+    """Progress callback emitting one JSON line per translation event."""
+
+    def update(event: dict[str, int | str]) -> None:
+        phase = str(event["phase"])
+        if phase == "failed":
+            typer.echo(f"failed {event['detail']}", err=True)
+        _emit_json_progress(
+            {
+                "task": "translate",
+                "phase": phase,
+                "done": int(event["scanned"]),
+                "total": total,
+                "translated": int(event["translated"]),
+                "failed": int(event["failed"]),
+                "detail": str(event["detail"]),
+            }
+        )
+
+    return update
+
+
+def _embedding_json_progress(total: int):
+    """Progress callback emitting JSON lines per embedding batch.
+
+    Skips the per-chunk 'candidate' events — one line per encoded batch is
+    plenty for a UI bar and keeps stdout small on large corpora.
+    """
+
+    def update(event: dict[str, int | str]) -> None:
+        phase = str(event["phase"])
+        if phase == "candidate":
+            return
+        _emit_json_progress(
+            {
+                "task": "embeddings",
+                "phase": phase,
+                "done": int(event["scanned"]),
+                "total": total,
+                "embedded": int(event["embedded"]),
+                "detail": "",
+            }
+        )
+
+    return update
 
 
 def _build_translations_with_optional_progress(

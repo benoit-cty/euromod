@@ -200,6 +200,33 @@ def iter_chunks_needing_embeddings(
                 return
 
 
+def count_chunks_needing_embeddings(
+    conn: Connection,
+    *,
+    model_id: int = 1,
+    limit: int | None = None,
+) -> int:
+    """Count the chunks `iter_chunks_needing_embeddings` would yield.
+
+    SQL twin of the iterator's staleness check: sha256(context_header + "\\n" +
+    content) compared against the stored input_hash, so a progress display can
+    know the total before the scan starts.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT count(*)
+            FROM chunks c
+            LEFT JOIN embeddings e ON e.chunk_id = c.id AND e.model_id = %s
+            WHERE e.input_hash IS DISTINCT FROM
+                  encode(sha256(convert_to(c.context_header || chr(10) || c.content, 'UTF8')), 'hex')
+            """,
+            (model_id,),
+        )
+        total = int(cur.fetchone()[0])
+    return min(total, limit) if limit is not None else total
+
+
 def ensure_bge_m3_model(conn: Connection, *, model_id: int = 1) -> None:
     """Ensure the BGE-M3 model registry row exists."""
     with conn.cursor() as cur:

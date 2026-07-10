@@ -24,16 +24,13 @@ the environment / repo `.env` files.
 
 ```bash
 uv sync --extra embeddings --extra translate   # uv sync installs exactly the listed extras
-set -a; source ../../../update-openfisca-with-ai/.env; set +a   # provider API keys
 uv run python -m euromod_ingest.cli translate run \
 	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
-	--model openrouter/google/gemma-4-31b-it:free
+	--model=azure_openai/gpt-5.4-nano
 ```
 
 `euromod_workflow.config.load_config()` only auto-loads `.env` from the `euromod`
-repo root and `agentic-workflow/`; the shared keys currently live in the sibling
-`update-openfisca-with-ai/.env`, hence the `source` line (or create a repo-root
-`.env`).
+repo root and `agentic-workflow/`;
 
 Use `--dry-run` to count untranslated texts without calling the LLM, `--limit N`
 to translate a first batch, and `--target-lang` for another language registered in
@@ -90,7 +87,10 @@ uv run python -m euromod_ingest.cli embeddings build \
 For the 329 chunks of the French fiscal bill it tooks 13 minutes on a Intel Ultra 7 265H, in cpu mode.
 
 The command shows a live progress bar by default. Use `--no-progress` when
-capturing logs in non-interactive scripts.
+capturing logs in non-interactive scripts, or `--progress-json` to emit
+machine-readable `@progress {json}` lines on stdout (one per encoded batch,
+with an upfront total) — this is what the desktop UI's Ingest tab uses to
+render its progress bar. `translate run` supports the same two flags.
 
 Use `CPU` first on the Ultra 7 265H. OpenVINO can expose other devices depending
 on the installed drivers, but BGE-M3 should be benchmarked before targeting the
