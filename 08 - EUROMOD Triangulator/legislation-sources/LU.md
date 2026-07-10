@@ -1,0 +1,198 @@
+# Legislation & Policy Sources: LU
+
+## Overview
+This document tracks the sources used to define tax-benefit rules for LU. Sources were initially extracted from the Y16 EUROMOD Country Report.
+
+## Time Coverage & Obsolescence Notes
+- **Current Basis**: Y16 Report (covers policies predominantly from 2022-2025).
+- **URL Stability**: Check URLs carefully for hardcoded years (e.g., `.../2023/...`). Legal frameworks update frequently; if a URL is dead, look for the base domain's search function or an archived version.
+- **Version Control**: When checking against models, ensure the legal text corresponds to the exact year of the EUROMOD policy being triangulated.
+
+## Extracted URLs
+### Ministries & Government Portals
+- [https://economy-finance.ec.europa.eu/document/download/6e6837c1-e00c-42ed-9f10-8d1ad56f913a_en?filename=spring_forecast-2024_statisical%20annext_en.pdf](https://economy-finance.ec.europa.eu/document/download/6e6837c1-e00c-42ed-9f10-8d1ad56f913a_en?filename=spring_forecast-2024_statisical%20annext_en.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `forecasts](https://economy-finance.ec.europa.eu/document/download/6e6837c1-e00c-42ed-9f10-8d1ad56f913a_en?filename=spring_forecast-2024_statisical%...`
+
+### Statistical Offices
+- [http://stats.oecd.org/Index.aspx](http://stats.oecd.org/Index.aspx) `[✅ DOWNLOADED]`
+  - *Context:* `- **OECD** (2022): <http://stats.oecd.org/Index.aspx>`
+- [https://lustat.statec.lu/vis?fs\[0\](https://lustat.statec.lu/vis?fs\[0\) `[✅ DOWNLOADED]`
+  - *Context:* `| Annual salary increase in % | \$f_upr9 | bed, bfapl, bfauc, bhl, bho, bmaba, bmals, bfa | https://lustat.statec.lu/vis?fs\[0\]=Th%C3%A8mes%2C1%7C...`
+- [https://statistiques.public.lu/dam-assets/fr/donnees-autres-formats/indicateurs-court-terme/economie-totale-prix/E5010.xls](https://statistiques.public.lu/dam-assets/fr/donnees-autres-formats/indicateurs-court-terme/economie-totale-prix/E5010.xls) `[FAILED/PENDING]`
+  - *Context:* `| National Consumer Price index (IPCN) | \$f_ipcn | xhc, xhcmomi, xhcot, xhcrt, xmp, xpp, xed00 (2019, 2020, 2021, 2022, 2023, 2024), xhl00 (2019, ...`
+- [https://statistiques.public.lu/fr/themes.html](https://statistiques.public.lu/fr/themes.html) `[FAILED/PENDING]`
+  - *Context:* `- **STATEC** (2022): <https://statistiques.public.lu/fr/themes.html>`
+
+### European & International Organisations
+- [https://data-explorer.oecd.org/](https://data-explorer.oecd.org/) `[✅ DOWNLOADED]`
+  - *Context:* `<sup>1</sup> OECD (2025), <https://data-explorer.oecd.org/>`
+- [https://ec.europa.eu/eurostat/data/database](https://ec.europa.eu/eurostat/data/database) `[✅ DOWNLOADED]`
+  - *Context:* `- **Eurostat** (2022): <https://ec.europa.eu/eurostat/data/database>`
+- [https://ec.europa.eu/eurostat/databrowser/view/demo_find/default/table?lang=en](https://ec.europa.eu/eurostat/databrowser/view/demo_find/default/table?lang=en) `[✅ DOWNLOADED]`
+  - *Context:* `<https://ec.europa.eu/eurostat/databrowser/view/demo_find/default/table?lang=en>,`
+- [https://ec.europa.eu/eurostat/databrowser/view/demo_mlexpec/default/table?lang=en](https://ec.europa.eu/eurostat/databrowser/view/demo_mlexpec/default/table?lang=en) `[✅ DOWNLOADED]`
+  - *Context:* `<https://ec.europa.eu/eurostat/databrowser/view/demo_mlexpec/default/table?lang=en>,`
+- [https://ec.europa.eu/eurostat/databrowser/view/demo_pjangroup/default/table?lang=en](https://ec.europa.eu/eurostat/databrowser/view/demo_pjangroup/default/table?lang=en) `[✅ DOWNLOADED]`
+  - *Context:* `<https://ec.europa.eu/eurostat/databrowser/view/demo_pjangroup/default/table?lang=en>`
+- [https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_manr/default/table?lang=en](https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_manr/default/table?lang=en) `[✅ DOWNLOADED]`
+  - *Context:* `Eurostat`
+- [https://ec.europa.eu/eurostat/databrowser/view/prc_ppp_ind/default/table?lang=en](https://ec.europa.eu/eurostat/databrowser/view/prc_ppp_ind/default/table?lang=en) `[✅ DOWNLOADED]`
+  - *Context:* `<https://ec.europa.eu/eurostat/databrowser/view/prc_ppp_ind/default/table?lang=en>.`
+- [https://ec.europa.eu/eurostat/databrowser/view/une_rt_a/default/table?lang=en](https://ec.europa.eu/eurostat/databrowser/view/une_rt_a/default/table?lang=en) `[✅ DOWNLOADED]`
+  - *Context:* `<https://ec.europa.eu/eurostat/databrowser/view/une_rt_a/default/table?lang=en>,`
+- [https://ec.europa.eu/social/home.jsp?langId=en](https://ec.europa.eu/social/home.jsp?langId=en) `[✅ DOWNLOADED]`
+  - *Context:* `<https://ec.europa.eu/social/home.jsp?langId=en>`
+- [https://euromod-web.jrc.ec.europa.eu/download-euromod](https://euromod-web.jrc.ec.europa.eu/download-euromod) `[✅ DOWNLOADED]`
+  - *Context:* `- Downloads: <https://euromod-web.jrc.ec.europa.eu/download-euromod>`
+- [https://euromod-web.jrc.ec.europa.eu/resources/documentation](https://euromod-web.jrc.ec.europa.eu/resources/documentation) `[✅ DOWNLOADED]`
+  - *Context:* `<https://euromod-web.jrc.ec.europa.eu/resources/documentation>`
+- [https://euromod-web.jrc.ec.europa.eu/resources/glossary](https://euromod-web.jrc.ec.europa.eu/resources/glossary) `[✅ DOWNLOADED]`
+  - *Context:* `<https://euromod-web.jrc.ec.europa.eu/resources/glossary>`
+- [https://euromod-web.jrc.ec.europa.eu/resources/parameters](https://euromod-web.jrc.ec.europa.eu/resources/parameters) `[✅ DOWNLOADED]`
+  - *Context:* `<u>https://euromod-web.jrc.ec.europa.eu/resources/parameters</u>.`
+- [https://euromod-web.jrc.ec.europa.eu/sites/default/files/2025-02/Nowcasting%20prices_note_J1.0%2B.pdf](https://euromod-web.jrc.ec.europa.eu/sites/default/files/2025-02/Nowcasting%20prices_note_J1.0%2B.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `prices_note_J1.0+.pdf](https://euromod-web.jrc.ec.europa.eu/sites/default/files/2025-02/Nowcasting%20prices_note_J1.0%2B.pdf)..`
+- [https://euromod-web.jrc.ec.europa.eu/sites/default/files/Inflation_rates_by_product_category.xlsx](https://euromod-web.jrc.ec.europa.eu/sites/default/files/Inflation_rates_by_product_category.xlsx) `[✅ DOWNLOADED]`
+  - *Context:* `rates](https://euromod-web.jrc.ec.europa.eu/sites/default/files/Inflation_rates_by_product_category.xlsx)`
+
+### Other Relevant Sources
+- [http://www.adem.public.lu/fr/publications/index.php](http://www.adem.public.lu/fr/publications/index.php) `[FAILED/PENDING]`
+  - *Context:* `<http://www.adem.public.lu/fr/publications/index.php>`
+- [http://www.fns.lu/](http://www.fns.lu/) `[FAILED/PENDING]`
+  - *Context:* `- **Fonds National de Solidarité** (2022): <http://www.fns.lu/>`
+- [http://www.impotsdirects.public.lu](http://www.impotsdirects.public.lu) `[FAILED/PENDING]`
+  - *Context:* `<http://www.impotsdirects.public.lu>`
+  - *Note:* The `*.public.lu` domain frequently drops automated connections (`WinError 10054`) or returns `503`. Manual retrieval may be necessary.
+- [http://www.isog.public.lu](http://www.isog.public.lu) `[✅ DOWNLOADED]`
+  - *Context:* `<http://www.isog.public.lu>`
+- [http://www.snas.public.lu](http://www.snas.public.lu) `[FAILED/PENDING]`
+  - *Context:* `<http://www.snas.public.lu>`
+- [https://aaa.public.lu/fr/prestations-cotisations/cotisations/bonusmalus.html](https://aaa.public.lu/fr/prestations-cotisations/cotisations/bonusmalus.html) `[✅ DOWNLOADED]`
+  - *Context:* `<https://aaa.public.lu/fr/prestations-cotisations/cotisations/bonusmalus.html>`
+- [https://adem.public.lu/en/employeurs/demander-aides-financieres/maintenir-emploi/chomage-partiel/chomage-partiel-covid19.html](https://adem.public.lu/en/employeurs/demander-aides-financieres/maintenir-emploi/chomage-partiel/chomage-partiel-covid19.html) `[FAILED/PENDING]`
+  - *Context:* `<https://adem.public.lu/en/employeurs/demander-aides-financieres/maintenir-emploi/chomage-partiel/chomage-partiel-covid19.html>`
+- [https://cae.public.lu/fr/conge-parental/informations-generales.html](https://cae.public.lu/fr/conge-parental/informations-generales.html) `[FAILED/PENDING]`
+  - *Context:* `<https://cae.public.lu/fr/conge-parental/informations-generales.html>.`
+- [https://ccss.public.lu/dam-assets/publications/2025/ccss-20250117-avis-80-99-fr-de.pdf](https://ccss.public.lu/dam-assets/publications/2025/ccss-20250117-avis-80-99-fr-de.pdf) `[FAILED/PENDING]`
+  - *Context:* `<https://ccss.public.lu/dam-assets/publications/2025/ccss-20250117-avis-80-99-fr-de.pdf>`
+- [https://ccss.public.lu/fr/parametres-sociaux.html](https://ccss.public.lu/fr/parametres-sociaux.html) `[FAILED/PENDING]`
+  - *Context:* `and <https://ccss.public.lu/fr/parametres-sociaux.html>`
+- [https://cnap.public.lu/fr/pensions/generalites.html#bloub-2](https://cnap.public.lu/fr/pensions/generalites.html#bloub-2) `[FAILED/PENDING]`
+  - *Context:* `| Annual average of (former) pensions | \$f_upr2 | bacpm, bdisv, pdi00, poacc, poacm, poamr, poaps, poapu, poawr, poaxp, psups, psupu, pdi, poa, ps...`
+- [https://cnap.public.lu/fr/pensions/pension-invalidite.html](https://cnap.public.lu/fr/pensions/pension-invalidite.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://cnap.public.lu/fr/pensions/pension-invalidite.html> and`
+- [https://cnap.public.lu/fr/pensions/pension-survie/pension-survie1.html](https://cnap.public.lu/fr/pensions/pension-survie/pension-survie1.html) `[FAILED/PENDING]`
+  - *Context:* `<https://cnap.public.lu/fr/pensions/pension-survie/pension-survie1.html>`
+- [https://cnap.public.lu/fr/pensions/pension-vieillesse-65.html](https://cnap.public.lu/fr/pensions/pension-vieillesse-65.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://cnap.public.lu/fr/pensions/pension-vieillesse-65.html>`
+- [https://douanes.public.lu/fr/accises/taux-droits-accise.html](https://douanes.public.lu/fr/accises/taux-droits-accise.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://douanes.public.lu/fr/accises/taux-droits-accise.html>`
+- [https://gouvernement.lu/fr/actualites/toutes_actualites/communiques/2023/07-juillet/21-lois-logement.html](https://gouvernement.lu/fr/actualites/toutes_actualites/communiques/2023/07-juillet/21-lois-logement.html) `[✅ DOWNLOADED]`
+  - *Context:* `<https://gouvernement.lu/fr/actualites/toutes_actualites/communiques/2023/07-juillet/21-lois-logement.html>`
+- [https://guichet.public.lu/fr/citoyens/aides/famille-education/revenus-modestes/allocation-vie-chere.html](https://guichet.public.lu/fr/citoyens/aides/famille-education/revenus-modestes/allocation-vie-chere.html) `[✅ DOWNLOADED]`
+  - *Context:* `guichet.public.lu/allocation-vie-chere.`
+- [https://guichet.public.lu/fr/citoyens/famille-education/etudes-superieures/aides-logement/aide-financiere.html](https://guichet.public.lu/fr/citoyens/famille-education/etudes-superieures/aides-logement/aide-financiere.html) `[✅ DOWNLOADED]`
+  - *Context:* `<https://guichet.public.lu/fr/citoyens/famille-education/etudes-superieures/aides-logement/aide-financiere.html>`
+- [https://guichet.public.lu/fr/citoyens/famille/mesures-action-sociale/aide-menages-revenus-modestes/allocation-vie-chere.html#bloub-1](https://guichet.public.lu/fr/citoyens/famille/mesures-action-sociale/aide-menages-revenus-modestes/allocation-vie-chere.html#bloub-1) `[FAILED/PENDING]`
+  - *Context:* `[guichet.public.lu/allocation-vie-chere](https://guichet.public.lu/fr/citoyens/famille/mesures-action-sociale/aide-menages-revenus-modestes/allocat...`
+- [https://guichet.public.lu/fr/citoyens/famille/parents/allocation-naissance/allocations-familiales.html](https://guichet.public.lu/fr/citoyens/famille/parents/allocation-naissance/allocations-familiales.html) `[FAILED/PENDING]`
+  - *Context:* `<https://guichet.public.lu/fr/citoyens/famille/parents/allocation-naissance/allocations-familiales.html>`
+- [https://guichet.public.lu/fr/citoyens/logement/location/aides-au-logement/subvention-loyer.html#bloub-9](https://guichet.public.lu/fr/citoyens/logement/location/aides-au-logement/subvention-loyer.html#bloub-9) `[FAILED/PENDING]`
+  - *Context:* `https://guichet.public.lu/subvention-loyer`
+- [https://guichet.public.lu/fr/citoyens/travail-emploi/chomage/indemnite](https://guichet.public.lu/fr/citoyens/travail-emploi/chomage/indemnite) `[FAILED/PENDING]`
+  - *Context:* `[https://guichet.public.lu/fr/citoyens/travail-emploi/chomage/indemnite](https://guichet.public.lu/fr/citoyens/travail-emploi/chomage/indemnite-cho...`
+- [https://guichet.public.lu/fr/citoyens/travail-emploi/chomage/indemnite-chomage/indemnite-chomage-salarie.html](https://guichet.public.lu/fr/citoyens/travail-emploi/chomage/indemnite-chomage/indemnite-chomage-salarie.html) `[FAILED/PENDING]`
+  - *Context:* `[https://guichet.public.lu/fr/citoyens/travail-emploi/chomage/indemnite](https://guichet.public.lu/fr/citoyens/travail-emploi/chomage/indemnite-cho...`
+- [https://guichet.public.lu/fr/citoyens/travail/conges-jours-feries/situation-personnelle/conge-maternite.html](https://guichet.public.lu/fr/citoyens/travail/conges-jours-feries/situation-personnelle/conge-maternite.html) `[✅ DOWNLOADED]`
+  - *Context:* `guichet.public.lu`
+- [https://guichet.public.lu/fr/citoyens/travail/maternite-prestations-familiales/allocations/allocations-familiales.html](https://guichet.public.lu/fr/citoyens/travail/maternite-prestations-familiales/allocations/allocations-familiales.html) `[✅ DOWNLOADED]`
+  - *Context:* `<https://guichet.public.lu/fr/citoyens/travail/maternite-prestations-familiales/allocations/allocations-familiales.html>`
+- [https://guichet.public.lu/fr/entreprises/fiscalite/impots-revenus/credit-impot-salaire-social-minimum.html](https://guichet.public.lu/fr/entreprises/fiscalite/impots-revenus/credit-impot-salaire-social-minimum.html) `[FAILED/PENDING]`
+  - *Context:* `<https://guichet.public.lu/fr/entreprises/fiscalite/impots-revenus/credit-impot-salaire-social-minimum.html>`
+- [https://guichet.public.lu/fr/entreprises/ressources-humaines/conges/situation-perso/conge-paternite.html](https://guichet.public.lu/fr/entreprises/ressources-humaines/conges/situation-perso/conge-paternite.html) `[✅ DOWNLOADED]`
+  - *Context:* `<https://guichet.public.lu/fr/entreprises/ressources-humaines/conges/situation-perso/conge-paternite.html>`
+- [https://guichet.public.lu/subvention-loyer](https://guichet.public.lu/subvention-loyer) `[FAILED/PENDING]`
+  - *Context:* `https://guichet.public.lu/subvention-loyer`
+- [https://igss.gouvernement.lu/dam-assets/publications/param%C3%A8tres-sociaux/2025/par-soc-202505.pdf](https://igss.gouvernement.lu/dam-assets/publications/param%C3%A8tres-sociaux/2025/par-soc-202505.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `Social_parameters_2025`
+- [https://igss.gouvernement.lu/dam-assets/publications/statistiques/protection-sociale/ps-2/PS-2-tab04.xls](https://igss.gouvernement.lu/dam-assets/publications/statistiques/protection-sociale/ps-2/PS-2-tab04.xls) `[✅ DOWNLOADED]`
+  - *Context:* `<https://igss.gouvernement.lu/dam-assets/publications/statistiques/protection-sociale/ps-2/PS-2-tab04.xls>.`
+- [https://impotsdirects.public.lu/fr/az/c/CII.html](https://impotsdirects.public.lu/fr/az/c/CII.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://impotsdirects.public.lu/fr/az/c/CII.html>`
+- [https://impotsdirects.public.lu/fr/az/c/CII/credit-indep-2024.html](https://impotsdirects.public.lu/fr/az/c/CII/credit-indep-2024.html) `[FAILED/PENDING]`
+  - *Context:* `https://impotsdirects.public.lu/fr/az/c/CII/credit-indep-2024.html`
+- [https://impotsdirects.public.lu/fr/az/c/CII/credit-indep-2024.html%20](https://impotsdirects.public.lu/fr/az/c/CII/credit-indep-2024.html%20) `[FAILED/PENDING]`
+  - *Context:* `https://impotsdirects.public.lu/fr/az/c/CII/credit-indep-2024.html`
+- [https://impotsdirects.public.lu/fr/az/c/CIP.html](https://impotsdirects.public.lu/fr/az/c/CIP.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://impotsdirects.public.lu/fr/az/c/CIP.html>`
+- [https://impotsdirects.public.lu/fr/az/c/CIP/cip2024.html](https://impotsdirects.public.lu/fr/az/c/CIP/cip2024.html) `[FAILED/PENDING]`
+  - *Context:* `<https://impotsdirects.public.lu/fr/az/c/CIP/cip2024.html>.`
+- [https://impotsdirects.public.lu/fr/az/c/cim.html](https://impotsdirects.public.lu/fr/az/c/cim.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://impotsdirects.public.lu/fr/az/c/cim.html>`
+- [https://impotsdirects.public.lu/fr/az/c/credit-impot-conjoncture.html](https://impotsdirects.public.lu/fr/az/c/credit-impot-conjoncture.html) `[FAILED/PENDING]`
+  - *Context:* `<https://impotsdirects.public.lu/fr/az/c/credit-impot-conjoncture.html>`
+- [https://impotsdirects.public.lu/fr/az/c/credit-impot-energie.html](https://impotsdirects.public.lu/fr/az/c/credit-impot-energie.html) `[FAILED/PENDING]`
+  - *Context:* `<https://impotsdirects.public.lu/fr/az/c/credit-impot-energie.html>`
+- [https://impotsdirects.public.lu/fr/az/c/credit-impot-salaire-social-minimum.html](https://impotsdirects.public.lu/fr/az/c/credit-impot-salaire-social-minimum.html) `[FAILED/PENDING]`
+  - *Context:* `<https://impotsdirects.public.lu/fr/az/c/credit-impot-salaire-social-minimum.html>`
+- [https://impotsdirects.public.lu/fr/az/c/credit-impot-salaries.html](https://impotsdirects.public.lu/fr/az/c/credit-impot-salaries.html) `[FAILED/PENDING]`
+  - *Context:* `<https://impotsdirects.public.lu/fr/az/c/credit-impot-salaries.html>`
+- [https://impotsdirects.public.lu/fr/az/c/credit-impot-salaries/cis2024.html](https://impotsdirects.public.lu/fr/az/c/credit-impot-salaries/cis2024.html) `[FAILED/PENDING]`
+  - *Context:* `<https://impotsdirects.public.lu/fr/az/c/credit-impot-salaries/cis2024.html>`
+- [https://impotsdirects.public.lu/fr/az/d/depens_spe.html](https://impotsdirects.public.lu/fr/az/d/depens_spe.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://impotsdirects.public.lu/fr/az/d/depens_spe.html>`
+- [https://impotsdirects.public.lu/fr/az/f/frais_obten.html](https://impotsdirects.public.lu/fr/az/f/frais_obten.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://impotsdirects.public.lu/fr/az/f/frais_obten.html> and`
+- [https://impotsdirects.public.lu/fr/az/l/logem_loc.html](https://impotsdirects.public.lu/fr/az/l/logem_loc.html) `[FAILED/PENDING]`
+  - *Context:* `<https://impotsdirects.public.lu/fr/az/l/logem_loc.html>`
+- [https://impotsdirects.public.lu/fr/az/t/tarif_pers.html](https://impotsdirects.public.lu/fr/az/t/tarif_pers.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://impotsdirects.public.lu/fr/az/t/tarif_pers.html>..`
+- [https://impotsdirects.public.lu/fr/legislation/LIR.html](https://impotsdirects.public.lu/fr/legislation/LIR.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://impotsdirects.public.lu/fr/legislation/LIR.html>.`
+- [https://impotsdirects.public.lu/fr/salpens/fiche/classe_impot.html](https://impotsdirects.public.lu/fr/salpens/fiche/classe_impot.html) `[FAILED/PENDING]`
+  - *Context:* `<https://impotsdirects.public.lu/fr/salpens/fiche/classe_impot.html>`
+- [https://legilux.public.lu/eli/etat/leg/loi/2023/08/07/a554/consolide/20240601](https://legilux.public.lu/eli/etat/leg/loi/2023/08/07/a554/consolide/20240601) `[✅ DOWNLOADED]`
+  - *Context:* `<https://legilux.public.lu/eli/etat/leg/loi/2023/08/07/a554/consolide/20240601>`
+- [https://legilux.public.lu/eli/etat/leg/loi/2023/08/07/a554/jo#attachment_1](https://legilux.public.lu/eli/etat/leg/loi/2023/08/07/a554/jo#attachment_1) `[✅ DOWNLOADED]`
+  - *Context:* `<https://legilux.public.lu/eli/etat/leg/loi/2023/08/07/a554/jo#attachment_1>,`
+- [https://logement.public.lu/](https://logement.public.lu/) `[FAILED/PENDING]`
+  - *Context:* `https://logement.public.lu/`
+- [https://logement.public.lu/dam-assets/documents/actualites/2016/20160627_Presentation_GarLocSubvLoyer_ChCommerce.pdf](https://logement.public.lu/dam-assets/documents/actualites/2016/20160627_Presentation_GarLocSubvLoyer_ChCommerce.pdf) `[FAILED/PENDING]`
+  - *Context:* `https://logement.public.lu/`
+- [https://logement.public.lu/dam-assets/documents/publications/aides-logement/location/bro-location-fr-web.pdf](https://logement.public.lu/dam-assets/documents/publications/aides-logement/location/bro-location-fr-web.pdf) `[FAILED/PENDING]`
+  - *Context:* `<https://logement.public.lu/dam-assets/documents/publications/aides-logement/location/bro-location-fr-web.pdf>`
+- [https://logement.public.lu/fr/locataire/obtenir-aide-location/subventionloyer.html](https://logement.public.lu/fr/locataire/obtenir-aide-location/subventionloyer.html) `[FAILED/PENDING]`
+  - *Context:* `<https://logement.public.lu/fr/locataire/obtenir-aide-location/subventionloyer.html>`
+- [https://mde.public.lu/fr/a-propos-mde/presentation.html](https://mde.public.lu/fr/a-propos-mde/presentation.html) `[FAILED/PENDING]`
+  - *Context:* `Sources: <https://mde.public.lu/fr/a-propos-mde/presentation.html>`
+- [https://mde.public.lu/fr/affiliation-financement/financement.html](https://mde.public.lu/fr/affiliation-financement/financement.html) `[FAILED/PENDING]`
+  - *Context:* `<https://mde.public.lu/fr/affiliation-financement/financement.html>`
+- [https://mfin.gouvernement.lu/fr/publications.html](https://mfin.gouvernement.lu/fr/publications.html) `[✅ DOWNLOADED]`
+  - *Context:* `<https://mfin.gouvernement.lu/fr/publications.html>`
+- [https://mss.gouvernement.lu/fr/publications.html](https://mss.gouvernement.lu/fr/publications.html) `[FAILED/PENDING]`
+  - *Context:* `<https://mss.gouvernement.lu/fr/publications.html>`
+- [https://mss.gouvernement.lu/fr/support/recherche.html?q=param%C3%A8tres+sociaux&b=0](https://mss.gouvernement.lu/fr/support/recherche.html?q=param%C3%A8tres+sociaux&b=0) `[FAILED/PENDING]`
+  - *Context:* `| Annual average care allowance | \$f_upr3 | bca01 | https://mss.gouvernement.lu/fr/support/recherche.html?q=param%C3%A8tres+sociaux&b=0 |`
+- [https://pfi.public.lu/fr/professionnel/tva/taxe-valeur-ajoutee.html](https://pfi.public.lu/fr/professionnel/tva/taxe-valeur-ajoutee.html) `[FAILED/PENDING]`
+  - *Context:* `<https://pfi.public.lu/fr/professionnel/tva/taxe-valeur-ajoutee.html>.`
+- [https://revis.public.lu/fr.html](https://revis.public.lu/fr.html) `[FAILED/PENDING]`
+  - *Context:* `Source: <https://revis.public.lu/fr.html> and`
+- [https://www.bcl.lu/en/statistics/series_statistiques_luxembourg/03_Capital_markets/03_05_Table.xls](https://www.bcl.lu/en/statistics/series_statistiques_luxembourg/03_Capital_markets/03_05_Table.xls) `[✅ DOWNLOADED]`
+  - *Context:* `| Stock market indices | \$f_upr8 | yiy | https://www.bcl.lu/en/statistics/series_statistiques_luxembourg/03_Capital_markets/03_05_Table.xls |`
+- [https://www.csl.lu/app/uploads/2024/10/20241023_csl_avis34-2024_equivalentcredit-impot_projet30-2024.pdf](https://www.csl.lu/app/uploads/2024/10/20241023_csl_avis34-2024_equivalentcredit-impot_projet30-2024.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.csl.lu/app/uploads/2024/10/20241023_csl_avis34-2024_equivalentcredit-impot_projet30-2024.pdf>`
+- [https://www.csl.lu/fr/vos-droits/securite-sociale/pensions/pensions-de-vieillesse/](https://www.csl.lu/fr/vos-droits/securite-sociale/pensions/pensions-de-vieillesse/) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.csl.lu/fr/vos-droits/securite-sociale/pensions/pensions-de-vieillesse/>`
+- [https://www.csl.lu/fr/vos-droits/securite-sociale/pensions/pensions-de-vieillesse/#que-recouvre-la-double-adaptation-des-pensions](https://www.csl.lu/fr/vos-droits/securite-sociale/pensions/pensions-de-vieillesse/#que-recouvre-la-double-adaptation-des-pensions) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.csl.lu/fr/vos-droits/securite-sociale/pensions/pensions-de-vieillesse/#que-recouvre-la-double-adaptation-des-pensions>`
+- [https://www.google.com/search?q=Luxembourger&sca_esv=fb6ec2c420ab31bb&source=hp&ei=JG1vadfDK4Cgi-gPv-HniQg&iflsig=AFdpzrgAAAAAaW97NJiLQ9VTQKCpMDOenJUVEun6EhKH&ved=2ahUKEwilod7ch5qSAxVy9LsIHa_-GzwQgK4QegQIAhAC&uact=5&oq=luxemburgues+en+ingles&gs_lp=Egdnd3Mtd2l6IhZsdXhlbWJ1cmd1ZXMgZW4gaW5nbGVzMgYQABgWGB4yBhAAGBYYHjIIEAAYogQYiQUyCBAAGIAEGKIEMggQABiABBiiBDIIEAAYgAQYogQyCBAAGIAEGKIESPIkUABYnCRwA3gAkAEAmAGSAaAB7haqAQQwLjI0uAEDyAEA-AEBmAIboALTF8ICCxAAGIAEGLEDGIMBwgIREC4YgAQYsQMY0QMYgwEYxwHCAggQABiABBixA8ICBRAAGIAEwgIOEC4YgAQYsQMY0QMYxwHCAg4QABiABBixAxiDARiKBcICBBAAGAPCAg4QLhiABBixAxiDARiKBcICCxAuGIAEGLEDGIMBwgIFEC4YgATCAgsQLhiABBjRAxjHAcICCxAuGIAEGMcBGK8BwgIIEC4YgAQYsQPCAgkQABiABBgKGAvCAgkQLhiABBgKGAvCAgYQABgKGB7CAgQQABgewgIJEAAYgAQYExgKwgIIEAAYExgKGB7CAgYQABgTGB7CAggQABgTGBYYHsICChAAGBMYFhgKGB7CAggQABgWGAoYHsICBRAAGO8FwgIFECEYoAHCAgYQABgNGB6YAwCSBwQzLjI0oAfyzAGyBwQwLjI0uAfJF8IHBjIuMTguN8gHQ4AIAA&sclient=gws-wiz&mstk=AUtExfD5G2peRLQOfmbS-gsyeLAofnV6EnqeUjDgwMSz2QRPNpvkIVlfj7e_YiWvosnrTtxg7uhYswE4r1T4FDQhtalMdam93HOPwh5rR2qBUQ6Z3_8zyCaQ1nRqZZm89ykiXog&csui=3](https://www.google.com/search?q=Luxembourger&sca_esv=fb6ec2c420ab31bb&source=hp&ei=JG1vadfDK4Cgi-gPv-HniQg&iflsig=AFdpzrgAAAAAaW97NJiLQ9VTQKCpMDOenJUVEun6EhKH&ved=2ahUKEwilod7ch5qSAxVy9LsIHa_-GzwQgK4QegQIAhAC&uact=5&oq=luxemburgues+en+ingles&gs_lp=Egdnd3Mtd2l6IhZsdXhlbWJ1cmd1ZXMgZW4gaW5nbGVzMgYQABgWGB4yBhAAGBYYHjIIEAAYogQYiQUyCBAAGIAEGKIEMggQABiABBiiBDIIEAAYgAQYogQyCBAAGIAEGKIESPIkUABYnCRwA3gAkAEAmAGSAaAB7haqAQQwLjI0uAEDyAEA-AEBmAIboALTF8ICCxAAGIAEGLEDGIMBwgIREC4YgAQYsQMY0QMYgwEYxwHCAggQABiABBixA8ICBRAAGIAEwgIOEC4YgAQYsQMY0QMYxwHCAg4QABiABBixAxiDARiKBcICBBAAGAPCAg4QLhiABBixAxiDARiKBcICCxAuGIAEGLEDGIMBwgIFEC4YgATCAgsQLhiABBjRAxjHAcICCxAuGIAEGMcBGK8BwgIIEC4YgAQYsQPCAgkQABiABBgKGAvCAgkQLhiABBgKGAvCAgYQABgKGB7CAgQQABgewgIJEAAYgAQYExgKwgIIEAAYExgKGB7CAgYQABgTGB7CAggQABgTGBYYHsICChAAGBMYFhgKGB7CAggQABgWGAoYHsICBRAAGO8FwgIFECEYoAHCAgYQABgNGB6YAwCSBwQzLjI0oAfyzAGyBwQwLjI0uAfJF8IHBjIuMTguN8gHQ4AIAA&sclient=gws-wiz&mstk=AUtExfD5G2peRLQOfmbS-gsyeLAofnV6EnqeUjDgwMSz2QRPNpvkIVlfj7e_YiWvosnrTtxg7uhYswE4r1T4FDQhtalMdam93HOPwh5rR2qBUQ6Z3_8zyCaQ1nRqZZm89ykiXog&csui=3) `[✅ DOWNLOADED]`
+  - *Context:* `[Luxembourger](https://www.google.com/search?q=Luxembourger&sca_esv=fb6ec2c420ab31bb&source=hp&ei=JG1vadfDK4Cgi-gPv-HniQg&iflsig=AFdpzrgAAAAAaW97NJ...`
+- [https://www.lesfrontaliers.lu/societe/la-subvention-de-loyer-cette-belle-oubliee/](https://www.lesfrontaliers.lu/societe/la-subvention-de-loyer-cette-belle-oubliee/) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.lesfrontaliers.lu/societe/la-subvention-de-loyer-cette-belle-oubliee/>`
+- [https://www.pwc.lu/en/newsletter/2022/social-parameters-april-2022.html](https://www.pwc.lu/en/newsletter/2022/social-parameters-april-2022.html) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.pwc.lu/en/newsletter/2022/social-parameters-april-2022.html>`
+- [https://www.secu.lu/assurance-maladie/livre-i/chapitre-iv-organisation/mutualite-des-employeurs/art-56/?L=0](https://www.secu.lu/assurance-maladie/livre-i/chapitre-iv-organisation/mutualite-des-employeurs/art-56/?L=0) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.secu.lu/assurance-maladie/livre-i/chapitre-iv-organisation/mutualite-des-employeurs/art-56/?L=0`
+- [https://www.secu.lu/assurance-pension/reglements/reglements-grand-ducaux-fixant-le-facteur-de-revalorisation-prevu-a-larticle-220-du-code-de-la-securite-sociale/](https://www.secu.lu/assurance-pension/reglements/reglements-grand-ducaux-fixant-le-facteur-de-revalorisation-prevu-a-larticle-220-du-code-de-la-securite-sociale/) `[✅ DOWNLOADED]`
+  - *Context:* `| Annual average of (former) pensions | \$f_upr2 | bacpm, bdisv, pdi00, poacc, poacm, poamr, poaps, poapu, poawr, poaxp, psups, psupu, pdi, poa, ps...`
+

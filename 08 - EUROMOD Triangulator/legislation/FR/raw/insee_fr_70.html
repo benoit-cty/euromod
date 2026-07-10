@@ -1,0 +1,964 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+
+<html lang="en" moznomarginboxes mozdisallowselectionprint>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<head>
+    
+
+
+
+
+
+
+    <script>
+        var _mtm = window._mtm || [];
+        var _paq = window._paq || [];
+        _mtm.push({ 'mtm.startTime': (new Date().getTime()), event: 'mtm.Start' });
+        _paq.push(['setCustomDimension', 1, 'WEB4G']);
+        _paq.push(['HeatmapSessionRecording::disable']);
+        (function() {
+            var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+            g.async=true; g.src='https://cdn.matomo.cloud/insee.matomo.cloud/container_j86K86K5.js'; s.parentNode.insertBefore(g,s);
+        })();
+    </script>
+
+
+    
+        
+            
+            
+            
+                <title>Statistics on income and living conditions | Insee</title>
+            
+        
+    
+
+    
+
+    
+
+    
+    <link rel="stylesheet" type="text/css" href="/static/css/application.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/featherlight/featherlight.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/swiper/swiper.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/dateTimePicker/jquery.datetimepicker.css">
+    <script type="text/javascript">
+        var contextPath="";
+        var langue="en";
+        var numOnglet="2";
+    </script>
+
+    <script type="text/javascript" charset="UTF-8" defer="defer" src="
+
+
+/static/js/svg/graphsvg.js
+"></script>
+    <script type="text/javascript" charset="UTF-8" defer="defer" src="
+
+
+/static/js/application-lib.min.js
+"></script>
+    <script src="/static/build/highcharts.js"></script>
+    <script src="/static/build/highcharts-insee.js"></script>
+    <script charset="UTF-8" defer="defer" src="
+
+
+/static/build/application.js
+"></script>
+    <script>
+        var contextPath="";
+        var langue="en";
+        var numOnglet="2";
+    </script>
+    <!--[if lte IE 8]>
+        <script type="text/javascript" charset="UTF-8" defer="defer" src="
+
+
+/static/js/polyfills/css3-mediaqueries.min.js
+"></script>
+        <![endif]-->
+    <script type="text/javascript">
+var inseeConfig = {
+
+        
+    };
+</script>
+
+    <script type="text/javascript">
+var features = {
+'rmesSource': 'true',
+};
+</script>
+
+
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
+    <link rel="icon" type="image/png" href="
+
+
+/static/img/favicon-96x96.png
+" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="
+
+
+/static/img/favicon.svg
+" />
+    <link rel="shortcut icon" href="
+
+
+/static/img/favicon.ico
+" />
+    <link rel="apple-touch-icon" sizes="180x180" href="
+
+
+/static/img/apple-touch-icon.png
+" />
+
+    <script async src="/static/build/htmx.min.js"></script>
+</head>
+
+<body>
+<!-- Lightbox -->
+<span id="isLightbox" class="hide">false</span>
+
+<span class="controller-param hidden" id="urlAlternative" aria-hidden="true"></span>
+<span class="controller-param hidden" id="urlCible" aria-hidden="true"></span>
+<span class="controller-param hidden" id="urlCibleAlternative" aria-hidden="true"></span>
+
+
+
+
+
+
+<div id="wait" class="wait-off"><img src="
+
+
+/static/img/preloader.gif
+" alt="Veuillez-patienter..."/>
+</div>
+<div id="fond-transparent-body" class="fond-transparent-off"></div>
+
+<header class="header" role="banner">
+    <span style="height: 0;display: inline-block;">&nbsp;</span>
+    <a class="evitement" href="#contenu" data-i18n="header.evitement.contenu">Aller au contenu</a>
+    
+        
+        
+            
+
+
+
+
+
+<div id="banniere" class="banniere">
+	<div class="bandeau">
+		<div class="liens-aide-responsive">
+			<a id="lien-aide-responsive" data-i18n="header.recherche.aide-du-haut-court" href="
+
+
+/en/information/3313008
+">Aide</a>
+			
+		</div>
+		<div class="liens-themes-responsive">
+			
+				
+					<a href="
+
+
+/en/information/8566052
+" data-i18n="header.recherche.themes" class="liens-themes-responsive">Thèmes</a>
+				
+				
+			
+		</div>
+		<div class="loupe" tabindex="-1">
+			<a href="#" id="afficher-recherche" tabindex="-1">
+				<span class="loupe-span">
+					<br/>
+					<span data-i18n="header.responsive.recherche-loupe" class="style">Recherche</span>
+				</span>
+			</a>
+		</div>
+		
+		
+
+
+
+
+
+
+
+
+	
+	
+		<a  href="
+
+
+/en/accueil
+" id="logo" >
+			<img class="logo logo-accueil lien-logo" src="/static/img/logoInseeEn.svg" height="75px" data-i18n="[alt]header.logo.alt" alt="Insee - Institut national de la statistique et des études économiques - Mesurer pour comprendre - Accueil" />
+			<img class="logo logo-accueil lien-logo-responsive" src="/static/img/logoInseeEn.svg" height="75px" data-i18n="[alt]header.logo.alt" alt="Insee - Institut national de la statistique et des études économiques - Mesurer pour comprendre - Accueil" />
+		</a>
+	
+
+
+		<div class="langue-responsive">
+			
+				
+					<a id="lien-changement-langue-responsive" href="/langue/fr" lang="fr">Français</a>
+				
+				
+			
+		</div>
+		<div class="presse-responsive">
+			<a id="lien-presse-responsive" data-i18n="header.recherche.espace-presse" href="
+
+
+/en/information/2107814
+">Presse</a>
+		</div>
+		<div class="hamburger">
+			<a href="#" id="afficher-menu" tabindex="-1">
+				<span class="hamburger-menu">
+					<br/>
+					<span data-i18n="header.responsive.menu-hamburger" class="style">Menu</span>
+				</span>
+			</a>
+		</div>
+	
+		
+		<div id="recherche-header" class="recherche-header recherche">
+			<div id="liens-acces">
+				<ul class="liste-lien-acces">
+					
+						<li class="lien-evitement"><a data-i18n="header.recherche.menu" href="#menu">Menu</a></li>
+						<li><a href="https://blog.insee.fr/" target="_blank" target="_blank" rel="noopener noreferrer">Blog</a></li>
+						<li><a data-i18n="header.recherche.espace-presse" href="
+
+
+/en/information/2107814
+">Presse</a></li>
+						<li><a data-i18n="header.recherche.aide-du-haut" href="
+
+
+/en/information/3313008
+">Aide</a></li>
+						
+ 						
+							
+								<li><a id="lien-changement-langue" href="/langue/fr" lang="fr">Français</a></li>
+							
+							
+						
+				</ul>
+			</div>
+			<div id="searchbar-header" class="searchbar-header" role="search">
+				<span id="search-waiting" class="waiting-off"><img alt="Veuillez-patienter..." src="/static/img/preloader.gif"></span>
+				<input data-i18n="[placeholder]header.recherche.barre-recherche-placeholder;[title]header.recherche.barre-recherche-title" type="search" class="ui-autocomplete-input"
+					id="barre-recherche" autocomplete="off" tabindex="0" title="Rechercher sur le site" placeholder="Rechercher" />
+				<button data-i18n="[title]header.recherche.loupe-title" id="bouton-recherche" class="searchbar-icon" tabindex="0" title="rechercher">
+					<span class="hidden-accessibilite" data-i18n="[title]header.recherche.loupe-title-icon">Lancer la recherche sur le site</span>
+				</button>
+				
+					
+						<a href="
+
+
+/en/information/8566052
+" data-i18n="header.recherche.themes" class="searchbar-theme" tabindex="0">Thèmes</a>
+					
+					
+				
+				<span id="start-terms" class="hidden"></span>
+			</div>
+		</div>
+	
+</div>
+	<!-- Attention : les commentaires en fin de ligne ont un rôle important ! -->
+	<nav id="menu" role="navigation" aria-hidden="false" >
+		<ul class="menu">
+			<li><a class="lien maison" href="
+
+
+/en/accueil
+" title="accueil" ></a></li><!--
+			--><li><a data-i18n="[html]menu.statistiques.titre" class="lien" href="
+
+
+/en/statistiques
+" >Statistiques et études</a>
+				<div class="menu-deroulant">
+					<div data-i18n="[html]menu.statistiques.en-tete" class="menu-deroulant-en-tete">
+						Cherchez vos statistiques par&hellip;
+					</div>
+					<ul>
+						<li>
+							<a class="deroulement" href="#"></a><a data-i18n="menu.statistiques.themes" class="lien titre-categorie" href="
+
+
+/en/statistiques?idfacette=1
+">Thèmes</a>
+							<ul>
+								<li><a data-i18n="menu.statistiques.economie" class="lien" href="
+
+
+/en/statistiques?theme=27
+">Économie - conjoncture - comptes nationaux</a></li>
+								<li><a data-i18n="menu.statistiques.demographie" class="lien" href="
+
+
+/en/statistiques?theme=0
+">Démographie</a></li>
+								<li><a data-i18n="menu.statistiques.entreprises" class="lien" href="
+
+
+/en/statistiques?theme=37
+">Entreprises</a></li>
+								<li><a data-i18n="[html]menu.statistiques.plus-de-themes" class="lien plusDe" href="
+
+
+/en/statistiques?idfacette=1
+">Plus de thèmes&hellip;</a></li>
+							</ul>
+						</li>
+						<li>
+							<a class="deroulement" href="#"></a><a data-i18n="menu.statistiques.niveau-geographique" class="lien titre-categorie" href="
+
+
+/en/statistiques?idfacette=3
+">Niveaux géographiques</a>
+							<ul>
+								<li><a class="lien" href="
+
+
+/en/statistiques?debut=0&geo=FRANCE-1&idfacette=3
+">France</a></li>
+								<li><a data-i18n="menu.statistiques.comparaisons-reg-dep" class="lien" href="
+
+
+/en/statistiques?debut=0&geo=COMPRD-1&idfacette=3
+">Toutes les régions ou tous les départements</a></li>
+								<li><a data-i18n="menu.statistiques.toutes-communes" class="lien" href="
+
+
+/en/statistiques?debut=0&geo=TOUTES_COMMUNE-1
+">Toutes les communes</a></li>
+								<li><a data-i18n="[html]menu.statistiques.plus-de-niveau-geographique" class="lien plusDe" href="
+
+
+/en/statistiques?idfacette=3
+">Plus de niveaux géographiques&hellip;</a></li>
+							</ul>
+						</li>
+						<li>
+							<a class="deroulement" href="#"></a><a data-i18n="menu.statistiques.categorie-produit" class="lien titre-categorie" href="
+
+
+/en/statistiques?idfacette=4
+">Catégories</a>
+							<ul>
+								<li><a data-i18n="menu.statistiques.donnees" class="lien" href="
+
+
+/en/statistiques?categorie=1
+">Données</a></li>
+								<li><a data-i18n="menu.statistiques.publications" class="lien" href="
+
+
+/en/statistiques?categorie=2
+">Publications</a></li>
+								<li><a data-i18n="[html]menu.statistiques.plus-de-categories" class="lien plusDe" href="
+
+
+/en/statistiques?idfacette=4
+">Plus de catégories&hellip;</a></li>
+							</ul>
+						</li>
+						<li>
+							<a class="deroulement" href="#"></a><a data-i18n="menu.statistiques.collections" class="lien titre-categorie" href="
+
+
+/en/statistiques?idfacette=5
+">Collections</a>
+							<ul>
+								<li><a class="lien" href="
+
+
+/en/statistiques?collection=116
+">Insee Première</a></li>
+								<li><a class="lien" href="
+
+
+/en/statistiques?collection=119
+">Notes et points de conjoncture</a></li>
+								<li><a data-i18n="[html]menu.statistiques.plus-de-collections" class="lien plusDe" href="
+
+
+/en/statistiques?idfacette=5
+">Plus de collections&hellip;</a></li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+			</li><!--
+			--><li><a class="deroulement" href="#"></a><a class="lien" href="/en/information/2107769">Definitions, methods and quality</a><div class="menu-deroulant"><ul><li><a class="lien titre-categorie" href="/en/metadonnees/definitions">Definitions</a><ul></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2526481">Data sources and indicators</a><ul><li><a class="lien" href="/en/metadonnees/sources">List of data sources</a></li><li><a class="lien" href="/en/metadonnees/indicateurs">List of indicators</a></li><li><a class="lien" href="/en/information/2517226">Documentation on census results</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/4252443">Quality in the Official Statistical Service (SSP)</a><ul><li><a class="lien" href="/en/information/4249987">The Reference Framework</a></li><li><a class="lien" href="/en/information/4250036">Governance</a></li><li><a class="lien" href="/en/information/6691500">The quality policy and strategy of the official statistical service</a></li><li><a class="lien" href="/en/information/4251599">European Commitments</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107765">Classification</a><ul><li><a class="lien" href="/en/information/8621640">French classification of activities</a></li><li><a class="lien" href="/en/information/8621654">French Classification of products</a></li><li><a class="lien" href="/en/information/8973248">Classification of individual consumption by purpose</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/5398380">Models, Methods and Statistical Tools</a><ul><li><a class="lien" href="/en/information/5398357">Statistical Methodology</a></li></ul></li><li><a class="lien titre-categorie" href="/en/information/4195037">Courrier des statistiques</a><ul></ul></li></ul></div></li><li><a class="deroulement" href="#"></a><a class="lien" href="/en/information/2107752">Services</a><div class="menu-deroulant"><ul><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107732">Review maintenance payments, rents, leases or a contract</a><ul><li><a class="lien" href="/en/information/2489482">Review housing rent</a></li><li><a class="lien" href="/en/information/2489869">Review a commercial or professional lease</a></li><li><a class="lien" href="/en/information/2491441">Indexation of contracts</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2512785">Retrieve indices and time series</a><ul><li><a class="lien" href="/en/information/2886952">History of news</a></li><li><a class="lien" href="/en/information/2868584">Access by theme</a></li><li><a class="lien" href="/en/information/3128589">Keyword or ID search</a></li><li><a class="lien" href="/en/information/2868055">SDMX service web</a></li><li><a class="lien" href="/en/information/2868052">Correspondence tables</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107734">Register or identify a company</a><ul><li><a class="lien" href="/en/information/2107726">Company situation tools</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2563034">Videos &amp; Educational tools</a><ul><li><a class="lien" href="/en/information/2563032">INSEE in brief</a></li><li><a class="lien" href="/en/information/2903127">Videos</a></li></ul></li><li><a class="lien titre-categorie" href="/en/information/2107749">Respond to an INSEE survey</a><ul></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107747">Consult publication calendars</a><ul><li><a class="lien" href="/en/information/2107811">Publication calendars</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107743">Contributing to the Index database of natural persons (BRPP)</a><ul><li><a class="lien" href="/en/information/2493967">Registry office data</a></li><li><a class="lien" href="/en/information/4489573">The Single Electoral Register</a></li><li><a class="lien" href="/en/information/2494151">The computerisation of data exchange</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/3288629">Alain Desrosières Insee library</a><ul><li><a class="lien" href="/en/information/3288575">Documentary portal and open access catalogue</a></li><li><a class="lien" href="/en/information/3288548">The Digital Library of Official Statistics</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107739">Follow us</a><ul><li><a class="lien" href="/en/information/3711699">INSEE on social networks</a></li><li><a class="lien" href="/en/information/2107837">Publication alerts</a></li></ul></li><li><a class="lien titre-categorie" href="/en/information/3313008">Contact us</a><ul></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107814">Press</a><ul><li><a class="lien" href="/en/information/2499106">Regional press officers</a></li><li><a class="lien" href="/en/information/2647680">Press releases</a></li></ul></li></ul></div></li><li><a class="deroulement" href="#"></a><a class="lien" href="/en/information/2107711">INSEE and official statistics</a><div class="menu-deroulant"><ul><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107702">INSEE</a><ul><li><a class="lien" href="/en/information/2381925">Getting to know INSEE</a></li><li><a class="lien" href="/en/information/2381922">Working at INSEE</a></li><li><a class="lien" href="/en/information/2381920">Seminars and conferences</a></li><li><a class="lien" href="/en/information/2381918">Brief history</a></li><li><a class="lien" href="/en/information/4195175">Activity Reports</a></li><li><a class="lien" href="/en/information/2410087">Satisfaction surveys</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107704">INSEE's activities</a><ul><li><a class="lien" href="/en/information/2384705">Producing short-term diagnoses</a></li><li><a class="lien" href="/en/information/2384796">Providing details about the productive system</a></li><li><a class="lien" href="/en/information/2384815">Observation of the society</a></li><li><a class="lien" href="/en/information/2384952">Conducting the population census</a></li><li><a class="lien" href="/en/information/2384677">Describing and analysing regions and territories</a></li><li><a class="lien" href="/en/information/2388700">Managing registers : BRPP and Sirene</a></li><li><a class="lien" href="/en/information/2388407">Disseminating its statistics and studies</a></li><li><a class="lien" href="/en/information/2385705">Improving its methods and assessing quality</a></li><li><a class="lien" href="/en/information/4301982">Contributing to the development of European and international statistics</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107706">Official Statistics</a><ul><li><a class="lien" href="/en/information/2398930">Legislative and institutional framework</a></li><li><a class="lien" href="/en/information/2386424">Official Statistical System</a></li><li><a class="lien" href="/en/information/2388575">Statistical confidentiality</a></li><li><a class="lien" href="/en/information/4196120">Personal data protection</a></li><li><a class="lien" href="/en/information/2388844">Dissemination rules for official statistics</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107708">The development of European statistics</a><ul><li><a class="lien" href="/en/information/4304373">Producers of European statistics in France</a></li><li><a class="lien" href="/en/information/2410240">The legal basis of European statistical governance</a></li><li><a class="lien" href="/en/information/4300318">The framework regulations and sectoral regulations</a></li></ul></li><li><a class="lien titre-categorie" href="/en/information/5232639">Access to administrative documents</a><ul></ul></li></ul></div></li>
+		</ul>
+	</nav>
+</div>
+<div class="clear"></div>
+        
+    
+</header>
+
+<main id="contenu" class="main" role="main">
+    
+    <span class="hidden" id="controller-name" aria-hidden="true">SourceController</span>
+    
+<nav class="breadcrum">
+   <div class="container">
+      <ol class="fil-ariane">
+         <li><a data-i18n="breadcrum.accueil" href="/en/accueil">Accueil</a></li>
+         <li><a href="/en/information/2107769">Definitions, methods and&nbsp;quality</a></li>
+         <li><a href="/en/information/2526481">Data sources and indicators</a></li>
+         <li><a data-i18n="sources.liste-sources.titre" href="/en/metadonnees/sources">sources</a></li>
+         <li>Statistics on income and living conditions</li>
+      </ol>
+   </div>
+</nav><section>
+   <div class="titre-page publication   ">
+      <div class="titre">
+         <h1 class="titre-principal                                  "><span class="titre-titre">Statistics on income and living conditions</span><span class="no-print">&nbsp;</span><span class="sous-titre div-in-h test">
+               <div class="bloc paragraphes ">
+                  <p class="paragraphe   ">EU-SILC</p>
+               </div></span></h1>
+         <p class="auteurs hidden-template-impression"></p>
+         <div class="chapeau"></div>
+      </div>
+      <div class="details hidden-template-impression">
+         <div>
+            <div class="categorie">Sources</div>
+            <div class="famille-numero"></div>
+            <div class="date-diffusion hidden-impression-information-rapide"><span id="libelle-details" class="hidden-template-impression"><span data-i18n="[html]produit.bandeau-bleu.paru-le">Paru le :</span></span><span id="libelle-details" class="impression-seulement hidden-impression-information-rapide"><span data-i18n="[html]produit.bandeau-bleu.paru-le-impression">Paru le</span></span>09/05/2026</div>
+            <div class="lien-details"><a data-i18n="produit.bandeau-bleu.imprimer" href="#" class="bouton-imprimante">Imprimer</a></div>
+         </div>
+         <div class="donnees-telechargeables"></div>
+      </div>
+      <div class="auteurs hidden-impression-information-rapide impression-seulement"></div>
+      <div class="date-diffusion hidden-impression-information-rapide impression-seulement"></div>
+   </div>
+   <div class="contenu   " id="contenu">
+      <div id="partage-reseaux-sociaux">
+         <div class="contenu-reseaux-sociaux"><a data-i18n="[title]reseaux-sociaux.publication.lien-bluesky" href="https://bsky.app/intent/compose?text=Statistics on income and living conditions https://insee.fr/en/metadonnees/source/serie/s1220" title="Bluesky" target="_blank"><img class="cercle-bluesky" src="/static/img/logo-bluesky.svg" alt=""><span data-i18n="reseaux-sociaux.publication.lien-bluesky" class="hidden-accessibilite"></span></a><div class="cercle-linkedin"><a data-i18n="[title]reseaux-sociaux.publication.lien-linkedin" href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https://insee.fr/en/metadonnees/source/serie/s1220&amp;title=Statistics on income and living conditions" class="btn btn-link" title="LinkedIn" target="_blank"><span class="icone-linkedin"><span data-i18n="reseaux-sociaux.publication.lien-linkedin" class="hidden-accessibilite"></span></span></a></div>
+            <div class="cercle-twitter"><a data-i18n="[title]reseaux-sociaux.publication.lien-twitter" href="https://x.com/intent/tweet?url=https://insee.fr/en/metadonnees/source/serie/s1220&amp;text=Statistics on income and living conditions" title="X" target="_blank"><span class="icone-twitter"><span data-i18n="reseaux-sociaux.publication.lien-twitter" class="hidden-accessibilite"></span></span></a></div>
+         </div>
+      </div>
+      <div class="contenu">
+         <div id="consulter" class="courant publication" tabindex="0">
+            <div class="corps-publication">
+               <h2 class="bloc  intertitre-impression " id="titre-bloc-1" data-i18n="sources.serie.resume"></h2>
+               <div class="bloc paragraphes">
+                  <p class="paragraphe">The EU-SILC (European Union Statistics on Income and Living Conditions) survey produces
+                     structural indicators on the distribution of income, poverty and exclusion that are
+                     comparable between the EU countries. It is part of the Community action programme
+                     to fight against social exclusion and it provides the statistical material for the
+                     European Commission's annual summary report on these issues. It also provides researchers
+                     with a micro-data base on income and living conditions, so that they can conduct European
+                     comparative studies on inequalities and the role of social and fiscal policies in
+                     redistribution.</p>
+                  <p class="paragraphe">The European regulation establishes a common framework for the systematic production
+                     of Community statistics on income and living conditions, encompassing cross-sectional
+                     and longitudinal data. This regulatory framework, which sets as a fundamental objective
+                     the availability of comparable statistics for all Member States, also includes the
+                     annual reporting on data quality and structural indicators.</p>
+                  <p class="paragraphe">The regulation provides for "primary" domains to be covered each year (socio-demographic
+                     characteristics of persons belonging to the households surveyed, details of income,
+                     financial situation, living conditions, work, housing, education, health, etc.) and
+                     "secondary" domains on specific topics that vary each year (housing conditions, children's
+                     health and living conditions, indebtedness, well-being, etc.), and are determined
+                     at European level. Some secondary modules are one-time, but most are rolling. The
+                     questionnaire generally includes a 3-year rolling smodule and a 6-year rolling module.</p>
+               </div>
+               <h2 class="bloc  intertitre-impression " id="titre-bloc-3" data-i18n="sources.serie.noteHistorique"></h2>
+               <div class="bloc paragraphes">
+                  <p class="paragraphe">In 1994, EUROSTAT - the statistical office of the European Union - set up the ECHP:
+                     European Community Household Panel.</p>
+                  <p class="paragraphe">The aim was to study the income and the living conditions of different categories
+                     of households within the European Union.</p>
+                  <p class="paragraphe">The European Community Household Panel was carried out until 2001 and was, as its
+                     name indicates, a longitudinal panel survey: the individuals belonging to the initial
+                     sample were surveyed again each year, even if they moved.</p>
+                  <p class="paragraphe">In 2004, the "Statistics on Income and Living Conditions in the European Union" (SRCV
+                     / EU-SILC) took over from the Panel with a more ambitious objective.</p>
+                  <p class="paragraphe">The SILC instrument is governed by a 2003 European Regulation establishing the themes
+                     to be addressed to a greater degree of detail than previously with the European Panel
+                     and with a larger coverage in Europe.</p>
+                  <p class="paragraphe">The aim is to provide the European Community with a comparable database, updated each
+                     year, which serves as a reference for the knowledge of income, living conditions and
+                     social exclusion in the Member States.</p>
+                  <p class="paragraphe">In 2008, the French SRCV system was redesigned to reorganise the entire information
+                     system on living conditions around the SRCV system, including additional themes relating
+                     to living conditions initially present in the former EPCV surveys (permanent surveys
+                     on living conditions) and replacing the collection of part of the household resources
+                     by survey with administrative data.</p>
+                  <p class="paragraphe">To measure subjective well-being, it was decided to introduce, from 2010, questions
+                     on the subjective appreciation that individuals make of their life in general, as
+                     well as the appreciation for certain specific aspects (leisure, relations with relatives,
+                     housing, work) into the SRCV questionnaire.</p>
+                  <p class="paragraphe">In 2020, the SRCV system was again redesigned, driven by the prospect of the European
+                     Commission drafting a new regulation governing the implementation of household surveys,
+                     the IESS (Integrated European Social Statistics) regulation, which became effective
+                     in 2021.</p>
+                  <p class="paragraphe">The first objective of the redesign was to respond to the revision of European criteria
+                     in terms of data quality, accuracy and delivery times, in particular by shortening
+                     the panel's duration to 4 years. The redesign was also an opportunity to modernise
+                     and rationalise the production chain, from the questionnaire design (which was greatly
+                     simplified) to statistical processing, including the management of the data collected.
+                     Most of the processing was carried out in R.</p>
+                  <p class="paragraphe">In 2022, the scope of the survey was extended to the 4 historical Doms (Reunion, Guadeloupe,
+                     Martinique, Guyana).</p>
+               </div>
+               <h2 class="bloc  intertitre-impression " id="titre-bloc-5" data-i18n="sources.voir-doc.millesimes">Documentation par millésimes</h2>
+               <ul class="bloc liste">
+                  <li class="item"><a class="renvoi" data-i18n="" href="/en/metadonnees/source/operation/s2160/presentation">Statistics on income and living conditions 2023</a></li>
+                  <li class="item"><a class="renvoi" data-i18n="" href="/en/metadonnees/source/operation/s2111/presentation">Statistics on income and living conditions 2021</a></li>
+                  <li class="item"><a class="renvoi" data-i18n="" href="/en/metadonnees/source/operation/s1073/presentation">Statistics on income and living conditions 2015</a></li>
+                  <li class="item"><a class="renvoi" data-i18n="" href="/en/metadonnees/source/operation/s1074/presentation">Statistics on income and living conditions 2010</a></li>
+                  <li class="item"><a class="renvoi" data-i18n="" href="/en/metadonnees/source/operation/s1075/presentation">Statistics on income and living conditions 2009</a></li>
+               </ul>
+               <h2 class="bloc  intertitre-impression " id="titre-bloc-7" data-i18n="sources.serie.remplace"></h2>
+               <div class="bloc paragraphes ">
+                  <p class="paragraphe   "><a class="renvoi" data-i18n="" href="/en/metadonnees/source/serie/s1228">Permanent living conditions survey</a></p>
+               </div>
+               <h2 class="bloc  intertitre-impression " id="titre-bloc-9" data-i18n="sources.serie.type"></h2>
+               <div class="bloc paragraphes ">
+                  <p class="paragraphe   ">Survey</p>
+               </div>
+               <h2 class="bloc  intertitre-impression " id="titre-bloc-11" data-i18n="sources.serie.periodicite"></h2>
+               <div class="bloc paragraphes ">
+                  <p class="paragraphe   ">Annual</p>
+               </div>
+               <h2 class="bloc  intertitre-impression " id="titre-bloc-13" data-i18n="sources.serie.voirAussi"></h2>
+               <ul class="bloc liste">
+                  <li class="item"><a class="renvoi" data-i18n="" href="/en/metadonnees/source/serie/s1264">Health Survey</a></li>
+                  <li class="item"><a class="renvoi" data-i18n="" href="/en/metadonnees/source/serie/s1004">Housing survey</a></li>
+               </ul>
+               <h2 class="bloc  intertitre-impression " id="produits-source" data-i18n="sources.produits.titre" tabindex="0">intertitreintertitreintertitre</h2>
+            </div>
+         </div>
+      </div>
+   </div>
+</section><section></section>
+    <section class="contenu hidden corps-publication" id="produits-liste">
+        <span id="source-waiting" class="waiting-off"><img alt="Veuillez-patienter&hellip;"
+                                                           src="/static/img/preloader.gif"/></span>
+        <div id="rubriques" role="region" aria-live="polite">
+            <div id="nombre-resultats"></div>
+            <div id="navigateur-up" class="navigateur"></div>
+            <section>
+                <article>
+                    <table id="documents" role="presentation"></table>
+                </article>
+            </section>
+            <div id="navigateur-down" class="navigateur"></div>
+        </div>
+    </section>
+
+</main>
+
+<footer role="contentinfo">
+    
+        
+        
+            
+
+
+
+<div class="footer-mobile">
+	<div class="liens-reseaux-sociaux-mobile">
+		<a href="https://bsky.app/profile/insee.fr" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-bluesky" title="Bluesky"><span class="icone-bluesky"><span data-i18n="reseaux-sociaux.footer.lien-bluesky" class="hidden-accessibilite"></span></span></a>
+		<a href="https://www.instagram.com/insee_fr/" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-instagram" title="Instagram"><span class="icone-instagram"><span data-i18n="reseaux-sociaux.footer.lien-instagram" class="hidden-accessibilite"></span></span></a>
+		<a href="https://www.linkedin.com/company/insee" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-linkedin" title="LinkedIn"><span class="icone-linkedin"><span data-i18n="reseaux-sociaux.footer.lien-linkedin" class="hidden-accessibilite"></span></span></a>
+		
+			
+				<a href="https://x.com/InseeFr_News" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-twitter" title="X"><span class="icone-twitter"><span data-i18n="reseaux-sociaux.footer.lien-twitter" class="hidden-accessibilite"></span></span></a>
+			
+			
+		
+		<a href="https://www.youtube.com/@Insee_Fr" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-youtube" title="Youtube"><span class="icone-youtube"><span data-i18n="reseaux-sociaux.footer.lien-youtube" class="hidden-accessibilite"></span></span></a>
+		<a href="https://blog.insee.fr/" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-blog" title="Blog"><span class="icone-blog"><span data-i18n="reseaux-sociaux.footer.lien-blog" class="hidden-accessibilite"></span></span></a>
+		<a href="
+
+
+/en/information/2414678
+" data-i18n="[title]reseaux-sociaux.footer.lien-rss" title="Rss"><span class="icone-rss"><span data-i18n="reseaux-sociaux.footer.lien-rss" class="hidden-accessibilite"></span></span></a>
+	</div>
+	<div class="liens-partenaires-mobile">
+		<ul class="menu-liens-partenaires-mobile" role="menu">
+			
+				
+					<li class="lien"><span data-i18n="footer.menu-footer.partenaires">Our partner sites</span></li>
+					<ul class="menu-deroulant-partenaires-mobile" role="menu">
+						<li role="menuitem">
+							<a class="lien" href="http://ec.europa.eu/eurostat/web/european-statistical-system/overview?locale=en" target="_blank" data-i18n="[title]footer.images.sse">Eurostat (statistical office of the European Union)</a>
+						</li>
+						<li role="menuitem">
+							<a class="lien" href="https://www.casd.eu/en/" target="_blank" data-i18n="[title]footer.images.casd">Secure access services for confidential data</a>
+						</li>
+					</ul>
+				
+				
+				
+			</ul>
+		</ul>
+	</div>
+</div>
+<div class="footer">
+	<div class="container-bloc-1">
+		<nav class="bloc-1" aria-label="bloc-1">
+			<div class="abonnement">
+				<h2 class="titre-footer" data-i18n="footer.abonnez-vous">Abonnez-vous</h2>
+				<div class="contenu-abonnement">
+					<div class="lettre"></div>
+					<a href="
+
+
+/en/information/2107837
+" class="lien-footer avis-parution" data-i18n="footer.avis-parution">Avis de parution</a>
+				</div>
+			</div>
+			<div class="reseaux-sociaux">
+				<h2 class="titre-footer" data-i18n="footer.reseaux-sociaux">Nous suivre</h2>
+				<div class="contenu-reseaux-sociaux">
+					<a href="https://bsky.app/profile/insee.fr" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-bluesky" title="Bluesky"><img class="cercle-bluesky" alt="" src="
+
+
+/static/img/logo-bluesky.svg
+"/><span data-i18n="reseaux-sociaux.footer.lien-bluesky" class="hidden-accessibilite"></span></a>
+					<a href="https://www.instagram.com/insee_fr/" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-instagram" title="Instagram"><img class="cercle-instagram" alt="" src="
+
+
+/static/img/logo-instagram-small.png
+"/><span data-i18n="reseaux-sociaux.footer.lien-instagram" class="hidden-accessibilite"></span></a>
+					<div class="cercle-linkedin">
+						<a href="https://www.linkedin.com/company/insee" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-linkedin" title="LinkedIn"><span class="icone-linkedin"><span data-i18n="reseaux-sociaux.footer.lien-linkedin" class="hidden-accessibilite"></span></span></a>
+					</div>
+					<div class="cercle-twitter">
+						
+							
+								<a href="https://x.com/InseeFr_News" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-twitter" title="X"><span class="icone-twitter"><span data-i18n="reseaux-sociaux.footer.lien-twitter" class="hidden-accessibilite"></span></span></a>
+							
+							
+						
+					</div>
+					<div class="cercle-youtube">
+						<a href="https://www.youtube.com/@Insee_Fr" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-youtube" title="Youtube"><span class="icone-youtube"><span data-i18n="reseaux-sociaux.footer.lien-youtube" class="hidden-accessibilite"></span></span></a>
+					</div>
+					<div class="cercle-blog">
+						<a href="https://blog.insee.fr/" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-blog" title="Blog"><span class="icone-blog"><span data-i18n="reseaux-sociaux.footer.lien-blog" class="hidden-accessibilite"></span></span></a>
+					</div>
+					<div class="cercle-rss">
+						<a href="
+
+
+/en/information/2414678
+" data-i18n="[title]reseaux-sociaux.footer.lien-rss" title="Rss"><span class="icone-rss"><span data-i18n="reseaux-sociaux.footer.lien-rss" class="hidden-accessibilite"></span></span></a>
+					</div>
+				</div>
+			</div>
+			<div class="contact-aide">
+				<h2 class="titre-footer" data-i18n="footer.contact">Contact</h2>
+				<div class="contenu-contact-aide">
+					<a href="
+
+
+/en/information/3313008
+" class="lien-footer" data-i18n="footer.aide">Aide et contact</a>
+				</div>
+			</div>
+			
+		</nav>
+	</div>
+	<div class="container-bloc-2">
+		<div class="bloc-2"><ul>
+   <div class="colonne-1">
+      <li class="liste-niveau-1">
+         <div class="titre-liste-niveau-1"><a class="lien" href="/en/statistiques" data-i18n="menu.statistiques.titre">Statistiques et études</a></div>
+      </li>
+      <li class="liste-niveau-1">
+         <div class="titre-liste-niveau-1"><a class="lien" href="/en/information/2107769">Definitions, methods and quality</a></div>
+         <ul>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/metadonnees/definitions">Definitions</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2526481">Data sources and indicators</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/4252443">Quality in the Official Statistical Service (SSP)</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107765">Classification</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/5398380">Models, Methods and Statistical Tools</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/4195037">Courrier des statistiques</a></div>
+            </li>
+         </ul>
+      </li>
+   </div>
+   <div class="colonne-2">
+      <li class="liste-niveau-1">
+         <div class="titre-liste-niveau-1"><a class="lien" href="/en/information/2107752">Services</a></div>
+         <ul>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107732">Review maintenance payments, rents, leases or a contract</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2512785">Retrieve indices and time series</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107734">Register or identify a company</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2563034">Videos &amp; Educational tools</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107749">Respond to an INSEE survey</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107747">Consult publication calendars</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107743">Contributing to the Index database of natural persons (BRPP)</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/3288629">Alain Desrosières Insee library</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107739">Follow us</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/3313008">Contact us</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107814">Press</a></div>
+            </li>
+         </ul>
+      </li>
+      <li class="liste-niveau-1">
+         <div class="titre-liste-niveau-1"><a class="lien" href="/en/information/2107711">INSEE and official statistics</a></div>
+         <ul>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107702">INSEE</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107704">INSEE's activities</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107706">Official Statistics</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107708">The development of European statistics</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/5232639">Access to administrative documents</a></div>
+            </li>
+         </ul>
+      </li>
+   </div>
+</ul></div>
+	</div>
+	<nav class="container-bloc-3" aria-label="container-bloc-3">
+		<div class="bloc-3">
+			<ul class="images-footer">
+				
+					
+						<li class="image-footer">
+							<a class="lien-footer-image" href="http://ec.europa.eu/eurostat/web/european-statistical-system/overview?locale=en" target="_blank" data-i18n="[title]footer.images.sse">
+								<img src="
+
+
+/static/img/footer/sse_en.png
+" alt="European Statistical System" title="Eurostat (statistical office of the European Union)" />
+							</a>
+						</li>
+						<li class="image-footer">
+							<a class="lien-footer-image" href="https://www.casd.eu/en/" target="_blank" data-i18n="[title]footer.images.casd">
+								<img src="
+
+
+/static/img/footer/CASD.png
+" alt="CASD" title="Secure access services for confidential data" />
+							</a>
+						</li>
+					
+					
+				
+			</ul>
+		</div>
+	</nav>
+	<nav class="container-bloc-4" aria-label="container-bloc-4">
+		<div class="bloc-4">
+			<ul class="liens-footer">
+				
+					
+						<li class="lien-footer">
+							<a href="
+
+
+/en/information/2409130
+" data-i18n="footer.liens.mentions">Legal notice</a>
+						</li>
+						<li class="lien-footer">
+							<a href="
+
+
+/en/information/2415363
+" data-i18n="footer.liens.accessibilite">Accessibility : partially available</a>
+						</li>
+						<li class="lien-footer">
+							<a href="
+
+
+/en/information/6051040
+" data-i18n="footer.liens.securite">Security</a>
+						</li>
+						<li class="lien-footer">
+							<a href="
+
+
+/en/plan-du-site
+" data-i18n="footer.liens.plan">Site map</a>
+						</li>
+					
+					
+				
+			</ul>
+		</div>
+	</nav>
+</div>
+
+        
+    
+</footer>
+
+<a href="#" class="sticky-top"><span data-i18n="footer.sticky-top.texte" class="sticky-text">Haut de page</span></a>
+
+
+<script>
+    window.addEventListener("load", async function () {
+        const isFrench = document.documentElement.lang !== "en";
+        Highcharts.setOptions({
+            lang: {
+                thousandsSep: "\u00A0",
+                numericSymbols: undefined, // disable 100k, 1M, etc
+                decimalPoint: isFrench ? "," : ".",
+            },
+        });
+
+        const bimester = isFrench
+            ? { label: "bimestre", abbr: "bim." }
+            : { label: "bimester", abbr: "bim." };
+        const quarter = isFrench
+            ? { label: "trimestre", abbr: "trim." }
+            : { label: "quarter", abbr: "qtr." };
+
+        const getBimester = (date) => {
+            return Math.floor(date.getUTCMonth() / 2) + 1;
+        };
+        const getQuarter = (date) => {
+            return Math.floor(date.getUTCMonth() / 3) + 1;
+        };
+
+        const addSuffix = function (pos) {
+            switch (pos) {
+                case 1:
+                    return pos + (isFrench ? "er " : "st ");
+                case 2:
+                    return pos + (isFrench ? "e " : "nd ");
+                case 3:
+                    return pos + (isFrench ? "e " : "rd ");
+                default:
+                    return pos + (isFrench ? "e " : "th ");
+            }
+        };
+
+        Highcharts.dateFormats.clib = function (timestamp) {
+            const date = new Date(timestamp);
+            return addSuffix(getBimester(date)) + bimester.abbr;
+        };
+        Highcharts.dateFormats.Clib = function (timestamp) {
+            const date = new Date(timestamp);
+            return addSuffix(getBimester(date)) + bimester.label;
+        };
+        Highcharts.dateFormats.t = function (timestamp) {
+            const date = new Date(timestamp);
+            return getQuarter(date) + "";
+        };
+        Highcharts.dateFormats.qlib = function (timestamp) {
+            const date = new Date(timestamp);
+            return addSuffix(getQuarter(date)) + quarter.abbr;
+        };
+        Highcharts.dateFormats.Qlib = function (timestamp) {
+            const date = new Date(timestamp);
+            return addSuffix(getQuarter(date)) + quarter.label;
+        };
+
+        const graphs = document.querySelectorAll("[id^='highchart']");
+        for (const graph of graphs) {
+            const response = await fetch(graph.getAttribute("data-graphique"));
+            const xml = await response.text();
+            const options = await generateChartOptions(xml);
+
+            if (options?.chart.type === 'map') {
+                Highcharts.mapChart(graph.getAttribute("id"), options);
+            } else {
+                Highcharts.chart(graph.getAttribute("id"), options);
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
+

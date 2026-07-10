@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EUROMOD Triangulation Report: AT</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1, h2, h3 { color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .summary-box { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #3498db; }
+        .stats-text { font-style: italic; color: #555; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { padding: 12px 15px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #f1f5f9; font-weight: 600; color: #2c3e50; }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+        .status-cell { text-align: center; font-size: 18px; }
+        .policy-header { background-color: #e2e8f0; font-weight: bold; }
+        .val-col { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; font-size: 13px; }
+        .explanation { font-size: 13px; color: #666; max-width: 300px; }
+    </style>
+</head>
+<body>
+    <h1>EUROMOD Triangulation Report: AT</h1>
+    <div class="summary-box">
+        <strong>Model Release:</strong> J2.0+<br>
+        <strong>Baseline Year:</strong> 2025<br>
+        <strong>Generated on:</strong> 2026-05-10<br><br>
+        <em>Reporting Logic: <strong>Legislation is King</strong>. National legislation as stored in ./legislation is the ground truth. Both the Country Report (CR) and the EUROMOD Model XML are evaluated against it.</em>
+    </div>
+
+    <h2>1. Executive Summary</h2>
+    <table>
+        <tr>
+            <th>Category</th>
+            <th>Parameters</th>
+            <th>Policies</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td><strong>Discrepancies</strong></td>
+            <td>59</td>
+            <td>9</td>
+            <td>XML value contradicts or is not found in Legislation (XML ❌).</td>
+        </tr>
+        <tr>
+            <td><strong>Potential Discrepancies</strong></td>
+            <td>4</td>
+            <td>2</td>
+            <td>XML matches Legislation, but CR differs or missed it (CR ❌).</td>
+        </tr>
+        <tr>
+            <td><strong>Matches</strong></td>
+            <td>159</td>
+            <td>20</td>
+            <td>Perfect alignment: XML and CR both match Legislation (✅).</td>
+        </tr>
+    </table>
+
+    <h2>2. Discrepancies</h2>
+<p class='stats-text'>59 parameter findings across 9 policies.</p>
+<table>
+<tr><th>Parameter</th><th>Legislation Value</th><th>CR Value</th><th>XML Value</th><th title='Country Report Match'>CR ✅/❌</th><th title='XML Model Match'>XML ✅/❌</th><th>Explanation</th></tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>ConstDef_at</code></td></tr>
+<tr>
+  <td><code>$tscse_minThres2</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1016.97</td>
+  <td class='val-col'>1016.97</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bun_minAmt</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>42.47</td>
+  <td class='val-col'>42.47</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bun_maxAmt</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>76.75</td>
+  <td class='val-col'>76.75</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>tscee_at</code></td></tr>
+<tr>
+  <td><code>$tsceeui_upThres1</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>2074</td>
+  <td class='val-col'>2074</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceeui_upThres2</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>2262</td>
+  <td class='val-col'>2262</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceeui_upThres3</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>2451</td>
+  <td class='val-col'>2451</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bch00_at</code></td></tr>
+<tr>
+  <td><code>$bch00_suppl_amt4</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>65.3</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>tin_at</code></td></tr>
+<tr>
+  <td><code>$tin_specialExempt_amt2</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>25000</td>
+  <td class='val-col'>25000</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_specialExempt_amt3</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>50000</td>
+  <td class='val-col'>50000</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_specialExempt_amt4</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>83333</td>
+  <td class='val-col'>83333</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintase_uplim</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>33000</td>
+  <td class='val-col'>33000</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bunnc_at</code></td></tr>
+<tr>
+  <td><code>$bun_minAmt</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>42.47</td>
+  <td class='val-col'>42.47</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bcc00_at</code></td></tr>
+<tr>
+  <td><code>$bcc457_y0_mo</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>0.388</td>
+  <td class='val-col'>0.388</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc791_y1_mo</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>0.571</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc851</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>17.65</td>
+  <td class='val-col'>17.65</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc791</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>18.98</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc731</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>20.56</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc_y</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>18000</td>
+  <td class='val-col'>18000</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bccid_y</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>8600</td>
+  <td class='val-col'>8600</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bcctu_at</code></td></tr>
+<tr>
+  <td><code>$bcctu_thresh2</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>18000</td>
+  <td class='val-col'>18000</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bsa_at</code></td></tr>
+<tr>
+  <td><code>$bsa_child_amt</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>326.44</td>
+  <td class='val-col'>326.44</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bsa_single_amt</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1209.01</td>
+  <td class='val-col'>1209.01</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bsa_couple_amt</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>846.31</td>
+  <td class='val-col'>846.31</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bsa_rentSingle_amt</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>302.25</td>
+  <td class='val-col'>302.25</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bsa_rentCouple_amt</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>211.58</td>
+  <td class='val-col'>211.58</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bsa_rentRet_amt1</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>163.22</td>
+  <td class='val-col'>163.22</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bsa_rentRet_amt3</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>81.61</td>
+  <td class='val-col'>81.61</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bsa_rentRet_amt2</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>122.41</td>
+  <td class='val-col'>122.41</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_young_not_edu_empl</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>604.5</td>
+  <td class='val-col'>604.5</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_young_edu_empl</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>906.76</td>
+  <td class='val-col'>906.76</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_hhyoung_not_edu_empl
+</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>151.13</td>
+  <td class='val-col'>151.13</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_hhyoung_edu_empl</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>226.69</td>
+  <td class='val-col'>226.69</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c0</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>660.87</td>
+  <td class='val-col'>660.87</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c1</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>762.89</td>
+  <td class='val-col'>762.89</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c2</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>860.82</td>
+  <td class='val-col'>860.82</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c3</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>958.75</td>
+  <td class='val-col'>958.75</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c4</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1056.68</td>
+  <td class='val-col'>1056.68</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c5</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1154.61</td>
+  <td class='val-col'>1154.61</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c6</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1252.55</td>
+  <td class='val-col'>1252.55</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c7</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1350.48</td>
+  <td class='val-col'>1350.48</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c8</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1448.41</td>
+  <td class='val-col'>1448.41</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c9</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1546.34</td>
+  <td class='val-col'>1546.34</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a1c10</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1644.27</td>
+  <td class='val-col'>1644.27</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c0</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>880.67</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c1</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>977.37</td>
+  <td class='val-col'>977.37</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c2</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1064.06</td>
+  <td class='val-col'>1064.06</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c3</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1150.76</td>
+  <td class='val-col'>1150.76</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c4</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1237.45</td>
+  <td class='val-col'>1237.45</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c5</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1324.15</td>
+  <td class='val-col'>1324.15</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c6</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1410.84</td>
+  <td class='val-col'>1410.84</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c7</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1497.54</td>
+  <td class='val-col'>1497.54</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c8</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1584.23</td>
+  <td class='val-col'>1584.23</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c9</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1670.93</td>
+  <td class='val-col'>1670.93</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_a2c10</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>1757.62</td>
+  <td class='val-col'>1757.62</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_chilld_suppl</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>54.41</td>
+  <td class='val-col'>54.41</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$sa_disability</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>217.62</td>
+  <td class='val-col'>217.62</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>yemcomp_at</code></td></tr>
+<tr>
+  <td><code>UpLim</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>3346.91</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$mc_rrate1</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>0.928</td>
+  <td class='val-col'>0.928</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$mc_rrate2</code></td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>0.9265</td>
+  <td class='val-col'>0.9265</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>❌</td>
+  <td class='explanation'>XML parameter value could not be found in the provided National Legislation.</td>
+</tr>
+</table>
+<h2>3. Potential Discrepancies</h2>
+<p class='stats-text'>4 parameter findings across 2 policies.</p>
+<table>
+<tr><th>Parameter</th><th>Legislation Value</th><th>CR Value</th><th>XML Value</th><th title='Country Report Match'>CR ✅/❌</th><th title='XML Model Match'>XML ✅/❌</th><th>Explanation</th></tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>pmmtu_at</code></td></tr>
+<tr>
+  <td><code>#_uplim</code></td>
+  <td class='val-col'>278.13</td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>278.13</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter matches Legislation and XML, but was not found in the Country Report.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bcc00_at</code></td></tr>
+<tr>
+  <td><code>$bcc851_y0_mo</code></td>
+  <td class='val-col'>0.163</td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>0.163</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter matches Legislation and XML, but was not found in the Country Report.</td>
+</tr>
+<tr>
+  <td><code>$bcc365_y0_mo</code></td>
+  <td class='val-col'>0.521</td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>0.521</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter matches Legislation and XML, but was not found in the Country Report.</td>
+</tr>
+<tr>
+  <td><code>$bcc457</code></td>
+  <td class='val-col'>32.86</td>
+  <td class='val-col'>Not Found</td>
+  <td class='val-col'>32.86</td>
+  <td class='status-cell'>❌</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter matches Legislation and XML, but was not found in the Country Report.</td>
+</tr>
+</table>
+<h2>4. Matches</h2>
+<p class='stats-text'>159 parameter findings across 20 policies.</p>
+<table>
+<tr><th>Parameter</th><th>Legislation Value</th><th>CR Value</th><th>XML Value</th><th title='Country Report Match'>CR ✅/❌</th><th title='XML Model Match'>XML ✅/❌</th><th>Explanation</th></tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>ConstDef_at</code></td></tr>
+<tr>
+  <td><code>$tsc_minThres1</code></td>
+  <td class='val-col'>551.10</td>
+  <td class='val-col'>551.10</td>
+  <td class='val-col'>551.10</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsc_maxThres1</code></td>
+  <td class='val-col'>6450</td>
+  <td class='val-col'>6450</td>
+  <td class='val-col'>6450</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscse_maxThres2</code></td>
+  <td class='val-col'>7525</td>
+  <td class='val-col'>7525</td>
+  <td class='val-col'>7525</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscse_minThres4</code></td>
+  <td class='val-col'>551.10</td>
+  <td class='val-col'>551.10</td>
+  <td class='val-col'>551.10</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscse_minThres3</code></td>
+  <td class='val-col'>551.10</td>
+  <td class='val-col'>551.10</td>
+  <td class='val-col'>551.10</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$UB_QperMin1</code></td>
+  <td class='val-col'>12</td>
+  <td class='val-col'>12</td>
+  <td class='val-col'>12</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$UB_QperTot1</code></td>
+  <td class='val-col'>24</td>
+  <td class='val-col'>24</td>
+  <td class='val-col'>24</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$UB_QperMin2</code></td>
+  <td class='val-col'>6.5</td>
+  <td class='val-col'>6.5</td>
+  <td class='val-col'>6.5</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$UB_QperTot2</code></td>
+  <td class='val-col'>12</td>
+  <td class='val-col'>12</td>
+  <td class='val-col'>12</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$UB_QperTot3</code></td>
+  <td class='val-col'>12</td>
+  <td class='val-col'>12</td>
+  <td class='val-col'>12</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$PensionAgeMale</code></td>
+  <td class='val-col'>65</td>
+  <td class='val-col'>65</td>
+  <td class='val-col'>65</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$PensionAgeFemale</code></td>
+  <td class='val-col'>61</td>
+  <td class='val-col'>61</td>
+  <td class='val-col'>61</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$lhwpt</code></td>
+  <td class='val-col'>25</td>
+  <td class='val-col'>25</td>
+  <td class='val-col'>25</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$lhw</code></td>
+  <td class='val-col'>42</td>
+  <td class='val-col'>42</td>
+  <td class='val-col'>42</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>IlDef_at</code></td></tr>
+<tr>
+  <td><code>uplim</code></td>
+  <td class='val-col'>175</td>
+  <td class='val-col'>175</td>
+  <td class='val-col'>175</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>uplim</code></td>
+  <td class='val-col'>175</td>
+  <td class='val-col'>175</td>
+  <td class='val-col'>175</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>uplim</code></td>
+  <td class='val-col'>175</td>
+  <td class='val-col'>175</td>
+  <td class='val-col'>175</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>uplim</code></td>
+  <td class='val-col'>175</td>
+  <td class='val-col'>175</td>
+  <td class='val-col'>175</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>yem_at (Switch: off)</code></td></tr>
+<tr>
+  <td><code>$Nwh</code></td>
+  <td class='val-col'>40</td>
+  <td class='val-col'>40</td>
+  <td class='val-col'>40</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$Minwage</code></td>
+  <td class='val-col'>1500</td>
+  <td class='val-col'>1500</td>
+  <td class='val-col'>1500</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>tscer_at</code></td></tr>
+<tr>
+  <td><code>$tscerac_cs_rate</code></td>
+  <td class='val-col'>0.0047</td>
+  <td class='val-col'>0.0047</td>
+  <td class='val-col'>0.0047</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerac_ee_rate</code></td>
+  <td class='val-col'>0.011</td>
+  <td class='val-col'>0.011</td>
+  <td class='val-col'>0.011</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerhl_cs_rate</code></td>
+  <td class='val-col'>0.03535</td>
+  <td class='val-col'>0.03535</td>
+  <td class='val-col'>0.03535</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerhl_min_rate</code></td>
+  <td class='val-col'>0.0386</td>
+  <td class='val-col'>0.0386</td>
+  <td class='val-col'>0.0386</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerui_rate</code></td>
+  <td class='val-col'>0.0295</td>
+  <td class='val-col'>0.0295</td>
+  <td class='val-col'>0.0295</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerho_rate</code></td>
+  <td class='val-col'>0.005</td>
+  <td class='val-col'>0.005</td>
+  <td class='val-col'>0.005</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscersf_rate</code></td>
+  <td class='val-col'>0.001</td>
+  <td class='val-col'>0.001</td>
+  <td class='val-col'>0.001</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerfa_rate</code></td>
+  <td class='val-col'>0.037</td>
+  <td class='val-col'>0.037</td>
+  <td class='val-col'>0.037</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsccthl_cs_rate</code></td>
+  <td class='val-col'>0.03535</td>
+  <td class='val-col'>0.03535</td>
+  <td class='val-col'>0.03535</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsccthl_rate</code></td>
+  <td class='val-col'>0.0468</td>
+  <td class='val-col'>0.0468</td>
+  <td class='val-col'>0.0468</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerpi_ee_rate</code></td>
+  <td class='val-col'>0.1255</td>
+  <td class='val-col'>0.1255</td>
+  <td class='val-col'>0.1255</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerpi_eeRed_rate</code></td>
+  <td class='val-col'>0.06275</td>
+  <td class='val-col'>0.06275</td>
+  <td class='val-col'>0.06275</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerui_appr_rate</code></td>
+  <td class='val-col'>0.0115</td>
+  <td class='val-col'>0.0115</td>
+  <td class='val-col'>0.0115</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerhl_ee_rate</code></td>
+  <td class='val-col'>0.0378</td>
+  <td class='val-col'>0.0378</td>
+  <td class='val-col'>0.0378</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerhl_appr_rate</code></td>
+  <td class='val-col'>0.0168</td>
+  <td class='val-col'>0.0168</td>
+  <td class='val-col'>0.0168</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscerrg_rate</code></td>
+  <td class='val-col'>0.03</td>
+  <td class='val-col'>0.03</td>
+  <td class='val-col'>0.03</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceruimin</code></td>
+  <td class='val-col'>0.0289</td>
+  <td class='val-col'>0.0289</td>
+  <td class='val-col'>0.0289</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>tscee_at</code></td></tr>
+<tr>
+  <td><code>$tsceehl_cs_rate</code></td>
+  <td class='val-col'>0.041</td>
+  <td class='val-col'>0.041</td>
+  <td class='val-col'>0.041</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceepi_ee_rate</code></td>
+  <td class='val-col'>0.1025</td>
+  <td class='val-col'>0.1025</td>
+  <td class='val-col'>0.1025</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceeui_rate2</code></td>
+  <td class='val-col'>0.01</td>
+  <td class='val-col'>0.01</td>
+  <td class='val-col'>0.01</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceeui_rate3</code></td>
+  <td class='val-col'>0.02</td>
+  <td class='val-col'>0.02</td>
+  <td class='val-col'>0.02</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceeui_rate4</code></td>
+  <td class='val-col'>0.0295</td>
+  <td class='val-col'>0.0295</td>
+  <td class='val-col'>0.0295</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceeho_rate</code></td>
+  <td class='val-col'>0.005</td>
+  <td class='val-col'>0.005</td>
+  <td class='val-col'>0.005</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceeot_rate</code></td>
+  <td class='val-col'>0.005</td>
+  <td class='val-col'>0.005</td>
+  <td class='val-col'>0.005</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceeot_fa_rate</code></td>
+  <td class='val-col'>0.0075</td>
+  <td class='val-col'>0.0075</td>
+  <td class='val-col'>0.0075</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceehl_appr_rate</code></td>
+  <td class='val-col'>0.0167</td>
+  <td class='val-col'>0.0167</td>
+  <td class='val-col'>0.0167</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceepi_eeRed_rate</code></td>
+  <td class='val-col'>0.05125</td>
+  <td class='val-col'>0.05125</td>
+  <td class='val-col'>0.05125</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceeui_appr_rate</code></td>
+  <td class='val-col'>0.0115</td>
+  <td class='val-col'>0.0115</td>
+  <td class='val-col'>0.0115</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tsceehl_ee_rate</code></td>
+  <td class='val-col'>0.0387</td>
+  <td class='val-col'>0.0387</td>
+  <td class='val-col'>0.0387</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>tscse_at</code></td></tr>
+<tr>
+  <td><code>$tscseac_fa_rate</code></td>
+  <td class='val-col'>0.019</td>
+  <td class='val-col'>0.019</td>
+  <td class='val-col'>0.019</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscseac_se_rate</code></td>
+  <td class='val-col'>12.07</td>
+  <td class='val-col'>12.07</td>
+  <td class='val-col'>12.07</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscsehl_se_rate</code></td>
+  <td class='val-col'>0.068</td>
+  <td class='val-col'>0.068</td>
+  <td class='val-col'>0.068</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscsepi_fa_rate</code></td>
+  <td class='val-col'>0.170</td>
+  <td class='val-col'>0.170</td>
+  <td class='val-col'>0.170</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscsepi_pf_rate</code></td>
+  <td class='val-col'>0.2</td>
+  <td class='val-col'>0.2</td>
+  <td class='val-col'>0.2</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscsepi_se_rate</code></td>
+  <td class='val-col'>0.185</td>
+  <td class='val-col'>0.185</td>
+  <td class='val-col'>0.185</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscseot_rate</code></td>
+  <td class='val-col'>0.0153</td>
+  <td class='val-col'>0.0153</td>
+  <td class='val-col'>0.0153</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscsehl_fa_rate</code></td>
+  <td class='val-col'>0.068</td>
+  <td class='val-col'>0.068</td>
+  <td class='val-col'>0.068</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscsepi_pf_redRate</code></td>
+  <td class='val-col'>0.1</td>
+  <td class='val-col'>0.1</td>
+  <td class='val-col'>0.1</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscsepi_se_redRate</code></td>
+  <td class='val-col'>0.0925</td>
+  <td class='val-col'>0.0925</td>
+  <td class='val-col'>0.0925</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscsepi_fa_redRate</code></td>
+  <td class='val-col'>0.085</td>
+  <td class='val-col'>0.085</td>
+  <td class='val-col'>0.085</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bch00_at</code></td></tr>
+<tr>
+  <td><code>$bch00_child_age4</code></td>
+  <td class='val-col'>19</td>
+  <td class='val-col'>19</td>
+  <td class='val-col'>19</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_child_age5</code></td>
+  <td class='val-col'>24</td>
+  <td class='val-col'>24</td>
+  <td class='val-col'>24</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_basic_amt1</code></td>
+  <td class='val-col'>138.4</td>
+  <td class='val-col'>138.4</td>
+  <td class='val-col'>138.4</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_basic_amt2</code></td>
+  <td class='val-col'>148</td>
+  <td class='val-col'>148</td>
+  <td class='val-col'>148</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_basic_amt3</code></td>
+  <td class='val-col'>171.8</td>
+  <td class='val-col'>171.8</td>
+  <td class='val-col'>171.8</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_basic_amt4</code></td>
+  <td class='val-col'>200.4</td>
+  <td class='val-col'>200.4</td>
+  <td class='val-col'>200.4</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_suppl_amt2</code></td>
+  <td class='val-col'>17.2</td>
+  <td class='val-col'>17.2</td>
+  <td class='val-col'>17.2</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_suppl_amt3</code></td>
+  <td class='val-col'>63.3</td>
+  <td class='val-col'>63.3</td>
+  <td class='val-col'>63.3</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_disab_amt</code></td>
+  <td class='val-col'>189.2</td>
+  <td class='val-col'>189.2</td>
+  <td class='val-col'>189.2</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_multi_addAmt</code></td>
+  <td class='val-col'>24.4</td>
+  <td class='val-col'>24.4</td>
+  <td class='val-col'>24.4</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_school_amt</code></td>
+  <td class='val-col'>121.4</td>
+  <td class='val-col'>121.4</td>
+  <td class='val-col'>121.4</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_school_upAge</code></td>
+  <td class='val-col'>16</td>
+  <td class='val-col'>16</td>
+  <td class='val-col'>16</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_ilchild_thresh_yr</code></td>
+  <td class='val-col'>17212</td>
+  <td class='val-col'>17212</td>
+  <td class='val-col'>17212</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bch00_ilchild_thresh_nu</code></td>
+  <td class='val-col'>17212</td>
+  <td class='val-col'>17212</td>
+  <td class='val-col'>17212</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>pch00_at (Switch: off)</code></td></tr>
+<tr>
+  <td><code>$pch_child_amt</code></td>
+  <td class='val-col'>29.07</td>
+  <td class='val-col'>29.07</td>
+  <td class='val-col'>29.07</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>pchcs_at (Switch: off)</code></td></tr>
+<tr>
+  <td><code>$pch_csChild_amt</code></td>
+  <td class='val-col'>15.6</td>
+  <td class='val-col'>15.6</td>
+  <td class='val-col'>15.6</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>tscpe_at</code></td></tr>
+<tr>
+  <td><code>$tscpehl_cs_rate</code></td>
+  <td class='val-col'>0.06</td>
+  <td class='val-col'>0.06</td>
+  <td class='val-col'>0.06</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscpehl_rate</code></td>
+  <td class='val-col'>0.06</td>
+  <td class='val-col'>0.06</td>
+  <td class='val-col'>0.06</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tscpepi_cs_rate</code></td>
+  <td class='val-col'>0.0219</td>
+  <td class='val-col'>0.0219</td>
+  <td class='val-col'>0.0219</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>tin_at</code></td></tr>
+<tr>
+  <td><code>$tin_upthres1</code></td>
+  <td class='val-col'>13308</td>
+  <td class='val-col'>13308</td>
+  <td class='val-col'>13308</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_basic_rate2</code></td>
+  <td class='val-col'>0.20</td>
+  <td class='val-col'>0.20</td>
+  <td class='val-col'>0.20</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_upthres2</code></td>
+  <td class='val-col'>21617</td>
+  <td class='val-col'>21617</td>
+  <td class='val-col'>21617</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_basic_rate3</code></td>
+  <td class='val-col'>0.3</td>
+  <td class='val-col'>0.3</td>
+  <td class='val-col'>0.3</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_upthres3</code></td>
+  <td class='val-col'>35836</td>
+  <td class='val-col'>35836</td>
+  <td class='val-col'>35836</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_basic_rate4</code></td>
+  <td class='val-col'>0.4</td>
+  <td class='val-col'>0.4</td>
+  <td class='val-col'>0.4</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_eeNeg_amt</code></td>
+  <td class='val-col'>487</td>
+  <td class='val-col'>487</td>
+  <td class='val-col'>487</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_eeNeg_rate</code></td>
+  <td class='val-col'>0.55</td>
+  <td class='val-col'>0.55</td>
+  <td class='val-col'>0.55</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_specialExempt_thres</code></td>
+  <td class='val-col'>2570</td>
+  <td class='val-col'>2570</td>
+  <td class='val-col'>2570</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_specialExempt_amt1</code></td>
+  <td class='val-col'>620</td>
+  <td class='val-col'>620</td>
+  <td class='val-col'>620</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_special_rate2</code></td>
+  <td class='val-col'>0.06</td>
+  <td class='val-col'>0.06</td>
+  <td class='val-col'>0.06</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_special_rate3</code></td>
+  <td class='val-col'>0.27</td>
+  <td class='val-col'>0.27</td>
+  <td class='val-col'>0.27</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_special_rate4</code></td>
+  <td class='val-col'>0.3575</td>
+  <td class='val-col'>0.3575</td>
+  <td class='val-col'>0.3575</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_special_rate5</code></td>
+  <td class='val-col'>0.5</td>
+  <td class='val-col'>0.5</td>
+  <td class='val-col'>0.5</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_upthres4</code></td>
+  <td class='val-col'>69166</td>
+  <td class='val-col'>69166</td>
+  <td class='val-col'>69166</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_basic_rate5</code></td>
+  <td class='val-col'>0.48</td>
+  <td class='val-col'>0.48</td>
+  <td class='val-col'>0.48</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_upthres5</code></td>
+  <td class='val-col'>103072</td>
+  <td class='val-col'>103072</td>
+  <td class='val-col'>103072</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_basic_rate6</code></td>
+  <td class='val-col'>0.5</td>
+  <td class='val-col'>0.5</td>
+  <td class='val-col'>0.5</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_upthres6</code></td>
+  <td class='val-col'>1000000</td>
+  <td class='val-col'>1000000</td>
+  <td class='val-col'>1000000</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_basic_rate7</code></td>
+  <td class='val-col'>0.55</td>
+  <td class='val-col'>0.55</td>
+  <td class='val-col'>0.55</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_severance_rate</code></td>
+  <td class='val-col'>0.06</td>
+  <td class='val-col'>0.06</td>
+  <td class='val-col'>0.06</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_special_rate6</code></td>
+  <td class='val-col'>0.55</td>
+  <td class='val-col'>0.55</td>
+  <td class='val-col'>0.55</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_specialExempt_amt5</code></td>
+  <td class='val-col'>166667</td>
+  <td class='val-col'>166667</td>
+  <td class='val-col'>166667</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_penNeg_rate</code></td>
+  <td class='val-col'>0.80</td>
+  <td class='val-col'>0.80</td>
+  <td class='val-col'>0.80</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_penNeg_amt</code></td>
+  <td class='val-col'>710</td>
+  <td class='val-col'>710</td>
+  <td class='val-col'>710</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tin_eeNeg_addAmt</code></td>
+  <td class='val-col'>790</td>
+  <td class='val-col'>790</td>
+  <td class='val-col'>790</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcch_amt</code></td>
+  <td class='val-col'>70.9</td>
+  <td class='val-col'>70.9</td>
+  <td class='val-col'>70.9</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcsw_amt1</code></td>
+  <td class='val-col'>601</td>
+  <td class='val-col'>601</td>
+  <td class='val-col'>601</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcsw_amt2</code></td>
+  <td class='val-col'>212</td>
+  <td class='val-col'>212</td>
+  <td class='val-col'>212</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcsw_amt3</code></td>
+  <td class='val-col'>268</td>
+  <td class='val-col'>268</td>
+  <td class='val-col'>268</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintclp_amt1</code></td>
+  <td class='val-col'>601</td>
+  <td class='val-col'>601</td>
+  <td class='val-col'>601</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintclp_amt2</code></td>
+  <td class='val-col'>212</td>
+  <td class='val-col'>212</td>
+  <td class='val-col'>212</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintclp_amt3</code></td>
+  <td class='val-col'>268</td>
+  <td class='val-col'>268</td>
+  <td class='val-col'>268</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcox_amt</code></td>
+  <td class='val-col'>487</td>
+  <td class='val-col'>487</td>
+  <td class='val-col'>487</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcpe_amt</code></td>
+  <td class='val-col'>1002</td>
+  <td class='val-col'>1002</td>
+  <td class='val-col'>1002</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcpe_addAmt</code></td>
+  <td class='val-col'>1476</td>
+  <td class='val-col'>1476</td>
+  <td class='val-col'>1476</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcfa_basic_amt</code></td>
+  <td class='val-col'>2000</td>
+  <td class='val-col'>2000</td>
+  <td class='val-col'>2000</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcfa_student_amt</code></td>
+  <td class='val-col'>700</td>
+  <td class='val-col'>700</td>
+  <td class='val-col'>700</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcfa_neg_amt</code></td>
+  <td class='val-col'>700</td>
+  <td class='val-col'>700</td>
+  <td class='val-col'>700</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcox_addAmt</code></td>
+  <td class='val-col'>790</td>
+  <td class='val-col'>790</td>
+  <td class='val-col'>790</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcsw_spouse_maxthres</code></td>
+  <td class='val-col'>7284</td>
+  <td class='val-col'>7284</td>
+  <td class='val-col'>7284</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcox_thres1</code></td>
+  <td class='val-col'>19424</td>
+  <td class='val-col'>19424</td>
+  <td class='val-col'>19424</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcox_thres2</code></td>
+  <td class='val-col'>29743</td>
+  <td class='val-col'>29743</td>
+  <td class='val-col'>29743</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcpe_spouse_maxthres</code></td>
+  <td class='val-col'>2673</td>
+  <td class='val-col'>2673</td>
+  <td class='val-col'>2673</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcpe2_thres1</code></td>
+  <td class='val-col'>24196</td>
+  <td class='val-col'>24196</td>
+  <td class='val-col'>24196</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcpe2_thres2</code></td>
+  <td class='val-col'>30957</td>
+  <td class='val-col'>30957</td>
+  <td class='val-col'>30957</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcpe_thres1</code></td>
+  <td class='val-col'>21245</td>
+  <td class='val-col'>21245</td>
+  <td class='val-col'>21245</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintcpe_thres2</code></td>
+  <td class='val-col'>30957</td>
+  <td class='val-col'>30957</td>
+  <td class='val-col'>30957</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintace_amt</code></td>
+  <td class='val-col'>132</td>
+  <td class='val-col'>132</td>
+  <td class='val-col'>132</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintatb_amt</code></td>
+  <td class='val-col'>730</td>
+  <td class='val-col'>730</td>
+  <td class='val-col'>730</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$tintase_rate</code></td>
+  <td class='val-col'>0.15</td>
+  <td class='val-col'>0.15</td>
+  <td class='val-col'>0.15</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bunnc_at</code></td></tr>
+<tr>
+  <td><code>$bun_fa_amt</code></td>
+  <td class='val-col'>0.97</td>
+  <td class='val-col'>0.97</td>
+  <td class='val-col'>0.97</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>tiniy_at</code></td></tr>
+<tr>
+  <td><code>band_rate</code></td>
+  <td class='val-col'>0.25</td>
+  <td class='val-col'>0.25</td>
+  <td class='val-col'>0.25</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bcc00_at</code></td></tr>
+<tr>
+  <td><code>$bcc791_y0_mo</code></td>
+  <td class='val-col'>0.195</td>
+  <td class='val-col'>0.195</td>
+  <td class='val-col'>0.195</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc731_y0_mo</code></td>
+  <td class='val-col'>0.296</td>
+  <td class='val-col'>0.296</td>
+  <td class='val-col'>0.296</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc639_y0_mo</code></td>
+  <td class='val-col'>0.341</td>
+  <td class='val-col'>0.341</td>
+  <td class='val-col'>0.341</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc851_y1_mo</code></td>
+  <td class='val-col'>0.477</td>
+  <td class='val-col'>0.477</td>
+  <td class='val-col'>0.477</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc731_y1_mo</code></td>
+  <td class='val-col'>0.866</td>
+  <td class='val-col'>0.866</td>
+  <td class='val-col'>0.866</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc639_y1_mo</code></td>
+  <td class='val-col'>0.965</td>
+  <td class='val-col'>0.965</td>
+  <td class='val-col'>0.965</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc851_y2_mo</code></td>
+  <td class='val-col'>0.910</td>
+  <td class='val-col'>0.910</td>
+  <td class='val-col'>0.910</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc639_y1_fa</code></td>
+  <td class='val-col'>0.081</td>
+  <td class='val-col'>0.081</td>
+  <td class='val-col'>0.081</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc457_y1_fa</code></td>
+  <td class='val-col'>0.187</td>
+  <td class='val-col'>0.187</td>
+  <td class='val-col'>0.187</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc365_y1_fa</code></td>
+  <td class='val-col'>0.426</td>
+  <td class='val-col'>0.426</td>
+  <td class='val-col'>0.426</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc851_y2_fa</code></td>
+  <td class='val-col'>0.554</td>
+  <td class='val-col'>0.554</td>
+  <td class='val-col'>0.554</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc791_y2_fa</code></td>
+  <td class='val-col'>0.657</td>
+  <td class='val-col'>0.657</td>
+  <td class='val-col'>0.657</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc731_y2_fa</code></td>
+  <td class='val-col'>0.951</td>
+  <td class='val-col'>0.951</td>
+  <td class='val-col'>0.951</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc639</code></td>
+  <td class='val-col'>23.50</td>
+  <td class='val-col'>23.50</td>
+  <td class='val-col'>23.50</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc365</code></td>
+  <td class='val-col'>41.14</td>
+  <td class='val-col'>41.14</td>
+  <td class='val-col'>41.14</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bccid</code></td>
+  <td class='val-col'>0.8</td>
+  <td class='val-col'>0.8</td>
+  <td class='val-col'>0.8</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bccid_max</code></td>
+  <td class='val-col'>80.12</td>
+  <td class='val-col'>80.12</td>
+  <td class='val-col'>80.12</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcc_child_suppl_rate</code></td>
+  <td class='val-col'>0.5</td>
+  <td class='val-col'>0.5</td>
+  <td class='val-col'>0.5</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bcctu_at</code></td></tr>
+<tr>
+  <td><code>$bcctu_amt</code></td>
+  <td class='val-col'>6.06</td>
+  <td class='val-col'>6.06</td>
+  <td class='val-col'>6.06</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bcctu_thresh1</code></td>
+  <td class='val-col'>8100</td>
+  <td class='val-col'>8100</td>
+  <td class='val-col'>8100</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bsa_at</code></td></tr>
+<tr>
+  <td><code>$bsa_BCA_rate (Func Switch: off)</code></td>
+  <td class='val-col'>0.30733595</td>
+  <td class='val-col'>0.30733595</td>
+  <td class='val-col'>0.30733595</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bsa_BTA_rate (Func Switch: off)</code></td>
+  <td class='val-col'>0.67</td>
+  <td class='val-col'>0.67</td>
+  <td class='val-col'>0.67</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bmact_at (Switch: switch)</code></td></tr>
+<tr>
+  <td><code>Comp_UpLim</code></td>
+  <td class='val-col'>20</td>
+  <td class='val-col'>20</td>
+  <td class='val-col'>20</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>yemcomp_at</code></td></tr>
+<tr>
+  <td><code>$mc_rrate3</code></td>
+  <td class='val-col'>0.9</td>
+  <td class='val-col'>0.9</td>
+  <td class='val-col'>0.9</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bedtu_at</code></td></tr>
+<tr>
+  <td><code>$bedtu_rate</code></td>
+  <td class='val-col'>0.046</td>
+  <td class='val-col'>0.046</td>
+  <td class='val-col'>0.046</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr class='policy-header'><td colspan='7'>Policy: <code>bsatu_at</code></td></tr>
+<tr>
+  <td><code>$bsatu_child_amt</code></td>
+  <td class='val-col'>60</td>
+  <td class='val-col'>60</td>
+  <td class='val-col'>60</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+<tr>
+  <td><code>$bsatu_parent_lim</code></td>
+  <td class='val-col'>25725</td>
+  <td class='val-col'>25725</td>
+  <td class='val-col'>25725</td>
+  <td class='status-cell'>✅</td>
+  <td class='status-cell'>✅</td>
+  <td class='explanation'>Parameter perfectly aligned across XML, CR, and National Legislation.</td>
+</tr>
+</table>
+
+</body>
+</html>

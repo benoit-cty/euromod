@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="revisit-after" content="10 days" />
+    <meta name="revisit" content="10 days" />
+    <meta name="author" content="parliament.bg" />
+    <meta property="og:image" content="https://www.parliament.bg/images/logo.png" />
+    
+        
+    <title>Parliament.bg</title>
+     <link href="/assets/css/uikit.min.css" type="text/css" rel="stylesheet"/>
+     <link href="/assets/css/uikit-rtl.min.css" type="text/css" rel="stylesheet"/>
+    
+
+    
+    
+    <link href="/css/app.css?id=db73b63778b035fef2b0" type="text/css" rel="stylesheet"/>
+    <link href="/css/all.min.css" type="text/css" rel="stylesheet"/>
+
+    <link rel="alternate" type="application/rss+xml" title="Новини от Народно събрание"  href="https://www.parliament.bg/feed/news" />
+    <link rel="alternate" type="application/rss+xml" title="Последни законопроекти от Народно събрание"  href="https://www.parliament.bg/feed/bills" />
+    <link rel="alternate" type="application/rss+xml" title="Последни закони от Народно събрание"  href="https://www.parliament.bg/feed/laws" />
+    <link rel="alternate" type="application/rss+xml" title="Последни проекти на решения от Народно събрание"  href="https://www.parliament.bg/feed/ns_acts" />
+    <link rel="alternate" type="application/rss+xml" title="Последни решения от Народно събрание"  href="https://www.parliament.bg/feed/desision" />
+    <link rel="alternate" type="application/rss+xml" title="Програма за работата на Народното събрание"  href="https://www.parliament.bg/feed/plenary" />
+   
+</head>
+<body>
+<div id="app">
+    <v-header-top></v-header-top>
+    <v-header></v-header>
+    <main style="">
+        <div class="">
+            <keep-alive>
+
+             <router-view :key="$route.fullPath">
+            </router-view>
+            </keep-alive>
+          
+        </div>
+    </main>
+     <v-footer></v-footer>
+</div>
+<script src="/assets/js/uikit.min.js"></script>
+<script src="/assets/js/uikit-icons.min.js"></script>
+
+
+<script src="/js/manifest.js?id=3c768977c2574a34506e" defer></script>
+<script src="/js/vendor.js?id=30747c22e0c342961509" defer></script>
+<script src="/js/app.js?id=23417b2178a0228cbe35" defer></script>
+</body>
+</html>
+<script id="f5_cspm">(function(){var f5_cspm={f5_p:'GJMPDLMAELHOCEMLAAADLNBLCJMGNABLKKIDHJLNBLANECPDPHMIIDFMNFLABNHCPLABGMOLAANHEIDLDIBAGGGKAAKCJPOIIGMEGFNJEGGIIFHNEOOMPLPGMKINHAFO',setCharAt:function(str,index,chr){if(index>str.length-1)return str;return str.substr(0,index)+chr+str.substr(index+1);},get_byte:function(str,i){var s=(i/16)|0;i=(i&15);s=s*32;return((str.charCodeAt(i+16+s)-65)<<4)|(str.charCodeAt(i+s)-65);},set_byte:function(str,i,b){var s=(i/16)|0;i=(i&15);s=s*32;str=f5_cspm.setCharAt(str,(i+16+s),String.fromCharCode((b>>4)+65));str=f5_cspm.setCharAt(str,(i+s),String.fromCharCode((b&15)+65));return str;},set_latency:function(str,latency){latency=latency&0xffff;str=f5_cspm.set_byte(str,40,(latency>>8));str=f5_cspm.set_byte(str,41,(latency&0xff));str=f5_cspm.set_byte(str,35,2);return str;},wait_perf_data:function(){try{var wp=window.performance.timing;if(wp.loadEventEnd>0){var res=wp.loadEventEnd-wp.navigationStart;if(res<60001){var cookie_val=f5_cspm.set_latency(f5_cspm.f5_p,res);window.document.cookie='f5avr1975619346aaaaaaaaaaaaaaaa_cspm_='+encodeURIComponent(cookie_val)+';path=/;'+'';}
+return;}}
+catch(err){return;}
+setTimeout(f5_cspm.wait_perf_data,100);return;},go:function(){var chunk=window.document.cookie.split(/\s*;\s*/);for(var i=0;i<chunk.length;++i){var pair=chunk[i].split(/\s*=\s*/);if(pair[0]=='f5_cspm'&&pair[1]=='1234')
+{var d=new Date();d.setTime(d.getTime()-1000);window.document.cookie='f5_cspm=;expires='+d.toUTCString()+';path=/;'+';';setTimeout(f5_cspm.wait_perf_data,100);}}}}
+f5_cspm.go();}());</script>

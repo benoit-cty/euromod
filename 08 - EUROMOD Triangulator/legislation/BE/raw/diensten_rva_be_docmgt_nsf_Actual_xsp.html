@@ -1,0 +1,93 @@
+    <!DOCTYPE html>
+    <html class="login-pf" lang="nl" dir="ltr">
+
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="robots" content="noindex, nofollow">
+
+                <meta name="viewport" content="width=device-width,initial-scale=1"/>
+        <title>Log in met RvaTech</title>
+        <link rel="icon" href="/resources/48gyd/login/onemrva-login-theme/img/favicon.ico" />
+                <link href="/resources/48gyd/common/keycloak/node_modules/@patternfly/patternfly/patternfly.min.css" rel="stylesheet" />
+                <link href="/resources/48gyd/common/keycloak/node_modules/patternfly/dist/css/patternfly.min.css" rel="stylesheet" />
+                <link href="/resources/48gyd/common/keycloak/node_modules/patternfly/dist/css/patternfly-additions.min.css" rel="stylesheet" />
+                <link href="/resources/48gyd/common/keycloak/lib/pficon/pficon.css" rel="stylesheet" />
+                <link href="/resources/48gyd/login/onemrva-login-theme/css/login.css" rel="stylesheet" />
+        <script type="importmap">
+            {
+                "imports": {
+                    "rfc4648": "/resources/48gyd/common/keycloak/vendor/rfc4648/rfc4648.js"
+            }
+        }
+        </script>
+        <script src="/resources/48gyd/login/onemrva-login-theme/js/menu-button-links.js" type="module"></script>
+        <script type="module">
+            import { checkCookiesAndSetTimer } from "/resources/48gyd/login/onemrva-login-theme/js/authChecker.js";
+
+            checkCookiesAndSetTimer(
+                "/realms/rvatech/login-actions/restart?client_id=PowerApps&tab_id=XC6swKQKE6I&skip_logout=true"
+            );
+        </script>
+    </head>
+
+    <body class="">
+    <div class="login-pf-page">
+        <div id="kc-header" class="login-pf-page-header">
+            <div id="kc-header-wrapper"
+                 class=""><div class="kc-logo-text"><span>RvaTech</span></div></div>
+        </div>
+        <div class="card-pf">
+            <header class="login-pf-header">
+                    <div class="pf-c-dropdown" id="kc-locale">
+                        <div id="kc-locale-wrapper" class="">
+                            <div id="kc-locale-dropdown" class="menu-button-links ">
+                                <button tabindex="1" id="kc-current-locale-link" aria-label="languages" aria-haspopup="true" aria-expanded="false" aria-controls="language-switch1">Nederlands</button>
+                                <ul role="menu" tabindex="-1" aria-labelledby="kc-current-locale-link" aria-activedescendant="" id="language-switch1" class="pf-c-dropdown__menu pf-m-align-right">
+                                        <li class="" role="none">
+                                            <a role="menuitem" id="language-1" class="pf-c-dropdown__menu-item" href="/realms/rvatech/login-actions/authenticate?client_id=PowerApps&amp;tab_id=XC6swKQKE6I&amp;execution=0ecc4032-7621-4895-87b9-8d13acb93999&amp;kc_locale=fr">Français</a>
+                                        </li>
+                                        <li class="" role="none">
+                                            <a role="menuitem" id="language-2" class="pf-c-dropdown__menu-item" href="/realms/rvatech/login-actions/authenticate?client_id=PowerApps&amp;tab_id=XC6swKQKE6I&amp;execution=0ecc4032-7621-4895-87b9-8d13acb93999&amp;kc_locale=nl">Nederlands</a>
+                                        </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                        <h1 id="kc-page-title">
+                            Vul hieronder je e-mailadres in. Sluit je browser niet af en klik op de link in de e-mail die je ontvangt.
+                        </h1>
+            </header>
+            <div id="kc-content">
+                <div id="kc-content-wrapper">
+
+
+        <form  id="kc-register-form" action="https://rvaonemtech.azure.rvaonem.fgov.be/realms/rvatech/login-actions/authenticate?session_code=5DU3O33ca37mzZZJw5ND55Q_omou4gMETf5noK9mrY0&amp;execution=0ecc4032-7621-4895-87b9-8d13acb93999&amp;client_id=PowerApps&amp;tab_id=XC6swKQKE6I" method="post">
+            <div class="form-group">
+                <label for="username">Email:</label>
+                <input style="width: 100%;
+                          box-sizing: border-box;"
+                       type="text"
+                       id="username"
+                       name="username"
+                       value="" />
+            </div>
+            <div>
+                <button
+                        class="pf-c-button
+                            btn-default
+                            pf-m-block
+                            btn-lg"
+                        type="submit" value="Login" >Verstuur de link</button>
+            </div>
+        </form>
+
+
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </body>
+    </html>

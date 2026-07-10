@@ -1,0 +1,8218 @@
+Social Welfare Act–Riigi Teataja
+
+Riigi Teataja
+
+Home
+
+Search
+
+Help
+
+FAQ
+
+Feedback
+
+Embed search
+
+My RT
+
+My RT allows for:
+
+Subscribing to e-mail notifications of all translations
+
+Subscribing to e-mail notifications of translations of specific legal instruments
+
+Please note!
+
+We advise you to use your e-mail as your username.
+
+Sign up
+
+|
+
+Forgot password?
+
+Statistics
+
+Introduction
+
+Tagasi pealehele
+
+Text size:
+
+Small
+
+Medium
+
+Large
+
+Social Welfare Act
+
+Download
+
+PDF
+
+Text
+
+XML
+
+Print
+
+RSS
+
+Help
+
+Translation
+
+Authentic
+              text
+
+Content
+
+Content
+
+Print content
+
+Hide
+
+Social Welfare Act - content
+
+1 General Provisions
+
+§ 1 Scope of application of Act
+
+§ 1
+
+1
+
+Scope of Act
+
+§ 2 Application of General Part of the Social Code Act
+
+§ 3 Principles of social welfare
+
+§ 4 Terms
+
+§ 5 Social welfare coverage
+
+§ 6 Prohibited items upon receipt of social services in social welfare institution
+
+§ 7 Internal evaluation of child welfare institutions
+
+§ 8 Emergency social assistance
+
+§ 9 Provision of assistance based on principle of case management
+
+§ 10 Case plan of child
+
+§ 11 Statistics on social welfare
+
+§ 12 Consideration of person’s will
+
+§ 13 Obligation to notify of need for assistance
+
+§ 13
+
+1
+
+Organisation of provision of social services during extraordinary situation
+
+2 Assistance Organised by Local Authorities
+
+1 General Provisions
+
+§ 14 Procedure for provision of social welfare assistance
+
+§ 15 Assessment obligation and decision on provision of assistance
+
+§ 15
+
+1
+
+Assessment of need for assistance of young persons
+
+§ 15
+
+2
+
+Assessment of need for assistance of disabled adults
+
+§ 16 Fee for social services
+
+§ 16
+
+1
+
+Requirements for social workers of local authorities
+
+2 Social Services of Local Authorities
+
+1 Domestic Service
+
+§ 17 Objective and content of domestic service
+
+§ 18 Obligations of local authorities
+
+§ 19 Requirements for persons directly providing services
+
+2 General Care Service Provided Outside Home
+
+§ 20 Objective and content of general care service provided outside home
+
+§ 21 Care plan
+
+§ 22 Requirements for service providers
+
+§ 22
+
+1
+
+Financing of 24-hour general care service provided outside home
+
+§ 22
+
+2
+
+Requirements for provision of general care service provided outside home
+
+3 Support Person Service
+
+§ 23 Objective and content of support person service
+
+§ 24 Obligations of local authorities
+
+§ 25 Requirements for persons directly providing services
+
+4 Curatorship of Adults
+
+§ 26 Objective and content of curatorship of adults
+
+5 Personal Assistant Service
+
+§ 27 Objective and content of personal assistant service
+
+§ 28 Obligations of local authorities
+
+§ 29 Requirements for persons directly providing services
+
+6 Shelter Service
+
+§ 30 Objective and content of shelter service
+
+§ 31 Obligations of local authorities
+
+§ 32 Requirements for service providers
+
+§ 32
+
+1
+
+Requirements for provision of shelter service
+
+7 Safe House Service
+
+§ 33 Objective and content of safe house service
+
+§ 34 Obligations of service provider
+
+§ 35 Obligations of local authorities
+
+§ 36 Requirements for persons directly providing services
+
+§ 37 Conditions for provision of safe house service
+
+8 Social Transport Service
+
+§ 38 Objective and content of social transport service
+
+§ 39 Requirements for service providers
+
+§ 40 Fee for social transport service
+
+9 Provision of Dwelling
+
+§ 41 Objective and content of provision of dwelling
+
+§ 42 Provision of dwelling to disabled persons
+
+§ 43 Requirements for provided dwellings
+
+10 Debt Counselling Service
+
+§ 44 Objective and content of debt counselling service
+
+§ 45 Requirements for persons directly providing services
+
+11 Childcare Service for Children with Extreme Need for Assistance and Support
+
+§ 45
+
+1
+
+Objective and target group of childcare service for children with extreme need for assistance and support
+
+§ 45
+
+2
+
+Obligations of local authorities
+
+§ 45
+
+3
+
+Requirements for childcare service
+
+§ 45
+
+4
+
+Requirements for childcarer
+
+12 Alternative Care Service
+
+§ 45
+
+5
+
+Objective and content of alternative care service
+
+§ 45
+
+6
+
+Provision of alternative care service in foster family
+
+§ 45
+
+7
+
+Provision of alternative care service in family house
+
+§ 45
+
+8
+
+Provision of alternative care service in substitute home
+
+§ 45
+
+9
+
+Obligations of local authorities
+
+§ 45
+
+10
+
+Provision of alternative care service
+
+§ 45
+
+11
+
+Funding of alternative care service
+
+§ 45
+
+12
+
+Obligations of service provider
+
+§ 45
+
+13
+
+Requirements for persons and their family members directly raising child
+
+§ 45
+
+14
+
+Contract entered into with family parent
+
+13 Continued Care Service
+
+§ 45
+
+15
+
+Objective and content of continued care service
+
+§ 45
+
+16
+
+Obligations of local authorities
+
+§ 45
+
+17
+
+Funding of continued care service
+
+3 Assistance Organised by State
+
+1 Assumption by State of Obligation to Pay Fee upon Purchase or Lease of Technical Aid
+
+1 Right to Apply for Assumption by State of Obligation to Pay Fee upon Purchasing or Leasing Technical Aid
+
+§ 46 Assumption by state of obligation to pay fee upon purchase or lease of technical aid
+
+§ 47 Entitled persons
+
+2 List of Technical Aids and Limits for Assumption of Obligation to Pay Fee
+
+§ 48 List of technical aids
+
+§ 49 Amendment of list of technical aids
+
+§ 50 Maximum price, limit and own contribution
+
+3 Application for and Deciding on Assumption of Obligation to Pay Fee
+
+§ 51 Application for assumption of obligation to pay fee
+
+§ 52 Deciding on assumption of obligation to pay fee
+
+§ 53 Waiting list for technical aid
+
+4 Contract for Assumption of Obligation to Pay Fee
+
+§ 54 Contract for assumption of obligation to pay fee
+
+5 Requirements upon Sale or Lease of Technical Aid
+
+§ 55 Requirements for seller or lessor of technical aid
+
+2 Assumption of Obligation to Pay Fee for Social Rehabilitation Service
+
+1 Right to Apply for Assumption of Obligation to Pay Fee for Social Rehabilitation Service
+
+§ 56 Assumption of obligation to pay fee for social rehabilitation service
+
+§ 57 List of rehabilitation services
+
+§ 58 Amount of fee for social rehabilitation service assumed
+
+§ 59 Entitled persons
+
+§ 60 Right to receive compensation for travel and accommodation expenses
+
+2 Application for and Deciding on Assumption of Obligation to Pay Fee
+
+§ 61 Application for assumption of obligation to pay fee
+
+§ 62 Identification of need for social rehabilitation service
+
+§ 63 Deciding on assumption of obligation to pay fee
+
+§ 64 Rehabilitation waiting list
+
+3 Contract for Assumption of Obligation to Pay Fee
+
+§ 65 Contract for assumption of obligation to pay fee
+
+4 Requirements for Provision of Social Rehabilitation Service
+
+§ 66 Requirements for provider of social rehabilitation service
+
+§ 67 Requirements for social rehabilitation service
+
+§ 68 Requirements for rehabilitation team
+
+§ 69 Preparation of rehabilitation plan and rehabilitation programme
+
+3 Special Care Services
+
+1 General Provisions
+
+§ 70 Application for special care services and making of decisions
+
+§ 71 Issue of referral decisions
+
+§ 72 Funding of special care services
+
+§ 73 Own contribution
+
+§ 74 Covering deficit of own contribution from state budget
+
+§ 75 Covering deficit for person placed in social welfare institution by court ruling
+
+§ 76 Waiting lists for special care services
+
+§ 77 Entry into contract for provision of special care services
+
+§ 78 Contract for provision of special care services
+
+§ 79 Reimbursement of expenses to providers of special care services
+
+§ 80 Termination of provision of special care services and notification thereof
+
+§ 81 Change of provider of special care services
+
+§ 82 Decision to terminate provision of special care service
+
+§ 83 Requirements for providers of special care services
+
+§ 84 Documents of persons receiving special care services
+
+§ 85 Activity plan
+
+§ 86 Requirements for persons directly providing services
+
+2 Everyday Life Support Service
+
+§ 87 Everyday life support service
+
+§ 88 Persons entitled to receive everyday life support service financed from state budget
+
+§ 89 Coverage of expenses of premises for provision of everyday life support service
+
+§ 90 Requirements for everyday life support service
+
+3 Employment Support Service
+
+§ 91 Employment support service
+
+§ 92 Persons entitled to receive employment support service financed from state budget
+
+§ 93 Requirements for employment support service
+
+4 Supported Living Service
+
+§ 94 Supported living service
+
+§ 95 Persons entitled to receive supported living service financed from state budget
+
+§ 96 Requirements for supported living service
+
+5 Community Living Service
+
+§ 97 Community living service
+
+§ 98 Persons entitled to receive community living service financed from state budget
+
+§ 99 Requirements for community living service
+
+5
+
+1
+
+Daily and Weekly Care Service
+
+§ 99
+
+1
+
+Objective of daily and weekly care service
+
+§ 99
+
+2
+
+Persons entitled to receive daily and weekly care service financed from state budget
+
+§ 99
+
+3
+
+Requirements for daily and weekly care service
+
+§ 99
+
+4
+
+Persons directly providing daily and weekly care service
+
+6 24-hour special care service
+
+§ 100 24-hour special care service
+
+§ 101 Adults entitled to receive 24-hour special care service financed from state budget
+
+§ 102 Requirements for 24-hour special care service
+
+§ 103 Requirements for 24-hour special care service in case of adult placed in social welfare institution by court ruling
+
+§ 104 Adults providing 24-hour special care service directly
+
+4 Care without Consent of Adult
+
+§ 105 Placing adults in social welfare institution on basis of court ruling
+
+§ 106 Restriction on freedom of movement of adults receiving social services
+
+§ 107 Isolation of adult
+
+5 Childcare Service
+
+6 Substitute Home Service
+
+§ 116 Substitute home service
+
+§ 117 Persons entitled to receive substitute home service
+
+§ 118 Provision of substitute home service
+
+§ 119 Referral to receive substitute home service
+
+§ 120 Financing of substitute home service
+
+§ 121 Documents of child receiving substitute home service
+
+§ 122 Requirements for substitute home service
+
+§ 123 Requirements for education employees of substitute homes
+
+§ 124 Requirements for family parents and for persons with whom they use common dwellings
+
+§ 124
+
+1
+
+Family parent contract
+
+§ 125 Provision of substitute home service to unaccompanied minor aliens, minor victims of human trafficking and sexually abused minors
+
+§ 126 Organisation of temporary placement of child in family
+
+6
+
+1
+
+Provision of alternative care service to unaccompanied minor aliens
+
+§ 126
+
+1
+
+Provision of alternative care service to unaccompanied minor aliens
+
+§ 126
+
+2
+
+Funding of alternative care service provided to unaccompanied minor aliens
+
+7 Foster Care of Child
+
+§ 127 Duties of local authorities in referral of children to foster care
+
+§ 128 Child subject to foster care and his or her rights
+
+§ 129 Requirements for person providing foster care and his or her family members and rights of caregiver
+
+§ 130 Child subject to foster care
+
+7
+
+1
+
+Closed Child Care Institution Service
+
+§ 130
+
+1
+
+Closed Child Care Institution Service
+
+§ 130
+
+2
+
+Proceeding for placing in closed child care institution
+
+§ 130
+
+3
+
+Requirements for closed child care institution service
+
+§ 130
+
+4
+
+Examination of items of child and removal, maintenance, return, delivery and destruction of forbidden items
+
+§ 130
+
+5
+
+Organisation and funding of closed child care institution service
+
+8 Subsistence Benefit
+
+§ 131 Subsistence benefit
+
+§ 132 Application for subsistence benefit
+
+§ 133 Bases for calculating subsistence benefit
+
+§ 134 Grant and payment of subsistence benefit
+
+§ 135 Supplementary social benefit paid from state budget
+
+9 Needs-based Family Benefit
+
+§ 136 Needs-based family benefit
+
+§ 137 Application for needs-based family benefit
+
+§ 138 Grant of needs-based family benefit
+
+§ 139 Payment of needs-based family benefit
+
+9
+
+1
+
+Pensioner’s Living Alone Allowance
+
+§ 139
+
+1
+
+Pensioner’s living alone allowance
+
+§ 139
+
+2
+
+Notification of persons of creation of right to receive pensioner’s allowance
+
+§ 139
+
+3
+
+Amount, grant and payment of pensioner’s allowance
+
+10 Social benefits for Estonian citizens or persons of Estonian origin who have settled in Estonia from foreign states, and their spouses, registered partners, children and parents
+
+§ 140 Social benefits for Estonian citizens or persons of Estonian origin who have settled in Estonia from foreign states, and their spouses, registered partners, children and parents
+
+11 Social Benefit for Persons Forcibly Sent to Eliminate Effects of Nuclear Disaster
+
+§ 140
+
+1
+
+Social benefit for persons sent to eliminate effects of nuclear disaster
+
+12 Financial Support Measures Applied in Extraordinary Situation
+
+§ 140
+
+2
+
+Financial support measures applied in extraordinary situation for prevention of difficulties in coping arising from extraordinary situation
+
+4 Database
+
+§ 141 Social Services and Benefits Registry
+
+§ 142 Authorised processors of Social Services and Benefits Registry
+
+§ 142
+
+1
+
+Data in Social Services and Benefits Registry
+
+§ 143 Submission of data to Social Services and Benefits Registry and exchange of data
+
+§ 144 Obligation of local authorities, providers of social services and Social Insurance Board to enter data in Social Services and Benefits Registry
+
+§ 144
+
+1
+
+Access to data by the Ministry of Social Affairs and the Ministry of Economic Affairs and Communications
+
+§ 145 Access to registry data
+
+§ 145
+
+1
+
+Preservation of data in Social Services and Benefits Registry
+
+5 Challenge Proceedings
+
+§ 146 Challenge proceedings of local authority
+
+6 Licence Proceedings
+
+§ 147 Licence requirement of provider of rehabilitation services
+
+§ 148 Adjudication of application for activity licence of provider of rehabilitation services
+
+§ 149 Subject of review of licence
+
+§ 150 Secondary condition of activity licence for rehabilitation services
+
+§ 151 Licence requirement of provider of social services
+
+§ 152 Application for activity licence of provider of social services
+
+§ 153 Subject of review of activity licence of provider of social services
+
+§ 154 Secondary conditions of activity licence of provider of social services
+
+§ 155 Renouncement of activity specified in activity licence
+
+7 Financing
+
+§ 156 Social benefits financed from state budget
+
+8 Supervision
+
+§ 157 Exercise of state and administrative supervision
+
+§ 158 Specific state supervision measures
+
+§ 158
+
+1
+
+Administrative supervision measures
+
+§ 159 Non-compliance levy rate
+
+9 Implementing Provisions
+
+1 Transitional Provisions and Ex-post Assessment
+
+§ 160 Transitional provisions
+
+§ 160
+
+1
+
+Ex-post assessment of regulation of § 151
+
+§ 160
+
+2
+
+Analysis of assessment system of persons in need of care
+
+§ 160
+
+3
+
+Payment of pensioner’s living alone allowance upon living together with person eligible for temporary protection
+
+§ 160
+
+4
+
+Compensation to local authorities for expenses of processing and payment of subsistence benefits
+
+§ 160
+
+5
+
+Benefit for mitigation of price increase
+
+§ 160
+
+6
+
+Implementation of § 140
+
+§ 160
+
+7
+
+Transformation of childcare service into childcare service for children with extreme need for assistance and support
+
+2 Amendment and Repeal of Acts
+
+§ 176 Amendment of Social Welfare Act
+
+§ 183 Repeal of Act
+
+3 Entry into force of Act
+
+§ 184 Entry into force of Act
+
+Issuer:
+
+Riigikogu
+
+Type:
+
+Act
+
+In force from:
+
+01.09.2025
+
+In force until:
+
+31.12.2025
+
+Translation published:
+
+10.09.2025
+
+Select wordings:
+
+Previous
+
+...
+
+01.07.2025
+
+22.06.2025
+
+10.01.2025
+
+01.01.2025
+
+Future wordings
+
+...
+
+01.01.2026
+
+09.01.2026
+
+In force
+
+Parallel texts
+
+Compare wordings
+
+Social Welfare Act
+
+Passed 09.12.2015
+
+RT I, 30.12.2015, 5
+
+Entry into force 01.01.2016, 18.01.2016, 01.07.2016, 01.01.2018, 01.07.2018 and 01.01.2020
+
+Amended by the following legal instruments
+
+(show)
+
+Passed
+
+Published
+
+Entry into force
+
+09.12.2015
+
+RT I, 30.12.2015, 5
+
+01.01.2016, in part 18.01.2016, 01.07.2016, 01.01.2017, 01.01.2018, 01.07.2018 and 01.01.2020
+
+15.06.2016
+
+RT I, 08.07.2016, 1
+
+01.01.2017, in part 18.07.2016
+
+23.11.2016
+
+RT I, 06.12.2016, 1
+
+01.01.2017
+
+07.12.2016
+
+RT I, 21.12.2016, 2
+
+01.01.2017, in part 01.01.2018
+
+14.06.2017
+
+RT I, 29.06.2017, 1
+
+09.07.2017, in part 01.07.2017
+
+11.10.2017
+
+RT I, 25.10.2017, 1
+
+01.01.2018, in Division 6 of Subchapter 3 and Subchapter 4 of Chapter 3 the word "person" has been replaced throughout the text by the word "adult" in the appropriate case form.
+
+25.10.2017
+
+RT I, 17.11.2017, 1
+
+01.01.2019
+
+15.11.2017
+
+RT I, 28.11.2017, 2
+
+01.01.2018
+
+06.12.2017
+
+RT I, 28.12.2017, 6
+
+01.01.2018, in part 01.04.2018
+
+06.12.2017
+
+RT I, 28.12.2017, 8
+
+01.01.2018, in part 01.05.2018
+
+21.03.2018
+
+RT I, 03.04.2018, 3
+
+15.04.2018
+
+06.06.2018
+
+RT I, 26.06.2018, 3
+
+01.07.2018
+
+16.10.2018
+
+RT I, 23.10.2018, 1
+
+30.10.2018, in part 01.01.2019
+
+14.11.2018
+
+RT I, 27.11.2018, 2
+
+01.01.2019
+
+05.12.2018
+
+RT I, 21.12.2018, 3
+
+01.01.2019, in part 01.04.2019
+
+12.12.2018
+
+RT I, 03.01.2019, 1
+
+01.01.2021
+
+20.02.2019
+
+RT I, 13.03.2019, 2
+
+15.03.2019
+
+08.04.2020
+
+RT I, 09.04.2020, 14
+
+10.04.2020, in part 19.04.2020, 01.05.2020 and 01.07.2020
+
+15.04.2020
+
+RT I, 21.04.2020, 1
+
+22.04.2020, subsections 3–5 of § 13¹ applied retroactively as of 12.03.2020
+
+10.03.2021
+
+RT I, 22.03.2021, 2
+
+01.04.2021
+
+22.11.2021
+
+RT I, 10.12.2021, 1
+
+01.09.2022
+
+13.04.2022
+
+RT I, 28.04.2022, 1
+
+01.05.2022, in part 08.05.2022, 01.01.2023, 01.02.2023 and 01.07.2024
+
+18.05.2022
+
+RT I, 07.06.2022, 1
+
+17.06.2022, in part 01.07.2022; § 160.3 applied retroactively as of 09.03.2022; § 160.5 in force until 31.05.2023
+
+26.10.2022
+
+RT I, 10.11.2022, 1
+
+20.11.2022
+
+07.12.2022
+
+RT I, 22.12.2022, 1
+
+01.01.2023
+
+07.12.2022
+
+RT I, 22.12.2022, 3
+
+01.01.2023, in part 01.07.2023 and 01.01.2024; subsections 3.7 and 3.8 of § 156 are in force until 31.12.2024
+
+14.12.2022
+
+RT I, 06.01.2023, 1
+
+01.04.2023, in part 16.01.2023
+
+15.02.2023
+
+RT I, 07.03.2023, 5
+
+01.01.2024
+
+20.06.2023
+
+RT I, 30.06.2023, 1
+
+01.07.2023
+
+20.06.2023
+
+RT I, 06.07.2023, 6
+
+01.01.2024
+
+22.11.2023
+
+RT I, 14.12.2023, 1
+
+01.01.2024, in part 24.12.2023 and 01.04.2029
+
+29.07.2024
+
+RT I, 17.08.2024, 1
+
+01.01.2025, in part 01.09.2025
+
+09.10.2024
+
+RT I, 18.10.2024, 1
+
+01.01.2025
+
+20.11.2024
+
+RT I, 11.12.2024, 1
+
+01.01.2025
+
+20.11.2024
+
+RT I, 11.12.2024, 2
+
+01.01.2025
+
+20.11.2024
+
+RT I, 11.12.2024, 3
+
+01.01.2025
+
+11.12.2024
+
+RT I, 31.12.2024, 3
+
+01.01.2025, in part 10.01.2025, 01.01.2026 and 01.01.2027
+
+11.12.2024
+
+RT I, 02.01.2025, 3
+
+01.09.2025
+
+11.12.2024
+
+RT I, 09.01.2025, 1
+
+01.09.2025
+
+21.05.2025
+
+RT I, 12.06.2025, 1
+
+22.06.2025, in part 01.07.2025, 01.09.2025 and 01.02.2027
+
+Chapter 1
+
+General Provisions
+
+§ 1.
+
+Scope of application of Act
+
+This Act provides the organisational, economic and legal bases for social welfare, and regulates the relations relating to social welfare.
+
+§ 1
+
+1
+
+.
+
+Scope of Act
+
+(1) If this Act provides an obligation to apply for an activity licence for the provision of social services, the requirements for the provision of social services provided for in this Act shall also be regarded as requirements for economic activity.
+
+(2) The General Part of the Economic Activities Code Act, considering the specifications provided for in this Act, shall be applied to the commencement, pursuit and termination of the economic activity as regulated by this Act, of a legal person in private law and a natural person. The provisions of the General Part of the Economic Activities Code Act and this Act regarding the application for an activity licence and the provision of social services shall be applied to legal persons in public law and state and local government institutions insofar as their specific characters do not provide otherwise.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 2.
+
+Application of General Part of the Social Code Act
+
+The provisions of the General Part of the Social Code Act apply to the social protection prescribed in this Act, taking account of the specifications provided for in this Act.
+
+§ 3.
+
+Principles of social welfare
+
+(1) Upon the provision of social welfare assistance:
+
+1)
+
+the needs of the person shall be taken into consideration first;
+
+2)
+
+such measures shall be preferred which are aimed at finding possibilities and increasing the ability of the person to organise his or her life as independently as possible;
+
+2
+
+1
+
+)
+
+such assistance and support shall be provided first which enable the person to live at home or receive a service offering a homelike environment and mode of life;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+3)
+
+the person shall be advised about choosing and adjusting measures and, if necessary, about assistance provided by a specialist with appropriate professional training;
+
+4)
+
+the efficiency of implementation of measures from the viewpoint of the person in need of assistance and, if necessary, from the viewpoint of the family and community shall be taken as the basis;
+
+5)
+
+the person in need of assistance and, if necessary, his or her family members shall be involved in all the phases of the provision of assistance if the person has consented thereto;
+
+6)
+
+measures shall be ensured to be as accessible to a person as possible.
+
+(2) A provider of social services must proceed from generally accepted quality principles: person-centeredness, empowering nature of the service, orientation towards outcome, needs-based approach, integral approach, protection of a person's rights, involvement, competence and ethics of the employee and the good work organisation and high-quality management of the organisation.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 4.
+
+Terms
+
+In this Act, the following definitions are used:
+
+1)
+
+“social welfare” means a system of procedures related to the provision or grant of social services, social benefits, emergency social assistance and other assistance the purpose of which is to support the ability of a person to cope independently, work and participate actively in social life, at the same time preventing social problems from arising or deepening at individual, family or social level;
+
+2)
+
+“social welfare institution” means an institution providing a social service specified in this Act;
+
+3)
+
+“social worker” means a person with higher education and appropriate professional training employed in social welfare;
+
+4)
+
+“child” means a person within the meaning of subsection 2 of § 3 of the Child Protection Act;
+
+5)
+
+“person working with children” means a person specified in subsection 2 of § 18 of the Child Protection Act who complies with the requirements provided for in § 20 of the Child Protection Act.
+
+§ 5.
+
+Social welfare coverage
+
+(1) The local authority of a person’s residence entered in the population register is required to organise the provision of social services, social benefits, emergency social assistance and other assistance to the person.
+
+(2) The provision of emergency social assistance to a person staying outside his or her residence entered in the population register is organised by the local authority in whose administrative territory the person is staying at the time he or she is in need of assistance.
+
+(3) The provision of social services and other assistance to a person staying outside his or her residence entered in the population register may be organised by the local authority in whose administrative territory the person is staying at the time he or she is in need of assistance in co-ordination with the local authority of the person’s residence entered in the population register.
+
+(4) The provision of social services, emergency social assistance and other assistance to a person whose residence cannot be determined according to the population register is organised by the local authority in whose administrative jurisdiction the person is staying at the time he or she is in need of assistance.
+
+(5) The provision of emergency social assistance to an alien temporarily staying in Estonia is organised by the local authority in whose administrative territory the person is staying at the time he or she is in need of assistance.
+
+§ 6.
+
+Prohibited items upon receipt of social services in social welfare institution
+
+(1) The following items are prohibited for a person receiving social services in a social welfare institution:
+
+1)
+
+weapons within the meaning of the Weapons Act;
+
+2)
+
+explosives, pyrotechnic substances and pyrotechnic articles within the meaning of the Explosives Act;
+
+3)
+
+substances used for causing narcotic, toxic or alcohol intoxication;
+
+4)
+
+other items which may constitute a danger to the life and health of the person receiving the service and other people.
+
+(2) In the case of suspicion of danger the social welfare institution shall communicate the information concerning the items specified in clause 1 or 2 of subsection 1 of this section or a substance used for causing narcotic intoxication specified in clause 3 of the same subsection to the police for ascertainment of the danger.
+
+(3) If a prohibited item not specified in subsection 2 of this section directly endangers the life or health of the person or other persons, the social welfare institution shall apply measures to reduce or eliminate the immediate danger.
+
+§ 7.
+
+Internal evaluation of child welfare institutions
+
+(1) Internal evaluation is carried out at child welfare institutions. Internal evaluation is a continuous process the purpose of which is to ensure conditions supporting the development of a child staying at a child welfare institution and consistent development of the institution. In the course of internal evaluation the suitability of the provided care for the child's age and development and the organisation of work and management of the institution shall be evaluated.
+
+(2) Internal evaluation of a child welfare institution shall be carried out at least once every three years.
+
+(3) The procedure for the internal evaluation of a child welfare institution shall be established by the head of the institution after submitting it to the keeper of the institution for comments.
+
+§ 8.
+
+Emergency social assistance
+
+(1) Emergency social assistance is provided to persons who find themselves in a socially helpless situation due to the loss or lack of means of subsistence which guarantees the persons at least food, clothing and temporary accommodation.
+
+(2) Emergency social assistance shall be provided to a person until he or she is no longer in a socially helpless situation due to the loss or lack of means of subsistence.
+
+§ 9.
+
+Provision of assistance based on principle of case management
+
+(1) If a person, in order to improve the ability to cope independently, needs long-term and diverse assistance, including long-term care, for which it is necessary to co-ordinate the co-operation between several organisations upon the provision of assistance, the principle of case management shall be used.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(1
+
+1
+
+) Long-term care means ensuring care for a person who needs assistance in the organisation of everyday life for a longer period of time because his or her mental or physical abilities or work ability have reduced. Long-term care includes health care services, care, and services supporting everyday coping of the person offered with the goal of alleviating and reducing pain, managing the evolution of the state of health, slowing down and preventing the deterioration of the state of health, caring for the person and providing assistance to the person in order to enable him or her to cope independently with everyday life activities.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(2) The provision of assistance shall,
+
+inter alia
+
+, include:
+
+1)
+
+the preparation of a case plan and co-ordination of the schedule for the activities of the parties which are related to each other;
+
+2)
+
+the determination of a co-ordinator of the case;
+
+3)
+
+the agreement on the procedure for mutual exchange of information.
+
+(3) A case plan is a written document consisting of an evaluation to a person’s need for assistance and the activity plan for application of measures.
+
+(4) A case plan shall be signed by the co-ordinator of the case and the person for whom the case plan has been prepared.
+
+(5) A case plan may be amended as necessary. The person in need of assistance shall confirm his or her approval of the amendments by a signature.
+
+(6) The list of information contained in a case plan shall be established by a regulation of the minister in charge of the policy sector.
+
+§ 10.
+
+Case plan of child
+
+(1) Case plans for children shall be prepared on the basis of the provisions of § 9 of this Act, taking into account the specifications provided for in this section.
+
+(2) Before referral to alternative care the local authority performing the duties of or appointed as the guardian of the child shall prepare a case plan for a child specified in subsection 1 of § 45
+
+9
+
+of this Act. Before referral to continued care the local authority performing the duties of the guardian of the person or the local authority of the residence of the person if the person becomes an adult shall prepare case plans for the persons specified in subsections 1 and 1
+
+1
+
+of § 45
+
+16
+
+of this Act.
+
+[RT I, 22.03.2021, 2 – entry into force 01.04.2021]
+
+(3) After the referral of a child to alternative care, the local authority performing the duties of or appointed as the guardian shall supplement the case plan of the child in cooperation with the provider of alternative care services. The case plan of a child referred to alternative care shall be reviewed at least once a year. The local authority of the residence of the person referred to continued care shall review the case plan of the person at least once a year.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(4) The Social Insurance Board shall perform the activities specified in subsection 2 and 3 with respect to unaccompanied minor aliens.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(5) The case plan prepared for a child referred to alternative care is an annex to the contract for the provision of alternative care service.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 11.
+
+Statistics on social welfare
+
+(1) Social welfare institutions, regardless of whether they are financed from the state or local authority budget, shall submit statistical reports to a local authority or the Social Insurance Board.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(2) A local authority shall submit the statistical reports to the Social Insurance Board.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(3) The Social Insurance Board shall submit the statistical reports to the Ministry of Social Affairs as a consolidated report.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(4) The requirements for the preparation, content of data and procedure for the submission of statistical reports on social welfare shall be established by a regulation of the minister in charge of the policy sector.
+
+§ 12.
+
+Consideration of person’s will
+
+(1) Upon the provision of social services, social benefits and other assistance, a person’s will shall be considered except in the cases provided for in §§ 105, 106 and 107 of this Act.
+
+(2) Resolution of issues pertaining to a child shall be based on the interests of the child pursuant to the provisions of the Child Protection Act.
+
+§ 13.
+
+Obligation to notify of need for assistance
+
+The family members of a person in need of assistance, judges, the police, prosecutors, employees of social welfare, health care and educational institutions and other persons are required to give notice of the person or family in need of social welfare to the local authority of the place of stay of the person or family.
+
+§ 13
+
+1
+
+.
+
+Organisation of provision of social services during extraordinary situation
+
+(1) During an emergency situation, a state of emergency or a state of war, special care services may be provided directly in addition to persons specified in subsection 1 of § 86 of this Act also by a natural person who has acquired at least secondary education and for whom supervision by a person who complies with the requirements provided for in subsection 1 of § 86 of this Act is ensured if this is indispensable for continuation of the provision of special care services.
+
+(2) [Repealed – RT I, 28.04.2022, 1 – entry into force 01.05.2022]
+
+(3) During an emergency situation, a state of emergency or a state of war, the running of the terms specified in subsection 5 of § 64 and clause 1 of subsection 1 of § 80 of this Act shall be suspended.
+
+(4) Where during an emergency situation, a state of emergency or a state of war, the running of the time limit specified in clause 1 of subsection 1 of § 80 of this Act has been suspended and the person is not using the special care service, the Social Insurance Board reimburses the provider of special care services for the expenses of the vacant place for receipt of the special care service to the extent of 95 per cent of the maximum cost of the service provided to the person established on the basis of clause 1 of subsection 5 of § 72 of this Act, but not more than in the amount indicated in the invoice.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(5) During an emergency situation, a state of emergency or a state of war, the Social Insurance Board may, on the proposal of the minister in charge of the policy sector, extend the term for assumption of the obligation to pay the fee for the social rehabilitation service or the term for the provision of a special care service until the need for the rearrangement arising from the emergency situation, state of emergency or state of war ceases to exist.
+
+[RT I, 21.04.2020, 1 – entry into force 22.04.2020, subsections 3–5 are applied retroactively as of 12 March 2020]
+
+Chapter 2
+
+Assistance Organised by Local Authorities
+
+Subchapter 1
+
+General Provisions
+
+§ 14.
+
+Procedure for provision of social welfare assistance
+
+(1) Local authorities shall establish the procedure for provision of social welfare assistance which shall contain at least the description and financing of social services and benefits and the conditions and procedure for application for social services and benefits.
+
+(2) Local authorities may organise social services and pay supplementary social benefits from a local authority budget under the conditions and pursuant to the procedure established by the local authority.
+
+§ 15.
+
+Assessment obligation and decision on provision of assistance
+
+(1) A local authority shall identify the need for assistance of a person who requests assistance and determine the extent of corresponding assistance, and organise the provision of assistance or help with activities required to receive assistance.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(2) Identification of the need for assistance shall be based on the integrity of the person's need for assistance, taking into account the circumstances affecting his or her ability to cope and participation in social life, including:
+
+1)
+
+circumstances related to the operational capacity of the person;
+
+2)
+
+circumstances related to the physical and social environment of the person.
+
+(3) When taking into account the circumstances specified in subsection 2 of this section, the assistance necessary for reducing or eliminating the restrictions caused by the need for assistance of a disabled person within the meaning of subsection 1 of § 2 of the Social Benefits for Disabled Persons Act shall be ensured, including the organisation of necessary support or translation services.
+
+(4) If a person whose need for care has been identified due to a chronic illness, special needs or another long-term health problem requests assistance, the local authority shall determine the person who shall, outside his or her professional or official job, care for the person who needs assistance. The local authority shall also determine the need for support of the person caring for the person who needs assistance, taking into account his or her actual care burden and the circumstances affecting his or her ability to cope and participation in social life.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+§ 15
+
+1
+
+.
+
+Assessment of need for assistance of young persons
+
+(1) The local authority of a person’s residence entered in the population register may identify the need for assistance of a person specified in subsection 2 of this section on its own initiative.
+
+(2) A person who is 16-26 years of age who complies with all the following conditions may need assistance:
+
+1)
+
+who does not study;
+
+2)
+
+who does not work;
+
+3)
+
+who is not registered as unemployed;
+
+4)
+
+who has not been established to have no work ability or a loss of capacity of work of over 80 per cent;
+
+5)
+
+who does not receive employment support service;
+
+6)
+
+who is not active in entrepreneurship;
+
+7)
+
+who does not receive benefits for raising a child who is younger than one and a half years;
+
+8)
+
+who is not imprisoned or in custody pending trial;
+
+9)
+
+who is not engaged in alternative service or military service.
+
+(3) In order to identify the person specified in subsection 2 of this section by processing the information provided for in subsection 4, the local authority must submit an application pursuant to the procedure established in the statutes of the Social Services and Benefits Registry.
+
+(4) For the purpose of identifying persons specified in subsection 2 of this section, the following personal data of persons who are 16-26 years of age entered in the population register shall be processed in the Social Services and Benefits Registry on the basis of the application provided for in subsection 3 up to twice per calendar year:
+
+1)
+
+name and personal identification code;
+
+2)
+
+contact details;
+
+3)
+
+name, personal identification code and contact details of his or her legal representative as appropriate;
+
+4)
+
+data on acquisition of education;
+
+5)
+
+data on employment and registration as unemployed;
+
+6)
+
+data on lacking work ability;
+
+7)
+
+data on entrepreneurship;
+
+8)
+
+data on receipt of benefit for raising a child who is younger than one and a half years;
+
+9)
+
+data on imprisonment;
+
+10)
+
+data on alternative service or military service.
+
+(5) The processing of the data listed in subsection 4 of a person specified in subsection 2 of this section shall result in a composition of data containing the name, personal identification code, contact details, data on the level of education and employment of the person and the name and contact details of his or her legal representative as appropriate.
+
+(6) A local authority may process the composition of data specified in subsection 5 of this section for the purpose of identification of need for assistance and for the provision of assistance.
+
+(7) In order to determine the need for assistance and provide assistance, a local authority may contact the person specified in subsection 5 of this section. If the person is a minor, the local authority shall inform his or her legal representative of the contact at the same time.
+
+(8) If the person who is 16-26 years of age does not wish for his or her data to be processed, the processing of data shall be concluded upon receipt of an appropriate application from the said person. Upon first contact with a person who is 16-26 years of age, the local authority shall ask the person for consent to further process his or her data. If the person does not give his or her consent, the further processing of data will be stopped. In order to rule out any further data processing only the personal identification code of the person shall be stored in the Social Services and Benefits Registry until the person attains 27 years of age.
+
+[RT I, 03.04.2018, 3 – entry into force 15.04.2018]
+
+§ 15
+
+2
+
+.
+
+Assessment of need for assistance of disabled adults
+
+(1) The local authority of a person’s residence entered in the population register may on its own initiative identify the need for assistance of an adult who has been established to have a moderate or severe disability on the basis of the Social Benefits for Disabled Persons Act.
+
+(2) The local authority of a person’s residence entered in the population register must on its own initiative identify the need for assistance of an adult who has been established to have a profound disability on the basis of the Social Benefits for Disabled Persons Act.
+
+(3) A person specified in subsection 1 or 2 of this section who complies with at least one of the following conditions may need assistance:
+
+1)
+
+the person has no active case plan in the Social Services and Benefits Registry;
+
+2)
+
+the local authority does not provide any social services to the person;
+
+3)
+
+the person is not under the guardianship of the local government;
+
+4)
+
+the local authority has not assessed the need for assistance of the person during the past year.
+
+(4) In order to initiate the data processing necessary for the identification of the person specified in subsection 1 of this section, the local authority must submit an application pursuant to the procedure established in the statutes of the Social Services and Benefits Registry.
+
+(5) For the purpose of identifying the need for assistance of persons specified in subsections 1 and 2 of this section, contacting and providing assistance to such persons, the following personal data of adults entered in the population register are processed in the Social Services and Benefits Registry:
+
+1)
+
+name and personal identification code;
+
+2)
+
+contact details;
+
+3)
+
+in the case of guardianship, name and contact details of the guardian;
+
+4)
+
+data on residence;
+
+5)
+
+address of place of stay;
+
+6)
+
+degree of severity of disability;
+
+7)
+
+abnormality in a function;
+
+8)
+
+duration of degree of severity of disability;
+
+9)
+
+date of death.
+
+(6) In order to identify the need for assistance of a person specified in subsections 1 and 2 of this section and provide assistance to such person, the local authority contacts the person within 30 days as of becoming aware of the person.
+
+(7) In the case the person specified in subsection 1 or 2 of this section does not wish for their data to be processed, the processing of data is terminated upon receipt of an appropriate application from the person.
+
+(8) In the case the degree of severity of disability established for a person specified in subsection 1 of this section increases, the local authority may recontact the person for identification of the need for assistance and provision of assistance. In the case the person does not wish for their data to be processed, the processing of data is terminated upon receipt of an appropriate application from the person.
+
+[RT I, 28.04.2022, 1 – entry into force 01.02.2023]
+
+§ 16.
+
+Fee for social services
+
+(1) A fee may be charged for the provision of social services. A local authority shall establish the conditions and amount of the fee charged for social services provided by the local authority. The charging of a fee shall be decided by the authority which pays for or provides the service.
+
+(2) The amount of the fee charged from a person depends on the extent and cost of the social service and the financial situation of the person receiving the service and his or her family.
+
+(3) The amount of the fee charged for social services shall not restrict the receipt of services.
+
+§ 16
+
+1
+
+.
+
+Requirements for social workers of local authorities
+
+A person who has been awarded the profession of a social worker on the basis of the Professions Act or who has acquired state-recognised higher education in social work or qualifications equal thereto may be appointed as a social worker by a local authority.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+Subchapter 2
+
+Social Services of Local Authorities
+
+Division 1
+
+Domestic Service
+
+§ 17.
+
+Objective and content of domestic service
+
+(1) Domestic service is a social service organised by a local authority the objective of which is to ensure independent and safe coping of an adult in his or her home by maintaining and improving his or her quality of life.
+
+(2) Upon provision of the domestic service, assistance is provided to a person in activities which the person is unable to perform without personal assistance due to reasons relating to state of health, operational capacity or physical and social environment but which are essential for living at home, such as heating, cooking, cleaning the dwelling, washing clothes and buying food and household articles and running other errands outside the dwelling.
+
+(3) The minister in charge of the policy sector may establish by a regulation detailed requirements for the objective and content of the domestic service, including the activities necessary for the achievement of the objective of the service.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+§ 18.
+
+Obligations of local authorities
+
+(1) The extent of the need for personal assistance shall be assessed and specified separately for each person. If during the period of providing the service the extent of the need for personal assistance changes due to the person's operational capacity or physical and social environment, a reassessment shall be carried out.
+
+(2) A local authority shall prepare in co-operation with the person receiving the service and the service provider an administrative act or a contract under public law for the provision of the service which shall,
+
+inter alia
+
+, set out the activities arising from the extent of the need for personal assistance which ensure independent coping of the person in his or her home.
+
+§ 19.
+
+Requirements for persons directly providing services
+
+The service shall not be provided directly by a person whose criminal record for an intentionally committed criminal offence may endanger the life, health and property of the person entitled to receive the service.
+
+Division 2
+
+General Care Service Provided Outside Home
+
+§ 20.
+
+Objective and content of general care service provided outside home
+
+(1) General care service provided outside the home of a person is a social service organised by a local authority the objective of which is to ensure a safe environment and coping of an adult who is temporarily or permanently unable to cope independently at home due to reasons relating to state of health, operational capacity or physical and social environment.
+
+(2) Upon provision of the service the service provider shall ensure care procedures and other activities and services determined in the care plan which support and ensure coping of the recipient of the service.
+
+(3) Upon provision of the service on a 24-hour basis the service provider shall also ensure accommodation and catering of the recipient of the service in addition to the activities specified in subsection 2 of this section.
+
+(4) The minister in charge of the policy sector may establish by a regulation detailed requirements for the objective and content of the general care provided outside home, including the activities necessary for the achievement of the objective of the service.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+§ 21.
+
+Care plan
+
+(1) A local authority shall prepare in co-operation with the person receiving the service and the service provider an administrative act or a contract under public law for the provision of the service which shall,
+
+inter alia
+
+, set out the activities arising from the extent of the need for personal assistance which ensure safety and coping of the person during the receipt of the care service.
+
+(2) The service provider shall prepare in co-operation with the recipient of the service or, if the recipient of the service is not responsive, the person financing the service a care plan for the person within 30 days from commencement of the provision of the service.
+
+(3) Upon preparation of a care plan, the need for health service shall also be assessed in addition to the need for care. An assessment concerning the need for health service shall be provided by a health care professional with an appropriate qualification.
+
+(4) A care plan shall include the objective of the provision of the care service, the activities for the achievement of the objective and the frequency thereof and the assessment of the service provider concerning the performance of the activities.
+
+(5) The service provider shall review the care plan at least once every half-year. If necessary, the service provider shall adjust the care plan as a result of the review.
+
+§ 22.
+
+Requirements for service providers
+
+(1) Service providers shall ensure the availability of staff whose qualifications and workload allow to perform activities and procedures in a manner determined in the care plan of persons receiving the care service.
+
+(2) Upon provision of the service on a 24-hour basis the availability of appropriate staff must be ensured for 24 hours a day if it is necessary for the performance of the activities and procedures determined in the care plan of persons receiving the care service.
+
+(3) The care service shall be provided directly by a care worker and assistant care worker. The care worker shall supervise the work of the assistant care worker.
+
+[RT I, 30.12.2015, 5 – entry into force 01.01.2020]
+
+(4) A care worker providing the service directly shall comply with one of the following requirements for professional training:
+
+1)
+
+has completed a study programme of formal vocational education aimed at achieving the learning outcomes described in the professional standard of a care worker;
+
+2)
+
+has completed a study programme of in-service training aimed at achieving the learning outcomes described in the professional standard of a care worker;
+
+3)
+
+has been awarded the profession of a care worker on the basis of the Professions Act.
+
+[RT I, 30.12.2015, 5 – entry into force 01.01.2020]
+
+(5) The service shall not be provided directly by a person whose criminal record for an intentionally committed criminal offence may endanger the life, health and property of the person entitled to receive the service.
+
+(6) The minister in charge of the policy sector may establish by a regulation detailed requirements for the number of employees providing care service directly.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+§ 22
+
+1
+
+.
+
+Financing of 24-hour general care service provided outside home
+
+(1) Where a local authority has determined that a person needs 24-hour general care service provided outside home, the cost of the place of service is financed from the budget of the local authority of the residence of the recipient of the service entered in the population register and from a fee charged from the person.
+
+(2) In the case provided in subsection 1 of this section, a local authority finances the following expenses of care workers and assistant care workers directly providing the care service specified in subsection 3 of § 22 of this Act:
+
+1)
+
+staff costs;
+
+2)
+
+the costs of special work clothes and personal protective equipment;
+
+3)
+
+the costs of medical examination and vaccination;
+
+4)
+
+training and supervision costs.
+
+(3) A local authority may set a limit on the payment of the costs specified in subsection 2 of this section which ensures the availability of the service to the recipient of the service, taking into account the requirements for the number of employees directly providing care service established on the basis of subsection 6 of § 22 of this Act.
+
+(4) In the case provided in subsection 1 of this section, the recipient of the service pays the accommodation and catering costs and other costs related to the provision of the service out of the cost of the place of service.
+
+(5) In the case the income of the recipient of the service is lower than the average old-age pension for the second quarter of the year preceding the budgetary year published by Statistics Estonia, the local authority covers the difference between the costs paid by the recipient of the service and the income of the recipient of the service, but not more than the difference between the average old-age pension for the second quarter of the previous year and the income of the recipient of the service. Income is deemed to include the recipient’s state pension, funded pension within the meaning of the Funded Pensions Act, work ability allowance within the meaning of the Work Ability Allowance Act and income subject to social tax within the meaning of the Social Tax Act.
+
+(6) A provider of general care service provided outside home discloses the cost of the place of service and the actual costs of the care workers and assistant care workers provided in subsection 2 of this section per recipient of the service.
+
+[RT I, 22.12.2022, 3 – entry into force 01.07.2023]
+
+§ 22
+
+2
+
+.
+
+Requirements for provision of general care service provided outside home
+
+The living environment and catering of a person receiving general care service outside the home must comply with the requirements provided in and established on the basis of §§ 21 and 22 of the Public Health Act.
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+Division 3
+
+Support Person Service
+
+§ 23.
+
+Objective and content of support person service
+
+(1) Support person service is a social service organised by a local authority the objective of which is to support the ability to cope independently in situations where a person needs significant personal assistance in performing his or her obligations and exercising his or her rights due to social, financial, psychological or health problems. Personal assistance includes guidance, motivation and development of greater independence and responsibility of a person.
+
+(2) Upon provision of the support person service to a person raising a child an additional objective is to ensure that the child is cared for and raised in a safe and supportive environment. A person who is a person directly providing alternative care services for the purposes of this Act, is not deemed to be a person raising a child.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(3) The objective of provision of the support person service to a child is to support, in co-operation with the person raising the child, the development of the child, including performance of care procedures in the case of a disabled child, if necessary. The support person shall assist the child in activities which promote development, guide and motivate the child to cope in everyday life and help to communicate with family members and outside the home.
+
+(4) The minister in charge of the policy sector may establish by a regulation detailed requirements for the objective and content of the support person service, including the activities necessary for the achievement of the objective of the service.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+§ 24.
+
+Obligations of local authorities
+
+(1) The extent of the need for personal assistance shall be assessed and specified separately for each person.
+
+(2) Upon submission of a request, a local authority shall assist the recipient of the service in choosing the person providing the service directly. Before determination of the person providing the service directly, the recipient of the service has the right to meet the person in order to assess their compatibility.
+
+(3) A local authority shall prepare in co-operation with the person receiving the service and the service provider an administrative act or a contract under public law for the provision of the service which shall set out the activities arising from the need for personal assistance.
+
+§ 25.
+
+Requirements for persons directly providing services
+
+(1) The person providing the service directly shall provide the service on the basis of the administrative act or the contract under public law for the provision of the service.
+
+(2) The service shall not be provided directly by a person:
+
+1)
+
+whose criminal record for an intentionally committed criminal offence may endanger the life, health and property of the person entitled to receive the service;
+
+2)
+
+who is an ascendant or descendant of the recipient of the service related in the first or second degree;
+
+3)
+
+who is permanently living in the same dwelling with the recipient of the service.
+
+Division 4
+
+Curatorship of Adults
+
+§ 26.
+
+Objective and content of curatorship of adults
+
+(1) Curatorship is established by a local authority for an adult who due to mental or physical disability needs assistance in the exercise of his or her rights and the performance of his or her obligations on the basis of an application of the person. The duties of a curator shall be determined upon establishment of the curatorship.
+
+(2) Curatorship is exercised by a person appointed by a local authority. Curatorship is established and a curator is appointed with the consent of the person under curatorship.
+
+Division 5
+
+Personal Assistant Service
+
+§ 27.
+
+Objective and content of personal assistant service
+
+(1) Personal assistant service is a social service organised by a local authority the objective of which is to increase the independent coping ability and participation in all areas of life of an adult who needs physical assistance due to a disability within the meaning of subsection 1 of § 2 of the Social Benefits for Disabled Persons Act and reduce the care burden of the legal curators of the person receiving the service.
+
+(2) Upon provision of the service, assistance is provided to the recipient of the service in activities for the performance of which the person needs physical assistance due to a disability. A personal assistant shall assist the person in his or her everyday life activities, such as moving about, eating, cooking, clothing, hygiene, housework and other activities in which the person needs guidance or personal assistance.
+
+(3) The minister in charge of the policy sector may establish by a regulation detailed requirements for the objective and content of the personal assistant service, including the activities necessary for the achievement of the objective of the service.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+§ 28.
+
+Obligations of local authorities
+
+(1) The extent of the need for personal assistance shall be assessed and specified separately for each person. If during the period of providing the service the extent of the need for personal assistance changes due to the person's state of health or physical and social environment, a reassessment shall be carried out.
+
+(2) A local authority shall prepare in co-operation with the person receiving the service and the service provider an administrative act or a contract under public law for the provision of the service which shall,
+
+inter alia
+
+, set out the activities arising from the extent of the need for personal assistance and the general instructions of the recipient of the service.
+
+(3) A recipient of the service has the right to choose the person providing the service directly. Upon submission of a request, a local authority shall assist the recipient of the service in finding the person providing the service directly. Before determination of the person providing the service directly, the recipient of the service has the right to meet the person in order to assess their compatibility.
+
+§ 29.
+
+Requirements for persons directly providing services
+
+(1) A person providing the service directly shall provide the service on the basis of the administrative act or the contract under public law for the provision of the service and the instructions of the recipient of the service.
+
+(2) The service shall not be provided directly by a person:
+
+1)
+
+whose criminal record for an intentionally committed criminal offence may endanger the life, health and property of the person entitled to receive the service;
+
+2)
+
+who is an ascendant or descendant of the recipient of the service related in the first or second degree;
+
+3)
+
+who is permanently living in the same dwelling with the recipient of the service.
+
+Division 6
+
+Shelter Service
+
+§ 30.
+
+Objective and content of shelter service
+
+(1) Shelter service is a social service organised by a local authority the objective of which is to provide a place of temporary overnight stay to an adult who is unable to find a place of overnight stay.
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+(2) The minister in charge of the policy sector may establish by a regulation detailed requirements for the objective and content of the shelter service, including the activities necessary for the achievement of the objective of the service.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+§ 31.
+
+Obligations of local authorities
+
+(1) The organisation of the shelter service shall be ensured by the local authority where the person is staying at the time the need for the service arises.
+
+(2) The local authority may, by a contract under public law, authorise legal persons in private law or natural persons or agencies of other local authorities to decide on the provision of the shelter service.
+
+§ 32.
+
+Requirements for service providers
+
+A provider of shelter service shall establish internal rules and inform the person upon commencement of the provision of the service of the internal rules and the rights of the person and the restrictions during the receipt of the service in such a way that the person is able to understand these.
+
+§ 32
+
+1
+
+.
+
+Requirements for provision of shelter service
+
+The living environment in which the shelter service is provided must comply with the requirements provided in and established on the basis of § 21 of the Public Health Act.
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+Division 7
+
+Safe House Service
+
+§ 33.
+
+Objective and content of safe house service
+
+(1) Safe house service is a social service organised by a local authority the objective of which is to ensure temporary housing, a safe environment and basic assistance to the persons specified in subsection 2 of this section. Upon provision of basic assistance, the person shall be ensured crisis assistance, if necessary, which restores the person's mental balance and operational capacity in everyday life and informed of other possibilities to receive assistance. Based on the age and needs of the person, his or her care and development shall also be ensured.
+
+(2) A local authority shall ensure the availability of the service to the following persons during the period of time when it is necessary for ensuring safety and organising their future life:
+
+1)
+
+a child who needs assistance due to deficiencies in his or her care which endanger his or her life, health or development;
+
+2)
+
+an adult who needs a safe environment.
+
+(3) A person who brings a child or an adult to a provider of safe house service is required to provide the service provider with information necessary for the provision of the service which is known to the person.
+
+(4) The minister in charge of the policy sector may establish by a regulation detailed requirements for the objective and content of the safe house service, including the activities necessary for the achievement of the objective of the service.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+§ 34.
+
+Obligations of service provider
+
+A service provider is required to inform:
+
+1)
+
+the local authority of its place of activity of the arrival of a child at the safe house not later than on the next working day, unless the child has been referred to the safe house by a decision of the local authority;
+
+2)
+
+the local authority of its place of activity and, if necessary, a regional victim support worker of the Social Insurance Board of the arrival of an adult at the safe house within five working days with his or her written consent.
+
+§ 35.
+
+Obligations of local authorities
+
+(1) Upon provision of the safe house service to a child, the local authority of the child's residence entered in the population register is required to provide information necessary for the provision of the service at the request of the service provider.
+
+(2) Upon provision of the safe house service to a child who is staying at the safe house without parents and who has not been referred to the safe house by a decision of the local authority, an official of the local authority of the child's residence entered in the population register engaged in social affairs is required, within five working days as of the arrival of the child in the safe house, to assess the well-being of the child and plan further activities necessary for ensuring the further well-being of the child.
+
+§ 36.
+
+Requirements for persons directly providing services
+
+(1) A person providing the service to a child directly shall comply with the following requirements:
+
+1)
+
+the person has not been deprived of the right of custody over a child in full and it has not been restricted;
+
+2)
+
+the person has not been removed from performance of the obligations of a guardian, caregiver or a foster parent;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+3)
+
+the person is not dependent on alcohol, narcotic drugs or psychotropic substances.
+
+(2) A person providing the service to a child directly shall comply with one of the following requirements:
+
+1)
+
+has acquired at least secondary education and state-recognised vocational or higher education in education, psychology or social work;
+
+2)
+
+has acquired at least secondary education and shall complete the in-service training for a person directly providing the safe house service to a child established on the basis of subsection 3 of this section within one year from commencing employment.
+
+[RT I, 09.04.2020, 14 – entry into force 19.04.2020]
+
+(3) The plan of the in-service training for a person directly providing the safe house service to a child, including the detailed scope, structure and content of the in-service training shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 09.04.2020, 14 – entry into force 19.04.2020]
+
+§ 37.
+
+Conditions for provision of safe house service
+
+(1) The service shall be provided to children and adults in separate premises, unless a child is staying at the safe house together with an adult family member.
+
+(2) [Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(3) The living environment and catering of a person receiving shelter service must comply with the requirements provided in and established on the basis of §§ 21 and 22 of the Public Health Act.
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+(4) An activity licence is required for the provision of the safe house service pursuant to clause 3 of § 151 of this Act. A separate activity licence is granted for the provision of the service to children and adults.
+
+Division 8
+
+Social Transport Service
+
+§ 38.
+
+Objective and content of social transport service
+
+(1) Social transport service is a social service organised by a local authority the objective of which is to enable a person, who suffers from a disability within the meaning of subsection 1 of § 2 of the Social Benefits for Disabled Persons Act and whose disability hinders the use of a personal or public transport vehicle, to use a means of transport which corresponds to his or her needs in order to get to work or an educational institution or use public services.
+
+(2) The minister in charge of the policy sector may establish by a regulation detailed requirements for the objective and content of the social transport service, including the activities necessary for the achievement of the objective of the service.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+§ 39.
+
+Requirements for service providers
+
+A service provider shall establish a safe operating procedure and ensure the availability thereof to persons using the service and persons providing the service directly.
+
+§ 40.
+
+Fee for social transport service
+
+(1) A fee may be charged for the social transport service provided as a regular service in an amount the person would spend on travelling the same distance by the least expensive existing means of transport if the person had no restrictions caused by the disability.
+
+(2) A fee may be charged for the social transport service provided as an occasional service or taxi service in an amount exceeding the amount specified in subsection 1 of this section.
+
+Division 9
+
+Provision of Dwelling
+
+§ 41.
+
+Objective and content of provision of dwelling
+
+(1) Provision of dwelling is a social service organised by a local authority the objective of which is to ensure the possibility to use a dwelling to a person who due to socio-economic situation is unable to provide a dwelling which corresponds to the needs of the person and his or her family.
+
+(2) The minister in charge of the policy sector may establish by a regulation detailed requirements for the objective and content of the provision of dwelling, including the activities necessary for the achievement of the objective of the service.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+§ 42.
+
+Provision of dwelling to disabled persons
+
+(1) Persons who have difficulties moving about, caring for themselves or communicating in a dwelling as a result of a disability within the meaning of subsection 1 of § 2 of the Social Benefits for Disabled Persons Act shall be assisted by a local authority in adapting their dwelling or in obtaining a more suitable dwelling.
+
+(2) Ensuring the possibility to use a dwelling shall be based on the principle that the disabled person would be able to live at home for as long as possible.
+
+§ 43.
+
+Requirements for provided dwellings
+
+(1) A dwelling granted in the use of a person shall comply with the following:
+
+1)
+
+the requirements provided in and established on the basis of § 21 of the Public Health Act;
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+2)
+
+the justified needs of the person and his or her family, and the size of the family.
+
+(2) A local authority may offer the possibility to use the same dwelling only to persons who wish to live in the same dwelling.
+
+Division 10
+
+Debt Counselling Service
+
+§ 44.
+
+Objective and content of debt counselling service
+
+(1) Debt counselling service is a social service organised by a local authority the objective of which is to assist a person in identifying his or her financial situation, conducting negotiations with creditors and satisfying claims, avoid the creation of new debts through enhancing the ability to cope and resolve other problems related to debt.
+
+(2) A situation in which a claim has been submitted to a person to perform a financial obligation arising from a relationship under the law of obligations or the law which has fallen due but which the person is unable to perform independently is deemed to be a debt for the purposes of the debt counselling service.
+
+(3) Debt counselling service includes counselling and guidance of a person and prevention of further debts.
+
+(4) In the case of a person with restricted active legal capacity, the service is provided to his or her legal representative on the basis of an application of the legal representative.
+
+(5) The minister in charge of the policy sector may establish by a regulation detailed requirements for the objective and content of the debt counselling service, including the activities necessary for the achievement of the objective of the service.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+§ 45.
+
+Requirements for persons directly providing services
+
+(1) A person providing the service directly shall comply with one of the following requirements for professional training:
+
+1)
+
+the person has been awarded the profession of a debt counsellor on the basis of the Professions Act;
+
+2)
+
+the person has acquired state-recognised higher education and completed in-service training of a debt counsellor.
+
+(2) The plan of the in-service training of a debt counsellor, including the detailed scope, structure and content of the in-service training shall be established by a regulation of the minister in charge of the policy sector.
+
+Division 11
+
+Childcare Service for Children with Extreme Need for Assistance and Support
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+§ 45
+
+1
+
+.
+
+Objective and target group of childcare service for children with extreme need for assistance and support
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+(1) The objective of childcare service for children with extreme need for assistance and support (hereinafter
+
+childcare service
+
+) is to reduce the care burden of the person raising a child with extreme need for assistance and support, to promote the ability of the person to cope or work, and to support the well-being and development of the child.
+
+(2) Children with extreme need for assistance and support are children in need of assistance for the purposes of the Child Protection Act who due to their mental or physical health state require more care, supervision and other support than children of the same age on average.
+
+(3) Childcare service is provided outside the period of schooling and education at an educational institution.
+
+(4) A child has the right to receive childcare service until the age of 18. A child without secondary education who is enrolled in a basic school, upper secondary school or formal vocational education or who is included in the list of a daytime in-service training course of a state agency administered by the Ministry of Education and Research is guaranteed childcare service until the end of the current academic year or the end of the in-service training course or until the student is excluded from the list of the school or the in-service training course.
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+§ 45
+
+2
+
+.
+
+Obligations of local authorities
+
+(1) A local authority assesses the need for assistance of a child with extreme need for assistance and support and the person raising the child in order to determine the need for and the volume of childcare service.
+
+(2) A local authority prepares in co-operation with the person receiving the service and the service provider an administrative act or a contract under public law for the provision of the service which sets out the activities arising from the need for childcare service and the essential conditions concerning the provision of the service which are at least the volume, time and place of provision of the service.
+
+(3) A local authority may use the funds provided in subsection 3
+
+1
+
+of § 156 of this Act to finance childcare service.
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+§ 45
+
+3
+
+.
+
+Requirements for childcare service
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+(1) Upon provision of the service the service provider guarantees the care, development and safety of the child.
+
+(2) A person directly providing the service (hereinafter
+
+childcarer
+
+) may care for up to five children at a time, including the childcarer's own persons who need care at the same time.
+
+(3) Where the childcare service is provided outside the dwelling of the child receiving the childcare service, the living environment and catering of the child receiving the service must comply with the requirements provided in and established on the basis of §§ 21 and 22 of the Public Health Act.
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+§ 45
+
+4
+
+.
+
+Requirements for childcarer
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+(1) A childcarer must meet the following requirements:
+
+1)
+
+has acquired at least secondary education or vocational education and has the profession of a childcarer awarded on the basis of the Professions Act, or has acquired at least secondary education or vocational education and has work experience with children and personal characteristics suitable for such work pursuant to the professional standard of a childcarer, which are assessed by the employer;
+
+2)
+
+has not been deprived of the right of custody on the grounds provided in the Family Law Act;
+
+3)
+
+has undergone first aid training during the preceding 24 months which is at least a 16-hour first aid training where it is the first training or an 8-hour training for the renewal of knowledge;
+
+4)
+
+has undergone regular medical examination for communicable diseases, including chest radiography in every two years, and holds a health certificate issued by the family physician concerning the undergone medical examination for communicable diseases.
+
+(2) A person who has acquired professional qualifications in a foreign state that have been recognised in accordance with the Recognition of Foreign Professional Qualifications Act may also act as a childcarer. The competent authority provided in subsection 2 of § 7 of the same Act is the Ministry of Social Affairs.
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+Division 12
+
+Alternative Care Service
+
+[RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+§ 45
+
+5
+
+.
+
+Objective and content of alternative care service
+
+(1) Alternative care service is a social service organised by a local authority, the objective of which is to ensure the long- or short-term well-being and rights of a child, ensure family-like living conditions to a child for the satisfaction of the basic needs of the child, to create a secure physical and social environment promoting his or her development and to prepare the child for coping in accordance with his or her abilities as an adult.
+
+(2) A foster family, family house and a substitute home are providers of alternative care service (hereinafter in this Division
+
+service provider
+
+). A person directly providing alternative care services is a foster parent, family parent and an educator (hereinafter in this Division jointly
+
+person directly raising a child
+
+).
+
+(3) Alternative care service shall be provided:
+
+1)
+
+as a long-term 24-hour service in the cases specified in subsection 1 of § 45
+
+9
+
+of this Act;
+
+2)
+
+short-term continuously for up to 90 days under the consent of a parent with right of custody or a guardian who is a natural person;
+
+3)
+
+short-term periodically under the consent of a parent with right of custody or a guardian who is a natural person.
+
+(4) Safe house service, alternative care service in cases specified in clause 1 of subsection 3 of this section and alternative care service specified in clauses 2 and 3 of subsection 3 of this section shall be provided in separate premises.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(5) Alternative care service in the case specified in clause 1 of subsection 3 of this section and in the cases specified in clauses 2 and 3 of subsection 3 of this section may be provided in the same premises only if:
+
+1)
+
+the children are from the same family or the child has an extreme need for care and assistance;
+
+2)
+
+it serves the interests of the children receiving alternative care;
+
+3)
+
+the legal representatives of the children placed or to be placed in the family have given their permission for it;
+
+4)
+
+it is approved by the Social Insurance Board.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+§ 45
+
+6
+
+.
+
+Provision of alternative care service in foster family
+
+(1) The provision of alternative care service in a foster family is the care for a child in a suitable family of which he or she is not a member.
+
+(2) There can be up to four persons under curatorship in a foster family at one time, including the caregiver's own children who are 14 years of age or younger and other persons who need care.
+
+(3) A foster family can include more than four persons under curatorship if:
+
+1)
+
+the children are from the same family or other circumstances exist where it is necessary to ensure that the children are raised together;
+
+2)
+
+it serves the interests of the children receiving alternative care;
+
+3)
+
+the legal representatives of the children placed or to be placed in the family have given their permission for it;
+
+4)
+
+it is approved by the Social Insurance Board.
+
+[RT I, 09.04.2020, 14 – entry into force 19.04.2020]
+
+(4) A person who wishes to become a foster family shall submit an application to the Social Insurance Board that shall perform activities related to suitability assessment and preparations.
+
+(5) The list of documents to be collected and data to be submitted by the Social Insurance Board for assessing the suitability of the foster family and the activities for assessing the suitability of the foster family shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 45
+
+7
+
+.
+
+Provision of alternative care service in family house
+
+(1) The provision of alternative care service in a family house is the provision of the service in a family with up to three family parents that also has up to six children at the same time.
+
+(1
+
+1
+
+) Alternative care at a family house may be received by more than six children if:
+
+1)
+
+the children are from the same family or other circumstances exist where it is necessary to ensure that the children are raised together;
+
+2)
+
+it serves the interests of the children receiving alternative care;
+
+3)
+
+the legal representatives of the children placed or to be placed in the family have given their permission for it;
+
+4)
+
+it is approved by the Social Insurance Board.
+
+[RT I, 09.04.2020, 14 – entry into force 19.04.2020]
+
+(2) The provision of alternative care service in a family house requires the presence of a family parent and, as appropriate for ensuring the well-being of children, an assistant compliant with the requirements provided for in subsection 1 of § 45
+
+13
+
+of this Act.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 45
+
+8
+
+.
+
+Provision of alternative care service in substitute home
+
+(1) The provision of alternative care service in a substitute home is the provision of the service in a family with educators that also has up to six children at the same time.
+
+(1
+
+1
+
+) Alternative care at a substitute home may be received by more than six children if:
+
+1)
+
+the children are from the same family or other circumstances exist where it is necessary to ensure that the children are raised together;
+
+2)
+
+it serves the interests of the children receiving alternative care;
+
+3)
+
+the legal representatives of the children placed or to be placed in the family have given their permission for it;
+
+4)
+
+it is approved by the Social Insurance Board.
+
+[RT I, 09.04.2020, 14 – entry into force 19.04.2020]
+
+(2) If the children of the substitute home family are present in the substitute home, it is compulsory for there to be at least one educator present for each family on a 24-hour basis and, as appropriate for ensuring the well-being of children, an assistant compliant with the requirements provided for in subsection 1 of § 45
+
+13
+
+of this Act.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 45
+
+9
+
+.
+
+Obligations of local authorities
+
+(1) A local authority shall ensure alternative care service for children until he or she reaches 18 years of age if:
+
+1)
+
+the parent of the child is deceased;
+
+2)
+
+a guardian has been appointed to the parent of the child due to restricted active legal capacity;
+
+3)
+
+the right of custody of the child's parent has been suspended, restricted or the parent has been deprived of it;
+
+4)
+
+the child is separated from his or her parent.
+
+(2) If the child specified in subsection 1 of this section has commenced acquisition of education before attaining 18 years of age and continues the acquisition of education in daytime or, for medical reasons, in another form of study at a basic school, upper secondary school or a formal vocational education, the local authority shall ensure alternative care service for the child:
+
+1)
+
+in the event of acquisition of education until the start of the following academic year, but not more than until the start of the following academic year the year that the child attained 19 years of age;
+
+2)
+
+until the interruption of studies, but not more than until the child attains 19 years of age, or
+
+3)
+
+until the start of the following academic year if the child attains 19 years of age.
+
+(3) A local authority may ensure alternative care service to a child in need of assistance whose parent with right of custody or guardian who is a natural person has given their consent that alternative care service shall be provided for up to 90 days or periodically.
+
+4)
+
+In organising alternative care service the local authority shall:
+
+1)
+
+assess the need to provide alternative care service based on the well-being of the child;
+
+2)
+
+make the decision to place a child into a foster family or in exceptional cases, considering the essential interests of the child, also in a family house or a substitute home;
+
+3)
+
+cover the costs related to the maintenance of a child and pay the service provider for the service;
+
+4)
+
+visit a child receiving alternative care at least twice a year to ensure the rights of the child and to assess the well-being of the child;
+
+5)
+
+gather and maintain the documents of a child receiving alternative care and transfer to the service provider the documents of a child referred to receive care that are necessary for the provision of alternative care service;
+
+6)
+
+ensure the preservation of the child's connections with his or her parents and former community and establish conditions for the child to return there.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 45
+
+10
+
+.
+
+Provision of alternative care service
+
+(1) An activity licence is required for the provision of alternative care service, except for the provision of alternative care service in a foster family, pursuant to clause 2 of § 151 of this Act.
+
+(2) If alternative care service is provided in a foster family, the service may be provided by a natural person whom the Social Insurance Board has entered into the register created under subsection 1 of § 141 of this Act.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 45
+
+11
+
+.
+
+Funding of alternative care service
+
+(1) Alternative care service shall be financed from the budget of the local authority performing the duties of the guardian of the child receiving the service or in the absence thereof, from the budget of the local authority of the child's residence entered in the population register, and the income of the child receiving alternative care.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(2) The maintenance of a child and additional needs arising from special needs are also financed from the income prescribed to the child from the state budget for monthly maintenance and for the partial compensation of additional costs related to a disability.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(3) The average monthly sum that should be spent to cover the personal expenses of a child 240 euros and no less than 2880 euros per year.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(4) A foster parent shall receive an allowance in the amount of at least one-half of the minimum monthly wage established under subsection 5 of § 29 of the Employment Contracts Act for one child in his or her care.
+
+[RT I, 09.04.2020, 14 – entry into force 01.07.2020]
+
+§ 45
+
+12
+
+.
+
+Obligations of service provider
+
+(1) A service provider shall ensure:
+
+1)
+
+the care, education, development and safety of a child receiving alternative care;
+
+2)
+
+the collection of the information and required documents concerning a child receiving alternative care;
+
+3)
+
+that the family parent and educator with whom the service provider has a contractual relationship complies with the requirements provided for in subsection 1 of § 45
+
+13
+
+of this Act;
+
+4)
+
+the preparation and submission of statistical reports about alternative care service pursuant to the procedure established under subsection 4 of § 11 of this Act;
+
+5)
+
+in the event of termination of alternative care service, the transfer of documents that are in its possession to the local authority performing the duties of a guardian, concerning a child who received alternative care;
+
+6)
+
+[repealed – RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+7)
+
+the compliance of the living environment and catering of a person receiving alternative care service with the requirements provided in and established on the basis of §§ 21 and 22 of the Public Health Act.
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+(2) As appropriate, the service provider in cooperation with the local authority that placed the children to receive the service, must limit the maximum permitted number of children in the family as provided for in subsection 2 of § 45
+
+6
+
+, subsection1 of § 457 and subsection 1 of § 45
+
+8
+
+of this Act to ensure the well-being of the children.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 45
+
+13
+
+.
+
+Requirements for persons and their family members directly raising child
+
+(1) A person directly raising a child shall comply with the following minimum requirements:
+
+1)
+
+the person is with active legal capacity, copes independently and resides permanently in Estonia;
+
+2)
+
+the person is an adult, except a family parent who must be at least 25 years of age;
+
+3)
+
+the person has the necessary personal characteristics to raise a child;
+
+4)
+
+the person has not been deprived of the right of custody and it has not been restricted on the grounds provided for in the Family Law Act;
+
+5)
+
+the person has not been removed from performance of the obligations of a guardian;
+
+6)
+
+the person complies with the requirements provided for in § 20 of the Child Protection Act;
+
+7)
+
+the person is not dependent on alcohol and narcotic drugs or psychotropic substances;
+
+8)
+
+the person has experience in working with children, except foster parents;
+
+9)
+
+the person has acquired at least secondary education;
+
+10)
+
+the person shall submit a health certificate concerning the passing of a medical examination for communicable diseases according to clause 3 of subsection 1 of § 13 of the Communicable Diseases Prevention and Control Act and shall thereafter regularly pass a medical examination according to subsection 6 of § 13 of the Communicable Diseases Prevention and Control;
+
+11)
+
+a foster parent must have undergone the in-service training established under subsection 5 of this section;
+
+12)
+
+a family parent, a substitute home educator and an assistant of a parent or a substitute home educator must have undergone the in-service training established under subsection 5 of this section or are required to undertake to undergo the said training within one year of employment.
+
+(2) If alternative care service is provided in the dwellings of a person directly raising a child, the adults with whom the person directly raising a child has common dwellings with are required to submit a health certificate concerning the passing of a medical examination for communicable diseases according to clause 3 of subsection 1 of § 13 of the Communicable Diseases Prevention and Control Act and thereafter regularly pass a medical examination according to subsection 6 of § 13 of the Communicable Diseases Prevention and Control.
+
+(3) If alternative care service is provided in the dwellings of the person directly raising a child, the adults using the same dwellings must comply with the requirements provided for in clauses 4–7 of subsection 1 of this section. The person directly raising the child and adults living with them in the same dwellings shall confirm their compliance with the requirements by signature.
+
+(4) Persons who have acquired foreign professional qualifications may be employed as persons directly raising a child if their professional qualifications have been recognised in accordance with the Recognition of Foreign Professional Qualifications Act. The competent authority provided for in subsection 2 of § 7 of the Recognition of Foreign Professional Qualifications Act is the Ministry of Social Affairs.
+
+(5) The specific conditions and procedure for the in-service training of a person directly raising a child when providing alternative care service shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 45
+
+14
+
+.
+
+Contract entered into with family parent
+
+[RT I, 22.03.2021, 2 – entry into force 01.04.2021]
+
+(1) If an employment contract is entered into with a family parent based on the nature of his or her work, the contract shall,
+
+inter alia
+
+, contain the following conditions:
+
+1)
+
+in the case of alternative care service provided in a family house with two and three family parents, the minimum working time which shall generally not be shorter than ten twenty-four hour periods in a calendar month, and the continuous working time which shall not be shorter than five twenty-four hour periods;
+
+2)
+
+in the case of alternative care service provided in a family house with two and three family parents, the maximum working time which shall generally not be longer than 20 twenty-four hour periods in a calendar month, and an exception which the parties may agree on to the maximum extent of five twenty-four hour periods.
+
+(2) The provisions of §§ 43–53 of the Employment Contracts Act shall not apply to an employment contract entered into with a family parent.
+
+(3) If an authorisation agreement is entered into with a family parent based on the nature of his or her work, the agreement shall contain at least the following conditions:
+
+1)
+
+the place for the provision of the service;
+
+2)
+
+in the case of alternative care service provided in a family house with two and three family parents, the minimum duration of the provision of the service which shall generally not be shorter than ten twenty-four hour periods in a calendar month, and the duration of continuous provision of the service which shall not be shorter than five twenty-four hour periods;
+
+3)
+
+in the case of alternative care service provided in a family house with two and three family parents, the maximum duration of the provision of the service which shall generally not be longer than 20 twenty-four hour periods in a calendar month, and an exception to the maximum extent of five twenty-four hour periods;
+
+4)
+
+organisation of provision of the service, primarily the beginning and end of provision of the service;
+
+5)
+
+procedure for payment of monthly fee;
+
+6)
+
+the term for advance notice upon extraordinary cancellation of the agreement, which is at least 30 calendar days;
+
+7)
+
+the right of the family parent to receive compensation from the other party upon failure to comply with the term provided for in clause 6 of this subsection to the extent which he or she would have been entitled to had the term been complied with;
+
+8)
+
+in the case of alternative care service provided in a family house with two and three family parents, the right to holiday pursuant to the procedure provided for in the Employment Contracts Act;
+
+9)
+
+in the case of alternative care service provided by one family parent, the right to use the assistance of a person who complies with the requirements established in clauses 1–10 of subsection 1 of § 45
+
+13
+
+of this Act on 42 calendar days a year.
+
+(4) The requirements arising from the Occupational Health and Safety Act shall apply to the provision of the service on the basis of an authorisation agreement entered into with a family parent.
+
+[RT I, 22.03.2021, 2 – entry into force 01.04.2021]
+
+Division 13
+
+Continued Care Service
+
+[RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+§ 45
+
+15
+
+.
+
+Objective and content of continued care service
+
+(1) Continued care service is a social service organised by a local authority the objective of which is to support the ability of a person leaving alternative care and guardianship to cope independently and continue studies.
+
+(2) Continued care service shall be provided based on a case plan on the basis of which the local authority shall ensure housing and needs-based support services and benefits.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 45
+
+16
+
+.
+
+Obligations of local authorities
+
+(1) A local authority shall ensure continued care service for an adult receiving alternative care on the basis of subsection 1 of § 45
+
+9
+
+of this Act, who continues attaining a formal vocational education, a professional higher education, in Bachelor's study or Master's study or integrated Bachelor's and Master's studies at a university in the following academic year after acquisition of basic, secondary, vocational or higher education:
+
+1)
+
+until the end of the initial standard period of study established by the corresponding curriculum, but not more than until the person attains 25 years of age;
+
+2)
+
+until the interruption of studies, but not more than until the person attains 25 years of age, or
+
+3)
+
+until the person attains 25 years of age.
+
+(1
+
+1
+
+) A local authority shall ensure continued care service for an adult receiving alternative care on the basis of subsection 1 of § 45
+
+9
+
+of this Act who at the time of referral to continued care continues the acquisition of education in a form of study specified in subsection 2 of § 45
+
+9
+
+of this Act.
+
+[RT I, 22.03.2021, 2 – entry into force 01.04.2021]
+
+(2) A local authority may ensure continued care service for a person of up to 25 years of age who received alternative care or was under guardianship until becoming an adult.
+
+[RT I, 22.03.2021, 2 – entry into force 01.04.2021]
+
+(3) A local authority ensures that the living environment of the housing specified in subsection 2 of § 45
+
+15
+
+of this Act complies with the requirements provided in and established on the basis of § 21 of the Public Health Act.
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+§ 45
+
+17
+
+.
+
+Funding of continued care service
+
+(1) Continued care service shall be financed from the budget of the local authority of the residence entered in the population register of the person receiving the service and from the income of the person receiving continued care.
+
+(2) The provisions provided for in subsection 3 of § 45
+
+11
+
+of this Act shall provide the basis for covering the personal expenses of a person.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+Chapter 3
+
+Assistance Organised by State
+
+Subchapter 1
+
+Assumption by State of Obligation to Pay Fee upon Purchase or Lease of Technical Aid
+
+Division 1
+
+Right to Apply for Assumption by State of Obligation to Pay Fee upon Purchasing or Leasing Technical Aid
+
+§ 46.
+
+Assumption by state of obligation to pay fee upon purchase or lease of technical aid
+
+Upon purchasing or leasing a technical aid entered in the list of technical aids, the state shall assume from the entitled person the obligation to pay the fee (hereinafter
+
+assumption of obligation to pay fee
+
+) provided that:
+
+1)
+
+the entitled person and the seller or lessor of the technical aid agree on the sale or lease of the technical aid on conditions which as a minimum comply with the requirements provided for in this Subchapter;
+
+2)
+
+the seller or lessor of the technical aid and the state have entered into a contract specified in § 54 of this Act.
+
+§ 47.
+
+Entitled persons
+
+(1) A person who has been established to be in need for a technical aid and who needs the technical aid to compensate for functional impairment arising from state of health and to reduce its impact on independent coping has the right to apply for the assumption of the obligation to pay the fee.
+
+[RT I, 17.08.2024, 1 – entry into force 01.09.2025]
+
+(1
+
+1
+
+) The conditions under which a functional impairment arising from state of health requires a technical aid is established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 17.08.2024, 1 – entry into force 01.09.2025]
+
+(2) [Repealed – RT I, 17.08.2024, 1 – entry into force 01.09.2025]
+
+(2
+
+1
+
+) [Repealed – RT I, 17.08.2024, 1 – entry into force 01.09.2025]
+
+(3) Persons who are imprisoned or in custody pending trial shall not have the right to apply for the assumption of the obligation to pay the fee, except in the case of a personal technical aid.
+
+[RT I, 27.11.2018, 2 – entry into force 01.01.2019]
+
+(3
+
+1
+
+) Persons who receive general care service provided outside the home of a person on a 24-hour basis, receive community living service if the community living service is provided for more than ten persons with special needs, or receive 24-hour special care service shall not have the right to apply for the assumption of the obligation to pay the fee for a technical aid that is directly related to the provision of care service or to the building used for the provision of service.
+
+[RT I, 27.11.2018, 2 – entry into force 01.01.2019]
+
+(3
+
+2
+
+) Persons who receive 24-hour special care service financed from the state budget shall not have the right to apply for the assumption of the obligation to pay the fee for technical aids specified in subsection 3
+
+1
+
+of this section as well as for incontinence products and skin protection and skin cleaning products the expenses of which shall be covered by the state budget funds within the service cost.
+
+[RT I, 27.11.2018, 2 – entry into force 01.01.2019]
+
+(3
+
+3
+
+) For the purposes of subsection 3
+
+1
+
+of this section, a technical aid that is directly related to the provision of care service or to the building used for the provision of service:
+
+1)
+
+primarily facilitates the work of the caregiver and not the persons' individual ability to manage;
+
+2)
+
+is related to the security of the building used for the provision of service or to the granting of access to such a building;
+
+3)
+
+is necessary for persons receiving care service for hygiene procedures, except for non-reusable technical aids;
+
+4)
+
+is prescribed for the provision of safe and health-promoting service in a regulation established on the basis of § 21 of the Public Health Act, and a technical aid which replaces the product or device prescribed for the provision of service and better corresponds to the needs of the person receiving care service;
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+5)
+
+can be attached to the building or the furniture and facilitates mobility in the building.
+
+[RT I, 27.11.2018, 2 – entry into force 01.01.2019]
+
+(3
+
+4
+
+) The list of technical aids which comply with the terms and conditions specified in subsection 3
+
+3
+
+of this section shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 27.11.2018, 2 – entry into force 01.01.2019]
+
+(3
+
+5
+
+) A technical aid certificate is a document certifying the need for a technical aid and on the basis of which the state assumes the obligation to pay the fee for the technical aid.
+
+[RT I, 12.06.2025, 1 – entry into force 01.09.2025]
+
+(4) [Repealed – RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+(5) The identifiers of the need for a technical aid depending on the complexity of the technical aid, and the composition of data of the technical aid certificate are established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 17.08.2024, 1 – entry into force 01.09.2025]
+
+(6) [Repealed –RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+(7) Upon the assumption of the obligation to pay the fee, the Social Insurance Board may, as an exception, decide to:
+
+1)
+
+reduce own contribution;
+
+2)
+
+compensate for a new technical aid before the end of the service life of the technical aid with the same ISO code compensated to the person or in the event of destruction of the technical aid due to reasons independent of the user;
+
+3)
+
+compensate for a technical aid the name of which has not been entered in the list of technical aids;
+
+4)
+
+increase the limit;
+
+5)
+
+change the maximum price established for a technical aid;
+
+6)
+
+change the requirement for the sales or lease transaction established for a technical aid;
+
+7)
+
+compensate for a technical aid with regard to which a notation is included in the list of technical aids that compensation is exceptional.
+
+[RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+(8) The specific conditions for the assumption of the obligation to pay the fee for a technical aid as an exception in the cases provided in subsection 7 of this section are established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+(9) Upon application for the assumption of the obligation to pay the fee for a technical aid the name of which has not been entered in the list of technical aids, the Social Insurance Board involves an expert in the procedure.
+
+[RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+Division 2
+
+List of Technical Aids and Limits for Assumption of Obligation to Pay Fee
+
+§ 48.
+
+List of technical aids
+
+(1) For the purposes of this Act, a technical aid is a product that helps to improve a person's functioning, compensate for functional impairment and achieve or maintain as independent coping as possible in everyday life.
+
+[RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+(2) The list of technical aids which shall include the information specified in subsection 3 of this section shall be established by a regulation of the minister in charge of the policy sector.
+
+(3) The following shall be included in the list of technical aids:
+
+1)
+
+name of the category of technical aids;
+
+2)
+
+ISO code of the technical aid;
+
+3)
+
+the name of the technical aid;
+
+4)
+
+the service life of the technical aid depending on the level of wear;
+
+5)
+
+a notation with regard to whether the technical aid is sold;
+
+6)
+
+a notation with regard to whether the technical aid is leased;
+
+7)
+
+in the case of leased technical aids the minimum frequency of maintenance;
+
+8)
+
+quantitative limit by years or months;
+
+9)
+
+a notation with regard to whether the technical aid is personal;
+
+9
+
+1
+
+)
+
+a notation with regard to whether the technical aid is directly related to the provision of care service or to the building used for the provision of service;
+
+[RT I, 27.11.2018, 2 – entry into force 01.01.2019]
+
+10)
+
+the limit for an obligation to pay the fee assumed from an entitled person;
+
+11)
+
+the maximum price of the technical aid;
+
+12)
+
+in the list of urine-absorbing aids the size and absorption capacity of the product;
+
+13)
+
+the identifier of the need for the technical aid;
+
+14)
+
+the conditions under which a functional impairment arising from state of health requires a technical aid;
+
+[RT I, 17.08.2024, 1 – entry into force 01.09.2025]
+
+15)
+
+specification of the ISO code of the technical aid or specification of the category of the technical aid.
+
+(4) For the purposes of this Act, a category of technical aids includes technical aids with similar function and intended purpose in the list of technical aids.
+
+(5) For the purposes of this Act, the name of a technical aid includes technical aids with the same function and intended purpose.
+
+(6) For the purposes of this Act, the service life of a technical aid is the service life established for the technical aid which starts from the first use of the technical aid and at the end of which the technical aid is deemed to have lost its useful value. The state does not assume the obligation to pay the fee for a technical aid the service life of which has ended.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+(7) Upon purchasing a technical aid for which quantitative limit has been established per month for the purposes of this Act, the service life shall be deemed to be the period at the end of which the assumption of the obligation to pay the fee terminates.
+
+§ 49.
+
+Amendment of list of technical aids
+
+The following criteria shall be taken into account upon entry of a technical aid in the list of technical aids or deletion of a technical aid from the list of technical aids:
+
+1)
+
+medically justified reason for the use of the technical aid and existence of alternative technical aids;
+
+2)
+
+conformity with the financial resources allocated from the state budget for the cost of purchasing and leasing technical aids;
+
+3)
+
+the cost-effectiveness of the technical aid.
+
+§ 50.
+
+Maximum price, limit and own contribution
+
+(1) For the purposes of this Act, maximum price is the maximum price established for a technical aid with the same function and intended purpose in the list of technical aids, on the basis of which the obligation to pay the fee for the aid is assumed.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+(2) Upon sale the calculation of the maximum price shall be based on the selling price of the technical aid which was bought the most in the previous year. Formation of maximum prices shall be based on the principle that one-third of the technical aids for sale would be more expensive than the maximum price and two-thirds of the technical aids for sale would be of equivalent price or less expensive.
+
+(3) Upon lease the calculation of the maximum price shall be based on the formation of the maximum price upon sale specified in subsection 2 of this section. Formation of maximum prices upon lease shall also be based on the service live, frequency of maintenance during service life and costs of maintenance and repair of the technical aid established in the list of technical aids.
+
+(4) Revaluation of maximum prices shall be based on the following:
+
+1)
+
+sales data of the previous period;
+
+2)
+
+market price lists for sale, lease and maintenance;
+
+3)
+
+own contribution of the user of the technical aid.
+
+(5) Information on the maximum prices in force shall be available to the user of a technical aid upon submission of an application.
+
+(6) Limit is a percentage of the obligation to pay the fee assumed from an entitled person which is calculated on the basis of the maximum price of the technical aid.
+
+[RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+(7) Limits shall be established on the basis of the following criteria:
+
+1)
+
+probability of aggravation of functional impairment or need for assistance;
+
+[RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+2)
+
+relief of difficulties in coping caused by a functional impairment or need for assistance, and other humane considerations;
+
+[RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+3)
+
+conformity with the financial resources allocated for technical aids.
+
+(8) The following exceptions shall apply in respect of the limits established in the list of technical aids:
+
+1)
+
+[repealed – RT I, 17.08.2024, 1 – entry into force 01.09.2025]
+
+2)
+
+the limit of 90 per cent in the case of a person of up to 18 years of age who meets the conditions provided in subsection 1 of § 47 of this Act and to whom a technical aid certificate has been issued.
+
+[RT I, 17.08.2024, 1 – entry into force 01.09.2025]
+
+3)
+
+[repealed – RT I, 17.08.2024, 1 – entry into force 01.09.2025]
+
+4)
+
+[repealed – RT I, 17.08.2024, 1 – entry into force 01.09.2025]
+
+(9) Own contribution of a person in the case of a sales transaction is the difference between the cost of the technical aid and the amount of the state participation, but not less than 7 euros.
+
+[RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+(9
+
+1
+
+) The Social Insurance Board reduces the own contribution of a person to up to five per cent but not less than to 7 euros of the cost of the technical aid in the case of a sales transaction, where the person or their family has received subsistence benefit in the month of the acquisition of the technical aid or in the preceding 12 months.
+
+[RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+(10) [Repealed – RT I, 17.08.2024, 1 – entry into force 01.01.2025]
+
+(11) Own contribution of a person may be smaller than the amount provided in subsection 9 of this section in the case of products for skin protection and skin cleaning, assistive products for absorbing urine, bibs and braille products, and upon lease of technical aids.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+Division 3
+
+Application for and Deciding on Assumption of Obligation to Pay Fee
+
+[RT I, 12.06.2025, 1 – entry into force 01.09.2025]
+
+§ 51.
+
+Application for assumption of obligation to pay fee
+
+(1) In order to apply for the assumption of the obligation to pay the fee, an entitled person contacts a seller or lessor of a technical aid and submits the documents required for the purchase or lease of the technical aid. In order to apply for the assumption of the obligation to pay the fee as an exception, a person submits an application to the Social Insurance Board.
+
+[RT I, 12.06.2025, 1 – entry into force 01.09.2025]
+
+(2) The list of information necessary for applying for the assumption of the obligation to pay the fee is established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 12.06.2025, 1 – entry into force 01.09.2025]
+
+(3) Upon deciding on the assumption of the obligation to pay the fee for a technical aid, the Social Insurance Board has the right to obtain from the Estonian Unemployment Insurance Fund information on whether the person of working age has been granted a technical aid necessary for work free of charge. Where a person applies for the assumption of the obligation to pay the fee as an exception, the Social Insurance Board has the right to make inquiries and receive data from other state or local government databases.
+
+[RT I, 12.06.2025, 1 – entry into force 01.09.2025]
+
+(4) [Repealed – RT I, 12.06.2025, 1 – entry into force 01.09.2025]
+
+§ 52.
+
+Deciding on assumption of obligation to pay fee
+
+(1) The Social Insurance Board shall decide on the assumption of the obligation to pay the fee within 30 calendar days from the submission of an application and required documents.
+
+(2) In the case specified in the first sentence of subsection 1 of § 51 of this Act, the state assumes the obligation to pay the fee after the completion of the electronic technical aid card by the seller or lessor of the technical aid.
+
+[RT I, 12.06.2025, 1 – entry into force 01.09.2025]
+
+(3) The composition of data on electronic technical aid cards shall be established by a regulation of the minister in charge of the policy sector.
+
+(4) Where there are no sufficient funds in the state budget, the Social Insurance Board has the right to distribute the state budget funds differently by ISO codes of technical aids.
+
+[RT I, 12.06.2025, 1 – entry into force 01.09.2025]
+
+§ 53.
+
+Waiting list for technical aid
+
+[Repealed – RT I, 12.06.2025, 1 – entry into force 01.09.2025]
+
+Division 4
+
+Contract for Assumption of Obligation to Pay Fee
+
+§ 54.
+
+Contract for assumption of obligation to pay fee
+
+(1) A contract for the assumption of obligation to pay the fee is an agreement by which the Social Insurance Board and the seller or lessor of a technical aid agree on the procedure under which the Social Insurance Board assumes from the entitled person the obligation to pay the fee.
+
+(2) The Social Insurance Board shall enter into a contract with the seller or lessor of a technical aid who complies with the requirements provided for in § 55 of this Act.
+
+(3) The Social Insurance Board shall verify the absence of tax arrears before entry into a contract. If it becomes evident that the seller or lessor of the technical aid has tax arrears, the Social Insurance Board may refuse to enter into the contract.
+
+(4) The Social Insurance Board shall enter into a contract for a term of up to three years, but not for less than one year.
+
+Division 5
+
+Requirements upon Sale or Lease of Technical Aid
+
+§ 55.
+
+Requirements for seller or lessor of technical aid
+
+(1) A seller or lessor of a technical aid who wishes to enter into a contract specified in § 54 of this Act or who has a contract in force with the Social Insurance Board pursuant to § 54 of this Act and who sells or leases technical aids for which the obligation to pay is assumed by the state shall:
+
+1)
+
+ensure the presence of employees who comply with the requirements provided for in subsection 2 of this section in every sales facility of the undertaking;
+
+2)
+
+ensure the capability necessary for the maintenance of all technical aids sold and leased in compliance with the requirements;
+
+3)
+
+ensure upon delivery of the technical aid training of the entitled person in the use of the technical aid at least to the extent established in subsection 3 of this section;
+
+4)
+
+ensure that the place for the provision of the service complies with fire safety requirements;
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+5)
+
+ensure access to the place for the provision of the service in compliance with the requirements established on the basis of subsection 4 of § 11 of the Building Code;
+
+[RT I, 30.12.2015, 5 – entry into force 01.01.2018]
+
+6)
+
+[Repealed – RT I, 13.03.2019, 2 – entry into force 15.03.2019]
+
+7)
+
+ensure accessibility of the information concerning the prices and maximum prices of technical aids sold and leased;
+
+8)
+
+forward information to the Social Insurance Board concerning the technical aids sold and leased;
+
+9)
+
+have established an internal procedure for the submission of complaints.
+
+(2) The seller or lessor of a technical aid shall ensure the presence of at least one specialist at every sales facility of the undertaking who has been awarded the profession of an assistive technology specialist on the basis of the Professions Act or the presence of a specialist specified in the regulation established under subsection 2
+
+1
+
+of this section with an appropriate qualification of professional training to sell or lease the technical aid.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2020]
+
+(2
+
+1
+
+) A list of specialists who have not been awarded the profession of an assistive technology specialist, but who have a suitable qualification and the necessary professional training to sell or lease a technical aid shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2020]
+
+(3) The procedure for advising in the use of a technical aid is established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+(4) A seller or lessor of a technical aid shall ensure during the term of the contract specified in § 54 of this Act that the Medical Devices and Appliances Database established on the basis of § 29 of the Medical Devices Act shall contain the following information concerning the technical aids provided by the seller or lessor:
+
+1)
+
+retail prices and leasing prices;
+
+2)
+
+the contact details of the place for the provision of the service;
+
+3)
+
+descriptions of technical aids.
+
+(5) A person whose obligation to pay the fee was assumed by the state and who is the user of the technical aid at the end of the service life has a preferential right to purchase or continue leasing the technical aid.
+
+(6) After the end of the service life of a technical aid, the seller or lessor of the technical aid shall ensure that the technical aid can be returned free of charge.
+
+Subchapter 2
+
+Assumption of Obligation to Pay Fee for Social Rehabilitation Service
+
+Division 1
+
+Right to Apply for Assumption of Obligation to Pay Fee for Social Rehabilitation Service
+
+§ 56.
+
+Assumption of obligation to pay fee for social rehabilitation service
+
+(1) The state shall assume from an entitled person the obligation to pay the fee for the social rehabilitation service, provided that:
+
+1)
+
+the entitled person and the provider of social rehabilitation service agree on the provision of the social rehabilitation service which complies with the requirements provided for in this Subchapter;
+
+2)
+
+the provider of the social rehabilitation service and the state have entered into a contract specified in § 65 of this Act.
+
+(2) The state shall assume the obligation to pay the fee on the basis of a decision specified in § 63 of this Act for up to two years.
+
+(3) The social rehabilitation service is a set of rehabilitation services provided on the basis of an activity plan, rehabilitation plan or rehabilitation programme and for the purposes specified in subsection 2 of § 62 of this Act.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+§ 57.
+
+List of rehabilitation services
+
+The list and prices of services provided under the social rehabilitation service for which the state assumes the obligation to pay the fee shall be established by a regulation of the minister in charge of the policy sector.
+
+§ 58.
+
+Amount of fee for social rehabilitation service assumed
+
+The maximum amount of the fee for the social rehabilitation service which is assumed per year and the procedure for the calculation of the fee shall be established by a regulation of the minister in charge of the policy sector.
+
+§ 59.
+
+Entitled persons
+
+(1) The following persons have the right to apply for the assumption of the obligation to pay the fee:
+
+1)
+
+persons of up to 16 years of age with a disability within the meaning of § 2 of the Social Benefits for Disabled Persons Act;
+
+2)
+
+children who have been identified as being in need of assistance on the basis of § 28 of the Child Protection Act and in need of a social rehabilitation service on the basis of subsections 3 and 4 of § 62 of this Act;
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+3)
+
+persons of working age who have a disability within the meaning of § 2 of the Social Benefits for Disabled Persons Act or who have been declared permanently incapacitated for work on the basis of the State Pension Insurance Act or whose category of disability has been determined for an unspecified term on the basis of the State Allowances Act or who have been established to have partial work ability on the basis of the Work Ability Allowance Act and whose need for the social rehabilitation service has been identified;
+
+[RT I, 30.12.2015, 5 – entry into force 01.07.2016]
+
+4)
+
+persons of working age with no work ability whose need for the social rehabilitation service has been identified;
+
+[RT I, 30.12.2015, 5 – entry into force 01.07.2016]
+
+5)
+
+persons of pensionable age provided for in § 7 of the State Pension Insurance Act who have a disability within the meaning of § 2 of the Social Benefits for Disabled Persons Act and whose need for the social rehabilitation service has been identified;
+
+6)
+
+persons who receive early retirement pension provided for in § 9 of the State Pension Insurance Act who have a disability within the meaning of § 2 of the Social Benefits for Disabled Persons Act and whose need for the social rehabilitation service has been identified;
+
+7)
+
+persons who receive the allowance of a rescue servant waiting for the old-age pension provided for in § 19 of the Rescue Service Act who have a disability within the meaning of § 2 of the Social Benefits for Disabled Persons Act and whose need for the social rehabilitation service has been identified;
+
+8)
+
+[repealed – RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+9)
+
+persons with first episode psychosis whose need for the social rehabilitation service has been identified by a medical team on the basis of subsection 3
+
+1
+
+of § 62 of this Act.
+
+[RT I, 09.04.2020, 14 – entry into force 01.05.2020]
+
+(2) For the purposes of this Division, a person of working age is a person between the age of 16 and the pensionable age who does not receive an early retirement pension or the allowance of a rescue servant waiting for old-age pension.
+
+(3) A person specified in clause 3 of subsection 1 of this section has the right to apply for the assumption of the obligation to pay the fee if:
+
+1)
+
+the person is not registered as unemployed on the basis of the Labour Market Measures Act and
+
+[RT I, 07.03.2023, 5 – entry into force 01.01.2024]
+
+2)
+
+the person is not engaged in an activity specified in clauses 3–9 of subsection 4 of § 8 of the Labour Market Measures Act and is not acquiring basic, general secondary, vocational or higher education.
+
+[RT I, 07.03.2023, 5 – entry into force 01.01.2024]
+
+§ 60.
+
+Right to receive compensation for travel and accommodation expenses
+
+(1) An entitled person and, if necessary, a person who accompanies the person, whose residence is outside of the local authority where the social rehabilitation service is provided, shall be compensated for the expenses incurred while travelling to the place of provision of the service and back. An entitled person and, if necessary, a person who accompanies the entitled person under 16 years of age shall be compensated for accommodation expenses during the receipt of the service.
+
+(2) If the social rehabilitation service must be provided in the daily environment of the entitled person, the provider of the social rehabilitation service shall be compensated for the travel expenses incurred while travelling from the place of provision of the service to the location of the entitled person and back.
+
+(3) Upon accommodation under the social rehabilitation service, the provider of the social rehabilitation service must ensure accommodation in an environment which complies with the following:
+
+1)
+
+the requirements for hospitals;
+
+2)
+
+at least the requirements for visitor's apartments included in the requirements for the provision of accommodation services established on the basis of subsection 3 of § 19 of the Tourism Act.
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+(4) [Repealed – RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+(5) The maximum travel and accommodation expenses and the conditions and procedure for compensation of travel and accommodation expenses of an entitled person and a person who is accompanying an entitled person per calendar year shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+Division 2
+
+Application for and Deciding on Assumption of Obligation to Pay Fee
+
+§ 61.
+
+Application for assumption of obligation to pay fee
+
+(1) In order to apply for the assumption of the obligation to pay the fee, a person specified in § 59 of this Act, except a person specified in clauses 2 and 9 of subsection 1 of the same section, submits an application to the Social Insurance Board.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+(2) The list of information included in the application specified in subsection 1 of this section and the documents to be appended thereto shall be established by a regulation of the minister in charge of the policy sector.
+
+§ 62.
+
+Identification of need for social rehabilitation service
+
+(1) The Social Insurance Board shall identify the need of the persons specified in clauses 3–7 of subsection 1 of § 59 of this Act for the social rehabilitation service on the basis of the following:
+
+1)
+
+purposes under which the provision of the social rehabilitation service is justified;
+
+2)
+
+the ability to cope;
+
+3)
+
+the operational capacity;
+
+4)
+
+the ability to participate;
+
+5)
+
+the state of health;
+
+6)
+
+information concerning the labour market services provided by the Estonian Unemployment Insurance Fund.
+
+(2) There is no need to provide the social rehabilitation service to a person specified in clauses 3–7 of subsection 1 of § 59 of this Act if the social rehabilitation service cannot be provided for at least one of the following purposes:
+
+1)
+
+in everyday life to increase motivation and readiness for participation in the activities of the community in accordance with the person's abilities, develop cognitive and physical abilities and teach and develop everyday skills as a result of which the person is living as independently as possible;
+
+2)
+
+in studying to offer support necessary in the study process as a result of which the person acquires education in accordance with his or her abilities or additional skills necessary for work;
+
+3)
+
+in communication and leisure to increase self-awareness, develop self-regulation, communication and co-operation skills as a result of which the person participates in social life in accordance to his or her abilities;
+
+4)
+
+in development of prerequisites for work ability to develop the readiness of the person to commence employment in accordance with his or her abilities.
+
+(3) A local authority shall determine the need of a child specified in clause 2 of subsection 1 of § 59 of this Act for a social rehabilitation service in the event that the application of earlier measures has not been sufficient or the use of other measures is not possible and the child is displaying significant shortcomings in at least two of the following areas of the well-being of a child:
+
+1)
+
+physical or medical condition;
+
+2)
+
+psychological or emotional state;
+
+3)
+
+social state;
+
+4)
+
+cognitive or educational state.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+(3
+
+1
+
+) A person specified in clause 9 of subsection 1 of § 59 of this Act has a need for the social rehabilitation service if the person needs assistance for the achievement of at least one of the objectives of the social rehabilitation service specified in subsection 2 of this section. The need of a person for the social rehabilitation service shall be determined by the medical team of the person.
+
+[RT I, 09.04.2020, 14 – entry into force 01.05.2020]
+
+(3
+
+2
+
+) If the need of a person specified in clause 9 of subsection 1 of § 59 of this Act for the social rehabilitation service has been identified by the medical team, the medical team shall forward the assessment to the Social Insurance Board for deciding on the assumption of the obligation to pay the fee.
+
+[RT I, 09.04.2020, 14 – entry into force 01.05.2020]
+
+(4) The terms and conditions for the identification of the need for the social rehabilitation service of a child specified in clause 2 of subsection 1 of § 59 of this Act or a person specified in clause 9 of subsection 1 of § 59 of this Act shall be established by the minister in charge of the policy sector.
+
+[RT I, 09.04.2020, 14 – entry into force 01.05.2020]
+
+§ 63.
+
+Deciding on assumption of obligation to pay fee
+
+(1) The Social Insurance Board decides on the assumption of the obligation to pay the fee in the case of a person specified in clauses 1, 2 and 9 of subsection 1 of § 59 of this Act within ten working days and in the case of a person specified in clauses 3–7 of the same subsection within 40 working days as of the receipt of the application.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+(2) Upon deciding on the assumption of the obligation to pay the fee for the social rehabilitation service, an employee of the Social Insurance Board has the right to receive the following:
+
+1)
+
+from the Estonian Unemployment Insurance Fund the expert opinion provided upon assessment of work ability and information concerning registration of the person as unemployed and provision of coaching for working life, work practice, career counselling, working with support person, special aids and equipment and occupational rehabilitation service to the person;
+
+[RT I, 30.12.2015, 5 – entry into force 01.07.2016]
+
+2)
+
+in the case of establishment of a disability the opinion of a person who has completed medical training concerning the degree of severity of the disability and the information concerning the decision on determination of the degree of severity of the disability;
+
+3)
+
+in the case of establishment of incapacity for work the opinion of a person who has completed medical training concerning the percentage of loss of capacity for work and the information concerning the decision on the establishment of incapacity for work.
+
+(3) A person for whom the right to receive the occupational rehabilitation service provided in the employment programme established on the basis of the Labour Market Measures Act arises during the receipt of the social rehabilitation service has the right to receive the social rehabilitation service to which the person has been referred to.
+
+[RT I, 07.03.2023, 5 – entry into force 01.01.2024]
+
+(4) The Social Insurance Board shall decide on the assumption of the obligation to pay the fee in the case of a person specified in clause 9 of subsection 1 of § 59 of this Act on the basis of the assessment of the medical team.
+
+[RT I, 09.04.2020, 14 – entry into force 01.05.2020]
+
+(5) For the purpose of immediate availability of appropriate assistance and service, the Social Insurance Board shall forward the assessment prepared by the medical team concerning a person specified in clause 9 of subsection 1 of § 59 of this Act and the decision on the assumption of the obligation to pay the fee to the service provider.
+
+[RT I, 09.04.2020, 14 – entry into force 01.05.2020]
+
+§ 64.
+
+Rehabilitation waiting list
+
+(1) If there are no sufficient funds in the state budget, the Social Insurance Board shall enter an entitled person in the waiting list for the assumption of the obligation to pay the fee. The waiting list for the assumption of the obligation to pay the fee shall not be longer than one year.
+
+(2) The Social Insurance Board shall maintain a separate rehabilitation waiting list for persons of up to 15 years of age and for persons not less than 16 years of age.
+
+(3) A person specified in clauses 2 and 9 of subsection 1 of § 59 of this Act and a person specified in clause 1 of subsection 1 of § 59 of this Act for whom the degree of severity of the disability has been determined for the first time have the right to apply for the assumption of the obligation to pay the fee outside the rehabilitation waiting list.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+(4) The Social Insurance Board shall notify the entitled person when his or her turn arrives according to the rehabilitation waiting list.
+
+(5) An entitled person shall lose the right to the assumption of the obligation to pay the fee if the person does not contact a provider of social rehabilitation service for entry into a contract for the provision of the social rehabilitation service within 60 calendar days as of the communication of the decision specified in subsection 1 of § 63 of this Act or the notice specified in subsection 4 of this section.
+
+Division 3
+
+Contract for Assumption of Obligation to Pay Fee
+
+§ 65.
+
+Contract for assumption of obligation to pay fee
+
+(1) A contract for the assumption of the obligation to pay the fee is an agreement by which the Social Insurance Board and a provider of social rehabilitation service agree on the procedure under which the Social Insurance Board assumes from the entitled person the obligation to pay the fee.
+
+(2) The Social Insurance Board shall enter into a contract with a provider of social rehabilitation service who holds an activity licence.
+
+(3) The Social Insurance Board shall verify the absence of tax arrears before entry into a contract. If it becomes evident that the provider of social rehabilitation service has tax arrears, the Social Insurance Board may refuse to enter into the contract.
+
+(4) The Social Insurance Board shall enter into a contract for a term of up to five years.
+
+Division 4
+
+Requirements for Provision of Social Rehabilitation Service
+
+§ 66.
+
+Requirements for provider of social rehabilitation service
+
+A provider of social rehabilitation service who provides the social rehabilitation service for which the state assumes the obligation to pay the fee shall:
+
+1)
+
+have formed a rehabilitation team in compliance with the requirements provided for in § 68 of this Act;
+
+2)
+
+ensure that the person providing the social rehabilitation service directly complies with the requirements provided for in § 68 of this Act;
+
+3)
+
+[omitted – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+4)
+
+ensure that the place for the provision of the service complies with fire safety requirements;
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+5)
+
+ensure access to the place for the provision of the service in compliance with the requirements established on the basis of subsection 4 of § 11 of the Building Code;
+
+6)
+
+[Repealed – RT I, 13.03.2019, 2 – entry into force 15.03.2019]
+
+7)
+
+have established an internal procedure for the settlement of complaints;
+
+8)
+
+organise the provision of the service in such a way that the person is able to receive all the services provided under the social rehabilitation service necessary for the person at the same service provider.
+
+§ 67.
+
+Requirements for social rehabilitation service
+
+If the obligation to pay the fee for the social rehabilitation service is assumed by the state, it is required to do the following in the course of the provision of the social rehabilitation service:
+
+1)
+
+to prepare a rehabilitation plan for the entitled person or to provide on the basis of an activity plan and rehabilitation plan or rehabilitation programme rehabilitation services in order to achieve the objective of social rehabilitation;
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+2)
+
+to introduce to the entitled person his or her rights and obligations, the procedure for the submission of complaints, the procedure for the provision of the social rehabilitation service and the documents prepared in the course thereof;
+
+3)
+
+to give a written assessment concerning the achievement of or the reasons for failure to achieve the objective of social rehabilitation of the entitled person and submit it to the Social Insurance Board together with the last personal individual report at the latest;
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+4)
+
+to give a written assessment in order to justify the amendment of the rehabilitation plan or rehabilitation programme if the rehabilitation plan or rehabilitation programme has been amended in the course of the provision of the social rehabilitation service.
+
+§ 68.
+
+Requirements for rehabilitation team
+
+(1) A rehabilitation team shall comprise at least three different specialists of whom one has been awarded the profession of a social worker on the basis of the Professions Act, acquired state-recognised higher education in social work or qualifications equal thereto.
+
+(2) The remaining specialists of a rehabilitation team shall have the following:
+
+1)
+
+a profession in the area of psychology awarded on the basis of the Professions Act, state-recognised higher education in psychology or qualifications equal thereto;
+
+2)
+
+the profession of a physiotherapist awarded on the basis of the Professions Act, state-recognised higher education in physiotherapy or qualifications equal thereto;
+
+3)
+
+the profession of a speech therapist awarded on the basis of the Professions Act, state-recognised higher education in speech therapy or qualifications equal thereto;
+
+4)
+
+state-recognised higher education in medical science or qualifications equal thereto, and are registered as health care professionals with the Health Board;
+
+5)
+
+state-recognised secondary specialized or higher education in nursing or qualifications equal thereto, and are registered as health care professionals with the Health Board;
+
+6)
+
+the profession of an occupational therapist awarded on the basis of the Professions Act, state-recognised higher education in occupational therapy or qualifications equal thereto;
+
+6
+
+1
+
+)
+
+the profession of a music therapist awarded on the basis of the Professions Act, state-recognised higher education in music therapy or qualifications equal thereto;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+7)
+
+the profession of a creative arts therapist awarded on the basis of the Professions Act, state-recognised higher education in art therapy (creative arts therapy) or qualifications equal thereto or
+
+8)
+
+the profession of a special education teacher awarded on the basis of the Professions Act, state-recognised higher education in special needs education or qualifications equal thereto.
+
+(3) Persons who have acquired foreign professional qualifications may also be specialists of a rehabilitation team if their professional qualifications have been recognised in accordance with the Recognition of Foreign Professional Qualifications Act. The competent authority provided for in subsection 2 of § 7 of the Recognition of Foreign Professional Qualifications Act is the Social Insurance Board.
+
+[RT I, 30.12.2015, 5 – entry into force 18.01.2016]
+
+(4) A peer counsellor may be included in a rehabilitation team who has experienced a disability, health damage or special needs similar to the disability, health damage or special needs of the entitled person and who has undergone the initial training of a peer counsellor established by a regulation of the minister in charge of the policy sector.
+
+(5) The study programme and content of the initial training of a peer counsellor shall be established by a regulation of the minister in charge of the policy sector.
+
+(6) At least one of the specialists of a rehabilitation team shall have undergone training in rehabilitation established by a regulation of the minister in charge of the policy sector or, upon acquisition of a speciality specified in subsection 2 of this section, completed the subjects specified in the modules of the study programme of the training in rehabilitation.
+
+(7) The study programme and content of the training in rehabilitation shall be established by a regulation of the minister in charge of the policy sector.
+
+(8) A specialist of the rehabilitation team may not be a person who has a penalty in force for an intentionally committed criminal offence which may endanger the life, health or property of a person entitled to receive the service.
+
+[RT I, 12.06.2025, 1 – entry into force 01.07.2025]
+
+§ 69.
+
+Preparation of rehabilitation plan and rehabilitation programme
+
+(1) A rehabilitation plan is a document prepared by the rehabilitation team with the participation of the entitled person and his or her legal representative which reflects an evaluation of the operational capacity of the person, objective of social rehabilitation, rehabilitation services necessary for the achievement of the objective and assessment concerning the achievement of the objective of social rehabilitation.
+
+(2) A rehabilitation programme is a document prepared by the rehabilitation team for a determined target group which reflects the objective of social rehabilitation, rehabilitation services necessary for the achievement of the objective and the volume of the services, and which sets out the period during which the programme is applied to entitled persons.
+
+(3) Upon preparation of a rehabilitation plan, the rehabilitation team shall consist of the following:
+
+1)
+
+a social worker;
+
+2)
+
+a physiotherapist or occupational therapist if the operational capacity of a person with mobility disorder or mobility impairment is evaluated;
+
+3)
+
+a special education teacher, speech therapist or occupational therapist if the operational capacity of a person with visual, hearing or speech impairment or intellectual disability is evaluated;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+4)
+
+a special education teacher if the operational capacity of a minor is evaluated;
+
+5)
+
+a psychiatrist or psychologist if the operational capacity of a child referred by a local authority is assessed;
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+6)
+
+a psychiatrist and occupational therapist if the operational capacity of a person not less than 16 years of age with a severe, profound or permanent mental disorder is evaluated;
+
+7)
+
+a psychiatrist and occupational therapist if the need for special care services of a person not less than 16 years of age with a mental disorder is evaluated.
+
+(4) Upon preparation and implementation of a rehabilitation programme, the provisions of subsection 3 of this section concerning a rehabilitation team shall apply.
+
+(5) A rehabilitation plan and rehabilitation programme may be amended in the course of the provision of the social rehabilitation service if it is necessary for achievement of the objective of rehabilitation.
+
+(6) The list of information contained in the activity plan, rehabilitation plan and rehabilitation programme is established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+(7) In order to assess the compliance of a rehabilitation programme with the criteria, the minister in charge of the policy sector shall form an advisory committee for assessing rehabilitation programmes at the Social Insurance Board whose opinion is not binding on the Social Insurance Board upon approval of the rehabilitation programme.
+
+(8) The advisory committee for assessing rehabilitation programmes includes a representative of the Social Insurance Board, the Ministry of Social Affairs, the Ministry of Economic Affairs and Communications, the Estonian Unemployment Insurance Fund, a state agency administered by the Ministry of Education and Research and an organisation representing the interests of disabled persons. The advisory committee for assessing rehabilitation programmes involves at least two specialist experts in the assessment of every programme.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+(9) The Social Insurance Board shall assess a rehabilitation programme on the basis of the following criteria:
+
+1)
+
+the rehabilitation programme and the objectives established and activities planned therein correspond to the needs of the target group;
+
+2)
+
+the rehabilitation programme complies with modern rehabilitation principles and is evidence-based;
+
+3)
+
+the results planned in the rehabilitation programme are measurable and increase the active participation of the person in social life and the results planned and achieved in the course of previous programmes are included;
+
+4)
+
+the rehabilitation programme is planned cost-effectively and the budget thereof is transparent.
+
+(10) The specific assessment criteria for rehabilitation programmes shall be established by a regulation of the minister in charge of the policy sector.
+
+(11) The Social Insurance Board shall approve a rehabilitation programme if the criteria specified in subsection 9 of this section are fulfilled.
+
+Subchapter 3
+
+Special Care Services
+
+Division 1
+
+General Provisions
+
+§ 70.
+
+Application for special care services and making of decisions
+
+(1) A person shall submit an application to the Social Insurance Board in order to receive a special care service.
+
+(1
+
+1
+
+) When submitting an application for the receipt of a special care service, a person may consent to the use of information in the health information system on a mental disorder diagnosis of the person upon deciding on the provision of a special care service.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(2) The Social Insurance Board shall assess the need of a person for a special care service based on the following:
+
+1)
+
+objectives under which the provision of the special care service is justified;
+
+1
+
+1
+
+)
+
+the person's need for support to ensure quality of life in important areas of life;
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+2)
+
+the ability to cope;
+
+3)
+
+the operational capacity;
+
+4)
+
+the ability to participate;
+
+5)
+
+the state of health;
+
+6)
+
+information concerning the labour market services provided by the Estonian Unemployment Insurance Fund;
+
+7)
+
+duration of the provision of the service and recommended frequency of activities;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(3) If a person has been referred to receive the 24-hour special care service on the basis of a court ruling, the legal representative of the person or the local authority of the residence of the person shall immediately submit the court ruling on placing the person in a social welfare institution without his or her consent to the Social Insurance Board.
+
+(4) The Social Insurance Board shall decide on the provision or refusal to provide special care services, except in the case of a person placed in a social welfare institution by a court ruling, within 40 working days as of the receipt of the application and all the required documents.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(5) [Repealed – RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(6) The maximum term for the provision of a special care service, during which a person has the right to receive the service, may be equal to the term set upon identification of the need for the special care service but, as a general rule, shall not exceed five years. In exceptional cases, a term of up to ten years may be set.
+
+(7) The content of information to be presented in an application and the list of required documents shall be established by a regulation of the minister in charge of the policy sector.
+
+(8) Upon deciding on the provision of a special care service, the Social Insurance Board has the right to receive from the person and the Estonian Unemployment Insurance Fund information concerning registration of the person as unemployed and provision of coaching for working life, work practice, working with support person and occupational rehabilitation service to the person.
+
+(9) Upon deciding on the provision of a special care service, the Social Insurance Board has the right to receive information from the health information system on the mental disorder diagnosis of a person with the consent of the person.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+§ 71.
+
+Issue of referral decisions
+
+(1) If an applicant complies with the requirements for persons entitled to receive a service specified in this Subchapter, the Social Insurance Board shall issue a referral decision to the person if:
+
+1)
+
+there are funds in the state budget for the provision of a special care service to the person;
+
+2)
+
+the provider of special care services to whom the person wishes to go to receive a special care service has a vacant place.
+
+(2) A referral decision shall set out:
+
+1)
+
+the name, personal identification code or date of birth and contact details of the person referred to receive a special care service and his or her legal representative, if the legal representative exists;
+
+2)
+
+the service to which the person is referred;
+
+3)
+
+the term during which the person is entitled to receive the service;
+
+4)
+
+the name and contact details of the provider of special care services to whom the person has been referred to for the receipt of the service;
+
+5)
+
+the objective of the receipt of the service;
+
+6)
+
+[Repealed – RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+7)
+
+recommended minimum frequency of the provision of the service;
+
+8)
+
+other information related to the provision of the service to the person placed in a social welfare institution by a court ruling.
+
+(3) In a referral decision to community living service, daily and weekly care service or 24-hour special care service, the Social Insurance Board indicates, in addition to the information specified in subsection 2 of this section, that the person is entitled to receive the indicated service provided that the person pays the amount of own contribution specified in § 73 of this Act or the amount of own contribution less the deficit in the own contribution the compensation obligation of which has been assumed by the state. A person has the right to receive the service also in the case a third person assumes the obligation to pay the amount of own contribution and the amount of own contribution of the person is covered to an agreed extent. This subsection does not apply to persons placed in a social welfare institution by a court ruling.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(4) The Social Insurance Board shall issue a referral decision to a person placed in a social welfare institution by a court ruling and the legal representative of the person immediately after entry into force of the court ruling or declaring the court ruling to be subject to execution.
+
+(5) A provider of special care services suitable for a person shall be selected and the date of commencement of the provision of the service shall be agreed upon by the Social Insurance Board, the person entitled to receive the service and the provider of special care services. The Social Insurance Board takes the request of the person placed in a social welfare institution by a court ruling into account in the selection of a service provider if it is possible for the service provider requested by the person to provide the 24-hour special care service to the person during the term indicated in the court ruling.
+
+(6) A person referred to receive a special care service must contact the provider of special care services on the date agreed for the provision of the service indicated in the referral decision, but not later than within three days in the case of everyday life support service, employment support service and supported living service and within seven days in the case of community living service, daily and weekly care service and 24-hour special care service as of the agreed date. Where a person fails to contact the service provider within the specified time limit, the person no longer has the right to receive the service on the basis of the same referral decision.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(7) A person referred to receive a special care service by a court ruling who is released from coercive treatment or treatment against will shall contact a provider of special care services on the date agreed for the provision of the service indicated in the referral decision, but not later than within ten days.
+
+(8) If the term agreed upon in the referral decision was allowed to expire with good reason, the Social Insurance Board may, at the request of the person and upon agreement with the provider of special care services, agree upon a new date from which the provision of the special care service shall commence.
+
+(9) A person placed in a social welfare institution by a court ruling shall be placed in the social welfare institution immediately after issue of the referral decision.
+
+(10) If the Social Insurance Board cannot issue a referral decision to a person entitled to receive a special care service pursuant to clause 1 of subsection 1 of this section, the Social Insurance Board shall notify the person of the satisfaction of the application and entry of the person in the waiting list in a format which can be reproduced in writing.
+
+(11) If the Social Insurance Board cannot issue a referral decision to a person entitled to receive a special care service pursuant to clause 2 of subsection 1 of this section, the Social Insurance Board shall notify the person of the satisfaction of the application, existence of vacant places at another service provider or entry of the person in the waiting list in a format which can be reproduced in writing if the person referred to receive the service is unwilling to receive the service from another provider of special care services.
+
+§ 72.
+
+Funding of special care services
+
+(1) Special care services provided to persons entitled to receive special care services are financed from the state budget through the budget of the Social Insurance Board, by the persons entitled to receive the community living service, daily and weekly care service or 24-hour special care service and, in the case specified in § 89 of this Act, by the local authority.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(2) The provision of special care services, except the 24-hour special care service provided on the basis of a court ruling, shall not be financed from the state budget to the following persons:
+
+1)
+
+persons who have attained the pensionable age specified in § 7 of the State Pension Insurance Act and have been diagnosed with dementia and who do not have any other severe, profound or permanent mental disorder in addition to dementia;
+
+2)
+
+persons who have a dependency on alcohol or narcotic drugs as the primary disease.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(3) Special care services are financed on the basis of a contract entered into between the service provider and the Social Insurance Board, the invoices submitted by the service provider and the referral decision issued to the person.
+
+[RT I, 14.12.2023, 1 – entry into force 24.12.2023]
+
+(4) [Repealed – RT I, 14.12.2023, 1 – entry into force 24.12.2023]
+
+(5) The minister in charge of the policy sector shall establish by a regulation:
+
+1)
+
+the maximum cost of special care services financed from the state budget per person in one calendar month;
+
+2)
+
+the components of the expenses of special care services which are covered from the state budget within the maximum cost;
+
+3)
+
+the components of the expenses of own contribution of the community living service, daily and weekly care service and 24-hour special care service by the person.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(6) [Repealed – RT I, 28.04.2022, 1 – entry into force 01.01.2023]
+
+§ 73.
+
+Own contribution
+
+(1) A person referred to receive community living service, daily and weekly care service or 24-hour special care service is required to pay their own contribution for catering and accommodation.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(1
+
+1
+
+) A person referred to receive daily and weekly care service pays their own contribution according to the number of days of use of the service.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(2) If the own contribution of a person is covered from the person’s state pension, funded pension within the meaning of the Funded Pensions Act, work ability allowance within the meaning of the Work Ability Allowance Act, income subject to social tax within the meaning of the Social Tax Act (hereinafter
+
+income
+
+), at least 15 per cent of the person’s income which would have remained to be used by the person after the payment of the income tax, unemployment insurance premium and contribution to funded pension should remain for personal use after the payment of his or her contribution, income tax, unemployment insurance premium, and contribution to funded pension.
+
+[RT I, 03.01.2019, 1 – entry into force 01.01.2021]
+
+(2
+
+1
+
+) If a person is paid old-age pension on the basis of the State Pension Insurance Act the amount of which is 50 per cent or if a person has submitted an application for the suspension of the payment of pension, the Social Insurance Board shall grant an old-age pension to the person the amount of which is 100 per cent of the old-age pension of the person.
+
+[RT I, 03.01.2019, 1 – entry into force 01.01.2021]
+
+(3) If the deficit in own contribution is less than 2 euros per calendar month, an amount of the income decreased by the amount of the deficit may be left for personal use.
+
+(4) A person’s income subject to social tax specified in subsection 2 of this section which is equal to the basic exemption pursuant to § 23 of the Income Tax Act in a calendar month accounted for shall not be included in the person’s income for the purposes of this Subchapter.
+
+(5) The maximum amount of own contribution of a person referred to receive community living service, daily and weekly care service or 24-hour special care service is established by the state budget for each budgetary year.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(6) Where, upon agreement with a person referred to receive a special care service, accommodation and catering is offered in conditions better than the conditions required by legislation, the provider of special care services may charge a fee from the person which exceeds the maximum fee. The fee must correspond to the value of the additional benefits.
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+(7) A person referred to receive a special care service has the right to demand from the service provider accommodation and catering in compliance with the minimum requirements provided for in the health protection requirements established for special care services.
+
+§ 74.
+
+Covering deficit of own contribution from state budget
+
+(1) If a person entitled to receive a service does not have sufficient financial resources to pay own contribution taking into account the provisions of subsections 2 and 4 of § 73 of this Act, the deficit in the maximum amount of own contribution established by the state budget (hereinafter
+
+deficit
+
+) shall be covered by the state budget through the budget of the Social Insurance Board unless the deficit is less than 2 euros per calendar month.
+
+(2) For the deficit to be covered from the state budget, a person shall submit an application to the Social Insurance Board together with an application for special care services.
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+(3) The Social Insurance Board shall cover the deficit from the state budget on the basis of the data of the Tax and Customs Board regarding the income of the person entitled to receive the service in the calendar month preceding the referral decision from which the amount of the income tax, unemployment insurance premium and contribution to funded pension shall be deducted, taking into account the provisions of subsections 2 and 3 of § 73 of this Act.
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2018]
+
+(4) [Repealed – RT I, 21.12.2016, 2 – entry into force 01.01.2018]
+
+(5) The deficit means the difference between the maximum amount of a person’s own contribution and the person's income from which income tax pursuant to the Income Tax Act, unemployment insurance premium, contribution to funded pension and 15 per cent of the person’s income which remains to be used by the person after the payment of the taxes have been deducted.
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2018]
+
+(6) The Social Insurance Board shall make a decision on covering the deficit from the state budget by the time of issue of the referral decision. If the application for the covering the deficit from the state budget is submitted to the Social Insurance Board after the issue of the referral decision, the Social Insurance Board shall make a decision on covering the deficit from the state budget within ten working days as of the receipt of the application and all the required data established on the basis of subsection 10 of this section.
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2018]
+
+(7) The decision specified in subsection 6 of this section shall be communicated also to the service provider at whom the person wishes to receive a special care service.
+
+(8) The Social Insurance Board pays the deficit to the provider of community living service, daily and weekly care service or 24-hour special care service at whom the person receives the special care service each month for the previous calendar month on the basis of the referral decision and the invoices submitted by the service provider.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(9) Each calendar month the Social Insurance Board shall verify the income of the person from the preceding calendar month on the basis of data from the Tax and Customs Board. If the person's income changes, the Social Insurance Board shall change the amount of cover for the deficit of the person's own contribution. The Social Insurance Board shall send the person or the legal representative of the person a written notification regarding changes to the cover of the deficit of the person's own contribution.
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2018]
+
+(10) The list of information to be presented in the application specified in subsection 2 of this section and the list of required documents shall be established by a regulation of the minister in charge of the policy sector.
+
+§ 75.
+
+Covering deficit for person placed in social welfare institution by court ruling
+
+(1) The provisions of § 74 of this Act apply to covering the deficit for a person placed in a social welfare institution by a court ruling, taking account of the specifications provided for in this section.
+
+(2) After entry into force of a court ruling or declaring a court ruling concerning placement of a person in a social welfare institution to be subject to immediate execution, the Social Insurance Board shall ascertain the financial viability of the person placed in a social welfare institution by a court ruling to pay the own contribution provided for in § 73 of this Act based on the provisions of subsections 3–6 of § 74 of this Act and shall make a decision which shall set out the obligation of the person to pay his or her own contribution. If a person does not have sufficient financial resources to pay for own contribution, taking into account the provisions of §§ 73 and 74 of this Act, the Social Insurance Board shall make a decision concerning covering the deficit from the state budget.
+
+(3) The Social Insurance Board shall make the decisions specified in subsection 2 of this section within ten working days after the issue of the referral decision specified in subsection 4 of § 71 of this Act.
+
+§ 76.
+
+Waiting lists for special care services
+
+(1) In the cases provided for in subsections 10 and 11 of § 71 of this Act, the Social Insurance Board shall enter a person entitled to receive a special care service in the waiting list for the receipt of the service which corresponds to the person's need for support as of the date of making the decision on provision of the special care service and shall prepare a corresponding list.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(2) The procedure and requirements for making waiting lists for special care services shall be established by a regulation of the minister in charge of the policy sector.
+
+(3) The Social Insurance Board may enter a person entitled to receive the service who is at least 16 years of age in the waiting list for a special care service if a need for the special care service has been established upon assessment of the person's need for support.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(4) [Repealed – RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(5) A person entered in the waiting list for a special care service is required to commence the use of the service within one month as of the date of making the decision on the provision of the service if there are funds in the state budget for the provision of the special care service to the person and the provider of special care services to whom the person wishes to go to receive the special care service has a vacant place. If the person refuses, without a good reason, to receive the special care service, the person shall be deleted from the waiting list.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+§ 77.
+
+Entry into contract for provision of special care services
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+(1) The Social Insurance Board authorises by a contract one or several sole proprietors, legal persons, local authorities or state agencies administered by government authorities acting or wishing to act as providers of special care services to provide special care services.
+
+[RT I, 14.12.2023, 1 – entry into force 24.12.2023]
+
+(2) [Repealed – RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+(3) The Social Insurance Board shall publish a notice concerning an intention to enter into a contract on the website of the Social Insurance Board. If necessary, the Social Insurance Board may publish additional notices concerning an intention to enter into a contract during a calendar year.
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+(4) A service provider shall submit a written application for entry into a contract to the Social Insurance Board within one month after the publication of the notice specified in subsection 3 of this section.
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+(5) The Social Insurance Board shall enter into a contract with service providers who hold an activity licence for the provision of a service specified in this Subchapter within three months after the proclamation of the annual State Budget Act. If the Social Insurance Board publishes an additional notice concerning an intention to enter into a contract during a calendar year, the Social Insurance Board shall enter into a contract with the service providers who hold an activity licence for the provision of a service specified in this Subchapter within three months after the publication of the notice specified in subsection 3 of this section.
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+(6) The Social Insurance Board may refuse to enter into a contract with a service provider if the issuer of the activity licence has issued a precept to the service provider due to non-compliance with the requirements provided for in this Act or established on the basis thereof.
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+§ 78.
+
+Contract for provision of special care services
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+(1) A service provider has the right to refuse to perform the obligation to provide the community living service, daily and weekly care service or 24-hour special care service arising from a contract where the person entitled to receive the service refuses to enter into a written agreement concerning the payment of own contribution or where the person has failed to pay the own contribution specified in § 73 of this Act in the amount agreed upon for two consecutive calendar months. Where another person has assumed the obligation to pay own contribution for the person, the service provider may not refuse to provide the service. This subsection does not apply to the provision of services to persons placed in a social welfare institution by a court ruling.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(2) The provision of a special care service to a person who has contacted a service provider in order to receive the service shall commence on the date the person contacted the service provider but not earlier than on the date agreed upon in the referral decision.
+
+(3) If a service provider wishes to terminate a contract prematurely, the service provider is required to inform the Social Insurance Board of such intention:
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+1)
+
+at least six months before the planned date of the termination of the contract in the case of the provision of the supported living service, community living service, daily and weekly care service and 24-hour special care service;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+2)
+
+at least three months before the planned date of the termination of the contract in the case of the provision of the everyday life support service and employment support service.
+
+§ 79.
+
+Reimbursement of expenses to providers of special care services
+
+(1) By a contract the Social Insurance Board undertakes to reimburse a provider of special care services for the expenses of the provision of a special care service each month on the basis of the submitted invoices to the extent indicated in the invoices but not more than in the amount of the maximum cost of the service established on the basis of clause 1 of subsection 5 of § 72 of this Act, where:
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(1
+
+1
+
+) In addition to the provisions of subsection 1 of this section, the Social Insurance Board may, on the basis of a contract, reimburse a provider of special care services who provides a service to persons placed in a social welfare institution by a court ruling for the expenses of vacant places for receipt of special care services. Expenses are reimbursed each month on the basis of the submitted invoices to the extent indicated in the invoices but not more than 95 per cent of the maximum cost of the service established on the basis of clause 1 of subsection 5 of § 72 of this Act.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(1
+
+2
+
+) In addition to the provisions of subsection 1 of this section, the Social Insurance Board may, on the basis of a contract, reimburse a provider of special care services who provides the daily or weekly care service for the expenses of unused days for receipt of special care services. Expenses are reimbursed each month on the basis of the submitted invoices to the extent indicated in the invoices but not more than 65 per cent of the maximum cost of the service established on the basis of clause 1 of subsection 5 of § 72 of this Act.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(2) Where a person referred to receive a special care service fails to contact the service provider during the time limit for the commencement of the provision of the service provided in subsections 6 and 7 of § 71 of this Act, the Social Insurance Board pays remuneration to the service provider for the provision of the special care service the person is referred to from the state budget on the basis of a submitted invoice. Remuneration is paid at most for three days in the case of everyday life support service, employment support service and supported living service, for seven days in the case of community living service, daily and weekly care service and 24-hour special care service, and for ten days in the case of a person who is released from coercive treatment or treatment against will and who is referred to receive a special care service by a court ruling.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(3) The Social Insurance Board shall continue to pay a provider of special care service for the provision of the service a fee that the person is entitled to receive from the state budget if:
+
+1)
+
+the person does not use the everyday life support service, employment support service, supported living service and daily and weekly care service for at least a minimum period of up to two consecutive months, or the community living service and the 24-hour special care service for up to two consecutive months – for the time the person did not use the service, but not more than for four months in one year;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+2)
+
+the person does not use the special care service more than six consecutive months due to the receipt of an in-patient health service – during the time of the receipt of the in-patient health service, but not more than for six months within one year;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+3)
+
+the person does not use the special care service due to the receipt of in-patient treatment for tuberculosis – until the end of receipt of the in-patient treatment for tuberculosis.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+(4) In the cases specified in subsections 2 and 3 of this section, the service provider is paid 95 per cent of the maximum cost of the service provided to the person established on the basis of clause 1 of subsection 5 of § 72 of this Act, but not more than in the amount indicated in the invoice.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(4
+
+1
+
+) Upon provision of the daily and weekly care service in the case specified in clause 1 of subsection 3 of this section, the service provider is paid 65 per cent of the maximum cost of the daily and weekly care service established on the basis of clause 1 of subsection 5 of § 72 of this Act, but not more than in the amount indicated in the invoice.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(5) The specific conditions and procedure for the submission of invoices shall be agreed upon in a contract entered into between the Social Insurance Board and the service provider.
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+(6) The specific conditions and procedure for the payment of remuneration from the state budget by the Social Insurance Board shall be established by a regulation of the minister in charge of the policy sector.
+
+§ 80.
+
+Termination of provision of special care services and notification thereof
+
+(1) A service provider shall terminate the provision of a special care service based on a referral decision in the case:
+
+1)
+
+the person does not use the everyday life support service, employment support service, supported living service and daily and weekly care service for at least a minimum period of more than two consecutive months, or the community living service and the 24-hour special care service for more than two consecutive months, except in the case of the provision of an in-patient health service;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+2)
+
+the contract entered into between the service provider and the Social Insurance Board expires and the same parties do not enter into a new contract for the provision of the same special care service or
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+3)
+
+the Social Insurance Board revokes a decision specified in subsection 4 of § 70 of this Act.
+
+(2) The provision of a service to a person placed in a social welfare institution by a court ruling shall be terminated in the case provided for in clause 2 of subsection 1 of this section and in the case the court suspends or terminates placing the person in a social welfare institution based on a court ruling or in the case the term for placing the person in a social welfare institution provided for in the court ruling expires.
+
+(3) A person who receives a special care service shall notify the service provider at whom he or she receives the special care service in writing of his or her wish to:
+
+1)
+
+suspend the receipt of the community living service or 24-hour special care service at the service provider for more than one day;
+
+2)
+
+terminate the receipt of the service at the service provider prior to the date specified in the referral decision.
+
+(4) If a person fails to use a special care service for more than two consecutive months due to the receipt of an in-patient health service and wishes to receive the service indicated in the referral decision after the receipt of the in-patient health service, the person or his or her legal representative, if the representative exists, shall submit to the Social Insurance Board through the provider of special care services at whom the person received the service indicated in the referral decision a written confirmation concerning the fact that the person received the in-patient health service the previous calendar month by the third day of each calendar month from the second month of the receipt of the in-patient health service until the end of the receipt of the health service.
+
+(5) If a person is not able to submit a written confirmation specified in subsection 4 of this section, the confirmation shall be submitted to the Social Insurance Board by the service provider at whom the person received the special care service if the service provider is aware that the person received an in-patient health service.
+
+(6) A provider of 24-hour special care service shall notify the Social Insurance Board of the provision of an in-patient health service to a person placed in a social welfare institution by a court ruling by submitting the corresponding written confirmation pursuant to the procedure and by the date provided for in subsection 4 of this section.
+
+(7) A provider of special care services is required to notify the Social Insurance Board of the following persons in writing within three working days after becoming aware of the following circumstances:
+
+1)
+
+a person who wishes to terminate the use of the special care service before the end of the term indicated in the referral decision;
+
+2)
+
+a person who has not used the everyday life support service, employment support service, supported living service and daily and weekly care service for at least a minimum period of more than two consecutive months, or the community living service and the 24-hour special care service for more than two consecutive months;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+2
+
+1
+
+)
+
+a person who has not used the special care service for more than four months within one year;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+3)
+
+a person who fails to contact the service provider during the term for the use of the special care service provided for in subsections 6 and 7 of § 71 of this Act as of the agreed date or
+
+4)
+
+a person who uses the special care service dies.
+
+§ 81.
+
+Change of provider of special care services
+
+(1) If a person referred to receive a special care service wishes to change the service provider before contacting the provider of special care services or during the receipt of the service, he or she shall submit a written application to the Social Insurance Board which shall set out the service provider whom the person wishes to contact for the receipt of the special care service and the date from which the person wishes to receive the service at the new service provider.
+
+(2) The Social Insurance Board shall issue a new referral decision to the person entitled to receive a special care service to the service provider requested by the person, if the service provider provides the service indicated in the decision specified in subsection 4 of § 70 of this Act and the service provider has a vacant place to offer for the person.
+
+(3) If the service provider requested by the person entitled to receive a special care service does not have a vacant place, the person shall be entered in the waiting list of the requested service provider for the special care service based on the provisions of § 76 of this Act.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(4) If a person who is placed in a social welfare institution by a court ruling wishes to change the service provider but there is no vacant place at the service provider requested by the person, provision of the special care service shall be continued at the service provider where the person is receiving the special care service until a place becomes vacant at the requested service provider.
+
+(5) If a contract is terminated and the same parties do not enter into a new contract for the provision of the same special care service, the Social Insurance Board shall issue a new referral decision to the person to whom the abovementioned service provider provided the special care service. If there is no vacant place at the service provider requested by the person, the provisions of subsection 3 of this section apply, except in the case of a person placed in a social welfare institution by a court ruling, who shall be placed to receive the special care service at a service provider who has a vacant place.
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+§ 82.
+
+Decision to terminate provision of special care service
+
+(1) If the Social Insurance Board has received information that the special care service provided to a person does not correspond to the needs of the person, the Social Insurance Board shall verify whether the person complies with the requirements for persons entitled to receive the special care service and assess whether the service provided corresponds to the needs of the person.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(2) If a person does not comply with the requirements for persons entitled to receive a special care service valid for persons entitled to receive a special care service at the time the decision specified in subsection 4 of § 70 of this Act is made or the special care service provided to the person does not correspond to his or her needs, the Social Insurance Board shall declare the decision specified in subsection 4 of § 70 of this Act invalid (hereinafter
+
+decision to terminate the provision of a special care service
+
+), except in the case of a person placed in a social welfare institution by a court ruling.
+
+(3) In case of the supported living service, community living service, daily and weekly care service and 24-hour special care service, a decision to terminate the provision of the special care service enters into force on the date the person terminates the use of the service, but not later than six months as of the date of notification of the person who receives the special care service of the decision.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(4) A decision to terminate the provision of a special care service for a person who uses the supported living service, community living service, daily and weekly care service or 24-hour special care service enters into force on the date when provision of the special care service to a person, in the waiting list for which the person was entered, is commenced, where the person:
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+1)
+
+has been referred again to receive the supported living service, community living service, daily and weekly care service or 24-hour special care service;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+2)
+
+has been entered in the waiting list for the service requested by the person six months after notification of the person of the decision to declare the decision invalid.
+
+§ 83.
+
+Requirements for providers of special care services
+
+(1) A provider of special care services is required to:
+
+1)
+
+introduce upon the commencement of the provision of a special care service to a person, orally or in writing, to the person and his or her legal representative, if the representative exists, its rules of procedure and the rights and obligations of the person during the receipt of the service;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+2)
+
+introduce the premises required for the provision of the service to the person upon commencement of the provision of the special care service, if the service is provided in the premises of the service provider;
+
+3)
+
+ensure collection and preservation of the information and documents concerning the person receiving the special care service and related to the provision of the service;
+
+4)
+
+prepare in writing the procedure for settlement of complaints of the institution which sets out the internal and external methods of submission and settlement of complaints and contact details of other relevant institutions to contact, and explain this to the person and his or her legal representative;
+
+5)
+
+ensure that the person providing the service directly who is in a contractual relationship therewith complies with the requirements established in § 86 of this Act and on the basis thereof;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+6)
+
+prepare a personal activity plan for the person referred to receive the special care service, on the basis of need for support established in different areas of life upon assessment of need of service;
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+7)
+
+work actively with the person during the provision of the special care service by involving him or her in the performance of the activities provided for as the content of the service in accordance with the person’s abilities and needs;
+
+8)
+
+notify the person, their legal representative and the Social Insurance Board of the arrival of the due date of the termination of the provision of the special care service, the need for the continuation of the provision of the service and expiry of the contract or intention to terminate the contract prematurely at least three months before the due date of the termination of the provision of the service in the case of the everyday life support service and employment support service and at least six months before the due date of the termination of the provision of the service in the case of the supported living service, community living service, daily and weekly care service and 24-hour special care service;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+9)
+
+notify, at the earliest opportunity, the person receiving the service, the Social Insurance Board and the legal representative of the person, if the representative exists, of a doubt arisen during the provision of the special care service concerning the fact that the service provided to the person does not correspond to the person’s needs;
+
+10)
+
+notify the person referred to receive the community living service, daily and weekly care service or 24-hour special care service, who has difficulties paying their contribution, of the possibility to cover the deficit in own contribution from the state budget;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+11)
+
+three months before the arrival of the date of the termination of the provision of the service indicated in the referral decision of the person, assess the achievement or the failure to achieve the objectives of the service provided to the person and the need for the continuation of the provision of the service to the person and submit to the Social Insurance Board a written assessment on the achievement or failure to achieve the objectives of the service and the need for the continuation of the provision of the service to the person;
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+11
+
+1
+
+)
+
+upon the termination of the provision of the service before the arrival of the date indicated in the referral decision of the person, assess the achievement or the failure to achieve the objectives of the service provided to the person and the need for the continuation of the provision of the service to the person directly before the termination of the provision of the service and submit to the Social Insurance Board, together with the last invoice at the latest, a written assessment on the achievement or failure to achieve the objectives of the service and the need for the continuation of the provision of the service to the person;
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+11
+
+2
+
+)
+
+with the consent of the person or the representative of the person, if the person proceeds to another service provider, send data in writing to the new service provider on the results of the assessment of the person's personal operational capacity and the activities of the activity plan and the performance thereof; prepare an assessment with reasons on the achievement of the objectives set in the activity plan or reasons for the failure to achieve the objectives set in the activity plan and submit the assessment and reasons to the new service provider at the latest on the day of proceeding to the new service provider;
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+12)
+
+prepare statistical reports about special care service pursuant to the procedure established on the basis of subsection 4 of § 11 of this Act and submit these to Social Insurance Board;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+13)
+
+ensure that the provision of special care services, the place of provision of services and catering comply with the requirements provided in and established on the basis of this Act and the Public Health Act.
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+(2) The list of documents to be collected and preserved by providers of special care services shall be established by a regulation of the minister in charge of the policy sector.
+
+(3) Data on the documents to be collected and preserved by providers of special care services shall be preserved up to ten years after terminating the provision of the service.
+
+[RT I, 13.03.2019, 2 – entry into force 15.03.2019]
+
+§ 84.
+
+Documents of persons receiving special care services
+
+(1) [Repealed – RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(2) A person referred to receive the supported living service, community living service, daily and weekly care service or 24-hour special care service is required to submit to the service provider specified in the referral decision a certificate concerning their state of health, which sets out the occurrence of somatic illnesses which require treatment and the treatment schedules prepared by the attending physician and also, at the request of the service provider, the occurrence of infectious diseases.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(3) [Repealed – RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(4) Upon the termination of a special care service, the service provider shall, at the request of the person who received the service or his or her legal representative, return the documents concerning the person collected and preserved during the provision of the service, including the activity plan prepared for the person.
+
+§ 85.
+
+Activity plan
+
+(1) In order to achieve the objectives set out in the referral decision, a provider of special care services shall prepare a personal activity plan in the areas of life related to the need for support established upon assessment of need of service for the performance of specific activities together with the person and his or her legal representative, if the representative exists, within 30 days after arrival of the person to receive a service.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(2) An activity plan shall include:
+
+1)
+
+the objective established for the person and the recommended activities for the achievement of the objective;
+
+2)
+
+the schedule and description of the performance of the activities which correspond to the needs of the person and assessment of the service provider concerning the performance of the activities at least once per quarter.
+
+(3) An activity plan shall be prepared for a person for the time of the provision of special care services. Once a year, a written assessment shall be prepared for the preceding 12 months on the performance of the activities specified in the activity plan and the achievement of objectives. The activity plan shall be complemented or amended is necessary.
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+§ 86.
+
+Requirements for persons directly providing services
+
+(1) Special care services may be provided directly by a natural person (hereinafter activity supervisor) who has acquired at least secondary education and undergone required professional training or who has acquired appropriate vocational or higher education for the provision of special care services.
+
+[RT I, 28.04.2022, 1 – entry into force 01.05.2022]
+
+(2) [Repealed – RT I, 28.04.2022, 1 – entry into force 01.05.2022]
+
+(3) A special care service shall not be provided directly by an activity supervisor whose criminal record for an intentionally committed criminal offence may endanger the life, health and property of the person entitled to receive the service.
+
+(4) [Repealed – RT I, 28.04.2022, 1 – entry into force 01.05.2022]
+
+(5) [Repealed – RT I, 28.04.2022, 1 – entry into force 01.05.2022]
+
+(6) [Repealed – RT I, 28.04.2022, 1 – entry into force 01.05.2022]
+
+(7) Professional requirements, including educational and training requirements for activity supervisors and requirements for completion of training, the scope and content of training shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 28.04.2022, 1 – entry into force 01.05.2022]
+
+(8) Persons who have acquired foreign professional qualifications may also provide special care services directly if their professional qualifications have been recognised in accordance with the Recognition of Foreign Professional Qualifications Act. The competent authority provided for in subsection 2 of § 7 of the Recognition of Foreign Professional Qualifications Act is the Social Insurance Board.
+
+[RT I, 30.12.2015, 5 – entry into force 18.01.2016]
+
+Division 2
+
+Everyday Life Support Service
+
+§ 87.
+
+Everyday life support service
+
+(1) The objective of the everyday life support service is the best possible independent coping and development of a person through supporting psycho-social coping, the development of everyday life coping skills and working skills and counselling of the people close to and people living together with the person.
+
+(2) Upon the provision of the everyday life support service, a service provider is required, based on the person’s needs and the objective of the receipt of the service specified in the referral decision, to:
+
+1)
+
+develop the person’s personal and everyday life skills by involving the person in the activities developing the abovementioned skills, taking account of the person’s state of health;
+
+2)
+
+supervise the person in the creation, preservation and development of social relationships;
+
+3)
+
+supervise the person in time-planning and spending spare time;
+
+4)
+
+supervise the person in using health, social, postal, financial and other services and in finding and implementing the possibilities to acquire education;
+
+5)
+
+develop the person’s working skills and enable the person to practice working;
+
+6)
+
+advise the people close to the person, including people living in the same dwelling with the person, in the specificities of the behaviour of the person entitled to receive the service and in communication with the person;
+
+7)
+
+support the activity of support groups for persons who receive the service and have similar diagnosis and related problems through supervising and advising of the persons;
+
+8)
+
+involve the person in other activities necessary for the achievement of the objective of the everyday life support service.
+
+§ 88.
+
+Persons entitled to receive everyday life support service financed from state budget
+
+An adult, except a person specified in subsection 2 of § 72 of this Act, is entitled to receive the everyday life support service if he or she complies with the following conditions:
+
+1)
+
+the person has a severe, profound or permanent mental disorder;
+
+2)
+
+no community living service, daily and weekly care service or 24-hour special care service is provided to the person at the same time.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+§ 89.
+
+Coverage of expenses of premises for provision of everyday life support service
+
+The local authority of a person’s residence entered in the population register is required to ensure coverage of the expenses related to the premises used or owned by a service provider to the extent established by the local government.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+§ 90.
+
+Requirements for everyday life support service
+
+(1) The everyday life support service may be provided in the dwelling of the person entitled to receive the service or any other place suitable for the provision of the abovementioned service.
+
+(2) The Social Insurance Board shall provide an assessment of the duration of the provision of the everyday life support service and the recommended frequency of the activities in a month.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(3) The activities forming the content of the everyday life support service shall be carried out with respect to the person referred to receive the service either directly or the people close to the person, including persons living together with the person, shall be advised to the recommended extent specified in the referral decision but at least four hours a month. A service provider is required to keep records of the hours during which the service is provided directly to the person or people close to the person.
+
+(4) Upon commencement of the provision of the everyday life support service, the service provider shall inform the entitled person on which days and at which time the service is provided.
+
+(5) A provider of everyday life support service shall ensure the presence of one full-time activity supervisor per ten persons referred to receive the service.
+
+Division 3
+
+Employment Support Service
+
+§ 91.
+
+Employment support service
+
+(1) The objective of the employment support service is to supervise and advise a person in order to support the person’s ability to cope independently and improve the quality of life during search for a job corresponding to the person’s abilities and during employment.
+
+(2) Upon the provision of the employment support service, a service provider is required, based on the person’s needs and the objective of the receipt of the service specified in the referral decision, to:
+
+1)
+
+motivate the person to commence work;
+
+2)
+
+find a job based on the person’s interests and corresponding to his or her abilities;
+
+3)
+
+support the person, supervise the person in accordance with the work instructions of the employer and advise the person during employment;
+
+4)
+
+supervise and advise the person’s employer with the consent of the latter upon employment of a person entitled to receive the service;
+
+5)
+
+supervise the person and the people working together with the person with their consent in the relationships created between them during employment;
+
+6)
+
+prepare the person for employment without support, where possible.
+
+[RT I, 14.12.2023, 1 – entry into force 24.12.2023]
+
+(3) Upon the provision of the employment support service, a service provider may offer the person a suitable job corresponding to the person’s abilities, including a job for which the person requires continuous support and supervision.
+
+[RT I, 14.12.2023, 1 – entry into force 24.12.2023]
+
+§ 92.
+
+Persons entitled to receive employment support service financed from state budget
+
+An adult, except a person specified in subsection 2 of § 72 of this Act, is entitled to receive the employment support service if he or she complies with the following conditions:
+
+1)
+
+the person has a severe, profound or permanent mental disorder;
+
+1
+
+1
+
+)
+
+the person has been established to have no work ability on the basis of the Work Ability Allowance Act, except in the case of a person who has attained the pensionable age provided in § 7 of the State Pension Insurance Act;
+
+[RT I, 14.12.2023, 1 – entry into force 24.12.2023]
+
+2)
+
+the person requires continuous support and supervision before commencing work or during working;
+
+[RT I, 14.12.2023, 1 – entry into force 24.12.2023]
+
+3)
+
+no daily and weekly care service or 24-hour special care service is provided to the person at the same time.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+§ 93.
+
+Requirements for employment support service
+
+(1) [Repealed – RT I, 30.12.2015, 5 – entry into force 01.07.2016]
+
+(2) The Social Insurance Board shall provide an assessment of the duration of the provision of the employment support service and the recommended frequency of the activities in a month.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(3) A provider of employment support service shall find a suitable job for a person referred to receive the service at least within one year after the commencement of the provision of the service to the person.
+
+(4) If a person referred to receive the employment support service has not accepted any of the jobs offered to him or her within one year as of the commencement of the provision of the employment support service, provision of the service based on the referral decision shall be terminated.
+
+(5) A provider of employment support service shall notify the Social Insurance Board of the expiry of the term specified in subsection 3 of this section after which the Social Insurance Board shall repeal proactively the administrative act whereby the person was referred to receive the employment support service.
+
+(6) The activities specified in clauses 1 and 3–6 of subsection 2 of § 91 of this Act which form the content of the employment support service shall be carried out directly in respect of the person referred to receive the employment support service, his or her employer or persons working together with the person to the recommended extent set out in the referral decision but at least four hours a month. A service provider is required to keep records of the hours during which the employment support service is provided directly to the employer, the person or persons working together with the person.
+
+(7) A provider of employment support service shall ensure the presence of one full-time activity supervisor per ten persons referred to receive the employment support service.
+
+Division 4
+
+Supported Living Service
+
+§ 94.
+
+Supported living service
+
+(1) The supported living service means supporting social coping and integration of a person together with supervision in the organisation of household and everyday life to ensure as independent coping of the person as possible when living independently.
+
+(2) Upon the provision of the supported living service, a service provider is required, based on the person’s needs and the objective of the receipt of the service specified in the referral decision, to:
+
+1)
+
+supervise the person in the organisation of household and everyday life, including in the preparation of the budget related to everyday life;
+
+2)
+
+supervise the person in the use of the services related to the use and maintenance of a dwelling, including the use of postal and financial services;
+
+3)
+
+assist in making agreements in the rules of common mode of life and in the implementation of the agreements if one dwelling is shared by at least two persons receiving the service;
+
+4)
+
+prepare the person for independent life and supervise and assist the person in the procurement of a dwelling.
+
+§ 95.
+
+Persons entitled to receive supported living service financed from state budget
+
+An adult, except a person specified in subsection 2 of § 72 of this Act, is entitled to receive the supported living service if he or she complies with the following conditions:
+
+1)
+
+the person has a severe, profound or permanent mental disorder;
+
+2)
+
+the person can take care of himself or herself;
+
+3)
+
+the person can cope, in case of supervision, with everyday life activities;
+
+4)
+
+no community living service, daily and weekly care service or 24-hour special care service is provided to the person at the same time.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+§ 96.
+
+Requirements for supported living service
+
+(1) The activities specified in subsection 2 of § 94 of this Act which form the content of the supported living service may be carried out in a dwelling the use of which has been granted to the person entitled to receive the supported living service or any other place suitable for the provision of the abovementioned service.
+
+(2) The Social Insurance Board shall provide an assessment of the duration of the provision of the supported living service and the recommended frequency of the activities in a month.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(3) A dwelling the use of which is granted to a person under the supported living service shall comply with the requirements established on the basis of subsection 4 of § 11 of the Building Code and clause 2 of subsection 1 of § 7 of the Dwelling Act.
+
+(4) In addition to the requirements specified in subsection 3 of this section, a dwelling shall include the following:
+
+1)
+
+at least one bedroom per person receiving the service;
+
+2)
+
+upon the request of the persons who receive the service, two persons receiving the service may live in one bedroom;
+
+3)
+
+a kitchen or a kitchen corner;
+
+4)
+
+the possibility to use a toilet and shower or bath.
+
+(5) The supported living service is provided in separate premises to persons with intellectual disabilities and persons with mental disorders.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(6) The activities specified in subsection 2 of § 94 of this Act shall be carried out in respect of a person referred to receive the supported living service at least two hours a week. A service provider is required to keep records of the hours during which the supported living service is provided directly to the person.
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+(7) A provider of supported living service shall ensure the presence of one full-time activity supervisor per ten persons referred to receive the supported living service.
+
+Division 5
+
+Community Living Service
+
+§ 97.
+
+Community living service
+
+(1) The community living service means the creation of a mode of life similar to a family favourable for the satisfaction of the basic needs and for the development of a person together with accommodation and catering in order to increase the person’s ability to cope independently and to develop the skills of the organisation of everyday life activities through participation in joint activities.
+
+(2) [Repealed – RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+(3) Upon the provision of the community living service, a service provider is required, based on the person’s needs and the objective of the receipt of the service specified in the referral decision, to:
+
+1)
+
+create a safe living environment and mode of life similar to a family and favourable for development;
+
+2)
+
+develop the person’s personal and everyday life skills and involve the person in the activities developing the abovementioned skills, taking account of the person’s state of health;
+
+3)
+
+supervise the person in time-planning and spending spare time;
+
+4)
+
+develop the person’s working skills and capacity for work;
+
+5)
+
+provide a possibility for the person to work in the service provider’s territory based on the abilities and skills of the person receiving the service or involve the person in a work-like activity in the joint household and to supervise the person in the performance of work or carrying out work-like activities;
+
+6)
+
+carry out other activities required for the achievement of the objective of the community living service.
+
+(4) [Repealed – RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+§ 98.
+
+Persons entitled to receive community living service financed from state budget
+
+An adult, except a person specified in subsection 2 of § 72 of this Act, is entitled to receive the community living service if he or she complies with the following conditions:
+
+1)
+
+the person has a severe, profound or permanent mental disorder;
+
+2)
+
+the person can take care of himself or herself and is able to participate in housework;
+
+3)
+
+no everyday life support service, supported living service, daily and weekly care service or 24-hour special care service is provided to the person at the same time.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+§ 99.
+
+Requirements for community living service
+
+(1) The activities specified in subsection 3 of § 97 of this Act shall be carried out with respect to the person receiving the community living service every day.
+
+(2) The Social Insurance Board shall provide an assessment of the objectives forming the content of the community living service and the duration of the provision of the community living service and the recommended frequency for the performance of the activities in a month.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(3) The community living service is provided in separate premises to persons with intellectual disabilities and persons with mental disorders.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(4) A provider of community living service shall ensure the compliance with the requirement provided for in clause 13 of subsection 1 of § 83 of this Act, if the community living service is provided for more than ten persons with special needs.
+
+(5) A provider of community living service shall ensure the presence of one activity supervisor per up to ten persons receiving the service outside of night time according to the needs of the person. At night, the availability of an activity supervisor shall be ensured to all the persons receiving the service at the service provider.
+
+[RT I, 21.12.2018, 3 – entry into force 01.01.2019]
+
+Division 5
+
+1
+
+Daily and Weekly Care Service
+
+[RT I, 18.10.2024, 1 - entry into force 01.01.2025]
+
+§ 99
+
+1
+
+.
+
+Objective of daily and weekly care service
+
+(1) The daily and weekly care service is the needs-based care and development of an adult together with accommodation and catering in order to enable the person referred to receive the daily and weekly care service to continue living at home, to ensure preservation and increase independent coping and safe living environment in the territory of the service provider and to reduce the care burden of the people close to the person, to help them remain in the labour market and participate in social life.
+
+(2) Upon the provision of the daily and weekly care service, a service provider is required, based on the person's needs and the objective of the receipt of the service specified in the referral decision, to:
+
+1)
+
+ensure the safety of the person receiving the daily and weekly care service;
+
+2)
+
+assist the person in taking care of himself or herself;
+
+3)
+
+supervise and assist the person, in cooperation with the people close to the person, in adherence to the treatment schedule prepared by a health care provider;
+
+4)
+
+develop the person's personal and everyday life skills by involving the person in the activities developing the abovementioned skills, taking account of the person's state of health;
+
+5)
+
+supervise the person in the creation, preservation and development of social relationships;
+
+6)
+
+supervise the person in spending spare time;
+
+7)
+
+involve the person in a work-like activity based on the abilities and skills of the person and supervise the person in such activity;
+
+8)
+
+advise the people close to the person in the specificities of the behaviour of the person and in communication with the person and cooperate with the people close to the person;
+
+9)
+
+carry out other activities required for the achievement of the objectives of the daily and weekly care service.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+§ 99
+
+2
+
+.
+
+Persons entitled to receive daily and weekly care service financed from state budget
+
+An adult, except a person specified in subsection 2 of § 72 of this Act, is entitled to receive the daily and weekly care service where the person complies with the following conditions:
+
+1)
+
+the person has a severe, profound or permanent mental disorder and a moderate, severe, profound or other intellectual or unspecified intellectual disability;
+
+2)
+
+the person has been established to have no work ability on the basis of the Work Ability Allowance Act, except in the case of a person who has attained the pensionable age provided in § 7 of the State Pension Insurance Act;
+
+3)
+
+upon assessment of the person's need for support, an extreme need for assistance and support in important areas of life and the need for daily and weekly care service on at least ten days a month have been established;
+
+4)
+
+the coping of the person cannot be ensured by any other social service specified in this Act;
+
+5)
+
+no everyday life support service, employment support service, supported living service, community living service or 24-hour special care service is provided to the person at the same time.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+§ 99
+
+3
+
+.
+
+Requirements for daily and weekly care service
+
+(1) The activities specified in subsection 2 of § 99
+
+1
+
+of this Act which form the content of the daily and weekly care service must be carried out in respect of the person receiving the daily and weekly care service on a minimum of ten days and a maximum of 23 days per month, except in the case provided in subsection 2 of this section.
+
+(2) Six months after the agreed deadline for the provision of the service indicated in the initial referral decision is the adaptation period during which the activities referred to in subsection 2 of § 99
+
+1
+
+of this Act may be carried out on less than ten days per month in respect of the person receiving the daily and weekly care service.
+
+(3) The Social Insurance Board provides an assessment of the duration of the provision of the daily and weekly care service and the recommended frequency of the activities in one month.
+
+(4) A provider of the daily and weekly care service is required to:
+
+1)
+
+ensure beds according to the needs of the persons receiving the service at the same time;
+
+2)
+
+ensure the provision of the service at a time that is suitable for the needs of the people close to the person receiving the service on all days of the week, including public holidays;
+
+3)
+
+ensure provision of the daily and weekly care service in premises separate from the premises where other 24-hour care services are provided;
+
+4)
+
+ensure inspection of entry into and exit from the premises for the provision of the daily and weekly care service;
+
+5)
+
+keep a record of the days and 24-hour periods during which the daily and weekly care service has been directly provided to the person.
+
+(5) Where a provider of the daily and weekly care service wishes to take a person receiving the service outside a place indicated on the activity licence, the service provider must obtain the consent of the person and the legal representative of the person, if the representative exists, therefor.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+§ 99
+
+4
+
+.
+
+Persons directly providing daily and weekly care service
+
+(1) A provider of the daily and weekly care service ensures 24-hour presence of at least one activity supervisor per 12 persons receiving the specified service and in addition to that, according to the needs of the persons, the presence of at least one activity supervisor outside of night time.
+
+(2) A provider of the daily and weekly care service may replace the 24-hour presence of one activity supervisor by the 24-hour presence of a care worker, provided that the care worker complies with the requirements provided in subsection 4 of § 22 of this Act.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+Division 6
+
+24-hour special care service
+
+[RT I, 25.10.2017, 1 - entry into force 01.01.2018, in Division 6 the word "person" has been replaced throughout the text by the word "adult" in the appropriate case form]
+
+§ 100.
+
+24-hour special care service
+
+(1) The 24-hour special care service means 24-hour care and development of an adult together with accommodation and catering to ensure preservation and increase of independent coping of the adult receiving the service and safe living environment in the territory of the service provider.
+
+(2) Upon the provision of the 24-hour special care service, the service provider is required, based on the adult’s needs and the objective of the receipt of the service specified in the referral decision, to:
+
+1)
+
+perform the obligations provided for in subsection 2 of § 87 of this Act;
+
+2)
+
+ensure the security of the adult receiving the 24-hour special care service;
+
+3)
+
+assist the adult in taking care of himself or herself;
+
+4)
+
+adhere to the treatment schedule prepared for the adult by a health care provider;
+
+5)
+
+create possibilities for the adult placed in a social welfare institution by a court ruling for working or for a work-like activity in the service provider’s territory;
+
+6)
+
+carry out other activities required to achieve the objective of the 24-hour special care service.
+
+(3) An adult who contacts a provider of 24-hour special care service on the basis of a referral decision, except an adult placed in a social welfare institution by a court ruling, who stays on the premises or in the territory for the provision of the 24-hour special care service used or owned by the provider of 24-hour special care service shall be deemed to be an adult receiving the service under this service.
+
+(4) An adult placed in a social welfare institution by a court ruling shall be deemed to be an adult receiving the service during the whole term specified in the court ruling regardless of the location of the adult.
+
+§ 101.
+
+Adults entitled to receive 24-hour special care service financed from state budget
+
+(1) An adult, except an adult specified in subsection 2 of § 72 of this Act, is entitled to receive the 24-hour special care service if he or she complies with the following conditions:
+
+1)
+
+the adult has a severe, profound or permanent mental disorder;
+
+2)
+
+[repealed – RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+3)
+
+the adult who is 18 years of age until attaining the pensionable age provided for in § 7 of the State Pension Insurance Act has been established to have no work ability on the basis of the Work Ability Allowance Act;
+
+[RT I, 30.12.2015, 5 – entry into force 01.07.2016]
+
+4)
+
+the need for the 24-hour special care service has been established upon assessment of the person's need for support;
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+5)
+
+the coping of the adult cannot be ensured by any other social service specified in this Act;
+
+6)
+
+no everyday life support service, employment support service, supported living service, community living service or daily and weekly care service is provided to the adult at the same time;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+7)
+
+the adult needs assistance in taking care of himself or herself;
+
+8)
+
+the adult cannot cope with everyday life activities or needs significant regular assistance or supervision for this purpose.
+
+(2) In addition to the adults specified in subsection 1 of this section, an adult who has a severe, profound or permanent mental disorder with unstable remission, except an adult specified in subsection 2 of § 72 of this Act, is entitled to receive the 24-hour special care service if:
+
+1)
+
+the adult complies with the conditions provided in clauses 4–6 of subsection 1 of this section and
+
+2)
+
+the adult has been established to have no work ability on the basis of the Work Ability Allowance Act, except in the case of an adult who has attained the pensionable age provided in § 7 of the State Pension Insurance Act.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+(2
+
+1
+
+) An adult who constantly rotates between periods of improvement and acute phases of the disease and whose condition is often changing shall be deemed to be a person with a severe, profound or permanent mental disorder with unstable remission in the case of the 24-hour special care service.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(3) In addition to the adults specified in subsections 1 and 2 of this section, an adult who has an extreme need for assistance and support, except an adult specified in subsection 2 of § 72 of this Act, is entitled to receive the 24-hour special care service if:
+
+1)
+
+the adult complies with the conditions provided for in clauses 4–6 of subsection 1 of this section and
+
+2)
+
+the adult has been established to have no work ability on the basis of the Work Ability Allowance Act, except in the case of an adult who has attained the pensionable age provided for in § 7 of the State Pension Insurance Act.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(4) An adult whose extreme need for assistance and support in important areas of life has been established upon assessment of the person’s need for support shall be deemed to be a person with extreme need for assistance and support in the case of the 24-hour special care service.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(5) In addition to the adults specified in subsections 1–3 of this section, the expenses related to the 24-hour special care service provided to adults placed in a social welfare institution by a court ruling, except own contribution, shall be paid from the state budget.
+
+§ 102.
+
+Requirements for 24-hour special care service
+
+(1) A provider of 24-hour special care service is required to:
+
+1)
+
+have an overview of the whereabouts of an adult receiving the 24-hour special care service;
+
+2)
+
+ensure inspection of entry into and exit from the premises for the provision of the 24-hour special care service;
+
+3)
+
+ensure the safety and security of the adults receiving the service and the provision of the service if the 24-hour special care service is provided to adults specified in subsection 1 of § 101 of this Act, adults with extreme need for assistance and support, and adults with a severe, profound or permanent mental disorder with unstable remission in the same premises;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+4)
+
+ensure provision of the 24-hour special care service in premises separate from the premises where other 24-hour care services are provided.
+
+(2) A provider of 24-hour special care service shall ensure the compliance with the requirement provided for in clause 13 of subsection 1 of § 83 of this Act, if the 24-hour special care service is provided for more than ten adults with special needs.
+
+(3) If a provider of 24-hour special care service wishes to take an adult receiving the 24-hour special care service outside a place indicated on the activity licence, the service provider shall obtain the consent of the adult and the legal representative thereof, if the representative exists, therefor.
+
+(4) A provider of 24-hour special care service ensures for persons receiving the 24-hour special care service at the service provider the availability of independent nursing care to the extent in which the Estonian Health Insurance Fund has assumed the obligation to pay the fee.
+
+[RT I, 11.12.2024, 1 – entry into force 01.01.2025]
+
+(5) [Repealed – RT I, 11.12.2024, 1 – entry into force 01.01.2025]
+
+(6) [Repealed – RT I, 11.12.2024, 1 – entry into force 01.01.2025]
+
+(7) [Repealed – RT I, 11.12.2024, 1 – entry into force 01.01.2025]
+
+(8) The 24-hour special care service, except accommodation, may be provided to adults placed in a social welfare institution by a court ruling in the same premises and at the same time with the adults specified in subsection 1 of § 101 of this Act, adults with extreme need for assistance and support, and adults with a severe, profound or permanent mental disorder with unstable remission, taking into account the provisions of § 103 of this Act.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+§ 103.
+
+Requirements for 24-hour special care service in case of adult placed in social welfare institution by court ruling
+
+If the 24-hour special care service is provided to an adult placed in a social welfare institution by a court ruling, the provider of 24-hour special care service is, in addition to the requirements provided for in § 102 of this Act, required to ensure:
+
+1)
+
+that the adult placed in the social welfare institution by a court ruling does not leave the premises or territory where the service is provided without being accompanied by a person ensured by the service provider;
+
+2)
+
+24-hour continuous surveillance and overview of the movement, location and activities of the adult placed in a social welfare institution by a court ruling;
+
+3)
+
+that the adult placed in a social welfare institution by a court ruling does not put himself or herself or other people in danger.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+§ 104.
+
+Adults providing 24-hour special care service directly
+
+(1) A provider of 24-hour special care service shall ensure 24-hour presence of at least one activity supervisor per 30 adults receiving the specified service and in addition to that, according to the needs of the adults, the presence of at least one activity supervisor outside of night time.
+
+(2) If the 24-hour special care service is provided to an adult with a severe, profound or permanent mental disorder with unstable remission or an adult with a mental disorder who has an extreme need for assistance and support, the provider of 24-hour special care service shall ensure 24-hour presence of at least one activity supervisor per 15 adults receiving the specified service and in addition to that, according to the needs of the adults, the presence of at least one activity supervisor outside of night time.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(2
+
+1
+
+) If the 24-hour special care service is provided to a person with a mental disorder who has an extreme need for assistance and support, the 24-hour presence of one activity supervisor may be replaced by the 24-hour presence of a care worker if the care worker complies with the requirements provided for in subsection 4 of § 22 of this Act.
+
+[RT I, 28.04.2022, 1 – entry into force 01.05.2022]
+
+(3) If the 24-hour special care service is provided to an adult placed in a social welfare institution by a court ruling, the provider of 24-hour special care service shall ensure 24-hour presence of at least one activity supervisor per 20 adults receiving the service and in addition to that, according to the needs of the adults, the presence of at least one activity supervisor outside of night time.
+
+[RT I, 08.07.2016, 1 – entry into force 18.07.2016]
+
+Subchapter 4
+
+Care without Consent of Adult
+
+[RT I, 25.10.2017, 1 - entry into force 01.01.2018, in Subchapter 4 the word "person" has been replaced throughout the text by the word "adult" in the appropriate case form]
+
+§ 105.
+
+Placing adults in social welfare institution on basis of court ruling
+
+(1) An adult is placed in a social welfare institution to receive the 24-hour special care service without his or her consent (hereinafter
+
+care without consent
+
+) upon the existence of all the following circumstances:
+
+1)
+
+the adult has a severe mental disorder which restricts his or her ability to understand or control his or her behaviour;
+
+2)
+
+the adult is dangerous to himself or herself or others, if he or she is not placed in a social welfare institution to receive the 24-hour special care service;
+
+3)
+
+the application of earlier measures has not been sufficient or the use of other measures is not possible.
+
+(2) If an adult is incapable of exercising his or her will, it is deemed that he or she has not granted his or her consent for the receipt of the service.
+
+(3) The consent of the legal representative of an adult is not a substitute for the consent of the adult.
+
+(4) Placing an adult in a social welfare institution without the consent of the adult, care without consent, the extension, suspension and termination thereof shall be decided by a court pursuant to the procedure prescribed in the Code of Civil Procedure for a proceeding for placing an adult in a closed institution, unless otherwise provided by this Act.
+
+(5) A court may place an adult to a social welfare institution for care-giving without his or her consent for a period of up to one year as of the making of the court ruling. If the circumstances listed in subsection 1 of this section have not ceased to exist at the end of such term, the court may extend the term of the adult's care in a social welfare institution without his or her consent at the request of the rural municipality or city government of the adult's residence or his or her legal representative for up to one year at a time.
+
+(6) The provider of 24-hour special care service, at whom the adult receives care without consent on the basis of a court judgment, shall immediately notify the guardian of the adult or the rural municipality or city government of the adult's residence of the need to extend, suspend or terminate care in a social welfare institution without the adult’s consent and append the opinion of a psychiatrist concerning the justification of the suspension, extension or termination of care in a social welfare institution without the adult’s consent to the notification. The following are required to notify immediately a court of the need to suspend or terminate care without the adult's consent:
+
+1)
+
+the provider of 24-hour special care service at whom the adult receives care without consent on the basis of a court judgment;
+
+2)
+
+the rural municipality or city government of the adult’s residence;
+
+3)
+
+the legal representative of the adult, if he or she is aware of the need to suspend or terminate the care of an adult without his or her consent.
+
+§ 106.
+
+Restriction on freedom of movement of adults receiving social services
+
+(1) The restriction on free movement may be applied to adults who:
+
+1)
+
+are placed in a social welfare institution on the basis of a court ruling in accordance with § 105 of this Act;
+
+2)
+
+receive the 24-hour special care service, if this is necessary for the protection of the rights and freedoms of such adult and other adults.
+
+(2) A provider of 24-hour special care service may restrict the right of an adult with a mental disorder receiving the 24-hour special care service to move freely only insofar as it is necessary for the protection of the life and health of such adult and other adults.
+
+§ 107.
+
+Isolation of adult
+
+(1) A provider of 24-hour special care service may use only isolation as a restriction on freedom of movement with respect to adults who have not been placed to receive the 24-hour special care service by a court ruling. Isolation may be used also with respect to adults placed in a social welfare institution by a court ruling.
+
+(2) Placing an adult in an isolation room is deemed to be isolation. The adult shall be constantly under the supervision of the provider of 24-hour special care service during the adult’s stay in an isolation room.
+
+(3) The requirements for isolation rooms and the furnishing of isolation rooms shall be established by a regulation of the minister in charge of the policy sector.
+
+(4) Isolation may be used with respect to an adult receiving the 24-hour special care service only if:
+
+1)
+
+there is immediate danger arising from the adult to the life, physical integrity or physical freedom of the adult himself or herself or other adults;
+
+2)
+
+verbal calming of an adult or application of other measures known to the service provider and indicated by the doctor with respect to the specific adult has been insufficient;
+
+3)
+
+to the service provider's knowledge the doctor has not excluded the use of isolation with respect to the specific adult.
+
+(5) If circumstances specified in subsection 4 of this section become evident and before isolation the provider of 24-hour special care service shall notify the provider of emergency medical care or the police. In the case of the need for immediate isolation, the service provider may isolate the adult before notification, taking account of the provisions of subsection 4 of this section.
+
+(6) An adult may be isolated from other adults receiving the service until the arrival of the provider of emergency medical care or the police, but not for longer than three consecutive hours.
+
+(7) A provider of 24-hour special care service shall adopt a reasoned written decision concerning the isolation. The service provider shall notify the legal representative of the adult, if the representative exists, of the isolation of the adult.
+
+(8) A provider of 24-hour special care service who uses isolation is required to prepare a written report which shall set out:
+
+1)
+
+the given name and surname of the adult isolated;
+
+2)
+
+the time of the beginning and end of isolation;
+
+3)
+
+the detailed description of the situation prior to isolation, including the measures taken to calm the adult;
+
+4)
+
+the reasons for isolation;
+
+5)
+
+the name of the adult who made the decision on isolation;
+
+6)
+
+information concerning the injury suffered by an adult specified in clause 1 of this subsection, the provider of 24-hour special care service or a n adult with whom the service provider is in contractual relationship in order to provide the 24-hour special care service and concerning the premises for provision of the service or furnishings thereof damaged by the adult.
+
+(9) After the termination of isolation the provider of 24-hour special care service is required to explain the purpose and reason for isolation to the adult who was isolated.
+
+(10) A provider of 24-hour special care service shall prepare instructions for managing problem behaviour and isolation of restless and violent adults.
+
+Subchapter 5
+
+Childcare Service
+
+[Repealed -  RT I, 21.12.2016, 2 - entry into force 01.01.2017]
+
+§ 108.  –  § 115.
+
+[Repealed – RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+Subchapter 6
+
+Substitute Home Service
+
+[Repealed -  RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+§ 116.
+
+Substitute home service
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 117.
+
+Persons entitled to receive substitute home service
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 118.
+
+Provision of substitute home service
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 119.
+
+Referral to receive substitute home service
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 120.
+
+Financing of substitute home service
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 121.
+
+Documents of child receiving substitute home service
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 122.
+
+Requirements for substitute home service
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 123.
+
+Requirements for education employees of substitute homes
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 124.
+
+Requirements for family parents and for persons with whom they use common dwellings
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 124
+
+1
+
+.
+
+Family parent contract
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 125.
+
+Provision of substitute home service to unaccompanied minor aliens, minor victims of human trafficking and sexually abused minors
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 126.
+
+Organisation of temporary placement of child in family
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+Subchapter 6
+
+1
+
+Provision of alternative care service to unaccompanied minor aliens
+
+[RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+§ 126
+
+1
+
+.
+
+Provision of alternative care service to unaccompanied minor aliens
+
+Alternative care service shall be provided to unaccompanied minor aliens under the conditions and pursuant to the procedure provided in Division 12 of Subchapter 2 of Chapter 2 of this Act.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 126
+
+2
+
+.
+
+Funding of alternative care service provided to unaccompanied minor aliens
+
+(1) Alternative care service provided to unaccompanied minor aliens shall be financed from the state budget through the Social Insurance Board.
+
+(2) The Social Insurance Board shall perform the obligations provided for in clauses 2–5 of subsection 4 of § 45
+
+9
+
+of this Act.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+Subchapter 7
+
+Foster Care of Child
+
+[RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+§ 127.
+
+Duties of local authorities in referral of children to foster care
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 128.
+
+Child subject to foster care and his or her rights
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 129.
+
+Requirements for person providing foster care and his or her family members and rights of caregiver
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 130.
+
+Child subject to foster care
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+Subchapter 7
+
+1
+
+Closed Child Care Institution Service
+
+[RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+§ 130
+
+1
+
+.
+
+Closed Child Care Institution Service
+
+(1) Closed child care institution service is a 24-hour service that shall be provided under the conditions provided for in § 130
+
+3
+
+of this Act to a child whose freedom has been restricted on the basis of a court ruling.
+
+(2) The purpose of closed child care institution service is to support the child's psychological, emotional, educational and cognitive development in order to achieve lasting changes that will enable the child to successfully cope in a normal environment after the restriction on freedom without behaviour that would harm his or her life, health and development and the life and health of other persons.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+§ 130
+
+2
+
+.
+
+Proceeding for placing in closed child care institution
+
+(1) A child shall be placed in a closed child care institution only in the event that the child's behaviour endangers his or her own life, health or development or the life and health of other persons and it is not possible to eliminate this danger by other less restrictive measures.
+
+(2) The placement of a child in a closed child care institution, also the extension and termination of being in a closed child care institution shall be decided by a court on the basis on an application submitted by the local authority of the residence of the child pursuant to the procedure prescribed in the Code of Civil Procedure for a proceeding for placing a person in a closed institution with the following specifications:
+
+1)
+
+the proceeding for the placement shall not apply provisional legal protection within the meaning of § 534 of the Code of Civil Procedure;
+
+2)
+
+conducting an expert assessment is not a prerequisite for placement within the meaning of § 537 of the Code of Civil Procedure;
+
+3)
+
+the court shall appoint a representative for the child to protect the interests of the child;
+
+4)
+
+in the proceeding for the placement the court shall also have to hear the parent with right of custody of the child, the person actually raising the child and persons who have significant contact with the child and work with the child in addition to the persons provided for in subsection 2 of § 536 of the Code of Civil Procedure;
+
+5)
+
+in the proceeding for the placement, the court must hear the child in person, regardless of the age of the child;
+
+6)
+
+in addition to persons provided for in § 543 of the Code of Civil Procedure, a parent with right of custody and a guardian shall also have the right to file an appeal against court ruling in the proceedings for the placement.
+
+(3) The application of a local authority shall contain the following:
+
+1)
+
+an explanation about the danger resulting from the behaviour of the child on his or her own life, health or development or the life and health of other persons;
+
+2)
+
+an assessment of the need for assistance of the child based on the provisions of § 28 of the Child Protection Act;
+
+3)
+
+an overview of the measures previously provided for the child by the local authority or state;
+
+4)
+
+a reason as to why it is not possible to eliminate the danger resulting from the behaviour of the child by other less restrictive measures;
+
+5)
+
+the opinion of the Social Insurance Board regarding the appropriateness of the measure restricting the freedom of the child;
+
+6)
+
+an overview of the measures that the local authority is implementing to support the relationships between the child and the persons raising him or her and the ability to cope and the parental skills of the persons raising the child before and after the child receives closed child care institution service;
+
+7)
+
+[repealed – RT I, 31.12.2024, 3 – entry into force 10.01.2025]
+
+§ 130
+
+3
+
+.
+
+Requirements for closed child care institution service
+
+(1) A provider of closed child care institution service shall have the following duties:
+
+1)
+
+accommodation and catering of a child;
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+2)
+
+provision of 24-hour support and supervision to prevent a child from leaving the place for the provision of the service without permission and risks arising from the behaviour of the child to him- or herself and to others;
+
+3)
+
+conducting activities proceeding from the needs of a child to identify and solve the child's developmental and behavioural problems;
+
+4)
+
+provision of developing activities to help a child spend free time and the provision of the right of information and freedom of expression of the child, including the use of means of communication;
+
+5)
+
+provision of all necessary support for the relationships between a child and the person raising the child and other persons that are important for the child.
+
+(2) A provider of closed child care institution service shall ensure the necessary number of employees with suitable personality traits and preparation for twenty-four hours a day to establish good and reliable relationships with the children receiving closed child care institution service, thereby ensuring the successful performance of the duties provided for in subsection 1 of this section. The minister in charge of the policy sector may establish by a regulation detailed requirements for the number of employees.
+
+(3) A provider of closed child care institution service has the right to restrict the freedom of movement of a child to a necessary extent at the place for the provision of the service and outside of the place for the provision of the service while refraining from excessive restrictions and taking into account when establishing the restrictions the needs of the child and the effect of the restrictions on the efficiency of the performance of the duties provided for in clauses 2–5 of subsection 1 of this section and on the achievement of the purpose of the service.
+
+(4) In order to ensure safety, a provider of closed child care institution service has the right to:
+
+1)
+
+apply the provisions of §§ 6 and 130
+
+4
+
+of this Act;
+
+2)
+
+place into an isolation room until the passing of the threat, but not for longer than three successive hours a child whose behaviour poses a direct and immediate threat to his or her own life or health or the life or health of other persons if such a threat cannot be avoided in any other way, while ensuring continuous support for and supervision of the child.
+
+(5) The requirements provided for in subsections 7–9 of § 107 of this Act shall be applied to the isolation provided for in clause 2 of subsection 4 of this section.
+
+(6) Compliance with the requirements provided in subsections 1–5 of this section is ensured by internal rules established by the service provider which provide at least:
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+1)
+
+a procedure for the use of a telephone and the internet, sending letters, receiving visitors, home visits and staying outside the place for the provision of the service;
+
+2)
+
+a procedure for the isolation of a child and the provision of supervision of and support for the child and the notification of a legal representative of the child;
+
+3)
+
+a procedure for the submission of complaints by a child and the review of complaints and the provision of relative feedback to the child;
+
+4)
+
+a procedure for the preparation and updating of an individual activity plan for a child and the implementation of developing and supportive activities on the basis thereof;
+
+5)
+
+a procedure for introducing the valid internal rules to a child upon his or her arrival to the child care institution and the updating and adoption to the individual needs of the child of the internal rules during the provision of the service and for asking and taking into consideration the child's opinion.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+(7) The living environment and catering of a child receiving closed child care institution service must comply with the requirements provided in and established on the basis of §§ 21 and 22 of the Public Health Act.
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+§ 130
+
+4
+
+.
+
+Examination of items of child and removal, maintenance, return, delivery and destruction of forbidden items
+
+(1) If a provider of closed child care institution service develops a reasonable suspicion that a child is in possession of or that a postal or other consignment addressed in the name of the child contains items specified in subsection 1 or 2 of § 6 of this Act, the service provider shall have the right to check the child and his or her clothing by means of observation and tactile communication or with the help of a technical device and to check the items in the possession of the person.
+
+(2) Upon examining the items in the possession of a child and removing forbidden items, a service provider refrains from breach of confidentiality of messages sent to the child.
+
+(3) If the medical condition of the child permits it, the items shall be examined and forbidden items removed from the child's possession in his or her presence.
+
+(4) Items removed from the possession of a child and not delivered to the police shall be preserved, delivered to the legal representative of the child, except a rural municipality or a city government, or destroyed by a service provider.
+
+(5) A service provider shall preserve the item removed from a child until the reason for the removal has ceased to exist. When the reason ceases to exist, the removed items shall immediately be returned to the child.
+
+(6) In the event that a service provider is unable to preserve the removed item and the child has a contractual or a legal representative, the service provider shall hand the removed item over to the representative of the child, except a rural municipality or a city government.
+
+(7) A service provider may destroy items that have been removed from the possession of a child and which are spoilt or past their shelf life.
+
+(8) In the event that there is an item being requested to be delivered to a child, a service provider shall check before the delivery, whether the right of possession of the item to be delivered has been restricted on the basis of this Act. The service provider has the right to stop a forbidden item to be delivered to a child.
+
+(9) A service provider shall document the examination of an item in the possession of a child and the removal, return, delivery to police or destruction of forbidden items. In the event of the removal of an item specified in clause 4 of subsection 1 of § 6 of this Act, the service provider shall also document the reasons for the removal of the substance or item.
+
+(10) A child shall be examined by tactile communication by a person of the same sex as the child. The child may also be examined by a person not of the same sex as the child if it is necessary for averting immediate threat.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+§ 130
+
+5
+
+.
+
+Organisation and funding of closed child care institution service
+
+(1) The provision of closed child care institution service is organised by the Social Insurance Board.
+
+(2) The Social Insurance Board shall have the right to give the provision of the service to a sole proprietor or a legal person with a contract under public law pursuant to the procedure provided for in the Administrative Co-operation Act.
+
+(3) The performance of the duties provided for in subsections 1 and 2 of § 130
+
+3
+
+on the basis of a contract under public law entered into on the basis of subsection 2 of this section, shall be financed from the state budget through the Social Insurance Board.
+
+(4) [Repealed – RT I, 28.04.2022, 1 - entry into force 01.07.2025; date of entry into force amended [RT I, 14.12.2023, 1]]
+
+(5) [Repealed – RT I, 28.04.2022, 1 - entry into force 01.07.2025; date of entry into force amended [RT I, 14.12.2023, 1]]
+
+(6) The price of state-funded closed child care institution service and the maximum cost per child entitled to receive the service in a calendar year shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+Subchapter 8
+
+Subsistence Benefit
+
+§ 131.
+
+Subsistence benefit
+
+(1) The objective of subsistence benefit is to alleviate material deprivation of persons and families in need of assistance as a temporary measure supporting the ability of persons to cope independently by providing minimum funds to satisfy the primary needs.
+
+(2) A person living alone or a family whose monthly net income, after the deduction of housing expenses calculated under the conditions provided for in subsections 5 and 6 of § 133 of this Act, is below the subsistence level has the right to receive a subsistence benefit.
+
+(3) The
+
+Riigikogu
+
+shall establish the subsistence level for a person living alone or to the first member of a family for each budgetary year by the state budget. Subsistence level is established based on minimum expenses made on consumption of foodstuffs, clothing, footwear and other goods and services which satisfy the primary needs. A new subsistence level shall not be less than the subsistence level in force.
+
+(4) The subsistence level of the second and each subsequent adult member of a family is 80 per cent of the subsistence level of the first member of the family.
+
+(5) The subsistence level of each child of a family is 120 per cent of the subsistence level of the first member of the family.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(6) If a child attains 18 years of age during the month of application for a subsistence benefit, he or she shall be deemed to be a child for the purposes of subsection 5 of this section.
+
+(7) Upon the grant of a subsistence benefit, the following persons who live in the same dwelling and have a shared household are deemed to be family members:
+
+1)
+
+persons who are married or in a registered partnership or in a relationship similar to marriage;
+
+[RT I, 06.07.2023, 6 – entry into force 01.01.2024]
+
+2)
+
+ascendants and descendants related in the first and second degree;
+
+3)
+
+other persons who have a shared household.
+
+(8) Upon the grant of a subsistence benefit, students up to 24 years of age who are enrolled in a basic school, upper secondary school or vocational educational institution and students up to 24 years of age who are enrolled in a university, institution of professional higher education or vocational educational institution are deemed to be members of the family if the address details of their residence entered in the population register coincide with the address details of the residence of the family members specified in subsection 7 of this section.
+
+(9) Students up to 24 years of age who are enrolled in a basic school, upper secondary school or vocational educational institution and students up to 24 years of age who are enrolled in a university, institution of professional higher education or vocational educational institution, whose address details of their residence entered in the population register do not coincide with the address details of the residence of the family members specified in subsection 7 of this section, have the right to receive a subsistence benefit from the local authority of their residence entered in the population register provided that their family was granted a subsistence benefit in the previous or given month.
+
+(10) If a student attains 25 years of age during the month of application for a subsistence benefit, subsections 8 and 9 of this section shall not apply to the student.
+
+(11) Subsections 8 and 9 of this section do not apply to a student who is married or in a registered partnership, or a parent or guardian of a child where the actual residence of the student is different from the actual residence of the family members specified in subsection 7 of this section.
+
+[RT I, 06.07.2023, 6 – entry into force 01.01.2024]
+
+(12) A ward whose guardian is a family member residing with him or her shall not be deemed a family member upon the grant of a subsistence benefit.
+
+§ 132.
+
+Application for subsistence benefit
+
+(1) In order to obtain a subsistence benefit for a given month, a subsistence benefit applicant shall submit an application to the local authority in whose administrative territory the actual residence of the applicant is located not later than by the last working day of the given month.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(1
+
+1
+
+) For the purpose of subsection 1 of this section, the actual residence of a person shall be deemed to be:
+
+1)
+
+the residence entered in the population register;
+
+2)
+
+the residence of the additional address entered in the population register;
+
+3)
+
+the place of stay entered in the population register or
+
+4)
+
+other residence.
+
+[RT I, 17.11.2017, 1 – entry into force 01.01.2019]
+
+(2) In an application, the applicant shall specify the names, personal identification codes or dates of birth and social status of persons to be considered upon the grant of a subsistence benefit pursuant to subsections 7 and 8 of § 131 of this Act.
+
+(3) Documents shall be appended to an application specified in subsection 1 of this section certifying the net income of a person living alone or all the members of a family received during the preceding month, the amount of paid support and the amounts withheld in enforcement proceedings pursuant to §§ 131 and 132 of the Code of Enforcement Procedure. If any type or amount of income cannot be documented, a subsistence benefit applicant shall verify it by his or her signature.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(4) If the applicant wishes the housing expenses to be also taken into account upon the grant of a subsistence benefit, the applicant shall append documents to the application certifying:
+
+1)
+
+the right to use the dwelling – such documents shall be submitted upon primary application and upon change of the legal basis for the use of the dwelling;
+
+2)
+
+the housing expenses payable during the given month specified in subsection 5 of § 133 of this Act.
+
+(5) A contract entered into between the persons specified in subsections 7 or 8 of § 131 of this Act themselves shall not be deemed to be the legal basis for the use of a dwelling.
+
+(5
+
+1
+
+) Where the applicant wishes the repayment of the loan taken in order to acquire housing to be also taken into account as housing expenses upon the grant of a subsistence benefit, the applicant appends to the application, upon primary application or amendment of the loan agreement, documents certifying:
+
+1)
+
+taking of loan in order to acquire housing and entry into a mandatory home insurance contract;
+
+2)
+
+using of the loan for acquiring housing if not apparent from a document specified in clause 1 of this subsection;
+
+3)
+
+using of payment holiday or refusal to grant payment holiday;
+
+4)
+
+existence of voluntary insurance for the prevention of solvency problems and whether it covers in full the repayment of the loan taken in order to acquire housing.
+
+[RT I, 07.06.2022, 1 – entry into force 01.07.2022]
+
+(6) Upon application for subsistence benefit for the first time or changes in the composition of objects specified in this subsection, an applicant shall, in addition to the documents specified in subsections 1, 3 and 4 of this section, submit a written list of dwellings which are movables and securities for the purpose of the Securities Market Act owned by the applicant and his or her family.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(6
+
+1
+
+) A local authority shall check from databases belonging to the state information system whether any immovables or vehicles for the purposes of the Traffic Act are owned by the person and the members of his or her family in order to determine the financial situation of the person and his or her family and the possibility to ensure sufficient funds for coping.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(7) A subsistence benefit shall not be granted to a person who receives general care service provided outside the home of a person on a 24-hour basis, special care service which includes 24-hour accommodation or alternative care service, or to a person who is in a custodial institution as a prisoner or to a person in custody.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 133.
+
+Bases for calculating subsistence benefit
+
+(1) A subsistence benefit shall be calculated based on the net income of a person living alone or the sum of the net incomes of all members of a family received during the preceding month, from which paid support, the amounts withheld in enforcement proceedings pursuant to §§ 131 and 132 of the Code of Enforcement Procedure, the housing expenses payable during the given month and the established subsistence level shall be deducted.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(1
+
+1
+
+) The net income during the preceding month specified in subsection 1 of this section shall be deemed to be the income received during the preceding calendar month or in justified cases the income received during 30 calendar days preceding the submission of the application.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(2) Upon calculating a subsistence benefit, the following shall not be included in the income of a person living alone or a family:
+
+1)
+
+single benefits paid out of the funds of the state budget or local authority budget;
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+2)
+
+periodic benefits paid from local authority budget funds pursuant to the legislation of the local authority which are dependent on family income or granted to compensate for the cost of a specific service;
+
+3)
+
+benefits paid on the basis of the Social Benefits for Disabled Persons Act, except for the disabled parent's allowance;
+
+4)
+
+student loan granted with security guaranteed by the state;
+
+5)
+
+grants and transport and accommodation benefits paid on the basis of the employment programme established on the basis of Labour Market Measures Act or from the structural assistance funds;
+
+[RT I, 07.03.2023, 5 – entry into force 01.01.2024]
+
+6)
+
+basic allowance, needs-based study allowance and needs-based special allowance paid on the basis of the Study Allowances and Study Loans Act and allowance paid from a special allowance fund established by an educational institution;
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+7)
+
+[Repealed – RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+8)
+
+[Repealed – RT I, 28.12.2017, 8 – entry into force 01.05.2018]
+
+9)
+
+earned income received by a child who is enrolled in a basic school, upper secondary school or formal vocational education until attaining 19 years of age or after attaining 19 years of age until the end of the current academic year or until the student is excluded from the list of the school;
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+10)
+
+compensation for the expenses related to entering into a rental contract of a dwelling and for the cost of translation services paid to a person or family who has been granted international protection on the basis of the Act on Granting International Protection to Aliens.
+
+[RT I, 07.06.2022, 1 – entry into force 17.06.2022]
+
+(2
+
+1
+
+) In the event that a subsistence benefit applicant or a member of a family applying for the benefit starts receiving earned income and was granted subsistence benefit for at least two consequent preceding months and the calculation thereof did not take into account the earned income, the following shall not be included in the income of a person living alone or a family during the months immediately following the receipt of earned income upon calculating a subsistence benefit:
+
+1)
+
+100 per cent of earned income on two months and
+
+2)
+
+subsequently 50 per cent of earned income.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(2
+
+2
+
+) The provisions of subsection 2
+
+1
+
+shall be applied once during 24 months after the application of subsection 2
+
+1
+
+in calculating a subsistence benefit.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(2
+
+3
+
+) Earned income within the meaning of clause 9 of subsection 2 and subsection 21 of this section shall be deemed to be income received in an employment or service relationship or on the basis of a contract for the supply of services under the law of obligations as well as the business income of a sole proprietor.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(3) In addition to what has been specified in subsections 2 and 2
+
+1
+
+of this section, a local authority may choose not to include the following in the income of a person living alone or a family upon calculating a subsistence benefit:
+
+1)
+
+grants and benefits supporting studying or working;
+
+2)
+
+benefits paid to cover specific expenses or loss;
+
+3)
+
+monetary benefits and gifts received from people close to a person or a family to improve the coping thereof to the extent of one-half the subsistence level per family in one month.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(4) If a subsistence benefit applicant or his or her family member receives income paid in advance or retroactively for several months, the subsistence benefit may be calculated on the basis of the average income during the six months preceding the application.
+
+(5) Taking into account the limits established on the basis of subsection 6 of this section and the socially justified standards for dwellings established on the basis of clause 2 of subsection 1 of § 7 of the Dwelling Act or the number of family members, the following housing expenses payable during the given month shall be taken into account upon calculation of a subsistence benefit:
+
+1)
+
+rent;
+
+1
+
+1
+
+)
+
+the repayment of the loan taken in order to acquire housing which includes the loan interest and the mandatory home insurance premium;
+
+[RT I, 07.06.2022, 1 – entry into force 01.07.2022]
+
+2)
+
+the administration costs of the apartment building, including costs related to repairs;
+
+3)
+
+repayment of loan taken for renovation of the apartment building;
+
+4)
+
+the cost of services of supplying water and leading off waste water;
+
+5)
+
+the cost of thermal energy or fuel consumed for supply of hot water;
+
+6)
+
+the cost of thermal energy or fuel consumed for heating;
+
+7)
+
+the costs related to consumption of electricity;
+
+8)
+
+the cost of household gas;
+
+9)
+
+the expenses made on land tax, which is calculated based on the size of land that equals three times the area under the dwelling;
+
+10)
+
+the expenses made on building insurance;
+
+11)
+
+the fee for the transport of municipal waste.
+
+(6) In order to grant subsistence benefit, local authorities shall establish limits for the expenses specified in subsection 5 of this section, which ensure decent subsistence for persons and their family members. Local authorities shall review the established limits at least once a year and establish new limits, if necessary.
+
+(6
+
+1
+
+) In addition to the provisions of subsection 5 of this section, upon calculating a subsistence benefit for a person living alone or a family who have been granted a subsistence benefit in the six months immediately preceding the calculation of a subsistence benefit, a local authority may take into account other single housing expenses within a subsistence limit during one calendar year the incurring of which is unavoidable and the result of a piece of legislation or due to risk on the health or life of a person.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(7) Upon calculation of subsistence benefit, pre-existing arrears in payment of housing expenses are not included in the housing expenses payable during the given month, and such arrears are not subject to coverage out of subsistence benefit.
+
+(7
+
+1
+
+) Housing expenses are taken into account upon the calculation of a subsistence benefit in the case of the housing where the applicant for subsistence benefit permanently resides and which is located in the administrative territory of the local authority which the benefit is applied from, except in the case of a person specified in subsection 8 of § 131 of this Act.
+
+[RT I, 07.06.2022, 1 – entry into force 01.07.2022]
+
+(8) Rent is not taken into account upon the calculation of a subsistence benefit where the lessor and lessee are married to each other or in a registered partnership, or ascendants and descendants related in the first and second degree.
+
+[RT I, 06.07.2023, 6 – entry into force 01.01.2024]
+
+(9) Land tax expenses shall not be taken into account upon the calculation of a subsistence benefit if the applicant is fully or partly exempt from the obligation to pay land tax on the basis of § 11 of the Land Tax Act.
+
+(9
+
+1
+
+) The repayment of the loan taken in order to acquire housing is taken into account upon the calculation of a subsistence benefit if:
+
+1)
+
+the loan has been taken in order to acquire housing by the applicant for subsistence benefit or a family member of the applicant specified in subsection 7 of § 131 of this Act if the benefit is applied for by the family;
+
+2)
+
+the payment holiday option has been used in respect of the loan taken in order to acquire housing or the applicant for subsistence benefit or a family member of the applicant submits a document certifying that it has not been considered possible to grant payment holiday;
+
+3)
+
+the person has not entered into a voluntary insurance contract for the prevention of solvency problems or it does not cover in full the repayment of the loan taken in order to acquire housing.
+
+[RT I, 07.06.2022, 1 – entry into force 01.07.2022]
+
+(9
+
+2
+
+) Repayments of the loan taken in order to acquire housing are taken into account upon the calculation of a subsistence benefit for up to six months in a calendar year.
+
+[RT I, 07.06.2022, 1 – entry into force 01.07.2022]
+
+(10) Upon the grant of a subsistence benefit to a family, the local authority shall take into account, as an additional expense, the housing expenses of the persons specified in subsection 8 of § 131 of this Act pursuant to the provisions of subsections 5 and 6 of this section. For each person specified in subsection 8 of § 131 of this Act, the socially justified standard for the dwelling calculated for one family member shall be added to the socially justified standard for the dwelling calculated for the family.
+
+§ 134.
+
+Grant and payment of subsistence benefit
+
+(1) Subsistence benefits shall be granted and paid by local authorities for the given month to the extent, under the conditions and pursuant to the procedure established by this Act. Subsistence benefits shall not be granted retroactively for the preceding months.
+
+(2) A subsistence benefit shall be granted within five working days after the submission of all documents.
+
+(3) Upon the grant of a subsistence benefit, the local authority shall assess whether the applicant for the benefit or his or her family member needs other social welfare assistance in addition to the subsistence benefit.
+
+(3
+
+1
+
+) A local authority shall ensure:
+
+1)
+
+availability of debt counselling service to a subsistence benefit applicant with regard to whom enforcement proceedings have been initiated;
+
+2)
+
+support services to a recipient of subsistence benefit in order to improve coping and financial skills of the person.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(4) A local authority has the right to refuse to grant a subsistence benefit or to reduce the sum of the granted subsistence benefit:
+
+1)
+
+if a benefit applicant or a member of a family applying for a benefit is a person of working age with ability to work who is not working or studying full time and not on academic leave;
+
+2)
+
+if a benefit applicant or a member of a family applying for a benefit is a person of working age with ability to work who is not working and is not registered as unemployed with the Estonian Unemployment Insurance Fund;
+
+[RT I, 31.12.2024, 3 – entry into force 10.01.2025]
+
+3)
+
+where a benefit applicant or a member of a family applying for a benefit is a person of working age with ability to work who is not working and is registered as unemployed with the Estonian Unemployment Insurance Fund, but has refused to comply with an activity plan or turned down suitable employment offered to the person without good reason;
+
+[RT I, 07.03.2023, 5 – entry into force 01.01.2024]
+
+4)
+
+if a benefit applicant or a member of a family applying for a benefit is a person of working age with ability to work who is not working and has turned down suitable employment offered by the local authority without good reason;
+
+5)
+
+if a benefit applicant or a member of a family applying for a benefit is a person of working age with ability to work who is not working and has refused, without good reason, social services organised by the local authority to support the ability to cope independently;
+
+6)
+
+if the subsistence benefit applicant or a child entitled to receive maintenance who lives together with the applicant, or other descendant or ascendant who needs assistance and is unable to maintain himself or herself has the right to receive support but the applicant refuses to submit a document certifying the right to receive the support or refuses to claim the support;
+
+7)
+
+if the local authority finds that the property used or owned by the subsistence benefit applicant or his or her family or the lease, rental or sale thereof ensures sufficient funds for coping for the person or his or her family;
+
+8)
+
+if the local authority finds that a benefit applicant or a member of a family applying for a benefit has made no other effort to improve his or her own material situation or the material situation of his or her family;
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+9)
+
+if the person has been granted an old-age pension but the person has submitted an application on the basis of § 25
+
+1
+
+of the State Pension Insurance Act for reduction of the amount of pension or suspension of the payment of pension.
+
+[RT I, 03.01.2019, 1 – entry into force 01.01.2021]
+
+(5) A local authority shall not refuse to grant subsistence benefit for the reason specified in clause 7 of subsection 4 of this section if only one dwelling used for permanent habitation and objects essential for everyday life, studies and employment are used or owned by the subsistence benefit applicant or his or her family.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(6) The amount calculated as subsistence benefit is paid by a local authority pursuant to § 28 of the General Part of the Social Code Act or by post or in cash, taking into account the corresponding wish of the applicant as expressed beforehand, within three working days as of the date of making the decision.
+
+[RT I, 14.12.2023, 1 – entry into force 01.01.2024]
+
+(7) A subsistence benefit applicant who is granted a subsistence benefit to cover housing expenses is required to ensure payment of such expenses.
+
+(8) If a subsistence benefit applicant who received a subsistence benefit to cover housing expenses in the previous month has not paid such expenses, the local authority has the right to pay the housing expenses specified in subsection 5 of § 133 of this Act for the subsistence benefit applicant out of the subsistence benefit granted to the person.
+
+§ 135.
+
+Supplementary social benefit paid from state budget
+
+(1) The recipient of subsistence benefit whose all family members are children within the meaning of subsections 7 and 8 of § 131 of this Act has the right to receive supplementary social benefit of 15 euros together with the subsistence benefit.
+
+(2) If a child attains 18 years of age during the month of application for a subsistence benefit, he or she shall be deemed to be a child for the purposes of subsection 1 of this section.
+
+(3) A local authority shall pay supplementary social benefit specified in subsection 1 of this section together with subsistence benefit from the state budget out of the funds allocated for the payment of subsistence benefit on the basis of subsection 1 of § 156 of this Act.
+
+Subchapter 9
+
+Needs-based Family Benefit
+
+[RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+§ 136.
+
+Needs-based family benefit
+
+[Repealed – RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+§ 137.
+
+Application for needs-based family benefit
+
+[Repealed – RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+§ 138.
+
+Grant of needs-based family benefit
+
+[Repealed – RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+§ 139.
+
+Payment of needs-based family benefit
+
+[Repealed – RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+Subchapter 9
+
+1
+
+Pensioner’s Living Alone Allowance
+
+[RT I, 06.12.2016, 1 - entry into force 01.01.2017]
+
+§ 139
+
+1
+
+.
+
+Pensioner’s living alone allowance
+
+(1) Pensioner's living alone allowance (hereinafter
+
+pensioner’s allowance
+
+) is an allowance paid once per calendar year to a person who has attained pensionable age and who is living alone in Estonia in order to improve his or her financial independence and reduce poverty.
+
+(2) A person who in the given calendar year from 1 April to 30 September complies with the following requirements has the right to receive pensioner’s allowance:
+
+1)
+
+the person is living alone according to the data on residence entered in the population register;
+
+2)
+
+the person has attained the pensionable age provided for in § 7 of the State Pension Insurance Act;
+
+3)
+
+a state pension or a pension on the basis of an international agreement has been granted to the person the monthly net amount of which is less than the rate of pensioner’s allowance.
+
+(3) A person who complies with the requirements provided for in clauses 1 and 2 of subsecion 2 of this section and to whom a social benefit is paid on the basis of § 140 of this Act has also the right to receive pensioner’s allowance.
+
+(4) The provisions of clause 1 of subsection 2 of this section shall not apply to a person:
+
+1)
+
+if another person residing at the residence of the person entered in the population register is the guardian of the person or a person under guardianship of the person;
+
+2)
+
+[repealed – RT I, 11.12.2024, 3 – entry into force 01.01.2025]
+
+3)
+
+if another person residing at the residence of the person entered in the population register receives 24-hour care service;
+
+4)
+
+if another person residing at the residence of the person entered in the population register is a person entitled to receive maintenance from the person within the meaning of clause 1 or 2 of § 97 of the Family Law Act.
+
+(5) A person does not have the right to receive pensioner’s allowance:
+
+1)
+
+who is imprisoned or in custody pending trial;
+
+2)
+
+who has been ordered by a court to receive coercive psychiatric treatment which is administered in the form of in-patient treatment;
+
+3)
+
+who receives general care service provided outside home, 24-hour special care service or community living service.
+
+[RT I, 11.12.2024, 3 – entry into force 01.01.2025]
+
+(6) If a person has been imprisoned or in custody pending trial or if coercive psychiatric treatment of the person has been administered in the form of in-patient treatment but the person was acquitted or was not subject to punishment by imprisonment, pensioner’s allowance shall be granted to him or her retroactively.
+
+[RT I, 06.12.2016, 1 – entry into force 01.01.2017]
+
+§ 139
+
+2
+
+.
+
+Notification of persons of creation of right to receive pensioner’s allowance
+
+(1) The Social Insurance Board shall verify on the basis of the data entered in the social protection information system, population register, Social Services and Benefits Registry and, if necessary, the Estonian Education Information System the compliance of persons with the requirements for receiving pensioner’s allowance and notify the persons of the creation of the right to receive the allowance. The Social Insurance Board shall communicate the notice concerning the creation of the right to receive the allowance to the e-mail address of the person or in the manner specified in clause 2 or 3 of subsection 1 of § 27 of the General Part of the Social Code Act.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(2) Compliance of a person with the requirements for receiving the allowance specified in subsection 1 of this section shall be verified on the basis of the following data:
+
+1)
+
+general data of the person: personal identification code, given names and surname, data on residence and place of stay and contact details, data on death, declaration of death, data on the person being missing or a fugitive, data on establishment of guardianship, parent's right of custody and permit or right of residence;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+2)
+
+data on the grant of state pension and the net amount thereof, including existing information of the Social Insurance Board concerning the net amount of a pension received from a foreign state;
+
+3)
+
+data on the grant of a social benefit paid on the basis of § 140 of this Act;
+
+4)
+
+data on general care service provided outside home, 24-hour special care service and community living service;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+5)
+
+data on the level of education of the person specified in clause 4 of subsection 4 of § 139
+
+1
+
+of this Act.
+
+[RT I, 06.12.2016, 1 – entry into force 01.01.2017]
+
+§ 139
+
+3
+
+.
+
+Amount, grant and payment of pensioner’s allowance
+
+(1) The rate of pensioner’s allowance and the amount of pensioner’s allowance shall be established by the
+
+Riigikogu
+
+by the state budget for each budgetary year. Calculation of the rate of the allowance shall be based on 1.2 times the amount of average old-age pension rounded to whole number which is announced by the Statistics Estonia for the second quarter of the year preceding the budgetary year.
+
+(2) Pensioner’s allowance shall be granted by an act of the Social Insurance Board.
+
+(3) The Social Insurance Board shall communicate the notice concerning the act of the grant of pensioner’s allowance to the e-mail address of the person or in the manner specified in clause 2 or 3 of subsection 1 of § 27 of the General Part of the Social Code Act.
+
+(4) Pensioner’s allowance shall be paid in October for the given calendar year.
+
+(5) A person specified in subsection 2 of § 139
+
+1
+
+of this Act who wishes to receive pensioner’s allowance shall submit corresponding one-off information to the Social Insurance Board by 31 August if:
+
+1)
+
+the person receives a pension from a foreign state – information on the receipt of pension as at 1 April;
+
+2)
+
+a 24-hour care service, except general care service provided outside home, 24-hour special care service and community living service, is provided to a person residing at the same residence with the person entered in the population register – information on the receipt of the 24-hour care service from 1 April to 30 September or information on changes in such circumstances.
+
+[RT I, 11.12.2024, 3 – entry into force 01.01.2025]
+
+(6) In the case specified in clause 1 of subsection 5 of this section, the person shall submit to the Social Insurance Board by 31 December of the given calendar year a certificate concerning the net amount of the pension received from a foreign state from 1 April to 30 September which is certified by a relevant authority of the foreign state.
+
+(7) The Social Insurance Board shall decide on the grant of or refusal to grant pensioner’s allowance on the basis of the information provided for in clause 2 of subsection 5 of this section within 10 working days after verification of the submitted information.
+
+(8) Pensioner’s allowance shall be paid pursuant to the procedure provided for in § 28 of the General Part of the Social Code Act, taking into account the specifications provided for in § 36 of the State Pension Insurance Act.
+
+(9) Pensioner’s allowance is financed from the state budget through the budget of the Ministry of Social Affairs.
+
+[RT I, 06.12.2016, 1 – entry into force 01.01.2017]
+
+Subchapter 10
+
+Social benefits for Estonian citizens or persons of Estonian origin who have settled in Estonia from foreign states, and their spouses, registered partners, children and parents
+
+[RT I, 06.07.2023, 6 - entry into force 01.01.2024]
+
+§ 140.
+
+Social benefits for Estonian citizens or persons of Estonian origin who have settled in Estonia from foreign states, and their spouses, registered partners, children and parents
+
+[RT I, 06.07.2023, 6 – entry into force 01.01.2024; persons who have settled in Estonia before 1 January 2024 have the right to receive social benefits specified in this section]
+
+(1) An Estonian citizen or a person of Estonian origin who has settled in Estonia from a foreign state and the spouse, registered partner, children and parents who have settled in Estonia together with the person and who have attained the pensionable age provided in § 7 of the State Pension Insurance Act have the right to receive a monthly social benefit at the national pension rate provided that the monthly income of the person is below the national pension rate.
+
+[RT I, 06.07.2023, 6 – entry into force 01.01.2024]
+
+(2) Applications for the grant of a social benefit specified in subsection 1 of this section shall be submitted to the Social Insurance Board.
+
+(3) A social benefit specified in subsection 1 of this section shall be granted by the Social Insurance Board.
+
+(4) A social benefit specified in subsection 1 of this section shall be granted from the date on which the right to the benefit arises, but retroactively not more than three months after the date of submission of the application. A social benefit shall be granted for a period during which a person meets the requirements provided for in subsection 1 of this section.
+
+(5) A social benefit specified in subsection 1 of this section is paid pursuant to § 28 of the General Part of the Social Code Act or by post or in cash, taking into account the corresponding wish of the recipient of the social benefit as expressed beforehand.
+
+[RT I, 14.12.2023, 1 – entry into force 01.01.2024]
+
+(6) The recipient of a social benefit specified in subsection 1 of this section is required to notify the Social Insurance Board of circumstances which bring about termination of payment of the granted social benefit in writing within ten days after the circumstances arise.
+
+(7) The list of information included in the application specified in subsection 1 of this section and the required documents shall be established by a regulation of the minister in charge of the policy sector.
+
+(8) The costs of social benefits specified in subsection 1 of this section shall be covered from the state budget through the budget of the Ministry of Social Affairs.
+
+Subchapter 11
+
+Social Benefit for Persons Forcibly Sent to Eliminate Effects of Nuclear Disaster
+
+[RT I, 28.12.2017, 6 - entry into force 01.04.2018]
+
+§ 140
+
+1
+
+.
+
+Social benefit for persons sent to eliminate effects of nuclear disaster
+
+(1) A person who was forcibly sent to an area of nuclear disaster for the elimination of the effects of the disaster is paid 292 euros per calendar year.
+
+[RT I, 22.12.2022, 1 – entry into force 01.01.2023]
+
+(2) If the person resided in Estonia before being forcibly sent to an area of nuclear disaster for the elimination of the effects of the disaster and returned to Estonia, but was not sent from Estonia, the said sending shall be deemed to have taken place forcibly form Estonia.
+
+(3) The following persons shall have the right to the social benefit specified in subsection 1 of this section:
+
+1)
+
+persons who have obtained Estonian citizenship through naturalisation;
+
+2)
+
+stateless persons who reside in Estonia on the basis of a long-term residence permit, the right of permanent residence, a temporary residence permit or a temporary right of residence.
+
+(4) Persons who are paid benefits from a foreign state for the same purpose or on the basis of the Persons Repressed by Occupying Powers Act shall not be entitled to the social benefit specified in subsection 1 of his section.
+
+(5) In order to receive the social benefit specified in subsection 1 of this section, a one-time application shall be submitted to the Social Insurance Board, containing the given names and surname, personal identification code, bank account number, date of submission of the application and confirmation that the person is not receiving benefits form a foreign state for the same purpose. A document certifying that the person was present in Estonia and a document certifying that the person was present in an area of elimination of the effects of a nuclear disaster shall be added to the application.
+
+(6) A person to whom an old-age pension under favourable conditions is granted and paid on the basis of subsection 2 of § 12 of the Persons Repressed by Occupying Powers Act, shall submit a single application to the Social Insurance Board in order to obtain the social benefit specified in subsection 1 of this section.
+
+(7) The social benefit specified in subsection 1 of this section shall be paid once per calendar year pursuant to the procedure provided for in § 28 of the General Part of the Social Code Act.
+
+(8) The social benefits specified in subsection 1 of this section shall be financed from the state budget through the budget of the Ministry of Social Affairs.
+
+[RT I, 28.12.2017, 6 – entry into force 01.04.2018]
+
+Subchapter 12
+
+Financial Support Measures Applied in Extraordinary Situation
+
+[RT I, 09.04.2020, 14 - entry into force 10.04.2020]
+
+§ 140
+
+2
+
+.
+
+Financial support measures applied in extraordinary situation for prevention of difficulties in coping arising from extraordinary situation
+
+(1) During an emergency situation, a state of emergency or a state of war, the Government of the Republic may establish by a regulation additional financial support measures for relieving and preventing difficulties in coping arising from the emergency situation, state of emergency or state of war.
+
+(2) Persons specified in subsection 1 of § 3 of the General Part of the Social Code Act and specifically affected by an emergency situation, a state of emergency or a state of war whose coping may have deteriorated to a significant extent due to the emergency situation, state of emergency or state of war shall have the right to financial support measures.
+
+(3) The financial support measures may be applied by an authority or a person authorised by the Government of the Republic on the conditions and pursuant to the procedure provided for in the regulation specified in subsection 1 of this section.
+
+[RT I, 22.03.2021, 2 – entry into force 01.04.2021]
+
+(4) The one-time cost of a financial support measure shall not be less than 5 euros or more than ten times the subsistence level.
+
+(5) The financial support measures established on the basis of subsection 1 of this section shall be financed from the state budget.
+
+(6) The financial support measures established on the basis of subsection 1 of this section may be applied until the need for such measures ceases to exist but not longer than 60 days after the termination of an emergency situation, a state of emergency or a state of war. The measures may be applied retroactively as of the declaration of an emergency situation, a state of emergency or a state of war.
+
+[RT I, 09.04.2020, 14 – entry into force 10.04.2020]
+
+Chapter 4
+
+Database
+
+§ 141.
+
+Social Services and Benefits Registry
+
+(1) The Social Services and Benefits Registry is a central database belonging to the state information system which is established for the following purposes:
+
+1)
+
+processing and recording of the provision of social services and benefits and other assistance;
+
+2)
+
+conduct and recording of acts of social work carried out based on the principle of case management;
+
+3)
+
+organisation and recording of adoption and guardianship;
+
+4)
+
+collection of data and statistics concerning social welfare.
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+(2) The Social Services and Benefits Registry and its statutes shall be established by a regulation of the minister in charge of the policy sector, which shall set forth the following:
+
+1)
+
+the authorised processor of the database;
+
+2)
+
+the duties of the chief and authorised processor;
+
+3)
+
+the composition of the data collected in the database and procedure for entry in the registry;
+
+4)
+
+the procedure for accessing data and release of data;
+
+5)
+
+the list of persons submitting data and data received from such persons;
+
+6)
+
+the specific procedure for the preservation of data, if necessary.
+
+7)
+
+other operational issues.
+
+[RT I, 13.03.2019, 2 – entry into force 15.03.2019]
+
+(3) The chief processor of the Social Services and Benefits Registry is the Social Insurance Board.
+
+[RT I, 13.03.2019, 2 – entry into force 15.03.2019]
+
+(4) [Repealed – RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+§ 142.
+
+Authorised processors of Social Services and Benefits Registry
+
+[Repealed – RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+§ 142
+
+1
+
+.
+
+Data in Social Services and Benefits Registry
+
+(1) The following data shall be processed in the Social Services and Benefits Registry:
+
+1)
+
+general data of a person – personal identification code, sex, date of birth, given names and surname, data on residence and place of stay, and contact details;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+2)
+
+other data concerning a person – data on special need, disability, work ability, restrictions on activities and participation related to state of health, mental disorder diagnosis in the case of special care service and social rehabilitation service, social status, health insurance, education, guardianship, caregiver, other persons specified in this Act, assessment conducted, case plan, benefit paid and service provided, income, housing and housing expenses and data on parent's right of custody over a person under 18 years of age, separation from the family and placement of a person under 18 years of age;
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+3)
+
+data on the provision of assistance and processing of a petition for adoption – general data of the proceeding, data on the acts and documents related to the proceeding;
+
+4)
+
+data on the chief and authorised processor – general data of the authority, data on users, benefits granted and services provided and accounting documents;
+
+5)
+
+general data of a person who submitted a petition for adoption and a foster family – personal identification code, sex, date of birth, given names and surname, data on residence and contact details;
+
+[RT I, 13.03.2019, 2 – entry into force 15.03.2019]
+
+6)
+
+other data of a person who submitted a petition for adoption – data on special need, disability, work ability, social status, health insurance, education, nationality, religious affiliation, family members, housing, child requested in the family, study of family, training completed and decision made;
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+7)
+
+other data of a person and the family members thereof who submitted a petition for a foster family – data on special need, disability, work ability, social status, health insurance, education, nationality, religious affiliation, housing, children receiving care in the family, child requested in the family, study of family and decision made and data confirming compliance with the requirements listed in subsections 1 and 2 of § 45
+
+13
+
+;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+8)
+
+data on the benefit paid by the local authority to cover the funeral expenses and data on organisation of a funeral by the local authority – data of the benefit applicant and of the person whose funeral expenses the benefit paid is to cover; general data of the local authority that organised the funeral and data of the person whose funeral was organised by the local authority;
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+81)
+
+data on covering of the costs specified in clauses 1 and 3 of subsection 5 of § 73 of the Act on Granting International Protection to Aliens for a person or family who has been granted international protection;
+
+[RT I, 07.06.2022, 1 – entry into force 17.06.2022]
+
+8
+
+2
+
+)
+
+data on the performance of the functions provided in subsection 5 of § 15 of the Child Protection Act – general data of the person and the child specified in the application of another Member State of the European Union, general data of the proceeding and the data on the acts and documents related to the persons specified in the application of another Member State of the European Union;
+
+[RT I, 10.11.2022, 1 – entry into force 20.11.2022]
+
+9)
+
+data concerning family mediation services provided in the Act on State-Funded Family Mediation Services – general data of the parties to mediation, general data of the child concerned by the dispute, general data of the mediation proceedings, data on the acts and documents related to the mediation proceedings, and data related to the provision of family mediation services.
+
+[RT I, 10.12.2021, 1 – entry into force 01.09.2022]
+
+(2) In addition to data specified in subsection 1 of this section, the following data is processed in the Social Services and Benefits Registry concerning a person who has been admitted pursuant to the Act on Granting International Protection to Aliens and who is applying for international protection or who has been granted protection in order to assess the need for assistance of the person and to provide assistance to the person:
+
+1)
+
+data on application for international protection or grant of protection;
+
+2)
+
+in the case of a minor, relation to the person accompanying the minor;
+
+3)
+
+data on necessary medicinal products;
+
+4)
+
+language skills of the person;
+
+5)
+
+other data concerning mode of life.
+
+[RT I, 07.06.2022, 1 – entry into force 17.06.2022]
+
+§ 143.
+
+Submission of data to Social Services and Benefits Registry and exchange of data
+
+[Repealed – RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+§ 144.
+
+Obligation of local authorities, providers of social services and Social Insurance Board to enter data in Social Services and Benefits Registry
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+(1) A local authority shall enter the following data in the Social Services and Benefits Registry pursuant to the procedure established in the statutes of the Social Services and Benefits Registry:
+
+1)
+
+data necessary for the application for and payment of subsistence benefits and supplementary social benefits paid from state budget provided for in § 135 of this Act;
+
+2)
+
+[Repealed – RT I, 28.12.2017, 8 – entry into force 01.05.2018]
+
+3)
+
+data concerning the establishment of curatorship or appointment of curators to adults provided for in § 26 of this Act;
+
+4)
+
+data necessary for the application for and payment of allowances for curatorship of adults provided for in § 26 of this Act;
+
+5)
+
+data concerning the funding, provision and receivers of alternative care and continuous care service provided for in §§ 455 and 45
+
+15
+
+of this Act;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+6)
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+7)
+
+data concerning applications for social services provided to children with extreme need for assistance and support specified in subsection 3
+
+2
+
+of § 156 of this Act and their families, and decisions on referral to receive a service;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+8)
+
+data concerning children in need of assistance within the meaning of the Child Protection Act and judicial decisions, acts and procedural acts related to cases of children in need of assistance;
+
+9)
+
+data concerning children in danger within the meaning of the Child Protection Act and judicial decisions, acts and procedural acts related to cases of children in danger;
+
+10)
+
+data concerning the case plans of children in need of assistance and children in danger within the meaning of the Child Protection Act;
+
+11)
+
+data concerning the application and decision for the referral to receive a service of a social service organised by a local authority;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+12)
+
+data necessary for the application for and payment of a social benefit paid by a local authority depending on the persons' individual needs for assistance, ability to cope or financial situation;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+13)
+
+data concerning the organisation and appointment of guardianship and the performance of the duties of the guardian;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+14)
+
+data concerning the provision of emergency social assistance organised by a local authority;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+15)
+
+data on the benefit paid by the local authority to cover the of funeral expenses and data on organisation of a funeral by the local authority;
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+16)
+
+data on covering of the costs specified in clauses 1 and 3 of subsection 5 of § 73 of the Act on Granting International Protection to Aliens for a person or family who has been granted international protection, if such obligation arises from an administrative contract entered into with the Social Insurance Board on the basis of subsection 31 of § 73 of the same Act.
+
+[RT I, 07.06.2022, 1 – entry into force 17.06.2022]
+
+(1
+
+1
+
+) When identifying the need for assistance of persons specified in subsection 2 of § 15
+
+1
+
+and subsections 1 and 2 of § 15
+
+2
+
+of this Act and determining the extent of corresponding assistance, a local authority enters in the Social Services and Benefits Registry data on the need for assistance, a future case plan and data on procedural acts.
+
+[RT I, 28.04.2022, 1 – entry into force 01.02.2023]
+
+(2) Entry of data concerning the social benefits paid by local authorities which are independent of a persons' individual needs for assistance, ability to cope or financial situation in the Social Services and Benefits Registry is voluntary.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(2
+
+1
+
+) The compositions of data specified in § 142
+
+1
+
+of this Act shall be taken as basis upon entry of data specified in subsection 2 of this section in the Social Services and Benefits Registry.
+
+[RT I, 13.03.2019, 2 – entry into force 15.03.2019]
+
+(3) Data concerning social rehabilitation, special care services and technical aids shall be entered in the Social Services and Benefits Registry if these are financed from a local authority budget.
+
+(4) [Repealed – RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+(5) A provider of social services who is financed from the state budget or the local authority budget shall enter in the Social Services and Benefits Registry at the latest by the tenth day of the month following the month of provision of a service:
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+1)
+
+data concerning the provision of the service to a person on the basis of clauses 5, 7 and 11 of subsection 1 of this section;
+
+2)
+
+data concerning the location of a person referred to receive the service specified in clause 5 of subsection 1 of this section;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+3)
+
+data concerning the referral of a person specified in clause 6 of subsection 6 of this section to victim support.
+
+[RT I, 06.01.2023, 1 – entry into force 16.01.2023]
+
+(5
+
+1
+
+) A family conciliator who conducts mediation proceedings on the basis of the Act on State-Funded Family Mediation Services enters in the Social Services and Benefits Registry the data concerning the mediation proceedings conducted in the course of the provision of the family mediation services at the latest by the tenth date of the month following the month of provision of the services.
+
+[RT I, 10.12.2021, 1 – entry into force 01.09.2022]
+
+(5
+
+2
+
+) A provider of general care service provided outside home shall enter in the Social Services and Benefits Registry within 14 calendar days from the commencement or termination of the provision of the service:
+
+1)
+
+general data specified in clause 1 of subsection 1 § 142
+
+1
+
+of this Actconcerning the person receiving the service;
+
+[RT I, 11.12.2024, 3 – entry into force 01.01.2025]
+
+2)
+
+data on the termination of the provision of the service to the person.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(6) The Social Insurance Board shall enter the following data in the Social Services and Benefits Registry pursuant to the procedure established in the statutes of the Social Services and Benefits Registry:
+
+1)
+
+data concerning children in need of assistance within the meaning of the Child Protection Act and acts and procedural acts related to cases of children in need of assistance, including data concerning the referral of children in need of assistance to receive social services;
+
+2)
+
+data concerning children in danger within the meaning of the Child Protection Act and judicial decisions, acts performed and procedural acts related to cases of children in danger;
+
+3)
+
+data concerning a petition for adoption and documents and acts related to the preparation for adoption;
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+4)
+
+data concerning a petition for a foster family and documents and acts related to the preparation for a foster family;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+4
+
+1
+
+)
+
+data concerning a person who has been admitted pursuant to the Act on Granting International Protection to Aliens and who is applying for international protection or who has been granted protection;
+
+[RT I, 07.06.2022, 1 – entry into force 17.06.2022]
+
+4
+
+2
+
+)
+
+data on covering of the costs specified in clauses 1 and 3 of subsection 5 of § 73 of the Act on Granting International Protection to Aliens for a person or family who has been granted international protection, if they have not been entered in the Social Services and Benefits Registry by the local government or a legal person governed by private law with whom the Social Insurance Board has entered into an administrative contract on the basis of subsection 3
+
+1
+
+of § 73 of the same Act;
+
+[RT I, 07.06.2022, 1 – entry into force 17.06.2022]
+
+4
+
+3
+
+)
+
+data on the documents and procedural acts related to the performance of the functions provided in subsection 5 of § 15 of the Child Protection Act;
+
+[RT I, 10.11.2022, 1 – entry into force 20.11.2022]
+
+5)
+
+general data of the parties to mediation who are receiving family mediation services provided in the Act on State-Funded Family Mediation Services, general data of the child concerned by the dispute and data on the acts and documents related to the provision of family mediation services;
+
+[RT I, 10.12.2021, 1 – entry into force 01.09.2022]
+
+6)
+
+data concerning the referral to victim support and victim support volunteers;
+
+[RT I, 06.01.2023, 1 – entry into force 16.01.2023]
+
+7)
+
+data concerning the assessment of the need for the social rehabilitation service and special care service.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+(7) A legal person governed by private law with whom the Social Insurance Board has entered into an administrative contract on the basis of subsection 3
+
+1
+
+of § 73 of the Act on Granting International Protection to Aliens enters in the Social Services and Benefits Registry data on covering the costs specified in clauses 1 and 3 of subsection 5 of § 73 of the same Act for a person or family who has been granted international protection, if such obligation arises from the administrative contract.
+
+[RT I, 07.06.2022, 1 – entry into force 17.06.2022]
+
+§ 144
+
+1
+
+.
+
+Access to data by the Ministry of Social Affairs and the Ministry of Economic Affairs and Communications
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+The officials of the Ministry of Social Affairs in charge of the health and social policy sector and engaged in analysis, and the officials of the Ministry of Economic Affairs and Communications in charge of labour policy sector and engaged in analysis have the right to process personal data entered in the Social Services and Benefits Registry for the purposes of policy-making and compilation of statistics, without the person being directly identifiable. The data to be processed are the personal data specified in § 1421 of this Act, except personal identification code, given name and surname, data on residence and contact details.
+
+[RT I, 12.06.2025, 1 – entry into force 22.06.2025]
+
+§ 145.
+
+Access to registry data
+
+[Repealed – RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+§ 145
+
+1
+
+.
+
+Preservation of data in Social Services and Benefits Registry
+
+(1) Data on proceedings entered in the Social Services and Benefits Registry shall be preserved in personalised form for five years following the end date of the proceedings.
+
+(2) After the expiry of the retention period specified in subsection 1 of this section, the data shall be entered in a digital archive where they shall be preserved in personalised form for five years.
+
+(3) The data processed on the basis of subsection 4 of § 15
+
+1
+
+of this Act and entered in the Social Services and Benefits Registry shall be preserved until the persons attain 27 years of age.
+
+(3
+
+1
+
+) Data specified in clause 9 of § 142
+
+1
+
+of this Act are preserved until the child concerned by family mediation services becomes an adult.
+
+[RT I, 10.12.2021, 1 – entry into force 01.09.2022]
+
+(3
+
+2
+
+) Upon assessment of the need for assistance of a disabled adult provided in § 15
+
+2
+
+of this Act, the data entered in the Social Services and Benefits Registry are preserved as follows:
+
+1)
+
+personal data specified in subsection 5 of § 15
+
+2
+
+of this Act until the duration of the degree of severity of the disability expires;
+
+2)
+
+in the case of refusal of consent to further processing of data, personal identification code of the person until the duration of the degree of severity of the disability expires.
+
+[RT I, 28.04.2022, 1 – entry into force 01.02.2023]
+
+(3
+
+3
+
+) The personal data specified in subsection 2 and 3 of § 27
+
+2
+
+of the Child Protection Act are preserved in the Social Services and Benefits Registry until the child becomes an adult.
+
+[RT I, 31.12.2024, 3 – entry into force 01.01.2025]
+
+(4) Petitions for adoption and a foster family entered in the Social Services and Benefits Registry shall be preserved for 50 years after the end date of the proceedings.
+
+(4
+
+1
+
+) Data concerning the referral to victim support are preserved for ten years after the latest entry of data on a case-by-case basis or for ten years after the person becomes an adult.
+
+[RT I, 06.01.2023, 1 – entry into force 16.01.2023]
+
+(4
+
+2
+
+) After the expiry of the retention period provided in subsection 4
+
+1
+
+of this section, the data are entered in the archive where they are preserved for fifty years.
+
+[RT I, 06.01.2023, 1 – entry into force 16.01.2023]
+
+(5) Data are rendered anonymous after the expiry of the retention period specified in subsections 2–4
+
+2
+
+of this section.
+
+[RT I, 06.01.2023, 1 – entry into force 16.01.2023]
+
+(5
+
+1
+
+) Data specified in subsection 5
+
+2
+
+of § 144 of this Act shall be preserved for 30 calendar days from the termination of the provision of the service to the person.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(6) Basic data and logs shall be preserved pursuant to the provisions of the statutes of the Social Services and Benefits Registry.
+
+[RT I, 13.03.2019, 2 – entry into force 15.03.2019]
+
+Chapter 5
+
+Challenge Proceedings
+
+[Repealed -  RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+§ 146.
+
+Challenge proceedings of local authority
+
+[Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+Chapter 6
+
+Licence Proceedings
+
+§ 147.
+
+Licence requirement of provider of rehabilitation services
+
+(1) An activity licence is required for the provision of rehabilitation services.
+
+(2) The licence requirement does not apply to the Social Insurance Board.
+
+§ 148.
+
+Adjudication of application for activity licence of provider of rehabilitation services
+
+(1) An application for an activity licence of a provider of rehabilitation services shall be adjudicated by the Social Insurance Board.
+
+(2) In addition to the information provided for in the General Part of the Economic Activities Code Act, an application for an activity licence of a provider of rehabilitation services shall set out the activities specified in the list established by a regulation of the minister in charge of the policy sector on the basis of § 57 of this Act which are provided by the provider of rehabilitation services under rehabilitation services.
+
+§ 149.
+
+Subject of review of licence
+
+An activity licence shall be granted for the provision of rehabilitation services if the provider of rehabilitation services and the rehabilitation team comply with the requirements provided for in §§ 66 and 68 of this Act.
+
+[RT I, 30.12.2015, 5 – entry into force 01.07.2018]
+
+§ 150.
+
+Secondary condition of activity licence for rehabilitation services
+
+The right to provide rehabilitation services on the basis of a rehabilitation programme may be added as a secondary condition to an activity licence for the provision of rehabilitation services if:
+
+1)
+
+the rehabilitation programme complies with the requirements provided for in subsections 2 and 4–6 of § 69 of this Act;
+
+2)
+
+the rehabilitation programme is approved pursuant to subsection 11 of § 69 of this Act.
+
+§ 151.
+
+Licence requirement of provider of social services
+
+An activity licence is required for the provision of the following social services:
+
+1)
+
+childcare service for children with extreme need for assistance and support;
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+2)
+
+alternative care service, except for the provision of alternative care service in a foster family;
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+3)
+
+safe house service;
+
+[RT I, 30.12.2015, 5 – entry into force 01.01.2020]
+
+4)
+
+general care service provided outside home;
+
+[RT I, 30.12.2015, 5 – entry into force 01.01.2020]
+
+5)
+
+everyday life support service;
+
+6)
+
+employment support service;
+
+7)
+
+supported living service;
+
+8)
+
+community living service;
+
+8
+
+1
+
+)
+
+daily and weekly care service;
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+9)
+
+24-hour special care service.
+
+§ 152.
+
+Application for activity licence of provider of social services
+
+(1) An application for an activity licence of a provider of social services shall be adjudicated by the Social Insurance Board for the provision of the services specified in § 151 of this Act by granting or refusing to grant the licence within 30 days after the submission of the application.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(2) [Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(3) In addition to the information provided for in the General Part of the Economic Activities Code Act, an application for an activity licence of a provider of social services shall set out the following information:
+
+1)
+
+the number of persons to whom the applicant wishes to provide the service at the place of business;
+
+2)
+
+upon application for an initial activity licence, the written consent of care workers, persons providing the service directly at a safe house, activity supervisors, childcarers, educators or family parents for commencement of employment with the service provider applying for the activity licence.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(4) Upon application for an activity licence for the provision of the safe house service, childcare service for children with extreme need for assistance and support, or alternative care service, the applicant submits, in addition to the information specified in subsection 3 of this section, a health certificate of the person providing the service directly, the childcarer, family parent or educator concerning the undergone medical examination for communicable diseases.
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+(5) Where the applicant wishes to provide the childcare service for children with extreme need for assistance and support or alternative care service in the dwellings of the childcarer or family parent, the following must be submitted in addition to the documents specified in subsections 3 and 4 of this section:
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+1)
+
+the consent of the owner of the dwelling for the provision of the childcare service for children with extreme need for assistance and support or alternative care service in the dwellings of the childcarer or family parent;
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+2)
+
+health certificates of the adults with whom the childcarer or family parent uses common dwellings concerning the undergone medical examination for communicable diseases.
+
+(6) [Repealed – RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(7) Upon application for an activity licence for the provision of the everyday life support service, employment support service, supported living service, community living service, daily and weekly care service and 24-hour special care service, the applicant submits, in addition to the information specified in subsection 3 of this section, a health certificate of the activity supervisor concerning the undergone medical examination for infectious diseases.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+§ 153.
+
+Subject of review of activity licence of provider of social services
+
+An activity licence for the provision of social services is granted if:
+
+1)
+
+the applicant for the activity licence and the service planned to be provided and the care worker, person providing the service directly at a safe house, the childcarer, educator, family parent and activity supervisor (hereinafter
+
+person providing the service directly
+
+) comply with the requirements for the services, service providers and the persons providing the service directly established in this Act and on the basis thereof;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+2)
+
+the person providing the service directly has no criminal record for an intentionally committed criminal offence which may endanger the life, health and property of the person entitled to receive the service;
+
+3)
+
+the place for the provision of the service complies with the requirements provided in and established on the basis of this Act and the Public Health Act;
+
+[RT I, 02.01.2025, 3 – entry into force 01.09.2025]
+
+4)
+
+the place for the provision of the service complies with the fire safety requirements;
+
+5)
+
+in the case of the services specified in clauses 1–3 of § 151 of this Act, the requirements provided for in § 20 of the Child Protection Act are complied with.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 154.
+
+Secondary conditions of activity licence of provider of social services
+
+The following secondary conditions shall be added to an activity licence of a provider of social services:
+
+1)
+
+the maximum number of persons to whom it is permitted to provide the service at the same time;
+
+2)
+
+in the case of the 24-hour special care service, a specification concerning whether the undertaking has the right to provide the service to a person with an extreme need for assistance and support, a person with a severe, profound or permanent mental disorder with unstable remission or a person placed in a social welfare institution by a court ruling in addition to a person specified in subsection 1 of § 101 of this Act;
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+3)
+
+a place of business where it is permitted to operate.
+
+§ 155.
+
+Renouncement of activity specified in activity licence
+
+(1) An activity specified in an activity licence may be temporarily renounced for up to six months. The provider of a service specified in clauses 1, 3 and 4 of § 151 of this Act is required to notify the issuer of the activity licence of the temporary renouncement of its activity at least three months in advance. Temporary renouncement of the services specified in clauses 2 and 5–9 of § 151 of this Act is not permitted.
+
+(2) The provider of a service specified in clause 1, 3, 4, 5 or 6 of § 151 of this Act is required to submit the notice on renouncement of economic activities to the registrar three months before the termination of the provision of the service. The provider of a service specified in clause 2, 7, 8, 8
+
+1
+
+or 9 of § 151 of this Act is required to submit the notice on renouncement of economic activities at least six months before the termination of the provision of the service.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+Chapter 7
+
+Financing
+
+§ 156.
+
+Social benefits financed from state budget
+
+(1) The expenses of payment of subsistence benefits shall be compensated to local authorities from the state budget. Compensation for the payment of subsistence benefits shall be calculated by deducting the balance of the funds received in previous years from the expenses of the local authority during the year preceding the given budgetary year. If the subsistence level has increased in the budgetary year, the impact thereof shall be taken into account upon distribution of compensation. If the balance of the compensation for the payment of benefits at the beginning of the year and the funds additionally provided in the budgetary year are not sufficient to pay subsistence benefits until the end of the year, additional funds may be allocated to local authorities to the extent of the expected deficit.
+
+[RT I, 28.12.2017, 8 – entry into force 01.05.2018]
+
+(2) The expenses of processing and payment of the benefits specified in subsection 1 of this section as the expenses of state functions performed by local authorities shall be compensated to local authorities from the state budget on the basis of the number of applications submitted in the year preceding the budgetary year and the average calculated expenses of processing of one application provided for in the state budget for the corresponding year.
+
+[RT I, 28.12.2017, 8 – entry into force 01.05.2018]
+
+(3) [Repealed – RT I, 23.10.2018, 1 – entry into force 01.01.2019]
+
+(3
+
+1
+
+) Support is prescribed for local authorities in the state budget for the provision of assistance to children with extreme need for assistance and support. Support is distributed between the local authorities in proportion to the number of children with a severe or profound disability. In doing so, the number of children with a profound disability is multiplied by three.
+
+[RT I, 28.04.2022, 1 – entry into force 01.01.2023]
+
+(3
+
+2
+
+) A local authority may use the support specified in subsection 3
+
+1
+
+of this section for the provision of services to a child with extreme need for assistance and support and the family in order to support the ability of the child in need of assistance to cope, prevent the aggravation of the need for assistance and help to reduce the care burden of the family.
+
+[RT I, 28.04.2022, 1 – entry into force 01.01.2023]
+
+(3
+
+3
+
+) In the case of a child with extreme need for assistance and support, the support specified in subsection 3
+
+1
+
+of this section may be used until the child attains 18 years of age. In the case of a child without secondary education who is enrolled in a basic school, upper secondary school or formal vocational education or who is included in the list of a daytime in-service training course of a state agency administered by the Ministry of Education and Research, the support may be used until the end of the current academic year or the end of the in-service training course or until the student is excluded from the list of the school or the in-service training course.
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+(3
+
+4
+
+) [Repealed – RT I, 22.12.2022, 3 – entry into force 01.01.2024]
+
+(3
+
+5
+
+) [Repealed – RT I, 22.12.2022, 3 – entry into force 01.01.2024]
+
+(3
+
+6
+
+) [Repealed – RT I, 22.12.2022, 3 – entry into force 01.01.2024]
+
+(3
+
+7
+
+) [Repealed – RT I, 22.12.2022, 3 – entry into force 01.01.2025]
+
+(3
+
+8
+
+) [Repealed – RT I, 22.12.2022, 3 – entry into force 01.01.2025]
+
+(3
+
+9
+
+) Support is prescribed for local authorities in the state budget in accordance with the possibilities of the state budget for the organisation of psychosocial and psychological support (hereinafter jointly
+
+mental health service
+
+). Mental health service is provided by a qualified person pursuant to the procedure established by a local authority. Support is distributed between the local authorities in proportion to the number of residents. The minimum support per local authority is at least 1/250 and the maximum support is up to 1/16 of the total amount of the mental health service support from the support fund determined on the basis of subsection 4 of § 48 of the State Budget Act.
+
+[RT I, 11.12.2024, 2 – entry into force 01.01.2025]
+
+(3
+
+10
+
+) Upon the use of the support specified in subsection 3
+
+9
+
+of this section, a local authority must proceed from the principle that the expenses to be covered from their budget must not be replaced with the mental health service support.
+
+[RT I, 11.12.2024, 2 – entry into force 01.01.2025]
+
+(4) The principles specified in this section for the distribution of funds allocated to local authorities and the principles for allocation thereof between the local authorities are established by a regulation of the Government of the Republic on the basis of the State Budget Act.
+
+[RT I, 22.12.2022, 3 – entry into force 01.01.2023]
+
+Chapter 8
+
+Supervision
+
+§ 157.
+
+Exercise of state and administrative supervision
+
+(1) State supervision over compliance with the requirements provided for in this Act and legislation established on the basis thereof, except the requirements provided for in clause 2 of subsection 4 of § 45
+
+3
+
+and subsection 2 of § 45
+
+13
+
+of this Act shall be exercised by the Social Insurance Board (hereinafter also
+
+law enforcement authority
+
+).
+
+(2) State supervision over compliance with the requirements provided for in clause 2 of subsection 4 of § 45
+
+3
+
+and subsection 2 of § 45
+
+13
+
+of this Act shall be exercised by the Health Board (hereinafter
+
+law enforcement authority
+
+).
+
+(3) Administrative supervision over the legality of the administrative acts issued by local authorities on the basis of this Act and the quality of social services and other assistance as well as the use of financial resources allocated by the state for social welfare shall be exercised by the Social Insurance Board. A report on administrative supervision shall be submitted to the Ministry of Social Affairs at least once a year by 1 March.
+
+(4) The Social Insurance Board has the right to obtain information necessary for supervision and verify the correctness of data on the basis of the data in the employment register provided for in § 25
+
+1
+
+of the Taxation Act.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+§ 158.
+
+Specific state supervision measures
+
+In order to exercise state supervision provided for in this Act, a law enforcement authority may apply the specific state supervision measures provided for in §§ 30, 32 and 49–51 of the Law Enforcement Act on the basis of and pursuant to the procedure provided for in the Law Enforcement Act.
+
+§ 158
+
+1
+
+.
+
+Administrative supervision measures
+
+(1) Upon the exercise of administrative supervision the Social Insurance Board has the right to:
+
+1)
+
+visit a social welfare institution, if necessary without prior notice, in order to verify compliance with the requirements for the activities of the social welfare institution established in this Act and on the basis thereof;
+
+2)
+
+inform the public and the persons close to the persons staying at the social welfare institution of the violations detected in the institution;
+
+3)
+
+take other administrative supervision measures provided in the Government of the Republic Act.
+
+[RT I, 31.12.2024, 3 – entry into force 10.01.2025]
+
+§ 159.
+
+Non-compliance levy rate
+
+[Repealed – RT I, 31.12.2024, 3 – entry into force 10.01.2025]
+
+Chapter 9
+
+Implementing Provisions
+
+Subchapter 1
+
+Transitional Provisions and Ex-post Assessment
+
+[RT I, 03.04.2018, 3 - entry into force 15.04.2018]
+
+§ 160.
+
+Transitional provisions
+
+(1) Until 31 December 2019, a family house and a substitute home family may consist of up to eight children.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(1
+
+1
+
+) A local authority may continue foster care contracts entered into before 1 January 2018 without consideration to the provisions provided for in subsection 4 of § 45
+
+11
+
+of this Act, until the need for providing alternative care service to the child ceases to exist, until the child attains 18 years of age or until the time specified in subsection 2 of § 45
+
+9
+
+if it is necessary pursuant to the child's interests.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(1
+
+2
+
+) Contracts for the provision of substitute home service entered into before 1 January 2018 shall continue to be valid and shall be deemed to be entered into between a local authority and a provider of substitute home service and the content of such contracts must be brought into compliance with the requirements in this Act by 31 December 2018.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(1
+
+3
+
+) Upon the application of other Acts, a person providing foster care specified in the wording of this Act in force until 31 December 2017 shall also be considered a foster parent.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(1
+
+4
+
+) A service provider that provided substitute home service on the basis of an activity licence for providing substitute home service issued before 1 January 2018 may continue providing alternative care service in a family house and a substitute home on the basis of the same activity licence.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(1
+
+5
+
+) The in-service training requirement specified in clause 12 of subsection 1 of § 45
+
+13
+
+of this Act must be met by 31 December 2020.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(1
+
+6
+
+) Persons that were referred to a substitute home and became adults while in the substitute home before 1 January 2018 may receive alternative care until 31 December 2018 under the terms and conditions specified in § 45
+
+16
+
+of this Act.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(2) [Repealed – RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(3) Until 31 December 2019, special care services may be provided by activity supervisors who have acquired at least basic education, who have registered themselves for a training in accordance with the plan established on the basis of subsection 7 of § 86 of this Act and who comply with the requirement provided for in subsection 3 of the specified section.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+(4) Until 31 December 2019, special care services may be provided to persons placed in a social welfare institution by a court ruling by activity supervisors who comply with the requirements specified in subsection 3 of this section and who have registered themselves for in-service training for work with persons with higher risk rate in accordance with the plan established on the basis of subsection 7 of § 86 of this Act.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+(5) In addition to activity supervisors specified in subsection 6 of § 86 of this Act, until 31 December 2019, activity supervisors, who comply with at least one of the requirements established in subsection 1 and the requirement established in subsection 3 of the abovementioned section and who have registered themselves for in-service training for work with persons with a profound multiple disability or a severe, profound or permanent mental disorder with unstable remission in accordance with the plan established on the basis of subsection 7, may provide services to persons with a profound multiple disability or a severe, profound or permanent mental disorder with unstable remission.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+(6) In-service trainings for work with persons with higher risk rate undergone before 1 January 2009 shall be considered equal to the trainings specified in subsection 7 of § 86 of this Act.
+
+(7) Until 31 December 2019, special care services may be provided by activity supervisors who have acquired basic education, who comply with the requirement provided for in subsection 3 of § 86 of this Act and who have undergone training in accordance with the plan established on the basis of subsection 7 of the abovementioned section.
+
+(7
+
+1
+
+) Applications for the receipt of a special care service submitted before 1 April 2019, the procedural acts for which have not been initiated by 1 April 2019, shall be processed by the Social Insurance Board under the conditions and pursuant to the procedure valid as of 1 April 2019.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(7
+
+2
+
+) The Social Insurance Board shall assess the need for support of persons entered in the waiting list for a special care service before 1 April 2019, except persons referred to receive a 24-hour special care service on the basis of a court ruling, before the issue of the referral decision, but not later than on 31 March 2022.
+
+[RT I, 21.12.2018, 3 – entry into force 01.04.2019]
+
+(8) An application for the receipt of a rehabilitation service submitted by a person under 18 years of age before 1 January 2016 shall be reviewed and the decision on the provision of the rehabilitation service shall be made pursuant to the wording of the Social Welfare Act in force until 31 December 2015.
+
+(9) The Social Insurance Board shall assume from a person under 18 years of age, in respect of whom the decision on the provision of a rehabilitation service was made at the latest on 31 December 2015 and in the case provided for in subsection 8 of this section, the obligation to pay the fee for the social rehabilitation service and shall provide the social rehabilitation service until the expiry of the rehabilitation plan but not for longer than until 31 December 2018. If the person specified in this subsection does not have a valid rehabilitation plan, the rehabilitation team shall determine the term of validity of the rehabilitation plan upon preparation thereof.
+
+(10) The Social Insurance Board shall assume from a person of at least 18 years of age in respect of whom the decision on the provision of a rehabilitation service was made at the latest on 31 December 2015 and who has a valid rehabilitation plan, the obligation to pay the fee for the social rehabilitation service and shall provide the social rehabilitation service until the expiry of the rehabilitation plan but not for longer than until 31 December 2018.
+
+(11) The Social Insurance Board shall assume from a person of at least 18 years of age, who has submitted an application for the receipt of a rehabilitation service before 1 January 2016 or whose decision on the provision of the rehabilitation service was made at the latest on 31 December 2015 and who does not have a valid rehabilitation plan, the obligation to pay the fee for the social rehabilitation service if the need of the person for the social rehabilitation service has been identified pursuant to § 62 of this Act.
+
+(12) A person whose receipt of a rehabilitation service has been decided on pursuant to the wording of the Social Welfare Act in force until 31 December 2015 shall no longer be entitled to receive the rehabilitation service pursuant to the specified wording as of the date of making the decision on occupational rehabilitation by the Estonian Unemployment Insurance Fund or the date of making the decision on assumption of the obligation to pay the fee for the social rehabilitation service by the Social Insurance Board.
+
+(13) A person qualified to participate in the work of a rehabilitation team pursuant to the wording of the Social Welfare Act in force until 31 December 2015 and registered as a member of a rehabilitation team in the register of economic activities as at 31 December 2015 may act as a member of a rehabilitation team until 31 December 2019.
+
+(14) A contract under public law entered into with a provider of rehabilitation services on the basis of subsection 1 of § 11
+
+4
+
+of the wording of the Social Welfare Act in force until 31 December 2015 shall expire on 31 December 2015.
+
+(15) A rehabilitation team shall comply with the requirements provided for in subsection 6 of § 68 of this Act at the latest by 1 January 2020.
+
+(16) If the right of a person to purchase or lease a technical aid or be compensated for the costs of services related thereto on the basis of a decision of the county government arose before 1 January 2016, the Social Insurance Board shall take over the financing of the service from the county government as of 1 January 2016.
+
+(17) A technical aid card issued to a person by a county government shall be valid in respect of the name of the technical aid entered on the card until the end of the service life of the technical aid within the meaning provided for in subsections 6 and 7 of § 48 of this Act.
+
+(18) The provisions of subsections 6 and 7 of § 47 of this Act shall also apply to a person whose right to purchase or lease a technical aid or be compensated for the costs of services related thereto on the basis of a decision of the county government arose before 1 January 2016.
+
+(19) Subsection 4 of § 51 of this Act shall not apply to a person specified in subsections 1 and 2 of § 47 of this Act whose basis for being an entitled person changes and a person whose technical aid card has expired.
+
+(20) A seller of lessor of a technical aid shall comply with the requirements provided for in subsection 4 of § 55 of this Act at the latest by 1 January 2017.
+
+(21) A provider of rehabilitation services who held an activity licence for the provision of rehabilitation services issued pursuant to the wording of the Social Welfare Act in force until 31 December 2015 and was registered as a provider of rehabilitation services in the register of economic activities as at 31 December 2015 may provide the services on the basis of the specified activity licence until 31 December 2016.
+
+(22) Local authorities are required to enter the data specified in subsection 1 of § 144 of this Act and data concerning active cases as at 1 January 2016 in the Social Services and Benefits Registry as follows:
+
+1)
+
+data specified in clauses 5–7 of subsection 1 of § 144 of this Act within three months as of entry into force of the Act;
+
+2)
+
+data specified in clauses 8–10 of subsection 1 of § 144 of this Act within six months as of entry into force of the Act.
+
+(23) In the case of the persons specified in clause 2 of subsection 1 of § 47 of this Act, the condition concerning partial or no work ability is also met if the person has been declared permanently incapacitated for work with a 40 to 100 per cent loss of capacity for work on the basis of the State Pension Insurance Act or whose category of disability determined for an unspecified term on the basis of the State Allowances Act is deemed to correspond to the permanent incapacity for work with a 40 to 100 per cent loss of capacity for work determined until the pensionable age pursuant to § 58 of the State Pension Insurance Act.
+
+[RT I, 30.12.2015, 5 – entry into force 01.07.2016]
+
+(24) The condition of no work ability provided for in clause 3 of subsection 1 of § 101 of this Act is deemed to be complied with also in the case of a person whose percentage of loss of capacity for work is at least 80.
+
+[RT I, 30.12.2015, 5 – entry into force 01.07.2016]
+
+(25) The condition of no work ability provided for in clause 2 of subsection 2 and clause 2 of subsection 3 of § 101 of this Act is deemed to be complied with also in the case of a person whose percentage of loss of capacity for work is at least 90.
+
+[RT I, 30.12.2015, 5 – entry into force 01.07.2016]
+
+(26) The Social Insurance Board is required to enter the data specified in clause 3 of subsection 6 of § 144 of this Act and data concerning active cases as at 1 January 2017 in the Social Services and Benefits Registry at the latest by 31 December 2017.
+
+[RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+(27) Juvenile offence matters in which juvenile committees are conducting proceedings and which have not been terminated by 1 January 2018 shall be referred to the local authority of the residence of the child which shall conduct proceedings on them on the basis provided for in Chapter 6 of the Child Protection Act.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+(28) The person on whom the juvenile committee has imposed the obligation of supervision shall continue to exercise supervision over the performance of the obligations arising from the imposition of a sanction on the basis of a resolution of the juvenile committee until the term of the imposition of the sanction.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+(29) Children who have been sent to a school for pupils who need special treatment due to behavioural problems before 1 January 2018 shall continue to be subject to the sanction of staying at the school or a 24-hour special care service on the basis of a court ruling. After 1 January 2018, the closed child care institution service regulation shall be applied to the stay at a school for pupils who need special treatment due to behavioural problems and the receipt of a 24-hour special care service on the basis of a court ruling.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+(30) A contract entered into on the basis of § 65 of this Act for the assumption of the obligation to pay the fee concerning a minor on whom a sanction has been imposed to provide social rehabilitation service, shall remain valid until the term of the contract.
+
+[RT I, 25.10.2017, 1 – entry into force 01.01.2018]
+
+(31) A local authority is required to enter the data specified in clauses 11–14 of subsection 1 of § 144 of this Act and data valid as at 1 January 2027 in the Social Services and Benefits Registry at the latest by 31 December 2027.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(32) A provider of social services who is financed from the state budget or the local authority budget is required to enter the data specified in clause 11 of subsection 1 of § 144 of this Act and data valid as at 1 January 2027 in the Social Services and Benefits Registry at the latest by 31 December 2027.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(33) A local authority shall process applications submitted before 1 January 2018 for a needs-based family benefit, grant the benefit and pay the benefit under the conditions and pursuant to the procedure valid before 1 January 2018.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(34) Upon the payment of need-based family benefit payments in 2018 the calculated subsistence benefit for the corresponding months shall consider the subsistence level of each child of a family to be equal to the subsistence level of the first member of the family.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(35) The compensation to a local authority from the state budget for 2018 of the expenses related to the payment of needs-based family benefits shall be calculated by deducting the balance of the funds received in previous years from the expenses of the local authority during the year preceding the given budgetary year and dividing the result by four.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(36) In 2018 no payments shall be made from the state budget to a local authority to compensate the expenses related to the processing and payment of needs-based benefits.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(37) Local authorities may use the excess balance from the compensation in 2018 of the expenses of payment of needs-based family benefits for the payment of subsistence benefits. Starting from 2019 the compensation for the expenses of payment of subsistence benefits to local authorities from the state budget shall also take into account the excess balance of expenses for the payment of needs-based family benefits.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(38) [Repealed – RT I, 22.12.2022, 3 – entry into force 01.07.2023]
+
+(39) [Repealed – RT I, 22.12.2022, 3 – entry into force 01.07.2023]
+
+(40) Subsections 3–5 of § 13
+
+1
+
+of this Act shall be applied retroactively as of 12 March 2020.
+
+[RT I, 21.04.2020, 1 – entry into force 22.04.2020]
+
+(41) The training of social workers of local authorities must comply with the requirement provided for in § 16
+
+1
+
+of this Act at the latest by 1 July 2026.
+
+[RT I, 28.04.2022, 1 – entry into force 08.05.2022]
+
+(42) Upon initial assessment of the need for assistance of a disabled adult provided in § 15
+
+2
+
+of this Act, the local authority must contact the person for the purpose of identification of the need for assistance and provision of assistance within 90 days as of becoming aware of the person.
+
+[RT I, 28.04.2022, 1 – entry into force 01.02.2023]
+
+(43) Until 31 December 2023, 1.06 times the amount of the average old-age pension for the second quarter of the year preceding the budgetary year published by Statistics Estonia is applied for covering the costs of 24-hour general care service provided outside home provided in subsection 5 of § 22
+
+1
+
+of this Act.
+
+[RT I, 22.12.2022, 3 – entry into force 01.07.2023]
+
+(44) The condition of no work ability provided in clause 1
+
+1
+
+of § 92 of this Act is deemed to be complied with also in the case of a person who has been declared permanently incapacitated for work with a loss of capacity for work of at least 80 per cent on the basis of the State Pension Insurance Act.
+
+[RT I, 14.12.2023, 1 – entry into force 24.12.2023]
+
+(45) The Social Insurance Board issues a referral decision for the provision of the employment support service to a person entered in the waiting list for the employment support service but who has not been established to have no work ability on the basis of the Work Ability Allowance Act or who has not been declared permanently incapacitated for work with a loss of capacity for work of at least 80 per cent on the basis of the State Pension Insurance Act, provided that other conditions provided in § 71 of this Act are met.
+
+[RT I, 14.12.2023, 1 – entry into force 24.12.2023]
+
+(46) The condition of no work ability provided in clause 2 of § 99
+
+2
+
+of this Act is deemed to be complied with also in the case of a person who has been declared permanently incapacitated for work with a loss of capacity for work of at least 80 per cent on the basis of the State Pension Insurance Act.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(47) The Social Insurance Board shall assess before 1 January 2025 the need for special care services of a person entered in the waiting list for the everyday life service. Where a person complies with the conditions for the receipt of the daily and weekly care service provided in § 99
+
+2
+
+of this Act, the Social Insurance Board decides on the provision of the service in accordance with the provisions of § 70 and notifies the person of their entry in the waiting list for the daily and weekly care service in a form reproducible in writing.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(48) The continuation of the provision of the service to a person to whom the Social Insurance Board has, before 1 January 2025, issued a referral decision for the receipt of the everyday life support service with recommended frequency of up to 21 or up to 23 twenty-four hour periods per month, who is established to have a continued need for a service of the same content and who complies with the conditions for the receipt of the daily and weekly care service provided in § 99
+
+2
+
+of this Act after the deadline for the provision of the service indicated in the referral decision, is decided in accordance with the provisions of § 70 and a referral decision for the receipt of the daily and weekly care service is issued in accordance with the provisions of § 71 by the Social Insurance Board.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+(49) The Social Insurance Board shall assess before 1 September 2026 the need for special care services of a person to whom the Social Insurance Board has issued before 1 January 2025 a referral decision for the everyday life support service with recommended frequency of up to 21 or up to 23 twenty-four hour periods per month and for whom the deadline for the provision of the service indicated in the referral decision is later than 1 September 2025. Where a person complies with the conditions for the receipt of the daily and weekly care service provided in § 99
+
+2
+
+of this Act, the Social Insurance Board decides on the continuation of the provision of the service with the consent of the person in accordance with the provisions of § 70 and issues a new referral decision for the receipt of the daily and weekly care service in accordance with the provisions of § 71. The deadline of the new referral decision must not be shorter than the deadline of the referral decision issued before 1 January 2025.
+
+[RT I, 18.10.2024, 1 – entry into force 01.01.2025]
+
+§ 160
+
+1
+
+.
+
+Ex-post assessment of regulation of § 15
+
+1
+
+In 2020 at the latest, the Ministry of Social Affairs shall analyse the effect and performance of the implementation of the regulation provided for in § 15
+
+1
+
+of this Act concerning the assessment of the need for assistance of young persons.
+
+[RT I, 03.04.2018, 3 – entry into force 15.04.2018]
+
+§ 160
+
+2
+
+.
+
+Analysis of assessment system of persons in need of care
+
+The Government of the Republic shall prepare an analysis and proposals on the basis thereof by 1 January 2020 regarding the assessment system used for the identification of the need for care of adults with the aim to implement the results of the analysis in order to determine the recipients of care leave as of 1 January 2021.
+
+[RT I, 26.06.2018, 3 – entry into force 01.07.2018]
+
+§ 160
+
+3
+
+.
+
+Payment of pensioner’s living alone allowance upon living together with person eligible for temporary protection
+
+(1) The provisions of clause 1 of subsection 2 of § 139
+
+1
+
+of this Act do not apply to a person, if another person residing at the residence of the person entered in the population register is a person eligible for temporary protection living in Estonia.
+
+(2) In order to establish the fact specified in subsection 1 of this section, the compliance of the person with the requirements for receiving pensioner’s allowance on the basis of the data on temporary protection is verified in addition to the data specified in subsection 2 of § 139
+
+2
+
+of this Act.
+
+[RT I, 07.06.2022, 1 – entry into force 17.06.2022, applied retroactively as of 9 March 2022]
+
+§ 160
+
+4
+
+.
+
+Compensation to local authorities for expenses of processing and payment of subsistence benefits
+
+Local authorities are compensated for the expenses of processing and payment of subsistence benefits in 2022, in addition to the cases specified in subsection 2 of § 156 of this Act, also for each application by which the number of applications submitted to a local authority from January to October in 2022 exceeds the number of applications submitted for the same period in 2021.
+
+[RT I, 07.06.2022, 1 – entry into force 17.06.2022]
+
+§ 160
+
+5
+
+.
+
+Benefit for mitigation of price increase
+
+[Repealed – RT I, 07.06.2022, 1 – entry into force 01.06.2023]
+
+§ 160
+
+6
+
+.
+
+Implementation of § 140
+
+Persons who have settled in Estonia before 1 January 2024 have the right to receive social benefits specified in § 140 of this Act.
+
+[RT I, 14.12.2023, 1 – entry into force 01.01.2024]
+
+§ 160
+
+7
+
+.
+
+Transformation of childcare service into childcare service for children with extreme need for assistance and support
+
+(1) A person to whom the Social Insurance Board has issued an activity licence for the provision of childcare services on the basis of clause 1 of § 151 of the Social Welfare Act notifies the Social Insurance Board, not later than by 1 December 2025, in a form reproducible in writing whether they will continue their economic activities as a provider of childcare service to children with extreme need for assistance and support on the basis of this Act or as a childcare owner on the basis of the Early Childhood Education Act. Where the person fails to notify of the continuation of their economic activities, the Social Insurance Board revokes the activity licence as of 1 September 2026.
+
+(2) After the submission of the notification specified in subsection 1 of this section, the activity licence for the provision of childcare services is deemed to be the activity licence for the provision of childcare services for children with extreme need for assistance and support issued on the basis of this Act.
+
+(3) Administrative acts issued or contracts under public law entered into until 31 August 2026 on the provision of childcare services on the basis of subsection 2 of § 45
+
+2
+
+of the wording of this Act in force as of 1 September 2025, which are related to the performance of the duties provided in this Act, continue to apply where they comply with the requirements provided in this Act, or until the expiry of the activity licence for the provision of childcare services of a service provider. Administrative acts issued or contracts under public law entered into until 31 August 2026 on the provision of childcare services on the basis of subsection 2 of § 45
+
+2
+
+of the wording of this Act in force until 31 August 2025 must be brought into conformity with this Act not later than by 1 September 2026.
+
+[RT I, 09.01.2025, 1 – entry into force 01.09.2025]
+
+Subchapter 2
+
+Amendment and Repeal of Acts
+
+§ 161.  –  § 175.
+
+[Omitted from this text.]
+
+§ 176.
+
+Amendment of Social Welfare Act
+
+The Social Welfare Act is amended as follows:
+
+1)
+
+clause 2 of subsection 1 of § 47 is amended and worded as follows:
+
+"2) persons of working age as of the age of 18 who have been established to have partial or no work ability;";
+
+2)
+
+clause 3 of subsection 1 of § 59 is amended and worded as follows:
+
+"3) persons of working age who have a disability within the meaning of § 2 of the Social Benefits for Disabled Persons Act or who have been declared permanently incapacitated for work on the basis of the State Pension Insurance Act or whose category of disability has been determined for an unspecified term on the basis of the State Allowances Act or who have been established to have partial work ability on the basis of the Work Ability Allowance Act and whose need for the social rehabilitation service has been identified;";
+
+3)
+
+[omitted – RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+4)
+
+clause 1 of subsection 2 of § 63 shall be complemented with the words "the expert opinion provided upon assessment of work ability" following the words "Estonian Unemployment Insurance Fund";
+
+5)
+
+subsection 2 of § 73 shall be complemented with the text "work ability allowance within the meaning of the Work Ability Allowance Act," after the text "work ability allowance within the meaning of the Work Ability Allowance Act";
+
+6)
+
+subsection 1 of § 93 is repealed;
+
+7)
+
+clause 3 of subsection 1 of § 101 is amended and worded as follows:
+
+"3) the person under 18 years of age until attaining the pensionable age provided for in § 7 of the State Pension Insurance Act has been established to have no work ability on the basis of the Work Ability Allowance Act;";
+
+8)
+
+clause 2 of subsection 2 of § 101 is amended and worded as follows:
+
+"2) the person has been established to have no work ability on the basis of the Work Ability Allowance Act, except in the case of a person who has attained the pensionable age provided for in § 7 of the State Pension Insurance Act, or";
+
+9)
+
+clause 2 of subsection 3 of § 101 is amended and worded as follows:
+
+"2) the person has been established to have no work ability on the basis of the Work Ability Allowance Act, except in the case of a person who has attained the pensionable age provided for in § 7 of the State Pension Insurance Act, and";
+
+10)
+
+the text of § 149 is amended and worded as follows:
+
+"An activity licence shall be granted for the provision of rehabilitation services if the provider of rehabilitation services and the rehabilitation team comply with the requirements provided for in §§ 66 and 68 of this Act.";
+
+11)
+
+subsections 23–25 are added to § 160 worded as follows:
+
+"(23) In the case of the persons specified in clause 2 of subsection 1 of § 47 of this Act, the condition concerning partial or no work ability is also met if the person has been declared permanently incapacitated for work with a 40 to 100 per cent loss of capacity for work on the basis of the State Pension Insurance Act or whose category of disability determined for an unspecified term on the basis of the State Allowances Act is deemed to correspond to the permanent incapacity for work with a 40 to 100 per cent loss of capacity for work determined until the pensionable age pursuant to § 58 of the State Pension Insurance Act.
+
+(24) The condition of no work ability provided for in clause 3 of subsection 1 of § 101 of this Act is deemed to be complied with also in the case of a person whose percentage of loss of capacity for work is at least 80.
+
+(25) The condition of no work ability provided for in clause 2 of subsection 2 and clause 2 of subsection 3 of § 101 of this Act is deemed to be complied with also in the case of a person whose percentage of loss of capacity for work is at least 90.".
+
+§ 177.  –  § 182.
+
+[Omitted from this text.]
+
+§ 183.
+
+Repeal of Act
+
+(1) The Social Welfare Act (RT I 1995, 21, 323) is repealed.
+
+(2) Regulations of local authorities established on the basis of the Act specified in subsection 1 of this section shall remain in force until entry into force of the regulations adopted on the basis of this Act but not for longer than until 31 March 2016.
+
+Subchapter 3
+
+Entry into force of Act
+
+§ 184.
+
+Entry into force of Act
+
+(1) The General Part of the Social Code Act and this Act enter into force on 1 January 2016.
+
+(2) Subsection 3 of § 68, subsection 8 of § 86, subsection 3 of § 115 and subsection 9 of § 123 of this Act enter into force on 18 January 2016.
+
+(3) Clause 4 of subsection 1 of § 59, clauses 1–2, 4–9 and 11 of § 176, clause 3 of § 177, clause 4 of § 179 and § 180 of this Act enter into force on 1 July 2016.
+
+(4) [Repealed – RT I, 21.12.2016, 2 – entry into force 01.01.2017]
+
+(5) Subsection 2 of § 52 and clause 5 of subsection 1 of § 55 of this Act enter into force on 1 January 2018.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+(6) Clause 10 of § 176 of this Act enters into force on 1 July 2018.
+
+[RT I, 28.11.2017, 2 – entry into force 01.01.2018]
+
+(7) Subsections 3 and 4 of § 22, subsection 2 of § 36, subsections 2 and 2
+
+1
+
+of § 55 and clauses 3 and 4 of § 151 of this Act enter into force on 1 January 2020.
+
+[RT I, 28.12.2017, 8 – entry into force 01.01.2018]
+
+← Back
+
+|
+
+Up ↑
+
+Lehe valmimist toetas Euroopa Liit
+
+Ligipääsetavuse teatis
+
+Facebook
+
+X.com
+
+© Riigikantselei 2010
+
+© Justiitsministeerium 2012
+
+Riigi Teataja otsinguabi:     620 8148
+
+Tagasiside:
+
+e-kiri
+
+Versioon 12.16.22
+
+https://www.riigiteataja.ee/otsingu_soovitused.json
+
+Riigi Teataja portal uses cookies to improve the user experience. By clicking the Accept button, you agree our use of cookies.
+
+More information.
+
+Accept

@@ -1,0 +1,73 @@
+.env
+
+# Video and Audio
+*.3gp
+*.flac
+*.h263
+*.h264
+*.mkv
+*.mov
+*.mp3
+*.mp4
+*.mpeg
+*.mpg
+*.ogg
+*.qt
+*.wav
+*.wma
+*.wmv
+
+# Archives and Compression
+*.7z
+*.bz2
+*.bzip2
+*.gz
+*.gzip
+*.iso
+*.lz
+*.lzh
+*.rar
+*.tar
+*.tgz
+*.zip
+
+# OS & System files
+*.DS_Store
+*.bak
+*.dll
+*.exe
+*.img
+*.lib
+*.swf
+
+# Package Managers
+*.apk
+*.deb
+*.rpm
+*.war
+
+# Documents and Images
+*.doc
+*.docx
+*.pdf
+*.pic
+*.ppt
+*.pptx
+*.psd
+*.rtf
+*.tif
+*.tiff
+*.xls
+*.xlsx
+
+# Python and Java Compiled/Keys
+*.class
+*.key
+*.pya
+*.pyc
+*.pyo
+*.pyv
+*.raw
+
+.venv/
+models/

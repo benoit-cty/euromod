@@ -1,0 +1,259 @@
+# Legislation & Policy Sources: FR
+
+## Overview
+This document tracks the sources used to define tax-benefit rules for FR. Sources were initially extracted from the Y16 EUROMOD Country Report.
+
+## Time Coverage & Obsolescence Notes
+- **Current Basis**: Y16 Report (covers policies predominantly from 2022-2025).
+- **URL Stability**: Check URLs carefully for hardcoded years (e.g., `.../2023/...`). Legal frameworks update frequently; if a URL is dead, look for the base domain's search function or an archived version.
+- **Version Control**: When checking against models, ensure the legal text corresponds to the exact year of the EUROMOD policy being triangulated.
+
+## Extracted URLs
+### Legal Repositories & Parliaments
+- [https://www.senat.fr/rap/a19-143-7/a19-143-77.html#:~:text=%2D%20l’%C3%A9largissement%20en%20cons%C3%A9quence%20du,de%2052%20%25%20en%20un%20an](https://www.senat.fr/rap/a19-143-7/a19-143-77.html#:~:text=%2D%20l’%C3%A9largissement%20en%20cons%C3%A9quence%20du,de%2052%20%25%20en%20un%20an) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.senat.fr/rap/a19-143-7/a19-143-77.html#:~:text=%2D%20l’%C3%A9largissement%20en%20cons%C3%A9quence%20du,de%2052%20%25%20en%20un%20an>`
+
+### Ministries & Government Portals
+- [http://drees.social-sante.gouv.fr/etudes-et-statistiques/publications/panoramas-de-la-drees/article/les-retraites-et-les-retraites-edition-2017](http://drees.social-sante.gouv.fr/etudes-et-statistiques/publications/panoramas-de-la-drees/article/les-retraites-et-les-retraites-edition-2017) `[✅ DOWNLOADED]`
+  - *Context:* `href="http://drees.social-sante.gouv.fr/etudes-et-statistiques/publications/panoramas-de-la-drees/article/les-retraites-et-les-retraites-edition-20...`
+- [https://dares.travail-emploi.gouv.fr/dares-etudes-et-statistiques/tableaux-de-bord/le-marche-du-travail-pendant-le-covid-19/tableaux-de-bord-hebdomadaires/article/situation-sur-le-marche-du-travail-au-15-septembre](https://dares.travail-emploi.gouv.fr/dares-etudes-et-statistiques/tableaux-de-bord/le-marche-du-travail-pendant-le-covid-19/tableaux-de-bord-hebdomadaires/article/situation-sur-le-marche-du-travail-au-15-septembre) `[✅ DOWNLOADED]`
+  - *Context:* `(<https://dares.travail-emploi.gouv.fr/dares-etudes-et-statistiques/tableaux-de-bord/le-marche-du-travail-pendant-le-covid-19/tableaux-de-bord-hebd...`
+- [https://dares.travail-emploi.gouv.fr/sites/default/files/39f7b48766297d57360140660b408124/Dares_TdB-marche-travail_crise-sanitaire_26%20avril%202021.pdf](https://dares.travail-emploi.gouv.fr/sites/default/files/39f7b48766297d57360140660b408124/Dares_TdB-marche-travail_crise-sanitaire_26%20avril%202021.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `<https://dares.travail-emploi.gouv.fr/sites/default/files/39f7b48766297d57360140660b408124/Dares_TdB-marche-travail_crise-sanitaire_26%20avril%2020...`
+- [https://dares.travail-emploi.gouv.fr/sites/default/files/70d96efc536b7d559fb385a4b2243e56/Dares_TdB-marche-travail_crise-sanitaire_31-mai.pdf](https://dares.travail-emploi.gouv.fr/sites/default/files/70d96efc536b7d559fb385a4b2243e56/Dares_TdB-marche-travail_crise-sanitaire_31-mai.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `<https://dares.travail-emploi.gouv.fr/sites/default/files/70d96efc536b7d559fb385a4b2243e56/Dares_TdB-marche-travail_crise-sanitaire_31-mai.pdf>`
+- [https://economy-finance.ec.europa.eu/document/download/6e6837c1-e00c-42ed-9f10-8d1ad56f913a_en?filename=spring_forecast-2024_statisical%20annext_en.pdf](https://economy-finance.ec.europa.eu/document/download/6e6837c1-e00c-42ed-9f10-8d1ad56f913a_en?filename=spring_forecast-2024_statisical%20annext_en.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `forecasts](https://economy-finance.ec.europa.eu/document/download/6e6837c1-e00c-42ed-9f10-8d1ad56f913a_en?filename=spring_forecast-2024_statisical%...`
+- [https://travail-emploi.gouv.fr/lallocation-daide-au-retour-lemploi-are](https://travail-emploi.gouv.fr/lallocation-daide-au-retour-lemploi-are) `[✅ DOWNLOADED]`
+  - *Context:* `<https://travail-emploi.gouv.fr/lallocation-daide-au-retour-lemploi-are>`
+- [https://travail-emploi.gouv.fr/le-conge-dadoption#anchor-navigation-566](https://travail-emploi.gouv.fr/le-conge-dadoption#anchor-navigation-566) `[✅ DOWNLOADED]`
+  - *Context:* `https://travail-emploi.gouv.fr/le-conge-dadoption#anchor-navigation-566`
+- [https://travail-emploi.gouv.fr/le-ministere-en-action/coronavirus-covid-19/questions-reponses-par-theme/faq-chomage-partiel-activite-partielle](https://travail-emploi.gouv.fr/le-ministere-en-action/coronavirus-covid-19/questions-reponses-par-theme/faq-chomage-partiel-activite-partielle) `[✅ DOWNLOADED]`
+  - *Context:* `<https://travail-emploi.gouv.fr/le-ministere-en-action/coronavirus-covid-19/questions-reponses-par-theme/faq-chomage-partiel-activite-partielle>`
+- [https://www.francetravail.fr/candidat/mes-droits-aux-aides-et-allocati/aides-financieres-et-autres-allo/aide-exceptionnelle-de-fin-danne.html](https://www.francetravail.fr/candidat/mes-droits-aux-aides-et-allocati/aides-financieres-et-autres-allo/aide-exceptionnelle-de-fin-danne.html) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.francetravail.fr/candidat/mes-droits-aux-aides-et-allocati/aides-financieres-et-autres-allo/aide-exceptionnelle-de-fin-danne.html`
+- [https://www.francetravail.fr/candidat/mes-droits-aux-aides-et-allocati/aides-financieres-et-autres-allo/autres-allocations/lallocation-de-solidarite-specif.html](https://www.francetravail.fr/candidat/mes-droits-aux-aides-et-allocati/aides-financieres-et-autres-allo/autres-allocations/lallocation-de-solidarite-specif.html) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.francetravail.fr/candidat/mes-droits-aux-aides-et-allocati/aides-financieres-et-autres-allo/autres-allocations/lallocation-de-solidarit...`
+- [https://www.securite-sociale.fr/home/medias/presse/list-presse/covid-19--dispositif-exceptionne.html#:~:text=Une%20simple%20convention%20entre%20l,84%20%25%20de%20son%20salaire%20net](https://www.securite-sociale.fr/home/medias/presse/list-presse/covid-19--dispositif-exceptionne.html#:~:text=Une%20simple%20convention%20entre%20l,84%20%25%20de%20son%20salaire%20net) `[FAILED/PENDING]`
+  - *Context:* `https://www.securite-sociale.fr/home/medias/presse/list-presse/covid-19--dispositif-exceptionne.html#:~:text=Une%20simple%20convention%20entre%20l,...`
+
+### Statistical Offices
+- [http://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=prc_hicp_midx&amp;lang=en](http://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=prc_hicp_midx&amp;lang=en) `[✅ DOWNLOADED]`
+  - *Context:* `href="http://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=prc_hicp_midx&amp;lang=en">http://appsso.eurostat.ec.europa.eu/nui/show.do?dataset=pr...`
+
+### European & International Organisations
+- [http://ec.europa.eu/economy_finance/ameco/user/serie/ResultSerie.cfm](http://ec.europa.eu/economy_finance/ameco/user/serie/ResultSerie.cfm) `[FAILED/PENDING]`
+  - *Context:* `href="http://ec.europa.eu/economy_finance/ameco/user/serie/ResultSerie.cfm">http://ec.europa.eu/economy_finance/ameco/user/serie/ResultSerie.cfm</a...`
+- [http://ec.europa.eu/eurostat/data/browse-statistics-by-theme](http://ec.europa.eu/eurostat/data/browse-statistics-by-theme) `[✅ DOWNLOADED]`
+  - *Context:* `<http://ec.europa.eu/eurostat/data/browse-statistics-by-theme>`
+- [https://circabc.europa.eu/ui/group/853b48e6-a00f-4d22-87db-c40bafd0161d/library/334d943f-6f71-4f4b-9c7e-a6767a3fe164?p=1&n=10&sort=name_ASC%22](https://circabc.europa.eu/ui/group/853b48e6-a00f-4d22-87db-c40bafd0161d/library/334d943f-6f71-4f4b-9c7e-a6767a3fe164?p=1&n=10&sort=name_ASC%22) `[FAILED/PENDING]`
+  - *Context:* `<https://circabc.europa.eu/ui/group/853b48e6-a00f-4d22-87db-c40bafd0161d/library/334d943f-6f71-4f4b-9c7e-a6767a3fe164?p=1&n=10&sort=name_ASC%22>`
+- [https://data.oecd.org/fr/](https://data.oecd.org/fr/) `[✅ DOWNLOADED]`
+  - *Context:* `OECD Statistics (2019). <https://data.oecd.org/fr/>`
+- [https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_manr/default/table?lang=en](https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_manr/default/table?lang=en) `[✅ DOWNLOADED]`
+  - *Context:* `Eurostat`
+- [https://ec.europa.eu/eurostat/documents/7894008/8256843/Methodological-note-2020.pdf/9a70fb55-ceb7-d25a-1b31-ab0c030095d2?t=1625228771763](https://ec.europa.eu/eurostat/documents/7894008/8256843/Methodological-note-2020.pdf/9a70fb55-ceb7-d25a-1b31-ab0c030095d2?t=1625228771763) `[✅ DOWNLOADED]`
+  - *Context:* `<https://ec.europa.eu/eurostat/documents/7894008/8256843/Methodological-note-2020.pdf/9a70fb55-ceb7-d25a-1b31-ab0c030095d2?t=1625228771763>`
+- [https://ec.europa.eu/info/sites/info/files/wf2017_statistical_annex_0.pdf](https://ec.europa.eu/info/sites/info/files/wf2017_statistical_annex_0.pdf) `[FAILED/PENDING]`
+  - *Context:* `href="https://ec.europa.eu/info/sites/info/files/wf2017_statistical_annex_0.pdf">https://ec.europa.eu/info/sites/info/files/wf2017_statistical_anne...`
+- [https://ec.europa.eu/taxation_customs/tedb/taxSearch.html](https://ec.europa.eu/taxation_customs/tedb/taxSearch.html) `[FAILED/PENDING]`
+  - *Context:* `See https://ec.europa.eu/taxation_customs/tedb/taxSearch.html`
+- [https://euromod-web.jrc.ec.europa.eu/download-euromod](https://euromod-web.jrc.ec.europa.eu/download-euromod) `[✅ DOWNLOADED]`
+  - *Context:* `Downloads: <https://euromod-web.jrc.ec.europa.eu/download-euromod>`
+- [https://euromod-web.jrc.ec.europa.eu/resources/documentation](https://euromod-web.jrc.ec.europa.eu/resources/documentation) `[✅ DOWNLOADED]`
+  - *Context:* `<https://euromod-web.jrc.ec.europa.eu/resources/documentation>`
+- [https://euromod-web.jrc.ec.europa.eu/resources/glossary](https://euromod-web.jrc.ec.europa.eu/resources/glossary) `[✅ DOWNLOADED]`
+  - *Context:* `<https://euromod-web.jrc.ec.europa.eu/resources/glossary>`
+- [https://euromod-web.jrc.ec.europa.eu/resources/parameters](https://euromod-web.jrc.ec.europa.eu/resources/parameters) `[✅ DOWNLOADED]`
+  - *Context:* `<u>https://euromod-web.jrc.ec.europa.eu/resources/parameters</u>.`
+- [https://euromod-web.jrc.ec.europa.eu/sites/default/files/Inflation_rates_by_product_category.xlsx](https://euromod-web.jrc.ec.europa.eu/sites/default/files/Inflation_rates_by_product_category.xlsx) `[✅ DOWNLOADED]`
+  - *Context:* `rates](https://euromod-web.jrc.ec.europa.eu/sites/default/files/Inflation_rates_by_product_category.xlsx)`
+
+### Other Relevant Sources
+- [http://data.caf.fr/site/](http://data.caf.fr/site/) `[FAILED/PENDING]`
+  - *Context:* `<http://data.caf.fr/site/>`
+- [http://vosdroits.service-public.fr](http://vosdroits.service-public.fr) `[FAILED/PENDING]`
+  - *Context:* `<http://vosdroits.service-public.fr>`
+- [http://www.bdm.insee.fr/bdm2/affichageSeries?anneeDebut=2007&amp;anneeFin=2012&amp;recherche=criteres&amp;codeGroupe=1476&amp;idbank=001665118&amp;idbank=001665121&amp;idbank=001665124&amp;idbank=001665127&amp;idbank=001665130&amp;idbank=001665133&amp;idbank=001665136&amp;idbank=001665139&amp;idbank=001665143&amp;idbank=001665146&amp;idbank=001665148](http://www.bdm.insee.fr/bdm2/affichageSeries?anneeDebut=2007&amp;anneeFin=2012&amp;recherche=criteres&amp;codeGroupe=1476&amp;idbank=001665118&amp;idbank=001665121&amp;idbank=001665124&amp;idbank=001665127&amp;idbank=001665130&amp;idbank=001665133&amp;idbank=001665136&amp;idbank=001665139&amp;idbank=001665143&amp;idbank=001665146&amp;idbank=001665148) `[FAILED/PENDING]`
+  - *Context:* `href="http://www.bdm.insee.fr/bdm2/affichageSeries?anneeDebut=2007&amp;anneeFin=2012&amp;recherche=criteres&amp;codeGroupe=1476&amp;idbank=00166511...`
+- [http://www.bdm.insee.fr/bdm2/affichageSeries?idbank=001765178&amp;bouton=OK&amp;codeGroupe=1743](http://www.bdm.insee.fr/bdm2/affichageSeries?idbank=001765178&amp;bouton=OK&amp;codeGroupe=1743) `[FAILED/PENDING]`
+  - *Context:* `href="https://www.insee.fr/fr/information/2411675">http://www.bdm.insee.fr/bdm2/affichageSeries?idbank=001765178&amp;bouton=OK&amp;codeGroupe=1743<...`
+- [http://www.bdm.insee.fr/bdm2/affichageSeries?request_locale=en&amp;anneeDebut=2007&amp;codeGroupe=1475&amp;recherche=criteres&amp;idbank=001665118&amp;anneeFin=2012](http://www.bdm.insee.fr/bdm2/affichageSeries?request_locale=en&amp;anneeDebut=2007&amp;codeGroupe=1475&amp;recherche=criteres&amp;idbank=001665118&amp;anneeFin=2012) `[FAILED/PENDING]`
+  - *Context:* `href="http://www.bdm.insee.fr/bdm2/affichageSeries?request_locale=en&amp;anneeDebut=2007&amp;codeGroupe=1475&amp;recherche=criteres&amp;idbank=0016...`
+- [http://www.bdm.insee.fr/bdm2/affichageSeries?request_locale=en&amp;codeGroupe=1560&amp;idbank=001690355&amp;bouton=OK](http://www.bdm.insee.fr/bdm2/affichageSeries?request_locale=en&amp;codeGroupe=1560&amp;idbank=001690355&amp;bouton=OK) `[FAILED/PENDING]`
+  - *Context:* `href="http://www.bdm.insee.fr/bdm2/affichageSeries?request_locale=en&amp;codeGroupe=1560&amp;idbank=001690355&amp;bouton=OK">http://www.bdm.insee.f...`
+- [http://www.dalloz-actualite.fr/indice/base-mensuelle-de-calcul-des-prestations-familiales.VSfD45PK-AB](http://www.dalloz-actualite.fr/indice/base-mensuelle-de-calcul-des-prestations-familiales.VSfD45PK-AB) `[✅ DOWNLOADED]`
+  - *Context:* `href="http://www.dalloz-actualite.fr/indice/base-mensuelle-de-calcul-des-prestations-familiales.VSfD45PK-AB">http://www.dalloz-actualite.fr/indice/...`
+- [http://www.data.gouv.fr/](http://www.data.gouv.fr/) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.impots.gouv.fr/portail/statistiques>,<http://www.data.gouv.fr/>,`
+- [http://www.insee.fr/en/bases-de-donnees/bsweb/serie.asp?idbank=001515333](http://www.insee.fr/en/bases-de-donnees/bsweb/serie.asp?idbank=001515333) `[FAILED/PENDING]`
+  - *Context:* `href="http://www.insee.fr/en/bases-de-donnees/bsweb/serie.asp?idbank=001515333">http://www.insee.fr/en/bases-de-donnees/bsweb/serie.asp?idbank=0015...`
+- [http://www.insee.fr/fr/ffc/docs_ffc/ref/revpmen11h.pdf](http://www.insee.fr/fr/ffc/docs_ffc/ref/revpmen11h.pdf) `[FAILED/PENDING]`
+  - *Context:* `href="http://www.insee.fr/fr/ffc/docs_ffc/ref/revpmen11h.pdf">http://www.insee.fr/fr/ffc/docs_ffc/ref/revpmen11h.pdf</a></p></td>`
+- [http://www.insee.fr/fr/themes/tableau.asp?reg_id=0&amp;ref_id=NATTEF04571](http://www.insee.fr/fr/themes/tableau.asp?reg_id=0&amp;ref_id=NATTEF04571) `[FAILED/PENDING]`
+  - *Context:* `href="http://www.insee.fr/fr/themes/tableau.asp?reg_id=0&amp;ref_id=NATTEF04571">http://www.insee.fr/fr/themes/tableau.asp?reg_id=0&amp;ref_id=NATT...`
+- [https://bofip.impots.gouv.fr/bofip/2036-PGP.html/identifiant%3DBOI-IR-BASE-40-20250414](https://bofip.impots.gouv.fr/bofip/2036-PGP.html/identifiant%3DBOI-IR-BASE-40-20250414) `[✅ DOWNLOADED]`
+  - *Context:* `<https://bofip.impots.gouv.fr/bofip/2036-PGP.html/identifiant%3DBOI-IR-BASE-40-20250414>`
+- [https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/handicap/l-allocation-aux-adultes-handicapes-aah](https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/handicap/l-allocation-aux-adultes-handicapes-aah) `[✅ DOWNLOADED]`
+  - *Context:* `https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/handicap/l-allocation-aux-adultes-handicapes-aah`
+- [https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/le-complement-familial-cf](https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/le-complement-familial-cf) `[✅ DOWNLOADED]`
+  - *Context:* `https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/le-complement-familial-cf`
+- [https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-professionnelle/le-revenu-de-solidarite-active-rsa](https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-professionnelle/le-revenu-de-solidarite-active-rsa) `[✅ DOWNLOADED]`
+  - *Context:* `https://caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-professionnelle/le-revenu-de-solidarite-active-rsa`
+- [https://caf.fr/professionnels/offres-et-services/accompagnement-des-allocataires/bareme-prime-la-naissance-et-allocation-de-base](https://caf.fr/professionnels/offres-et-services/accompagnement-des-allocataires/bareme-prime-la-naissance-et-allocation-de-base) `[✅ DOWNLOADED]`
+  - *Context:* `<https://caf.fr/professionnels/offres-et-services/accompagnement-des-allocataires/bareme-prime-la-naissance-et-allocation-de-base>*`
+- [https://data.progedo.fr/studies/doi/10.13144/lil-1738?tab=documents](https://data.progedo.fr/studies/doi/10.13144/lil-1738?tab=documents) `[✅ DOWNLOADED]`
+  - *Context:* `<https://data.progedo.fr/studies/doi/10.13144/lil-1738?tab=documents>`
+- [https://drees.solidarites-sante.gouv.fr/publications/les-dossiers-de-la-drees/le-non-recours-aux-prestations-sociales-mise-en-perspective?utm_source=Sarbacane&utm_medium=email&utm_campaign=DD%2093%20PUB](https://drees.solidarites-sante.gouv.fr/publications/les-dossiers-de-la-drees/le-non-recours-aux-prestations-sociales-mise-en-perspective?utm_source=Sarbacane&utm_medium=email&utm_campaign=DD%2093%20PUB) `[✅ DOWNLOADED]`
+  - *Context:* `<https://drees.solidarites-sante.gouv.fr/publications/les-dossiers-de-la-drees/le-non-recours-aux-prestations-sociales-mise-en-perspective?utm_sour...`
+- [https://drees.solidarites-sante.gouv.fr/sites/default/files/2022-07/Regularly%20measuring%20the%20non-take-up%20of%20the%20RSA%20and%20the%20employment%20bonus%20method%20and%20results.pdf](https://drees.solidarites-sante.gouv.fr/sites/default/files/2022-07/Regularly%20measuring%20the%20non-take-up%20of%20the%20RSA%20and%20the%20employment%20bonus%20method%20and%20results.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `<https://drees.solidarites-sante.gouv.fr/sites/default/files/2022-07/Regularly%20measuring%20the%20non-take-up%20of%20the%20RSA%20and%20the%20emplo...`
+- [https://entreprendre.service-public.fr/vosdroits/F32101](https://entreprendre.service-public.fr/vosdroits/F32101) `[✅ DOWNLOADED]`
+  - *Context:* `1 https://entreprendre.service-public.fr/vosdroits/F32101`
+- [https://entreprendre.service-public.gouv.fr/vosdroits/F32101](https://entreprendre.service-public.gouv.fr/vosdroits/F32101) `[✅ DOWNLOADED]`
+  - *Context:* `Source : <https://entreprendre.service-public.gouv.fr/vosdroits/F32101>`
+- [https://www.agence-adoption.fr/](https://www.agence-adoption.fr/) `[✅ DOWNLOADED]`
+  - *Context:* `| AFA | Agence Francaise de l'adoption |`
+- [https://www.anil.org/aj-reduction-loyer-solidarite-rls-apl/](https://www.anil.org/aj-reduction-loyer-solidarite-rls-apl/) `[✅ DOWNLOADED]`
+  - *Context:* `Source : <https://www.anil.org/aj-reduction-loyer-solidarite-rls-apl/>`
+- [https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations](https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations) `[✅ DOWNLOADED]`
+  - *Context:* `href="https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations">https://www.caf.fr/allocataires/aides-et-demarches/droits-et-presta...`
+- [https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/l-allocation-de-rentree-scolaire-ars](https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/l-allocation-de-rentree-scolaire-ars) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/l-allocation-de-rentree-scolaire-ars`
+- [https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/l-allocation-de-soutien-familial-asf](https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/l-allocation-de-soutien-familial-asf) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/l-allocation-de-soutien-familial-asf`
+- [https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/la-prestation-partagee-d-education-de-l-enfant-prepare](https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/la-prestation-partagee-d-education-de-l-enfant-prepare) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/la-prestation-partagee-d-education-de-l-enfant-prepare`
+- [https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/le-complement-familial-cf](https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/le-complement-familial-cf) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/le-complement-familial-cf`
+- [https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/les-allocations-familiales-af](https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/les-allocations-familiales-af) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.caf.fr/allocataires/aides-et-demarches/droits-et-prestations/vie-personnelle/les-allocations-familiales-af`
+- [https://www.caf.fr/allocataires/caf-du-nord/actualites-departementales/le-versement-de-la-prime-de-noel](https://www.caf.fr/allocataires/caf-du-nord/actualites-departementales/le-versement-de-la-prime-de-noel) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.caf.fr/allocataires/caf-du-nord/actualites-departementales/le-versement-de-la-prime-de-noel>`
+- [https://www.caf.fr/nous-connaitre/l-e-ssentiel](https://www.caf.fr/nous-connaitre/l-e-ssentiel) `[✅ DOWNLOADED]`
+  - *Context:* `onwards (sources: , , https://www.caf.fr/nous-connaitre/l-e-ssentiel) .`
+- [https://www.caf.fr/professionnels/offres-et-services/accompagnement-des-allocataires/bareme-prime-d-activite](https://www.caf.fr/professionnels/offres-et-services/accompagnement-des-allocataires/bareme-prime-d-activite) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.caf.fr/professionnels/offres-et-services/accompagnement-des-allocataires/bareme-prime-d-activite`
+- [https://www.cci.fr/actualites/les-charges-sociales-au-1er-janvier-2025](https://www.cci.fr/actualites/les-charges-sociales-au-1er-janvier-2025) `[FAILED/PENDING]`
+  - *Context:* `https://www.cci.fr/actualites/les-charges-sociales-au-1er-janvier-2025`
+- [https://www.cleiss.fr/docs/regimes/regime_france/an_3.html](https://www.cleiss.fr/docs/regimes/regime_france/an_3.html) `[✅ DOWNLOADED]`
+  - *Context:* `Retirement: https://www.cleiss.fr/docs/regimes/regime_france/an_3.html`
+- [https://www.douane.gouv.fr/fiche/la-fiscalite-appliquee-aux-tabacs-manufactures-et-la-composition-du-prix-de-vente-au-detail](https://www.douane.gouv.fr/fiche/la-fiscalite-appliquee-aux-tabacs-manufactures-et-la-composition-du-prix-de-vente-au-detail) `[✅ DOWNLOADED]`
+  - *Context:* `(https://www.douane.gouv.fr/fiche/la-fiscalite-appliquee-aux-tabacs-manufactures-et-la-composition-du-prix-de-vente-au-detail)`
+- [https://www.douane.gouv.fr/fiche/la-fiscalite-appliquee-aux-tabacs-manufactures-et-la-composition-du-prix-de-vente-au-detail#:~:text=L'accise%20sur%20les%20produits,au%20taux%20de%2016%2C6667%20%25](https://www.douane.gouv.fr/fiche/la-fiscalite-appliquee-aux-tabacs-manufactures-et-la-composition-du-prix-de-vente-au-detail#:~:text=L'accise%20sur%20les%20produits,au%20taux%20de%2016%2C6667%20%25) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.douane.gouv.fr/fiche/la-fiscalite-appliquee-aux-tabacs-manufactures-et-la-composition-du-prix-de-vente-au-detail#:~:text=L'accise%20sur...`
+- [https://www.douane.gouv.fr/fiche/la-fiscalite-appliquee-aux-tabacs-manufactures-et-la-composition-du-prix-de-vente-au-detail#:~:text=L'accise%20sur%20les%20produits,au%20taux%20de%2016%2C6667%20%25*](https://www.douane.gouv.fr/fiche/la-fiscalite-appliquee-aux-tabacs-manufactures-et-la-composition-du-prix-de-vente-au-detail#:~:text=L'accise%20sur%20les%20produits,au%20taux%20de%2016%2C6667%20%25*) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.douane.gouv.fr/fiche/la-fiscalite-appliquee-aux-tabacs-manufactures-et-la-composition-du-prix-de-vente-au-detail#:~:text=L'accise%20sur...`
+- [https://www.ecologie.gouv.fr/politiques-publiques/tarification-effective-du-carbone#visualiser-les-donnees-de-la-tarification-effective-du-carbone-et-de-lenergie-2](https://www.ecologie.gouv.fr/politiques-publiques/tarification-effective-du-carbone#visualiser-les-donnees-de-la-tarification-effective-du-carbone-et-de-lenergie-2) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.ecologie.gouv.fr/politiques-publiques/tarification-effective-du-carbone#visualiser-les-donnees-de-la-tarification-effective-du-carbone-...`
+- [https://www.ecologie.gouv.fr/sites/default/files/documents/Guide%202025%20sur%20la%20fiscalit%C3%A9%20des%20%C3%A9nergies.pdf](https://www.ecologie.gouv.fr/sites/default/files/documents/Guide%202025%20sur%20la%20fiscalit%C3%A9%20des%20%C3%A9nergies.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `Source :https://www.ecologie.gouv.fr/sites/default/files/documents/Guide%202025%20sur%20la%20fiscalit%C3%A9%20des%20%C3%A9nergies.pdf`
+- [https://www.economie.gouv.fr/cedef/fiches-pratiques/comment-fonctionne-la-taxe-malus-sur-les-vehicules-polluants](https://www.economie.gouv.fr/cedef/fiches-pratiques/comment-fonctionne-la-taxe-malus-sur-les-vehicules-polluants) `[FAILED/PENDING]`
+  - *Context:* `https://www.economie.gouv.fr/cedef/fiches-pratiques/comment-fonctionne-la-taxe-malus-sur-les-vehicules-polluants`
+- [https://www.economie.gouv.fr/cedef/les-fiches-pratiques/quels-sont-les-taux-de-tva-en-vigueur-en-france-et-dans-lunion#:~:text=Le%20d%C3%A9tail%20des%20taux%20de,taux%20n'est%20express%C3%A9ment%20pr%C3%A9vu](https://www.economie.gouv.fr/cedef/les-fiches-pratiques/quels-sont-les-taux-de-tva-en-vigueur-en-france-et-dans-lunion#:~:text=Le%20d%C3%A9tail%20des%20taux%20de,taux%20n'est%20express%C3%A9ment%20pr%C3%A9vu) `[FAILED/PENDING]`
+  - *Context:* `<https://www.economie.gouv.fr/cedef/les-fiches-pratiques/quels-sont-les-taux-de-tva-en-vigueur-en-france-et-dans-lunion#:~:text=Le%20d%C3%A9tail%20...`
+- [https://www.economie.gouv.fr/covid19-soutien-entreprises/aides-versees-fonds-solidarite](https://www.economie.gouv.fr/covid19-soutien-entreprises/aides-versees-fonds-solidarite) `[FAILED/PENDING]`
+  - *Context:* `<https://www.economie.gouv.fr/covid19-soutien-entreprises/aides-versees-fonds-solidarite>,`
+- [https://www.economie.gouv.fr/covid19-soutien-entreprises/dispositif-de-chomage-partiel](https://www.economie.gouv.fr/covid19-soutien-entreprises/dispositif-de-chomage-partiel) `[FAILED/PENDING]`
+  - *Context:* `<https://www.economie.gouv.fr/covid19-soutien-entreprises/dispositif-de-chomage-partiel>,`
+- [https://www.economie.gouv.fr/covid19-soutien-entreprises/fonds-de-solidarite-pour-les-tpe-independants-et-micro](https://www.economie.gouv.fr/covid19-soutien-entreprises/fonds-de-solidarite-pour-les-tpe-independants-et-micro) `[FAILED/PENDING]`
+  - *Context:* `<https://www.economie.gouv.fr/covid19-soutien-entreprises/fonds-de-solidarite-pour-les-tpe-independants-et-micro>`
+- [https://www.economie.gouv.fr/entreprises/gerer-ses-ressources-humaines-et-ses-salaries/comment-fonctionne-la-reduction-generale#](https://www.economie.gouv.fr/entreprises/gerer-ses-ressources-humaines-et-ses-salaries/comment-fonctionne-la-reduction-generale#) `[FAILED/PENDING]`
+  - *Context:* `https://www.economie.gouv.fr/entreprises/gerer-ses-ressources-humaines-et-ses-salaries/comment-fonctionne-la-reduction-generale#`
+- [https://www.economie.gouv.fr/particuliers/gerer-mon-argent/comment-beneficier-du-cheque-energie#](https://www.economie.gouv.fr/particuliers/gerer-mon-argent/comment-beneficier-du-cheque-energie#) `[FAILED/PENDING]`
+  - *Context:* `https://www.economie.gouv.fr/particuliers/gerer-mon-argent/comment-beneficier-du-cheque-energie#`
+- [https://www.economie.gouv.fr/particuliers/gerer-mon-impot-sur-le-revenu/comment-calculer-votre-impot-dapres-le-bareme-de-limpot#plafonnement-du-quotient-familia_5](https://www.economie.gouv.fr/particuliers/gerer-mon-impot-sur-le-revenu/comment-calculer-votre-impot-dapres-le-bareme-de-limpot#plafonnement-du-quotient-familia_5) `[FAILED/PENDING]`
+  - *Context:* `https://www.economie.gouv.fr/particuliers/gerer-mon-impot-sur-le-revenu/comment-calculer-votre-impot-dapres-le-bareme-de-limpot#plafonnement-du-quo...`
+- [https://www.economie.gouv.fr/particuliers/gerer-mon-impot-sur-le-revenu/pouvez-vous-beneficier-de-la-decote-de-limpot-sur-le](https://www.economie.gouv.fr/particuliers/gerer-mon-impot-sur-le-revenu/pouvez-vous-beneficier-de-la-decote-de-limpot-sur-le) `[FAILED/PENDING]`
+  - *Context:* `https://www.economie.gouv.fr/particuliers/gerer-mon-impot-sur-le-revenu/pouvez-vous-beneficier-de-la-decote-de-limpot-sur-le`
+- [https://www.economie.gouv.fr/particuliers/gerer-mon-impot-sur-le-revenu/quotient-familial-et-impot-sur-le-revenu-comment-ca](https://www.economie.gouv.fr/particuliers/gerer-mon-impot-sur-le-revenu/quotient-familial-et-impot-sur-le-revenu-comment-ca) `[FAILED/PENDING]`
+  - *Context:* `https://www.economie.gouv.fr/particuliers/gerer-mon-impot-sur-le-revenu/quotient-familial-et-impot-sur-le-revenu-comment-ca`
+- [https://www.economie.gouv.fr/particuliers/impots-et-fiscalite/gerer-mes-autres-impots-et-taxes/comment-fonctionne-le-prelevement](https://www.economie.gouv.fr/particuliers/impots-et-fiscalite/gerer-mes-autres-impots-et-taxes/comment-fonctionne-le-prelevement) `[FAILED/PENDING]`
+  - *Context:* `<https://www.economie.gouv.fr/particuliers/impots-et-fiscalite/gerer-mes-autres-impots-et-taxes/comment-fonctionne-le-prelevement>`
+- [https://www.economie.gouv.fr/particuliers/impots-et-fiscalite/gerer-mes-autres-impots-et-taxes/csg-et-crds-comment-ca-fonctionne#csg-et-crds-quels-sont-les-taux-\_2](https://www.economie.gouv.fr/particuliers/impots-et-fiscalite/gerer-mes-autres-impots-et-taxes/csg-et-crds-comment-ca-fonctionne#csg-et-crds-quels-sont-les-taux-\_2) `[FAILED/PENDING]`
+  - *Context:* `Source:https://www.economie.gouv.fr/particuliers/impots-et-fiscalite/gerer-mes-autres-impots-et-taxes/csg-et-crds-comment-ca-fonctionne#csg-et-crds...`
+- [https://www.economie.gouv.fr/particuliers/preparer-ma-retraite-et-ma-succession/comment-fonctionne-le-minimum-vieillesse-ou#](https://www.economie.gouv.fr/particuliers/preparer-ma-retraite-et-ma-succession/comment-fonctionne-le-minimum-vieillesse-ou#) `[FAILED/PENDING]`
+  - *Context:* `https://www.economie.gouv.fr/particuliers/preparer-ma-retraite-et-ma-succession/comment-fonctionne-le-minimum-vieillesse-ou#`
+- [https://www.impots.gouv.fr/particulier/questions/comment-puis-je-beneficier-de-la-deduction-forfaitaire-de-10](https://www.impots.gouv.fr/particulier/questions/comment-puis-je-beneficier-de-la-deduction-forfaitaire-de-10) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.impots.gouv.fr/particulier/questions/comment-puis-je-beneficier-de-la-deduction-forfaitaire-de-10>`
+- [https://www.impots.gouv.fr/portail/statistiques](https://www.impots.gouv.fr/portail/statistiques) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.impots.gouv.fr/portail/statistiques>,<http://www.data.gouv.fr/>,`
+- [https://www.impots.gouv.fr/sites/default/files/media/3_Documentation/depliants/nid_4004_gp_125.pdf](https://www.impots.gouv.fr/sites/default/files/media/3_Documentation/depliants/nid_4004_gp_125.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.impots.gouv.fr/sites/default/files/media/3_Documentation/depliants/nid_4004_gp_125.pdf`
+- [https://www.impots.gouv.fr/sites/default/files/media/8_transverse/chatbot/fiche_qr_chatbot-10_2022-07-08.pdf](https://www.impots.gouv.fr/sites/default/files/media/8_transverse/chatbot/fiche_qr_chatbot-10_2022-07-08.pdf) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.impots.gouv.fr/sites/default/files/media/8_transverse/chatbot/fiche_qr_chatbot-10_2022-07-08.pdf`
+- [https://www.insee.fr/en/metadonnees/source/serie/s1220](https://www.insee.fr/en/metadonnees/source/serie/s1220) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.insee.fr/en/metadonnees/source/serie/s1220>`
+- [https://www.insee.fr/en/statistiques](https://www.insee.fr/en/statistiques) `[✅ DOWNLOADED]`
+  - *Context:* `Statistics on incomes and wages <https://www.insee.fr/en/statistiques>`
+- [https://www.insee.fr/fr/information/2411675](https://www.insee.fr/fr/information/2411675) `[✅ DOWNLOADED]`
+  - *Context:* `href="https://www.insee.fr/fr/information/2411675">http://www.bdm.insee.fr/bdm2/affichageSeries?idbank=001765178&amp;bouton=OK&amp;codeGroupe=1743<...`
+- [https://www.insee.fr/fr/metadonnees/source/operation/s2160/documentation-methodologique](https://www.insee.fr/fr/metadonnees/source/operation/s2160/documentation-methodologique) `[✅ DOWNLOADED]`
+  - *Context:* `operation](https://www.insee.fr/fr/metadonnees/source/operation/s2160/documentation-methodologique)”`
+- [https://www.insee.fr/fr/metadonnees/source/serie/s1220](https://www.insee.fr/fr/metadonnees/source/serie/s1220) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.insee.fr/fr/metadonnees/source/serie/s1220`
+- [https://www.insee.fr/fr/statistiques/1375188](https://www.insee.fr/fr/statistiques/1375188) `[✅ DOWNLOADED]`
+  - *Context:* `Source: [https://www.insee.fr/fr/statistiques/1375188 and own`
+- [https://www.insee.fr/fr/statistiques/1375188%20and%20own%20elaboration%20for169](https://www.insee.fr/fr/statistiques/1375188%20and%20own%20elaboration%20for169) `[FAILED/PENDING]`
+  - *Context:* `for169](https://www.insee.fr/fr/statistiques/1375188%20and%20own%20elaboration%20for169)`
+- [https://www.insee.fr/fr/statistiques/2381408#tableau-Donnes](https://www.insee.fr/fr/statistiques/2381408#tableau-Donnes) `[✅ DOWNLOADED]`
+  - *Context:* `href="https://www.insee.fr/fr/statistiques/2381408#tableau-Donnes">https://www.insee.fr/fr/statistiques/2381408#tableau-Donnes</a></td>`
+- [https://www.insee.fr/fr/statistiques/2412465#tableau-Donnes](https://www.insee.fr/fr/statistiques/2412465#tableau-Donnes) `[FAILED/PENDING]`
+  - *Context:* `href="https://www.insee.fr/fr/statistiques/2412465#tableau-Donnes">https://www.insee.fr/fr/statistiques/2412465#tableau-Donnes</a></td>`
+- [https://www.insee.fr/fr/statistiques/serie/001515333](https://www.insee.fr/fr/statistiques/serie/001515333) `[✅ DOWNLOADED]`
+  - *Context:* `increase <https://www.insee.fr/fr/statistiques/serie/001515333> )`
+- [https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000046860759](https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000046860759) `[FAILED/PENDING]`
+  - *Context:* `<https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000046860759>*`
+- [https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000044595989/LEGISCTA000044599467/](https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000044595989/LEGISCTA000044599467/) `[FAILED/PENDING]`
+  - *Context:* `<https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000044595989/LEGISCTA000044599467/>`
+- [https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000047911785](https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000047911785) `[FAILED/PENDING]`
+  - *Context:* `2023](https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000047911785)`
+- [https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000050854392](https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000050854392) `[FAILED/PENDING]`
+  - *Context:* `Source : https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000050854392`
+- [https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000046206217](https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000046206217) `[FAILED/PENDING]`
+  - *Context:* `<https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000046206217>`
+- [https://www.legifrance.gouv.fr/loda/id/JORFTEXT000039160329](https://www.legifrance.gouv.fr/loda/id/JORFTEXT000039160329) `[FAILED/PENDING]`
+  - *Context:* `Source: https://www.legifrance.gouv.fr/loda/id/JORFTEXT000039160329`
+- [https://www.legifrance.gouv.fr/loda/id/JORFTEXT000044560604/2023-05-17/](https://www.legifrance.gouv.fr/loda/id/JORFTEXT000044560604/2023-05-17/) `[FAILED/PENDING]`
+  - *Context:* `https://www.legifrance.gouv.fr/loda/id/JORFTEXT000044560604/2023-05-17/`
+- [https://www.legifrance.gouv.fr/loda/id/LEGISCTA000039160679](https://www.legifrance.gouv.fr/loda/id/LEGISCTA000039160679) `[FAILED/PENDING]`
+  - *Context:* `Source: : <https://www.legifrance.gouv.fr/loda/id/LEGISCTA000039160679>`
+- [https://www.msa.fr/lfp/exploitant/cotisations-et-contributions](https://www.msa.fr/lfp/exploitant/cotisations-et-contributions) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.msa.fr/lfp/exploitant/cotisations-et-contributions>`
+- [https://www.service-public.gouv.fr/particuliers/actualites/A15236](https://www.service-public.gouv.fr/particuliers/actualites/A15236) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.service-public.gouv.fr/particuliers/actualites/A15236>`
+- [https://www.service-public.gouv.fr/particuliers/actualites/A17979](https://www.service-public.gouv.fr/particuliers/actualites/A17979) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.service-public.gouv.fr/particuliers/actualites/A17979>`
+- [https://www.service-public.gouv.fr/particuliers/actualites/A18080#:~:text=avion%20(TSBA](https://www.service-public.gouv.fr/particuliers/actualites/A18080#:~:text=avion%20(TSBA) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.service-public.gouv.fr/particuliers/actualites/A18080#:~:text=avion%20(TSBA)%20%3F-,La%20taxe%20de%20solidarit%C3%A9%20sur%20les%20bill...`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F12484/personnalisation/resultat?lang=&quest0=0&quest1=0&quest=](https://www.service-public.gouv.fr/particuliers/vosdroits/F12484/personnalisation/resultat?lang=&quest0=0&quest1=0&quest=) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.service-public.gouv.fr/particuliers/vosdroits/F12484/personnalisation/resultat?lang=&quest0=0&quest1=0&quest=`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F1419#:~:text=Le%20taux%20marginal%20d'imposition,li%C3%A9%20aux%20enfants%20est%20limit%C3%A9.\*](https://www.service-public.gouv.fr/particuliers/vosdroits/F1419#:~:text=Le%20taux%20marginal%20d'imposition,li%C3%A9%20aux%20enfants%20est%20limit%C3%A9.\*) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.service-public.gouv.fr/particuliers/vosdroits/F1419#:~:text=Le%20taux%20marginal%20d'imposition,li%C3%A9%20aux%20enfants%20est%20limit%...`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F14709](https://www.service-public.gouv.fr/particuliers/vosdroits/F14709) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.service-public.gouv.fr/particuliers/vosdroits/F14709`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F2329/personnalisation/resultat?lang=&quest0=0&quest=](https://www.service-public.gouv.fr/particuliers/vosdroits/F2329/personnalisation/resultat?lang=&quest0=0&quest=) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.service-public.gouv.fr/particuliers/vosdroits/F2329/personnalisation/resultat?lang=&quest0=0&quest=`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F2882](https://www.service-public.gouv.fr/particuliers/vosdroits/F2882) `[✅ DOWNLOADED]`
+  - *Context:* `Source: https://www.service-public.gouv.fr/particuliers/vosdroits/F2882`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F3053#:~:text=Les%20indemnit%C3%A9s%20journali%C3%A8res%20(IJ](https://www.service-public.gouv.fr/particuliers/vosdroits/F3053#:~:text=Les%20indemnit%C3%A9s%20journali%C3%A8res%20(IJ) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.service-public.gouv.fr/particuliers/vosdroits/F3053#:~:text=Les%20indemnit%C3%A9s%20journali%C3%A8res%20(IJ)%20sont,%2C%20divis%C3%A9%...`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F31130](https://www.service-public.gouv.fr/particuliers/vosdroits/F31130) `[✅ DOWNLOADED]`
+  - *Context:* `Source: https://www.service-public.gouv.fr/particuliers/vosdroits/F31130`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F34931/1_0?idFicheParent=F2](https://www.service-public.gouv.fr/particuliers/vosdroits/F34931/1_0?idFicheParent=F2) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.service-public.gouv.fr/particuliers/vosdroits/F34931/1_0?idFicheParent=F2>`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F34931/1_1_0?idFicheParent=F2](https://www.service-public.gouv.fr/particuliers/vosdroits/F34931/1_1_0?idFicheParent=F2) `[✅ DOWNLOADED]`
+  - *Context:* `<https://www.service-public.gouv.fr/particuliers/vosdroits/F34931/1_1_0?idFicheParent=F2>*`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F35127](https://www.service-public.gouv.fr/particuliers/vosdroits/F35127) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.service-public.gouv.fr/particuliers/vosdroits/F35127`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F415/personnalisation/resultat?lang=&quest0=1&quest1=1&quest2=1&quest3=1&quest4=1&quest5=1&quest6=1&quest=](https://www.service-public.gouv.fr/particuliers/vosdroits/F415/personnalisation/resultat?lang=&quest0=1&quest1=1&quest2=1&quest3=1&quest4=1&quest5=1&quest6=1&quest=) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.service-public.gouv.fr/particuliers/vosdroits/F415/personnalisation/resultat?lang=&quest0=1&quest1=1&quest2=1&quest3=1&quest4=1&quest5=...`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F744](https://www.service-public.gouv.fr/particuliers/vosdroits/F744) `[✅ DOWNLOADED]`
+  - *Context:* `*https://www.service-public.gouv.fr/particuliers/vosdroits/F744*`
+- [https://www.service-public.gouv.fr/particuliers/vosdroits/F744*](https://www.service-public.gouv.fr/particuliers/vosdroits/F744*) `[FAILED/PENDING]`
+  - *Context:* `*https://www.service-public.gouv.fr/particuliers/vosdroits/F744*`
+- [https://www.unedic.org/l-assurance-chomage-et-vous/demandeur-d-emploi-ou-salarie/mon-indemnisation/pendant-combien-de-temps-vais-je-toucher-mes-allocations-chomage](https://www.unedic.org/l-assurance-chomage-et-vous/demandeur-d-emploi-ou-salarie/mon-indemnisation/pendant-combien-de-temps-vais-je-toucher-mes-allocations-chomage) `[✅ DOWNLOADED]`
+  - *Context:* `https://www.unedic.org/l-assurance-chomage-et-vous/demandeur-d-emploi-ou-salarie/mon-indemnisation/pendant-combien-de-temps-vais-je-toucher-mes-all...`
+- [https://www.urssaf.fr/accueil/outils-documentation/taux-baremes/taux-cotisations-ac-plnr.html](https://www.urssaf.fr/accueil/outils-documentation/taux-baremes/taux-cotisations-ac-plnr.html) `[FAILED/PENDING]`
+  - *Context:* `<https://www.urssaf.fr/accueil/outils-documentation/taux-baremes/taux-cotisations-ac-plnr.html>`
+

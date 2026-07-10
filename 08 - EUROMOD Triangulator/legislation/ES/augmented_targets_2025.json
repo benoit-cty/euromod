@@ -1,0 +1,82 @@
+[
+  {
+    "parameter": "$SMI2",
+    "xml_value": "735.90",
+    "comment": "Minimum wage (Salario Mínimo Interprofesional) - monthly - frozen at 2018 level for indexing regional benefits",
+    "query": "Minimum wage (Salario Mínimo Interprofesional) 2025 legislation ES",
+    "results": [
+      {
+        "title": "BOE-A-2025-2576 Real Decreto 87/2025, de 11 de febrero, por el que se fija el salario mínimo interprofesional para 2025.",
+        "url": "https://www.boe.es/eli/es/rd/2025/02/11/87"
+      },
+      {
+        "title": "Real Decreto 87/2025, de 11 de febrero, por el que se fija el salario mínimo interprofesional para 2025.",
+        "url": "https://www.boe.es/buscar/pdf/2025/BOE-A-2025-2576-consolidado.pdf"
+      },
+      {
+        "title": "Gabinete de Comunicación",
+        "url": "https://prensa.mites.gob.es/webPrensa/listado-noticia/noticia/4420"
+      }
+    ]
+  },
+  {
+    "parameter": "$bchrg_reg51_lim2",
+    "xml_value": "39838.5",
+    "comment": "",
+    "query": "$bchrg_reg51_lim2 2025 legislation ES",
+    "results": [
+      {
+        "title": "Agencia Tributaria: 6.2 Límites y exceso de aportaciones",
+        "url": "https://sede.agenciatributaria.gob.es/Sede/ayuda/manuales-videos-folletos/manuales-practicos/irpf-2025/c13-determinacion-renta-contribuyente-sujeta-gravamen/reducciones-base-imponible-general/reducciones-aportaciones-contribuciones-sistemas-prevision-social/normas-comunes-aplicables-aportaciones-sistemas-social/limites-exceso-aportaciones.html"
+      },
+      {
+        "title": "BOE-A-2025-26605 Orden HAC/1517/2025, de 18 de diciembre, por la que se publican los límites de los distintos tipos de contratos a efectos de la contratación del sector público a partir del 1 de enero de 2026.",
+        "url": "https://boe.es/buscar/doc.php?id=BOE-A-2025-26605"
+      },
+      {
+        "title": "BOE-A-2025-6598 Real Decreto 252/2025, de 1 de abril, por el que se aprueba el Reglamento del Impuesto Complementario para garantizar un nivel mínimo global de imposición para los grupos multinacionales y los grupos nacionales de gran magnitud.",
+        "url": "https://boe.es/diario_boe/txt.php?id=BOE-A-2025-6598"
+      }
+    ]
+  },
+  {
+    "parameter": "$bchrg_reg51_lim3",
+    "xml_value": "55773.9",
+    "comment": "",
+    "query": "$bchrg_reg51_lim3 2025 legislation ES",
+    "results": [
+      {
+        "title": "BOE-A-2025-6596 Real Decreto-ley 3/2025, de 1 de abril, por el que se establece el programa de incentivos ligados a la movilidad eléctrica (MOVES III) para el año 2025.",
+        "url": "https://boe.es/buscar/doc.php?id=BOE-A-2025-6596"
+      },
+      {
+        "title": "BOE-A-2025-26605 Orden HAC/1517/2025, de 18 de diciembre, por la que se publican los límites de los distintos tipos de contratos a efectos de la contratación del sector público a partir del 1 de enero de 2026.",
+        "url": "https://boe.es/buscar/doc.php?id=BOE-A-2025-26605"
+      },
+      {
+        "title": "BOE-A-2025-7439 Real Decreto 214/2025, de 18 de marzo, por el que se crea el registro de huella de carbono, compensación y proyectos de absorción de dióxido de carbono y por el que se establece la obligación del cálculo de la huella de carbono y de la elaboración y publicación de planes de reducción de emisiones de gases de efecto invernadero.",
+        "url": "https://boe.es/diario_boe/txt.php?id=BOE-A-2025-7439"
+      }
+    ]
+  },
+  {
+    "parameter": "UpLim",
+    "xml_value": "1366.2",
+    "comment": "Benefit cannot be higher than the basic amount of the non-contributory old age-disability pension (since 2013)",
+    "query": "Benefit cannot be higher than the basic amount of the non 2025 legislation ES",
+    "results": [
+      {
+        "title": "BOE-A-2025-7660 Real Decreto 316/2025, de 15 de abril, sobre limitación de la cuantía inicial de las pensiones públicas y revalorización de las pensiones del sistema de la Seguridad Social, de las pensiones de Clases Pasivas del Estado y de otras prestaciones sociales públicas para el ejercicio 2025.",
+        "url": "https://www.boe.es/eli/es/rd/2025/04/15/316"
+      },
+      {
+        "title": "BOE-A-2025-999 Real Decreto 35/2025, de 21 de enero, sobre limitación de la cuantía inicial de las pensiones públicas y revalorización de las pensiones del sistema de la Seguridad Social, de las pensiones de Clases Pasivas del Estado y de otras prestaciones sociales públicas para el ejercicio 2025.",
+        "url": "https://boe.es/buscar/doc.php?id=BOE-A-2025-999"
+      },
+      {
+        "title": "Disposición 1484 del BOE núm. 20 de 2026",
+        "url": "https://www.boe.es/boe/dias/2026/01/22/pdfs/BOE-A-2026-1484.pdf"
+      }
+    ]
+  }
+]

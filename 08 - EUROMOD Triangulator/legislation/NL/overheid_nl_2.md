@@ -1,0 +1,71 @@
+Vind snel de juiste overheidsinformatie.
+
+Zoek in alle bronnen van de overheid
+
+Diensten van de overheid
+
+Bekijk wat u kunt regelen met uw gemeente of organisaties. Zoals een paspoort aanvragen of een toeslag aanvragen. Al het aanbod in uw woonplaats kunt u bekijken op
+
+in uw regio
+
+.
+
+Berichten over uw Buurt
+
+Ontvang e-mails over besluiten van de overheid in uw buurt. Bijvoorbeeld wegwerkzaamheden of vergunningen. Of
+
+zoek meteen rondom een adres
+
+.
+
+Beleid en regelgeving
+
+Van het ontstaan tot uitvoering en controle van wetten. Bekijk de Nederlandse
+
+wet- en regelgeving
+
+en
+
+officiële bekendmakingen
+
+. Of bekijk
+
+lokale regelgeving
+
+speciaal voor uw omgeving.
+
+Levensgebeurtenissen
+
+Bekijk wat u moet regelen bij belangrijke momenten in uw leven. Bijvoorbeeld bij een geboorte, huwelijk, verhuizing of overlijden.
+
+Contactgegevens
+
+In het Register van Overheidsorganisaties vindt u adressen, telefoonnummers en websites van gemeenten, ministeries en andere overheidsorganisaties.
+
+Wat doet Overheid.nl?
+
+De website Overheid.nl is de wegwijzer naar informatie en diensten van alle overheidsorganisaties in Nederland. We helpen u snel naar wetten, regels en diensten van alle delen van de overheid, zoals:
+
+Ministeries en parlement: gaan over landelijke wetten en beleid.
+
+Provincies: kijken naar natuur en nieuwe bouwplannen.
+
+Gemeenten: regelen paspoort, vergunningen en afvalverwerking.
+
+Waterschappen: houden water schoon en dijken veilig.
+
+Uitvoerings­organisaties : zoals UWV en de Belastingdienst.
+
+Uitgelichte onderwerpen
+
+Verdragenbank (internationale wet- en regelgeving)
+
+Ondernemersplein (informatie en advies voor ondernemers)
+
+Openbare Overheidsdocumenten
+
+Parlementaire documenten
+
+Internetconsultatie (denk mee over nieuwe wetten en regels)
+
+Gegevens bij besluiten

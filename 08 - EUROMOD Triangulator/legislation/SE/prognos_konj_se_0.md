@@ -1,0 +1,1 @@
+Timlöner enligt nationalräkenskaperna. Prognosdatabasen

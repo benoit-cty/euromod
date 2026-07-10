@@ -1,0 +1,2821 @@
+{
+  "country": "SE",
+  "version": "J2.0+",
+  "year": 2025,
+  "discrepancies": [
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunuplim (Func Switch: n/a)",
+      "xml_value": "18700",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$mc_max_yem (Func Switch: off)",
+      "xml_value": "44000",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef8",
+      "xml_value": "-0.212",
+      "cr_value": "-0.212",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef10",
+      "xml_value": "-0.523",
+      "cr_value": "-0.523",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tinna_upthres1",
+      "xml_value": "625500",
+      "cr_value": "625500",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tintc_ee_addthres5",
+      "xml_value": "13.54",
+      "cr_value": "13.54",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_exempt_thres",
+      "xml_value": "24873",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_amt1",
+      "xml_value": "2720",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_amt5",
+      "xml_value": "3790",
+      "cr_value": "3790",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_amt6",
+      "xml_value": "4350",
+      "cr_value": "4350",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_amt7",
+      "xml_value": "4920",
+      "cr_value": "4920",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_amt8",
+      "xml_value": "4960",
+      "cr_value": "4960",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_ChildSingle_amt1",
+      "xml_value": "3910",
+      "cr_value": "3910",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_ChildCouple_amt1",
+      "xml_value": "7050",
+      "cr_value": "7050",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_amt3",
+      "xml_value": "1770",
+      "cr_value": "1770",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_amt5",
+      "xml_value": "2310",
+      "cr_value": "2310",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_amt6",
+      "xml_value": "2620",
+      "cr_value": "2620",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_amt7",
+      "xml_value": "2810",
+      "cr_value": "2810",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsamt_se",
+      "parameter": "$bsamt_BCA_rate (Func Switch: off)",
+      "xml_value": "0.3698",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    }
+  ],
+  "potentials": [
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$mc_share3 (Func Switch: off)",
+      "xml_value": "0.8571",
+      "cr_value": "Not Found",
+      "leg_value": "0.8571",
+      "cr_match": "\u274c",
+      "xml_match": "\u2705",
+      "explanation": "Parameter matches Legislation and XML, but was not found in the Country Report."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_coef1",
+      "xml_value": "30.5",
+      "cr_value": "Not Found",
+      "leg_value": "30.5",
+      "cr_match": "\u274c",
+      "xml_match": "\u2705",
+      "explanation": "Parameter matches Legislation and XML, but was not found in the Country Report."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bpa_coef2",
+      "xml_value": "30.5",
+      "cr_value": "Not Found",
+      "leg_value": "30.5",
+      "cr_match": "\u274c",
+      "xml_match": "\u2705",
+      "explanation": "Parameter matches Legislation and XML, but was not found in the Country Report."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_amt4",
+      "xml_value": "40000",
+      "cr_value": "Not Found",
+      "leg_value": "40000",
+      "cr_match": "\u274c",
+      "xml_match": "\u2705",
+      "explanation": "Parameter matches Legislation and XML, but was not found in the Country Report."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tinpm_amt",
+      "xml_value": "1327",
+      "cr_value": "Not Found",
+      "leg_value": "1327",
+      "cr_match": "\u274c",
+      "xml_match": "\u2705",
+      "explanation": "Parameter matches Legislation and XML, but was not found in the Country Report."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_amt2",
+      "xml_value": "3030",
+      "cr_value": "Not Found",
+      "leg_value": "3030",
+      "cr_match": "\u274c",
+      "xml_match": "\u2705",
+      "explanation": "Parameter matches Legislation and XML, but was not found in the Country Report."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_amt4",
+      "xml_value": "3030",
+      "cr_value": "Not Found",
+      "leg_value": "3030",
+      "cr_match": "\u274c",
+      "xml_match": "\u2705",
+      "explanation": "Parameter matches Legislation and XML, but was not found in the Country Report."
+    }
+  ],
+  "matches": [
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$XBASM",
+      "xml_value": "58800",
+      "cr_value": "58800",
+      "leg_value": "58800",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$XBASMI",
+      "xml_value": "80600",
+      "cr_value": "80600",
+      "leg_value": "80600",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunrate1 (Func Switch: n/a)",
+      "xml_value": "0.8",
+      "cr_value": "0.8",
+      "leg_value": "0.8",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunrate2 (Func Switch: n/a)",
+      "xml_value": "0.8",
+      "cr_value": "0.8",
+      "leg_value": "0.8",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunrate3 (Func Switch: n/a)",
+      "xml_value": "0.7",
+      "cr_value": "0.7",
+      "leg_value": "0.7",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$siceethres (Func Switch: n/a)",
+      "xml_value": "1000",
+      "cr_value": "1000",
+      "leg_value": "1000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$siceebase1 (Func Switch: n/a)",
+      "xml_value": "8.07",
+      "cr_value": "8.07",
+      "leg_value": "8.07",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$siceebase2 (Func Switch: n/a)",
+      "xml_value": "0.423",
+      "cr_value": "0.423",
+      "leg_value": "0.423",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$siceerate (Func Switch: n/a)",
+      "xml_value": "0.07",
+      "cr_value": "0.07",
+      "leg_value": "0.07",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$sicerthres (Func Switch: n/a)",
+      "xml_value": "1000",
+      "cr_value": "1000",
+      "leg_value": "1000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$scersirate (Func Switch: n/a)",
+      "xml_value": "0.0355",
+      "cr_value": "0.0355",
+      "leg_value": "0.0355",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$scerrdrate (Func Switch: n/a)",
+      "xml_value": "0.75",
+      "cr_value": "0.75",
+      "leg_value": "0.75",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$scermlrate (Func Switch: n/a)",
+      "xml_value": "0.026",
+      "cr_value": "0.026",
+      "leg_value": "0.026",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$scerotrate1 (Func Switch: n/a)",
+      "xml_value": "0.1162",
+      "cr_value": "0.1162",
+      "leg_value": "0.1162",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$sceracrate (Func Switch: n/a)",
+      "xml_value": "0.0020",
+      "cr_value": "0.0020",
+      "leg_value": "0.0020",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$scercirate (Func Switch: n/a)",
+      "xml_value": "0.0060",
+      "cr_value": "0.0060",
+      "leg_value": "0.0060",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$scerpirate (Func Switch: n/a)",
+      "xml_value": "0.1021",
+      "cr_value": "0.1021",
+      "leg_value": "0.1021",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$scerirrate (Func Switch: n/a)",
+      "xml_value": "0.0264",
+      "cr_value": "0.0264",
+      "leg_value": "0.0264",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunrate4 (Func Switch: n/a)",
+      "xml_value": "0.65",
+      "cr_value": "0.65",
+      "leg_value": "0.65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$UB_QperTot",
+      "xml_value": "12",
+      "cr_value": "12",
+      "leg_value": "12",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$UB_UpLim1",
+      "xml_value": "910",
+      "cr_value": "910",
+      "leg_value": "910",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$UB_LowLim",
+      "xml_value": "510",
+      "cr_value": "510",
+      "leg_value": "510",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$UB_UpLim2",
+      "xml_value": "760",
+      "cr_value": "760",
+      "leg_value": "760",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$UB_LowLimB",
+      "xml_value": "510",
+      "cr_value": "510",
+      "leg_value": "510",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$UB_UpLim1B",
+      "xml_value": "1200",
+      "cr_value": "1200",
+      "leg_value": "1200",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$UB_UpLim2B",
+      "xml_value": "1000",
+      "cr_value": "1000",
+      "leg_value": "1000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$fthw ",
+      "xml_value": "40",
+      "cr_value": "40",
+      "leg_value": "40",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$lhw",
+      "xml_value": "40",
+      "cr_value": "40",
+      "leg_value": "40",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$mc_rrate1 (Func Switch: off)",
+      "xml_value": "0.80",
+      "cr_value": "0.80",
+      "leg_value": "0.80",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$mc_rrate2 (Func Switch: off)",
+      "xml_value": "0.85",
+      "cr_value": "0.85",
+      "leg_value": "0.85",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$mc_rrate3 (Func Switch: off)",
+      "xml_value": "0.875",
+      "cr_value": "0.875",
+      "leg_value": "0.875",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$mc_rrate4 (Func Switch: off)",
+      "xml_value": "0.85",
+      "cr_value": "0.85",
+      "leg_value": "0.85",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$mc_share1 (Func Switch: off)",
+      "xml_value": "0.9375",
+      "cr_value": "0.9375",
+      "leg_value": "0.9375",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$mc_share2 (Func Switch: off)",
+      "xml_value": "0.8824",
+      "cr_value": "0.8824",
+      "leg_value": "0.8824",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$mc_share4 (Func Switch: off)",
+      "xml_value": "0.8824",
+      "cr_value": "0.8824",
+      "leg_value": "0.8824",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscer_thr (Func Switch: off)",
+      "xml_value": "25000",
+      "cr_value": "25000",
+      "leg_value": "25000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscse_thr (Func Switch: off)",
+      "xml_value": "100000",
+      "cr_value": "100000",
+      "leg_value": "100000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$yemcomp_stdmy (Func Switch: off)",
+      "xml_value": "12",
+      "cr_value": "12",
+      "leg_value": "12",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$yemcomp_thres2 (Func Switch: off)",
+      "xml_value": "0.75",
+      "cr_value": "0.75",
+      "leg_value": "0.75",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$yemcomp_thres3 (Func Switch: off)",
+      "xml_value": "0.50",
+      "cr_value": "0.50",
+      "leg_value": "0.50",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$yemcomp_thres4 (Func Switch: off)",
+      "xml_value": "0.25",
+      "cr_value": "0.25",
+      "leg_value": "0.25",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$yemcomp_rate1 (Func Switch: off)",
+      "xml_value": "0.80",
+      "cr_value": "0.80",
+      "leg_value": "0.80",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$yemcomp_rate2 (Func Switch: off)",
+      "xml_value": "0.6",
+      "cr_value": "0.6",
+      "leg_value": "0.6",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$yemcomp_rate3 (Func Switch: off)",
+      "xml_value": "0.40",
+      "cr_value": "0.40",
+      "leg_value": "0.40",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$yemcomp_rate4 (Func Switch: off)",
+      "xml_value": "0.2",
+      "cr_value": "0.2",
+      "leg_value": "0.2",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunct_stdmy",
+      "xml_value": "12",
+      "cr_value": "12",
+      "leg_value": "12",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunct_my3",
+      "xml_value": "12",
+      "cr_value": "12",
+      "leg_value": "12",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunct_minage",
+      "xml_value": "16",
+      "cr_value": "16",
+      "leg_value": "16",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunct_maxage",
+      "xml_value": "65",
+      "cr_value": "65",
+      "leg_value": "65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunct_thres1",
+      "xml_value": "30",
+      "cr_value": "30",
+      "leg_value": "30",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunct_rate1",
+      "xml_value": "0.8",
+      "cr_value": "0.8",
+      "leg_value": "0.8",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunct_rate2",
+      "xml_value": "0.7",
+      "cr_value": "0.7",
+      "leg_value": "0.7",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bunct_rate3",
+      "xml_value": "0.65",
+      "cr_value": "0.65",
+      "leg_value": "0.65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_stdmy",
+      "xml_value": "12",
+      "cr_value": "12",
+      "leg_value": "12",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_couple_amt1",
+      "xml_value": "390",
+      "cr_value": "390",
+      "leg_value": "390",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_couple_amt2",
+      "xml_value": "60",
+      "cr_value": "60",
+      "leg_value": "60",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_couple_amt3",
+      "xml_value": "180",
+      "cr_value": "180",
+      "leg_value": "180",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_single_amt1",
+      "xml_value": "480",
+      "cr_value": "480",
+      "leg_value": "480",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_single_amt2",
+      "xml_value": "60",
+      "cr_value": "60",
+      "leg_value": "60",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_single_amt3",
+      "xml_value": "180",
+      "cr_value": "180",
+      "leg_value": "180",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_couple_amt4",
+      "xml_value": "90",
+      "cr_value": "90",
+      "leg_value": "90",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_couple_rate1",
+      "xml_value": "0.8",
+      "cr_value": "0.8",
+      "leg_value": "0.8",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_couple_coef1",
+      "xml_value": "0.97",
+      "cr_value": "0.97",
+      "leg_value": "0.97",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_couple_amt5",
+      "xml_value": "300",
+      "cr_value": "300",
+      "leg_value": "300",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_couple_amt6",
+      "xml_value": "250",
+      "cr_value": "250",
+      "leg_value": "250",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_couple_amt7",
+      "xml_value": "180",
+      "cr_value": "180",
+      "leg_value": "180",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_single_rate1",
+      "xml_value": "0.8",
+      "cr_value": "0.8",
+      "leg_value": "0.8",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_single_coef1",
+      "xml_value": "0.97",
+      "cr_value": "0.97",
+      "leg_value": "0.97",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_single_amt5",
+      "xml_value": "390",
+      "cr_value": "390",
+      "leg_value": "390",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_single_amt6",
+      "xml_value": "250",
+      "cr_value": "250",
+      "leg_value": "250",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bfapl_single_amt7",
+      "xml_value": "180",
+      "cr_value": "180",
+      "leg_value": "180",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bpa_coef1",
+      "xml_value": "0.97",
+      "cr_value": "0.97",
+      "leg_value": "0.97",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bpa_rate",
+      "xml_value": "0.80",
+      "cr_value": "0.80",
+      "leg_value": "0.80",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bpa_maxlim",
+      "xml_value": "7.5",
+      "cr_value": "7.5",
+      "leg_value": "7.5",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bpa_stdmy",
+      "xml_value": "12",
+      "cr_value": "12",
+      "leg_value": "12",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscer_maxage ",
+      "xml_value": "66",
+      "cr_value": "66",
+      "leg_value": "66",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscer_minamt1",
+      "xml_value": "1000",
+      "cr_value": "1000",
+      "leg_value": "1000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscer_age1",
+      "xml_value": "23",
+      "cr_value": "23",
+      "leg_value": "23",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscer_ret_minage",
+      "xml_value": "65",
+      "cr_value": "65",
+      "leg_value": "65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscer_minamt3",
+      "xml_value": "1000",
+      "cr_value": "1000",
+      "leg_value": "1000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscee_minamt",
+      "xml_value": "1000",
+      "cr_value": "1000",
+      "leg_value": "1000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscee_stdmy",
+      "xml_value": "12",
+      "cr_value": "12",
+      "leg_value": "12",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscee_coef1",
+      "xml_value": "8.07",
+      "cr_value": "8.07",
+      "leg_value": "8.07",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscee_coef2",
+      "xml_value": "0.423",
+      "cr_value": "0.423",
+      "leg_value": "0.423",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscse_maxage1",
+      "xml_value": "65",
+      "cr_value": "65",
+      "leg_value": "65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscse_minamt",
+      "xml_value": "1000",
+      "cr_value": "1000",
+      "leg_value": "1000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscse_ret_minage",
+      "xml_value": "65",
+      "cr_value": "65",
+      "leg_value": "65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tscse_minamt2",
+      "xml_value": "1000",
+      "cr_value": "1000",
+      "leg_value": "1000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_thres2",
+      "xml_value": "0.99",
+      "cr_value": "0.99",
+      "leg_value": "0.99",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_thres3",
+      "xml_value": "2.72",
+      "cr_value": "2.72",
+      "leg_value": "2.72",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_thres4",
+      "xml_value": "3.11",
+      "cr_value": "3.11",
+      "leg_value": "3.11",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_thres5",
+      "xml_value": "7.88",
+      "cr_value": "7.88",
+      "leg_value": "7.88",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_coef1",
+      "xml_value": "0.423",
+      "cr_value": "0.423",
+      "leg_value": "0.423",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_coef2",
+      "xml_value": "0.2",
+      "cr_value": "0.2",
+      "leg_value": "0.2",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_coef3",
+      "xml_value": "0.99",
+      "cr_value": "0.99",
+      "leg_value": "0.99",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_coef4",
+      "xml_value": "0.77",
+      "cr_value": "0.77",
+      "leg_value": "0.77",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_coef5",
+      "xml_value": "0.1",
+      "cr_value": "0.1",
+      "leg_value": "0.1",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_coef6",
+      "xml_value": "3.11",
+      "cr_value": "3.11",
+      "leg_value": "3.11",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_coef7",
+      "xml_value": "0.293",
+      "cr_value": "0.293",
+      "leg_value": "0.293",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_minage",
+      "xml_value": "65",
+      "cr_value": "65",
+      "leg_value": "65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_thres2",
+      "xml_value": "0.91",
+      "cr_value": "0.91",
+      "leg_value": "0.91",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_thres3",
+      "xml_value": "1.11",
+      "cr_value": "1.11",
+      "leg_value": "1.11",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_thres4",
+      "xml_value": "1.965",
+      "cr_value": "1.965",
+      "leg_value": "1.965",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_thres5",
+      "xml_value": "2.72",
+      "cr_value": "2.72",
+      "leg_value": "2.72",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_thres6",
+      "xml_value": "3.11",
+      "cr_value": "3.11",
+      "leg_value": "3.11",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_thres7",
+      "xml_value": "3.24",
+      "cr_value": "3.24",
+      "leg_value": "3.24",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_thres9",
+      "xml_value": "7.88",
+      "cr_value": "7.88",
+      "leg_value": "7.88",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_thres10",
+      "xml_value": "8.08",
+      "cr_value": "8.08",
+      "leg_value": "8.08",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_thres11",
+      "xml_value": "10.94",
+      "cr_value": "10.94",
+      "leg_value": "10.94",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_thres12",
+      "xml_value": "12.47",
+      "cr_value": "12.47",
+      "leg_value": "12.47",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef1",
+      "xml_value": "0.687",
+      "cr_value": "0.687",
+      "leg_value": "0.687",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef2",
+      "xml_value": "0.885",
+      "cr_value": "0.885",
+      "leg_value": "0.885",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef3",
+      "xml_value": "0.2",
+      "cr_value": "0.2",
+      "leg_value": "0.2",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef4",
+      "xml_value": "0.600",
+      "cr_value": "0.600",
+      "leg_value": "0.600",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef5",
+      "xml_value": "0.057",
+      "cr_value": "0.057",
+      "leg_value": "0.057",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef6",
+      "xml_value": "0.333",
+      "cr_value": "0.333",
+      "leg_value": "0.333",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef7",
+      "xml_value": "0.1949",
+      "cr_value": "0.1949",
+      "leg_value": "0.1949",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef9",
+      "xml_value": "0.3949",
+      "cr_value": "0.3949",
+      "leg_value": "0.3949",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef11",
+      "xml_value": "0.4949",
+      "cr_value": "0.4949",
+      "leg_value": "0.4949",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef12",
+      "xml_value": "0.096",
+      "cr_value": "0.096",
+      "leg_value": "0.096",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef13",
+      "xml_value": "0.304",
+      "cr_value": "0.304",
+      "leg_value": "0.304",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef14",
+      "xml_value": "0.186",
+      "cr_value": "0.186",
+      "leg_value": "0.186",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef15",
+      "xml_value": "0.286",
+      "cr_value": "0.286",
+      "leg_value": "0.286",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef16",
+      "xml_value": "0.872",
+      "cr_value": "0.872",
+      "leg_value": "0.872",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef17",
+      "xml_value": "0.199",
+      "cr_value": "0.199",
+      "leg_value": "0.199",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef18",
+      "xml_value": "2.48",
+      "cr_value": "2.48",
+      "leg_value": "2.48",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef19",
+      "xml_value": "9.263",
+      "cr_value": "9.263",
+      "leg_value": "9.263",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef20",
+      "xml_value": "0.62",
+      "cr_value": "0.62",
+      "leg_value": "0.62",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_coef21",
+      "xml_value": "1.532",
+      "cr_value": "1.532",
+      "leg_value": "1.532",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_amt2",
+      "xml_value": "1500",
+      "cr_value": "1500",
+      "leg_value": "1500",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tinpm_rate",
+      "xml_value": "0.01",
+      "cr_value": "0.01",
+      "leg_value": "0.01",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tintcmi_amt",
+      "xml_value": "100000",
+      "cr_value": "100000",
+      "leg_value": "100000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tintc_ee_maxage",
+      "xml_value": "65",
+      "cr_value": "65",
+      "leg_value": "65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tintc_ee_addthres2",
+      "xml_value": "0.91",
+      "cr_value": "0.91",
+      "leg_value": "0.91",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tintc_ee_addthres3",
+      "xml_value": "3.24",
+      "cr_value": "3.24",
+      "leg_value": "3.24",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tintc_ee_addthres4",
+      "xml_value": "8.08",
+      "cr_value": "8.08",
+      "leg_value": "8.08",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_addcoef1",
+      "xml_value": "0.91",
+      "cr_value": "0.91",
+      "leg_value": "0.91",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_addcoef2",
+      "xml_value": "0.3874",
+      "cr_value": "0.3874",
+      "leg_value": "0.3874",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_addcoef3",
+      "xml_value": "1.813",
+      "cr_value": "1.813",
+      "leg_value": "1.813",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_addcoef4",
+      "xml_value": "0.199",
+      "cr_value": "0.199",
+      "leg_value": "0.199",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_addcoef5",
+      "xml_value": "3.24",
+      "cr_value": "3.24",
+      "leg_value": "3.24",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ee_addcoef6",
+      "xml_value": "2.776",
+      "cr_value": "2.776",
+      "leg_value": "2.776",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addcoef1",
+      "xml_value": "0.22",
+      "cr_value": "0.22",
+      "leg_value": "0.22",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addcoef2",
+      "xml_value": "15000",
+      "cr_value": "15000",
+      "leg_value": "15000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addcoef3",
+      "xml_value": "0.07",
+      "cr_value": "0.07",
+      "leg_value": "0.07",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addcoef4",
+      "xml_value": "36000",
+      "cr_value": "36000",
+      "leg_value": "36000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addcoef5",
+      "xml_value": "0.03",
+      "cr_value": "0.03",
+      "leg_value": "0.03",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_disab_addthres1",
+      "xml_value": "0.91",
+      "cr_value": "0.91",
+      "leg_value": "0.91",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_disab_addthres2",
+      "xml_value": "3.24",
+      "cr_value": "3.24",
+      "leg_value": "3.24",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_disab_addcoef1",
+      "xml_value": "0.045",
+      "cr_value": "0.045",
+      "leg_value": "0.045",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_disab_addcoef2",
+      "xml_value": "0.91",
+      "cr_value": "0.91",
+      "leg_value": "0.91",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_disab_addcoef3",
+      "xml_value": "0.3405",
+      "cr_value": "0.3405",
+      "leg_value": "0.3405",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_disab_addcoef4",
+      "xml_value": "1.703",
+      "cr_value": "1.703",
+      "leg_value": "1.703",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_disab_addcoef5",
+      "xml_value": "0.128",
+      "cr_value": "0.128",
+      "leg_value": "0.128",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_disab_addcoef6",
+      "xml_value": "3.24",
+      "cr_value": "3.24",
+      "leg_value": "3.24",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tinna_rate2",
+      "xml_value": "0.2",
+      "cr_value": "0.2",
+      "leg_value": "0.2",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tinfu_rate",
+      "xml_value": "0.00293",
+      "cr_value": "0.00293",
+      "leg_value": "0.00293",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tinrg_rate",
+      "xml_value": "0.1169",
+      "cr_value": "0.1169",
+      "leg_value": "0.1169",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tinmu_rate",
+      "xml_value": "0.2071",
+      "cr_value": "0.2071",
+      "leg_value": "0.2071",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addthres5",
+      "xml_value": "1.75",
+      "cr_value": "1.75",
+      "leg_value": "1.75",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addthres6",
+      "xml_value": "5.24",
+      "cr_value": "5.24",
+      "leg_value": "5.24",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addcoef6",
+      "xml_value": "0.22",
+      "cr_value": "0.22",
+      "leg_value": "0.22",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addcoef7",
+      "xml_value": "0.2635",
+      "cr_value": "0.2635",
+      "leg_value": "0.2635",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addcoef8",
+      "xml_value": "0.07",
+      "cr_value": "0.07",
+      "leg_value": "0.07",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$tin_ret_addcoef9",
+      "xml_value": "0.6293",
+      "cr_value": "0.6293",
+      "leg_value": "0.6293",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_maxage1",
+      "xml_value": "16",
+      "cr_value": "16",
+      "leg_value": "16",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_stdamt",
+      "xml_value": "1250",
+      "cr_value": "1250",
+      "leg_value": "1250",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_addamt1",
+      "xml_value": "150",
+      "cr_value": "150",
+      "leg_value": "150",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_addamt2",
+      "xml_value": "580",
+      "cr_value": "580",
+      "leg_value": "580",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_addamt3",
+      "xml_value": "1010",
+      "cr_value": "1010",
+      "leg_value": "1010",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_addamt4",
+      "xml_value": "1250",
+      "cr_value": "1250",
+      "leg_value": "1250",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_maxage2",
+      "xml_value": "18",
+      "cr_value": "18",
+      "leg_value": "18",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_addamt5",
+      "xml_value": "150",
+      "cr_value": "150",
+      "leg_value": "150",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_addamt6",
+      "xml_value": "580",
+      "cr_value": "580",
+      "leg_value": "580",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_addamt7",
+      "xml_value": "1010",
+      "cr_value": "1010",
+      "leg_value": "1010",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_addamt8",
+      "xml_value": "1250",
+      "cr_value": "1250",
+      "leg_value": "1250",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bch_maxage3",
+      "xml_value": "17",
+      "cr_value": "17",
+      "leg_value": "17",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_rate1",
+      "xml_value": "0.15",
+      "cr_value": "0.15",
+      "leg_value": "0.15",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_thres1",
+      "xml_value": "100000",
+      "cr_value": "100000",
+      "leg_value": "100000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_stdmy",
+      "xml_value": "12",
+      "cr_value": "12",
+      "leg_value": "12",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_child1_stdamt",
+      "xml_value": "1500",
+      "cr_value": "1500",
+      "leg_value": "1500",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_child2_stdamt",
+      "xml_value": "2000",
+      "cr_value": "2000",
+      "leg_value": "2000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_child3_stdamt",
+      "xml_value": "2650",
+      "cr_value": "2650",
+      "leg_value": "2650",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_amt1",
+      "xml_value": "5300",
+      "cr_value": "5300",
+      "leg_value": "5300",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_amt2",
+      "xml_value": "1400",
+      "cr_value": "1400",
+      "leg_value": "1400",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_amt3",
+      "xml_value": "5900",
+      "cr_value": "5900",
+      "leg_value": "5900",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_amt4",
+      "xml_value": "6600",
+      "cr_value": "6600",
+      "leg_value": "6600",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_coef1",
+      "xml_value": "0.5",
+      "cr_value": "0.5",
+      "leg_value": "0.5",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_amt5",
+      "xml_value": "75000",
+      "cr_value": "75000",
+      "leg_value": "75000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_supplcoef1",
+      "xml_value": "0.40",
+      "cr_value": "0.40",
+      "leg_value": "0.40",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_redcoef2",
+      "xml_value": "0.2",
+      "cr_value": "0.2",
+      "leg_value": "0.2",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_thres2",
+      "xml_value": "150000",
+      "cr_value": "150000",
+      "leg_value": "150000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_supplcoef2",
+      "xml_value": "0.25",
+      "cr_value": "0.25",
+      "leg_value": "0.25",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_minage",
+      "xml_value": "18",
+      "cr_value": "18",
+      "leg_value": "18",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_maxage",
+      "xml_value": "29",
+      "cr_value": "29",
+      "leg_value": "29",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_amt6",
+      "xml_value": "1800",
+      "cr_value": "1800",
+      "leg_value": "1800",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_amt7",
+      "xml_value": "2600",
+      "cr_value": "2600",
+      "leg_value": "2600",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_amt8",
+      "xml_value": "3600",
+      "cr_value": "3600",
+      "leg_value": "3600",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_coef2",
+      "xml_value": "0.9",
+      "cr_value": "0.9",
+      "leg_value": "0.9",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_coef3",
+      "xml_value": "0.65",
+      "cr_value": "0.65",
+      "leg_value": "0.65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_coef4",
+      "xml_value": "0.33",
+      "cr_value": "0.33",
+      "leg_value": "0.33",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_amt9",
+      "xml_value": "41000",
+      "cr_value": "41000",
+      "leg_value": "41000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_amt10",
+      "xml_value": "58000",
+      "cr_value": "58000",
+      "leg_value": "58000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bho_minamt",
+      "xml_value": "100",
+      "cr_value": "100",
+      "leg_value": "100",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_rate1",
+      "xml_value": "0.15",
+      "cr_value": "0.15",
+      "leg_value": "0.15",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_thres1",
+      "xml_value": "200000",
+      "cr_value": "200000",
+      "leg_value": "200000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_rate2",
+      "xml_value": "0.15",
+      "cr_value": "0.15",
+      "leg_value": "0.15",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_thres2",
+      "xml_value": "100000",
+      "cr_value": "100000",
+      "leg_value": "100000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_stdmy",
+      "xml_value": "12",
+      "cr_value": "12",
+      "leg_value": "12",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_minage",
+      "xml_value": "65",
+      "cr_value": "65",
+      "leg_value": "65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_age1",
+      "xml_value": "20",
+      "cr_value": "20",
+      "leg_value": "20",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_age2",
+      "xml_value": "22",
+      "cr_value": "22",
+      "leg_value": "22",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_age3",
+      "xml_value": "24",
+      "cr_value": "24",
+      "leg_value": "24",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_age4",
+      "xml_value": "26",
+      "cr_value": "26",
+      "leg_value": "26",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_age5",
+      "xml_value": "28",
+      "cr_value": "28",
+      "leg_value": "28",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_age6",
+      "xml_value": "29",
+      "cr_value": "29",
+      "leg_value": "29",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_age7",
+      "xml_value": "30",
+      "cr_value": "30",
+      "leg_value": "30",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_age8",
+      "xml_value": "65",
+      "cr_value": "65",
+      "leg_value": "65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef1",
+      "xml_value": "2.48",
+      "cr_value": "2.48",
+      "leg_value": "2.48",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef2",
+      "xml_value": "2.53",
+      "cr_value": "2.53",
+      "leg_value": "2.53",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef3",
+      "xml_value": "2.58",
+      "cr_value": "2.58",
+      "leg_value": "2.58",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef4",
+      "xml_value": "2.63",
+      "cr_value": "2.63",
+      "leg_value": "2.63",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef5",
+      "xml_value": "2.68",
+      "cr_value": "2.68",
+      "leg_value": "2.68",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef6",
+      "xml_value": "2.73",
+      "cr_value": "2.73",
+      "leg_value": "2.73",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef7",
+      "xml_value": "2.78",
+      "cr_value": "2.78",
+      "leg_value": "2.78",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef8",
+      "xml_value": "2.43",
+      "cr_value": "2.43",
+      "leg_value": "2.43",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef9",
+      "xml_value": "2.2",
+      "cr_value": "2.2",
+      "leg_value": "2.2",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_coef2",
+      "xml_value": "0.90",
+      "cr_value": "0.90",
+      "leg_value": "0.90",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_coef3",
+      "xml_value": "0.7",
+      "cr_value": "0.7",
+      "leg_value": "0.7",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_coef4",
+      "xml_value": "0.5",
+      "cr_value": "0.5",
+      "leg_value": "0.5",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_coef5",
+      "xml_value": "840",
+      "cr_value": "840",
+      "leg_value": "840",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_coef7",
+      "xml_value": "0.90",
+      "cr_value": "0.90",
+      "leg_value": "0.90",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_coef8",
+      "xml_value": "0.7",
+      "cr_value": "0.7",
+      "leg_value": "0.7",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_coef9",
+      "xml_value": "0.5",
+      "cr_value": "0.5",
+      "leg_value": "0.5",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_coef10",
+      "xml_value": "540",
+      "cr_value": "540",
+      "leg_value": "540",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef10",
+      "xml_value": "0.96",
+      "cr_value": "0.96",
+      "leg_value": "0.96",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_disab_coef11",
+      "xml_value": "0.7",
+      "cr_value": "0.7",
+      "leg_value": "0.7",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_amt1",
+      "xml_value": "3000",
+      "cr_value": "3000",
+      "leg_value": "3000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_amt2",
+      "xml_value": "5000",
+      "cr_value": "5000",
+      "leg_value": "5000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_amt3",
+      "xml_value": "7000",
+      "cr_value": "7000",
+      "leg_value": "7000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_amt4",
+      "xml_value": "7500",
+      "cr_value": "7500",
+      "leg_value": "7500",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_coef11",
+      "xml_value": "0.62",
+      "cr_value": "0.62",
+      "leg_value": "0.62",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_ret_coef12",
+      "xml_value": "0.5",
+      "cr_value": "0.5",
+      "leg_value": "0.5",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bhope_minamt",
+      "xml_value": "25",
+      "cr_value": "25",
+      "leg_value": "25",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_age9",
+      "xml_value": "11",
+      "cr_value": "11",
+      "leg_value": "11",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_age10",
+      "xml_value": "14",
+      "cr_value": "14",
+      "leg_value": "14",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_age11",
+      "xml_value": "15",
+      "cr_value": "15",
+      "leg_value": "15",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_age12",
+      "xml_value": "18",
+      "cr_value": "18",
+      "leg_value": "18",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_age13",
+      "xml_value": "19",
+      "cr_value": "19",
+      "leg_value": "19",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_child_amt3",
+      "xml_value": "2700",
+      "cr_value": "2700",
+      "leg_value": "2700",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_amt1",
+      "xml_value": "1270",
+      "cr_value": "1270",
+      "leg_value": "1270",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_amt2",
+      "xml_value": "1400",
+      "cr_value": "1400",
+      "leg_value": "1400",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_amt4",
+      "xml_value": "2010",
+      "cr_value": "2010",
+      "leg_value": "2010",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_se",
+      "parameter": "$bsamt_amt8",
+      "xml_value": "100",
+      "cr_value": "100",
+      "leg_value": "100",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "yem_se (Switch: switch)",
+      "parameter": "$Nwh",
+      "xml_value": "40",
+      "cr_value": "40",
+      "leg_value": "40",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    }
+  ]
+}

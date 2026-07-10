@@ -1,0 +1,290 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Υπηρεσίες Κοινωνικών Ασφαλίσεων - Γενικά Στατιστικά Στοιχεία</title><meta http-equiv="content-type" content="text/html;charset=UTF-8"><meta name="language" content="el"><meta name="keywords" content=""><meta name="description" content=""><link rel="stylesheet" href="../aristodemos.css" type="text/css"><link rel="stylesheet" href="../stylesheet.css" type="text/css"><link rel="stylesheet" href="../footer.css" type="text/css"><link rel="shortcut icon" href="../favicon.ico">
+<script language="JavaScript" type="text/javascript">
+<!-- 
+document._domino_target = "_self";
+function _doClick(v, o, t) {
+  var returnValue = false;
+  var url="/mlsi/sid/sidv2.nsf/page21_gr/page21_gr?OpenDocument&Click=" + v;
+  if (o.href != null) {
+    o.href = url;
+    returnValue = true;
+  } else {
+    if (t == null)
+      t = document._domino_target;
+    window.open(url, t);
+  }
+  return returnValue;
+}
+// -->
+</script>
+
+<script language="JavaScript" type="text/javascript">
+<!-- 
+function search(){var pathname = (window.location.pathname);var ft = document.forms[0].FTSearch.valuevar b = "&p=1" + "&w=&t=&s=" + ft + "&L=G&e=&i=1"var c = pathname.substring(0,(pathname.lastIndexOf('.nsf')+5)) + 'AdvancedSearch_gr/AdvancedSearch_gr?OpenForm&q=' + bwindow.location.href = c}
+
+// -->
+</script>
+
+<script language="JavaScript" type="text/javascript">
+<!-- 
+// SpryAccordion.js - version 0.15 - Spry Pre-Release 1.6.1//// Copyright (c) 2006. Adobe Systems Incorporated.// All rights reserved.//// Redistribution and use in source and binary forms, with or without// modification, are permitted provided that the following conditions are met:////   * Redistributions of source code must retain the above copyright notice,//     this list of conditions and the following disclaimer.//   * Redistributions in binary form must reproduce the above copyright notice,//     this list of conditions and the following disclaimer in the documentation//     and/or other materials provided with the distribution.//   * Neither the name of Adobe Systems Incorporated nor the names of its//     contributors may be used to endorse or promote products derived from this//     software without specific prior written permission.//// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE// POSSIBILITY OF SUCH DAMAGE.var Spry;if (!Spry) Spry = {};if (!Spry.Widget) Spry.Widget = {};Spry.Widget.Accordion = function(element, opts){	this.element = this.getElement(element);	this.defaultPanel = 0;	this.hoverClass = "AccordionPanelTabHover";	this.openClass = "AccordionPanelOpen";	this.closedClass = "AccordionPanelClosed";	this.focusedClass = "AccordionFocused";	this.enableAnimation = false;	this.enableKeyboardNavigation = true;	this.currentPanel = null;	this.animator = null;	this.hasFocus = null;	this.previousPanelKeyCode = Spry.Widget.Accordion.KEY_UP;	this.nextPanelKeyCode = Spry.Widget.Accordion.KEY_DOWN;	this.useFixedPanelHeights = true;	this.fixedPanelHeight = 0;	Spry.Widget.Accordion.setOptions(this, opts, true);	this.attachBehaviors();};Spry.Widget.Accordion.prototype.getElement = function(ele){	if (ele && typeof ele == "string")		return document.getElementById(ele);	return ele;};Spry.Widget.Accordion.prototype.addClassName = function(ele, className){	if (!ele || !className || (ele.className && ele.className.search(new RegExp("\\b" + className + "\\b")) != -1))		return;	ele.className += (ele.className ? " " : "") + className;};Spry.Widget.Accordion.prototype.removeClassName = function(ele, className){	if (!ele || !className || (ele.className && ele.className.search(new RegExp("\\b" + className + "\\b")) == -1))		return;	ele.className = ele.className.replace(new RegExp("\\s*\\b" + className + "\\b", "g"), "");};Spry.Widget.Accordion.setOptions = function(obj, optionsObj, ignoreUndefinedProps){	if (!optionsObj)		return;	for (var optionName in optionsObj)	{		if (ignoreUndefinedProps && optionsObj[optionName] == undefined)			continue;		obj[optionName] = optionsObj[optionName];	}};Spry.Widget.Accordion.prototype.onPanelTabMouseOver = function(e, panel){	if (panel)		this.addClassName(this.getPanelTab(panel), this.hoverClass);	return false;};Spry.Widget.Accordion.prototype.onPanelTabMouseOut = function(e, panel){	if (panel)		this.removeClassName(this.getPanelTab(panel), this.hoverClass);	return false;};Spry.Widget.Accordion.prototype.openPanel = function(elementOrIndex){	var panelA = this.currentPanel;	var panelB;	if (typeof elementOrIndex == "number")		panelB = this.getPanels()[elementOrIndex];	else		panelB = this.getElement(elementOrIndex);		if (!panelB || panelA == panelB)			return null;	var contentA = panelA ? this.getPanelContent(panelA) : null;	var contentB = this.getPanelContent(panelB);	if (!contentB)		return null;	if (this.useFixedPanelHeights && !this.fixedPanelHeight)		this.fixedPanelHeight = (contentA.offsetHeight) ? contentA.offsetHeight : contentA.scrollHeight;	if (this.enableAnimation)	{		if (this.animator)			this.animator.stop();		this.animator = new Spry.Widget.Accordion.PanelAnimator(this, panelB, { duration: this.duration, fps: this.fps, transition: this.transition });		this.animator.start();	}	else	{		if(contentA)		{			contentA.style.display = "none";			contentA.style.height = "0px";		}		contentB.style.display = "block";		contentB.style.height = this.useFixedPanelHeights ? this.fixedPanelHeight + "px" : "auto";	}	if(panelA)	{		this.removeClassName(panelA, this.openClass);		this.addClassName(panelA, this.closedClass);	}	this.removeClassName(panelB, this.closedClass);	this.addClassName(panelB, this.openClass);	this.currentPanel = panelB;	return panelB;};Spry.Widget.Accordion.prototype.closePanel = function(){	// The accordion can only ever have one panel open at any	// give time, so this method only closes the current panel.	// If the accordion is in fixed panel heights mode, this	// method does nothing.	if (!this.useFixedPanelHeights && this.currentPanel)	{		var panel = this.currentPanel;		var content = this.getPanelContent(panel);		if (content)		{			if (this.enableAnimation)			{				if (this.animator)					this.animator.stop();				this.animator = new Spry.Widget.Accordion.PanelAnimator(this, null, { duration: this.duration, fps: this.fps, transition: this.transition });				this.animator.start();			}			else			{				content.style.display = "none";				content.style.height = "0px";			}		}				this.removeClassName(panel, this.openClass);		this.addClassName(panel, this.closedClass);		this.currentPanel = null;	}};Spry.Widget.Accordion.prototype.openNextPanel = function(){	return this.openPanel(this.getCurrentPanelIndex() + 1);};Spry.Widget.Accordion.prototype.openPreviousPanel = function(){	return this.openPanel(this.getCurrentPanelIndex() - 1);};Spry.Widget.Accordion.prototype.openFirstPanel = function(){	return this.openPanel(0);};Spry.Widget.Accordion.prototype.openLastPanel = function(){	var panels = this.getPanels();	return this.openPanel(panels[panels.length - 1]);};Spry.Widget.Accordion.prototype.onPanelTabClick = function(e, panel){	if (panel != this.currentPanel)		this.openPanel(panel);	else		this.closePanel();	if (this.enableKeyboardNavigation)		this.focus();	if (e.preventDefault) e.preventDefault();	else e.returnValue = false;	if (e.stopPropagation) e.stopPropagation();	else e.cancelBubble = true;	return false;};Spry.Widget.Accordion.prototype.onFocus = function(e){	this.hasFocus = true;	this.addClassName(this.element, this.focusedClass);	return false;};Spry.Widget.Accordion.prototype.onBlur = function(e){	this.hasFocus = false;	this.removeClassName(this.element, this.focusedClass);	return false;};Spry.Widget.Accordion.KEY_UP = 38;Spry.Widget.Accordion.KEY_DOWN = 40;Spry.Widget.Accordion.prototype.onKeyDown = function(e){	var key = e.keyCode;	if (!this.hasFocus || (key != this.previousPanelKeyCode && key != this.nextPanelKeyCode))		return true;		var panels = this.getPanels();	if (!panels || panels.length < 1)		return false;	var currentPanel = this.currentPanel ? this.currentPanel : panels[0];	var nextPanel = (key == this.nextPanelKeyCode) ? currentPanel.nextSibling : currentPanel.previousSibling;	while (nextPanel)	{		if (nextPanel.nodeType == 1 /* Node.ELEMENT_NODE */)			break;		nextPanel = (key == this.nextPanelKeyCode) ? nextPanel.nextSibling : nextPanel.previousSibling;	}	if (nextPanel && currentPanel != nextPanel)		this.openPanel(nextPanel);	if (e.preventDefault) e.preventDefault();	else e.returnValue = false;	if (e.stopPropagation) e.stopPropagation();	else e.cancelBubble = true;	return false;};Spry.Widget.Accordion.prototype.attachPanelHandlers = function(panel){	if (!panel)		return;	var tab = this.getPanelTab(panel);	if (tab)	{		var self = this;		Spry.Widget.Accordion.addEventListener(tab, "click", function(e) { return self.onPanelTabClick(e, panel); }, false);		Spry.Widget.Accordion.addEventListener(tab, "mouseover", function(e) { return self.onPanelTabMouseOver(e, panel); }, false);		Spry.Widget.Accordion.addEventListener(tab, "mouseout", function(e) { return self.onPanelTabMouseOut(e, panel); }, false);	}};Spry.Widget.Accordion.addEventListener = function(element, eventType, handler, capture){	try	{		if (element.addEventListener)			element.addEventListener(eventType, handler, capture);		else if (element.attachEvent)			element.attachEvent("on" + eventType, handler);	}	catch (e) {}};Spry.Widget.Accordion.prototype.initPanel = function(panel, isDefault){	var content = this.getPanelContent(panel);	if (isDefault)	{		this.currentPanel = panel;		this.removeClassName(panel, this.closedClass);		this.addClassName(panel, this.openClass);		// Attempt to set up the height of the default panel. We don't want to		// do any dynamic panel height calculations here because our accordion		// or one of its parent containers may be display:none.		if (content)		{			if (this.useFixedPanelHeights)			{				// We are in fixed panel height mode and the user passed in				// a panel height for us to use.					if (this.fixedPanelHeight)					content.style.height = this.fixedPanelHeight + "px";			}			else			{				// We are in variable panel height mode, but since we can't				// calculate the panel height here, we just set the height to				// auto so that it expands to show all of its content.					content.style.height = "auto";			}		}	}	else	{		this.removeClassName(panel, this.openClass);		this.addClassName(panel, this.closedClass);		if (content)		{			content.style.height = "0px";			content.style.display = "none";		}	}		this.attachPanelHandlers(panel);};Spry.Widget.Accordion.prototype.attachBehaviors = function(){	var panels = this.getPanels();	for (var i = 0; i < panels.length; i++)		this.initPanel(panels[i], i == this.defaultPanel);	// Advanced keyboard navigation requires the tabindex attribute	// on the top-level element.	this.enableKeyboardNavigation = (this.enableKeyboardNavigation && this.element.attributes.getNamedItem("tabindex"));	if (this.enableKeyboardNavigation)	{		var self = this;		Spry.Widget.Accordion.addEventListener(this.element, "focus", function(e) { return self.onFocus(e); }, false);		Spry.Widget.Accordion.addEventListener(this.element, "blur", function(e) { return self.onBlur(e); }, false);		Spry.Widget.Accordion.addEventListener(this.element, "keydown", function(e) { return self.onKeyDown(e); }, false);	}};Spry.Widget.Accordion.prototype.getPanels = function(){	return this.getElementChildren(this.element);};Spry.Widget.Accordion.prototype.getCurrentPanel = function(){	return this.currentPanel;};Spry.Widget.Accordion.prototype.getPanelIndex = function(panel){	var panels = this.getPanels();	for( var i = 0 ; i < panels.length; i++ )	{		if( panel == panels[i] )			return i;	}	return -1;};Spry.Widget.Accordion.prototype.getCurrentPanelIndex = function(){	return this.getPanelIndex(this.currentPanel);};Spry.Widget.Accordion.prototype.getPanelTab = function(panel){	if (!panel)		return null;	return this.getElementChildren(panel)[0];};Spry.Widget.Accordion.prototype.getPanelContent = function(panel){	if (!panel)		return null;	return this.getElementChildren(panel)[1];};Spry.Widget.Accordion.prototype.getElementChildren = function(element){	var children = [];	var child = element.firstChild;	while (child)	{		if (child.nodeType == 1 /* Node.ELEMENT_NODE */)			children.push(child);		child = child.nextSibling;	}	return children;};Spry.Widget.Accordion.prototype.focus = function(){	if (this.element && this.element.focus)		this.element.focus();};Spry.Widget.Accordion.prototype.blur = function(){	if (this.element && this.element.blur)		this.element.blur();};/////////////////////////////////////////////////////Spry.Widget.Accordion.PanelAnimator = function(accordion, panel, opts){	this.timer = null;	this.interval = 0;	this.fps = 60;	this.duration = 500;	this.startTime = 0;	this.transition = Spry.Widget.Accordion.PanelAnimator.defaultTransition;	this.onComplete = null;	this.panel = panel;	this.panelToOpen = accordion.getElement(panel);	this.panelData = [];	this.useFixedPanelHeights = accordion.useFixedPanelHeights;	Spry.Widget.Accordion.setOptions(this, opts, true);	this.interval = Math.floor(1000 / this.fps);	// Set up the array of panels we want to animate.	var panels = accordion.getPanels();	for (var i = 0; i < panels.length; i++)	{		var p = panels[i];		var c = accordion.getPanelContent(p);		if (c)		{			var h = c.offsetHeight;			if (h == undefined)				h = 0;			if (p == panel && h == 0)				c.style.display = "block";			if (p == panel || h > 0)			{				var obj = new Object;				obj.panel = p;				obj.content = c;				obj.fromHeight = h;				obj.toHeight = (p == panel) ? (accordion.useFixedPanelHeights ? accordion.fixedPanelHeight : c.scrollHeight) : 0;				obj.distance = obj.toHeight - obj.fromHeight;				obj.overflow = c.style.overflow;				this.panelData.push(obj);				c.style.overflow = "hidden";				c.style.height = h + "px";			}		}	}};Spry.Widget.Accordion.PanelAnimator.defaultTransition = function(time, begin, finish, duration) { time /= duration; return begin + ((2 - time) * time * finish); };Spry.Widget.Accordion.PanelAnimator.prototype.start = function(){	var self = this;	this.startTime = (new Date).getTime();	this.timer = setTimeout(function() { self.stepAnimation(); }, this.interval);};Spry.Widget.Accordion.PanelAnimator.prototype.stop = function(){	if (this.timer)	{		clearTimeout(this.timer);		// If we're killing the timer, restore the overflow		// properties on the panels we were animating!		for (i = 0; i < this.panelData.length; i++)		{			obj = this.panelData[i];			obj.content.style.overflow = obj.overflow;		}	}	this.timer = null;};Spry.Widget.Accordion.PanelAnimator.prototype.stepAnimation = function(){	var curTime = (new Date).getTime();	var elapsedTime = curTime - this.startTime;	var i, obj;	if (elapsedTime >= this.duration)	{		for (i = 0; i < this.panelData.length; i++)		{			obj = this.panelData[i];			if (obj.panel != this.panel)			{				obj.content.style.display = "none";				obj.content.style.height = "0px";			}			obj.content.style.overflow = obj.overflow;			obj.content.style.height = (this.useFixedPanelHeights || obj.toHeight == 0) ? obj.toHeight + "px" : "auto";		}		if (this.onComplete)			this.onComplete();		return;	}	for (i = 0; i < this.panelData.length; i++)	{		obj = this.panelData[i];		var ht = this.transition(elapsedTime, obj.fromHeight, obj.distance, this.duration);		obj.content.style.height = ((ht < 0) ? 0 : ht) + "px";	}		var self = this;	this.timer = setTimeout(function() { self.stepAnimation(); }, this.interval);};
+
+// -->
+</script>
+</head>
+<body text="#000000" bgcolor="#FFFFFF">
+
+<form onsubmit="if (document.forms[0].FTSearch.value != &quot;&quot;){	var pathname = (window.location.pathname);	var ft = encodeURI(document.forms[0].FTSearch.value)	var b = &quot;&amp;p=1&quot; + &quot;&amp;w=&amp;t=&amp;s=&quot; + ft + &quot;&amp;L=G&amp;e=&amp;i=1&quot;	var c = pathname.substring(0,(pathname.lastIndexOf('.nsf')+5)) + 'AdvancedSearch_gr/AdvancedSearch_gr?OpenForm&amp;q=' + b	window.location.href = c	}	return falsereturn true;" action=""><div id="container">
+<div class="languages">
+<a href=" ../index_en/index_en?OpenDocument"><strong>EN</strong> - English</a>
+</div>
+<div class="cyrep">
+<img src="../govcy_gr.gif" alt="Λογότυπο Κυπριακής Δημοκρατίας" title="Κυπριακή Δημοκρατία">
+</div>
+<div id="content">
+<div class="title"><img src="../title_gr.gif" title="Υπηρεσίες Κοινωνικών Ασφαλίσεων" alt="Λογότυπο ΥΚΑ"></div><div class="codropsmenu1" id="menu" style="float:left; margin:0; padding:0;background: #95a14b; border-top: 1px solid #878787;  border-bottom: 1px solid #878787;"><ul>
+<li class="first"><div style="background-color:#FFFFFF"><a href="../index_gr/index_gr?OpenDocument">Αρχική Σελίδα</a></div></li>
+<li  class="menuitem"><div style="background-color:#FFFFFF"><a href="../pagem1_gr/pagem1_gr?OpenDocument">Πού θα Εξυπηρετηθείτε</a></div></li> 
+<li  class="menuitem"><div style="background-color:#FFFFFF"><a href="../page3m_gr/page3m_gr?OpenDocument">Έντυπα Αιτήσεων</a></div></li>
+ <li  class="menuitem"><div style="background-color:#FFFFFF"><a href="../page10_gr/page10_gr?OpenDocument"> Ανακοινώσεις</a></div></li>
+<li  class="last"><div style="background-color:#FFFFFF"><a href="../contact_gr/contact_gr?OpenDocument">Επικοινωνία</a></div></li>
+<script type="text/javascript" src="../jquery13.js"></script>
+<script type="text/javascript">
+$(function() {
+    changeWidth(786);
+
+    $('#buttons input').click(function(){
+        changeWidth($(this).val());
+    });
+
+    function changeWidth(menuWidth){
+        var menuItems = $('#menu li').size();
+        var itemWidth = (menuWidth/menuItems)-2;
+
+        $('#menu').css({'width': menuWidth +'px'});
+        $('#menu a').css({'width': itemWidth +'px'});
+
+
+
+    }
+});
+        </script>
+</ul></div>
+</div>
+<div class="fixedservices">
+  <ul>
+    <li class="home_link"><a href="../index_gr/index_gr?OpenDocument">Αρχική Σελίδα</a></li>
+    <li class="print_link"><a href=/mlsi/sid/sidv2.nsf/page21_gr/page21_gr?OpenDocument&print onclick="window.open(this.href, '#', 'width=700,height=500, left=200, top=50, scrollbars'); return false;" target="_blank">Φιλική Εκτύπωση</a></li>
+    <li class="portal_link"><a href="http://www.cyprus.gov.cy">Κυβερνητική Πύλη</a></li>
+    <li class="faq_link"><a href="../faq_gr/faq_gr?OpenDocument">Συνήθεις Ερωτήσεις</a></li>
+  </ul>
+<div class="go">
+<label><span style="display:none">Αναζήτηση</span><input name="FTSearch" size="11" maxlength="50" class="searchinput" value="Αναζήτηση..."></label>&nbsp;<label><span style="display:none">Go</span><input type="submit" name="GO" value="GO"></label>
+</div>
+</div>
+<div class="menu">
+<link href="../SpryAccordion.css" rel="stylesheet" type="text/css" />
+<div id="Accordion1" class="Accordion" tabindex="0">
+<div class="AccordionPanel">
+<div class="AccordionPanelTab"><a href="#" onClick="parent.location='#'">Υπηρεσίες Κοινωνικών Ασφαλίσεων<br></a></div>
+<div class="AccordionPanelContent">
+<div class="onelinemenu"><a href="../page01_gr/page01_gr?OpenDocument">Αποστολή</a></div><br />
+<div class="onelinemenu"><a href="../page02_gr/page02_gr?OpenDocument">Ιστορικό</a></div><br />
+<div class="onelinemenu"><a href="../page03_gr/page03_gr?OpenDocument">Διευθυντής</a></div><br />
+<div class="onelinemenu"><a href="../page04_gr/page04_gr?OpenDocument">Οργανωτική Δομή</a></div>
+<br></div></div>
+<div class="AccordionPanel">
+<div class="AccordionPanelTab"><a href="#" value="Νομοθεσίες"  onclick="location.href='../page16_gr/page16_gr?OpenDocument'">Νομοθεσίες</a></div>
+<div class="AccordionPanelContent">
+<div class="onelinemenu"><a href="../page16a_gr/page16a_gr?OpenDocument">Άρθρο 85 του Περί Κοινωνικών Ασφαλίσεων Νόμου Ν.59 (Ι)/2010</a></div><br />
+<br></div></div>
+<div class="AccordionPanel">
+<div class="AccordionPanelTab"><a href="#" onClick="parent.location='#'">Ενημέρωση</a></div>
+<div class="AccordionPanelContent">
+<div class="onelinemenu"><a href="../page10_gr/page10_gr?OpenDocument">Ανακοινώσεις</a></div><br />
+<div class="onelinemenu"><a href="../page11_gr/page11_gr?OpenDocument">Ομιλίες</a></div><br />
+<div class="onelinemenu"><a href="../page12_gr/page12_gr?OpenDocument">Εκδηλώσεις</a></div><br />
+<div class="onelinemenu"><a href="../page13_gr/page13_gr?OpenDocument">Εκδόσεις</a></div><br />
+<br></div></div>
+<div class="AccordionPanel">
+<div class="AccordionPanelTab"><a href="#" onClick="parent.location='../page3m_gr/page3m_gr?OpenDocument'">Υποβολή Αιτήσεων</a><br></div>
+<div class="AccordionPanelContent">
+
+
+<br /><div class="onelinemenu" style="font-size: 12px; font-weight: bold;">Επιδόματα / Βοηθήματα</div>
+<div class="onelinemenu" style="padding-left: 10px; padding-top: 0px;"><a href="https://www.gov.cy/service/epidoma-mitrotitas/">Επίδομα Μητρότητας</a></div>
+<div class="onelinemenu" style="padding-left: 10px; padding-top: 0px;"><a href="https://www.gov.cy/service/aitisi-gia-epidoma-anergias/">Επίδομα Ανεργίας</a></div>
+<div class="onelinemenu" style="padding-left: 10px; padding-top: 0px;"><a href="https://www.gov.cy/service/epidoma-astheneias/">Επίδομα Ασθενείας</a></div>
+<div class="onelinemenu" style="padding-left: 10px; padding-top: 0px;"><a href="../All/2EEEB0D5888D00F1C225816E00435737?OpenDocument">Επίδομα Πατρότητας</a></div>
+<div class="onelinemenu" style="padding-left: 10px; padding-top: 0px;"><a href="../All/A2BE8684182A80ADC2257B180022866B?OpenDocument">Επίδομα Ορφάνιας</a></div>
+<div class="onelinemenu" style="padding-left: 10px; padding-top: 0px;"><a href="../All/D0CD147501FECCC2C225891F0048E7C9">Επίδομα Γονικής Άδειας</a></div><br />
+<div class="onelinemenu" style="padding-left: 10px; padding-top: 0px;"><a href="https://child-birth-grant.service.gov.cy/">Βοήθημα Τοκετού</a></div>
+<div class="onelinemenu" style="padding-left: 10px; padding-top: 0px;"><a href="../All/00337937079519CBC22589DC003774BB">Βοήθημα Κηδείας</a></div><br />
+<div class="onelinemenu"><a href="../page37_gr/page37_gr?OpenDocument">Παροχές για εργατικά ατυχήματα</a></div><br />
+<div class="onelinemenu"><a href="../page36_gr/page36_gr?OpenDocument">Συντάξεις (Θεσμοθετημένη, Χηρείας, Ανικανότητας, Κοινωνική, Ειδική Παροχή)</a></div><br />
+<div class="onelinemenu"><a href="../page32_gr/page32_gr?OpenDocument">Εργοδότες</a></div><br />
+<div class="onelinemenu"><a href="../page33_gr/page33_gr?OpenDocument">Μισθωτοί και Αυτοτελώς Εργαζόμενοι (ΑΕ)</a></div><br />
+<div class="onelinemenu"><a href="../page45_gr/page45_gr?OpenDocument">Προαιρετικά Ασφαλισμένοι</a></div><br />
+<div class="onelinemenu"><a href="../page38_gr/page38_gr?OpenDocument">Εξομοιούμενοι περίοδοι ασφάλισης (τακτικής εκπαίδευσης, υπηρεσία στην Εθνική Φρουρά, γέννηση παιδιών, γονική άδεια, άδεια φροντίδας, άδεια για λόγους ανωτέρας βίας)</a></div><br />
+<div class="onelinemenu"><a href="../page40_gr/page40_gr?OpenDocument">Πλεονασμός</a></div><br />
+<div class="onelinemenu"><a href="../page30_gr/page30_gr?OpenDocument">Αφερεγγυότητα του Εργοδότη</a></div><br />
+<div class="onelinemenu"><a href="../page39_gr/page39_gr?OpenDocument">Άδειες</a></div><br />
+<div class="onelinemenu"><a href="../page41_gr/page41_gr?OpenDocument">Ευρωπαϊκή Ένωση</a></div><br />
+<div class="onelinemenu"><a href="../page44_gr/page44_gr?OpenDocument">Άλλες Αιτήσεις / Έντυπα</a></div><br />
+<br></div></div>
+<div class="AccordionPanelTab"><a href="#" value="Ενημερωτικοί Οδηγοί"  onclick="location.href='../pageb1_gr/pageb1_gr?OpenDocument'">Ενημερωτικοί Οδηγοί</a><br></div>
+<div class="AccordionPanelTab"><a href="#" value="Βασικές Ασφαλιστέες Αποδοχές"  onclick="location.href='../page94_gr/page94_gr?OpenDocument'">Βασικές Ασφαλιστέες Αποδοχές</a><br></div>
+<div class="AccordionPanelTab"><a href="#" value="Επαγγελματικές Κατηγορίες Αυτοτελώς Εργαζόμένων"  onclick="location.href='../page95_gr/page95_gr?OpenDocument'">Επαγγελματικές Κατηγορίες Αυτοτελώς Εργαζόμένων</a><br></div>
+<div class="AccordionPanelTab"><a href="#" value="Σχέδιο Επιχορήγησης Αδειών Εργοδοτουμένων"  onclick="location.href='../page96_gr/page96_gr?OpenDocument'">Σχέδιο Επιχορήγησης Αδειών Εργοδοτουμένων</a><br></div>
+<div class="AccordionPanel">
+<div class="AccordionPanelTab"><a href="#" onClick="parent.location='../page20_gr/page20_gr?OpenDocument'">Στατιστικά Στοιχεία</a></div>
+<div class="AccordionPanelContent">
+<div class="onelinemenu"><a href="../page21_gr/page21_gr?OpenDocument">Γενικά Στατιστικά Στοιχεία</a></div><br />
+<div class="onelinemenu"><a href="../page22_gr/page22_gr?OpenDocument">Ταμείο Κοινωνικών Ασφαλίσεων</a></div><br />
+<div class="onelinemenu"><a href="../page23_gr/page23_gr?OpenDocument">Ταμείο Πλεονάζοντος Προσωπικού</a></div><br />
+<div class="onelinemenu"><a href="../page24_gr/page24_gr?OpenDocument">Κεντρικό Ταμείο Αδειών</a></div><br />
+<div class="onelinemenu"><a href="../page25_gr/page25_gr?OpenDocument">Ταμείο Αφερεγγυότητας</a></div><br />
+<br></div></div>
+<div class="AccordionPanel">
+<div class="AccordionPanelTab"><a href="#" onClick="parent.location='../page60_gr/page60_gr?OpenDocument'">Έφορος <br>Ταμείων Επαγγελματικών Συνταξιοδοτικών Παροχών </a></div>
+<div class="AccordionPanelContent">
+<div class="onelinemenu"><a href="../page61_gr/page61_gr?OpenDocument">Νομοθεσίες</a></div><br />
+<div class="onelinemenu"><a href="../page43_gr/page43_gr?OpenDocument">Έντυπα</a></div><br />
+<br></div></div>
+<div class="AccordionPanel">
+<div class="AccordionPanelTab"><a href="#" onClick="parent.location='#'">Ευρωπαϊκή Ένωση</a></div>
+<div class="AccordionPanelContent">
+<div class="onelinemenu"><a href="../pageb2_gr/pageb2_gr?OpenDocument">Συντονισμός συστημάτων κοινωνικής ασφάλισης στην Ε.Ε. </a></div><br />
+<div class="onelinemenu"><a href="../page5a_gr/page5a_gr?OpenDocument">Σύστημα πληροφόρησης για την Εσωτερική Αγορά Internal Market Information System (IMI) </a></div><br />
+<div class="onelinemenu"><a href="../page52_gr/page52_gr?OpenDocument">Έντυπα αιτήσεων </a></div><br />
+<div class="onelinemenu"><a href="../page53_gr/page53_gr?OpenDocument">Ενημερωτικοί οδηγοί</a></div><br />
+<br></div></div>
+<div class="AccordionPanelTab"><a href="#" value="Οδηγίες για εργασία στην Ε.Ε"  onclick="location.href='../page91_gr/page91_gr?OpenDocument'">Οδηγίες για εργασία στην Ε.Ε</a><br></div>
+<div class="AccordionPanelTab"><a href="#" value="Διμερείς Συμβάσεις"  onclick="location.href='../page92_gr/page92_gr?OpenDocument'">Διμερείς Συμβάσεις</a><br></div>
+<div class="AccordionPanelTab"><a href="#" value="Διεθνείς Σχέσεις"  onclick="location.href='../page93_gr/page93_gr?OpenDocument'">Διεθνείς Σχέσεις</a><br></div>
+<div class="AccordionPanelTab"><a href="#" value="Κενές Θέσεις"  onclick="location.href='../page98_gr/page98_gr?OpenDocument'">Κενές Θέσεις</a><br></div>
+<div class="AccordionPanelTab"><a href="#" value="Προσφορές"  onclick="location.href='../page97_gr/page97_gr?OpenDocument'">Προσφορές</a><br></div>
+<div class="AccordionPanel AccordionPanelOpen">
+<div class="AccordionPanelTab AccordionPanelOpen" style='font-weight: bold; background-color: #31576F; padding: 10px; margin-top: 5px; margin-bottom: -2px;'><a  style="color: white; padding-left: 10px;" href="#" onClick="parent.location='#'">Ηλεκτρονικές Υπηρεσίες<br></a></div>
+<div class="AccordionPanelContent"  style= "border: 2px solid #31576F; margin-top: 0px;"  >
+<div class="onelinemenu"><a href="https://www.gov.cy/service/epidoma-astheneias/" target="_blank" >Επίδομα Ασθενείας</a></div><br />
+<div class="onelinemenu"><a href="https://www.gov.cy/service/aitisi-gia-epidoma-anergias" target="_blank" >Επίδομα Ανεργίας</a></div><br />
+<div class="onelinemenu"><a href="https://child-birth-grant.service.gov.cy/" target="_blank" >Βοήθημα Τοκετού</a></div><br />
+<div class="onelinemenu"><a href="https://www.gov.cy/service/epidoma-mitrotitas" target="_blank" >Επίδομα Μητρότητας</a></div><br />
+<div class="onelinemenu"><a href="https://www.gov.cy/service/aitisi-antikatastasis-i-prosthikis-engrafon-anaforika-me-diadiktyakes-aitiseis-epidomaton/" target="_blank" >Αντικατάσταση ή προσθήκη εγγράφων αναφορικά με διαδικτυακές αιτήσεις επιδομάτων</a></div><br />
+<br></div></div>
+</div>
+<br><br>
+<script type="text/javascript">
+<!--
+var Accordion1 = new Spry.Widget.Accordion("Accordion1", { useFixedPanelHeights: false, defaultPanel: 8, duration: 250, fps: 120 });
+//-->
+</script>
+</div>
+<div class="print">
+</div>
+<div class="main">
+<br>
+<h1>Γενικά Στατιστικά Στοιχεία</h1><br><div align="justify"><span class="simpletext"></span></div><br><br><br>
+
+<table border="0" cellpadding="2" cellspacing="0">
+<tr><th></th></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/932700A4C43CF23FC2257A6200227E08?OpenDocument" class="titlesmall">2006</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/2FE1277B9E17E488C2257A6200227164?OpenDocument" class="titlesmall">2007</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/B81365134E15A0CEC2257A6200225E2A?OpenDocument" class="titlesmall">2008</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/CEC5CAF9BC0FF66AC2257A620022571A?OpenDocument" class="titlesmall">2009</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/BB7436092E7B4469C2257A6200224FB0?OpenDocument" class="titlesmall">2010</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/032D38877F790233C2257A620022473D?OpenDocument" class="titlesmall">2011</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/1E42F9BF2F19578CC2257A620022158E?OpenDocument" class="titlesmall">2012</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/13D50616C33D1A68C2257AFE00313FDE?OpenDocument" class="titlesmall">2013</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/90A2344406A2DD5CC2257D42002610EF?OpenDocument" class="titlesmall">2014</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/0BE99BE68229991CC2257EAF002323D2?OpenDocument" class="titlesmall">2015</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/905FBBC3281CB657C22580DB0033824C?OpenDocument" class="titlesmall">2016</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/4ED4803147698740C22580DB0033683C?OpenDocument" class="titlesmall">2017</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/9A4DA9986A84B903C225822F0042686E?OpenDocument" class="titlesmall">2018</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/0792770E36E34D49C225841500340A90?OpenDocument" class="titlesmall">2019</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/68F9F81345AD21E4C22585270033EBE1?OpenDocument" class="titlesmall">2020</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/E2A655E371E982CEC2258676002DFFA9?OpenDocument" class="titlesmall">2021</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/991BC064899CBD02C2258895002E8CDA?OpenDocument" class="titlesmall">2022</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/C64682BE21D27D06C22589A90029B79D?OpenDocument" class="titlesmall">2023</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/85FDEF50EEAE98D0C2258AE5002A3B8E?OpenDocument" class="titlesmall">2024</a></li></h3></td></td></tr>
+
+<tr valign="top"><td nowrap><img width="16" height="1" src="/icons/ecblank.gif" border="0" alt=""><td style="padding: 5px 5px; text-align:justify"><h3><li><font class="simpletext">  </font><a href="/mlsi/sid/sidv2.nsf/All/49515E2108EF988CC2258C30002D9E69?OpenDocument" class="titlesmall">2025</a></li></h3></td></td></tr>
+</table>
+</div>
+<p><div class="banners">
+
+<br><tr><td><center><a href="https://www.gov.cy/services/ergasia-kai-asfalish/" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/5602BB5F74B5D138C22587DF004C8485/$file/yka-banner.jpg?OpenElement" alt="Εικόνα Ηλεκτρονικές Υπηρεσίες" title="Ηλεκτρονικές Υπηρεσίες"></a></center></td></tr>
+<br><tr><td><center><a href="../All/FDF29BC857BACF57C2258BF600356560/$file/web%20banner%20adstore2023-01.png" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/4C661C9E60F08A06C2258B3B001F7A16/$file/web banner adstore2023-01.png?OpenElement" alt="Εικόνα Κέντρο Επικοινωνίας 1450" title="Κέντρο Επικοινωνίας 1450"></a></center></td></tr>
+<br><tr><td><center><a href="http://www.mlsi.gov.cy/mlsi/sid/sidv2.nsf/All/989D62D9654E4992C22588BD003467B4?OpenDocument" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/146048B0DDBA3324C22588C6004444D8/$file/banner-sid.png?OpenElement" alt="Εικόνα banner" title="banner"></a></center></td></tr>
+<br><tr><td><center><a href="https://ergani.mlsi.gov.cy" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/5C9DD43DCAD5C986C225876400214899/$file/ergani-banner.gif?OpenElement" alt="Εικόνα ΕΡΓΑΝΗ" title="ΕΡΓΑΝΗ"></a></center></td></tr>
+<br><tr><td><center><a href="https://www.pay.sid.mlsi.gov.cy/SisWeb/index.jsp" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/1E34A466A2726FFAC2257B13003614C7/$file/sisnet-banner.gif?OpenElement" alt="Εικόνα ΠΛΗΡΩΜΗ ΕΙΣΦΟΡΩΝ ΜΕΣΩ ΔΙΑΔΙΚΤΥΟΥ" title="ΠΛΗΡΩΜΗ ΕΙΣΦΟΡΩΝ ΜΕΣΩ ΔΙΑΔΙΚΤΥΟΥ"></a></center></td></tr>
+<br><tr><td><center><a href="http://www.mlsi.gov.cy/mlsi/sid/sidv2.nsf/All/5BD35CF3AFBE8012C225877D003A6476?OpenDocument" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/D3412D61FACF5624C2257FFF003BEAFA/$file/sid.gif?OpenElement" alt="Εικόνα Ρύθμιση Ληξιπρόθεσμων Κοινωνικών Εισφορών" title="Ρύθμιση Ληξιπρόθεσμων Κοινωνικών Εισφορών"></a></center></td></tr>
+<br><tr><td><center><a href="../page60_gr/page60_gr?OpenDocument" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/25BF56A61A1DB76DC2257B1A0033B164/$file/sid_banner_8.png?OpenElement" alt="Εικόνα Έφορος Ιδρυμάτων Επαγγελματικών Συνταξιοδοτικών Παροχών" title="Έφορος Ιδρυμάτων Επαγγελματικών Συνταξιοδοτικών Παροχών"></a></center></td></tr>
+<br><tr><td><center><a href="http://cybersafety.cy" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/4D7D9A2B1FB57319C225850E00409A54/$file/helpline-hotline-small.jpg?OpenElement" alt="Εικόνα Ασφαλές Διαδίκτυο" title="Ασφαλές Διαδίκτυο"></a></center></td></tr>
+<br><tr><td><center><a href="http://www.cyprus.gov.cy" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/0B65EFB90C81D3F1C2257B1300363665/$file/portal_gr.gif?OpenElement" alt="Εικόνα Κυβερνητική Πύλη Διαδικτύου" title="Κυβερνητική Πύλη Διαδικτύου"></a></center></td></tr>
+<br><tr><td><center><a href="http://www.mlsi.gov.cy/mlsi/sdg/sdg.nsf/ddministration_el/ddministration_el?opendocument" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/98667936118B3824C22586A20041226D/$file/youreurope-logo.png?OpenElement" alt="Εικόνα Your Europe" title="Your Europe"></a></center></td></tr>
+<br><tr><td><center><a href="../pageb1_gr/pageb1_gr?OpenDocument" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/439B9D46857C6189C22578730022CD45/$file/sid_banner_7_gr.jpg?OpenElement" alt="Εικόνα Ενημερωτικοί Οδηγοί" title="Ενημερωτικοί Οδηγοί"></a></center></td></tr>
+<br><tr><td><center><a href="../page20_gr/page20_gr?OpenDocument" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/22A9F44BB62549D8C225787100208AFB/$file/sid_banner_1_gr.jpg?OpenElement" alt="Εικόνα Στατιστικά Στοιχεία" title="Στατιστικά Στοιχεία"></a></center></td></tr>
+<br><tr><td><center><a href="../pageb2_gr/pageb2_gr?OpenDocument" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/13582189B68E27A5C22578710020B61F/$file/sid_banner_4_gr.jpg?OpenElement" alt="Εικόνα Συντονισμός Συστημάτων Κοινωνικής Ασφάλειας στην Ε.Ε." title="Συντονισμός Συστημάτων Κοινωνικής Ασφάλειας στην Ε.Ε."></a></center></td></tr>
+<br><tr><td><center><a href="http://www.kepa.gov.cy/em/" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/F0323BB8194C300EC2257B3A0025C9CD/$file/Διαδικτυακή Υπηρεσία του Κέντρου Παραγωγικότητας ''Ενημέρωσε με''.gif?OpenElement" alt="Εικόνα Διαδικτυακή Υπηρεσία του Κέντρου Παραγωγικότητας ''Ενημέρωσε με''" title="Διαδικτυακή Υπηρεσία του Κέντρου Παραγωγικότητας ''Ενημέρωσε με''"></a></center></td></tr>
+<br><tr><td><center><a href="../All/175A9A59E0A59FAEC2257B7F002572C0/$file/2012-12-21%20Cypriot%20Guide%20for%20Bulgarian%20Migrants%20BG%20-%20FINAL.pdf" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/4A8DBF2711403343C2257B7F0026518C/$file/sid_banner_bul.gif?OpenElement" alt="Εικόνα The Cyprus Social Insurance Scheme" title="The Cyprus Social Insurance Scheme"></a></center></td></tr>
+<br><tr><td><center><a href="https://mim.ac.cy/mim/mim.nsf/page2a_en/page2a_en?opendocument" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/31E96D2AF9C49A5CC2257E4A002060D9/$file/300x250_2022.gif?OpenElement" alt="Εικόνα Μεταπτυχιακό Πρόγραμμα ΜΙΜ" title="Μεταπτυχιακό Πρόγραμμα ΜΙΜ"></a></center></td></tr>
+<br><tr><td><center><a href="http://ec.europa.eu/internal_market/imi-net/index_el.html" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/C6115C369A7D4DF8C2257BD4002F314A/$file/Σύστημα πληροφόρησης για την Εσωτερική Αγορά Internal Market Information System (IMI).jpg?OpenElement" alt="Εικόνα Σύστημα πληροφόρησης για την Εσωτερική Αγορά Internal Market Information System (IMI)" title="Σύστημα πληροφόρησης για την Εσωτερική Αγορά Internal Market Information System (IMI)"></a></center></td></tr>
+<br><tr><td><center><a href="https://ec.europa.eu/social/main.jsp?catId=869&langId=el" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/F2265F3CA95E9C14C22586290034FC69/$file/el_square_cef_logo.png?OpenElement" alt="Εικόνα Ηλεκτρονική ανταλλαγή πληροφοριών για την κοινωνική ασφάλιση (EESSI)" title="Ηλεκτρονική ανταλλαγή πληροφοριών για την κοινωνική ασφάλιση (EESSI)"></a></center></td></tr>
+<br><tr><td><center><a href="http://www.eprocurement.gov.cy" target="_blank"><img style="border:1px solid grey;" width="160" src="/mlsi/sid/sidv2.nsf/All/29C21B6742FF8F92C2257862002F7125/$file/ep.JPG?OpenElement" alt="Εικόνα e-procurment" title="e-procurment"></a></center></td></tr>
+
+</div></div><div id="footer">
+<div class="lastupdate">
+<br>Τελευταία Ενημέρωση στις: 07/05/2026 12:49:08 PM
+
+<div class="horline">&nbsp;</div>
+
+<div class="bottom_left">
+<br>© 2011 - 2026 Κυπριακή Δημοκρατία,<br>
+<a href=http://www.mlsi.gov.cy target="_blank"  class="bottom_left">Υπουργείο Εργασίας και Κοινωνικών Ασφαλίσεων</a>,<br />  Υπηρεσίες Κοινωνικών Ασφαλίσεων<br>
+</div>
+
+<div class="bottom_right">
+<br><ul>
+<li><a href="../index_gr/index_gr?OpenDocument">Αρχική Σελίδα</a>&nbsp;</li>|
+<li><a href="../sitemap_gr/sitemap_gr?OpenForm">Χάρτης Πλοήγησης</a>&nbsp;</li>|
+<li><a href="../links_gr/links_gr?OpenDocument">Συνδέσεις</a>&nbsp;</li>|
+<li><a href="http://www.cyprus.gov.cy" target="_blank">Κυβερνητική Πύλη Διαδικτύου</a></li></ul><ul>
+<li><a href="../disclaimer_gr/disclaimer_gr?OpenDocument">Αποποίηση</a>&nbsp;</li>|
+<li> <a href="../contact_gr/contact_gr?OpenDocument">Επικοινωνία</a>&nbsp;</li>|
+<li><a href="../webmaster_gr/webmaster_gr?OpenDocument">Υπεύθυνος Διαδικτυακού Τόπου</a></li>
+
+</ul>
+</div>
+
+</div>
+<p><br>
+<br>
+<br>
+<br>
+</form>
+</body>
+</html>

@@ -1,0 +1,1140 @@
+{
+  "country": "NL",
+  "version": "J2.0+",
+  "year": 2025,
+  "discrepancies": [
+    {
+      "policy": "constdef_nl",
+      "parameter": "$EI_maxdwag",
+      "xml_value": "290.67",
+      "cr_value": "290.67",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bfa_nl",
+      "parameter": "$bfa_bchqtr_amt",
+      "xml_value": "286.45",
+      "cr_value": "286.45",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bfa_nl",
+      "parameter": "$bfa_mult3",
+      "xml_value": "1.4286",
+      "cr_value": "1.4286",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "psu_nl",
+      "parameter": "$psu_base",
+      "xml_value": "1717.38",
+      "cr_value": "1717.38",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "poa_nl",
+      "parameter": "$poa_single",
+      "xml_value": "1683.38",
+      "cr_value": "1683.38",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "poa_nl",
+      "parameter": "$poa_couple",
+      "xml_value": "1154.68",
+      "cr_value": "1154.68",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tschl_nl",
+      "parameter": "$tschl_prem_av",
+      "xml_value": "1905",
+      "cr_value": "1905",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tschl_nl",
+      "parameter": "$tschl_uplim",
+      "xml_value": "75860",
+      "cr_value": "75860",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tin_nl",
+      "parameter": "Band_UpLim",
+      "xml_value": "9999999",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tin_nl",
+      "parameter": "Band_UpLim",
+      "xml_value": "9999999",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tinkt_nl",
+      "parameter": "Band_UpLim",
+      "xml_value": "9999999",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tinkt_nl",
+      "parameter": "$tinkt_assetlim",
+      "xml_value": "282226",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tinkt_nl",
+      "parameter": "$tinkt_inclim_l",
+      "xml_value": "14431",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tinkt_nl",
+      "parameter": "$tinkt_inclim_u",
+      "xml_value": "20075",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_gtc_spa",
+      "xml_value": "1536",
+      "cr_value": "1536",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_wtc_spa",
+      "xml_value": "2802",
+      "cr_value": "2802",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_irc_uplim",
+      "xml_value": "32223",
+      "cr_value": "32223",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_oac_incupp",
+      "xml_value": "58875",
+      "cr_value": "58875",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_B2",
+      "xml_value": "37545",
+      "cr_value": "37545",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_C1",
+      "xml_value": "2511",
+      "cr_value": "2511",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_C2",
+      "xml_value": "5022",
+      "cr_value": "5022",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_C3",
+      "xml_value": "7533",
+      "cr_value": "7533",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_C4",
+      "xml_value": "10044",
+      "cr_value": "10044",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_C5",
+      "xml_value": "2511",
+      "cr_value": "2511",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_I2",
+      "xml_value": "936",
+      "cr_value": "936",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_S1",
+      "xml_value": "3389",
+      "cr_value": "3389",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_asslim",
+      "xml_value": "252.759",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_couple_asset_thres",
+      "xml_value": "15540",
+      "cr_value": "15540",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_couple_nonret_amt",
+      "xml_value": "1922.07",
+      "cr_value": "1922.07",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_couple_ret_amt",
+      "xml_value": "2053.48",
+      "cr_value": "2053.48",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_couple_youth_amt",
+      "xml_value": "1048.75",
+      "cr_value": "1048.75",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_couple_youth1_amt",
+      "xml_value": "1672.66",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_couple_noch_asset_thres",
+      "xml_value": "15540",
+      "cr_value": "15540",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_couple_noch_nonret_amt",
+      "xml_value": "1922.07",
+      "cr_value": "1922.07",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_couple_noch_ret_amt",
+      "xml_value": "2053.48",
+      "cr_value": "2053.48",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_couple_noch_youth_amt",
+      "xml_value": "664.34",
+      "cr_value": "664.34",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_loneparent_asset_thres",
+      "xml_value": "15540",
+      "cr_value": "15540",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_loneparent_ret_amt",
+      "xml_value": "1501.07",
+      "cr_value": "1501.07",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_loneparent_youth_amt",
+      "xml_value": "332.17",
+      "cr_value": "332.17",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_single_asset_thres",
+      "xml_value": "7770",
+      "cr_value": "7770",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_single_nonret_amt",
+      "xml_value": "961.04",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_single_ret_amt",
+      "xml_value": "1501.07",
+      "cr_value": "1501.07",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_single_youth_amt",
+      "xml_value": "332.17",
+      "cr_value": "332.17",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_norm_amt_1",
+      "xml_value": "332.17",
+      "cr_value": "332.17",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa_norm_amt_2",
+      "xml_value": "384.41",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_C_amt",
+      "xml_value": "1213.79",
+      "cr_value": "1213.79",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_D_amt",
+      "xml_value": "538.57",
+      "cr_value": "538.57",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_E_amt",
+      "xml_value": "4224",
+      "cr_value": "4224",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_F_amt",
+      "xml_value": "2112",
+      "cr_value": "2112",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_inclim_single",
+      "xml_value": "39719",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_inclim_couple",
+      "xml_value": "50206",
+      "cr_value": "50206",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_assetlim_single",
+      "xml_value": "141896",
+      "cr_value": "141896",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_assetlim_couple",
+      "xml_value": "179429",
+      "cr_value": "179429",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_asslim_m",
+      "xml_value": "252.76",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ersic_NL",
+      "parameter": "$ersic_uplim",
+      "xml_value": "6322",
+      "cr_value": "6322",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$bho_cA_amt",
+      "xml_value": "-37.14",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$bho_incomeA_amt",
+      "xml_value": "22700",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$hbo_quallim",
+      "xml_value": "477.20",
+      "cr_value": "477.20",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$hbo_maxrent",
+      "xml_value": "900.07",
+      "cr_value": "900.07",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$hbo_uplim_1",
+      "xml_value": "682.96",
+      "cr_value": "682.96",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$hbo_uplim_3",
+      "xml_value": "731.92",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$hbo_minnormA",
+      "xml_value": "236.19",
+      "cr_value": "236.19",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$hbo_minbasA",
+      "xml_value": "199.05",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$bho_bC_rt",
+      "xml_value": "-0.001382497146",
+      "cr_value": "-0.001382497146",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$bho_cC_amt",
+      "xml_value": "-37.14",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$bho_incomeC_amt",
+      "xml_value": "30450",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$hbo_minnormC",
+      "xml_value": "234.38",
+      "cr_value": "234.38",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$hbo_minbasC",
+      "xml_value": "197.24",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bma_nl (Switch: off)",
+      "parameter": "Comp_UpLim",
+      "xml_value": "290.67",
+      "cr_value": "290.67",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    }
+  ],
+  "potentials": [],
+  "matches": [
+    {
+      "policy": "constdef_nl",
+      "parameter": "$PenAge",
+      "xml_value": "67",
+      "cr_value": "67",
+      "leg_value": "67",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$gUB_QperMin",
+      "xml_value": "26",
+      "cr_value": "26",
+      "leg_value": "26",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$gUB_QperTot",
+      "xml_value": "36",
+      "cr_value": "36",
+      "leg_value": "36",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$Nwh",
+      "xml_value": "37",
+      "cr_value": "37",
+      "leg_value": "37",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$eUB_QperTot",
+      "xml_value": "48",
+      "cr_value": "48",
+      "leg_value": "48",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$eUB_QperMinDd",
+      "xml_value": "52",
+      "cr_value": "52",
+      "leg_value": "52",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$MinWage_m",
+      "xml_value": "2191.80",
+      "cr_value": "2191.80",
+      "leg_value": "2191.80",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$Nwh",
+      "xml_value": "38",
+      "cr_value": "38",
+      "leg_value": "38",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$tin_bandlim1",
+      "xml_value": "38441",
+      "cr_value": "38441",
+      "leg_value": "38441",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$tin_bandlim1a",
+      "xml_value": "40502",
+      "cr_value": "40502",
+      "leg_value": "40502",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$tin_bandlim2",
+      "xml_value": "76817",
+      "cr_value": "76817",
+      "leg_value": "76817",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$tin_birthyear",
+      "xml_value": "1946",
+      "cr_value": "1946",
+      "leg_value": "1946",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "constdef_nl",
+      "parameter": "$tin_taxyear",
+      "xml_value": "2025",
+      "cr_value": "2025",
+      "leg_value": "2025",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "yem_nl",
+      "parameter": "$MinWage_m",
+      "xml_value": "2191.80",
+      "cr_value": "2191.80",
+      "leg_value": "2191.80",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "yem_nl",
+      "parameter": "$Nwh",
+      "xml_value": "38",
+      "cr_value": "38",
+      "leg_value": "38",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "bfa_nl",
+      "parameter": "$bfa_mult2",
+      "xml_value": "1.2143",
+      "cr_value": "1.2143",
+      "leg_value": "1.2143",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "bunct_nl",
+      "parameter": "uplim",
+      "xml_value": "24",
+      "cr_value": "24",
+      "leg_value": "24",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tin_nl",
+      "parameter": "$tin_deduc_se",
+      "xml_value": "2470",
+      "cr_value": "2470",
+      "leg_value": "2470",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tin_nl",
+      "parameter": "$impr_band1",
+      "xml_value": "12500",
+      "cr_value": "12500",
+      "leg_value": "12500",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tin_nl",
+      "parameter": "$impr_band2",
+      "xml_value": "25000",
+      "cr_value": "25000",
+      "leg_value": "25000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tin_nl",
+      "parameter": "$impr_band3",
+      "xml_value": "50000",
+      "cr_value": "50000",
+      "leg_value": "50000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tin_nl",
+      "parameter": "$impr_band4",
+      "xml_value": "75000",
+      "cr_value": "75000",
+      "leg_value": "75000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tin_nl",
+      "parameter": "$impr_band5",
+      "xml_value": "1330000",
+      "cr_value": "1330000",
+      "leg_value": "1330000",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tinkt_nl",
+      "parameter": "$tinkt_assetlim_ch",
+      "xml_value": "57684",
+      "cr_value": "57684",
+      "leg_value": "57684",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_gtc",
+      "xml_value": "3068",
+      "cr_value": "3068",
+      "leg_value": "3068",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_gtc_inclim",
+      "xml_value": "28406",
+      "cr_value": "28406",
+      "leg_value": "28406",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_wtc",
+      "xml_value": "5599",
+      "cr_value": "5599",
+      "leg_value": "5599",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_wtc_b1_l",
+      "xml_value": "12169",
+      "cr_value": "12169",
+      "leg_value": "12169",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_wtc_b2_l",
+      "xml_value": "26288",
+      "cr_value": "26288",
+      "leg_value": "26288",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_wtc_inclim",
+      "xml_value": "43071",
+      "cr_value": "43071",
+      "leg_value": "43071",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_irc_lowlim",
+      "xml_value": "6145",
+      "cr_value": "6145",
+      "leg_value": "6145",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_oac",
+      "xml_value": "2035",
+      "cr_value": "2035",
+      "leg_value": "2035",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_oac_inclow",
+      "xml_value": "45308",
+      "cr_value": "45308",
+      "leg_value": "45308",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tintc_nl",
+      "parameter": "$tin_oac_sp",
+      "xml_value": "531",
+      "cr_value": "531",
+      "leg_value": "531",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_B1",
+      "xml_value": "28406",
+      "cr_value": "28406",
+      "leg_value": "28406",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "chall_nl",
+      "parameter": "$chall_I1",
+      "xml_value": "703",
+      "cr_value": "703",
+      "leg_value": "703",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "bsanet_nl",
+      "parameter": "$bsa00_BCA_rate (Func Switch: off)",
+      "xml_value": "0.741143",
+      "cr_value": "0.741143",
+      "leg_value": "0.741143",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "bsagross_nl",
+      "parameter": "$bsag_fact",
+      "xml_value": "1.558118",
+      "cr_value": "1.558118",
+      "leg_value": "1.558118",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "bsagross_nl",
+      "parameter": "$bsag_fact_old",
+      "xml_value": "1.05552",
+      "cr_value": "1.05552",
+      "leg_value": "1.05552",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_A_rt",
+      "xml_value": ".1370",
+      "cr_value": ".1370",
+      "leg_value": ".1370",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "bhlmt_nl",
+      "parameter": "$bhlmt_B_amt",
+      "xml_value": "28406",
+      "cr_value": "28406",
+      "leg_value": "28406",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$bho_aA_rt",
+      "xml_value": "0.000000438698",
+      "cr_value": "0.000000438698",
+      "leg_value": "0.000000438698",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$bho_bA_rt",
+      "xml_value": "0.000446392665",
+      "cr_value": "0.000446392665",
+      "leg_value": "0.000446392665",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "bho_nl",
+      "parameter": "$bho_aC_rt",
+      "xml_value": "0.000000298184",
+      "cr_value": "0.000000298184",
+      "leg_value": "0.000000298184",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    }
+  ]
+}
