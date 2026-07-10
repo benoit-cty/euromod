@@ -88,14 +88,21 @@ sudo apt-get update && sudo apt-get install -y --no-install-recommends \
     make \
     # For pdfinfo
     poppler-utils \
+    socat \
     && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
 In PowerShell :
 
 winget install jqlang.jq
 
-Things to do for the Euromod team :
+## Questions
 
+- Form of my reports for each part : Word documents ?
+- Gitlab access ? Right now my code is on a Github private repo with access for Hannes.
+- Code licensing ?
+
+## Things to do for the Euromod team
+- Parameters export to JSON. Already started by Hannes.
 - How to deploy the project on Euromod IT infrastructure : Docker or Managed Postgresql at AWS ? Or Kubernetes ?
 - How to run an embedding batch at night on the Euromod GPU ?
 - How to run a translation batch at night on the Euromod GPU ?
