@@ -165,50 +165,50 @@ INSERT INTO legal_unit_versions (id, legal_unit_id, validity, version_status, so
 -- ----------------------------------------------------------------------------
 -- Texts (search_config + content_hash computed from lang_fts_config/content)
 -- ----------------------------------------------------------------------------
-INSERT INTO unit_texts (id, version_id, lang, authenticity, content, translation_of, mt_engine, search_config, content_hash)
+INSERT INTO unit_texts (id, version_id, lang, authenticity, content, translation_of, source_lang, mt_engine, search_config, content_hash)
 SELECT v.id, v.version_id, v.lang, v.authenticity, v.content,
-       v.translation_of::uuid, v.mt_engine,
+       v.translation_of::uuid, v.source_lang, v.mt_engine,
        (SELECT config FROM lang_fts_config WHERE lang = v.lang),
        encode(sha256(convert_to(v.content, 'UTF8')), 'hex')
 FROM (VALUES
   -- FR art. 197, 2024 barème — authentic + EN machine translation
   ('e0000000-0000-4000-8000-000000000001'::uuid, 'd0000000-0000-4000-8000-000000000001'::uuid, 'fr', 'authentic',
    'I. – En ce qui concerne les contribuables visés à l''article 4 B, il est fait application des règles suivantes pour le calcul de l''impôt sur le revenu : 1. L''impôt est calculé en appliquant à la fraction de chaque part de revenu qui excède 11 294 € le taux de : 11 % pour la fraction supérieure à 11 294 € et inférieure ou égale à 28 797 € ; 30 % pour la fraction supérieure à 28 797 € et inférieure ou égale à 82 341 € ; 41 % pour la fraction supérieure à 82 341 € et inférieure ou égale à 177 106 € ; 45 % pour la fraction supérieure à 177 106 €.',
-   NULL, NULL),
+   NULL, NULL, NULL),
   ('e0000000-0000-4000-8000-000000000002'::uuid, 'd0000000-0000-4000-8000-000000000001'::uuid, 'en', 'machine_translation',
    'I. – For taxpayers referred to in Article 4 B, income tax is computed by applying to the fraction of each income share exceeding EUR 11,294 the rate of: 11% for the fraction above EUR 11,294 and up to EUR 28,797; 30% for the fraction above EUR 28,797 and up to EUR 82,341; 41% for the fraction above EUR 82,341 and up to EUR 177,106; 45% for the fraction above EUR 177,106.',
-   'e0000000-0000-4000-8000-000000000001', 'demo-mt'),
+   'e0000000-0000-4000-8000-000000000001', 'fr', 'demo-mt'),
   -- FR art. 197, 2025 barème — authentic + EN machine translation
   ('e0000000-0000-4000-8000-000000000003'::uuid, 'd0000000-0000-4000-8000-000000000002'::uuid, 'fr', 'authentic',
    'I. – En ce qui concerne les contribuables visés à l''article 4 B, il est fait application des règles suivantes pour le calcul de l''impôt sur le revenu : 1. L''impôt est calculé en appliquant à la fraction de chaque part de revenu qui excède 11 497 € le taux de : 11 % pour la fraction supérieure à 11 497 € et inférieure ou égale à 29 315 € ; 30 % pour la fraction supérieure à 29 315 € et inférieure ou égale à 83 823 € ; 41 % pour la fraction supérieure à 83 823 € et inférieure ou égale à 180 294 € ; 45 % pour la fraction supérieure à 180 294 €.',
-   NULL, NULL),
+   NULL, NULL, NULL),
   ('e0000000-0000-4000-8000-000000000004'::uuid, 'd0000000-0000-4000-8000-000000000002'::uuid, 'en', 'machine_translation',
    'I. – For taxpayers referred to in Article 4 B, income tax is computed by applying to the fraction of each income share exceeding EUR 11,497 the rate of: 11% for the fraction above EUR 11,497 and up to EUR 29,315; 30% for the fraction above EUR 29,315 and up to EUR 83,823; 41% for the fraction above EUR 83,823 and up to EUR 180,294; 45% for the fraction above EUR 180,294.',
-   'e0000000-0000-4000-8000-000000000003', 'demo-mt'),
+   'e0000000-0000-4000-8000-000000000003', 'fr', 'demo-mt'),
   -- BE art. 130 — TWO authentic languages (the Belgian case)
   ('e0000000-0000-4000-8000-000000000005'::uuid, 'd0000000-0000-4000-8000-000000000003'::uuid, 'fr', 'authentic',
    'L''impôt de base est calculé selon le barème suivant : 25 p.c. pour la tranche de revenu de 0,01 EUR à 15 820 EUR ; 40 p.c. pour la tranche de 15 820 EUR à 27 920 EUR ; 45 p.c. pour la tranche de 27 920 EUR à 48 320 EUR ; 50 p.c. pour la tranche supérieure à 48 320 EUR.',
-   NULL, NULL),
+   NULL, NULL, NULL),
   ('e0000000-0000-4000-8000-000000000006'::uuid, 'd0000000-0000-4000-8000-000000000003'::uuid, 'nl', 'authentic',
    'De basisbelasting wordt berekend volgens het volgende tarief : 25 pct. voor de inkomensschijf van 0,01 EUR tot 15 820 EUR ; 40 pct. voor de schijf van 15 820 EUR tot 27 920 EUR ; 45 pct. voor de schijf van 27 920 EUR tot 48 320 EUR ; 50 pct. voor de schijf boven 48 320 EUR.',
-   NULL, NULL),
+   NULL, NULL, NULL),
   -- NL artikel 2.10
   ('e0000000-0000-4000-8000-000000000007'::uuid, 'd0000000-0000-4000-8000-000000000004'::uuid, 'nl', 'authentic',
    'De belasting op het belastbare inkomen uit werk en woning wordt bepaald aan de hand van de volgende tabel : bij een belastbaar inkomen uit werk en woning van niet meer dan 38 441 euro bedraagt de belasting 35,82%; boven 38 441 euro en niet meer dan 76 817 euro : 37,48%; boven 76 817 euro : 49,50%.',
-   NULL, NULL),
+   NULL, NULL, NULL),
   -- LT 6 straipsnis
   ('e0000000-0000-4000-8000-000000000008'::uuid, 'd0000000-0000-4000-8000-000000000005'::uuid, 'lt', 'authentic',
    'Pajamų mokesčio tarifas – 20 procentų, taikomas metinei pajamų daliai, neviršijančiai 60 vidutinių šalies darbo užmokesčių dydžio sumos, ir 32 procentai – šią sumą viršijančiai metinei pajamų daliai.',
-   NULL, NULL),
+   NULL, NULL, NULL),
   -- ES artículo 63
   ('e0000000-0000-4000-8000-000000000009'::uuid, 'd0000000-0000-4000-8000-000000000006'::uuid, 'es', 'authentic',
    'La parte de la base liquidable general será gravada con arreglo a la siguiente escala : hasta 12 450,00 euros, tipo aplicable del 9,50 por ciento ; de 12 450,00 a 20 200,00 euros, 12,00 por ciento ; de 20 200,00 a 35 200,00 euros, 15,00 por ciento ; de 35 200,00 a 60 000,00 euros, 18,50 por ciento ; de 60 000,00 a 300 000,00 euros, 22,50 por ciento ; en adelante, 24,50 por ciento.',
-   NULL, NULL),
+   NULL, NULL, NULL),
   -- IE section 15
   ('e0000000-0000-4000-8000-000000000010'::uuid, 'd0000000-0000-4000-8000-000000000007'::uuid, 'en', 'authentic',
    'Income tax shall be charged for each year of assessment at the rate of tax specified in this section : the standard rate of 20 per cent on income up to the standard rate cut-off point, and the higher rate of 40 per cent on the remainder of taxable income.',
-   NULL, NULL)
-) AS v(id, version_id, lang, authenticity, content, translation_of, mt_engine);
+   NULL, NULL, NULL)
+) AS v(id, version_id, lang, authenticity, content, translation_of, source_lang, mt_engine);
 
 -- ----------------------------------------------------------------------------
 -- Chunks: whole-unit chunks (seq 0) generated from every text row.
