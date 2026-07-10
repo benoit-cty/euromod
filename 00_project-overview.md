@@ -14,14 +14,14 @@ Build (with the JRC.B.2 IT team) a temporally-aware, multilingual RAG over fisca
 
 | # | Activity | Units | € | Deadline | Deliverable |
 |---|----------|-------|---|----------|-------------|
-| 1 | Policy Parameter format | 15 | 675 | **1 Aug 2026** | Spec document for parameter format |
-| 2 | RAG architecture & implementation | 100 | 4 500 | **15 Nov 2026** | Architecture proposal document (interim payment after 1+2) |
-| 3 | Agentic workflow | 80 | 3 600 | **15 Dec 2026** | Architecture documentation |
-| 4 | Validation | 35 | 1 575 | **15 Dec 2026** | Validation dataset + KPI report |
-| 5 | Technical report | 30 | 1 350 | **31 Dec 2026** | Co-authored report (multi-country, multi-LLM eval) |
-| 6 | On-site meeting Seville (≤3 days) | 30 | 1 350 | **31 Dec 2026** | Meeting (best timed during Activities 1–2) |
+| 1 | Policy Parameter format | 15 | - | **1 Aug 2026** | Spec document for parameter format |
+| 2 | RAG architecture & implementation | 100 | - | **15 Nov 2026** | Architecture proposal document (interim payment after 1+2) |
+| 3 | Agentic workflow | 80 | - | **15 Dec 2026** | Architecture documentation |
+| 4 | Validation | 35 | - | **15 Dec 2026** | Validation dataset + KPI report |
+| 5 | Technical report | 30 | - | **31 Dec 2026** | Co-authored report (multi-country, multi-LLM eval) |
+| 6 | On-site meeting Seville (≤3 days) | 30 | - | **31 Dec 2026** | Meeting (best timed during Activities 1–2) |
 
-**Total: 290 units = 13 050 €**
+
 
 ## 3. Critical-path reading of the timeline
 
