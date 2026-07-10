@@ -1,0 +1,6332 @@
+[
+  {
+    "name": "SetDefault_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "SetDefault",
+        "switch": "on",
+        "params": {
+          "yemmy00": "12",
+          "Dataset": "training*",
+          "ysebsre": "yse",
+          "lemhw00": "lhw"
+        }
+      },
+      {
+        "name": "SetDefault",
+        "switch": "on",
+        "params": {
+          "Dataset": "*_hhot",
+          "lhw_a": "0",
+          "yem_a": "0",
+          "liwmy_a": "0",
+          "lnu": "0",
+          "yempv_a": "0",
+          "yemmy_a": "0",
+          "lma": "0",
+          "lma18": "0",
+          "lma19": "0",
+          "lma20": "0",
+          "lmc": "0",
+          "yem18_a": "0",
+          "yem19_a": "0",
+          "yem20_a": "0",
+          "lowas": "0",
+          "ysemy": "0",
+          "kfbmy": "0",
+          "yemmy20_a": "0",
+          "yemmy19_a": "0",
+          "yemmy18_a": "0",
+          "lhw20_a": "0",
+          "lhw19_a": "0",
+          "lhw18_a": "0",
+          "lmc20": "0"
+        }
+      },
+      {
+        "name": "SetDefault",
+        "switch": "on",
+        "params": {
+          "Dataset": "hr_20*",
+          "bsu": "0",
+          "boa": "0",
+          "bfamh": "0",
+          "bfaba": "0",
+          "bch": "0",
+          "yptmp": "0",
+          "ypt00": "ypt",
+          "aca": "0",
+          "yst": "0",
+          "ymwdt": "0",
+          "bfaot": "0",
+          "yemtx": "yem",
+          "yemnt": "0",
+          "kfbtx": "kfb",
+          "kfbnt": "0",
+          "ysecwre00": "ysecwre",
+          "ysecwre01": "0",
+          "ysecwre02": "0",
+          "ymc": "0",
+          "ymc00": "0",
+          "ymc01": "0",
+          "xed00": "0",
+          "xhl00": "0",
+          "yiytx": "yiy",
+          "yiynt": "0",
+          "pditx": "pdi",
+          "pdint": "0",
+          "poatx": "poa",
+          "poant": "0",
+          "psutx": "psu",
+          "psunt": "0"
+        }
+      },
+      {
+        "name": "SetDefault",
+        "switch": "on",
+        "params": {
+          "Dataset": "*_training_data",
+          "yemmy00": "yemmy",
+          "lemhw00": "lhw",
+          "ysebsre": "yse",
+          "xmp00": "0",
+          "xmpam": "0"
+        }
+      },
+      {
+        "name": "SetDefault",
+        "switch": "on",
+        "params": {
+          "Dataset": "*training*",
+          "bwkmceemy_s": "0",
+          "bwkmcsemy_s": "0",
+          "bwkmcmy_s": "0",
+          "yemmwmy_s": "0",
+          "ysemwmy_s": "0",
+          "lmcee_s": "0",
+          "lmcse_s": "0"
+        }
+      },
+      {
+        "name": "SetDefault",
+        "switch": "off",
+        "params": {
+          "Dataset": "hr_20*",
+          "ydsyc_a": "0"
+        }
+      },
+      {
+        "name": "SetDefault",
+        "switch": "off",
+        "params": {
+          "Dataset": "*",
+          "bsayn_a": "-1"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Uprate_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "Uprate",
+        "switch": "on",
+        "params": {
+          "Dataset": "*training_data.txt",
+          "WarnIfNoFactor": "no",
+          "Def_Factor": "1"
+        }
+      },
+      {
+        "name": "Uprate",
+        "switch": "on",
+        "params": {
+          "Dataset": "HR_20??_??_????_??_??",
+          "kivho": "$f_monthly_wage",
+          "kfbcc": "$f_monthly_wage",
+          "tis": "$f_one",
+          "tscer": "$f_one",
+          "tscee": "$f_one",
+          "tad": "$f_one",
+          "tpr": "$f_one",
+          "bunot": "$f_monthly_wage",
+          "bunct": "$f_monthly_wage",
+          "bsaot": "$f_sab2",
+          "bsa00": "$f_sab1",
+          "bho": "$f_sab2",
+          "bhl": "$f_monthly_wage",
+          "bed": "$f_gdp",
+          "afc": "$f_hicp_nat",
+          "xhcmomi": "$f_hicp_nat",
+          "xhcrt": "$f_gdp",
+          "ydses_o": "$f_one",
+          "ypp": "$f_monthly_wage",
+          "yds": "$f_one",
+          "yem_a": "$f_monthly_wage",
+          "yivwg": "$f_monthly_wage",
+          "ysv": "$f_gdp",
+          "ypr": "$f_gdp",
+          "yot": "$f_monthly_wage",
+          "ysebsnr": "$f_monthly_wage",
+          "yemtx": "$f_monthly_wage_tax",
+          "xpp": "$f_hicp_nat",
+          "xhcot": "$f_hicp_nat",
+          "ysecwre00": "$f_monthly_wage",
+          "ysebsre": "$f_monthly_wage",
+          "ysecwnr": "$f_monthly_wage",
+          "tscse": "$f_one",
+          "AggVar_Part": "psunt",
+          "AggVar_Name": "psu",
+          "tin": "$f_one",
+          "yempv": "$f_monthly_wage",
+          "bdi": "$f_sab2",
+          "yse": "$f_monthly_wage",
+          "tmu": "$f_one",
+          "boa": "$f_pens",
+          "bsu": "$f_bub",
+          "bch": "$f_bub",
+          "bfaba": "$f_bub",
+          "bfamh": "$f_monthly_wage",
+          "ypt00": "$f_monthly_wage",
+          "yptmp": "$f_monthly_wage",
+          "xmp00": "$f_hicp_nat",
+          "xmpam": "$f_hicp_nat",
+          "bfa": "$f_bub",
+          "kfbtx": "$f_monthly_wage",
+          "yst": "$f_monthly_wage",
+          "ymwdt": "$f_yemLead",
+          "bfaot": "$f_bub",
+          "kfbnt": "$f_monthly_wage",
+          "xed00": "$f_gdp",
+          "xhl00": "$f_gdp",
+          "yemnt": "$f_monthly_wage_nontax",
+          "ysecwre01": "$f_monthly_wage",
+          "ysecwre02": "$f_monthly_wage",
+          "ymc00": "$f_monthly_wage",
+          "ymc01": "$f_monthly_wage",
+          "pditx": "$f_pdi_av",
+          "pdint": "$f_pdi_av",
+          "poatx": "$f_poa_av",
+          "poant": "$f_poa_av",
+          "psutx": "$f_psu_av",
+          "psunt": "$f_psu_av",
+          "yiytx": "$f_one",
+          "yiynt": "$f_one",
+          "Factor_Condition": "lindi = 0"
+        }
+      }
+    ]
+  },
+  {
+    "name": "ConstDef_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$ANWPY": "1302#m",
+          "$ANWPY2": "1317#m",
+          "$GMW": "970#m",
+          "$PSMW": "800.75#m",
+          "$BUB": "441.44#m",
+          "$Nwh": "40",
+          "$tsceepi02_rate": "0.05",
+          "$tsceepi01_rate": "0.15",
+          "$tsceepi00_rate": "0.2",
+          "$tscsebusi01_rate": "n/a",
+          "$tscersi00_rate": "0.165",
+          "$tscerui_rate": "n/a",
+          "$AGWPY": "1798#m",
+          "$PensionAgeWomen": "63.75",
+          "$PensionAgeMen": "65",
+          "$tscbesi_rate1": "0",
+          "$tscbesi_rate2": "0",
+          "$tscsecwsi00_rate": "0.075",
+          "$tscsecwpi01_rate": "0.075",
+          "$tscsecwpi00_rate": "0.1",
+          "$tscsecwpi02_rate": "0.025",
+          "$tscseui_rate": "n/a",
+          "$tscsebusi00_rate": "0.075",
+          "$tscsebupi00_farmC_rate": "0.1",
+          "$tscsebupi01_farmC_rate": "0.05",
+          "$PAB": "600#m",
+          "$SAB1": "160#m",
+          "$SAB2": "75#m"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$UB_QperMin": "9",
+          "$UB_QperTot": "24"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$mc_am1": "0",
+          "$mc_am2": "0",
+          "$lhw": "0"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "off",
+        "params": {
+          "$tco_CIA_01": "0",
+          "$tco_CIA_12": "0",
+          "$tco_CIA_11": "0",
+          "$tco_CIA_10": "0",
+          "$tco_CIA_09": "0",
+          "$tco_CIA_08": "0",
+          "$tco_CIA_07": "0",
+          "$tco_CIA_06": "0",
+          "$tco_CIA_05": "0",
+          "$tco_CIA_04r": "0",
+          "$tco_CIA_03": "0",
+          "$tco_CIA_02": "0",
+          "$tco_CIA_045": "0",
+          "$tco_CIAon": "1"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$bsa_BTA_rate": "1",
+          "$bsa_BCA_rate": "1"
+        }
+      }
+    ]
+  },
+  {
+    "name": "ilsdef_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_earns",
+          "ysebsnr": "+",
+          "yemtx": "+",
+          "ysecwre": "+",
+          "ysebsre": "+",
+          "ysecwnr": "+",
+          "yst": "+",
+          "yemnt": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_origy",
+          "ypt": "+",
+          "yiy": "+",
+          "ypr": "+",
+          "ypp": "+",
+          "yot": "+",
+          "ysebsnr": "+",
+          "yemtx": "+",
+          "ysecwre": "+",
+          "ysebsre": "+",
+          "ysecwnr": "+",
+          "xmp00": "-",
+          "xmpam": "-",
+          "yst": "+",
+          "yemnt": "+",
+          "ymc": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_origrepy",
+          "bunct_s": "+",
+          "ils_pen": "+",
+          "ils_origy": "+",
+          "bfapl_s": "+",
+          "bfama_s": "+",
+          "bhl": "+",
+          "bwkmc_s": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_pen",
+          "psu": "+",
+          "poa": "+",
+          "pdi": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_benmt",
+          "bsa_s": "+",
+          "bho": "+",
+          "bch_s": "+",
+          "bsaot": "+",
+          "bhout_s": "+",
+          "boamt_s": "+",
+          "boatu00_s": "+",
+          "boatu01_s": "+",
+          "bsatu_s": "n/a",
+          "bchtu_s": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_bennt",
+          "bhl": "+",
+          "bfaba_s": "+",
+          "bmanc_s": "+",
+          "bed": "+",
+          "bfapl_s": "+",
+          "bfama_s": "+",
+          "bunct_s": "+",
+          "bdi": "+",
+          "bunot": "+",
+          "boa": "+",
+          "bsu": "+",
+          "bfaot": "+",
+          "bwkmc_s": "n/a",
+          "ymc": "n/a",
+          "buntu_s": "n/a",
+          "bditu_s": "n/a",
+          "bfafh_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_ben",
+          "ils_benmt": "+",
+          "ils_pen": "+",
+          "ils_bennt": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_bensim",
+          "bunct_s": "+",
+          "bsa_s": "+",
+          "bfaba_s": "+",
+          "bmanc_s": "+",
+          "bfapl_s": "+",
+          "bfama_s": "+",
+          "bch_s": "+",
+          "bhout_s": "+",
+          "bwkmc_s": "n/a",
+          "boamt_s": "+",
+          "boatu00_s": "+",
+          "buntu_s": "n/a",
+          "bchtu_s": "n/a",
+          "bsatu_s": "n/a",
+          "bditu_s": "n/a",
+          "bfafh_s": "+",
+          "boatu01_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_taxsim",
+          "tin_s": "+",
+          "tmu_s": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_tax",
+          "ils_taxwl": "+",
+          "ils_taxin": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_sicer",
+          "tscerui_s": "n/a",
+          "tscersi01_s": "n/a",
+          "tscersi00_s": "+",
+          "tscsecwsi00_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_sicse",
+          "tscsebupi02_s": "+",
+          "tscsebupi01_s": "+",
+          "tscsebupi00_s": "+",
+          "tscsebusi01_s": "n/a",
+          "tscsebusi00_s": "+",
+          "tscsecwpi02_s": "+",
+          "tscsecwpi01_s": "+",
+          "tscsecwpi00_s": "+",
+          "tscseui_s": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_sicee",
+          "tsceepi02_s": "+",
+          "tsceepi01_s": "+",
+          "tsceepi00_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_dispy",
+          "ils_sicdy": "-",
+          "ils_tax": "-",
+          "ils_ben": "+",
+          "ils_origy": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_bed",
+          "bed": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_bun",
+          "bunct_s": "+",
+          "bunot": "+",
+          "bwkmc_s": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_bdi",
+          "pdi": "+",
+          "bdi": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_bsu",
+          "psu": "+",
+          "bsu": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_bho",
+          "bho": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_bsa",
+          "bsa_s": "+",
+          "bsaot": "+",
+          "bhout_s": "+",
+          "boamt_s": "+",
+          "boatu00_s": "+",
+          "buntu_s": "n/a",
+          "bchtu_s": "n/a",
+          "bsatu_s": "n/a",
+          "bditu_s": "n/a",
+          "boatu01_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_bhl",
+          "bhl": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_boa",
+          "poa": "+",
+          "boa": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_bfa",
+          "bch_s": "+",
+          "ils_b1_bcb": "+",
+          "bfaot": "+",
+          "ymc": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b2_bfaed",
+          "ils_b1_bfa": "+",
+          "ils_b1_bed": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b2_bsaho",
+          "ils_b1_bsa": "+",
+          "ils_b1_bho": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b2_penhl",
+          "ils_b1_boa": "+",
+          "ils_b1_bdi": "+",
+          "ils_b1_bhl": "+",
+          "ils_b1_bsu": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_sicct",
+          "tscct_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_sicot",
+          "tscbesi_s": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_sicdy",
+          "ils_sicot": "+",
+          "ils_sicse": "+",
+          "ils_sicee": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_base_tin",
+          "yiy": "+",
+          "ypr": "+",
+          "ysecwre": "+",
+          "ysebsre": "+",
+          "kfbtx": "+",
+          "yemtx": "+",
+          "psutx": "+",
+          "pditx": "+",
+          "poatx": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "n/a",
+        "params": {
+          "Name": "n/a",
+          "yiy": "n/a",
+          "ypr": "n/a",
+          "ysecwre": "n/a",
+          "ysebsre": "n/a",
+          "kfb": "n/a",
+          "yem": "n/a",
+          "psu": "n/a",
+          "pdi": "n/a",
+          "poa": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_bcb",
+          "bfama_s": "+",
+          "bfapl_s": "+",
+          "bmanc_s": "+",
+          "bfaba_s": "+",
+          "bfafh_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_extstat_other",
+          "i_yemkfbtx": "+",
+          "i_yemkfbnt": "+",
+          "i_sicerrelam1": "+",
+          "i_sicerrelam3": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b1_bwk"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_b2_bunwk",
+          "ils_b1_bwk": "+",
+          "ils_b1_bun": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_taxin",
+          "tin_s": "+",
+          "tmu_s": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_taxwl",
+          "tpr": "+"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tudef_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "IND",
+          "Name": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "HH",
+          "Name": "tu_hh_oecd_co",
+          "DepChildCond": "(dag<14)"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "HH",
+          "Name": "tu_household_hr",
+          "HeadDefInc": "ils_origy",
+          "DepChildCond": "(dag<14)"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "SUBGROUP",
+          "Name": "tu_mar_couple_hr",
+          "Members": "Partner",
+          "PartnerCond": "(Default) & (IsMarried)"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "SUBGROUP",
+          "Name": "tu_bfama_hr",
+          "DepChildCond": "(dag = 0) | (dag = 1)",
+          "Members": "Partner & OwnDepChild & LooseDepChild",
+          "NoChildIfPartner": "yes",
+          "NoChildIfHead": "yes",
+          "ExtHeadCond": "(default) & (dgn = 0)",
+          "StopIfNoHeadFound": "no"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "SUBGROUP",
+          "Name": "tu_bfapl_broad_hr",
+          "DepChildCond": "(dag <= 40) & !(IsParent)",
+          "Members": "Partner & OwnDepChild & LooseDepChild & DepParent",
+          "NoChildIfPartner": "yes",
+          "NoChildIfHead": "yes",
+          "ExtHeadCond": "(default) & (dgn=0)",
+          "StopIfNoHeadFound": "no",
+          "DepParentCond": "(Default)"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "SUBGROUP",
+          "Name": "tu_bfapl_hr",
+          "DepChildCond": "(dag <= 3) ",
+          "Members": "Partner & OwnDepChild & LooseDepChild",
+          "NoChildIfPartner": "yes",
+          "NoChildIfHead": "yes",
+          "ExtHeadCond": "(default) & (dgn=0)",
+          "StopIfNoHeadFound": "no"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "SUBGROUP",
+          "Name": "tu_bfaba_hr",
+          "DepChildCond": "(dag = 0)",
+          "Members": "Partner & OwnDepChild & LooseDepChild",
+          "NoChildIfPartner": "yes",
+          "NoChildIfHead": "yes",
+          "ExtHeadCond": "(default)",
+          "StopIfNoHeadFound": "no"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Name": "tu_tin_broad_hr",
+          "Type": "HH",
+          "DepChildCond": "(IsOwnChild)",
+          "AssignPartnerOfDependents": "no",
+          "HeadDefInc": "ils_origy"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Name": "tu_bfafh_hr",
+          "Type": "SUBGROUP",
+          "Members": "Partner & OwnDepChild & LooseDepChild",
+          "DepChildCond": "(dag = 0)",
+          "NoChildIfHead": "yes",
+          "NoChildIfPartner": "yes",
+          "ExtHeadCond": "(default) & (dgn = 1)",
+          "StopIfNoHeadFound": "no"
+        }
+      }
+    ]
+  },
+  {
+    "name": "yem_hr",
+    "switch": "toggle",
+    "functions": [
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(yem > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Max",
+        "switch": "on",
+        "params": {
+          "Val": "$GMW * min(lhw, $Nwh) / $Nwh * yemmy / 12",
+          "Output_Var": "yem",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "ChangeParam",
+        "switch": "on",
+        "params": {
+          "Param_Id": "dd4bf183-2937-4ffc-b61f-c07421db4ef3",
+          "Param_NewVal": "HR_2025_yem_std"
+        }
+      }
+    ]
+  },
+  {
+    "name": "neg_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_ysebsnr": "0",
+          "i_ysecwre": "0",
+          "i_ysebsre": "0",
+          "i_ysecwnr": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "ysebsnr",
+          "Output_Var": "i_ysebsnr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Max",
+        "switch": "on",
+        "params": {
+          "Val": "0",
+          "Output_Var": "ysebsnr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "ysecwre",
+          "Output_Var": "i_ysecwre",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "ysebsre",
+          "Output_Var": "i_ysebsre",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "ysecwnr",
+          "Output_Var": "i_ysecwnr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Max",
+        "switch": "on",
+        "params": {
+          "Val": "0",
+          "Output_Var": "ysecwre",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Max",
+        "switch": "on",
+        "params": {
+          "Val": "0",
+          "Output_Var": "ysebsre",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Max",
+        "switch": "on",
+        "params": {
+          "Val": "0",
+          "Output_Var": "ysecwnr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "ysebsnr + ysecwnr + ysebsre + ysecwre",
+          "Output_Var": "yse",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tscer_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(i_yemkfbtx > 0) & (i_yemhwy > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_sicerbft0": "0",
+          "i_yemfteq": "0",
+          "i_sicerdcft": "0",
+          "i_yemaj": "0",
+          "i_yempt": "0",
+          "i_yemft": "0",
+          "i_yemhwy": "0",
+          "i_yemkfbtx": "0",
+          "i_yempteq": "0",
+          "i_sicerdcpt": "0",
+          "i_sicerbpt0": "0",
+          "i_sicerbaj": "0",
+          "i_sicerb": "0",
+          "i_sicerrel1": "0",
+          "i_sicerrel3": "0",
+          "i_yemkfbnt": "0",
+          "i_sicerrelam1": "0",
+          "i_sicerrelam3": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tscersi00_rate * i_sicerb * (1 - i_sicerrel1 - i_sicerrel3)",
+          "Output_Var": "tscersi00_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a",
+          "Who_Must_Be_Elig": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a",
+          "Who_Must_Be_Elig": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yemft",
+          "Output_Var": "i_sicerbft0",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one",
+          "LowLim": "$tscersi00_minbase * $AGWPY * min(lemhw00, $Nwh) / $Nwh * yemmy00 / 12"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yemft/min(lemhw00,$Nwh)*$Nwh/(yemmy00/12)",
+          "Output_Var": "i_yemfteq",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yemkfbtx *  (yemmy00 * lemhw00 * 52/12) / i_yemhwy",
+          "Output_Var": "i_yemft",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "(52 / 12) * (yemmy00 * lemhw00 + yemmy01 * lemhw01 + yemajmy * lemhw02)",
+          "Output_Var": "i_yemhwy",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yemkfbtx *  (yemmy01 * lemhw01 * 52/12) / i_yemhwy",
+          "Output_Var": "i_yempt",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yemkfbtx *  (yemajmy * lemhw02 * 52/12) / i_yemhwy",
+          "Output_Var": "i_yemaj",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yempt / min(lemhw01, $Nwh) * $Nwh / (yemmy01 / 12)",
+          "Output_Var": "i_yempteq",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "yemtx + kfbtx",
+          "Output_Var": "i_yemkfbtx",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(i_yemft > 0) & (i_yemhwy > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(i_yempt > 0) & (i_yemhwy > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yempt",
+          "Output_Var": "i_sicerbpt0",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one",
+          "LowLim": "$tscersi00_minbase * $AGWPY * min(lemhw01, $Nwh) / $Nwh * yemmy01 / 12"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yemaj",
+          "Output_Var": "i_sicerbaj",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_sicerbft0  + i_sicerbpt0 + i_sicerbaj",
+          "Output_Var": "i_sicerb",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(i_yemaj > 0) & (i_yemhwy > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(i_sicerb > 0) & (i_yemhwy > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tscersi00_randthres1": "0.55",
+          "$tscersi00_randthres3": "0.77",
+          "$tscersi00_minbase": "0.38"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_sicerrel1 = 0) & (dag < 35) & (yemmy > 0) & (liwwh <= 60)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_sicerrel3",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(yemmy > 0) & (liwwh <= yemmy)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_sicerrel1",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "yemnt + kfbnt",
+          "Output_Var": "i_yemkfbnt",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_sicerrel3 > 0)",
+          "Comp_perTU": "i_sicerrel3",
+          "Output_Var": "i_sicerrel3",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_sicerrel1 > 0)",
+          "Comp_perTU": "i_sicerrel1",
+          "Output_Var": "i_sicerrel1",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tscersi00_rate * i_sicerb * i_sicerrel1",
+          "Output_Var": "i_sicerrelam1",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tscersi00_rate * i_sicerb * i_sicerrel3",
+          "Output_Var": "i_sicerrelam3",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tscee_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(i_siceeb > 0) & (i_dag >= 40)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tsceepi00_rate * i_siceeb1",
+          "Output_Var": "tsceepi00_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(i_siceeb > 0) & (i_dag < 40)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tsceepi01_rate * i_siceeb1",
+          "Output_Var": "tsceepi01_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tsceepi02_rate * i_siceeb",
+          "Output_Var": "tsceepi02_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_dag": "0",
+          "i_siceebft": "0",
+          "i_siceebaj": "0",
+          "i_siceebpt": "0",
+          "i_siceeb": "0",
+          "i_siceeb1": "0",
+          "i_sceepided": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "dag - 24",
+          "Output_Var": "i_dag",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yemft",
+          "Output_Var": "i_siceebft",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0.38*$AGWPY*min(lemhw00,$Nwh)/$Nwh*yemmy00/12",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(i_yemft > 0) & (i_yemhwy > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yempt",
+          "Output_Var": "i_siceebpt",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0.38*$AGWPY*min(lemhw01,$Nwh)/$Nwh*yemmy01/12",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(i_yempt > 0) & (i_yemhwy > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yemaj",
+          "Output_Var": "i_siceebaj",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(i_yemaj > 0) & (i_yemhwy > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_siceebft + i_siceebpt + i_siceebaj",
+          "Output_Var": "i_siceeb",
+          "TAX_UNIT": "tu_individual_hr",
+          "UpLim": "6 * $AGWPY",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tsceepi00_ded_thres1": "700#m",
+          "$tsceepi00_ded_rate": "0.5",
+          "$tsceepi00_ded_thres2": "1300#m",
+          "$tsceepi00_ded_amt": "300#m"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(yemmy > 0) & (i_siceeb < $tsceepi00_ded_thres1)",
+          "Comp_perTU": "$tsceepi00_ded_amt * (yemmy / 12)",
+          "Output_Var": "i_sceepided",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_siceeb - i_sceepided",
+          "LowLim": "0",
+          "Output_Var": "i_siceeb1",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tscsebu_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tscsebusi00_pro1A_base": "1.10",
+          "$tscsebusi00_pro2A_base": "0.65",
+          "$tscsebusi00_tradA_base": "0.65",
+          "$tscsebusi00_farm2A_base": "0.55",
+          "$tscsebusi00_farmC_base": "0.38",
+          "$tscsebusi00_farmD_base": "0.38",
+          "$tscsebusi00_tradB_base": "0.40"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_tradB = 1)",
+          "Comp_perTU": "(ysemy / 12) * $AGWPY * $tscsebusi00_tradB_base * $tscersi00_rate",
+          "Output_Var": "tscsebusi00_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_tradB = 1) & (i_dag >= 40)",
+          "Comp_perTU": "(ysemy / 12) * $AGWPY * $tscsebusi00_tradB_base * $tsceepi00_rate",
+          "Output_Var": "tscsebupi00_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_tradB = 1) & (i_dag < 40)",
+          "Comp_perTU": "(ysemy / 12) * $AGWPY * $tscsebusi00_tradB_base * $tsceepi01_rate",
+          "Output_Var": "tscsebupi01_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_tradB = 1) & (i_dag < 40)",
+          "Comp_perTU": "(ysemy / 12) * $AGWPY * $tscsebusi00_tradB_base * $tsceepi02_rate",
+          "Output_Var": "tscsebupi02_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tscbesi_hr",
+    "switch": "n/a",
+    "functions": [
+      {
+        "name": "SchedCalc",
+        "switch": "n/a",
+        "params": {
+          "Base": "n/a",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a",
+          "Simple_Prog": "n/a"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "n/a",
+        "params": {
+          "$tscbesi_randthres": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bunct_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "max(lunmy,bunctmy)",
+          "Output_Var": "lunmy_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(lunmy_s > 0) & (bunct = 0)",
+          "Comp_perElig": "0",
+          "Output_Var": "liwmy_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Comp_LowLim": "$UB_QperMin"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(bunct > 0)",
+          "Comp_perElig": "yempv",
+          "Output_Var": "yempv_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(dgn=0)",
+          "Comp_perElig": "$PensionAgeWomen - dag",
+          "Output_Var": "i_yearsleft",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(lunmy_s > 0) & (liwmy_s >= $UB_QperMin) & (dag > 15) & (i_yearsleft >= 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "on",
+        "params": {
+          "Base": "liwwh",
+          "Band_LowLim": "25",
+          "Band_Amount": "4",
+          "Output_Var": "bunmy_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Simple_Prog": "yes"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(liwwh <= 384) | (i_yearsleft >= 5)",
+          "Comp_perElig": "bunmy_s",
+          "Output_Var": "bunmy_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(bunct = 0) & (lunmy_s > 0)",
+          "Comp_perElig": "bunmy_s",
+          "Output_Var": "bunmy_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one",
+          "UpLim": "lunmy_s"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$UB_rate_period1 * yempv_s",
+          "Output_Var": "sin01_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one",
+          "UpLim": "$UB_maxamt_period1",
+          "LowLim": "$UB_minamt_period1"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a",
+          "Who_Must_Be_Elig": "n/a",
+          "UpLim": "n/a",
+          "LowLim": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "(sin01_s * min(bunmy_s, 3) + sin02_s * min(max(bunmy_s - 3, 0), 3) + sin03_s * max(bunmy_s - 6, 0)) / 12",
+          "Output_Var": "bunct_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_yearsleft": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "bunmy_s",
+          "Output_Var": "bunmy_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one",
+          "UpLim": "12 - i_bfamamy - i_bfaplmy - i_bmancmy",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "off",
+        "params": {
+          "Formula": "liwwh24_h",
+          "Output_Var": "liwmy_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Comp_Cond": "bunmy_s>6",
+          "Comp_perTU": "sin03_s",
+          "Output_Var": "bunct_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "bunmy_s<lunmy_s",
+          "Comp_perTU": "0",
+          "Output_Var": "bunct_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Formula": "$UB_rate_period2 * yempv_s",
+          "LowLim": "$UB_minamt_period2",
+          "UpLim": "$UB_maxamt_period2",
+          "Output_Var": "sin02_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Formula": "$UB_rate_period3 * yempv_s",
+          "LowLim": "$UB_minamt_period3",
+          "UpLim": "$UB_maxamt_period3",
+          "Output_Var": "sin03_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$UB_rate_period1": "0.6",
+          "$UB_minamt_period1": "0.5 * $PSMW",
+          "$UB_maxamt_period1": "0.7 * $ANWPY2",
+          "$UB_rate_period2": "0.35",
+          "$UB_minamt_period2": "0.5 * $PSMW",
+          "$UB_maxamt_period2": "0.4 * $ANWPY2",
+          "$UB_rate_period3": "0.3",
+          "$UB_minamt_period3": "0.5 * $PSMW",
+          "$UB_maxamt_period3": "0.35 * $ANWPY2"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tscsecw_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(ysecwre > 0) & (i_dag >= 40)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tscsecwpi00_rate * ysecwre",
+          "Output_Var": "tscsecwpi00_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(ysecwre > 0) & (i_dag < 40)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tscsecwpi01_rate * ysecwre",
+          "Output_Var": "tscsecwpi01_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tscsecwpi02_rate * ysecwre",
+          "Output_Var": "tscsecwpi02_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(ysecwre > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tscsecwsi00_rate * ysecwre",
+          "Output_Var": "tscsecwsi00_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bsa_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$bsa_SingleAdult_amt": "$SAB1 * 1",
+          "$bsa_SingleAdultDisab_amt": "$SAB1 * 1.3",
+          "$bsa_FamAdult_amt": "$SAB1 * 0.7",
+          "$bsa_Child18to25_amt": "n/a",
+          "$bsa_Child15to17_amt": "n/a",
+          "$bsa_Child7to14_amt": "n/a",
+          "$bsa_Child0to6_amt": "n/a",
+          "$bsa_FamAdultDisab_amt": "$SAB1 * 0.95",
+          "$bsa_LonePar_amt": "$SAB1 * 1.45",
+          "$bsa_LoneParDisab_amt": "$SAB1 * 1.60",
+          "$bsa_ChildSingleLone0to6_amt": "n/a",
+          "$bsa_ChildSingleLone7to14_amt": "n/a",
+          "$bsa_ChildSingleLone15to17_amt": "n/a",
+          "$bsa_ChildSingleLone18to25_amt": "n/a",
+          "$bsa_Alim13to18_thres": "0.110 * $ANWPY2",
+          "$bsa_Alim7to12_thres": "0.100 * $ANWPY2",
+          "$bsa_Alim0to6_thres": "0.085 * $ANWPY2",
+          "$bsa_bta_thres": "0.03 * $ANWPY",
+          "$bsa_Child2Par_amt": "$SAB1 * 0.95",
+          "$bsa_ChildSinglePar_amt": "$SAB1 * 1.05",
+          "$bsa_ChildLonePar_amt": "$SAB1 * 1.15",
+          "$bsa_BTA_rate": "1",
+          "$bsa_minamt": "0.03 * $ANWPY"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_MoS": "0",
+          "i_carcond": "0",
+          "i_npadisbsa": "0",
+          "i_bsapot": "0",
+          "i_alim": "0",
+          "i_alimthres": "0",
+          "i_finasset": "0",
+          "i_MoSind": "0",
+          "i_psuexA_bsa": "0",
+          "i_npatin_bsa": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(IsDepChild) & (nAdultsInTu = 1) & (yptmp = 0)",
+          "Comp_perElig": "$bsa_ChildLonePar_amt",
+          "Output_Var": "i_MoS",
+          "TAX_UNIT": "tu_bsa_hr"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "HH",
+          "Name": "tu_bsa_hr",
+          "DepChildCond": "(dag < 18)"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_bsa",
+          "bfapl_s": "+",
+          "bhl": "+",
+          "yiy": "+",
+          "ypp": "+",
+          "ypr": "+",
+          "ysecwre": "+",
+          "ysebsre": "+",
+          "yemtx": "+",
+          "bunct_s": "+",
+          "bmanc_s": "n/a",
+          "bfama_s": "+",
+          "ils_pen": "+",
+          "ils_sicse": "-",
+          "ils_sicee": "-",
+          "tmu_s": "n/a",
+          "tin_s": "-",
+          "i_alim": "+",
+          "ysv": "+",
+          "xmpam": "-",
+          "ysebsnr": "+",
+          "ysecwnr": "+",
+          "ils_sicot": "-",
+          "bwkmc_s": "n/a",
+          "kfbtx": "+",
+          "ymc": "+",
+          "i_psuexA_bsa": "-"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_mos - il_bsa",
+          "Output_Var": "i_bsapot",
+          "TAX_UNIT": "tu_bsa_hr",
+          "LowLim": "0",
+          "UpLim": "1.5 * $GMW"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(aca != 1) | ((aca = 1) & (i_npadisbsa > 0)) | ((aca = 1) & (nPersInUnit > 5))",
+          "Comp_perTU": "1",
+          "Output_Var": "i_carcond",
+          "TAX_UNIT": "tu_bsa_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(IsDisabled) | (bdi > 0)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_npadisbsa",
+          "TAX_UNIT": "tu_bsa_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_bsapot * i_carcond",
+          "Output_Var": "bsa_s",
+          "TAX_UNIT": "tu_bsa_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "off",
+        "params": {
+          "Comp_Cond": "(yptmp > 0) & (dag > 6) & (dag <= 12)",
+          "Comp_perElig": "$bsa_Alim7to12_thres",
+          "Output_Var": "i_alimthres",
+          "TAX_UNIT": "tu_bsa_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "yptmp - $GMW",
+          "Output_Var": "i_alim",
+          "TAX_UNIT": "tu_bsa_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "off",
+        "params": {
+          "Comp_perTU": "bsa_s",
+          "Output_Var": "bsa_s",
+          "TAX_UNIT": "tu_bsa_hr",
+          "Comp_Cond": "(bsa_s > 0)"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "off",
+        "params": {
+          "Comp_Cond": "(IsDepChild#1) & (nAdultsInTu#1 = 1) & (yptmp#1 = 0)",
+          "Comp_perElig": "$bsa_ChildLonePar_amt",
+          "Output_Var": "i_MoSind",
+          "#_Level": "tu_bsa_hr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "off",
+        "params": {
+          "Comp_Cond": "(i_bsa_cumpers > $bsa_target_count & bsayn_a = -1)  | bsayn_a = 0",
+          "Comp_perTU": "0",
+          "Output_Var": "bsa_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "CumulativeSum",
+        "switch": "off",
+        "params": {
+          "SummingVar": "i_bsa_elig",
+          "SummingWeighted": "yes",
+          "SortingVar": "i_bsa_sort",
+          "OutputVar": "i_bsa_cumpers",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "off",
+        "params": {
+          "$bsa_target_count": "$sum_i_bsa_elig * $bsa_rate"
+        }
+      },
+      {
+        "name": "Totals",
+        "switch": "off",
+        "params": {
+          "Agg": "i_bsa_elig",
+          "Use_Weights": "yes",
+          "Varname_Sum": "$sum",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "off",
+        "params": {
+          "$bsa_rate": "min($bsa_BCA_rate,$bsa_BTA_rate)"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "off",
+        "params": {
+          "$bsa_BCA_rate": "0.786"
+        }
+      },
+      {
+        "name": "Totals",
+        "switch": "off",
+        "params": {
+          "Agg": "n/a",
+          "Use_Weights": "n/a",
+          "Varname_Sum": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "off",
+        "params": {
+          "i_bsa_bca_take": "n/a"
+        }
+      },
+      {
+        "name": "CumulativeSum",
+        "switch": "off",
+        "params": {
+          "SummingVar": "n/a",
+          "SummingWeighted": "n/a",
+          "SortingVar": "n/a",
+          "OutputVar": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "off",
+        "params": {
+          "$bsa_targetBCA_amt": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "off",
+        "params": {
+          "Comp_Cond": "bsa_s >= $bsa_minamt",
+          "Comp_perTU": "1",
+          "Comp_perElig": "i_bsa_sort",
+          "Output_Var": "i_bsa_sort",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "off",
+        "params": {
+          "i_bsa_sort": "i_bsa_rand",
+          "i_bsa_amt": "bsa_s",
+          "i_bsa_elig": "bsa_s > 0",
+          "i_bsa_cumexp": "0",
+          "i_bsa_cumpers": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(IsParentOfDepChild)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_npatin_bsa",
+          "TAX_UNIT": "tu_bsa_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_npatin_bsa#2 < 2) & (i_psuexE#1 = 1) & (psu#1 > 0)",
+          "Comp_perTU": "psu",
+          "#_Level": "tu_bsa_hr",
+          "UpLim": "$GMW",
+          "Output_Var": "i_psuexA_bsa",
+          "TAX_UNIT": "tu_bsa_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tin_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tin_secw_rate": "0.2",
+          "$tin_rent_rate": "0.12",
+          "$tin_div_rate": "0.12",
+          "$tinta_pen_amt1": "n/a",
+          "$tinta_basic_amt": "$PAB * 1",
+          "$tintach_child6_amt": "$PAB * 8",
+          "$tintach_child5_amt": "$PAB * 5.5",
+          "$tintach_child4_amt": "$PAB * 3.6",
+          "$tintach_child3_amt": "$PAB * 2.2",
+          "$tintach_child2_amt": "$PAB * 1.2",
+          "$tintach_child1_amt": "$PAB * 0.5",
+          "$tinta_pen_amt2": "n/a",
+          "$tinta_dep_thres": "$PAB * 6 / 12",
+          "$tintach_child10_amt": "$PAB * 26",
+          "$tintach_child9_amt": "$PAB * 20.1",
+          "$tintach_child8_amt": "$PAB * 15.2",
+          "$tintach_child7_amt": "$PAB * 11.2",
+          "$tin_stdupthres2": "n/a",
+          "$tin_stdupthres1": "$PAB * (50 / 6)",
+          "$tin_stdrate3": "n/a",
+          "$tin_stdrate2": "n/a",
+          "$tin_stdrate1": "n/a",
+          "$tin_div_thres": "n/a",
+          "$tinta_dep_amt": "$PAB * 0.5",
+          "$tinta_disab_amt1": "$PAB * 0.3",
+          "$tin_secw_thres": "n/a",
+          "$tin_lumpsum_base": "1695#y",
+          "$tin_lumpsum_rate": "0.12",
+          "$tinta_disab_amt2": "$PAB * 1",
+          "$tin_rent_ded": "0.3",
+          "$tin_stdrate4": "n/a",
+          "$tin_stdupthres3": "n/a"
+        }
+      },
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "SUBGROUP",
+          "Name": "tu_tin_hr",
+          "NoChildIfHead": "yes",
+          "DepChildCond": "(Default) & ((dag<=14) | (IsInEducation) | ((liwwh = 0) & (liwmy = 0))) & (il_taxableYDC#1 < $tinta_dep_thres)",
+          "Members": "Partner & OwnDepChild & LooseDepChild & DepRelative",
+          "PartnerCond": "(Default) & (IsMarried)",
+          "HeadDefInc": "il_taxableY",
+          "NoChildIfPartner": "yes",
+          "DepRelativeCond": "!(IsHeadOfTu) & !(IsDepChild) & ((IsPartner) | (IsParent) | (IsDepChild#2)) & (il_taxableYDR#1 < $tinta_dep_thres)",
+          "#_Level": "tu_tin_broad_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(nDepChildrenInTu#1 = 8)",
+          "Comp_perTU": "$tintach_child8_amt",
+          "Output_Var": "i_tintacha",
+          "TAX_UNIT": "tu_individual_hr",
+          "#_Level": "tu_tin_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(IsDepRelative) & (nPersInUnit > 1)",
+          "Comp_perElig": "$tinta_dep_amt",
+          "Output_Var": "tintadp_s",
+          "TAX_UNIT": "tu_tin_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(IsDisabled) | (bdi > 0)",
+          "Comp_perTU": "$tinta_disab_amt1",
+          "Output_Var": "tintadb_s",
+          "TAX_UNIT": "tu_tin_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_gtstotinc - (i_gtsbasall + tintach_s + tintadp_s + tintadb_s)",
+          "Output_Var": "i_gtsbase",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "on",
+        "params": {
+          "Base": "i_gtsbase",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "i_pitrat2",
+          "Output_Var": "i_gtstax",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "TAX_UNIT": "tu_individual_hr",
+          "Comp_perElig": "i_ysecwps * i_pitrat1",
+          "Comp_Cond": "(i_ysecwps > 0)",
+          "Output_Var": "i_tinysecw"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_gtsmss": "0",
+          "i_tinISS": "0",
+          "i_pemy": "0",
+          "i_penps": "0",
+          "i_yemps": "0",
+          "i_ysebsps": "0",
+          "i_ysecwps": "0",
+          "i_penpsav": "0",
+          "i_yempsav": "0",
+          "i_tintaPE": "0",
+          "i_tintbPE": "0",
+          "i_tinPE0": "0",
+          "i_tinPE": "0",
+          "i_tintaEM": "0",
+          "i_tintbEM": "0",
+          "i_tinEM": "0",
+          "i_gtsbasall": "0",
+          "i_gtsbase": "0",
+          "i_gtstax": "0",
+          "i_tinMSS": "0",
+          "i_gtstotinc": "0",
+          "i_icwext": "0",
+          "i_tinypr": "0",
+          "i_tinyiy": "0",
+          "i_tinysecw": "0",
+          "i_psuexmy": "0",
+          "i_psuexA": "0",
+          "i_psuexE": "0",
+          "i_npatin": "0",
+          "i_tinY050": "0",
+          "i_tinY075": "0",
+          "i_tinY100": "0",
+          "i_tintbY050": "0",
+          "i_tintbY075": "0",
+          "i_tintbY100": "0",
+          "i_tintach050": "0",
+          "i_tintach075": "0",
+          "i_tintach100": "0",
+          "i_tintacha": "0",
+          "i_gtstcp": "0",
+          "i_gtstce": "0",
+          "i_ysels": "0",
+          "i_tinsels": "0",
+          "i_surtrat": "0",
+          "i_pitrat1": "0",
+          "i_pitrat2": "0",
+          "i_tinsebs": "0",
+          "i_tinse": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "ysecwre - il_tscsecwpi",
+          "Output_Var": "i_ysecwps",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yemkfbtx - il_tsceepi",
+          "Output_Var": "i_yemps",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "(il_pentx - i_psuexA)",
+          "Output_Var": "i_penps",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "pdimy + poamy + i_psuexmy",
+          "Output_Var": "i_pemy",
+          "TAX_UNIT": "tu_individual_hr",
+          "UpLim": "12"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_pemy > 0)",
+          "Comp_perTU": "12 * i_penps / i_pemy",
+          "Output_Var": "i_penpsav",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(yemmy > 0)",
+          "Comp_perTU": "12 * i_yemps / yemmy",
+          "Output_Var": "i_yempsav",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "i_tintaPE",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_penpsav - (i_tintaPE + tintach_s + tintadp_s + tintadb_s)",
+          "Output_Var": "i_tintbPE",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "on",
+        "params": {
+          "Base": "i_tintbPE",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "i_pitrat2",
+          "Output_Var": "i_tinPE0",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "0.5 * i_tinPE0",
+          "Output_Var": "i_tinPE",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yempsav - (tinta00_s + tintach_s + tintadp_s + tintadb_s)",
+          "Output_Var": "i_tintbEM",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "on",
+        "params": {
+          "Base": "i_tintbEM",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "i_pitrat2",
+          "Output_Var": "i_tinEM",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "tinta00_s",
+          "Output_Var": "i_gtsbasall",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_penps +  i_yemps + i_ysebsps + i_ysecwps",
+          "Output_Var": "i_gtstotinc",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "(i_tinPE * i_pemy / 12) + (i_tinEM * yemmy / 12) + i_tinypr + i_tinyiy + i_tinysecw",
+          "Output_Var": "i_tinMSS",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "(i_gtstax - i_gtstcp - i_gtstce) + i_tinypr + i_tinyiy",
+          "Output_Var": "i_gtsmss",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(ypr > 0)",
+          "Comp_perElig": "(1 - $tin_rent_ded) * ypr * $tin_rent_rate",
+          "TAX_UNIT": "tu_individual_hr",
+          "Output_Var": "i_tinypr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "TAX_UNIT": "tu_individual_hr",
+          "Comp_perElig": "yiytx * $tin_div_rate",
+          "Comp_Cond": "(yiy > 0)",
+          "Output_Var": "i_tinyiy"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(IsParentOfDepChild)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_npatin",
+          "TAX_UNIT": "tu_tin_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(dag <= 18) | ((dag > 18) & (dag < 26) & (dec > 0))",
+          "Comp_perTU": "1",
+          "Output_Var": "i_psuexE",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_npatin#1 < 2) & (i_psuexE = 1) & (psu > 0)",
+          "Comp_perTU": "psu",
+          "Output_Var": "i_psuexA",
+          "TAX_UNIT": "tu_individual_hr",
+          "#_Level": "tu_tin_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_psuexA > 0)",
+          "Comp_perTU": "0",
+          "Output_Var": "i_psuexmy",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "!(IsHeadOfTu#1) & !(IsPartner#1)",
+          "Comp_perTU": "0 * i_tintacha",
+          "Output_Var": "i_tintach100",
+          "TAX_UNIT": "tu_individual_hr",
+          "#_Level": "tu_tin_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_tinY050#1 < i_tinY100#1) &  (i_tinY050#1 < i_tinY075#1)",
+          "Comp_perTU": "i_tintach050",
+          "Output_Var": "tintach_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "#_Level": "tu_tin_hr"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "on",
+        "params": {
+          "Base": "i_tintbY050",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "i_pitrat2",
+          "Output_Var": "i_tinY050",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "il_taxableY - (tinta00_s + i_tintach050 + tintadp_s + tintadb_s)",
+          "Output_Var": "i_tintbY050",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "!(IsHeadOfTu#1) & !(IsPartner#1)",
+          "Comp_perTU": "0 * i_tintacha",
+          "Output_Var": "i_tintach050",
+          "TAX_UNIT": "tu_individual_hr",
+          "#_Level": "tu_tin_hr"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "on",
+        "params": {
+          "Base": "i_tintbY075",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "i_pitrat2",
+          "Output_Var": "i_tinY075",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "il_taxableY - (tinta00_s + i_tintach075 + tintadp_s + tintadb_s)",
+          "Output_Var": "i_tintbY075",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "!(IsHeadOfTu#1) & !(IsPartner#1)",
+          "Comp_perTU": "0 * i_tintacha",
+          "Output_Var": "i_tintach075",
+          "TAX_UNIT": "tu_individual_hr",
+          "#_Level": "tu_tin_hr"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "on",
+        "params": {
+          "Base": "i_tintbY100",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "i_pitrat2",
+          "Output_Var": "i_tinY100",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "il_taxableY - (tinta00_s + i_tintach100 + tintadp_s + tintadb_s)",
+          "Output_Var": "i_tintbY100",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_penps > 0) & (i_gtstotinc > 0)",
+          "Comp_perTU": "0.5 * (i_penps / i_gtstotinc) * i_gtstax",
+          "Output_Var": "i_gtstcp",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_yemps > 0) & (i_gtstotinc > 0) & (dag >= 26) & (dag <= 30)",
+          "Comp_perTU": "0.5*(i_yemps/i_gtstotinc)*min(i_gtstax,i_pitrat1*($tin_stdupthres1+i_icwext))",
+          "Output_Var": "i_gtstce",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_sepA = 1) & (ysebsre > 0)",
+          "Comp_perTU": "ysebsre - il_sicsebs",
+          "Output_Var": "i_ysebsps",
+          "LowLim": "0",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_tradB = 1)",
+          "Comp_perTU": "$tin_lumpsum_base",
+          "Output_Var": "i_ysels",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_ysels * $tin_lumpsum_rate",
+          "Output_Var": "i_tinsels",
+          "UpLim": "max(0, ysebsre - il_sicsebs)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_gtsmss + i_tinsels",
+          "Output_Var": "tin_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tmu_rate1": "n/a",
+          "$tmu_rate2": "n/a",
+          "$tmu_rate3": "n/a",
+          "$tin_stdrate11": "0.224",
+          "$tin_stdrate12": "0.199",
+          "$tin_stdrate13": "0.200",
+          "$tin_stdrate21": "0.324",
+          "$tin_stdrate22": "0.299",
+          "$tin_stdrate23": "0.299"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tinta_basic_amt",
+          "Output_Var": "tinta00_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(drgru = 1)",
+          "Comp_perTU": "$tin_stdrate13",
+          "Output_Var": "i_pitrat1",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(drgru = 1)",
+          "Comp_perTU": "$tin_stdrate23",
+          "Output_Var": "i_pitrat2",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_gtstotinc > 0)",
+          "Comp_perTU": "i_gtstax * i_ysebsps / i_gtstotinc",
+          "Output_Var": "i_tinsebs",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_tinsels + i_tinsebs",
+          "Output_Var": "i_tinse",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tscct_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_csic1 + i_csic2a + i_csic2b + i_csic3 + i_csic5",
+          "Output_Var": "tscct_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_csic1": "0",
+          "i_csic2a": "0",
+          "i_csic2b": "0",
+          "i_csic3": "0",
+          "i_csic5": "0"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "n/a",
+        "params": {
+          "Base": "n/a",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a",
+          "Simple_Prog": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((i_bfamamy > 0) | (i_bfaplmy > 0)) & (i_dag < 40)",
+          "Comp_perTU": "(0.38 * $AGWPY) * $tscct00_rate * (i_bfamamy + i_bfaplmy) / 12",
+          "Output_Var": "i_csic1",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tscct00_rate": "0.05",
+          "$tscct01_rate": "0.05",
+          "$tscct02_rate": "0.01"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(lunmy > 0) & (lowas = 1)",
+          "Comp_perTU": "(0.38 * $AGWPY) * $tscct01_rate * lunmy / 12",
+          "Output_Var": "i_csic2b",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(lunmy > 0) & (lowas = 1) & (i_dag < 40)",
+          "Comp_perTU": "(0.38 * $AGWPY) * $tscct00_rate * lunmy / 12",
+          "Output_Var": "i_csic2a",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bmanc_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(IsHeadOfTu#1) & (dgn = 0) & (IsParentOfDepChild#1) & (nDepChInTu#1 > 0) & (lemmy = 0) & (i_bmelse = 0) & (bfama_s + bfapl_s = 0)",
+          "TAX_UNIT": "tu_individual_hr",
+          "#_Level": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_thirdch = 0) & (i_twins = 0) & (i_minage = 1)",
+          "Comp_perElig": "i_mindmb - 1",
+          "Output_Var": "i_bmancmy",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_bmancmy": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$bmanc_amt * i_bmancmy / 12",
+          "Output_Var": "bmanc_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bfaba_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(IsHeadOfTu#1) & (IsParentOfDepChild#1) & (nDepChInTu#1 > 0)",
+          "TAX_UNIT": "tu_individual_hr",
+          "#_Level": "tu_bfaba_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$bfaba_rate * nDepChildrenInTu#1",
+          "Output_Var": "bfaba_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one",
+          "#_Level": "tu_bfaba_hr"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$bfaba_rate": "$BUB * 1.4 / 12"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bch_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefTu",
+        "switch": "on",
+        "params": {
+          "Type": "HH",
+          "Name": "tu_bch_hr",
+          "DepChildCond": "(dms = 1) & (((dag <= 14) | (dag = 15) & (dec = 2)) | ((dag >= 15) & (dag <= 19) & ((dec = 3) | (dec = 4))) | ((dag <= 21) & ((IsDisabled) | (bdi > 0))))"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$bch_thres1": "$BUB * 0.2",
+          "$bch_thres2": "$BUB * 0.4",
+          "$bch_thres3": "$BUB * 0.6",
+          "$bch_rate3": "$BUB * 0.11",
+          "$bch_rate2": "$BUB * 0.125",
+          "$bch_rate1": "$BUB * 0.14",
+          "$bch_suppl_amt2": "132.72#m",
+          "$bch_suppl_amt1": "66.36#m",
+          "$bch_thres4": "$BUB * 1.0",
+          "$bch_thres5": "$BUB * 1.4",
+          "$bch_rate4": "$BUB * 0.09",
+          "$bch_rate5": "$BUB * 0.07",
+          "$empnr": "0.917",
+          "$bch_suppl_rate2": "0.25",
+          "$bch_suppl_rate1": "0.15"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_bch",
+          "bfapl_s": "+",
+          "ysebsre": "+",
+          "yemtx": "+",
+          "ils_pen": "+",
+          "bfama_s": "+",
+          "bhl": "+",
+          "yiy": "+",
+          "ysecwre": "+",
+          "ypp": "+",
+          "ypr": "+",
+          "bmanc_s": "+",
+          "ils_sicee": "-",
+          "tmu_s": "n/a",
+          "tin_s": "-",
+          "ils_sicse": "-",
+          "ysv": "+",
+          "bunct_s": "+",
+          "ils_sicot": "-",
+          "bwkmc_s": "n/a",
+          "kfbtx": "+",
+          "ymc": "+"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "(il_bch * $empnr) / nPersInUnit",
+          "Output_Var": "i_bchYpHM",
+          "TAX_UNIT": "tu_bch_hr"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_bchYpHM": "0",
+          "i_npadis": "0",
+          "i_nchdis": "0",
+          "i_bchbasic": "0",
+          "i_bchprons": "0",
+          "i_bchothers": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bchYpHM > $bch_thres4) & (i_bchYpHM <= $bch_thres5)",
+          "Comp_perTU": "$bch_rate5 * nDepChildrenInTu",
+          "Output_Var": "bch_s",
+          "TAX_UNIT": "tu_bch_hr",
+          "Result_Var": "i_bchbasic"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Add_Var": "bch_s",
+          "TAX_UNIT": "tu_bch_hr",
+          "Result_Var": "i_bchothers"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(IsParentOfDepChild) & ((IsDisabled) | (bdi#1 > 0))",
+          "Comp_perElig": "1",
+          "Output_Var": "i_npadis",
+          "TAX_UNIT": "tu_bch_hr",
+          "#_Level": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(IsDepChild) & ((IsDisabled) | (bdi#1 > 0))",
+          "Comp_perElig": "1",
+          "Output_Var": "i_nchdis",
+          "TAX_UNIT": "tu_bch_hr",
+          "#_Level": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Output_Add_Var": "bch_s",
+          "TAX_UNIT": "tu_bch_hr",
+          "Comp_perTU": "$bch_suppl_amt1",
+          "Comp_Cond": "(nDepChildrenInTu = 3) & (i_bchbasic > 0)",
+          "Result_Var": "i_bchprons"
+        }
+      }
+    ]
+  },
+  {
+    "name": "output_std_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefOutput",
+        "switch": "on",
+        "params": {
+          "TAX_UNIT": "tu_individual_hr",
+          "VarGroup": "id*",
+          "ILGroup": "ils_*",
+          "UnitInfo_TU": "n/a",
+          "UnitInfo_Id": "n/a",
+          "File": "HR_2025_std"
+        }
+      }
+    ]
+  },
+  {
+    "name": "output_std_hh_hr",
+    "switch": "off",
+    "functions": [
+      {
+        "name": "DefOutput",
+        "switch": "on",
+        "params": {
+          "File": "HR_2025_std_hh",
+          "TAX_UNIT": "tu_hh_oecd_co",
+          "Var": "idhh",
+          "ILGroup": "ils_*"
+        }
+      }
+    ]
+  },
+  {
+    "name": "InitVars_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "0",
+          "Output_Var": "bfama_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "0",
+          "Output_Var": "bfapl_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "0",
+          "Output_Var": "bmanc_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "0",
+          "Output_Var": "bunct_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tmu_hr",
+    "switch": "n/a",
+    "functions": [
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "n/a",
+        "params": {
+          "i_tmuMSS": "n/a",
+          "i_tmuse": "n/a",
+          "i_tmuPE": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tin_hr",
+    "switch": "on",
+    "functions": []
+  },
+  {
+    "name": "ildef_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_tsceepi",
+          "tsceepi02_s": "+",
+          "tsceepi01_s": "+",
+          "tsceepi00_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_tscsebupi",
+          "tscsebupi02_s": "+",
+          "tscsebupi01_s": "+",
+          "tscsebupi00_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_tscsecwpi",
+          "tscsecwpi02_s": "+",
+          "tscsecwpi01_s": "+",
+          "tscsecwpi00_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_sicsebs",
+          "tscsebusi00_s": "+",
+          "tscsebusi01_s": "n/a",
+          "tscsebupi00_s": "+",
+          "tscsebupi01_s": "+",
+          "tscsebupi02_s": "+",
+          "tscseui_s": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_sicsecw",
+          "tscsecwpi00_s": "+",
+          "tscsecwpi01_s": "+",
+          "tscsecwpi02_s": "+",
+          "tscsecwsi00_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_taxableY",
+          "ils_pen": "+",
+          "ysebsre": "+",
+          "yem": "+",
+          "ysecwre": "+",
+          "ypr": "n/a",
+          "yiy": "n/a",
+          "il_tscsecwpi": "-",
+          "il_sicsebs": "-",
+          "il_tsceepi": "-",
+          "tscbesi_s": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_taxableYDR",
+          "il_taxableY": "+",
+          "bhl": "+",
+          "bed": "n/a",
+          "ypp": "+",
+          "bmanc_s": "+",
+          "bfapl_s": "+",
+          "bfama_s": "+",
+          "bunct_s": "+",
+          "yiy": "+",
+          "ypr": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_taxableYDC",
+          "il_taxableYDR": "+",
+          "psu": "-"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_pentx",
+          "poatx": "+",
+          "pditx": "+",
+          "psutx": "+"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Def_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "UpdateTu",
+        "switch": "on",
+        "params": {
+          "Name": "tu_tin_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bhout_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$bhout_max_amt": "70#m"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_ambdi": "0",
+          "i_bdipda": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(bdimy > 0)",
+          "Comp_perTU": "12 * bdi / bdimy",
+          "Output_Var": "i_ambdi",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_ambdi >= 200#m)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_bdipda",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(bsa_s > 0) | (i_bdipda > 0) | (boamt_s > 0)",
+          "Comp_perTU": "min($bhout_max_amt, xhcot)",
+          "Output_Var": "bhout_s",
+          "TAX_UNIT": "tu_household_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bfama_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_child3": "0",
+          "i_minage": "0",
+          "i_minagechild": "0",
+          "i_IncBaseSE": "0",
+          "i_BfmBeeR": "0",
+          "i_tinSE": "0",
+          "i_sicSE": "0",
+          "i_BfmBse": "0",
+          "i_BfmBeeN": "0",
+          "i_yempr": "0",
+          "i_tscempr": "0",
+          "i_tinempr": "0",
+          "i_bmelse": "0",
+          "i_BfmBee": "0",
+          "i_bfanch01": "0",
+          "i_bfanch": "0",
+          "i_bfanch21": "0",
+          "i_bfanch11": "0",
+          "i_mindmbchild": "0",
+          "i_bfanch31": "0",
+          "i_twins": "0",
+          "i_thirdch": "0",
+          "i_mindmb": "0",
+          "i_triplets": "0",
+          "i_bfamamy0": "0",
+          "i_bfama": "0",
+          "i_bfamamy": "0",
+          "i_bfanch32": "0",
+          "i_bfanch22": "0",
+          "i_bfanch12": "0",
+          "i_bfanch02": "0",
+          "i_bfanch34": "0",
+          "i_bfanch33": "0",
+          "i_bfanch24": "0",
+          "i_bfanch23": "0",
+          "i_bfanch14": "0",
+          "i_bfanch13": "0",
+          "i_bfanch04": "0",
+          "i_bfanch03": "0",
+          "i_dagalt": "0",
+          "i_dmb0": "0",
+          "i_yemre": "0",
+          "i_tscemre": "0",
+          "i_tinemre": "0"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(HasMinValInTu#1) & (IsDepChild)",
+          "TAX_UNIT": "tu_bfapl_hr",
+          "#_Val": "i_dagalt"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "dag",
+          "Output_Var": "i_minagechild",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_twins = 0) & (i_triplets = 1)",
+          "Comp_perTU": "i_minagechild / 3",
+          "Output_Var": "i_minage",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_IncBaseSE - i_sicSE - i_tinSE",
+          "Output_Var": "i_BfmBse",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "on",
+        "params": {
+          "Base": "i_IncBaseSE - i_sicSE - tinta00_s",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "i_pitrat2",
+          "Output_Var": "i_tinSE",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "($tsceepi00_rate + $tscersi00_rate) * i_IncBaseSE",
+          "Output_Var": "i_sicSE",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_pro1A = 1)",
+          "Comp_perTU": "$AGWPY * $tscsebusi00_pro1A_base",
+          "Output_Var": "i_IncBaseSE",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yemre - i_tscemre - i_tinemre",
+          "Output_Var": "i_BfmBeeR",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "yivwg * 174",
+          "Output_Var": "i_yempr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tsceepi00_rate * i_yempr",
+          "Output_Var": "i_tscempr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "on",
+        "params": {
+          "Base": "i_yempr - i_tscempr - (tinta00_s + tintach_s + tintadp_s + tintadb_s)",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "i_pitrat2",
+          "Output_Var": "i_tinempr",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_yempr - i_tscempr - i_tinempr",
+          "Output_Var": "i_BfmBeeN",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_farmA = 1) | (i_pro1A = 1) | (i_pro2A = 1) | (i_tradA = 1) | (i_tradB = 1)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_bmelse",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(yemmy = 0)",
+          "Comp_perTU": "i_BfmBeeN",
+          "Output_Var": "i_BfmBee",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(IsOwnChild) | (IsLooseDepChild)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch",
+          "TAX_UNIT": "tu_bfapl_broad_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag<=0) & (dmb >= 1) & (dmb <= 3)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch01",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 1) & (dmb >= 1) & (dmb <= 3)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch11",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 2) & (dmb >= 1) & (dmb <= 3)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch21",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "dmb",
+          "Output_Var": "i_mindmbchild",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfanch01 = 2) | (i_bfanch02 = 2) | (i_bfanch03 = 2) | (i_bfanch04 = 2) | (i_bfanch11 = 2) | (i_bfanch12 = 2) | (i_bfanch13 = 2) | (i_bfanch14 = 2) | (i_bfanch21 = 2) | (i_bfanch22 = 2) | (i_bfanch23 = 2) | (i_bfanch24 = 2) | (i_bfanch31 = 2) | (i_bfanch32 = 2) | (i_bfanch33 = 2) | (i_bfanch34 = 2)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_twins",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfanch > 2)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_thirdch",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_twins = 0) & (i_triplets = 1)",
+          "Comp_perTU": "i_mindmbchild / 3",
+          "Output_Var": "i_mindmb",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 3) & (dmb >= 1) & (dmb <= 3)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch31",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfanch01 = 3) | (i_bfanch02 = 3) | (i_bfanch03 = 3) | (i_bfanch04 = 3) | (i_bfanch11 = 3) | (i_bfanch12 = 3) | (i_bfanch13 = 3) | (i_bfanch14 = 3) | (i_bfanch21 = 3) | (i_bfanch22 = 3) | (i_bfanch23 = 3) | (i_bfanch24 = 3) | (i_bfanch31 = 3) | (i_bfanch32 = 3) | (i_bfanch33 = 3) | (i_bfanch34 = 3)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_triplets",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_bfama * i_bfamamy / 12",
+          "Output_Var": "bfama_s",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_bfamamy0",
+          "Output_Var": "i_bfamamy",
+          "TAX_UNIT": "tu_individual_hr",
+          "LowLim": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((lemmy > 0) | (les = 3)) & (liwwh >= 12)",
+          "Comp_perElig": "i_BfmBee",
+          "Output_Var": "i_bfama",
+          "TAX_UNIT": "tu_individual_hr",
+          "Who_Must_Be_Elig": "one",
+          "LowLim": "$bfama_min_amt"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(IsHeadOfTu#1) & (dgn = 0) & (IsParentOfDepChild#1) & (nDepChInTu#1 > 0) & ((lemmy > 0) | (les = 3) | (i_bmelse = 1))",
+          "TAX_UNIT": "tu_individual_hr",
+          "#_Level": "tu_bfama_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag<=0) & (dmb >= 4) & (dmb <= 6)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch02",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 1) & (dmb >= 4) & (dmb <= 6)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch12",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 2) & (dmb >= 4) & (dmb <= 6)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch22",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 3) & (dmb >= 4) & (dmb <= 6)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch32",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag<=0) & (dmb >= 7) & (dmb <= 9)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch03",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag<=0) & (dmb >= 10) & (dmb <= 12)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch04",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 1) & (dmb >= 10) & (dmb <= 12)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch14",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 1) & (dmb >= 7) & (dmb <= 9)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch13",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 2) & (dmb >= 10) & (dmb <= 12)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch24",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 2) & (dmb >= 7) & (dmb <= 9)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch23",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 3) & (dmb >= 10) & (dmb <= 12)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch34",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "((IsOwnDepChild) | (IsLooseDepChild)) & (dag = 3) & (dmb >= 7) & (dmb <= 9)",
+          "Comp_perElig": "1",
+          "Output_Var": "i_bfanch33",
+          "TAX_UNIT": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "100 * dag + dmb",
+          "Output_Var": "i_dagalt",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$bfapl_min_amt": "$BUB * 1.59",
+          "$bfapl_max_amt": "$BUB * 6.8",
+          "$bfama_min_amt": "$BUB * 1.59",
+          "$bfafh_min_amt": "$BUB * 1.59",
+          "$bmanc_amt": "$BUB * 1.14"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(yemmy > 0)",
+          "Comp_perTU": "12 * (yemtx + kfbtx) / yemmy",
+          "Output_Var": "i_yemre",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "$tsceepi00_rate * i_yemre",
+          "Output_Var": "i_tscemre",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "on",
+        "params": {
+          "Base": "i_yemre - i_tscemre - (tinta00_s + tintach_s + tintadp_s + tintadb_s)",
+          "Band_UpLim": "n/a",
+          "Band_Rate": "n/a",
+          "LowLim": "0",
+          "Output_Var": "i_tinemre",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfama > 0) & (i_minage = 0) & ((i_mindmb >= 1) & (i_mindmb <= 7))",
+          "Comp_perElig": "0",
+          "Output_Var": "i_bfamamy0",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bfapl_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_bfapl": "0",
+          "i_bfaplmy0": "n/a",
+          "i_bfaplmy": "0",
+          "i_bfaplmo": "0",
+          "i_bfaplfh": "0",
+          "i_bfaplmyA0": "0",
+          "i_bfaplmyA": "0",
+          "i_bfaplmomyA0": "0",
+          "i_bfaplmomyA": "0",
+          "i_bfaplfhmyA0": "0",
+          "i_bfaplfhmyA": "0",
+          "i_bfaplmomyB0": "0",
+          "i_bfaplmomyB": "0",
+          "i_bfaplA": "0",
+          "i_bfaplmoA": "0",
+          "i_bfaplfhA": "0",
+          "i_bfaplmoB": "0",
+          "i_bfapl_fhm": "0",
+          "i_bfapl_fhp": "0",
+          "i_bfaplfhA2": "0",
+          "i_bfaplfhA4": "0"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(IsHeadOfTu#1) & (dgn = 0) & (IsParentOfDepChild#1) & (nDepChInTu#1 > 0) & ((lemmy > 0) | (les = 3) | (i_bmelse = 1))",
+          "TAX_UNIT": "tu_individual_hr",
+          "#_Level": "tu_bfapl_hr"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$bfapl_randthres1": "0.06",
+          "$bfapl_randthres2": "0.15"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Comp_Cond": "(liwwh < 12)",
+          "Comp_perElig": "$bfapl_min_amt",
+          "LowLim": "$bfapl_min_amt",
+          "UpLim": "$bfapl_max_amt",
+          "Output_Var": "i_bfaplmo",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(IsPartnerOfHeadOfTu#1) & (dgn = 1) & (IsParentOfDepChild#1) & (nDepChInTu#1 > 0) & ((lemmy > 0) | (les = 3) | (i_bmelse = 1)) & (i_bfaplmo#1 > 0)",
+          "#_Level": "tu_bfapl_hr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Comp_Cond": "(liwwh < 12)",
+          "Comp_perElig": "$bfapl_min_amt",
+          "LowLim": "$bfapl_min_amt",
+          "UpLim": "$bfapl_max_amt",
+          "Output_Var": "i_bfaplfh",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfaplfh > 0)",
+          "Comp_perTU": "0",
+          "Output_Var": "i_bfapl_fhm",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfapl_fhm > 0)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_bfapl_fhp",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfaplmo > 0) & (i_minage = 1) & (i_mindmb >= 7)",
+          "Comp_perElig": "6 + 2 * i_bfapl_fhp#1",
+          "#_Level": "tu_bfapl_hr",
+          "Output_Var": "i_bfaplmyA0",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "round((1 - i_bfapl_fhm#1 / 8) * i_bfaplmyA0)",
+          "#_Level": "tu_bfapl_hr",
+          "Output_Var": "i_bfaplmomyA0",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "min(i_bfaplmomyA0, 12 - i_bfamamy)",
+          "LowLim": "0",
+          "Output_Var": "i_bfaplmomyA",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfapl_fhp = 1)",
+          "Comp_perElig": "i_bfaplmyA0#1 - i_bfaplmomyA0#1",
+          "#_Level": "tu_bfapl_hr",
+          "Output_Var": "i_bfaplfhmyA0",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_bfaplfhmyA0",
+          "LowLim": "0",
+          "Output_Var": "i_bfaplfhmyA",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfaplmo > 0) & ((i_thirdch = 1) | (i_twins = 1)) & (i_minage = 3)",
+          "Comp_perElig": "i_mindmb - 1",
+          "#_Level": "tu_bfapl_hr",
+          "Output_Var": "i_bfaplmomyB0",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "min(i_bfaplmomyB0, 12  - i_bfamamy - i_bfaplmomyA)",
+          "LowLim": "0",
+          "Output_Var": "i_bfaplmomyB",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfaplmo > 0) & (i_bfaplmomyA > 0)",
+          "Comp_perElig": "i_bfaplmo * i_bfaplmomyA",
+          "Output_Var": "i_bfaplmoA",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfaplfh > 0) & (i_bfaplfhmyA > 0)",
+          "Comp_perElig": "i_bfaplfh * i_bfaplfhmyA",
+          "Output_Var": "i_bfaplfhA",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfaplmo > 0) & (i_bfaplmomyB > 0)",
+          "Comp_perElig": "$bfapl_min_amt * i_bfaplmomyB",
+          "Output_Var": "i_bfaplmoB",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "(i_bfaplmoA + i_bfaplfhA + i_bfaplmoB) / 12",
+          "Output_Var": "bfapl_s",
+          "UpLim": "$bfapl_max_amt",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_bfaplmomyA + i_bfaplfhmyA + i_bfaplmomyB",
+          "LowLim": "0",
+          "Output_Var": "i_bfaplmy",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "(i_bfaplmoA + i_bfaplfhA) / 12",
+          "LowLim": "0",
+          "Output_Var": "i_bfaplA",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfaplfhA > 0) & (i_bfapl_fhm = 2)",
+          "Comp_perTU": "i_bfaplfhA",
+          "Output_Var": "i_bfaplfhA2",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfaplfhA > 0) & (i_bfapl_fhm = 4)",
+          "Comp_perTU": "i_bfaplfhA",
+          "Output_Var": "i_bfaplfhA4",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "ilsUDBdef_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_boa",
+          "poa": "+",
+          "boa": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_bsu",
+          "psu": "+",
+          "bsu": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_bdi",
+          "pdi": "+",
+          "bdi": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_bun",
+          "bunct_s": "+",
+          "bunot": "+",
+          "bwkmc_s": "n/a"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_bhl",
+          "bhl": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_bed",
+          "bed": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_bsa",
+          "bsa_s": "+",
+          "bsaot": "+",
+          "bhout_s": "+",
+          "boamt_s": "+",
+          "boatu00_s": "+",
+          "buntu_s": "n/a",
+          "bchtu_s": "n/a",
+          "bsatu_s": "n/a",
+          "bditu_s": "n/a",
+          "boatu01_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_bfa",
+          "bch_s": "+",
+          "bfama_s": "+",
+          "bmanc_s": "+",
+          "bfapl_s": "+",
+          "bfaba_s": "+",
+          "bfaot": "+",
+          "bfafh_s": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_bho",
+          "bho": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_yem",
+          "yemtx": "+",
+          "yst": "+",
+          "yemnt": "+",
+          "ymc": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_yse",
+          "ysebsnr": "+",
+          "ysecwre": "+",
+          "ysebsre": "+",
+          "ysecwnr": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_yiy",
+          "yiy": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_ypp",
+          "ypp": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_ypr",
+          "ypr": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_yot",
+          "yot": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_ypt",
+          "ypt": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_xmp",
+          "xmp00": "+",
+          "xmpam": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_kfbcc",
+          "kfbcc": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_tpr",
+          "tpr": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_tis",
+          "tin_s": "+",
+          "ils_sicse": "+",
+          "ils_sicee": "+",
+          "tmu_s": "n/a",
+          "ils_sicot": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_udb_yds",
+          "ils_udb_yem": "+",
+          "ils_udb_tis": "-",
+          "ils_udb_tpr": "-",
+          "ils_udb_xmp": "-",
+          "ils_udb_yiy": "+",
+          "ils_udb_kfbcc": "+",
+          "ils_udb_yot": "+",
+          "ils_udb_ypt": "+",
+          "ils_udb_ypr": "+",
+          "ils_udb_ypp": "+",
+          "ils_udb_boa": "+",
+          "ils_udb_bsu": "+",
+          "ils_udb_bdi": "+",
+          "ils_udb_bun": "+",
+          "ils_udb_bhl": "+",
+          "ils_udb_bed": "+",
+          "ils_udb_bsa": "+",
+          "ils_udb_bfa": "+",
+          "ils_udb_bho": "+",
+          "ils_udb_yse": "+"
+        }
+      }
+    ]
+  },
+  {
+    "name": "random_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "32156"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_rn_sic1",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "25832"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_rn_sic2",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "34685"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_mc_rand_1",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "18903"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_mc_rand_2",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "13453"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_lma1",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "16576"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_lma2",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_lmamy",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "20345"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_mc_rand_1": "0",
+          "i_mc_rand_2": "0",
+          "i_mc_rand_3": "0",
+          "i_rn_sic1": "0",
+          "i_rn_sic2": "0",
+          "i_lma1": "0",
+          "i_lma2": "0",
+          "i_lmamy": "0",
+          "i_rn_sic3": "0",
+          "i_rn_bfapl": "0",
+          "i_bsa_rand": "0"
+        }
+      },
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "18904"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_mc_rand_3",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "82354"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_rn_sic3",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "734512"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_rn_bfapl",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "RandSeed",
+        "switch": "on",
+        "params": {
+          "Seed": "734515"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "rand",
+          "Output_Var": "i_bsa_rand",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "TransLMA_hr",
+    "switch": "off",
+    "functions": [
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(yemmy = 0) & (ysemy = 0) & (dag > 17) & (dag < 65) & (les = 5)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Comp_Cond": "(deh = 5) & (dgn = 1) & (i_lma1 < $ur_dgn1_deh3_ee)",
+          "Comp_perTU": "1",
+          "Output_Var": "lma",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(yemmy > 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Comp_Cond": "(deh = 5) & (dgn = 1) & (i_lma1 < $er_dgn1_deh3_ee)",
+          "Comp_perTU": "2",
+          "Output_Add_Var": "lma",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(ysemy > 0) & (yemmy = 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Comp_Cond": "dgn = 1 & (i_lma2 < $er_dgn1_se)",
+          "Comp_perTU": "2",
+          "Output_Add_Var": "lma",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(lma = 1)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Formula": "(yivwg * $lhw * 52/12)",
+          "Output_Var": "yem_a",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(lma = 1) | (lma = 5)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Formula": "$lhw",
+          "Output_Var": "lhw_a",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(lma=2) & (ysemy > 0) & (yemmy = 0)",
+          "Comp_perTU": "0",
+          "Output_Var": "yemmy_a",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$er_dgn0_deh1_ee": "0.00",
+          "$er_dgn0_deh2_ee": "0.00",
+          "$er_dgn0_deh3_ee": "0.00",
+          "$er_dgn1_deh1_ee": "0.00",
+          "$er_dgn1_deh2_ee": "0.00",
+          "$er_dgn1_deh3_ee": "0.00",
+          "$ur_yemmy8": "0.00",
+          "$ur_dgn0_deh1_ee": "0.00",
+          "$ur_dgn0_deh2_ee": "0.00",
+          "$ur_dgn0_deh3_ee": "0.00",
+          "$ur_dgn1_deh1_ee": "0.00",
+          "$ur_dgn1_deh2_ee": "0.00",
+          "$ur_dgn1_deh3_ee": "0.00",
+          "$er_dgn0_se": "0.00",
+          "$er_dgn1_se": "0.00",
+          "$er_yemmy2": "0.00",
+          "$er_yemmy5": "0.00",
+          "$er_yemmy8": "0.00",
+          "$ur_yemmy2": "0.00",
+          "$ur_yemmy5": "0.00",
+          "Run_Cond": "GetDataIncomeYear = 2019"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_lmc": "0"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$sh_mcee_l1_dgn0": "0",
+          "$sh_mcee_l2_dgn0": "0",
+          "$sh_mcee_l3_dgn0": "0",
+          "$sh_mcee_l4_dgn0": "0",
+          "$sh_mcee_l5_dgn0": "0",
+          "$sh_mcee_l1_dgn1": "0",
+          "$sh_mcee_l2_dgn1": "0",
+          "$sh_mcee_l3_dgn1": "0",
+          "$sh_mcee_l4_dgn1": "0",
+          "$sh_mcee_l5_dgn1": "0",
+          "$sh_mceemy_1": "0",
+          "$sh_mceemy_2": "0",
+          "$sh_mceemy_3": "0",
+          "$sh_mceemy_4": "0",
+          "$sh_mceemy_5": "0",
+          "$sh_mceemy_6": "0",
+          "$sh_mceemy_7": "0",
+          "$sh_mceemy_8": "0",
+          "$sh_mceemy_9": "0",
+          "$sh_0hours_ee": "0",
+          "$sh_15hours_ee": "0",
+          "$sh_45hours_ee": "0",
+          "Run_Cond": "GetDataIncomeYear = 2019"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$sh_mcse_l1_dgn0": "0",
+          "$sh_mcse_l2_dgn0": "0",
+          "$sh_mcse_l3_dgn0": "0",
+          "$sh_mcse_l4_dgn0": "0",
+          "$sh_mcse_l5_dgn0": "0",
+          "$sh_mcse_l1_dgn1": "0",
+          "$sh_mcse_l2_dgn1": "0",
+          "$sh_mcse_l3_dgn1": "0",
+          "$sh_mcse_l4_dgn1": "0",
+          "$sh_mcse_l5_dgn1": "0",
+          "$sh_mcsemy_1": "0",
+          "$sh_mcsemy_2": "0",
+          "$sh_mcsemy_3": "0",
+          "$sh_mcsemy_4": "0",
+          "$sh_mcsemy_5": "0",
+          "$sh_mcsemy_6": "0",
+          "$sh_mcsemy_7": "0",
+          "$sh_mcsemy_8": "0",
+          "$sh_mcsemy_9": "0",
+          "$sh_0hours_se": "0",
+          "$sh_15hours_se": "0",
+          "$sh_45hours_se": "0",
+          "Run_Cond": "GetDataIncomeYear = 2019"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Add_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$er_dgn0_deh1_ee": "0.00",
+          "$er_dgn0_deh2_ee": "0.00",
+          "$er_dgn0_deh3_ee": "0.00",
+          "$er_dgn1_deh1_ee": "0.00",
+          "$er_dgn1_deh2_ee": "0.00",
+          "$er_dgn1_deh3_ee": "0.00",
+          "$ur_yemmy8": "0.00",
+          "$ur_dgn0_deh1_ee": "0.00",
+          "$ur_dgn0_deh2_ee": "0.00",
+          "$ur_dgn0_deh3_ee": "0.00",
+          "$ur_dgn1_deh1_ee": "0.00",
+          "$ur_dgn1_deh2_ee": "0.00",
+          "$ur_dgn1_deh3_ee": "0.00",
+          "$er_dgn0_se": "0.00",
+          "$er_dgn1_se": "0.00",
+          "$er_yemmy2": "0.00",
+          "$er_yemmy5": "0.00",
+          "$er_yemmy8": "0.00",
+          "$ur_yemmy2": "0.00",
+          "$ur_yemmy5": "0.00",
+          "Run_Cond": "GetDataIncomeYear != 2019"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$sh_mcee_l1_dgn0": "0",
+          "$sh_mcee_l2_dgn0": "0",
+          "$sh_mcee_l3_dgn0": "0",
+          "$sh_mcee_l4_dgn0": "0",
+          "$sh_mcee_l5_dgn0": "0",
+          "$sh_mcee_l1_dgn1": "0",
+          "$sh_mcee_l2_dgn1": "0",
+          "$sh_mcee_l3_dgn1": "0",
+          "$sh_mcee_l4_dgn1": "0",
+          "$sh_mcee_l5_dgn1": "0",
+          "$sh_mceemy_1": "0",
+          "$sh_mceemy_2": "0",
+          "$sh_mceemy_3": "0",
+          "$sh_mceemy_4": "0",
+          "$sh_mceemy_5": "0",
+          "$sh_mceemy_6": "0",
+          "$sh_mceemy_7": "0",
+          "$sh_mceemy_8": "0",
+          "$sh_mceemy_9": "0",
+          "$sh_0hours_ee": "0",
+          "$sh_15hours_ee": "0",
+          "$sh_45hours_ee": "0",
+          "Run_Cond": "GetDataIncomeYear != 2019"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$sh_mcse_l1_dgn0": "0",
+          "$sh_mcse_l2_dgn0": "0",
+          "$sh_mcse_l3_dgn0": "0",
+          "$sh_mcse_l4_dgn0": "0",
+          "$sh_mcse_l5_dgn0": "0",
+          "$sh_mcse_l1_dgn1": "0",
+          "$sh_mcse_l2_dgn1": "0",
+          "$sh_mcse_l3_dgn1": "0",
+          "$sh_mcse_l4_dgn1": "0",
+          "$sh_mcse_l5_dgn1": "0",
+          "$sh_mcsemy_1": "0",
+          "$sh_mcsemy_2": "0",
+          "$sh_mcsemy_3": "0",
+          "$sh_mcsemy_4": "0",
+          "$sh_mcsemy_5": "0",
+          "$sh_mcsemy_6": "0",
+          "$sh_mcsemy_7": "0",
+          "$sh_mcsemy_8": "0",
+          "$sh_mcsemy_9": "0",
+          "$sh_0hours_se": "0",
+          "$sh_15hours_se": "0",
+          "$sh_45hours_se": "0",
+          "Run_Cond": "GetDataIncomeYear != 2019"
+        }
+      }
+    ]
+  },
+  {
+    "name": "selfemp_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_fawo": "0",
+          "i_farmA": "0",
+          "i_farmC": "0",
+          "i_farmD": "0",
+          "i_pro1A": "0",
+          "i_pro2A": "0",
+          "i_tradA": "0",
+          "i_septx": "0",
+          "i_tradB": "0",
+          "i_tradE": "0",
+          "i_sepA": "0"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(ysebsre > 0) & (lsemy > 0) & (lesse = 1)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_farmA",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(ysebsre > 0) & (lsemy > 0) & (lesse = 2)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_farmC",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(ysebsre > 0) & (lsemy > 0) & (lesse = 3)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_farmD",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(ysebsre > 0) & (lsemy > 0) & (lesse = 4)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_pro1A",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(ysebsre > 0) & (lsemy > 0) & (lesse = 5)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_pro2A",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(ysebsre > 0) & (lsemy > 0) & (lesse = 6)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_tradA",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_farmA + i_farmC + i_farmD + i_pro1A + i_pro2A + i_tradA + i_tradB",
+          "Output_Var": "i_septx",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(ysebsre > 0) & (lsemy > 0) & (lesse = 7)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_tradB",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(lsemy > 0) & (lesse = 8)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_tradE",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "i_farmA + i_pro1A + i_pro2A + i_tradA",
+          "Output_Var": "i_sepA",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "covidcomp_hr",
+    "switch": "off",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "n/a",
+        "params": {
+          "i_yem_orig": "n/a",
+          "Var_Monetary": "n/a",
+          "i_kfb_orig": "n/a",
+          "i_ysebsre_orig": "n/a",
+          "i_bwkmcee_s": "n/a",
+          "i_bwkmcse_s": "n/a",
+          "i_yemmy_orig": "n/a",
+          "i_ysemy_orig": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tco_hr",
+    "switch": "off",
+    "functions": [
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tco_v_02111": "$tco_base_v_02111",
+          "$tco_v_02121": "$tco_base_v_02121",
+          "$tco_v_02122": "$tco_base_v_02122",
+          "$tco_v_02131": "$tco_base_v_02131",
+          "$tco_v_02211": "$tco_base_v_02211",
+          "$tco_v_02212": "$tco_base_v_02212",
+          "$tco_v_02213": "$tco_base_v_02213",
+          "$tco_v_04511": "$tco_base_v_04511",
+          "$tco_v_04521": "$tco_base_v_04521",
+          "$tco_v_04522": "$tco_base_v_04522",
+          "$tco_v_04531": "$tco_base_v_04531",
+          "$tco_v_04541": "$tco_base_v_04541",
+          "$tco_v_07221": "$tco_base_v_07221"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tco_a_04531": "1.00*$tco_a_04531a + 0.00*$tco_a_04531b + 0.00*$tco_a_04531c",
+          "$tco_a_07221": "0.50*(0*$tco_a_07221a1+$tco_a_07221a2) + 0.00*$tco_a_07221b + 0.50*$tco_a_07221c + 0.00*$tco_a_07221d + 0.00*$tco_a_07221e",
+          "$tco_a_02121": "0.95*$tco_a_02121a +0.025*$tco_a_02121b +0.025*$tco_a_02121c"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tco_base_q_07221": "0.50*$tco_base_q_07221a + 0.00*$tco_base_q_07221b + 0.50*$tco_base_q_07221c + 0.00*$tco_base_q_07221d + 0.00*$tco_base_q_07221e",
+          "$tco_base_q_04531": "1.00*$tco_base_q_04531a + 0.00*$tco_base_q_04531b + 0.00*$tco_base_q_04531c",
+          "$tco_base_q_02131": "($tco_base_q_02131t)* 100 / 5",
+          "$tco_base_q_02122": "$tco_base_q_02122t * 100",
+          "$tco_base_q_02121": "(0.90*$tco_base_q_02121t1+ 0.05*$tco_base_q_02121t2 + 0.05*$tco_base_q_02121t3)* 100",
+          "$tco_base_q_02111": "$tco_base_q_02111t / 40% * 100",
+          "$tco_base_a_07221": "0.50*(0*$tco_base_a_07221a1+$tco_base_a_07221a2) + 0.00*$tco_base_a_07221b + 0.50*$tco_base_a_07221c + 0.00*$tco_base_a_07221d + 0.00*$tco_base_a_07221e",
+          "$tco_base_a_04531": "1.00*$tco_base_a_04531a + 0.00*$tco_base_a_04531b + 0.00*$tco_base_a_04531c",
+          "$tco_base_a_02121": "0.95*$tco_base_a_02121a + 0.025*$tco_base_a_02121b + 0.025*$tco_base_a_02121c"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_xs_exc",
+          "xs07221": "+",
+          "xs04541": "+",
+          "xs04531": "+",
+          "xs04522": "+",
+          "xs04521": "+",
+          "xs04511": "+",
+          "xs02213": "+",
+          "xs02212": "+",
+          "xs02211": "+",
+          "xs02131": "+",
+          "xs02122": "+",
+          "xs02121": "+",
+          "xs02111": "+",
+          "Warn_If_NonMonetary": "no"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tco_t_01111": "$tco_t_std",
+          "$tco_t_01112": "$tco_t_red2",
+          "$tco_t_01113": "$tco_t_std",
+          "$tco_t_01114": "$tco_t_std",
+          "$tco_t_01115": "$tco_t_std",
+          "$tco_t_01116": "$tco_t_std",
+          "$tco_t_01121": "$tco_t_red2",
+          "$tco_t_01122": "$tco_t_red2",
+          "$tco_t_01123": "$tco_t_red2",
+          "$tco_t_01124": "$tco_t_red2",
+          "$tco_t_01125": "$tco_t_red2",
+          "$tco_t_01126": "$tco_t_std",
+          "$tco_t_01127": "$tco_t_red2",
+          "$tco_t_01131": "$tco_t_red2",
+          "$tco_t_01132": "$tco_t_red2",
+          "$tco_t_01133": "$tco_t_std",
+          "$tco_t_01134": "$tco_t_std",
+          "$tco_t_01141": "$tco_t_red2",
+          "$tco_t_01142": "$tco_t_red2",
+          "$tco_t_01143": "$tco_t_red2",
+          "$tco_t_01144": "$tco_t_std",
+          "$tco_t_01145": "$tco_t_std",
+          "$tco_t_01146": "$tco_t_std",
+          "$tco_t_01147": "$tco_t_red2",
+          "$tco_t_01151": "$tco_t_red2",
+          "$tco_t_01152": "$tco_t_red2",
+          "$tco_t_01153": "$tco_t_red2",
+          "$tco_t_01154": "$tco_t_red2",
+          "$tco_t_01155": "$tco_t_red2",
+          "$tco_t_01161": "$tco_t_red2",
+          "$tco_t_01162": "$tco_t_red2",
+          "$tco_t_01163": "$tco_t_red2",
+          "$tco_t_01164": "$tco_t_red2",
+          "$tco_t_01165": "$tco_t_red2",
+          "$tco_t_01166": "$tco_t_red2",
+          "$tco_t_01167": "$tco_t_red2",
+          "$tco_t_01168": "$tco_t_red2",
+          "$tco_t_01169": "$tco_t_red2",
+          "$tco_t_01171": "$tco_t_red2",
+          "$tco_t_01172": "$tco_t_red2",
+          "$tco_t_01173": "$tco_t_red2",
+          "$tco_t_01174": "$tco_t_red2",
+          "$tco_t_01175": "$tco_t_red2",
+          "$tco_t_01176": "$tco_t_red2",
+          "$tco_t_01177": "$tco_t_red2",
+          "$tco_t_01178": "$tco_t_red2",
+          "$tco_t_01181": "$tco_t_std",
+          "$tco_t_01182": "$tco_t_std",
+          "$tco_t_01183": "$tco_t_std",
+          "$tco_t_01184": "$tco_t_std",
+          "$tco_t_01185": "$tco_t_std",
+          "$tco_t_01186": "$tco_t_std",
+          "$tco_t_01191": "$tco_t_std",
+          "$tco_t_01192": "$tco_t_std",
+          "$tco_t_01193": "$tco_t_red2",
+          "$tco_t_01194": "$tco_t_std",
+          "$tco_t_01211": "$tco_t_std",
+          "$tco_t_01212": "$tco_t_std",
+          "$tco_t_01213": "$tco_t_std",
+          "$tco_t_01221": "$tco_t_std",
+          "$tco_t_01222": "$tco_t_std",
+          "$tco_t_01223": "$tco_t_std",
+          "$tco_t_01224": "$tco_t_std",
+          "$tco_t_02111": "$tco_t_std",
+          "$tco_t_02121": "$tco_t_std",
+          "$tco_t_02122": "$tco_t_std",
+          "$tco_t_02131": "$tco_t_std",
+          "$tco_t_02211": "$tco_t_std",
+          "$tco_t_02212": "$tco_t_std",
+          "$tco_t_02213": "$tco_t_std",
+          "$tco_t_03111": "$tco_t_std",
+          "$tco_t_03121": "$tco_t_std",
+          "$tco_t_03122": "$tco_t_std",
+          "$tco_t_03123": "$tco_t_std",
+          "$tco_t_03131": "$tco_t_std",
+          "$tco_t_03141": "$tco_t_std",
+          "$tco_t_03211": "$tco_t_std",
+          "$tco_t_03212": "$tco_t_std",
+          "$tco_t_03213": "$tco_t_std",
+          "$tco_t_03221": "$tco_t_std",
+          "$tco_t_04111": "$tco_t_zero",
+          "$tco_t_04121": "$tco_t_zero",
+          "$tco_t_04311": "$tco_t_std",
+          "$tco_t_04321": "$tco_t_std",
+          "$tco_t_04411": "$tco_t_red1",
+          "$tco_t_04421": "$tco_t_red1",
+          "$tco_t_04431": "$tco_t_red1",
+          "$tco_t_04441": "$tco_t_std",
+          "$tco_t_04511": "$tco_t_red1",
+          "$tco_t_04521": "$tco_t_red2",
+          "$tco_t_04522": "$tco_t_std",
+          "$tco_t_04531": "$tco_t_std",
+          "$tco_t_04541": "$tco_t_std",
+          "$tco_t_04551": "$tco_t_red2",
+          "$tco_t_05111": "$tco_t_std",
+          "$tco_t_05121": "$tco_t_std",
+          "$tco_t_05131": "$tco_t_std",
+          "$tco_t_05211": "$tco_t_std",
+          "$tco_t_05311": "$tco_t_std",
+          "$tco_t_05312": "$tco_t_std",
+          "$tco_t_05313": "$tco_t_std",
+          "$tco_t_05314": "$tco_t_std",
+          "$tco_t_05315": "$tco_t_std",
+          "$tco_t_05316": "$tco_t_std",
+          "$tco_t_05317": "$tco_t_std",
+          "$tco_t_05321": "$tco_t_std",
+          "$tco_t_05331": "$tco_t_std",
+          "$tco_t_05411": "$tco_t_std",
+          "$tco_t_05412": "$tco_t_std",
+          "$tco_t_05413": "$tco_t_std",
+          "$tco_t_05414": "$tco_t_std",
+          "$tco_t_05511": "$tco_t_std",
+          "$tco_t_05521": "$tco_t_std",
+          "$tco_t_05611": "$tco_t_std",
+          "$tco_t_05612": "$tco_t_std",
+          "$tco_t_05621": "$tco_t_std",
+          "$tco_t_05622": "$tco_t_std",
+          "$tco_t_06111": "$tco_t_red2",
+          "$tco_t_06121": "$tco_t_std",
+          "$tco_t_06131": "$tco_t_red2",
+          "$tco_t_06211": "$tco_t_zero",
+          "$tco_t_06221": "$tco_t_zero",
+          "$tco_t_06231": "$tco_t_zero",
+          "$tco_t_06232": "$tco_t_zero",
+          "$tco_t_06233": "$tco_t_zero",
+          "$tco_t_06311": "$tco_t_zero",
+          "$tco_t_07111": "$tco_t_std",
+          "$tco_t_07112": "$tco_t_std",
+          "$tco_t_07121": "$tco_t_std",
+          "$tco_t_07131": "$tco_t_std",
+          "$tco_t_07141": "$tco_t_std",
+          "$tco_t_07211": "$tco_t_std",
+          "$tco_t_07221": "$tco_t_std",
+          "$tco_t_07231": "$tco_t_std",
+          "$tco_t_07241": "$tco_t_std",
+          "$tco_t_07311": "$tco_t_std",
+          "$tco_t_07321": "$tco_t_std",
+          "$tco_t_07331": "$tco_t_zero",
+          "$tco_t_07341": "$tco_t_std",
+          "$tco_t_07351": "$tco_t_std",
+          "$tco_t_07361": "$tco_t_std",
+          "$tco_t_08111": "$tco_t_zero",
+          "$tco_t_08211": "$tco_t_std",
+          "$tco_t_08311": "$tco_t_std",
+          "$tco_t_09111": "$tco_t_std",
+          "$tco_t_09112": "$tco_t_std",
+          "$tco_t_09121": "$tco_t_std",
+          "$tco_t_09122": "$tco_t_std",
+          "$tco_t_09131": "$tco_t_std",
+          "$tco_t_09141": "$tco_t_std",
+          "$tco_t_09151": "$tco_t_std",
+          "$tco_t_09211": "$tco_t_std",
+          "$tco_t_09221": "$tco_t_std",
+          "$tco_t_09222": "$tco_t_std",
+          "$tco_t_09231": "$tco_t_std",
+          "$tco_t_09311": "$tco_t_std",
+          "$tco_t_09321": "$tco_t_std",
+          "$tco_t_09331": "$tco_t_std",
+          "$tco_t_09341": "$tco_t_std",
+          "$tco_t_09351": "$tco_t_std",
+          "$tco_t_09411": "$tco_t_std",
+          "$tco_t_09421": "$tco_t_red2",
+          "$tco_t_09422": "$tco_t_std",
+          "$tco_t_09423": "$tco_t_zero",
+          "$tco_t_09424": "$tco_t_std",
+          "$tco_t_09511": "$tco_t_red2",
+          "$tco_t_09521": "$tco_t_red2",
+          "$tco_t_09531": "$tco_t_std",
+          "$tco_t_09541": "$tco_t_std",
+          "$tco_t_09611": "$tco_t_std",
+          "$tco_t_10111": "$tco_t_zero",
+          "$tco_t_10211": "$tco_t_zero",
+          "$tco_t_10311": "$tco_t_zero",
+          "$tco_t_10411": "$tco_t_zero",
+          "$tco_t_10511": "$tco_t_zero",
+          "$tco_t_11111": "$tco_t_red1",
+          "$tco_t_11112": "$tco_t_std",
+          "$tco_t_11121": "$tco_t_red1",
+          "$tco_t_11211": "$tco_t_red1",
+          "$tco_t_12111": "$tco_t_std",
+          "$tco_t_12121": "$tco_t_std",
+          "$tco_t_12131": "$tco_t_std",
+          "$tco_t_12311": "$tco_t_std",
+          "$tco_t_12321": "$tco_t_std",
+          "$tco_t_12322": "$tco_t_std",
+          "$tco_t_12411": "$tco_t_zero",
+          "$tco_t_12412": "$tco_t_zero",
+          "$tco_t_12521": "$tco_t_zero",
+          "$tco_t_12531": "$tco_t_zero",
+          "$tco_t_12541": "$tco_t_zero",
+          "$tco_t_12551": "$tco_t_zero",
+          "$tco_t_12621": "$tco_t_zero",
+          "$tco_t_12711": "$tco_t_std",
+          "Run_Cond": "GetDataCOICOPVersion=2003"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tco_t_std": "$tco_base_t_std",
+          "$tco_t_red1": "$tco_base_t_red1",
+          "$tco_t_red2": "$tco_base_t_red2",
+          "$tco_t_zero": "$tco_base_t_zero"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tco_a_07221e": "$tco_base_a_07221e",
+          "$tco_a_07221d": "$tco_base_a_07221d",
+          "$tco_a_07221c": "$tco_base_a_07221c",
+          "$tco_a_07221b": "$tco_base_a_07221b",
+          "$tco_a_07221a1": "$tco_base_a_07221a1",
+          "$tco_a_04541": "$tco_base_a_04541",
+          "$tco_a_04531c": "$tco_base_a_04531c",
+          "$tco_a_04531b": "$tco_base_a_04531b",
+          "$tco_a_04531a": "$tco_base_a_04531a",
+          "$tco_a_04522": "$tco_base_a_04522",
+          "$tco_a_04521": "$tco_base_a_04521",
+          "$tco_a_04511": "$tco_base_a_04511",
+          "$tco_a_02213": "$tco_base_a_02213",
+          "$tco_a_02212": "$tco_base_a_02212",
+          "$tco_a_02211": "$tco_base_a_02211",
+          "$tco_a_02131": "$tco_base_a_02131",
+          "$tco_a_02122": "$tco_base_a_02122",
+          "$tco_a_02121a": "$tco_base_a_02121a",
+          "$tco_a_02111": "$tco_base_a_02111",
+          "$tco_a_07221a2": "$tco_base_a_07221a2",
+          "$tco_a_02121c": "$tco_base_a_02121c",
+          "$tco_a_02121b": "$tco_base_a_02121b"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_xs_rest",
+          "xs01111": "+",
+          "Warn_If_NonMonetary": "no",
+          "xs12621": "+",
+          "xs12551": "+",
+          "xs12541": "+",
+          "xs12531": "+",
+          "xs12521": "+",
+          "xs12412": "+",
+          "xs12411": "+",
+          "xs12322": "+",
+          "xs12321": "+",
+          "xs12311": "+",
+          "xs12131": "+",
+          "xs12121": "+",
+          "xs12111": "+",
+          "xs11211": "+",
+          "xs11121": "+",
+          "xs11112": "+",
+          "xs11111": "+",
+          "xs10511": "+",
+          "xs10411": "+",
+          "xs10311": "+",
+          "xs10211": "+",
+          "xs10111": "+",
+          "xs09611": "+",
+          "xs09541": "+",
+          "xs09531": "+",
+          "xs09521": "+",
+          "xs09511": "+",
+          "xs09424": "+",
+          "xs09423": "+",
+          "xs09422": "+",
+          "xs09421": "+",
+          "xs09411": "+",
+          "xs09351": "+",
+          "xs09341": "+",
+          "xs09331": "+",
+          "xs09321": "+",
+          "xs09311": "+",
+          "xs09231": "+",
+          "xs09222": "+",
+          "xs09221": "+",
+          "xs09211": "+",
+          "xs09151": "+",
+          "xs09141": "+",
+          "xs09131": "+",
+          "xs09122": "+",
+          "xs09121": "+",
+          "xs09112": "+",
+          "xs09111": "+",
+          "xs08311": "+",
+          "xs08211": "+",
+          "xs08111": "+",
+          "xs07361": "+",
+          "xs07351": "+",
+          "xs07341": "+",
+          "xs07331": "+",
+          "xs07321": "+",
+          "xs07311": "+",
+          "xs07241": "+",
+          "xs07231": "+",
+          "xs07211": "+",
+          "xs07141": "+",
+          "xs07131": "+",
+          "xs07121": "+",
+          "xs07112": "+",
+          "xs07111": "+",
+          "xs06311": "+",
+          "xs06233": "+",
+          "xs06232": "+",
+          "xs06231": "+",
+          "xs06221": "+",
+          "xs06211": "+",
+          "xs06131": "+",
+          "xs06121": "+",
+          "xs06111": "+",
+          "xs05622": "+",
+          "xs05621": "+",
+          "xs05612": "+",
+          "xs05611": "+",
+          "xs05521": "+",
+          "xs05511": "+",
+          "xs05414": "+",
+          "xs05413": "+",
+          "xs05412": "+",
+          "xs05411": "+",
+          "xs05331": "+",
+          "xs05321": "+",
+          "xs05317": "+",
+          "xs05316": "+",
+          "xs05315": "+",
+          "xs05314": "+",
+          "xs05313": "+",
+          "xs05312": "+",
+          "xs05311": "+",
+          "xs05211": "+",
+          "xs05131": "+",
+          "xs05121": "+",
+          "xs05111": "+",
+          "xs04551": "+",
+          "xs04441": "+",
+          "xs04431": "+",
+          "xs04421": "+",
+          "xs04411": "+",
+          "xs04321": "+",
+          "xs04311": "+",
+          "xs04121": "+",
+          "xs04111": "+",
+          "xs03221": "+",
+          "xs03213": "+",
+          "xs03212": "+",
+          "xs03211": "+",
+          "xs03141": "+",
+          "xs03131": "+",
+          "xs03123": "+",
+          "xs03122": "+",
+          "xs03121": "+",
+          "xs03111": "+",
+          "xs01224": "+",
+          "xs01223": "+",
+          "xs01222": "+",
+          "xs01221": "+",
+          "xs01213": "+",
+          "xs01212": "+",
+          "xs01211": "+",
+          "xs01194": "+",
+          "xs01193": "+",
+          "xs01192": "+",
+          "xs01191": "+",
+          "xs01186": "+",
+          "xs01185": "+",
+          "xs01184": "+",
+          "xs01183": "+",
+          "xs01182": "+",
+          "xs01181": "+",
+          "xs01178": "+",
+          "xs01177": "+",
+          "xs01176": "+",
+          "xs01175": "+",
+          "xs01174": "+",
+          "xs01173": "+",
+          "xs01172": "+",
+          "xs01171": "+",
+          "xs01169": "+",
+          "xs01168": "+",
+          "xs01167": "+",
+          "xs01166": "+",
+          "xs01165": "+",
+          "xs01164": "+",
+          "xs01163": "+",
+          "xs01162": "+",
+          "xs01161": "+",
+          "xs01155": "+",
+          "xs01154": "+",
+          "xs01153": "+",
+          "xs01152": "+",
+          "xs01151": "+",
+          "xs01147": "+",
+          "xs01146": "+",
+          "xs01145": "+",
+          "xs01144": "+",
+          "xs01143": "+",
+          "xs01142": "+",
+          "xs01141": "+",
+          "xs01134": "+",
+          "xs01133": "+",
+          "xs01132": "+",
+          "xs01131": "+",
+          "xs01127": "+",
+          "xs01126": "+",
+          "xs01125": "+",
+          "xs01124": "+",
+          "xs01123": "+",
+          "xs01122": "+",
+          "xs01121": "+",
+          "xs01116": "+",
+          "xs01115": "+",
+          "xs01114": "+",
+          "xs01113": "+",
+          "xs01112": "+",
+          "xs12711": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_extstat_ittcal",
+          "il_itt_revc": "+",
+          "il_itt_excc": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_itt_excc",
+          "il_tx0211_na": "+",
+          "il_tx02121_na": "+",
+          "il_tx02122_na": "+",
+          "il_tx0213_na": "+",
+          "il_tx022_na": "+",
+          "il_tx045_na": "+",
+          "il_tx0451_na": "+",
+          "il_tx04521_na": "+",
+          "il_tx045_072_na": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_itt_revc",
+          "il_tva_na": "+",
+          "il_tx_na": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "ils_extstat_ittncal",
+          "il_itt_expnc": "+",
+          "il_itt_revnc": "+",
+          "il_itt_excnc": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_itt_excnc",
+          "il_tx0211": "+",
+          "il_tx02121": "+",
+          "il_tx02122": "+",
+          "il_tx0213": "+",
+          "il_tx022": "+",
+          "il_tx045": "+",
+          "il_tx0451": "+",
+          "il_tx04521": "+",
+          "il_tx045_072": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_itt_revnc",
+          "il_tva": "+",
+          "il_tx": "+"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_itt_expnc",
+          "il_x01": "+",
+          "il_x02": "+",
+          "il_x03": "+",
+          "il_x04": "+",
+          "il_x05": "+",
+          "il_x06": "+",
+          "il_x07": "+",
+          "il_x08": "+",
+          "il_x09": "+",
+          "il_x10": "+",
+          "il_x11": "+",
+          "il_x12": "+"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$tco_a_02211": "(53.10 * 6 + 56.10 * 6)/12",
+          "$tco_a_02212": "(114.15 * 6 + 120.50 * 6)/12",
+          "$tco_a_02213": "(114.15 * 6 + 120.50 * 6)/12"
+        }
+      }
+    ]
+  },
+  {
+    "name": "boamt_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_boamtYpHM": "0"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$boamt": "154.50#m"
+        }
+      },
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_boamt",
+          "ils_pen": "+",
+          "yemtx": "+",
+          "kfbtx": "+",
+          "ysv": "+",
+          "ysebsre": "+",
+          "ysecwre": "+",
+          "ypp": "+",
+          "ypr": "+",
+          "yiy": "+",
+          "bhl": "+",
+          "bfapl_s": "+",
+          "bfama_s": "+",
+          "bmanc_s": "+",
+          "bunct_s": "+",
+          "bwkmc_s": "n/a",
+          "ymc": "+",
+          "ils_sicot": "-",
+          "ils_sicee": "-",
+          "ils_sicse": "-",
+          "tin_s": "-",
+          "tmu_s": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(dag >= 65) & (ils_pen = 0) & (bsa_s#1 = 0)",
+          "#_Level": "tu_household_hr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "il_boamt / nPersInUnit",
+          "Output_Var": "i_boamtYpHM",
+          "TAX_UNIT": "tu_household_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Comp_Cond": "(i_boamtYpHM#1 <= 2 * $boamt)",
+          "Comp_perElig": "$boamt",
+          "Output_Var": "boamt_s",
+          "#_Level": "tu_household_hr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bfafh_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_bfafh": "0",
+          "i_bfafhmc": "0"
+        }
+      },
+      {
+        "name": "DefConst",
+        "switch": "on",
+        "params": {
+          "$bfafhd1": "10",
+          "$bfafhd2": "15"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "(IsHeadOfTu#1) & (dgn = 1) & (IsParentOfDepChild#1) & (nDepChInTu#1 > 0) & ((lemmy > 0) | (les = 3) | (i_bmelse = 1))",
+          "#_Level": "tu_bfafh_hr",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Comp_Cond": "(liwwh < 12)",
+          "Comp_perTU": "$bfafh_min_amt",
+          "LowLim": "$bfafh_min_amt",
+          "Output_Var": "i_bfafh",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_twins = 1) | (i_triplets = 1)",
+          "Comp_perTU": "1",
+          "Output_Var": "i_bfafhmc",
+          "TAX_UNIT": "tu_bfafh_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(i_bfafh > 0) & (i_bfafhmc = 1)",
+          "Comp_perTU": "i_bfafh * $bfafhd2 * 8 / 2080",
+          "Output_Var": "bfafh_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "boatu00_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefIl",
+        "switch": "on",
+        "params": {
+          "Name": "il_boatu",
+          "i_penpsav": "+",
+          "i_tinPE": "-",
+          "i_tmuPE": "n/a"
+        }
+      },
+      {
+        "name": "DefVar",
+        "switch": "n/a",
+        "params": {
+          "i_boatu00_1": "n/a",
+          "i_boatu00_2": "n/a",
+          "i_boatu00_3": "n/a"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "n/a",
+        "params": {
+          "Base": "n/a",
+          "Band_UpLim": "n/a",
+          "Band_Amount": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a",
+          "Simple_Prog": "n/a"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "n/a",
+        "params": {
+          "Base": "n/a",
+          "Band_UpLim": "n/a",
+          "Band_Amount": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a",
+          "Simple_Prog": "n/a"
+        }
+      },
+      {
+        "name": "SchedCalc",
+        "switch": "n/a",
+        "params": {
+          "Base": "n/a",
+          "Band_UpLim": "n/a",
+          "Band_Amount": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a",
+          "Simple_Prog": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "on",
+        "params": {
+          "Comp_Cond": "(il_boatu > 0) & (ils_sicee = 0) & (ils_sicse = 0)",
+          "Comp_perTU": "0",
+          "Output_Var": "boatu00_s",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bchtu_hr",
+    "switch": "n/a",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "n/a",
+        "params": {
+          "i_bchtu": "n/a"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      }
+    ]
+  },
+  {
+    "name": "buntu_hr",
+    "switch": "n/a",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "n/a",
+        "params": {
+          "i_buntu": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bditu_hr",
+    "switch": "n/a",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "n/a",
+        "params": {
+          "i_bditu": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      }
+    ]
+  },
+  {
+    "name": "bsatu_hr",
+    "switch": "n/a",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "n/a",
+        "params": {
+          "i_bsatu": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "n/a",
+        "params": {
+          "Elig_Cond": "n/a",
+          "#_Level": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "n/a",
+        "params": {
+          "Who_Must_Be_Elig": "n/a",
+          "Formula": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      }
+    ]
+  },
+  {
+    "name": "boatu01_hr",
+    "switch": "on",
+    "functions": [
+      {
+        "name": "DefVar",
+        "switch": "on",
+        "params": {
+          "i_boatu01_1": "0"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Formula": "50#y",
+          "Output_Var": "i_boatu01_1",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "Elig",
+        "switch": "on",
+        "params": {
+          "Elig_Cond": "((poamy > 0) | (boamt_s > 0)) & (ils_sicee = 0) & (ils_sicse = 0)",
+          "TAX_UNIT": "tu_individual_hr"
+        }
+      },
+      {
+        "name": "ArithOp",
+        "switch": "on",
+        "params": {
+          "Who_Must_Be_Elig": "one",
+          "Formula": "i_boatu01_1",
+          "Output_Var": "boatu01_s",
+          "TAX_UNIT": "tu_household_hr"
+        }
+      },
+      {
+        "name": "BenCalc",
+        "switch": "n/a",
+        "params": {
+          "Comp_Cond": "n/a",
+          "Comp_perTU": "n/a",
+          "Output_Var": "n/a",
+          "TAX_UNIT": "n/a"
+        }
+      }
+    ]
+  }
+]

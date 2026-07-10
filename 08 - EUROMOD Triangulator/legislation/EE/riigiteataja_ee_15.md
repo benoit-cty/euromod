@@ -1,0 +1,1764 @@
+Social Benefits for Disabled Persons Act–Riigi Teataja
+
+Riigi Teataja
+
+Home
+
+Search
+
+Help
+
+FAQ
+
+Feedback
+
+Embed search
+
+My RT
+
+My RT allows for:
+
+Subscribing to e-mail notifications of all translations
+
+Subscribing to e-mail notifications of translations of specific legal instruments
+
+Please note!
+
+We advise you to use your e-mail as your username.
+
+Sign up
+
+|
+
+Forgot password?
+
+Statistics
+
+Introduction
+
+Tagasi pealehele
+
+Text size:
+
+Small
+
+Medium
+
+Large
+
+Social Benefits for Disabled Persons Act
+
+Download
+
+PDF
+
+Text
+
+XML
+
+Print
+
+RSS
+
+Help
+
+Translation
+
+Authentic
+              text
+
+Content
+
+Content
+
+Print content
+
+Hide
+
+Social Benefits for Disabled Persons Act - content
+
+1 GENERAL PROVISIONS
+
+§ 1 Scope of application and purpose of Act
+
+§ 2 Definitions
+
+§ 2
+
+1
+
+Preparation of rehabilitation plan
+
+§ 2
+
+2
+
+Application for determination of degree of severity of disability
+
+§ 2
+
+3
+
+Determination of degree of severity of disability
+
+§ 2
+
+4
+
+Term for making of decision concerning degree of severity of disability and duration of degree of severity of disability
+
+§ 2
+
+5
+
+Disabled person's card
+
+§ 2
+
+6
+
+Determination of degree of severity of disability of child with permanent need for support arising from state of health
+
+§ 3 Subject of social benefits for disabled persons
+
+§ 4 Classes of social benefits for disabled persons
+
+§ 5 Social benefit rate for disabled persons
+
+§ 5
+
+1
+
+Extension of duration of degree of severity of disability during extraordinary situation
+
+2 BENEFITS
+
+§ 6 Disabled child allowance
+
+§ 7 Disability allowance for a person of working age
+
+§ 7
+
+1
+
+Disability allowance for a person of retirement age
+
+§ 8 Caregiver’s allowance
+
+§ 9 Disabled parent's allowance
+
+§ 10 Education allowance
+
+§ 10
+
+1
+
+Work allowance
+
+§ 11 Rehabilitation allowance
+
+§ 12 In-service training allowance
+
+§ 13 Transport allowance
+
+§ 14 Telephone allowance
+
+3 PROCEDURE FOR IMPLEMENTATION
+
+§ 15 Data
+
+§ 16 Application for social benefits for disabled persons
+
+§ 17 Grant of social benefits for disabled persons
+
+§ 18 Restrictions on payment of social benefits for disabled persons
+
+§ 19 Suspension, continuation and termination of payment of disabled child allowance, disabled parent's allowance and disability allowance for person of working age granted to person under 18 years of age
+
+§ 20 Changes in payment of social benefits for disabled persons
+
+§ 20
+
+1
+
+Terms for recalculation of social benefits
+
+§ 21 Coverage of expenditure
+
+§ 22 Payment of social benefits for disabled persons
+
+§ 23 Settlement of disputes
+
+§ 24 Overpaid amounts of social benefits for disabled persons
+
+§ 24
+
+1
+
+Payment of disabled adult allowance
+
+§ 24
+
+2
+
+Payment of disabled adult allowance or disability allowance for a person of working age
+
+§ 24
+
+3
+
+Payment of work allowance
+
+§ 25 Amendment of earlier legislation
+
+§ 25
+
+1
+
+Payment of social benefits for disabled persons
+
+§ 25
+
+2
+
+Implementation of § 51 of this Act
+
+§ 25
+
+3
+
+Benefit for mitigation of effect of motor vehicle tax
+
+§ 26 Entry into force of Act
+
+Issuer:
+
+Riigikogu
+
+Type:
+
+Act
+
+In force from:
+
+22.06.2025
+
+In force until:
+
+31.12.2025
+
+Translation published:
+
+11.06.2025
+
+Select wordings:
+
+Previous
+
+...
+
+01.06.2025
+
+01.01.2025
+
+01.07.2023
+
+08.05.2022
+
+Future wordings
+
+...
+
+01.01.2026
+
+In force
+
+Parallel texts
+
+Compare wordings
+
+Social Benefits for Disabled Persons Act
+
+Passed 27.01.1999
+
+RT I 1999, 16, 273
+
+entered into force pursuant to § 26.
+
+Amended by the following legal instruments
+
+(show)
+
+Passed
+
+Published
+
+Entry into force
+
+13.10.1999
+
+RT I 1999, 82, 749
+
+01.01.2000
+
+10.11.1999
+
+RT I 1999, 88, 803
+
+10.12.1999
+
+20.12.2000
+
+RT I 2001, 3, 10
+
+01.01.2001
+
+05.12.2001
+
+RT I 2001, 100, 648
+
+01.01.2002
+
+12.12.2001
+
+RT I 2001, 102, 671
+
+01.01.2002
+
+09.04.2002
+
+RT I 2002, 35, 219
+
+25.04.2002
+
+consolidated text on paper RT
+
+RT I 2002, 39, 245
+
+19.06.2002
+
+RT I 2002, 61, 375
+
+01.08.2002
+
+08.12.2004
+
+RT I 2004, 89, 603
+
+01.01.2005
+
+08.12.2004
+
+RT I 2004, 89, 604
+
+01.04.2005
+
+16.06.2005
+
+RT I 2005, 38, 299
+
+17.07.2005
+
+15.06.2005
+
+RT I 2005, 39, 308
+
+01.01.2006
+
+15.12.2005
+
+RT I 2005, 71, 544
+
+01.01.2006
+
+17.05.2006
+
+RT I 2006, 26, 191
+
+01.08.2006
+
+16.11.2006
+
+RT I 2006, 55, 409
+
+01.09.2007
+
+15.02.2007
+
+RT I 2007, 22, 116
+
+01.01.2008
+
+19.12.2007
+
+RT I 2007, 71, 437
+
+01.01.2008
+
+19.12.2007
+
+RT I 2007, 71, 437
+
+01.10.2008
+
+22.10.2008
+
+RT I 2008, 48, 264
+
+23.11.2008
+
+17.12.2008
+
+RT I 2008, 58, 329
+
+01.03.2009
+
+29.10.2009
+
+RT I 2009, 53, 360
+
+01.01.2010, in part 21.11.2009
+
+22.04.2010
+
+RT I 2010, 22, 108
+
+01.01.2011, enters into force on the date which has been determined in the Decision of the Council of the European Union regarding the abrogation of the derogation established in respect of the Republic of Estonia on the basis provided for in Article 140 (2) of the Treaty on the Functioning of the European Union, Council Decision 2010/416/EU of 13 July 2010 (OJ L 196, 28.07.2010, pp. 24–26).
+
+17.06.2010
+
+RT I 2010, 38, 231
+
+01.07.2010
+
+08.03.2012
+
+RT I, 27.03.2012, 6
+
+01.06.2012
+
+14.06.2012
+
+RT I, 05.07.2012, 14
+
+01.09.2012
+
+14.11.2012
+
+RT I, 06.12.2012, 1
+
+01.01.2013
+
+12.06.2013
+
+RT I, 02.07.2013, 1
+
+01.09.2013, in part 01.01.2014
+
+26.02.2014
+
+RT I, 21.03.2014, 1
+
+31.03.2014
+
+26.03.2014
+
+RT I, 16.04.2014, 3
+
+01.07.2014
+
+19.06.2014
+
+RT I, 29.06.2014, 109
+
+01.07.2014, the titles of ministers replaced on the basis of subsection 4 of § 107³ of the Government of the Republic Act.
+
+19.11.2014
+
+RT I, 13.12.2014, 1
+
+01.01.2016, in part 01.01.2015 and 01.07.2016; date of entry into force changed 01.07.2016 [RT I, 17.12.2015, 1]
+
+19.11.2014
+
+RT I, 13.12.2014, 2
+
+01.01.2016
+
+18.02.2015
+
+RT I, 23.03.2015, 5
+
+01.07.2015
+
+25.11.2015
+
+RT I, 17.12.2015, 1
+
+20.12.2015, in part 01.01.2016 and 01.07.2016
+
+09.12.2015
+
+RT I, 30.12.2015, 5
+
+01.01.2016
+
+15.06.2016
+
+RT I, 08.07.2016, 1
+
+01.01.2017
+
+14.06.2017
+
+RT I, 29.06.2017, 1
+
+09.07.2017, in part 01.07.2017
+
+15.11.2017
+
+RT I, 28.11.2017, 2
+
+01.01.2018
+
+13.02.2019
+
+RT I, 27.02.2019, 11
+
+01.01.2020
+
+08.04.2020
+
+RT I, 09.04.2020, 14
+
+01.05.2020
+
+15.04.2020
+
+RT I, 21.04.2020, 1
+
+22.04.2020
+
+10.03.2021
+
+RT I, 22.03.2021, 2
+
+01.04.2021
+
+13.04.2022
+
+RT I, 28.04.2022, 1
+
+08.05.2022
+
+20.06.2023
+
+RT I, 30.06.2023, 1
+
+01.07.2023
+
+29.07.2024
+
+RT I, 17.08.2024, 1
+
+01.01.2025, in part 01.06.2025 and 01.01.2026
+
+20.11.2024
+
+RT I, 12.12.2024, 2
+
+22.12.2024, in part 01.01.2025
+
+11.12.2024
+
+RT I, 31.12.2024, 3
+
+10.01.2025, in part 01.01.2025
+
+21.05.2025
+
+RT I, 12.06.2025, 1
+
+22.06.2025, in part 01.02.2027
+
+Chapter 1
+
+GENERAL PROVISIONS
+
+§ 1.
+
+Scope of application and purpose of Act
+
+(1) This Act provides the classes of social benefits for disabled persons, the conditions of entitlement thereto, the amounts of benefits and the procedure for the grant and payment thereof.
+
+(2) The purpose of this Act is to support the ability of disabled persons to cope independently, social integration and equal opportunities and to promote studies and work through partial compensation for the additional expenses caused by the disability.
+
+[RT I 2007, 71, 437 - entry into force 01.01.2008]
+
+(3) The provisions of the General Part of the Social Code Act apply to the social protection prescribed in this Act, taking account of the specifications provided for in this Act.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+§ 2.
+
+Definitions
+
+(1) Disability is the loss of or an abnormality in an anatomical, physiological or mental structure or function of a person which in conjunction with different relational and environmental restrictions prevents participation in social life on equal bases with the others.
+
+[RT I 2007, 71, 437 - entry into force 01.10.2008]
+
+(1
+
+1
+
+) On the basis of this Act the severe, profound or moderate degree of disability of children of up to 16 years of age and persons of the retirement age is established proceeding from the need for personal assistance, guidance or supervision. For the purposes of this subsection, there are the following degrees of severity of disabilities:
+
+1)
+
+profound disability is the loss of or an abnormality in an anatomical, physiological or mental structure or function of a person as a result of which the person needs constant personal assistance, guidance or supervision twenty-four hours a day;
+
+2)
+
+severe disability is the loss of or an abnormality in an anatomical, physiological or mental structure or function of a person as a result of which the person needs personal assistance, guidance or supervision in every twenty-four hour period;
+
+3)
+
+moderate disability is the loss of or an abnormality in an anatomical, physiological or mental structure or function of a person as a result of which the person needs regular personal assistance or guidance outside his or her residence at least once a week.
+
+[RT I 2007, 71, 437 - entry into force 01.10.2008]
+
+(2) Personal assistance or guidance means the provision of assistance to persons who do not cope independently with eating, treatment, hygiene, clothing, moving about or communicating. Supervision means the ensurance of safety regarding persons who, by act or omission, may constitute danger to the life, health or property of themselves or other persons.
+
+[RT I, 28.04.2022, 1 - entry into force 08.05.2022]
+
+(2
+
+1
+
+) On the basis of this Act the severe, profound or moderate degree of disability of a person of 16 years of age until attaining the retirement age (hereinafter
+
+person of working age
+
+) is established proceeding from restrictions on participation in daily activities and social life. For the purposes of this subsection, there are the following degrees of severity of disabilities:
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+1)
+
+a person whose daily activity or participation in social life is wholly restricted has a profound disability;
+
+2)
+
+a person whose daily activity or participation in social life is restricted has a severe disability;
+
+3)
+
+a person who has difficulties in his or her daily activity or participation in social life has a moderate disability.
+
+[RT I 2007, 71, 437 - entry into force 01.10.2008]
+
+(2
+
+2
+
+)
+
+[Repealed –  RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+(3) The term „work” in this Act is used within the meaning of the State Pension Insurance Act.
+
+[RT I 2007, 71, 437 - entry into force 01.01.2008]
+
+§ 2
+
+1
+
+.
+
+Preparation of rehabilitation plan
+
+[Repealed –  RT I, 28.04.2022, 1 - entry into force 08.05.2022]
+
+§ 2
+
+2
+
+.
+
+Application for determination of degree of severity of disability
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+(1) An application for determination of the degree of severity of disability shall be submitted to the Social Insurance Board.
+
+(2) A person may submit an application for determination of the degree of severity of disability through the Estonian Unemployment Insurance Fund (hereinafter
+
+unemployment insurance fund
+
+) if the application is submitted together with an application for assessment of work ability submitted to the unemployment insurance fund on the basis of the Work Ability Allowance Act.
+
+(3) The minister in charge of the policy sector shall establish by a regulation the list of information to be set out in the application for determination of the degree of severity of disability of a person of working age which shall include:
+
+1)
+
+the name, date of birth and sex or personal identification code and contact details of the person applying for determination of the degree of severity of disability, information concerning his or her education and employment, use of technical aids and personal assistance, and rehabilitation;
+
+2)
+
+the list of conditions precluding work ability and the list of areas which characterise the physical and mental abilities of the person.
+
+(4) The minister in charge of the policy sector shall establish by a regulation the list of information to be set out in the application for determination of the degree of severity of disability of children and persons of retirement age which shall include the name, date of birth and sex or personal identification code and contact details of the person applying for determination of the degree of severity of disability, information concerning his or her studies or employment, the need for personal assistance, guidance or supervision arising from state of health, changes in living conditions or state of health.
+
+(5) The date on which the application for determination of the degree of severity of disability is submitted to the Social Insurance Board or in the case specified in subsection 2 of this section to the unemployment insurance fund shall be deemed to be the date of submission of the application. If the application for determination of the degree of severity of disability is sent by post, the date on the date stamp of the place from which the application was sent is deemed to be the date of submission of the application.
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+§ 2
+
+3
+
+.
+
+Determination of degree of severity of disability
+
+(1) The degree of severity of disability shall be determined by the Social Insurance Board, involving persons who have completed medical training, if necessary.
+
+(2) In order to determine the degree of severity of disability, the Social Insurance Board shall have, with the consent of the person, access to the given name and surname of the doctor who submitted information to the health information system.
+
+(3) A person who has completed medical training shall have, with the consent of the person, access to the following information in the health information system necessary for determination of the degree of severity of disability:
+
+1)
+
+information concerning the submitter of information;
+
+2)
+
+information concerning out-patient visits and hospitalisations;
+
+3)
+
+information concerning medicinal products.
+
+(4) If there is no information specified in subsection 3 of this section in the health information system or the information is insufficient to determine the degree of severity of disability, the family physician or medical specialist of the person shall forward the missing information to the health information system and notify the Social Insurance Board thereof or forward the information describing the state of health to the Social Insurance Board within 15 days as of the receipt of the relevant application from the Social Insurance Board.
+
+(5) The list of information in the health information system necessary for determination of the degree of severity of disability and the periods for inquiries shall be established by a regulation of the minister in charge of the policy sector.
+
+(6) Upon determination of the degree of severity of a disability, the following shall be taken into account:
+
+1)
+
+the state of health;
+
+2)
+
+the operational capacity;
+
+3)
+
+the need for personal assistance, guidance or supervision which exceeds the need appropriate to the age of the person;
+
+4)
+
+the person's need for personal assistance and guidance which exists regardless of the use of technical aids;
+
+5)
+
+the living environment;
+
+6)
+
+upon existence of a rehabilitation plan, the activities prescribed therein.
+
+(7) If a person of working age applies for determination of the degree of severity of disability and assessment of work ability at the same time, the expert opinion prepared upon assessment of work ability (hereinafter
+
+expert opinion
+
+) and the decision concerning the assessment of work ability made by the unemployment insurance fund shall be used to determine the degree of severity of disability.
+
+(8) If a person of working age applies for determination of the degree of severity of disability and the unemployment insurance fund has assessed his or her work ability during the six months prior to the submission of the application for determination of the degree of severity of disability, the expert opinion and the decision concerning the assessment of work ability made by the unemployment insurance fund shall be used to determine the degree of severity of disability.
+
+[RT I, 09.04.2020, 14 - entry into force 01.05.2020]
+
+(8
+
+1
+
+) Upon receipt of information concerning a change in the condition of a disabled child, the Social Insurance Board is required to reassess the need of the child for assistance. Each person with the respective information is required to notify the Social Insurance Board of a change in the condition of a disabled child.
+
+[RT I, 09.04.2020, 14 - entry into force 01.05.2020]
+
+(9) The conditions and procedure for determination of the degree of severity of disability are established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 17.08.2024, 1 - entry into force 01.06.2025]
+
+(10) The date provided for in subsection 5 of § 2
+
+2
+
+of this Act shall be deemed to be the date of determination of the degree of severity of disability.
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+§ 2
+
+4
+
+.
+
+Term for making of decision concerning degree of severity of disability and duration of degree of severity of disability
+
+(1) The Social Insurance Board makes the decision to determine or not to determine the degree of severity of disability within 30 working days as of the receipt of sufficient information to carry out the examination.
+
+[RT I, 12.12.2024, 2 - entry into force 01.01.2025]
+
+(2) Where the expert opinion and the decision concerning the assessment of work ability made by the unemployment insurance fund are used to determine the degree of severity of disability, the Social Insurance Board makes the decision concerning the determination of the degree of severity of disability within 30 working days as of the receipt of the expert opinion and the decision concerning the assessment of work ability made by the unemployment insurance fund.
+
+[RT I, 12.12.2024, 2 - entry into force 01.01.2025]
+
+(2
+
+1
+
+) If the expert opinion and the decision concerning the assessment of work ability made by the unemployment insurance fund are used to determine the degree of severity of disability and the person has submitted an application for determination of the degree of severity of disability within the term for re-examination but the decision to determine the degree of severity of disability is not made before the expiry of the current decision to determine the degree of severity of disability, the Social Insurance Board shall extend the decision to determine the degree of severity of disability until a new decision to determine or not to determine the degree of severity of disability is made.
+
+[RT I, 29.06.2017, 1 - entry into force 09.07.2017]
+
+(3) The degree of severity of disability shall be determined as follows:
+
+1)
+
+for disabled persons of retirement age for six months, one year, two years, three years or five years;
+
+2)
+
+for disabled persons of working age for up to five years but not for longer than until the retirement age;
+
+3)
+
+for children for six months, one year, two years or three years but not for longer than until the child attains 16 years of age.
+
+(4) If a person of working age has been established to have no work ability until the retirement age on the basis of subsection 2 of § 8 of the Work Ability Allowance Act, the degree of severity of disability may be determined for the period until retirement age.
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+(5) If a child has an unchanging or progressive permanent condition which is not compensated for by treatment, medicinal products, technical aids or services, the degree of disability may be determined for the period until attaining 16 years of age.
+
+[RT I, 28.04.2022, 1 - entry into force 08.05.2022]
+
+(5
+
+1
+
+) If a person of retirement age has an unchanging or progressive permanent condition which is not compensated for by treatment, medicinal products, technical aids or services, the degree of disability may be determined for life.
+
+[RT I, 28.04.2022, 1 - entry into force 08.05.2022]
+
+(6) The specific conditions and procedure for determination of the degree of severity of disability for children specified in subsection 5 of this section and for persons of retirement age specified in subsection 5
+
+1
+
+of this section with an unchanging or progressive permanent condition shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 28.04.2022, 1 - entry into force 08.05.2022]
+
+§ 2
+
+5
+
+.
+
+Disabled person's card
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016 - section number changed from 2.3 to 2.5]
+
+(1) The Social Insurance Board shall issue to a disabled person who does not have a pension certificate at the request thereof a disabled person's card which certifies the degree of severity of disability and the type and duration of disability. A disabled person's card is valid together with an identity document within the meaning of §§ 2 or 4 of the Identity Documents Act.
+
+[RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+(2) The list of information included in a disabled person's card and procedure for the issue thereof shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+§ 2
+
+6
+
+.
+
+Determination of degree of severity of disability of child with permanent need for support arising from state of health
+
+(1) Where a child has a permanent need for support arising from state of health with regard to which data have been entered in the health information system, and the local authority has forwarded the data concerning the child to the Social Insurance Board for the determination of the degree of severity of disability, the Social Insurance Board initiates the determination of the degree of severity of disability.
+
+(2) The list of conditions causing a child’s permanent need for support arising from state of health is established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 31.12.2024, 3 - entry into force 01.01.2025]
+
+§ 3.
+
+Subject of social benefits for disabled persons
+
+(1) Social benefits for disabled persons shall be granted and paid pursuant to the provisions of this Act to permanent residents of Estonia or persons residing in Estonia on the basis of a temporary residence permit or temporary right of residence with moderate, severe or profound disabilities which cause additional expense, except if an allowance is paid in the case provided for in subsection 1
+
+1
+
+of § 6 of this Act.
+
+[RT I, 09.04.2020, 14 - entry into force 01.05.2020]
+
+(2) Persons enjoying international protection staying in Estonia have the right to receive social benefits for disabled persons on equal grounds with permanent residents of Estonia.
+
+[RT I 2007, 71, 437 - entry into force 01.01.2008]
+
+(3) If an international agreement entered into by the Republic of Estonia includes provisions concerning the grant and payment of social benefits for disabled persons which are different from this Act, the international agreement applies.
+
+§ 4.
+
+Classes of social benefits for disabled persons
+
+This Act establishes the following social benefits for disabled persons:
+
+1)
+
+disabled child allowance;
+
+2)
+
+disability allowance for a person of working age;
+
+3)
+
+disability allowance for a person of retirement age;
+
+4)
+
+[repealed –  RT I 2008, 58, 329 - entry into force 01.03.2009]
+
+5)
+
+disabled parent's allowance;
+
+6)
+
+education allowance;
+
+7)
+
+[repealed –  RT I, 17.12.2015, 1 - entry into force 01.01.2016]
+
+8)
+
+[repealed –  RT I, 13.12.2014, 2 - entry into force 01.01.2016]
+
+9)
+
+in-service training allowance.
+
+[RT I 2007, 71, 437 - entry into force 01.01.2008]
+
+§ 5.
+
+Social benefit rate for disabled persons
+
+[Repealed –  RT I, 17.08.2024, 1 - entry into force 01.06.2025]
+
+§ 5
+
+1
+
+.
+
+Extension of duration of degree of severity of disability during extraordinary situation
+
+During an emergency, an emergency situation, a state of emergency or a state of war, the Social Insurance Board may, on the proposal of the minister in charge of the policy sector, extend the duration of the degree of severity of disability of a person if determination of the degree of severity of disability is significantly restricted due to the emergency, emergency situation, state of emergency or state of war for objective reasons and the extension of the duration of the degree of severity of the disability is necessary for the disabled person for the preservation of the social guarantees of the person until the need for the rearrangement arising from the emergency, emergency situation, state of emergency or state of war ceases to exist.
+
+[RT I, 21.04.2020, 1 - entry into force 22.04.2020; during an emergency situation, the Social Insurance Board may apply the possibility to extend the duration of the degree of severity of disability of a person provided for in this section retroactively as of 12 March 2020.]
+
+Chapter 2
+
+BENEFITS
+
+§ 6.
+
+Disabled child allowance
+
+(1) Disabled child allowance shall be paid monthly to a child with a moderate, severe or profound disability for compensation for the additional expenses caused by the disability and for the activities prescribed in the rehabilitation plan, except for the activities financed from the health insurance and other state budget funds.
+
+(1
+
+1
+
+) For the purposes of this Act, a child with a rare disease diagnosis for whom the degree of severity of the disability has not been determined has the right to receive the disabled child allowance specified in subsection 1 of this section, and the allowance shall be paid for the prevention of disability and compensation for the additional expenses caused thereby if the development of the disability is unavoidable without prevention.
+
+[RT I, 09.04.2020, 14 - entry into force 01.05.2020]
+
+(2) Disabled child allowance shall be paid until the child attains 16 years of age.
+
+(3) Disabled child allowance shall be paid to the bank account of the child, parent or guardian.
+
+[RT I, 28.04.2022, 1 - entry into force 08.05.2022]
+
+(4)
+
+[Repealed –  RT I 2001, 102, 671 - entry into force 01.01.2002]
+
+(5) Disabled child allowance is paid in the following amounts:
+
+1)
+
+to a child with a profound disability in the amount of 270 euros;
+
+2)
+
+to a child with a severe disability and to a child specified in subsection 1
+
+1
+
+of this section in the amount of 180 euros;
+
+3)
+
+to a child with a moderate disability in the amount of 139 euros.
+
+[RT I, 17.08.2024, 1 - entry into force 01.06.2025]
+
+(6) The minister in charge of the policy sector shall establish by a regulation the list of rare diseases for which disabled child allowance is paid in the case provided for in subsection 1
+
+1
+
+of this section.
+
+[RT I, 09.04.2020, 14 - entry into force 01.05.2020]
+
+(7) The list specified in subsection 6 of this section shall be supplemented at the proposal of a medical assessment committee and after consultation with interest groups.
+
+[RT I, 09.04.2020, 14 - entry into force 01.05.2020]
+
+§ 7.
+
+Disability allowance for a person of working age
+
+(1) Disability allowance for a person of working age shall be paid monthly to a disabled person of working age for compensation for the additional expenses caused by the disability, except for the activities financed from the health insurance and other state budget funds.
+
+(2) Disability allowance for a person of working age is paid in the following amounts:
+
+1)
+
+to a person of working age with a profound disability in the amount of 100 euros;
+
+2)
+
+to a person of working age with a severe disability in the amount of 50 euros;
+
+3)
+
+to a person of working age with a moderate disability, based on the area in which the loss of or abnormality in a function occurs, in the amount of 29–42 euros.
+
+[RT I, 17.08.2024, 1 - entry into force 01.06.2025]
+
+(2
+
+1
+
+) The specific conditions for the payment and amounts of the disability allowance for a person of working age are established by a regulation of the minister in charge of the policy sector.
+
+[RT I, 17.08.2024, 1 - entry into force 01.06.2025]
+
+(3)
+
+[Repealed –  RT I, 17.08.2024, 1 - entry into force 01.06.2025]
+
+§ 7
+
+1
+
+.
+
+Disability allowance for a person of retirement age
+
+(1) Disability allowance for a person of retirement age shall be paid monthly to a person of retirement age with a moderate, severe or profound disability for compensation for the additional expenses caused by the disability and, upon existence of a rehabilitation plan, for the activities prescribed therein, except for the activities financed from the health insurance and other state budget funds.
+
+(2) Disability allowance for a person of retirement age is paid in the following amounts:
+
+1)
+
+to a person of retirement age with a profound disability in the amount of 41 euros;
+
+2)
+
+to a person of retirement age with a severe disability in the amount of 27 euros;
+
+3)
+
+to a person of retirement age with a moderate disability in the amount of 13 euros.
+
+[RT I, 17.08.2024, 1 - entry into force 01.06.2025]
+
+§ 8.
+
+Caregiver’s allowance
+
+[Repealed –  RT I 2008, 58, 329 - entry into force 01.03.2009]
+
+§ 9.
+
+Disabled parent's allowance
+
+Disabled parent’s allowance is paid monthly in the amount of 19.18 euros to a disabled parent, foster parent or guardian who is raising a child alone or to one of the disabled parents upon raising a child of up to 16 years of age or a child of up to 19 years of age without secondary education who is enrolled in a basic school or upper secondary school, or in formal vocational education at a vocational educational institution or institution of professional higher education or who is included in the list of a daytime in-service training course of a state agency administered by the Ministry of Education and Research. When the child attains 19 years of age, payment of the disabled parent’s allowance continues until the end of the current academic year or the student is excluded from the list of the school or until the in-service training course ends or the student is excluded from the list of the in-service training course.
+
+[RT I, 17.08.2024, 1 - entry into force 01.06.2025]
+
+§ 10.
+
+Education allowance
+
+(1) Education allowance shall be paid monthly, except in July and August, to a non-working disabled student who attends upper secondary school in years 10 to 12 or who attends a vocational educational institution or an institution of higher education or who is included in the list of a daytime in-service training course of a state agency administered by the Ministry of Education and Research, and who has additional expenses in relation to his or her studies as a result of the disability.
+
+[RT I, 30.06.2023, 1 - entry into force 01.07.2023]
+
+(2) Education allowance is paid according to the actual additional expenses of the person in an amount of at least 6.39 euros but not more than 25.57 euros per month.
+
+[RT I, 17.08.2024, 1 - entry into force 01.06.2025]
+
+§ 10
+
+1
+
+.
+
+Work allowance
+
+[Repealed –  RT I, 17.12.2015, 1 - entry into force 01.01.2016]
+
+§ 11.
+
+Rehabilitation allowance
+
+[Repealed –  RT I, 13.12.2014, 2 - entry into force 01.01.2016]
+
+§ 12.
+
+In-service training allowance
+
+(1) In-service training allowance shall be paid to a working disabled person for in-service training received for the purpose of professional development and for formal education.
+
+[RT I, 23.03.2015, 5 - entry into force 01.07.2015]
+
+(2) In-service training allowance is paid to compensate partially for actual training expenditure in an amount of up to 613.68 euros during three calendar years as of the first grant of the allowance.
+
+[RT I, 17.08.2024, 1 - entry into force 01.06.2025]
+
+§ 13.
+
+Transport allowance
+
+[Repealed –  RT I 2001, 102, 671 - entry into force 01.01.2002]
+
+§ 14.
+
+Telephone allowance
+
+[Repealed –  RT I 2001, 102, 671 - entry into force 01.01.2002]
+
+Chapter 3
+
+PROCEDURE FOR IMPLEMENTATION
+
+§ 15.
+
+Data
+
+(1) Data concerning the grant and payment of social benefits for disabled persons shall be entered in the social protection information system.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(2) Data concerning the employment of applicants for and recipients of education allowance and in-service training allowance shall be entered in the social protection information system from the employment register provided for in § 25
+
+1
+
+of the Taxation Act.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+§ 16.
+
+Application for social benefits for disabled persons
+
+(1) Applications to grant social benefits for disabled persons shall be submitted to the Social Insurance Board.
+
+[RT I 2007, 71, 437 - entry into force 01.10.2008]
+
+(1
+
+1
+
+) In the case provided for in subsection 2 of § 2
+
+2
+
+of this Act, an application for social benefits for disabled persons may be submitted together with an application for the determination of the degree of severity of disability to the Social Insurance Board through the unemployment insurance fund.
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+(2) The basic documents necessary to apply for social benefits for disabled persons are:
+
+1)
+
+an application for an allowance which sets out the name, date of birth and sex or personal identification code, contact details and bank account number of the applicant for the allowance and the type of allowance and upon application for a disabled child allowance the name, date of birth and sex or personal identification code of the child;
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+2)
+
+[repealed –  RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+3)
+
+a document provided for in subsection 2 of § 2 or § 4 of the Identity Documents Act.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(3) The list of additional documents necessary to apply for social benefits for disabled persons and the list of information included in the application shall be established by the minister in charge of the policy sector.
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+(3
+
+1
+
+) An application for social benefits for disabled persons may be submitted together with an application for the determination of the degree of severity of a disability.
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+(4) The date of application for social benefits for disabled persons is deemed to be the date on which the Social Insurance Board receives the application.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(4
+
+1
+
+) In the case provided for in subsection 1
+
+1
+
+of this section, the date of application for social benefits for disabled persons shall be deemed to be the date on which the application was submitted to the unemployment insurance fund.
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+(5) If an application for social benefits for disabled persons is sent by post, the date on the date stamp of the place from which the application is sent is deemed to be the date of application for a benefit.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(6)
+
+[Repealed –  RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+§ 17.
+
+Grant of social benefits for disabled persons
+
+(1) Social benefits for disabled persons shall be granted and the amounts thereof shall be decided by the Social Insurance Board. The procedure and terms for the grant and payment of social benefits for disabled persons shall be established by a regulation of the minister in charge of the policy sector.
+
+[RT I 2007, 71, 437 - entry into force 01.10.2008]
+
+(2) Social benefits for disabled persons provided for in §§ 6–7
+
+1
+
+of this Act shall be granted from the date on which the degree of severity of the disability is determined, if the application for a benefit is submitted within three months after the corresponding decision is made.
+
+[RT I 2007, 71, 437 - entry into force 01.10.2008]
+
+(3) Upon a later application for social benefits for disabled persons provided for in §§ 6–7
+
+1
+
+of this Act, monthly benefits shall be granted retroactively, but for not more than the three months preceding the application.
+
+[RT I 2007, 71, 437 - entry into force 01.01.2008]
+
+(4) Social benefits for disabled persons provided for in §§ 9–12 of this Act shall be granted from the date of submission of an application for benefit but not earlier than from the date on which the right to a benefit arises.
+
+[RT I, 13.12.2014, 2 - entry into force 01.01.2016]
+
+(5) Social benefits for disabled persons shall be granted for the period during which a person fulfils the conditions for receipt of benefits provided for in this Act.
+
+§ 18.
+
+Restrictions on payment of social benefits for disabled persons
+
+[Repealed –  RT I 2007, 22, 116 - entry into force 01.01.2008]
+
+§ 19.
+
+Suspension, continuation and termination of payment of disabled child allowance, disabled parent's allowance and disability allowance for person of working age granted to person under 18 years of age
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(1) The Social Insurance Board shall suspend the payment of disabled child allowance, disabled parent's allowance and disability allowance for a person of working age granted to a person under 18 years of age if the child is separated from the family.
+
+(2)
+
+[Repealed –  RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+(3) The Social Insurance Board shall continue the payment of disabled child allowance, disabled parent's allowance and disability allowance for a person of working age granted to a person under 18 years of age if the reason specified in subsection 1 of this section ceases to exist.
+
+[RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+(4) The Social Insurance Board shall terminate the payment of disabled child allowance, disabled parent’s allowance and allowance for a person of working age granted to a person under 18 years of age to a parent if the parent has been deprived of legal custody on the basis of § 135 of the Family Law Act or if a guardian has been appointed to his or her minor child or the child is referred to alternative care on the basis of subsection 1 of § 45
+
+9
+
+of the Social Welfare Act.
+
+[RT I, 28.11.2017, 2 - entry into force 01.01.2018]
+
+(5) The Social Insurance Board shall pay disabled child allowance, disabled parent's allowance and allowance for a person of working age granted to a person under 18 years of age in the cases provided for in subsection 4 of this section to another applicant on the conditions provided for in this Act retroactively for not more than the six calendar months preceding the submission of the corresponding application.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+§ 20.
+
+Changes in payment of social benefits for disabled persons
+
+(1) The payment of social benefits for disabled persons shall be terminated or suspended or the amounts thereof shall be recalculated if the recipient of benefit has recovered sufficiently for the right to receive social benefits for disabled persons provided for in this Act or the amount of the benefit received to be changed.
+
+(1
+
+1
+
+) The social benefit for disabled persons shall be paid to a person in the amount previously specified until a new decision to determine or not to determine the degree of severity of disability is made if the Social Insurance Board has extended the current decision to determine the degree of severity of disability in the case provided for in subsection 2
+
+1
+
+of § 2
+
+4
+
+of this Act.
+
+[RT I, 29.06.2017, 1 - entry into force 09.07.2017]
+
+(2)
+
+[Repealed –  RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(2
+
+1
+
+) The payment of social benefits for disabled persons shall be suspended during the time of the service of the sentence of imprisonment of a convicted recipient of the benefit in a prison or house of detention.
+
+[RT I, 12.06.2025, 1 - entry into force 22.06.2025]
+
+(2
+
+2
+
+)
+
+[Repealed –  RT I, 12.06.2025, 1 - entry into force 22.06.2025]
+
+(2
+
+3
+
+) If a person is taken into custody as a preventive measure, payment of social benefits for disabled persons shall be suspended for the time the person is held in custody. The social benefit shall be paid to the person retroactively after a court judgment enters into force if the person is acquitted or is not subject to punishment by imprisonment.
+
+[RT I, 12.06.2025, 1 - entry into force 22.06.2025]
+
+(3)
+
+[Repealed –  RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(4)
+
+[Repealed –  RT I, 17.12.2015, 1 - entry into force 01.01.2016]
+
+(5) Accommodation and catering expenses of a person staying in a prison or house of detention and expenses covered from the state or the local government budget, including expenses related to the general services of the prison or house of detention are not deemed to be additional expenses caused by a disability.
+
+[RT I, 17.12.2015, 1 - entry into force 01.01.2016]
+
+(6)
+
+[Repealed –  RT I 2008, 58, 329 - entry into force 01.03.2009]
+
+(7) A recipient of social benefits for disabled persons is required to notify the Social Insurance Board in writing within ten days of any circumstances which result in the termination or suspension of payment of social benefits for disabled persons or a change in the amount thereof.
+
+(8) If a rural municipality or city government notifies the Social Insurance Board of circumstances which affect the suspension, continuation or termination of the payment of family benefits on the basis of the Family Benefits Act, such circumstances shall be taken into account upon the payment of social benefits for disabled persons and the Social Insurance Board shall decide on the suspension, continuation or termination of social benefits for disabled persons of the basis of this Act.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+§ 20
+
+1
+
+.
+
+Terms for recalculation of social benefits
+
+(1) If circumstances arise which require the increase of a social benefit for disabled persons, the benefit shall be recalculated as of the date of submission of a corresponding claim and the necessary documents, provided that the claim and the documents are submitted within one month as of the circumstances requiring the increase of the benefit arising. If the claim and the necessary documents are submitted later, the benefit shall be recalculated as of the first day of the month following the month in which the corresponding claim and necessary documents are submitted.
+
+(2) If circumstances arise which require the reduction of a social benefit for disabled persons, the benefit shall be recalculated as of the first day of the month following the month in which such circumstances arise.
+
+§ 21.
+
+Coverage of expenditure
+
+(1) Expenditure for social benefits for disabled persons provided by this Act shall be covered from the state budget through the budget of the Ministry of Social Affairs.
+
+(2) Expenditure relating to the grant and payment of social benefits for disabled persons and medical assessment shall be covered from the state budget through the budget of the Ministry of Social Affairs.
+
+[RT I, 13.12.2014, 1 - entry into force 01.07.2016 (entry into force changed – RT I, 17.12.2015, 1)]
+
+(3) If a person applying for determination of the degree of severity of disability applies for assessment of work ability at the same time, the expenditure relating to medical assessment shall be covered from the budget of the Ministry of Social Affairs if the person has been established to have a condition precluding work ability within the meaning of the Work Ability Allowance Act.
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+§ 22.
+
+Payment of social benefits for disabled persons
+
+(1) The monetary compensation paid on the basis of this Act shall be paid monthly for the current month pursuant to the procedure provided for in § 28 of the General Part of the Social Code Act.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(1
+
+1
+
+) On the basis of a decision of the Social Insurance Board, the allowance provided for in § 12 of this Act shall be paid to the agency which provided the services to the recipient of the allowance.
+
+[RT I, 13.12.2014, 1 - entry into force 01.07.2016 (entry into force changed – RT I, 17.12.2015, 1)]
+
+(2)
+
+[Repealed –  RT I 2008, 48, 264 - entry into force 23.11.2008]
+
+(3)
+
+[Repealed –  RT I 2008, 48, 264 - entry into force 23.11.2008]
+
+(3
+
+1
+
+) On the basis of a reasoned application submitted to the Social Insurance Board, social benefits for disabled persons shall be paid as home delivery by post at the expense of the payer of the benefit to a person whose movement is restricted or who lives in low density area and who has scarce access to bank services and who is:
+
+1)
+
+a person with a profound disability who has been established to have partial or no work ability or
+
+[RT I, 13.12.2014, 1 - entry into force 01.07.2016 (entry into force changed – RT I, 17.12.2015, 1)]
+
+2)
+
+[repealed –  RT I, 13.12.2014, 1 - entry into force 01.07.2016 (entry into force changed – RT I, 17.12.2015, 1)]
+
+3)
+
+a person of retirement age.
+
+[RT I 2008, 48, 264 - entry into force 23.11.2008]
+
+(3
+
+2
+
+) The Social Insurance Board shall make a decision on the basis of the application specified in subsection 3
+
+1
+
+of this section with a period of validity of up to one year. The Social Insurance Board may make a decision on the basis of the application specified in subsection 3
+
+1
+
+of this section with a longer period of validity, if this is necessary due to the nature of the reasons proceeding from which the Social Insurance Board makes the decision on the basis of the application specified in subsection 3
+
+1
+
+of this section. The Social Insurance Board shall make the decision on the basis of the application specified in subsection 3
+
+1
+
+of this section within 10 working days after the submission of the corresponding application.
+
+[RT I 2008, 48, 264 - entry into force 23.11.2008]
+
+(4) If a social benefit for disabled persons which is paid by post is not drawn for at least two months, payment of the social benefit shall be suspended. After submission of a corresponding application and a document provided for in subsection 2 of § 2 or § 4 of the Identity Documents Act, the social benefit shall be paid retroactively.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(5) Upon payment of social benefits for disabled persons, amounts shall be rounded to the accuracy of one cent.
+
+[RT I 2010, 22, 108 - entry into force 01.01.2011]
+
+(6)
+
+[Repealed –  RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(7)
+
+[Repealed –  RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(8)
+
+[Repealed –  RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(9)
+
+[Repealed –  RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+§ 23.
+
+Settlement of disputes
+
+If a person disagrees with a decision made by the Social Insurance Board pursuant to this Act, he or she has the right to file a challenge with the Social Insurance Board pursuant to the procedure provided for in the General Part of the Social Code Act.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+§ 24.
+
+Overpaid amounts of social benefits for disabled persons
+
+(1) Amounts of social benefits for disabled persons which are overpaid on the basis of this Act shall be voluntarily repaid or shall be recovered or set off pursuant to the procedure provided for in the General Part of the Social Code Act.
+
+(2) If a person does not return social benefits received without basis, the amounts overpaid to him or her may be set off against the social benefits paid monthly on the basis of a decision of the Social Insurance Board. The set-off amount shall not exceed 20 per cent of the amount of benefits granted to the person.
+
+(3) If payment of social benefits for disabled persons is terminated before the full set-off of overpaid amounts, the amounts paid without basis shall be recovered from the person pursuant to the procedure provided for in the General Part of the Social Code Act.
+
+(4) If the Social Insurance Board issues a precept to a person concerning the commencement of compulsory enforcement upon failure to perform the obligation to comply with the recovery but there is no information concerning the address of the person or the person does not live at the address known and the actual location of the person is unknown and the precept cannot be delivered in any other manner provided for in the General Part of the Social Code Act, the conclusion of the precept shall be published in the official publication Ametlikud Teadaanded.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+§ 24
+
+1
+
+.
+
+Payment of disabled adult allowance
+
+[Repealed –  RT I, 12.06.2025, 1 - entry into force 22.06.2025]
+
+§ 24
+
+2
+
+.
+
+Payment of disabled adult allowance or disability allowance for a person of working age
+
+[Repealed –  RT I, 12.06.2025, 1 - entry into force 22.06.2025]
+
+§ 24
+
+3
+
+.
+
+Payment of work allowance
+
+[Repealed –  RT I, 12.06.2025, 1 - entry into force 22.06.2025]
+
+§ 25.
+
+Amendment of earlier legislation
+
+[Omitted from this text.]
+
+§ 25
+
+1
+
+.
+
+Payment of social benefits for disabled persons
+
+(1) Social benefits for disabled persons shall be paid pursuant to the procedure provided for in subsections 1 and 3
+
+1
+
+of § 22 as of 1 February 2009.
+
+(2) Until 1 February 2009, social benefits for disabled persons shall be paid through the local pension departments either to the bank account of the recipient of the benefit or by post at the expense of the payer of the benefit as requested by the recipient.
+
+[RT I, 06.12.2012, 1 - entry into force 01.01.2013]
+
+(3) The social benefits for disabled persons granted before 1 February 2009 shall be paid pursuant to the procedure provided for in § 22 of this Act as of 1 February 2009.
+
+(4) If the recipient of benefits does not notify the Social Insurance Board of his or her bank account number or submit an application in accordance with subsection 1 of § 22 of this Act and it is therefore not possible to pay the benefits pursuant to the procedure provided for in § 22 of this Act, payment of the benefits shall be suspended as of 1 February 2009. After submission of the corresponding application and a document provided for in subsection 2 of § 2 or § 4 of the Identity Documents Act, the benefits shall be paid retroactively.
+
+[RT I, 08.07.2016, 1 - entry into force 01.01.2017]
+
+(5) Under the conditions and pursuant to the procedure provided for in subsections 3
+
+1
+
+and 3
+
+2
+
+of § 22 of this Act, social benefits for disabled persons shall also be paid to persons with a profound disability receiving pension for incapacity for work and persons with a profound disability declared permanently incapacitated for work receiving national pension.
+
+[RT I, 13.12.2014, 1 - entry into force 01.07.2016 (entry into force changed – RT I, 17.12.2015, 1)]
+
+(6) The Social Insurance Board shall grant rehabilitation allowance to a person who bore rehabilitation expenses until 31 December 2015 and who was entitled to receive rehabilitation allowance pursuant to the wording of the Social Benefits for Disabled Persons Act in force until 31 December 2015 and who submits an application no later than on 30 June 2016.
+
+[RT I, 13.12.2014, 2 - entry into force 01.01.2016]
+
+§ 25
+
+2
+
+.
+
+Implementation of § 5
+
+1
+
+of this Act
+
+During the emergency situation declared by the Government of the Republic on 12 March 2020, the Social Insurance Board may apply the possibility to extend the duration of the degree of severity of disability of a person provided for in § 5
+
+1
+
+of this Act retroactively as of 12 March 2020.
+
+[RT I, 21.04.2020, 1 - entry into force 22.04.2020]
+
+§ 25
+
+3
+
+.
+
+Benefit for mitigation of effect of motor vehicle tax
+
+(1) A single benefit is paid to mitigate the effect of the motor vehicle tax:
+
+1)
+
+to a child with profound disability in the amount of 142 euros;
+
+2)
+
+to a child with severe disability in the amount of 95 euros;
+
+3)
+
+to a child with a diagnosis of a rare disease provided in a regulation established on the basis of subsection 6 of § 6 of this Act in the amount of 95 euros;
+
+4)
+
+to a person of working age with profound disability in the amount of 250 euros;
+
+5)
+
+to a person of working age with severe disability in the amount of 60 euros.
+
+(2) Children and persons of working age have the right to receive the benefit provided that they comply with one of the following conditions on 1 January 2025:
+
+1)
+
+the person has been established to have profound disability;
+
+2)
+
+the person has been established to have severe disability;
+
+3)
+
+the child has been granted severely disabled child allowance on the basis of a diagnosis of a rare disease provided in a regulation established on the basis of subsection 6 of § 6 of this Act.
+
+(3) The Social Insurance Board verifies the compliance of a person with the conditions provided in subsection 2 of this section on the basis of the data in the social protection information system.
+
+(4) The benefit is granted by an act of the Social Insurance Board.
+
+(5) The Social Insurance Board communicates the notice concerning the act of the grant of benefit to the e-mail address of the person or in the manner specified in clauses 2–4 of subsection 1 of § 27 of the General Part of the Social Code Act.
+
+(6) The benefit is paid no later than on 31 March 2025 pursuant to the procedure provided in § 28 of the General Part of the Social Code Act, taking into account the provisions of this Act. Where the compliance of a person with the conditions for receiving the benefit is established later, the benefit will be paid retroactively.
+
+(7) The benefit is financed from the state budget.
+
+[RT I, 17.08.2024, 1 - entry into force 01.01.2025]
+
+§ 26.
+
+Entry into force of Act
+
+(1) For persons who, before the entry into force of this Act, were granted a disability pension at the rate established for a disabled child, maintenance allowance for raising a disabled child, or a disabled single parent's child allowance, and who, on the basis of this Act, are entitled to social benefits for disabled persons, the earlier pension or benefit shall be recalculated as social benefits for disabled persons. If the recalculated benefit proves to be less than the pension or benefit previously paid, social benefits for disabled persons shall be paid in the amount of the previous pension or benefit until the end of the term previously specified or until a new medical examination is performed.
+
+(2) This Act enters into force on 1 January 2000.
+
+(3) Section 7, clause 2 of subsection 1 of § 8, clauses 2 and 3 of subsection 2 of § 8, and §§ 11 and 12 of this Act enter into force on 1 January 2001.
+
+(4) Until 1 January 2001, caregiver's allowance shall be paid to one non-working parent who is raising a child of 3 to 18 years of age with a moderate, severe or profound disability pursuant to clause 1 of subsection 1 of § 8 of this Act in the amount established in clause 1 of subsection 2 of § 8 of this Act.
+
+(5) A disabled person who was granted a social benefit for disabled persons prior to 1 January 2001 and who does not have the right to receive a social benefit for disabled persons after 1 January 2001 shall be paid a social benefit in the former amount for the specified term, except for transport allowance and telephone allowance the payment of which shall be terminated as of the date of being granted an allowance if the person is not less than 16 years of age.
+
+(6) The payment of social benefits to a person who was granted social benefits for disabled persons, except for disabled child allowance, transport allowance and telephone allowance, prior to 1 January 2002 shall be continued on the former bases and in the former amount for the specified term.
+
+(7) Disabled child allowance shall be recalculated pursuant to the Act which enters into force on 1 January 2002. If the recalculated benefit is less than the sum of disabled child allowance, transport allowance and telephone allowance previously paid, the disabled child allowance shall be paid in the total sum of the benefits for the specified term.
+
+(8) The decision on the granting of caregiver's allowance granted to a caregiver or guardian of a person not less than 18 years of age through the Social Insurance Board shall be revoked. The Social Insurance Board shall notify the recipient of a caregiver's allowance and the rural municipality government or city government in whose administrative jurisdiction the recipient of the caregiver's allowance lives in writing of the revocation of the decision on the granting of caregiver's allowance.
+
+[RT I 2004, 89, 604 - entry into force 01.04.2005]
+
+(9) The decision on the granting of caregiver's allowance granted to a parent or step-parent of a disabled child through the Social Insurance Board shall be revoked. The Social Insurance Board shall notify the recipient of a caregiver's allowance and the rural municipality government or city government in whose administrative jurisdiction the recipient of the caregiver’s allowance lives according to the population register in writing of the revocation of the decision on the granting of caregiver’s allowance.
+
+[RT I 2008, 58, 329 - entry into force 01.03.2009]
+
+(10) If a person submits an application for an examination for determination of the degree of severity of a disability and identification of additional expenses before entry into force of the conditions provided for in subsections 1
+
+1
+
+and 1
+
+2
+
+of § 2
+
+2
+
+of this Act, the procedure in force at the time of submission of the application shall apply.
+
+[RT I, 27.03.2012, 6 - entry into force 01.06.2012]
+
+(11) The wording of this Act which entered into force on 1 January 2016 together with implementing provisions shall apply to a person who has not submitted an application for assessment of work ability together with an application for the determination of the degree of severity of a disability before 1 January 2017.
+
+[RT I, 17.12.2015, 1 - entry into force 01.07.2016]
+
+← Back
+
+|
+
+Up ↑
+
+Lehe valmimist toetas Euroopa Liit
+
+Ligipääsetavuse teatis
+
+Facebook
+
+X.com
+
+© Riigikantselei 2010
+
+© Justiitsministeerium 2012
+
+Riigi Teataja otsinguabi:     620 8148
+
+Tagasiside:
+
+e-kiri
+
+Versioon 12.16.22
+
+https://www.riigiteataja.ee/otsingu_soovitused.json
+
+Riigi Teataja portal uses cookies to improve the user experience. By clicking the Accept button, you agree our use of cookies.
+
+More information.
+
+Accept

@@ -1,0 +1,1060 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+
+<html lang="en" moznomarginboxes mozdisallowselectionprint>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<head>
+    
+
+
+
+
+
+
+    <script>
+        var _mtm = window._mtm || [];
+        var _paq = window._paq || [];
+        _mtm.push({ 'mtm.startTime': (new Date().getTime()), event: 'mtm.Start' });
+        _paq.push(['setCustomDimension', 1, 'WEB4G']);
+        _paq.push(['HeatmapSessionRecording::disable']);
+        (function() {
+            var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+            g.async=true; g.src='https://cdn.matomo.cloud/insee.matomo.cloud/container_j86K86K5.js'; s.parentNode.insertBefore(g,s);
+        })();
+    </script>
+
+
+    
+        
+            
+                <title data-i18n="recherche.head.titre-page">Résultats de la recherche | Insee</title>
+            
+            
+            
+        
+    
+
+    
+
+    
+        
+            
+                <meta data-i18n="[content]recherche.head.meta-description" name="description" content="Recherchez vos statistiques par thème, niveau géographique, catégorie ou collection" />
+            
+            
+        
+    
+
+    
+        <meta name="robots" content="noindex, nofollow">
+    
+    <link rel="stylesheet" type="text/css" href="/static/css/application.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/featherlight/featherlight.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/swiper/swiper.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/dateTimePicker/jquery.datetimepicker.css">
+    <script type="text/javascript">
+        var contextPath="";
+        var langue="en";
+        var numOnglet="1";
+    </script>
+
+    <script type="text/javascript" charset="UTF-8" defer="defer" src="
+
+
+/static/js/svg/graphsvg.js
+"></script>
+    <script type="text/javascript" charset="UTF-8" defer="defer" src="
+
+
+/static/js/application-lib.min.js
+"></script>
+    <script src="/static/build/highcharts.js"></script>
+    <script src="/static/build/highcharts-insee.js"></script>
+    <script charset="UTF-8" defer="defer" src="
+
+
+/static/build/application.js
+"></script>
+    <script>
+        var contextPath="";
+        var langue="en";
+        var numOnglet="1";
+    </script>
+    <!--[if lte IE 8]>
+        <script type="text/javascript" charset="UTF-8" defer="defer" src="
+
+
+/static/js/polyfills/css3-mediaqueries.min.js
+"></script>
+        <![endif]-->
+    <script type="text/javascript">
+var inseeConfig = {
+
+        
+    };
+</script>
+
+    <script type="text/javascript">
+var features = {
+'rmesSource': 'true',
+};
+</script>
+
+
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes" />
+    <link rel="icon" type="image/png" href="
+
+
+/static/img/favicon-96x96.png
+" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="
+
+
+/static/img/favicon.svg
+" />
+    <link rel="shortcut icon" href="
+
+
+/static/img/favicon.ico
+" />
+    <link rel="apple-touch-icon" sizes="180x180" href="
+
+
+/static/img/apple-touch-icon.png
+" />
+
+    <script async src="/static/build/htmx.min.js"></script>
+</head>
+
+<body>
+<!-- Lightbox -->
+<span id="isLightbox" class="hide">false</span>
+
+<span class="controller-param hidden" id="urlAlternative" aria-hidden="true"></span>
+<span class="controller-param hidden" id="urlCible" aria-hidden="true"></span>
+<span class="controller-param hidden" id="urlCibleAlternative" aria-hidden="true"></span>
+
+
+
+
+
+
+<div id="wait" class="wait-off"><img src="
+
+
+/static/img/preloader.gif
+" alt="Veuillez-patienter..."/>
+</div>
+<div id="fond-transparent-body" class="fond-transparent-off"></div>
+
+<header class="header" role="banner">
+    <span style="height: 0;display: inline-block;">&nbsp;</span>
+    <a class="evitement" href="#contenu" data-i18n="header.evitement.contenu">Aller au contenu</a>
+    
+        
+        
+            
+
+
+
+
+
+<div id="banniere" class="banniere">
+	<div class="bandeau">
+		<div class="liens-aide-responsive">
+			<a id="lien-aide-responsive" data-i18n="header.recherche.aide-du-haut-court" href="
+
+
+/en/information/3313008
+">Aide</a>
+			
+		</div>
+		<div class="liens-themes-responsive">
+			
+				
+					<a href="
+
+
+/en/information/8566052
+" data-i18n="header.recherche.themes" class="liens-themes-responsive">Thèmes</a>
+				
+				
+			
+		</div>
+		<div class="loupe" tabindex="-1">
+			<a href="#" id="afficher-recherche" tabindex="-1">
+				<span class="loupe-span">
+					<br/>
+					<span data-i18n="header.responsive.recherche-loupe" class="style">Recherche</span>
+				</span>
+			</a>
+		</div>
+		
+		
+
+
+
+
+
+
+
+
+	
+	
+		<a  href="
+
+
+/en/accueil
+" id="logo" >
+			<img class="logo logo-accueil lien-logo" src="/static/img/logoInseeEn.svg" height="75px" data-i18n="[alt]header.logo.alt" alt="Insee - Institut national de la statistique et des études économiques - Mesurer pour comprendre - Accueil" />
+			<img class="logo logo-accueil lien-logo-responsive" src="/static/img/logoInseeEn.svg" height="75px" data-i18n="[alt]header.logo.alt" alt="Insee - Institut national de la statistique et des études économiques - Mesurer pour comprendre - Accueil" />
+		</a>
+	
+
+
+		<div class="langue-responsive">
+			
+				
+					<a id="lien-changement-langue-responsive" href="/langue/fr" lang="fr">Français</a>
+				
+				
+			
+		</div>
+		<div class="presse-responsive">
+			<a id="lien-presse-responsive" data-i18n="header.recherche.espace-presse" href="
+
+
+/en/information/2107814
+">Presse</a>
+		</div>
+		<div class="hamburger">
+			<a href="#" id="afficher-menu" tabindex="-1">
+				<span class="hamburger-menu">
+					<br/>
+					<span data-i18n="header.responsive.menu-hamburger" class="style">Menu</span>
+				</span>
+			</a>
+		</div>
+	
+		
+		<div id="recherche-header" class="recherche-header recherche">
+			<div id="liens-acces">
+				<ul class="liste-lien-acces">
+					
+						<li class="lien-evitement"><a data-i18n="header.recherche.menu" href="#menu">Menu</a></li>
+						<li><a href="https://blog.insee.fr/" target="_blank" target="_blank" rel="noopener noreferrer">Blog</a></li>
+						<li><a data-i18n="header.recherche.espace-presse" href="
+
+
+/en/information/2107814
+">Presse</a></li>
+						<li><a data-i18n="header.recherche.aide-du-haut" href="
+
+
+/en/information/3313008
+">Aide</a></li>
+						
+ 						
+							
+								<li><a id="lien-changement-langue" href="/langue/fr" lang="fr">Français</a></li>
+							
+							
+						
+				</ul>
+			</div>
+			<div id="searchbar-header" class="searchbar-header" role="search">
+				<span id="search-waiting" class="waiting-off"><img alt="Veuillez-patienter..." src="/static/img/preloader.gif"></span>
+				<input data-i18n="[placeholder]header.recherche.barre-recherche-placeholder;[title]header.recherche.barre-recherche-title" type="search" class="ui-autocomplete-input"
+					id="barre-recherche" autocomplete="off" tabindex="0" title="Rechercher sur le site" placeholder="Rechercher" />
+				<button data-i18n="[title]header.recherche.loupe-title" id="bouton-recherche" class="searchbar-icon" tabindex="0" title="rechercher">
+					<span class="hidden-accessibilite" data-i18n="[title]header.recherche.loupe-title-icon">Lancer la recherche sur le site</span>
+				</button>
+				
+					
+						<a href="
+
+
+/en/information/8566052
+" data-i18n="header.recherche.themes" class="searchbar-theme" tabindex="0">Thèmes</a>
+					
+					
+				
+				<span id="start-terms" class="hidden">*:*</span>
+			</div>
+		</div>
+	
+</div>
+	<!-- Attention : les commentaires en fin de ligne ont un rôle important ! -->
+	<nav id="menu" role="navigation" aria-hidden="false" >
+		<ul class="menu">
+			<li><a class="lien maison" href="
+
+
+/en/accueil
+" title="accueil" ></a></li><!--
+			--><li><a data-i18n="[html]menu.statistiques.titre" class="lien" href="
+
+
+/en/statistiques
+" >Statistiques et études</a>
+				<div class="menu-deroulant">
+					<div data-i18n="[html]menu.statistiques.en-tete" class="menu-deroulant-en-tete">
+						Cherchez vos statistiques par&hellip;
+					</div>
+					<ul>
+						<li>
+							<a class="deroulement" href="#"></a><a data-i18n="menu.statistiques.themes" class="lien titre-categorie" href="
+
+
+/en/statistiques?idfacette=1
+">Thèmes</a>
+							<ul>
+								<li><a data-i18n="menu.statistiques.economie" class="lien" href="
+
+
+/en/statistiques?theme=27
+">Économie - conjoncture - comptes nationaux</a></li>
+								<li><a data-i18n="menu.statistiques.demographie" class="lien" href="
+
+
+/en/statistiques?theme=0
+">Démographie</a></li>
+								<li><a data-i18n="menu.statistiques.entreprises" class="lien" href="
+
+
+/en/statistiques?theme=37
+">Entreprises</a></li>
+								<li><a data-i18n="[html]menu.statistiques.plus-de-themes" class="lien plusDe" href="
+
+
+/en/statistiques?idfacette=1
+">Plus de thèmes&hellip;</a></li>
+							</ul>
+						</li>
+						<li>
+							<a class="deroulement" href="#"></a><a data-i18n="menu.statistiques.niveau-geographique" class="lien titre-categorie" href="
+
+
+/en/statistiques?idfacette=3
+">Niveaux géographiques</a>
+							<ul>
+								<li><a class="lien" href="
+
+
+/en/statistiques?debut=0&geo=FRANCE-1&idfacette=3
+">France</a></li>
+								<li><a data-i18n="menu.statistiques.comparaisons-reg-dep" class="lien" href="
+
+
+/en/statistiques?debut=0&geo=COMPRD-1&idfacette=3
+">Toutes les régions ou tous les départements</a></li>
+								<li><a data-i18n="menu.statistiques.toutes-communes" class="lien" href="
+
+
+/en/statistiques?debut=0&geo=TOUTES_COMMUNE-1
+">Toutes les communes</a></li>
+								<li><a data-i18n="[html]menu.statistiques.plus-de-niveau-geographique" class="lien plusDe" href="
+
+
+/en/statistiques?idfacette=3
+">Plus de niveaux géographiques&hellip;</a></li>
+							</ul>
+						</li>
+						<li>
+							<a class="deroulement" href="#"></a><a data-i18n="menu.statistiques.categorie-produit" class="lien titre-categorie" href="
+
+
+/en/statistiques?idfacette=4
+">Catégories</a>
+							<ul>
+								<li><a data-i18n="menu.statistiques.donnees" class="lien" href="
+
+
+/en/statistiques?categorie=1
+">Données</a></li>
+								<li><a data-i18n="menu.statistiques.publications" class="lien" href="
+
+
+/en/statistiques?categorie=2
+">Publications</a></li>
+								<li><a data-i18n="[html]menu.statistiques.plus-de-categories" class="lien plusDe" href="
+
+
+/en/statistiques?idfacette=4
+">Plus de catégories&hellip;</a></li>
+							</ul>
+						</li>
+						<li>
+							<a class="deroulement" href="#"></a><a data-i18n="menu.statistiques.collections" class="lien titre-categorie" href="
+
+
+/en/statistiques?idfacette=5
+">Collections</a>
+							<ul>
+								<li><a class="lien" href="
+
+
+/en/statistiques?collection=116
+">Insee Première</a></li>
+								<li><a class="lien" href="
+
+
+/en/statistiques?collection=119
+">Notes et points de conjoncture</a></li>
+								<li><a data-i18n="[html]menu.statistiques.plus-de-collections" class="lien plusDe" href="
+
+
+/en/statistiques?idfacette=5
+">Plus de collections&hellip;</a></li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+			</li><!--
+			--><li><a class="deroulement" href="#"></a><a class="lien" href="/en/information/2107769">Definitions, methods and quality</a><div class="menu-deroulant"><ul><li><a class="lien titre-categorie" href="/en/metadonnees/definitions">Definitions</a><ul></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2526481">Data sources and indicators</a><ul><li><a class="lien" href="/en/metadonnees/sources">List of data sources</a></li><li><a class="lien" href="/en/metadonnees/indicateurs">List of indicators</a></li><li><a class="lien" href="/en/information/2517226">Documentation on census results</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/4252443">Quality in the Official Statistical Service (SSP)</a><ul><li><a class="lien" href="/en/information/4249987">The Reference Framework</a></li><li><a class="lien" href="/en/information/4250036">Governance</a></li><li><a class="lien" href="/en/information/6691500">The quality policy and strategy of the official statistical service</a></li><li><a class="lien" href="/en/information/4251599">European Commitments</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107765">Classification</a><ul><li><a class="lien" href="/en/information/8621640">French classification of activities</a></li><li><a class="lien" href="/en/information/8621654">French Classification of products</a></li><li><a class="lien" href="/en/information/8973248">Classification of individual consumption by purpose</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/5398380">Models, Methods and Statistical Tools</a><ul><li><a class="lien" href="/en/information/5398357">Statistical Methodology</a></li></ul></li><li><a class="lien titre-categorie" href="/en/information/4195037">Courrier des statistiques</a><ul></ul></li></ul></div></li><li><a class="deroulement" href="#"></a><a class="lien" href="/en/information/2107752">Services</a><div class="menu-deroulant"><ul><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107732">Review maintenance payments, rents, leases or a contract</a><ul><li><a class="lien" href="/en/information/2489482">Review housing rent</a></li><li><a class="lien" href="/en/information/2489869">Review a commercial or professional lease</a></li><li><a class="lien" href="/en/information/2491441">Indexation of contracts</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2512785">Retrieve indices and time series</a><ul><li><a class="lien" href="/en/information/2886952">History of news</a></li><li><a class="lien" href="/en/information/2868584">Access by theme</a></li><li><a class="lien" href="/en/information/3128589">Keyword or ID search</a></li><li><a class="lien" href="/en/information/2868055">SDMX service web</a></li><li><a class="lien" href="/en/information/2868052">Correspondence tables</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107734">Register or identify a company</a><ul><li><a class="lien" href="/en/information/2107726">Company situation tools</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2563034">Videos &amp; Educational tools</a><ul><li><a class="lien" href="/en/information/2563032">INSEE in brief</a></li><li><a class="lien" href="/en/information/2903127">Videos</a></li></ul></li><li><a class="lien titre-categorie" href="/en/information/2107749">Respond to an INSEE survey</a><ul></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107747">Consult publication calendars</a><ul><li><a class="lien" href="/en/information/2107811">Publication calendars</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107743">Contributing to the Index database of natural persons (BRPP)</a><ul><li><a class="lien" href="/en/information/2493967">Registry office data</a></li><li><a class="lien" href="/en/information/4489573">The Single Electoral Register</a></li><li><a class="lien" href="/en/information/2494151">The computerisation of data exchange</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/3288629">Alain Desrosières Insee library</a><ul><li><a class="lien" href="/en/information/3288575">Documentary portal and open access catalogue</a></li><li><a class="lien" href="/en/information/3288548">The Digital Library of Official Statistics</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107739">Follow us</a><ul><li><a class="lien" href="/en/information/3711699">INSEE on social networks</a></li><li><a class="lien" href="/en/information/2107837">Publication alerts</a></li></ul></li><li><a class="lien titre-categorie" href="/en/information/3313008">Contact us</a><ul></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107814">Press</a><ul><li><a class="lien" href="/en/information/2499106">Regional press officers</a></li><li><a class="lien" href="/en/information/2647680">Press releases</a></li></ul></li></ul></div></li><li><a class="deroulement" href="#"></a><a class="lien" href="/en/information/2107711">INSEE and official statistics</a><div class="menu-deroulant"><ul><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107702">INSEE</a><ul><li><a class="lien" href="/en/information/2381925">Getting to know INSEE</a></li><li><a class="lien" href="/en/information/2381922">Working at INSEE</a></li><li><a class="lien" href="/en/information/2381920">Seminars and conferences</a></li><li><a class="lien" href="/en/information/2381918">Brief history</a></li><li><a class="lien" href="/en/information/4195175">Activity Reports</a></li><li><a class="lien" href="/en/information/2410087">Satisfaction surveys</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107704">INSEE's activities</a><ul><li><a class="lien" href="/en/information/2384705">Producing short-term diagnoses</a></li><li><a class="lien" href="/en/information/2384796">Providing details about the productive system</a></li><li><a class="lien" href="/en/information/2384815">Observation of the society</a></li><li><a class="lien" href="/en/information/2384952">Conducting the population census</a></li><li><a class="lien" href="/en/information/2384677">Describing and analysing regions and territories</a></li><li><a class="lien" href="/en/information/2388700">Managing registers : BRPP and Sirene</a></li><li><a class="lien" href="/en/information/2388407">Disseminating its statistics and studies</a></li><li><a class="lien" href="/en/information/2385705">Improving its methods and assessing quality</a></li><li><a class="lien" href="/en/information/4301982">Contributing to the development of European and international statistics</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107706">Official Statistics</a><ul><li><a class="lien" href="/en/information/2398930">Legislative and institutional framework</a></li><li><a class="lien" href="/en/information/2386424">Official Statistical System</a></li><li><a class="lien" href="/en/information/2388575">Statistical confidentiality</a></li><li><a class="lien" href="/en/information/4196120">Personal data protection</a></li><li><a class="lien" href="/en/information/2388844">Dissemination rules for official statistics</a></li></ul></li><li><a class="deroulement" href="#"></a><a class="lien titre-categorie" href="/en/information/2107708">The development of European statistics</a><ul><li><a class="lien" href="/en/information/4304373">Producers of European statistics in France</a></li><li><a class="lien" href="/en/information/2410240">The legal basis of European statistical governance</a></li><li><a class="lien" href="/en/information/4300318">The framework regulations and sectoral regulations</a></li></ul></li><li><a class="lien titre-categorie" href="/en/information/5232639">Access to administrative documents</a><ul></ul></li></ul></div></li>
+		</ul>
+	</nav>
+</div>
+<div class="clear"></div>
+        
+    
+</header>
+
+<main id="contenu" class="main" role="main">
+    
+    <!--[if lte IE 8]>
+    <script type='text/javascript' charset="UTF-8" src="
+
+
+/static/js/polyfills/json2.js
+"></script>
+    <![endif]-->
+    
+    <span class="hidden" id="controller-name" aria-hidden="true">SolrControllerEx</span>
+    <span class="controller-param hidden" data-name="pathname"
+          aria-hidden="true">/en/statistiques</span>
+    <span class="controller-param hidden" data-name="isNavigation" aria-hidden="true">true</span>
+    <span class="controller-param hidden" id="lien-geoclip" aria-hidden="true">https://statistiques-locales.insee.fr/</span>
+
+    <nav class="breadcrum">
+        <div class="container">
+            <ol class="fil-ariane">
+                <li><a data-i18n="breadcrum.accueil" href="
+
+
+/en/accueil
+">Accueil</a></li>
+                <li data-i18n="breadcrum.statistiques">Statistiques et études</li>
+            </ol>
+        </div>
+    </nav>
+    <div class="titre-page">
+        <div class="titre">
+            <h1 data-i18n="statistiques.bandeau-bleu.titre" class="titre-principal">Statistiques et
+                Études EN</h1>
+            
+                
+                    <div id="statistiques-chapo-ecrans" data-i18n="[html]statistiques.bandeau-bleu.chapo.ecran"
+                         class="chapeau">
+                        <p class="paragraphe-chapeau">
+                            The Statistics section lists all the publications and data available on insee.fr.<br/>To refine your search, two tools are at your disposal:
+                        </p>
+                        <p class="paragraphe-chapeau">
+                            - the filters (facets) shown on the left of this page, with results displayed starting from the most recent. Using the "Geographic level" filter, you can easily select nationwide (choose "France") or local (down to your neighbourhood) results.
+                        </p>
+                        <p class="paragraphe-chapeau">
+                            - the search engine on the upper right of each page, with results displayed starting from the most relevant.
+                        </p>
+                    </div>
+                    <div id="statistiques-chapo-mobiles" data-i18n="[html]statistiques.bandeau-bleu.chapo.mobile"
+                         class="chapeau">
+                        <p class="paragraphe-chapeau">
+                            The Statistics section lists all the publications and data available on insee.fr.<br/>Two tools allow you to narrow your search:
+                        </p>
+                        <p class="paragraphe-chapeau">
+                            - by clicking on Refine your search, you access the selection filters (facet). Using the \"Geographic level\" filter, you can easily select nationwide (choose \"France\") or local (down to your neighbourhood) results; by clicking on Display results, these are dispayed from the newest to the oldest.
+                        </p>
+                        <p class="paragraphe-chapeau">
+                            - the search engine on the upper of each page allows you to access the results from most relevant to least relevant.
+                        </p>
+                    </div>
+                
+                
+            
+        </div>
+        <div class="boutons-bascule" role="tablist">
+            <div data-i18n="facettes.communs.affiner-recherche" class="affiner-recherche" role="tab"
+                 aria-controls="facettes">Affiner votre recherche
+            </div>
+            <div data-i18n="facettes.communs.afficher-resultats" class="afficher-resultat courant" role="tab"
+                 aria-controls="echos">Afficher les résultats
+            </div>
+        </div>
+    </div>
+    <div class="contenu" id="contenu">
+        <header id="facettes" class="facettes">
+            <section id="criteres" class="criteres">
+                <div class="titre-mes-criteres clearfix">
+                    <h2 data-i18n="facettes.criteres.titre" class="libelle">Mes critères</h2>
+                    <button data-i18n="facettes.criteres.supprimer" class="bouton-raz bouton-criteres" tabindex="0">
+                        Supprimer tous
+                    </button>
+                </div>
+                <div id="mes-criteres"></div>
+            </section>
+
+            <div class="accordion-container">
+                <h2 data-i18n="facettes.communs.affiner-recherche" id="h2-titre-recherche" class="titre-recherche">
+                    Affiner votre recherche</h2>
+                <!-- Facette Première Approche -->
+                
+
+
+
+
+<section class="facette accordion">
+    <h3 id="tab-facette-premiere-approche" class="accordion-header picto-header">
+        <span class="titre-avec-picto">
+            <span data-i18n="facettes.premiere-approche.titre">Aller à l'essentiel</span>
+    <svg aria-hidden="true" focusable="false" version="1.1" id="Calque_1" xmlns="httprg/2000/svg" x="0px" y="0px" viewBox="0 0 100 100" style="enable-background:new 0 0 100 100;" xml:space="preserve">
+        <style type="text/css">
+            .st0 {fill: #FFFFFF;}
+                </style>
+                    <g id="Calque_1_00000165231234266534829950000000722666564325481090_">
+                    </g>
+                    <g id="icons">
+                    </g>
+                    <path class="st0" d="M47.2,91.2c-23.1,0-41.7-18.8-41.7-41.7c0-23.1,18.8-41.7,41.7-41.7c23.1,0,41.7,18.8,41.7,41.7
+                    C88.9,72.5,70.3,91.2,47.2,91.2z M47.2,14.6c-19.3,0-34.9,15.6-34.9,34.9s15.6,34.9,34.9,34.9s34.9-15.6,34.9-34.9
+                    S66.5,14.6,47.2,14.6z"/>
+                    <path class="st0" d="M89.7,92.6c-0.8,0-1.6-0.3-2.2-0.8l-15-12.3c-1.4-1.3-1.7-3.3-0.5-4.7c1.3-1.4,3.3-1.7,4.7-0.5l15.2,12.3
+                    c1.4,1.3,1.7,3.3,0.5,4.7C91.6,92.1,90.6,92.6,89.7,92.6z"/>
+                    <g>
+                        <path class="st0" d="M27.1,65.6c-1.9,0-3.5-1.6-3.5-3.5V49.5c0-1.9,1.6-3.5,3.5-3.5s3.5,1.6,3.5,3.5v12.6
+                        C30.6,64.2,29,65.6,27.1,65.6z"/>
+                        <path class="st0" d="M45.9,65.6c-1.9,0-3.5-1.6-3.5-3.5V26.6c0-1.9,1.6-3.5,3.5-3.5c1.9,0,3.5,1.6,3.5,3.5v35.7
+                        C49.3,64.2,47.7,65.6,45.9,65.6z"/>
+                        <path class="st0" d="M64.6,65.6c-1.9,0-3.5-1.6-3.5-3.5V39.4c0-1.9,1.6-3.5,3.5-3.5c1.9,0,3.5,1.6,3.5,3.5v22.7
+                        C68,64.2,66.5,65.6,64.6,65.6z"/>
+                    </g>
+                </svg>
+            </span>
+            <span class="fleche-haut">
+            </span>
+        </h3>
+    <div id="tabpanel-facette-premiere-approche" class="contenu-facette accordion-content">
+        <div id="premiere-approche" class="arbre-noeud facette-container"></div>
+    </div>
+</section>
+                <!-- Facette themes -->
+                <section class="facette accordion">
+                    <h3 id="tab-facette-theme" class="accordion-header"><span
+                            data-i18n="facettes.themes.titre">Thèmes</span>
+                        <span class="fleche-haut"></span></h3>
+                    <div id="tabpanel-facette-theme" class="contenu-facette accordion-content">
+                        <div id="themes" class="arbre-noeud facette-container"></div>
+                    </div>
+                </section>
+                <!-- Facette conjoncture -->
+                <section class="facette accordion">
+                    <h3 id="tab-facette-conjoncture" class="accordion-header"><span
+                            data-i18n="facettes.conjoncture.titre">Conjoncture</span> <span
+                            class="fleche-haut"></span></h3>
+                    <div id="tabpanel-facette-conjoncture" class="contenu-facette accordion-content">
+                        <div id="conjoncture" class="arbre-noeud facette-container select">
+                            <div id="conjoncture-choix">
+                                <ul class="arbre-facette"></ul>
+                            </div>
+                            <div class="container searchbar-header" >
+                                   <input data-i18n="[placeholder]facettes.conjoncture.rechercher-placeholder;[title]facettes.conjoncture.rechercher-title"
+                                          id="conjoncture-filtre" type="search" role="textbox" autocomplete="off"
+                                          tabindex="0" title="Filtrer les indicateurs de conjoncture par leurs noms"
+                                          placeholder="Rechercher un indicateur de conjoncture"/>
+                                   <button class="searchbar-icon"><span class="hidden-accessibilite" data-i18n="facettes.conjoncture.rechercher-title">Rechercher un indicateur de conjoncture par son nom</span></button>
+                            </div>
+                            <div id="conjoncture-liste" class="scrollbox">
+                                <div id="conjoncture-liste-content" class="scrollbox-contenu"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Facette Géographie -->
+                <section class="facette accordion">
+                    <h3 id="tab-facette-geographie" class="accordion-header"><span
+                            data-i18n="facettes.niveau-geo.titre">Niveaux géographiques</span> <span
+                            class="fleche-haut"></span></h3>
+                    <div id="tabpanel-facette-geographie" class="contenu-facette accordion-content">
+                        
+
+
+
+
+
+<div id="geographie" class="arbre-noeud select facette-container">
+	<span id="geo-waiting" class="waiting-off"><img  alt="Veuillez-patienter..." src="/static/img/preloader.gif" /></span>
+	<span id="geo-niveau" class="container"></span>
+	<ul id="geo-contenant" class="geo-contenant" role="radiogroup" aria-labelledby="geo-niveau" aria-hidden="true">
+		<li class="radio" tabindex="0" role="radio" aria-checked="true" data-value="nom">
+			<img id="radio-image-nom" src="/static/img/radio-checked.svg" aria-labelledby="radio-label-nom" role="presentation" alt="Coché : " />
+			<span data-i18n="facettes.niveau-geo.dont-nom" id="radio-label-nom" class="radio-label">dont le nom est&nbsp;:</span>
+		</li>
+		<li class="radio" tabindex="-1" role="radio" aria-checked="false" data-value="contenant">
+			<img id="radio-image-contenant" src="/static/img/radio-unchecked.svg" aria-labelledby="radio-label-contenant" role="presentation" alt="Non-coché : "  />
+			<span data-i18n="facettes.niveau-geo.contenant-commune" id="radio-label-contenant" class="radio-label">contenant la commune dont le nom est&nbsp;:</span>
+		</li>
+	</ul>
+	<div class="container searchbar-header" >
+		<input data-i18n="[placeholder]facettes.niveau-geo.rechercher-placeholder;[title]facettes.niveau-geo.rechercher-title" id="geo-searchbar" type="search" autocomplete="off" role="textbox" tabindex="0" title="Rechercher une zone géographique par son nom ou son code" placeholder="Rechercher une zone géographique" />
+		<button class="searchbar-icon"><span class="hidden-accessibilite" data-i18n="facettes.niveau-geo.rechercher-title">Rechercher une zone géographique par son nom ou son code</span></button>
+	</div>
+	<span id="geo-selections" class="container arbre-noeud"></span>
+</div>
+                    </div>
+                </section>
+                <!-- Facette Catégories -->
+                <section class="facette accordion">
+                    <h3 id="tab-facette-categorie" class="accordion-header"><span data-i18n="facettes.categories.titre">Catégories</span>
+                        <span class="fleche-haut"></span></h3>
+                    <div id="tabpanel-facette-categorie" class="contenu-facette accordion-content">
+                        <div id="categories" class="arbre-noeud facette-container"></div>
+                    </div>
+                </section>
+                <!-- Facette collections -->
+                <section class="facette accordion">
+                    <h3 id="tab-facette-collection" class="accordion-header"><span
+                            data-i18n="facettes.collections.titre">Collections</span> <span class="fleche-haut"></span>
+                    </h3>
+                    <div id="tabpanel-facette-collection" class="contenu-facette accordion-content">
+                        <div id="collection" class="arbre-noeud facette-container select">
+                            <div id="collection-choix">
+                                <ul class="arbre-facette"></ul>
+                            </div>
+                            <div class="container searchbar-header" >
+                                   <input data-i18n="[placeholder]facettes.collections.rechercher-placeholder;[title]facettes.collections.rechercher-title"
+                                          id="collection-filtre" type="search" role="textbox" autocomplete="off"
+                                          tabindex="0" title="Filtrer les collections par leurs noms"
+                                          placeholder="Rechercher une collection"/>
+                                   <button class="searchbar-icon"><span class="hidden-accessibilite" data-i18n="facettes.collections.rechercher-title">Rechercher une collection par son nom</span></button>
+                            </div>
+                            <div id="collection-liste" class="scrollbox">
+                                <div id="collection-liste-content" class="scrollbox-contenu"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </header>
+        <div id="echos" role="region" aria-live="polite">
+            <div id="nombre-resultats"></div>
+            <div id="navigateur-up" class="navigateur"></div>
+            <section>
+                <article>
+                    <table id="documents" role="presentation"></table>
+                </article>
+            </section>
+            <div id="navigateur-down" class="navigateur"></div>
+        </div>
+    </div>
+    <a href="#" class="sticky-left"><span class="sticky-text"></span></a>
+
+</main>
+
+<footer role="contentinfo">
+    
+        
+        
+            
+
+
+
+<div class="footer-mobile">
+	<div class="liens-reseaux-sociaux-mobile">
+		<a href="https://bsky.app/profile/insee.fr" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-bluesky" title="Bluesky"><span class="icone-bluesky"><span data-i18n="reseaux-sociaux.footer.lien-bluesky" class="hidden-accessibilite"></span></span></a>
+		<a href="https://www.instagram.com/insee_fr/" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-instagram" title="Instagram"><span class="icone-instagram"><span data-i18n="reseaux-sociaux.footer.lien-instagram" class="hidden-accessibilite"></span></span></a>
+		<a href="https://www.linkedin.com/company/insee" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-linkedin" title="LinkedIn"><span class="icone-linkedin"><span data-i18n="reseaux-sociaux.footer.lien-linkedin" class="hidden-accessibilite"></span></span></a>
+		
+			
+				<a href="https://x.com/InseeFr_News" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-twitter" title="X"><span class="icone-twitter"><span data-i18n="reseaux-sociaux.footer.lien-twitter" class="hidden-accessibilite"></span></span></a>
+			
+			
+		
+		<a href="https://www.youtube.com/@Insee_Fr" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-youtube" title="Youtube"><span class="icone-youtube"><span data-i18n="reseaux-sociaux.footer.lien-youtube" class="hidden-accessibilite"></span></span></a>
+		<a href="https://blog.insee.fr/" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-blog" title="Blog"><span class="icone-blog"><span data-i18n="reseaux-sociaux.footer.lien-blog" class="hidden-accessibilite"></span></span></a>
+		<a href="
+
+
+/en/information/2414678
+" data-i18n="[title]reseaux-sociaux.footer.lien-rss" title="Rss"><span class="icone-rss"><span data-i18n="reseaux-sociaux.footer.lien-rss" class="hidden-accessibilite"></span></span></a>
+	</div>
+	<div class="liens-partenaires-mobile">
+		<ul class="menu-liens-partenaires-mobile" role="menu">
+			
+				
+					<li class="lien"><span data-i18n="footer.menu-footer.partenaires">Our partner sites</span></li>
+					<ul class="menu-deroulant-partenaires-mobile" role="menu">
+						<li role="menuitem">
+							<a class="lien" href="http://ec.europa.eu/eurostat/web/european-statistical-system/overview?locale=en" target="_blank" data-i18n="[title]footer.images.sse">Eurostat (statistical office of the European Union)</a>
+						</li>
+						<li role="menuitem">
+							<a class="lien" href="https://www.casd.eu/en/" target="_blank" data-i18n="[title]footer.images.casd">Secure access services for confidential data</a>
+						</li>
+					</ul>
+				
+				
+				
+			</ul>
+		</ul>
+	</div>
+</div>
+<div class="footer">
+	<div class="container-bloc-1">
+		<nav class="bloc-1" aria-label="bloc-1">
+			<div class="abonnement">
+				<h2 class="titre-footer" data-i18n="footer.abonnez-vous">Abonnez-vous</h2>
+				<div class="contenu-abonnement">
+					<div class="lettre"></div>
+					<a href="
+
+
+/en/information/2107837
+" class="lien-footer avis-parution" data-i18n="footer.avis-parution">Avis de parution</a>
+				</div>
+			</div>
+			<div class="reseaux-sociaux">
+				<h2 class="titre-footer" data-i18n="footer.reseaux-sociaux">Nous suivre</h2>
+				<div class="contenu-reseaux-sociaux">
+					<a href="https://bsky.app/profile/insee.fr" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-bluesky" title="Bluesky"><img class="cercle-bluesky" alt="" src="
+
+
+/static/img/logo-bluesky.svg
+"/><span data-i18n="reseaux-sociaux.footer.lien-bluesky" class="hidden-accessibilite"></span></a>
+					<a href="https://www.instagram.com/insee_fr/" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-instagram" title="Instagram"><img class="cercle-instagram" alt="" src="
+
+
+/static/img/logo-instagram-small.png
+"/><span data-i18n="reseaux-sociaux.footer.lien-instagram" class="hidden-accessibilite"></span></a>
+					<div class="cercle-linkedin">
+						<a href="https://www.linkedin.com/company/insee" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-linkedin" title="LinkedIn"><span class="icone-linkedin"><span data-i18n="reseaux-sociaux.footer.lien-linkedin" class="hidden-accessibilite"></span></span></a>
+					</div>
+					<div class="cercle-twitter">
+						
+							
+								<a href="https://x.com/InseeFr_News" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-twitter" title="X"><span class="icone-twitter"><span data-i18n="reseaux-sociaux.footer.lien-twitter" class="hidden-accessibilite"></span></span></a>
+							
+							
+						
+					</div>
+					<div class="cercle-youtube">
+						<a href="https://www.youtube.com/@Insee_Fr" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-youtube" title="Youtube"><span class="icone-youtube"><span data-i18n="reseaux-sociaux.footer.lien-youtube" class="hidden-accessibilite"></span></span></a>
+					</div>
+					<div class="cercle-blog">
+						<a href="https://blog.insee.fr/" target="_blank" rel="noopener" data-i18n="[title]reseaux-sociaux.footer.lien-blog" title="Blog"><span class="icone-blog"><span data-i18n="reseaux-sociaux.footer.lien-blog" class="hidden-accessibilite"></span></span></a>
+					</div>
+					<div class="cercle-rss">
+						<a href="
+
+
+/en/information/2414678
+" data-i18n="[title]reseaux-sociaux.footer.lien-rss" title="Rss"><span class="icone-rss"><span data-i18n="reseaux-sociaux.footer.lien-rss" class="hidden-accessibilite"></span></span></a>
+					</div>
+				</div>
+			</div>
+			<div class="contact-aide">
+				<h2 class="titre-footer" data-i18n="footer.contact">Contact</h2>
+				<div class="contenu-contact-aide">
+					<a href="
+
+
+/en/information/3313008
+" class="lien-footer" data-i18n="footer.aide">Aide et contact</a>
+				</div>
+			</div>
+			
+		</nav>
+	</div>
+	<div class="container-bloc-2">
+		<div class="bloc-2"><ul>
+   <div class="colonne-1">
+      <li class="liste-niveau-1">
+         <div class="titre-liste-niveau-1"><a class="lien" href="/en/statistiques" data-i18n="menu.statistiques.titre">Statistiques et études</a></div>
+      </li>
+      <li class="liste-niveau-1">
+         <div class="titre-liste-niveau-1"><a class="lien" href="/en/information/2107769">Definitions, methods and quality</a></div>
+         <ul>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/metadonnees/definitions">Definitions</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2526481">Data sources and indicators</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/4252443">Quality in the Official Statistical Service (SSP)</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107765">Classification</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/5398380">Models, Methods and Statistical Tools</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/4195037">Courrier des statistiques</a></div>
+            </li>
+         </ul>
+      </li>
+   </div>
+   <div class="colonne-2">
+      <li class="liste-niveau-1">
+         <div class="titre-liste-niveau-1"><a class="lien" href="/en/information/2107752">Services</a></div>
+         <ul>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107732">Review maintenance payments, rents, leases or a contract</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2512785">Retrieve indices and time series</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107734">Register or identify a company</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2563034">Videos &amp; Educational tools</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107749">Respond to an INSEE survey</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107747">Consult publication calendars</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107743">Contributing to the Index database of natural persons (BRPP)</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/3288629">Alain Desrosières Insee library</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107739">Follow us</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/3313008">Contact us</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107814">Press</a></div>
+            </li>
+         </ul>
+      </li>
+      <li class="liste-niveau-1">
+         <div class="titre-liste-niveau-1"><a class="lien" href="/en/information/2107711">INSEE and official statistics</a></div>
+         <ul>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107702">INSEE</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107704">INSEE's activities</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107706">Official Statistics</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/2107708">The development of European statistics</a></div>
+            </li>
+            <li class="liste-niveau-2">
+               <div class="titre-liste-niveau-2"><a class="lien titre-categorie" href="/en/information/5232639">Access to administrative documents</a></div>
+            </li>
+         </ul>
+      </li>
+   </div>
+</ul></div>
+	</div>
+	<nav class="container-bloc-3" aria-label="container-bloc-3">
+		<div class="bloc-3">
+			<ul class="images-footer">
+				
+					
+						<li class="image-footer">
+							<a class="lien-footer-image" href="http://ec.europa.eu/eurostat/web/european-statistical-system/overview?locale=en" target="_blank" data-i18n="[title]footer.images.sse">
+								<img src="
+
+
+/static/img/footer/sse_en.png
+" alt="European Statistical System" title="Eurostat (statistical office of the European Union)" />
+							</a>
+						</li>
+						<li class="image-footer">
+							<a class="lien-footer-image" href="https://www.casd.eu/en/" target="_blank" data-i18n="[title]footer.images.casd">
+								<img src="
+
+
+/static/img/footer/CASD.png
+" alt="CASD" title="Secure access services for confidential data" />
+							</a>
+						</li>
+					
+					
+				
+			</ul>
+		</div>
+	</nav>
+	<nav class="container-bloc-4" aria-label="container-bloc-4">
+		<div class="bloc-4">
+			<ul class="liens-footer">
+				
+					
+						<li class="lien-footer">
+							<a href="
+
+
+/en/information/2409130
+" data-i18n="footer.liens.mentions">Legal notice</a>
+						</li>
+						<li class="lien-footer">
+							<a href="
+
+
+/en/information/2415363
+" data-i18n="footer.liens.accessibilite">Accessibility : partially available</a>
+						</li>
+						<li class="lien-footer">
+							<a href="
+
+
+/en/information/6051040
+" data-i18n="footer.liens.securite">Security</a>
+						</li>
+						<li class="lien-footer">
+							<a href="
+
+
+/en/plan-du-site
+" data-i18n="footer.liens.plan">Site map</a>
+						</li>
+					
+					
+				
+			</ul>
+		</div>
+	</nav>
+</div>
+
+        
+    
+</footer>
+
+<a href="#" class="sticky-top"><span data-i18n="footer.sticky-top.texte" class="sticky-text">Haut de page</span></a>
+
+
+<script>
+    window.addEventListener("load", async function () {
+        const isFrench = document.documentElement.lang !== "en";
+        Highcharts.setOptions({
+            lang: {
+                thousandsSep: "\u00A0",
+                numericSymbols: undefined, // disable 100k, 1M, etc
+                decimalPoint: isFrench ? "," : ".",
+            },
+        });
+
+        const bimester = isFrench
+            ? { label: "bimestre", abbr: "bim." }
+            : { label: "bimester", abbr: "bim." };
+        const quarter = isFrench
+            ? { label: "trimestre", abbr: "trim." }
+            : { label: "quarter", abbr: "qtr." };
+
+        const getBimester = (date) => {
+            return Math.floor(date.getUTCMonth() / 2) + 1;
+        };
+        const getQuarter = (date) => {
+            return Math.floor(date.getUTCMonth() / 3) + 1;
+        };
+
+        const addSuffix = function (pos) {
+            switch (pos) {
+                case 1:
+                    return pos + (isFrench ? "er " : "st ");
+                case 2:
+                    return pos + (isFrench ? "e " : "nd ");
+                case 3:
+                    return pos + (isFrench ? "e " : "rd ");
+                default:
+                    return pos + (isFrench ? "e " : "th ");
+            }
+        };
+
+        Highcharts.dateFormats.clib = function (timestamp) {
+            const date = new Date(timestamp);
+            return addSuffix(getBimester(date)) + bimester.abbr;
+        };
+        Highcharts.dateFormats.Clib = function (timestamp) {
+            const date = new Date(timestamp);
+            return addSuffix(getBimester(date)) + bimester.label;
+        };
+        Highcharts.dateFormats.t = function (timestamp) {
+            const date = new Date(timestamp);
+            return getQuarter(date) + "";
+        };
+        Highcharts.dateFormats.qlib = function (timestamp) {
+            const date = new Date(timestamp);
+            return addSuffix(getQuarter(date)) + quarter.abbr;
+        };
+        Highcharts.dateFormats.Qlib = function (timestamp) {
+            const date = new Date(timestamp);
+            return addSuffix(getQuarter(date)) + quarter.label;
+        };
+
+        const graphs = document.querySelectorAll("[id^='highchart']");
+        for (const graph of graphs) {
+            const response = await fetch(graph.getAttribute("data-graphique"));
+            const xml = await response.text();
+            const options = await generateChartOptions(xml);
+
+            if (options?.chart.type === 'map') {
+                Highcharts.mapChart(graph.getAttribute("id"), options);
+            } else {
+                Highcharts.chart(graph.getAttribute("id"), options);
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
+

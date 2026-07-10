@@ -1,0 +1,795 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="https://www.w3.org/1999/xhtml" xml:lang="lv" lang="lv">
+<head profile="https://www.w3.org/2005/10/profile">
+
+      	<meta property='fb:app_id' content='' />
+      	<meta property='og:type' content='website' />
+        	<meta property='og:url' content='https://likumi.lv/' />
+        	<meta property='og:site_name' content='LIKUMI.LV' />
+        	<meta property='og:image' content='https://likumi.lv/likumi_bildes/PIC/LIK200.JPG' />
+        	<meta property='og:title' content='Likumi.lv - Latvijas Republikas tiesību akti' /><title>Likumi.lv - Latvijas Republikas tiesību akti</title><meta name='description' content='Tiesību akti un to izmaiņas: visi jaunumi un arhīvs. Sistematizēti tiesību akti. Plašas meklēšanas un personalizētās iespējas. Vietni uztur „Latvijas Vēstnesis”'><meta name='keywords' content='tiesību nozares, tiesību aktu klasifikācija, darba tiesības, komerctiesības, patērētāju tiesības, nodokļi un nodevas, krimināltiesības, apdrošināšana, tiesību aktu tēmas'>  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+  <link rel="image_src" href="/likumi_bildes/PIC/LIK200.JPG"/>
+
+  <link rel="icon"
+      type="image/png"
+      href="/favicon2.ico" />
+
+  <link href="/css/1758555140_style.css" rel="stylesheet" type="text/css"/>
+
+  
+  <!--[if IE 7]>
+  <link rel="stylesheet" href="/css/1758555140_ie7.css" type="text/css"/>
+  <![endif]-->
+  <!--[if IE 8]>
+  <link rel="stylesheet" href="/css/1758555140_ie8.css" type="text/css"/>
+  <![endif]-->
+  <!--[if IE 9]>
+  <link rel="stylesheet" href="/css/1758555140_ie9.css" type="text/css"/>
+  <![endif]-->
+
+  <script type="text/javascript" charset="UTF-8" src="/js/block_iframes.js?1"></script>
+    <script type="text/javascript" charset="UTF-8" src="/js/cookie-script.js?1773748020"></script>
+      <script src="/js/1758555140_jquery-1.12.4.js" type="text/javascript"></script>
+  <script type="text/javascript">var $1_12_4 = jQuery.noConflict();</script>
+  <script src="/js/1758555140_jquery.js" type="text/javascript"></script>
+
+  
+    <!-- GA4: Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N3WX2LE6EQ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-N3WX2LE6EQ');
+  </script>
+  </head>
+<body>
+<script type="text/javascript">
+  // (C)2000-2026 Gemius SA - gemiusPrism  / Likumi.lv/Visas Lapas
+	var pp_gemius_identifier = 'baCQ1MsF2_nLH9ShOwkkErRHrtDKOg8mmlMMTsuO2_H.B7';
+
+  var pp_gemius_init_timeout = 15000;
+  var pp_gemius_consent = false;
+
+  function gemius_pending(i) {
+    window[i] = window[i] || function() {
+      var x = window[i+'_pdata'] = window[i+'_pdata'] || [];
+      x[x.length] = Array.prototype.slice.call(arguments, 0);
+    }
+  }
+  (function (cmds) {
+    var c;
+    while ((c = cmds.pop())) gemius_pending(c);
+  })([
+    "gemius_cmd",
+    "gemius_hit",
+    "gemius_event",
+    "gemius_init",
+    "pp_gemius_hit",
+    "pp_gemius_event",
+    "pp_gemius_init",
+  ]);
+  window.pp_gemius_cmd = window.pp_gemius_cmd || window.gemius_cmd;
+  (function(d,t) {
+      try {
+        var gt=d.createElement(t),s=d.getElementsByTagName(t)[0],l="http"+(location.protocol=="https:"?"s":"");
+        gt.setAttribute("async","async");
+        gt.setAttribute("defer","defer");
+        gt.src=l+"://galv.hit.gemius.pl/xgemius.min.js";
+        s.parentNode.insertBefore(gt,s);
+      }
+      catch (e) {}
+    }
+  )(document,"script");
+
+  (function(){
+    function wait_for_gemius_init(params){
+      if(typeof gemius_init == 'function'){
+        gemius_init(params);
+      }
+      else{
+        var waiting_for_gemius = setInterval(
+          function (params) {
+            if(typeof gemius_init == 'function'){
+              gemius_init(params);
+              clearInterval(waiting_for_gemius);
+            }
+          }, 200, params);
+        setTimeout(function(){clearInterval(waiting_for_gemius);}, 20000);
+      }
+    }
+
+    function initialise_gemius_after_user_consent(){
+      function initialise_gemius() {
+        // Once a choice is known, ignore all changes on this same page load.
+        window.removeEventListener('CookieScriptAccept', initialise_gemius);
+        window.removeEventListener('CookieScriptAcceptAll', initialise_gemius);
+        window.removeEventListener('CookieScriptReject', initialise_gemius);
+
+        // NOTE: Copy `is_consent_given` here, as it may not be available to call at this stage.
+        var consent_given = false;
+        if(window.CookieScript && window.CookieScript.instance){
+          var cookie_choice = window.CookieScript.instance.currentState();
+          consent_given = cookie_choice.action && cookie_choice.categories.indexOf('performance') > -1;
+        }
+        // Else: CookieScript is unavailable or it's a no-cookie page (`no_cookie_banner_page`).
+
+        // NOTE: Gemius will just ignore the `gemius_init` call after the `pp_gemius_init_timeout` timeout.
+        wait_for_gemius_init({consent: consent_given});
+      }
+
+      if(gemius_init_triggered){
+        return; // Ignore repeated calls.
+      }
+      gemius_init_triggered = true;
+
+      if(no_cookie_banner_page || window.CookieScript.instance.currentState().action){
+        initialise_gemius();
+      }
+      // The choice has not been made yet (and we want to wait for it).
+      else{
+        window.addEventListener('CookieScriptAccept', initialise_gemius);
+        window.addEventListener('CookieScriptAcceptAll', initialise_gemius);
+        window.addEventListener('CookieScriptReject', initialise_gemius);
+      }
+    }
+
+
+
+    var no_cookie_banner_page = false;
+    var gemius_init_triggered = false;
+
+    // If we don't have to wait for CookieScript:
+    if(window.CookieScript && window.CookieScript.instance){
+      initialise_gemius_after_user_consent();
+    }
+    else{
+      window.addEventListener('CookieScriptLoaded', initialise_gemius_after_user_consent);
+
+      if(no_cookie_banner_page){
+        // `no_cookie_banner_page` may be because CookieScript is unavailable,
+        // so wait a little constant bit, do not rely on "CookieScriptLoaded" happening.
+        setTimeout(initialise_gemius_after_user_consent, 2000);
+      }
+    }
+  })();
+</script>
+  <div style="position: absolute;left: -999em;">
+	<a href="https://m.likumi.lv" title="Teksta versija">Teksta versija</a>
+</div>
+
+<div style="top:220px;display:none;visibility:hidden;" class="dialog" id="vecs-browseris">
+	<div class="wrapper-2">
+		<div onclick="closeDialog(this);" class="close" role="button"></div>
+		<div class="tp fsl fcdg fwb lfloat">
+			Uzmanību! Jūs lietojat neatbilstošu interneta pārlūkprogrammu.
+		</div><div class="clear"></div>
+		<div class="text-3 lfloat fsm fcdg fwb">
+			Lai varētu lietot visas Likumi.lv piedāvātās iespējas, piedāvājam BEZ MAKSAS ielādēt jaunāku pārlūkprogrammas versiju. Iesakām izmēģināt arī vietnes MOBILO VERSIJU - <a href='https://m.likumi.lv' style='color:#559BBD;'>m.likumi.lv</a> (piemērota arī mazāk jaudīgiem datoriem).		</div><div class="clear"></div>
+		<div class="content">
+			<div class="column lfloat">
+				<div class="item-container">
+					<a href='http://www.mozilla.org/lv/firefox/fx/' target='_blank' class="fsm fcdg fwb"><div class="item item-firefox"></div> Firefox</a>
+				</div>
+				<div class="item-container">
+					<a href='https://www.google.com/chrome/' target='_blank' class="fsm fcdg fwb"><div class="item item-chrome"></div> Chrome</a>
+				</div>
+			</div>
+			<div class="column lfloat">
+				<div class="item-container">
+					<a href='http://www.apple.com/safari/' target='_blank' class="fsm fcdg fwb"><div class="item item-safari"></div> Safari</a>
+				</div>
+				<div class="item-container">
+					<a href='http://windows.microsoft.com/en-us/internet-explorer/download-ie' target='_blank' class="fsm fcdg fwb"><div class="item item-ie"></div> Internet Explorer</a>
+				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	</div>
+	<div class="footer">
+		<div class="lfloat btn-check fsm fcdg fwb">
+			<div onclick="toggleCheckbox(this);" class="checkbox" id="browser-chk" role="checkbox"></div>
+			<label for="browser-chk">nerādīt turpmāk šo paziņojumu</label>
+		</div>
+		<div class="btn-2 rfloat fcw fsm fwb" onclick="saveDontShowOldBrowser();" role="button">
+			<div class="helper"></div>
+			Apstiprināt
+		</div>
+		<div class="clear"></div>
+	</div>
+</div>
+<div style="top:220px;display:none;visibility:hidden;" class="aptauja" id="aptauja">
+	<div class="wrapper-2">
+		<div onclick="closeAptauja();" class="close" role="button"></div>
+		<div class="logo-lv"></div>
+		<div class="text">
+			<div class="fsl fwb fcdg">Aicinām vēl šonedēļ piedalīties lietotāju apmierinātības aptaujā!</div>
+			<div class="clear">&nbsp;</div><br/>
+			<div class="fsl fwn fcdg">Paldies par viedokli!<br/><br/><br/><br/></div>
+			<div class="aln"><a href="https://www.visidati.lv/tk/11368872/" target="_blank" id="sakt_apt"><img border="0" alt="Sākt aptauju" src="/likumi_bildes/PIC/START_LIK.PNG"></a></div>
+			<div class="footer">
+				<div class="lfloat fsm fcdg fwn">
+					<div onclick="toggleCheckbox(this);closeAptauja();" class="lfloat checkbox" id="nap" role="checkbox"></div>&nbsp;&nbsp;<label for="nap">Rādīt vēlāk</label>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+    <div id='btn-feedback' class='atsauksmes-block' onclick='showAtsauksmes();' role='button'></div>
+  <div class="globalContainer"><div class="clear"></div><div class='pageHead'>
+        <div class='logo' style=''><a href='https://likumi.lv'><img height='44px' src='/likumi_bildes/PIC/LIKUMI_25_LOGO.PNG' alt='LIKUMI LV'/></a></div>
+        <div class='title fcg'>LATVIJAS REPUBLIKAS TIESĪBU AKTI</div>
+        <div class='navHead'>
+          <ul>
+            <li><a href='https://likumi.lv/ta/veids' class='fclb fwb '>veidi</a></li>
+            <li><a href='https://likumi.lv/ta/tema' class='fclb fwb '>tēmas</a></li>
+            <li><a href='https://likumi.lv/ta/skatitakie' class='fclb fwb '>visvairāk skatītie</a></li>
+            <li><a href='https://likumi.lv/ta/jaunakie' class='fclb fwb '>jaunākie</a></li>
+          </ul>
+        </div>
+        <div class='navLang navLang-lv' style='position:absolute;top:0;right:0px;line-height: 31px;'>
+          <a class='lv' href='https://likumi.lv'>LV</a>&nbsp;
+          <a class='en' href='https://likumi.lv/about.php'>EN</a>
+        </div>      
+    </div>
+<div class="pageRow1">  <div class='col1 lfloat'>
+    <div class='searchBox lfloat'>
+      <div class='wrapper'>
+      <form action='https://likumi.lv/google_search.php' id='searchbox_007602629882570581132:f2wua_haduq' name='search' style="overflow: hidden">
+        <input type='hidden' name='cx' value='007602629882570581132:f2wua_haduq' />
+          <input type='hidden' name='cof' value='FORID:11' />
+          <input type='hidden' name='sa' value='Meklēt' />
+          <input type='hidden' name='num' value='20' />
+          <input type='hidden' name='lang_ui' value='lv' />
+        <input type='text' value='' title='Lai meklētu, pieņemiet mērķa sīkdatnes!' placeholder='Lai meklētu, pieņemiet mērķa sīkdatnes!' data-cookie-ok-text='Ievadiet atslēgvārdu šeit' disabled class='lfloat' name='q' size='50'/>
+        <button class='searchBtn lfloat' type='submit' value='submit'>
+            <span class='title fcw fsl fwb'>meklēt</span>
+            <span class='img'></span>
+        </button>
+      </form>
+      </div>
+    </div>
+    
+    <div class='searchExpand lfloat fsm fcw fwb' onclick='searchExpand.show("new");' role='button'>
+      Izvērstā meklēšana
+    </div>
+    </div>
+  <script>
+    function noGoogleSearch(){
+      CookieScript.instance.show();
+    }
+    $1_12_4('#searchbox_007602629882570581132\\:f2wua_haduq').on('click', noGoogleSearch);
+  </script>
+    <script src="/js/1758555140_enable_google_search.js" type="text/plain" data-cookiescript="accepted" data-cookiecategory="targeting"></script>
+
+<!--IZVĒRSTĀ MEKLĒŠANA-->
+
+<div class="searchExpandContainer fcdg fwb fsm" style="display:none;">
+	<form id="searchForm" method="post" action="search.php">
+        <fieldset style="display:none;">
+            <legend>Noklusējuma vērtības</legend>
+    		<input type="hidden" name="loc1" value="0" />
+    		<input type="hidden" name="fraze1" value="0" />
+    		<input type="hidden" name="loc2" value="0" />
+    		<input type="hidden" name="fraze2" value="0" />
+    		<input type="hidden" name="st_groz" value="1" />
+    		<input type="hidden" name="na_status1" value="1" />
+    		<input type="hidden" name="na_status2" value="1" />
+    		<input type="hidden" name="na_status3" value="0" />
+    		<input type="hidden" name="vf_radit_nos" value="1" />
+    		<input type="hidden" name="vf_sort_type" value="0" />
+        </fieldset>
+
+	<div class="topField">
+		<div class="title fwb fcg fsl lfloat">Izvērstā meklēšana</div>
+		<div class="subtitle lfloat"><a href="/par-mums/ka-meklet" class="fclb fwb fsn" target="_blank">Kā meklēt?</a></div>
+		<div class="close rfloat" onclick="closeDarkBg();" role="button"></div>
+		<div class="clear"></div>
+		<label for="searchS">Meklēt nosaukumā<br/></label>
+		<div class="inputContainer">
+			<input type="text" class="fsm" value="" name="vf_title" id="searchS"/>
+			<div class="checkboxPart">
+				<table width="90%" height="30" align="right">
+					<tr>
+						<td><div class="checkbox" id="loc1"></div></td>
+						<td>meklēt locījumos</td>
+						<td><div class="checkbox" id="fraze1"></div></td>
+						<td>meklēt frāzi</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+        <label for="search-in-text">Meklēt tekstā<br/></label>
+		<div class="inputContainer">
+			<input type="text" class="fsm" value="" name="vf_text" id="search-in-text"/>
+			<div class="checkboxPart">
+				<table width="90%" height="30" align="right">
+					<tr>
+						<td width="16"><div class="checkbox" id="loc2"></div></td>
+						<td>meklēt locījumos</td>
+						<td width="16"><div class="checkbox" id="fraze2"></div></td>
+						<td>meklēt frāzi</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	<div class="innerField">
+		<table width="640" cellpadding="0" cellspacing="0" border="0">
+			<tr class="tr_first">
+				<td width="280" align="left">Izdevējs</td>
+				<td width="20">&nbsp;</td>
+				<td width="280" align="left">Veids</td>
+				<td align="right" width="60"></td>
+			</tr>
+			<tr class="tr_clone">
+				<td width="280" height="50" align="left">
+					<div class="selectContainer izdevejs">
+						<div id="search-izdevejs-dropdown" class="fwn"></div>
+					</div>
+				</td>
+				<td width="20">&nbsp;</td>
+				<td width="280" align="left">
+					<div class="selectContainer veids">
+						<div id="search-veids-dropdown" class="fwn"></div>
+					</div>
+				</td>
+				<td align="right"><div onclick="searchExpand.cloneTr(this);" role="button"><img src="/likumi_bildes/PIC/MEKL_PLUS.GIF" alt="pievienot"/></div></td>
+			</tr>
+		</table>
+		<div class="checkboxPart">
+			<table height="30">
+				<tr>
+					<td width="16"><div class="checkbox selected" id="st_groz"></div></td>
+					<td>nemeklēt grozījumos</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<div class="innerField2">
+		<table width="750" cellpadding="0" cellspacing="0" border="0">
+			<tr>
+				<td width="280" height="30" align="left" colspan="3"><label for="calendar1">Pieņemts</label></td>
+				<td width="20">&nbsp;</td>
+				<td width="280" align="left" colspan="3"><label for="calendar3">Stājas spēkā</label></td>
+				<td width="60">&nbsp;</td>
+				<td width="110"><label for="dok_nr_text">Dokumenta Nr.</label></td>
+			</tr>
+			<tr>
+				<td width="110" height="30">
+					<input type="text" class="fsm lfloat" name="na_izd_dat" id="calendar1"/>
+					<div class="rfloat calendar"></div>
+				</td>
+				<td width="60">
+					<div class="lidz fclg"><label for="calendar2">līdz</label></div>
+				</td>
+				<td width="110">
+					<input type="text" class="fsm lfloat" name="na_izd_dat_to" id="calendar2" onClick="copyDat('calendar1',this);"/>
+					<div class="rfloat calendar"></div>
+				</td>
+				<td width="20">&nbsp;</td>
+				<td width="110">
+					<input type="text" class="fsm lfloat" name="na_sst_dat" id="calendar3"/>
+					<div class="rfloat calendar"></div>
+				</td>
+				<td width="60">
+					<div class="lidz fclg"><label for="calendar4">līdz</label></div>
+				</td>
+				<td width="110">
+					<input type="text" class="fsm lfloat" name="na_sst_dat_to" id="calendar4" onClick="copyDat('calendar3',this);"/>
+					<div class="rfloat calendar"></div>
+				</td>
+				<td width="60">&nbsp;</td>
+				<td width="110">
+					<input type="text" class="fsm text" name="vf_numurs" id="dok_nr_text"/>
+				</td>
+			</tr>
+			<tr>
+				<td height="12" colspan="9">&nbsp;</td>
+			</tr>
+			<tr>
+				<td height="30" align="left" colspan="3"><label for="calendar5">Publicēts LV</label></td>
+				<td>&nbsp;</td>
+				<td align="left" colspan="3"><label for="calendar7">Zaudējis spēku</label></td>
+				<td>&nbsp;</td>
+				<td><label for="calendar9">Redakcija uz</label></td>
+			</tr>
+			<tr>
+				<td>
+					<input type="text" class="fsm lfloat" name="vf_pub_dat" id="calendar5"/>
+					<div class="rfloat calendar"></div>
+				</td>
+				<td>
+					<div class="lidz fclg"><label for="calendar6">līdz</label></div>
+				</td>
+				<td>
+					<input type="text" class="fsm lfloat" name="vf_pub_dat_to" id="calendar6" onClick="copyDat('calendar5',this);"/>
+					<div class="rfloat calendar"></div>
+				</td>
+				<td>&nbsp;</td>
+				<td>
+					<input type="text" class="fsm lfloat" name="vf_zaud_sp" id="calendar7"/>
+					<div class="rfloat calendar"></div>
+				</td>
+				<td>
+					<div class="lidz fclg"><label for="calendar8">līdz</label></div>
+				</td>
+				<td>
+					<input type="text" class="fsm lfloat" name="vf_zaud_sp_to" id="calendar8" onClick="copyDat('calendar7',this);"/>
+					<div class="rfloat calendar"></div>
+				</td>
+				<td>&nbsp;</td>
+				<td>
+					<input type="text" class="fsm lfloat" name="na_red" id="calendar9"/>
+					<div class="rfloat calendar"></div>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div class="bottomField">
+		<table width="420" cellpadding="0" cellspacing="0" border="0" align="left">
+			<tr>
+				<td height="40">Statuss:</td>
+				<td width="20">
+					<div class="checkbox selected" id="na_status1"></div>
+				</td>
+				<td>spēkā esošs</td>
+				<td width="20">
+					<div class="checkbox selected" id="na_status2"></div>
+				</td>
+				<td>vēl nav spēkā</td>
+				<td width="20">
+					<div class="checkbox" id="na_status3"></div>
+				</td>
+				<td>zaudējis spēku</td>
+			</tr>
+		</table>
+        <button type='submit' value='submit' class="btn search fcw fwb fsl rfloat" onclick="event.preventDefault(); searchExpand.send();">meklēt<span class="helper"></span>
+        </button>
+		<div class="btn reset fcw fwb fsl rfloat" onclick="searchExpand.reset();" role="button">notīrīt</div>
+		<div class="clear"></div>
+	</div>
+	</form>
+</div>
+<div class='col2 lfloat'>
+      <div class='authorizeBox'>
+        <div class='title fwb fcw fss lfloat' onclick='showAutorizejies()'>Autorizēties savā kontā</div>
+        <div class='clear'></div>
+        <hr class='lg' />
+        <div class='why-text fclg fwb fss' onClick="location.href='/par-mums/personalizetas-iespejas'" role='link'>Kādēļ autorizēties vai reģistrēties?</div>
+      </div>
+      <div id="likauth-dialog" style="display:none;height:180px;"></div>
+  <div id="likreg-dialog" style="display:none;/*height:542px; kāpēc kāds to uzlika? aizmirsu paroli sadaļā rādās nepareizs izmērs.*/"></div>
+</div>
+<div class="col3 lfloat">&nbsp;</div>
+<div class="clear"></div>
+</div><div class='globalContainerCenter'><div class="pageRow2"><div class="col1 lfloat">
+	<div class="listStyle1">
+		<div class="title">Tiesību aktu veidi</div>
+		<ul>
+			<li><a href="/ta/veids/saeima/likumi">Likumi</a></li>
+			<li><a href="/ta/veids/ministru-kabinets/noteikumi">Ministru kabineta noteikumi</a></li>
+			<li><a href="/ta/veids#domes">Pašvaldību saistošie noteikumi</a></li>
+			<li><a href="/ta/saraksts/starptautiskie-ligumi/#stl-meklet">Starptautiskie līgumi</a></li>
+			<li><a href="/ta/saraksts/politikas-planosanas-dokumenti/#ppd-meklet">Politikas plānošanas dokumenti</a></li>
+		</ul>
+		<div class="more" id="visiveidi">citi veidi</div>
+	</div>
+</div>
+<div class="col2 lfloat">
+			<div class="listStyle1">
+				<div class="title">Tiesību aktu tēmas</div>
+				<ul><li><a href='/ta/tema/darba-tiesibas'>Darba tiesības</a></li><li><a href='/ta/tema/eiropas-savieniba'>Eiropas Savienība</a></li><li><a href='/ta/tema/teritorijas-attistibas-planosana'>Teritorijas attīstības plānošana</a></li><li><a href='/ta/tema/administrativas-atbildibas-celvedis'>Administratīvās atbildības ceļvedis</a></li><li><a href='/ta/tema/atbalsts-ukrainas-civiliedzivotajiem'>Atbalsts Ukrainas civiliedzīvotājiem</a></li></ul>
+    			<div class="more" id="visastemas">visas tēmas</div>
+    		</div>
+    	</div><div class="col3 lfloat">
+	<div class="listStyle2">
+		<div class="title fsxl fwb fcw">Šodienas jaunumi<br>tiesību aktos</div>
+		<div class="date fsm fwb fclg2">09.05.2026.</div>
+		<table>
+			<tr class="tac1">
+				<td width="50"><img src="/likumi_bildes/PIC/PUBL.PNG" alt=""/></td>
+				<td width="20" class="tac"><a class="fcw" href="/ta/jaunakie/publiceti">0</a></td>
+				<td><a class="fcw" href="/ta/jaunakie/publiceti">publicēti</a></td>
+			</tr>
+			<tr class="tac1">
+				<td><img src="/likumi_bildes/PIC/SPEKA.PNG" alt=""/></td>
+				<td class="tac"><a class="fcw" href="/ta/jaunakie/stajas-speka">15</a></td>
+				<td><a class="fcw" href="/ta/jaunakie/stajas-speka">stājas spēkā</a></td>
+			</tr>
+			<tr class="tac1">
+				<td><img src="/likumi_bildes/PIC/ZAUD.PNG" alt=""/></td>
+				<td class="tac"><a class="fcw" href="/ta/jaunakie/zaude-speku">3</a></td>
+				<td><a class="fcw" href="/ta/jaunakie/zaude-speku">zaudē spēku</a></td>
+			</tr>
+		</table>
+	</div>
+	<div class="footer">
+		<input type="text" id="today_datepicker" value="1" name="datepicker" style="display:none;">
+		<label for="today_datepicker">atlasīt tiesību aktus pēc datuma</label>
+	</div>
+</div>
+<div class="clear"></div></div><div class="clear"></div><div class="pageRow3"><div class="col1 lfloat">
+			<div class="listStyle3">
+				<div class="wrapper">
+					<div class="title">Visvairāk skatītie</div>
+				</div>
+				<ul class="nav">
+					<li class="fsm fwb active" id="new" doo="top">Mēneša<div class="helper"></div></li>
+					<li class="fsm fwb" id="all" doo="top">Visi</li>
+				</ul>
+				<div class="clear"></div>
+				<hr class="ldg">
+				<div class="wrapper" style="padding-top:10px;">
+        <ul class="list" id="toplist"><li class='tooltip-container ico-info'><div class='lfloat'><div class='lfloat'><div class='lfloat statusu-ikonas'><div class='tooltip-container ico-speka'><div class="ico">
+        <div class="ico">
+          <div class="tooltip">
+            <div class="helper"></div>
+            <div class="container fss fwn fcw"><font class='fcw2'>Statuss: </font><font class='fcw3'>spēkā esošs</font><br/><font class='fcw2'>Izdevējs: </font><font class='fcw3'>Saeima</font><br/><font class='fcw2'>Veids: </font><font class='fcw3'>likums</font><br/><font class='fcw2'>Pieņemts: </font><font class='fcw3'>01.04.2026.</font><br/><font class='fcw2'>Stājas spēkā: </font><font class='fcw3'>29.04.2026.</font><br/><font class='fcw2'>Publicēts: </font><font class='fcw3'><a href='https://www.vestnesis.lv/ta/id/367720' class='white-link fp_top_text' rel-text='Saite uz dokumentu vestnesis.lv' target='_blank'>Latvijas Vēstnesis</a>, 72, 15.04.2026.</font><br/><span><font class='fclg2'>OP numurs: </font><a class='white-link fp_top_text' href='https://www.vestnesis.lv/url.php?id=367720' target='_blank' rel-text='Saite uz oficiālo publikāciju (PDF)'>2026/72.1</a></span>
+            </div>
+          </div>
+        </div></div></div></div></div></div><div class="text-container">
+              <a href="/ta/id/367720-kapsetu-likums" target="_blank" class="t1 fwn fss fp_top_text" rel-text='Kapsētu likums'>Kapsētu likums</a>
+              <a target='_blank' href='https://www.vestnesis.lv/ta/id/367720' class='t2 inlined fwb fsxs fp_top_text' rel-text='Saite uz dokumentu vestnesis.lv'>Latvijas Vēstnesis<span class='date'>, 15.04.2026.</span></a>
+              </div>
+              <div class="clear"></div>
+            </li><li class='tooltip-container ico-info'><div class='lfloat'><div class='lfloat'><div class='lfloat statusu-ikonas'><div class='tooltip-container ico-info'><div class="ico">
+        <div class="ico">
+          <div class="tooltip">
+            <div class="helper"></div>
+            <div class="container fss fwn fcw"><font class='fcw2'>Izdevējs: </font><font class='fcw3'>Ministru kabinets</font><br/><font class='fcw2'>Veids: </font><font class='fcw3'>rīkojums</font><br/><font class='fcw2'>Numurs: </font><font class='fcw3'>204</font><br/><font class='fcw2'>Pieņemts: </font><font class='fcw3'>09.04.2026.</font><br/><font class='fcw2'>Stājas spēkā: </font><font class='fcw3'>09.04.2026.</font><br/><font class='fcw2'>Publicēts: </font><font class='fcw3'><a href='https://www.vestnesis.lv/ta/id/367671' class='white-link fp_top_text' rel-text='Saite uz dokumentu vestnesis.lv' target='_blank'>Latvijas Vēstnesis</a>, 70, 13.04.2026.</font><br/><span><font class='fclg2'>OP numurs: </font><a class='white-link fp_top_text' href='https://www.vestnesis.lv/url.php?id=367671' target='_blank' rel-text='Saite uz oficiālo publikāciju (PDF)'>2026/70.8</a></span>
+            </div>
+          </div>
+        </div></div></div></div></div></div><div class="text-container">
+              <a href="/ta/id/367671-par-korupcijas-noversanas-un-apkarosanas-pasakumu-planu-2026-2027-gadam" target="_blank" class="t1 fwn fss fp_top_text" rel-text='Par Korupcijas novēršanas un apkarošanas pasākumu plānu 2026.–2027. gadam'>Par Korupcijas novēršanas un apkarošanas pasākumu plānu 2026.–2027. gadam</a>
+              <a target='_blank' href='https://www.vestnesis.lv/ta/id/367671' class='t2 inlined fwb fsxs fp_top_text' rel-text='Saite uz dokumentu vestnesis.lv'>Latvijas Vēstnesis<span class='date'>, 13.04.2026.</span></a>
+              </div>
+              <div class="clear"></div>
+            </li><li class='tooltip-container ico-info'><div class='lfloat'><div class='lfloat'><div class='lfloat statusu-ikonas'><div class='tooltip-container ico-speka'><div class="ico">
+        <div class="ico">
+          <div class="tooltip">
+            <div class="helper"></div>
+            <div class="container fss fwn fcw"><font class='fcw2'>Statuss: </font><font class='fcw3'>spēkā esošs</font><br/><font class='fcw2'>Izdevējs: </font><font class='fcw3'>Ministru kabinets</font><br/><font class='fcw2'>Veids: </font><font class='fcw3'>noteikumi</font><br/><font class='fcw2'>Numurs: </font><font class='fcw3'>204</font><br/><font class='fcw2'>Pieņemts: </font><font class='fcw3'>14.04.2026.</font><br/><font class='fcw2'>Stājas spēkā: </font><font class='fcw3'>18.04.2026.</font><br/><font class='fcw2'>Publicēts: </font><font class='fcw3'><a href='https://www.vestnesis.lv/ta/id/367788' class='white-link fp_top_text' rel-text='Saite uz dokumentu vestnesis.lv' target='_blank'>Latvijas Vēstnesis</a>, 74, 17.04.2026.</font><br/><span><font class='fclg2'>OP numurs: </font><a class='white-link fp_top_text' href='https://www.vestnesis.lv/url.php?id=367788' target='_blank' rel-text='Saite uz oficiālo publikāciju (PDF)'>2026/74.3</a></span>
+            </div>
+          </div>
+        </div></div></div></div></div></div><div class="text-container">
+              <a href="/ta/id/367788-kriterijiun-kartiba-kada-valsts-piedalas-pedagogu-darba-samaksas-finansesanavisparejas-pamatizglitibas-un-visparejas" target="_blank" class="t1 fwn fss fp_top_text" rel-text='Kritēriji un kārtība, kādā valsts piedalās pedagogu darba samaksas finansēšanā vispārējās pamatizglītības un vispārējās vidējās izglītības pakāpē '>Kritēriji un kārtība, kādā valsts piedalās pedagogu darba samaksas finansēšanā vispārējās ..</a>
+              <a target='_blank' href='https://www.vestnesis.lv/ta/id/367788' class='t2 inlined fwb fsxs fp_top_text' rel-text='Saite uz dokumentu vestnesis.lv'>Latvijas Vēstnesis<span class='date'>, 17.04.2026.</span></a>
+              </div>
+              <div class="clear"></div>
+            </li><li class='tooltip-container ico-info'><div class='lfloat'><div class='lfloat'><div class='lfloat statusu-ikonas'><div class='tooltip-container ico-speka'><div class="ico">
+        <div class="ico">
+          <div class="tooltip">
+            <div class="helper"></div>
+            <div class="container fss fwn fcw"><font class='fcw2'>Statuss: </font><font class='fcw3'>spēkā esošs</font><br/><font class='fcw2'>Izdevējs: </font><font class='fcw3'>Saeima</font><br/><font class='fcw2'>Veids: </font><font class='fcw3'>likums</font><br/><font class='fcw2'>Pieņemts: </font><font class='fcw3'>16.04.2026.</font><br/><font class='fcw2'>Stājas spēkā: </font><font class='fcw3'>21.04.2026.</font><br/><font class='fcw2'>Publicēts: </font><font class='fcw3'><a href='https://www.vestnesis.lv/ta/id/367831' class='white-link fp_top_text' rel-text='Saite uz dokumentu vestnesis.lv' target='_blank'>Latvijas Vēstnesis</a>, 75A, 20.04.2026.</font><br/><span><font class='fclg2'>OP numurs: </font><a class='white-link fp_top_text' href='https://www.vestnesis.lv/url.php?id=367831' target='_blank' rel-text='Saite uz oficiālo publikāciju (PDF)'>2026/75A.1</a></span>
+            </div>
+          </div>
+        </div></div></div></div></div></div><div class="text-container">
+              <a href="/ta/id/367831-grozijumi-kriminalprocesa-likuma" target="_blank" class="t1 fwn fss fp_top_text" rel-text='Grozījumi Kriminālprocesa likumā'>Grozījumi Kriminālprocesa likumā</a>
+              <a target='_blank' href='https://www.vestnesis.lv/ta/id/367831' class='t2 inlined fwb fsxs fp_top_text' rel-text='Saite uz dokumentu vestnesis.lv'>Latvijas Vēstnesis<span class='date'>, 20.04.2026.</span></a>
+              </div>
+              <div class="clear"></div>
+            </li><li class='tooltip-container ico-info'><div class='lfloat'><div class='lfloat'><div class='lfloat statusu-ikonas'><div class='tooltip-container ico-info'><div class="ico">
+        <div class="ico">
+          <div class="tooltip">
+            <div class="helper"></div>
+            <div class="container fss fwn fcw"><font class='fcw2'>Izdevējs: </font><font class='fcw3'>Ministru kabinets</font><br/><font class='fcw2'>Veids: </font><font class='fcw3'>informatīvais ziņojums</font><br/><font class='fcw2'>Pieņemts: </font><font class='fcw3'>09.04.2026.</font><br/><font class='fcw2'>Publicēts: </font><font class='fcw3'><a href='https://www.vestnesis.lv/ta/id/367662' class='white-link fp_top_text' rel-text='Saite uz dokumentu vestnesis.lv' target='_blank'>Latvijas Vēstnesis</a>, 73, 16.04.2026.</font><br/><span><font class='fclg2'>OP numurs: </font><a class='white-link fp_top_text' href='https://www.vestnesis.lv/url.php?id=367662' target='_blank' rel-text='Saite uz oficiālo publikāciju (PDF)'>2026/73.10</a></span>
+            </div>
+          </div>
+        </div></div></div></div></div></div><div class="text-container">
+              <a href="/ta/id/367662-par-atkritumu-apsaimniekosanas-valsts-plana-2021-2028-gadam-izpildi-2021-2022-un-2023-gada" target="_blank" class="t1 fwn fss fp_top_text" rel-text='Par Atkritumu apsaimniekošanas valsts plāna 2021.-2028. gadam izpildi 2021., 2022. un 2023. gadā'>Par Atkritumu apsaimniekošanas valsts plāna 2021.-2028. gadam izpildi 2021., 2022. ..</a>
+              <a target='_blank' href='https://www.vestnesis.lv/ta/id/367662' class='t2 inlined fwb fsxs fp_top_text' rel-text='Saite uz dokumentu vestnesis.lv'>Latvijas Vēstnesis<span class='date'>, 16.04.2026.</span></a>
+              </div>
+              <div class="clear"></div>
+            </li></ul><div class="footer">
+						<hr class="ldg">
+						<div class="more" id="more_sk">citi visvairāk skatītie</div>
+					</div></div>
+			</div>
+		</div><div class="col2 lfloat">
+        <div class="listStyle3">
+          <div class="wrapper">
+            <div class="title">Tiesību aktu skaidrojumi</div>
+          </div>
+          <ul class="nav">
+            <li class="fsm fwb active" id="lv" doo="sk">LV portāls<div class="helper"></div></li>
+            <li class="fsm fwb" id="jv" doo="sk">Jurista Vārds</li>
+          </ul>
+          <div class="clear"></div>
+          <hr class="ldg">
+          <div class="wrapper" style="padding-top:10px;">
+  <ul class='list noico' id='sklist'><li>
+					<div class='lfloat left'>
+						<a href='https://lvportals.lv/skaidrojumi/389367-vienkarsotas-prasibas-pasnodarbinatajiem-un-nostiprinatas-iespejas-sanemt-pensijas-un-pabalstus-arvalstis-2026' target='_blank' class='t1 fwn fss fp_top_text' rel-text='' data-max-width='300'>Vienkāršotas prasības pašnodarbinātajiem un nostiprinātas iespējas saņemt pensijas un pabalstus ārvalstīs</a>
+						<a href='doc.php?id=368075' class='t3 fwn fss'>Grozījumi likumā "Par valsts sociālo apdrošināšanu"</a>
+					</div>
+					<div class='rfloat img'>
+						<a href='https://lvportals.lv/skaidrojumi/389367-vienkarsotas-prasibas-pasnodarbinatajiem-un-nostiprinatas-iespejas-sanemt-pensijas-un-pabalstus-arvalstis-2026' target='_blank' title='Vienkāršotas prasības pašnodarbinātajiem un nostiprinātas iespējas saņemt pensijas un pabalstus ārvalstīs'>
+							<img src='https://likumi.lv/wwwraksti/TEMAS/2026/MAIJS/BILDES/76JJQAKVE.JPEG' alt='' height='45'/>
+						</a>
+					</div>
+					<div class='clear'></div>
+				</li><li>
+					<div class='lfloat left'>
+						<a href='https://lvportals.lv/skaidrojumi/389381-stajas-speka-regulejums-sabiedribas-intereses-iesaistito-personu-aizsardzibai-pret-nepamatotam-tiesvedibam-palielinati-sodi-par-parkapumiem-civilprocesa--2026' target='_blank' class='t1 fwn fss fp_top_text' rel-text='' data-max-width='300'>Stājas spēkā regulējums sabiedrības interesēs iesaistīto personu aizsardzībai pret nepamatotām tiesvedībām; palielināti sodi par pārkāpumiem civilprocesā </a>
+						<a href='doc.php?id=368076' class='t3 fwn fss'>Sabiedrības interesēs iesaistīto personu aizsardzības likums</a>
+					</div>
+					<div class='rfloat img'>
+						<a href='https://lvportals.lv/skaidrojumi/389381-stajas-speka-regulejums-sabiedribas-intereses-iesaistito-personu-aizsardzibai-pret-nepamatotam-tiesvedibam-palielinati-sodi-par-parkapumiem-civilprocesa--2026' target='_blank' title='Stājas spēkā regulējums sabiedrības interesēs iesaistīto personu aizsardzībai pret nepamatotām tiesvedībām; palielināti sodi par pārkāpumiem civilprocesā '>
+							<img src='https://likumi.lv/wwwraksti/TEMAS/2026/MAIJS/BILDES/76JJQ9SSP.JPEG' alt='' height='45'/>
+						</a>
+					</div>
+					<div class='clear'></div>
+				</li><li>
+					<div class='lfloat left'>
+						<a href='https://lvportals.lv/skaidrojumi/327738-4-maijs-latvijas-republikas-neatkaribas-atjaunosanas-diena-2026' target='_blank' class='t1 fwn fss fp_top_text' rel-text='' data-max-width='300'>4. maijs – Latvijas Republikas Neatkarības atjaunošanas diena</a>
+						<a href='doc.php?id=75539' class='t3 fwn fss'>Par Latvijas Republikas neatkarības atjaunošanu</a>
+					</div>
+					<div class='rfloat img'>
+						<a href='https://lvportals.lv/skaidrojumi/327738-4-maijs-latvijas-republikas-neatkaribas-atjaunosanas-diena-2026' target='_blank' title='4. maijs – Latvijas Republikas Neatkarības atjaunošanas diena'>
+							<img src='https://likumi.lv/wwwraksti/TEMAS/2021/MAIJS/BILDES/76JJP0CUF.JPEG' alt='' height='45'/>
+						</a>
+					</div>
+					<div class='clear'></div>
+				</li><li>
+					<div class='lfloat'>
+						<a href='https://lvportals.lv/e-konsultacijas/38625-darba-laiku-nosaka-darba-liguma-darba-kartibas-noteikumos-mainu-grafikos-2026' target='_blank' class='t1 fwn fss fp_top_text' rel-text='' data-max-width='300'>Darba laiku nosaka darba līgumā, darba kārtības noteikumos, maiņu grafikos</a>
+						<a href='doc.php?id=26019' class='t3 fwn fss'>Darba likums</a>
+					</div>
+					<div class='clear'></div>
+				</li></ul></div>		
+					<div class="footer">
+						<hr class="ldg">
+						<a href="https://lvportals.lv/skaidrojumi/" target="_blank"><div class="more" id="more_lv">citi skaidrojumi LV portālā</div></a>
+					</div>
+				
+			</div>
+		</div><div class="col3 lfloat">
+
+<div>
+    <a href="/par-mums/apmacibas" target="_blank"><img src="/likumi_bildes/user_content/LikumiLV_apmacibas_baneris.png" alt="Likumi.lv apmācības" width="280" /></a>
+</div></div><div class="clear"></div></div><div class="clear"></div><div class="pageRow4"><div class="col1 lfloat">
+    <iframe width="280" height="158" src="https://www.youtube.com/embed/GxT9-NVtzBE" frameborder="0" title="Youtube video" allowfullscreen data-alt_img-src="/likumi_bildes/user_content/yt_izdevejs.jpg" data-alt_img-url="https://www.youtube.com/watch?v=GxT9-NVtzBE"></iframe>
+    <div class="video-footer">Kas ir oficiālais izdevējs "Latvijas Vēstnesis"?</div>
+</div>
+<div class="col2 lfloat">
+    <iframe width="280" height="158" src="https://www.youtube.com/embed/HxcwG3lCETU" frameborder="0" title="Tiesību aktu vietne Likumi.lv: zini un izmanto!" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen data-alt_img-src="/likumi_bildes/user_content/yt_likumi_lv.jpg" data-alt_img-url="https://www.youtube.com/watch?v=HxcwG3lCETU"></iframe>
+    <div class="video-footer">Ieskats Likumi.lv piedāvātajās iespējās</div>
+</div>
+<div class="col3 lfloat" id="fp_banner">
+	<iframe width="280" height="158" src="https://www.youtube.com/embed/YqInjx4AlOY" frameborder="0" title="Youtube video" allowfullscreen data-alt_img-src="/likumi_bildes/user_content/yt_likumi_lv2.jpg" data-alt_img-url="https://www.youtube.com/watch?v=YqInjx4AlOY"></iframe>
+	<div class="video-footer">Likumi.lv – palīgs ne tikai juristiem!</div>
+</div>
+<div class="clear"></div></div><div class="clear"></div><div class="pageRow5"><a class="foot-banner-item item1 fwn fss fcdg lfloat" href="https://www.vestnesis.lv" target="_blank">
+	<div class="wrapper">
+		Oficiālais<br>izdevums
+	</div>
+</a>
+<a class="foot-banner-item item2 fwn fss fcdg lfloat" href="http://www.lvportals.lv" target="_blank">
+	<div class="wrapper">
+		Skaidrojumi,<br>viedokļi,<br>likumi praksē
+	</div>
+</a>
+<a class="foot-banner-item item3 fwn fss fcdg lfloat" href="https://juristavards.lv" target="_blank">
+	<div class="wrapper">
+		Žurnāls<br>tiesiskai domai<br>un praksei
+	</div>
+</a>
+</div></div></div><div class="clear">&nbsp;</div>
+<div id="doc-expander" style="height:1px;"></div><!--when need to expand-->
+<div class="autorizejies-kontam dialog" style="display:none;"></div>
+<div class="globalFooterTop">
+  <div style='display:none;'>
+    <div id='uatrue'>0</div>  </div>
+	<div class="wrapper">
+		<table cellpadding="0" cellspacing="0" border="0" width="100%">
+			<tr>
+				<td valign="top" width="290" class="fsm fwb fcw">
+					
+  Šajā vietnē oficiālais izdevējs<br />
+  "Latvijas Vēstnesis" nodrošina tiesību aktu<br />
+  sistematizācijas funkciju.<br /><br />
+  Sistematizēti tiesību akti ir informatīvi. Pretrunu gadījumā vadās pēc oficiālās publikācijas.
+				</td>
+				<td width="30"></td>
+				<td valign="top" width="140">
+					<a href="/par-mums" class="fsm fwb fcdg">Par Likumi.lv</a><br/>
+					<a href="https://lv.lv/lv/aktualitates?tags=3" target="_blank" class="fsm fwb fcdg">Aktualitātes</a><br/>
+          <a class="fsm fwb fcdg pointable" onclick="showAtsauksmes();">Atsauksmēm</a><br/>
+          <a target="_blank" href="/par-mums/apmacibas" class="fsm fwb fcdg">Apmācības</a><br/>
+					<a target="_blank" href="https://lv.lv/lv/kontakti" class="fsm fwb fcdg">Kontakti</a>
+				</td>
+				<td valign="top" width="140">
+          <a class="fsm fwb fcdg pointable" href="https://m.likumi.lv">Mobilā versija</a><br/>
+					<a class="fsm fwb fcdg pointable" href="/par-mums/portala-lietosanas-noteikumi">Lietošanas noteikumi</a><br/>
+					<a class="fsm fwb fcdg pointable" href="https://lv.lv/lv/par-mums/oficialais-izdevejs/privatuma-politika" target="_blank">Privātuma politika</a><br/>
+					<a class="fsm fwb fcdg pointable" href="/par-mums/sikdatnes">Sīkdatnes</a><br/>
+          <a class="fsm fwb fcdg pointable" href="/par-mums/pieklustamiba">Piekļūstamība</a>
+				</td>
+				<td width="40"></td>
+				<td valign="top">
+					<table style="margin-top:-12px;">
+						<tr>
+              <td width="36" class="twlink icon-link" rel-text="Seko mums X"><img src="/ui/img/soc_x.png" alt="X logo"/></td>
+              <td width="36" class="fblink icon-link" rel-text="Seko mums Facebook"><img src="/ui/img/soc_facebook.png" alt="facebook logo"/></td>
+              <td width="36" class="ytlink icon-link" rel-text="Seko mums YouTube"><img src="/ui/img/soc_youtube.png" alt="youtube logo"/></td>
+              <td width="36" class="iglink icon-link" rel-text="Seko mums Instagram"><img src="/ui/img/soc_instagram.png" alt="instagram logo"/></td>
+							<td width="36" class="rsslink icon-link" rel-text="Abonēt RSS"><img id="rss-barotnes-click-img" src="/ui/img/soc_rss.png" alt="RSS logo"/></td>
+							<td class="fsm fwb fcdg"><div id="rss-barotnes-wrapper">
+                <div id="rss-barotnes" style='position:absolute;top:0;left:0;display:none;'>
+                  <div>RSS</div>
+                  <div class='rss-group-link-noa'>Šodien publicēti tiesību akti</div><ul><li><a href='https://likumi.lv/rss/likumi.xml'>Likumi</a></li><li><a href='https://likumi.lv/rss/mk_not.xml'>Ministru kabineta noteikumi</a></li><li><a href='https://likumi.lv/rss/mk_instr.xml'>Ministru kabineta instrukcijas</a></li><li><a href='https://likumi.lv/rss/mk_rik.xml'>Ministru kabineta rīkojumi</a></li><li><a href='https://likumi.lv/rss/vp_takti.xml'>Valsts prezidenta tiesību akti</a></li><li><a href='https://likumi.lv/rss/mp_rik.xml'>Ministru prezidenta rīkojumi</a></li><li><a href='https://likumi.lv/rss/st_nolemumi.xml'>Satversmes tiesas nolēmumi</a></li><li><a href='https://likumi.lv/rss/lb_not.xml'>Latvijas bankas noteikumi</a></li><li><a href='https://likumi.lv/rss/fktk_not.xml'>FKTK noteikumi</a></li><li><a href='https://likumi.lv/rss/sprk_lem.xml'>SPRK lemumi</a></li><li><a href='https://likumi.lv/rss/cvk_lem.xml'>CVK lēmumi</a></li><li><a href='https://likumi.lv/rss/pv_riga.xml'>Rīgas domes saistošie noteikumi</a></li><li><a href='https://likumi.lv/rss/visi_ta.xml'>Visi tiesību akti</a></li></ul><div class='rss-group-link'><a href='https://likumi.lv/rss/sst.xml'>Šodien stājas spēkā</a></div><div class='rss-group-link'><a href='https://likumi.lv/rss/spz.xml'>Šodien zaudē spēku</a></div>                </div>
+                </div>
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+	</div>
+</div>
+<div class="globalFooterBottom">
+	<div class="wrapper">
+		<table cellpadding="0" cellspacing="0" border="0" width="100%">
+			<tr>
+				<td width="290">
+					<a href="https://lv.lv/" target="_blank"><img src="/likumi_bildes/PIC/LV.LV_184X26.PNG" alt="Latvijas Vēstnesis" /></a>
+				</td>
+				<td width="40"></td>
+				<td width="290" valign="top">
+					<a href="/ta/id/57980#p90">
+						<font class="fss fwn fcxlg">"Ikvienam ir tiesības zināt savas tiesības."</font><br />
+						<font class="fss fwn fclg2">Latvijas Republikas Satversmes 90. pants</font><br />
+					</a>
+					<a href="https://lv.lv/" target="_blank">
+						<font class="fss fwn fcxlg" style="display:block;padding-top:10px;">&copy; Oficiālais izdevējs "Latvijas Vēstnesis"</font>
+					</a>
+				</td>
+				<td width="40"></td>
+				<td width="290" valign="top">
+				</td>
+			</tr>
+		</table>
+	</div>
+</div>
+<div class="dark_bg" style="display:none;" onclick="closeDarkBg();" role="presentation"></div>
+
+  <script src="/js/js.cookie-3.0.5.min.js" type="text/javascript"></script>
+  <script src="/js/1758555140_cookies.js" type="text/javascript"></script>
+  <script src="/js/1758555140_json2.js" type="text/javascript"></script>
+  <script src="/js/1758555140_jquery.ui.js" type="text/javascript"></script>
+  <script src="/js/1758555140_jquery.ui.lv.js" type="text/javascript"></script>
+  <script src="/js/1758555140_fp.js" type="text/javascript"></script>
+  <script src="/js/1758555140_tabledata.js" type="text/javascript"></script>
+  <script src="/js/1758555140_jquery.ba-bbq.js" type="text/javascript"></script>
+  <script src="/js/1758555140_jquery.mousewheel.min.js"></script>
+  <script src="/js/1758555140_lvdd.js"></script>
+  <script src="/js/1758555140_dialogs.js"></script>
+
+<script type="text/javascript">
+  var deff = {"main_url_base":"https:\/\/likumi.lv"};
+
+  var likumilv_events = $1_12_4({});
+</script>
+
+<script src="/js/1761817225_scripts.js" type="text/javascript"></script>
+<div id="fb-root"></div>
+
+<script type="text/javascript">$('#btn-lkaptauja-hide').click(function(el){
+      $.ajax({
+        type: 'POST',
+            url: '/ajax/ajax.php',
+            data: 'do=aptauja&time=all',
+      });
+      $('#msg-lv-lkaptauja').hide();
+    });
+  </script><style type="text/css"></style><style id="js-style-override" type="text/css"></style></body>
+</html>

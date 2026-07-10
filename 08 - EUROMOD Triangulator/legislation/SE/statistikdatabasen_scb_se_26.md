@@ -1,0 +1,1 @@
+Genomsnittlig grund- och månadslön samt kvinnors lön i procent av mäns lön efter SNI 2007 och kön.  År 2023 - 2024. PxWeb

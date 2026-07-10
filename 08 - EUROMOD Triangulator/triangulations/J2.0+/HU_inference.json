@@ -1,0 +1,200 @@
+{
+  "country": "HU",
+  "version": "J2.0+",
+  "year": 2025,
+  "discrepancies": [
+    {
+      "policy": "ConstDef_hu",
+      "parameter": "$MinPension_m",
+      "xml_value": "28500",
+      "cr_value": "28500",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "ConstDef_hu",
+      "parameter": "$mc_rrate",
+      "xml_value": "0.7",
+      "cr_value": "0.7",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tscse_hu",
+      "parameter": "comp_uplim",
+      "xml_value": "21700",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tin_hu",
+      "parameter": "#_UpLim (Func Switch: off)",
+      "xml_value": "809000",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "tin_hu",
+      "parameter": "Band_UpLim (Func Switch: off)",
+      "xml_value": "433700",
+      "cr_value": "433700",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsa_hu",
+      "parameter": "uplim (Func Switch: off)",
+      "xml_value": "69426",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsa_hu",
+      "parameter": "$bsa_BCA_rate (Func Switch: off)",
+      "xml_value": "0.759114473",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsa_hu",
+      "parameter": "uplim",
+      "xml_value": "69426",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    },
+    {
+      "policy": "bsa_hu",
+      "parameter": "uplim",
+      "xml_value": "69426",
+      "cr_value": "Not Found",
+      "leg_value": "Not Found",
+      "cr_match": "\u274c",
+      "xml_match": "\u274c",
+      "explanation": "XML parameter value could not be found in the provided National Legislation."
+    }
+  ],
+  "potentials": [],
+  "matches": [
+    {
+      "policy": "ConstDef_hu",
+      "parameter": "$MinWage_m",
+      "xml_value": "290800",
+      "cr_value": "290800",
+      "leg_value": "290800",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_hu",
+      "parameter": "$PenAge",
+      "xml_value": "65",
+      "cr_value": "65",
+      "leg_value": "65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_hu",
+      "parameter": "$PenAgeFem",
+      "xml_value": "65",
+      "cr_value": "65",
+      "leg_value": "65",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_hu",
+      "parameter": "$UB_QperMin",
+      "xml_value": "12",
+      "cr_value": "12",
+      "leg_value": "12",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_hu",
+      "parameter": "$UB_QperTot",
+      "xml_value": "36",
+      "cr_value": "36",
+      "leg_value": "36",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_hu",
+      "parameter": "$Nwh",
+      "xml_value": "40",
+      "cr_value": "40",
+      "leg_value": "40",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "ConstDef_hu",
+      "parameter": "$lhw",
+      "xml_value": "40",
+      "cr_value": "40",
+      "leg_value": "40",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "yem_hu (Switch: off)",
+      "parameter": "$Nwh",
+      "xml_value": "40",
+      "cr_value": "40",
+      "leg_value": "40",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tin_hu",
+      "parameter": "threshold (Func Switch: off)",
+      "xml_value": "0.1",
+      "cr_value": "0.1",
+      "leg_value": "0.1",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    },
+    {
+      "policy": "tin_hu",
+      "parameter": "Band_Rate (Func Switch: off)",
+      "xml_value": "0.15",
+      "cr_value": "0.15",
+      "leg_value": "0.15",
+      "cr_match": "\u2705",
+      "xml_match": "\u2705",
+      "explanation": "Parameter perfectly aligned across XML, CR, and National Legislation."
+    }
+  ]
+}

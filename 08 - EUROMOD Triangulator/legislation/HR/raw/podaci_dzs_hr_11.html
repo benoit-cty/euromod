@@ -1,0 +1,1976 @@
+
+<!DOCTYPE html>
+<html lang=hr>
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-56466390-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-56466390-1');
+    </script>
+    <meta charset=utf-8>
+    <meta http-equiv=x-ua-compatible content="ie=edge">
+    <meta name=viewport content="width=device-width,initial-scale=1">
+    <meta property="og:title" content="Statistics in line" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Državni zavod za statistiku" />
+    <meta property="og:image" content="/images/logo_hr.png" />
+    <title>Statistics in line | Državni zavod za statistiku</title>
+    <link rel="icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Oswald:500|Roboto:400,700&amp;subset=latin-ext" rel="stylesheet">
+    <link rel=stylesheet href="/assets/css/compiled.css?v=3">
+    <script src="/js/jquery-2.2.4.min.js"></script>
+    <script src="/js/jquery.validate.min.js"></script>
+    <script src="/js/additional-methods.min.js"></script>
+    <script src="/scripts/apexcharts.min.js"></script>
+    <script src="/scripts/magnific.custom.min.js"></script>
+    <link href=/assets/js/app.js rel=preload as=script>
+    <link href=/assets/js/chunk-vendors.js rel=preload as=script>
+    <link href=/assets/css/app.css rel=stylesheet>
+    <link href=/css/print.css rel=stylesheet>
+    <link href="/css/apexcharts.css" rel="stylesheet">
+    <link rel="stylesheet" hrewwf="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+
+
+      <script src=/js/d3.v5.min.js></script>
+</head>
+
+<body>
+    <div class="static-frame">
+        
+<div class="header">
+    <div class="container">
+        <div class="row">
+            
+<nav class="nav-mobile hide-desktop">
+    <div class="container">
+        <div class="header-flex">
+            <a href="/en/" class="header-logo">
+                <img src="/svg/dzs-logo.svg" alt="">
+            </a>
+            <button class="deactivate-hamburger button-icon">
+                <svg class="icon icon-close"><use xlink:href="/svg/symbol-defs.svg#icon-close"></use></svg>
+            </button>
+        </div>
+
+        <ul class="level-1 mobile-menu">
+            <li class="mobile-gap">
+                
+<a class="" href="/hr/">HR</a>
+<a class="_selected" href="/en/">EN</a>
+
+            </li>
+            <li>
+                <a class="level-1-href" href="#">STATISTICS</a>
+                <div class="level-1-icon toggle-level"></div>
+                <ul class="level-2">
+                        <li class="">
+                            <a href="/en/statistics/gdp-and-national-accounts/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-bdp">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-bdp"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">GDP and National Accounts</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/prices/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-cijene">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-cijene"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Prices</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/construction/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-gradevinarstvo">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-gradevinarstvo"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Construction</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/industry/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-industrija">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-industrija"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Industry</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/culture/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-kultura">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-kultura"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Culture</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/education/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-obrazovanje">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-obrazovanje"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Education</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/environment-and-energy/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-okolis">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-okolis"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Environment and Energy</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/enterprises/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-poduzeca">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-poduzeca"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Enterprises</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/agriculture/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-poljoprivreda">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-poljoprivreda"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Agriculture</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/justice-and-social-protection/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-pravosude">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-pravosude"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Justice and Social Protection</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/register-of-business-entities/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-rps">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-rps"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Register of Business Entities</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/foreign-trade-in-goods/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-robna_razmjena">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-robna_razmjena"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Foreign Trade in Goods</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/population/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-stanovnistvo">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-stanovnistvo"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Population</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/transport/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-transport">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-transport"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Transport</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/trade-and-other-services/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-trgovina">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-trgovina"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Trade and Other Services</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/labour-market/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-trziste_rada">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-trziste_rada"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Labour Market</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/tourism/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-turizam">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-turizam"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Tourism</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/science-technologies-and-information-society/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-znanost">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-znanost"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Science, Technologies and Information Society</span>
+                            </a>
+                        </li>
+                        <li class="">
+                            <a href="/en/statistics/living-conditions-income-and-social-exclusion/">
+                                <span class="nav-panel-icon-holder">
+                                    <svg class="icon icon-zivotni_uvjeti">
+                                        <use xlink:href="/svg/symbol-defs.svg#icon-zivotni_uvjeti"></use>
+                                    </svg>
+                                </span>
+                                <span class="nav-panel-icon-text">Living conditions, Income and Social Exclusion</span>
+                            </a>
+                        </li>
+                </ul>
+            </li>
+            <li>
+                <a href="/en/archives/" target="_blank">ARCHIVES</a>
+            </li>
+            <li>
+                <a href="https://dzs.gov.hr" target="_blank">DZS.GOV.HR</a>
+                <img src="/images/pattern.png" class="nav-pattern-mob" />
+            </li>
+            <li>
+                <a href="https://dzs.gov.hr/press-629/629">PRESS</a>
+                <img src="/images/pattern.png" class="nav-pattern-mob" />
+            </li>
+            <li>
+                <a href="https://dzs.gov.hr/contacts/618" target="_blank">CONTACT</a>
+                <img src="/images/pattern.png" class="nav-pattern-mob" />
+            </li>
+        </ul>
+
+    </div>
+</nav>
+        </div>
+
+        <div class="header-flex">
+
+            <a href="/en/" class="header-logo">
+                <img src="/svg/dzs-logo.svg" alt="">
+                
+            </a>
+
+            
+<div class="nav">
+    <ul class="nav-list" id="nav-main">
+        <li class="nav-item">
+            <button class="nav-link js_trigger_stats" data-target="#nav-panel-podaci2">Statistics</button>
+        </li>
+        
+
+        <li class="nav-item">
+            <a href="/en/archives/" target="_blank">ARCHIVES</a>
+        </li>
+
+        <li class="nav-item">
+            <a href="https://dzs.gov.hr" target="_blank">DZS.GOV.HR</a>
+            <img src="/images/pattern.png" class="nav-pattern" />
+        </li>
+
+        <li class="nav-item">
+            <a href="https://dzs.gov.hr/press-629/629" target="_blank">PRESS</a>
+            <img src="/images/pattern.png" class="nav-pattern" />
+        </li>
+
+        <li class="nav-item">
+            <a href="https://dzs.gov.hr/contacts/618" target="_blank">CONTACT</a>
+            <img src="/images/pattern.png" class="nav-pattern" />
+        </li>
+
+        
+	
+    <li class="nav-item language-link" data-language="hr">
+        <a class="nav-link " href="/hr/">HR</a>
+    </li>
+
+
+<script>
+    $(function () {
+        localStorage.setItem("dzs.selectedLanguage", "en-US");
+        $('.language-link').on('click', function () {
+            localStorage.setItem("dzs.selectedLanguage", $(this).data("language"));
+        })
+    })
+</script>
+	
+
+    </ul>
+</div>
+
+<script>
+    $(function () {
+
+        // TODO fix menu handling: currently mix of Vue component + js below
+
+        var activeMenu = false;
+        $(".js_trigger_stats").on("click", function () {
+
+            var targetMenu = $(this).attr('data-target');
+
+            $('#nav-main ._active').removeClass('_active');
+
+            // if active menu title was clicked, close it
+            if (activeMenu === targetMenu) {
+                $(".nav-panel").slideUp();
+                activeMenu = false;
+                return;
+            }
+
+            activeMenu = targetMenu;
+            $(".nav-panel>div").hide();
+            $(targetMenu).show();
+            $(this).addClass("_active");
+            $(".nav-panel").slideDown();
+        });
+        // close podaci/obrasci menu on click in menu
+        $(document).on('click', '#nav-panel-podaci a,#nav-panel-obrasci a', function () {
+            $('#nav-main ._active').removeClass('_active');
+            $(".nav-panel").hide();
+            activeMenu = false;
+            return;
+        });
+    });
+</script>
+
+            <div class="header-right">
+                <div class="header-right-top">
+                </div>
+                <div class="header-right-bottom">
+                    <form class="" method="get" action="/en/search">
+                        <button type="submit" class="search-trigger search-trigger-style">
+                            <span>Search</span>
+                            <svg class="icon icon-search">
+                                <use xlink:href="/svg/symbol-defs.svg#icon-search"></use>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="hide-desktop">
+                <div class="mobile-buttons">
+                    <form class="" method="get" action="/en/search">
+                        <button type="submit" class="button-icon search-trigger">
+                            <svg class="icon icon-search"><use xlink:href="/svg/symbol-defs.svg#icon-search"></use></svg>
+                        </button>
+                    </form>
+                    <button class="activate-hamburger button-icon">
+                        <svg class="icon icon-menu"><use xlink:href="/svg/symbol-defs.svg#icon-menu"></use></svg>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+<div class="nav-panel" style="display:none">
+    <div id="nav-panel-podaci">
+        <div id="NavTaxonomy"></div>
+    </div>
+    <div id="nav-panel-podaci2">
+        <div>
+            <ul id="" class="">
+                    <li class="">
+                        <a href="/en/statistics/gdp-and-national-accounts/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-bdp">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-bdp"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">GDP and National Accounts</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/prices/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-cijene">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-cijene"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Prices</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/construction/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-gradevinarstvo">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-gradevinarstvo"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Construction</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/industry/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-industrija">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-industrija"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Industry</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/culture/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-kultura">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-kultura"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Culture</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/education/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-obrazovanje">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-obrazovanje"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Education</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/environment-and-energy/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-okolis">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-okolis"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Environment and Energy</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/enterprises/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-poduzeca">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-poduzeca"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Enterprises</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/agriculture/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-poljoprivreda">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-poljoprivreda"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Agriculture</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/justice-and-social-protection/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-pravosude">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-pravosude"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Justice and Social Protection</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/register-of-business-entities/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-rps">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-rps"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Register of Business Entities</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/foreign-trade-in-goods/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-robna_razmjena">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-robna_razmjena"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Foreign Trade in Goods</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/population/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-stanovnistvo">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-stanovnistvo"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Population</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/transport/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-transport">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-transport"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Transport</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/trade-and-other-services/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-trgovina">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-trgovina"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Trade and Other Services</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/labour-market/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-trziste_rada">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-trziste_rada"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Labour Market</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/tourism/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-turizam">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-turizam"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Tourism</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/science-technologies-and-information-society/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-znanost">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-znanost"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Science, Technologies and Information Society</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/en/statistics/living-conditions-income-and-social-exclusion/" class="">
+                            <span class="nav-panel-icon-holder">
+                                <svg class="icon icon-zivotni_uvjeti">
+                                    <use xlink:href="/svg/symbol-defs.svg#icon-zivotni_uvjeti"></use>
+                                </svg>
+                            </span>
+                            <span class="nav-panel-icon-text">Living conditions, Income and Social Exclusion</span>
+                        </a>
+                    </li>
+            </ul>
+        </div>
+    </div>
+    <div id="nav-panel-obrasci">
+        <div>
+            <ul id="" class="">
+            </ul>
+        </div>
+    </div>
+        <div id="nav-panel-1064">
+            <ul>
+                    <li>
+                        <a href="/en/pages/dzs/disclaimer/">Disclaimer</a>
+                    </li>
+                    <li>
+                        <a href="/en/pages/dzs/privacy-policy/">Privacy policy</a>
+                    </li>
+                    <li>
+                        <a href="/en/pages/dzs/thank-you-page/">Your request has been received</a>
+                    </li>
+                    <li>
+                        <a href="/en/pages/dzs/error/">Error sending message</a>
+                    </li>
+            </ul>
+        </div>
+
+</div>
+
+
+
+    </div>
+</div>
+
+        <div class=site-overlay></div>
+        <div class=faux-scroller>
+            <div class=container>
+                <div id="breadcrumbs" class="is-main-content">
+                    
+
+                </div>
+
+                <div id="RouterViewContent"></div>
+
+                <div class="is-main-content">
+                    
+<style>
+
+    #excel-icon {
+        width: 25px;
+        margin-left: 10px;
+    }
+</style>
+<input type="hidden" value="En US"/>
+<h1>Statistics in line<img id="excel-icon" src="/images/excel.png" alt="Excel" /></h1>
+    <aside class="accordion">
+        <ul class="accordion-level1">
+                    <li>
+                        <a id="Economy - Basic Indicators"
+                           data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf"
+                           href="\media\viuaj2d3\osnovni-pokazatelji-rh.xlsx"
+                           title="Economy - Basic Indicators"
+                           target="_blank">
+                            Economy - Basic Indicators
+                            <em class="dateStamp">(08. May 2026.)</em>
+                        </a>
+                    </li>
+                    <li>
+                        <a id="Register of Business Entities"
+                           data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf"
+                           href="\media\ccmcu4sc\msi-registar.xlsx"
+                           title="Register of Business Entities"
+                           target="_blank">
+                            Register of Business Entities
+                            <em class="dateStamp">(10. April 2026.)</em>
+                        </a>
+                    </li>
+                    <li>
+                        <h2>Enterprises (28. April 2023.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="business-demography" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/4yzbtwwc/msi-poslovna-demografija.xlsx" title="Business Demography" target="_blank">
+                                            Business Demography
+                                            <em class="dateStamp">(28. April 2023.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Population (30. April 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="natural-change-in-population" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/meehktks/msi-stanovnistvo.xlsx" title="Natural Change in Population" target="_blank">
+                                            Natural Change in Population
+                                            <em class="dateStamp">(30. April 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="migration" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/yuulvhlw/stanovnistvo-migracije.xlsx" title="Migration" target="_blank">
+                                            Migration
+                                            <em class="dateStamp">(23. June 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="population-estimate" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/vb1ae2vm/procjene-stanovnistva.xlsx" title="Population Estimate " target="_blank">
+                                            Population Estimate 
+                                            <em class="dateStamp">(13. February 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="population-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/ueajlqe5/stanovnistvo-pregled-po-zupanijama.xlsx" title="Population - Review by Counties" target="_blank">
+                                            Population - Review by Counties
+                                            <em class="dateStamp">(29. August 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="population-review-by-towns-and-municipalities" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/2gihgkfh/stanovnistvo-pregled-po-gradovima-i-opcinama.xlsx" title="Population - Review by Towns and Municipalities" target="_blank">
+                                            Population - Review by Towns and Municipalities
+                                            <em class="dateStamp">(30. September 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Industry (13. January 2025.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="industry" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/ib5idwgj/msi-industrija.xlsx" title="Industry" target="_blank">
+                                            Industry
+                                            <em class="dateStamp">(13. January 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="industry-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/hkxjgy4j/industrija.xlsx" title="Industry - Review by Counties" target="_blank">
+                                            Industry - Review by Counties
+                                            <em class="dateStamp">(30. September 2024.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Employment and Wages (28. April 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="employment-active-population-labour-force" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/yjvbaa2n/zaposlenost-aktivno-stanovnistvo.xlsx" title="Employment - Active Population (Labour Force)" target="_blank">
+                                            Employment - Active Population (Labour Force)
+                                            <em class="dateStamp">(11. March 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="employment-administrative-sources" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/4snl4v1e/zaposlenost-administrativni-izvori.xlsx" title="Employment - Administrative Sources" target="_blank">
+                                            Employment - Administrative Sources
+                                            <em class="dateStamp">(21. April 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="wages" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/yegdgb5v/place.xlsx" title="Wages" target="_blank">
+                                            Wages
+                                            <em class="dateStamp">(20. March 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="employment-and-wages-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/xpkfrkth/zaposlenost-i-place-pregled-po-zupanijama.xlsx" title="Employment and Wages - Review by Counties" target="_blank">
+                                            Employment and Wages - Review by Counties
+                                            <em class="dateStamp">(28. April 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                                        <li>
+                                            <h3>Employment and Wages (02. June 2025.)</h3>
+
+                                                <div>
+                                                    <ul class="accordion-level3">
+
+                                                            <li>
+                                                                <a id="employment-overview-for-republic-of-croatia" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/pb5pnnti/zaposleni-pregled-za-rh.xlsx" title="Employment - Overview for Republic of Croatia" target="_blank">
+                                                                    Employment - Overview for Republic of Croatia
+                                                                    <em class="dateStamp">(02. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="employment-overview-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/syjnewxe/zaposleni-pregled-po-zupanijama.xlsx" title="Employment - Overview by Counties" target="_blank">
+                                                                    Employment - Overview by Counties
+                                                                    <em class="dateStamp">(02. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="average-monthly-wages" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/2ibhnmk0/prosjecne-mjesecne-place.xlsx" title="Average Monthly Wages" target="_blank">
+                                                                    Average Monthly Wages
+                                                                    <em class="dateStamp">(02. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                    </ul>
+                                                </div>
+                                        </li>
+                                        <li>
+                                            <h3>Labour Force Survey Results (20. October 2025.)</h3>
+
+                                                <div>
+                                                    <ul class="accordion-level3">
+
+                                                            <li>
+                                                                <a id="population" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/bf5hqkfr/rezultati-ankete-o-radnoj-snazi-1-stanovnistvo.xlsx" title="Population" target="_blank">
+                                                                    Population
+                                                                    <em class="dateStamp">(20. October 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="employment" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/yzif5bwg/rezultati-ankete-o-radnoj-snazi-2-zaposlenost.xlsx" title="Employment" target="_blank">
+                                                                    Employment
+                                                                    <em class="dateStamp">(20. October 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="working-hours" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/esnoiz02/rezultati-ankete-o-radnoj-snazi-3-sati-rada.xlsx" title="Working hours" target="_blank">
+                                                                    Working hours
+                                                                    <em class="dateStamp">(20. October 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="unemployment" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/iqscotfq/rezultati-ankete-o-radnoj-snazi-4-nezaposlenost.xlsx" title="Unemployment" target="_blank">
+                                                                    Unemployment
+                                                                    <em class="dateStamp">(20. October 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="comparison-of-croatia-with-european-countries" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/tmhjona3/rezultati-ankete-o-radnoj-snazi-5-usporedba-hrvatske-s-ostalim-europskim-zemljama.xlsx" title="Comparison of Croatia with European countries" target="_blank">
+                                                                    Comparison of Croatia with European countries
+                                                                    <em class="dateStamp">(20. October 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="precision-measures" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/z5wngjgd/rezultati-ankete-o-radnoj-snazi-6-mjere-preciznosti.xlsx" title="Precision measures" target="_blank">
+                                                                    Precision measures
+                                                                    <em class="dateStamp">(20. October 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                    </ul>
+                                                </div>
+                                        </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Construction (21. April 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="construction" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/4neprvvo/msi-gradevinarstvo.xlsx" title="Construction" target="_blank">
+                                            Construction
+                                            <em class="dateStamp">(21. April 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="construction-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/1w2ef5pd/gra%C4%91evinarstvo.xlsx" title="Construction - Review by Counties" target="_blank">
+                                            Construction - Review by Counties
+                                            <em class="dateStamp">(11. March 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Transport and Communications (08. May 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="transport" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/nkmivfsu/transport-prijevoz.xlsx" title="Transport" target="_blank">
+                                            Transport
+                                            <em class="dateStamp">(13. February 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="transport-review-from-1970" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/b0fekdze/transport-pregled.xlsx" title="Transport - Review from 1970 " target="_blank">
+                                            Transport - Review from 1970 
+                                            <em class="dateStamp">(02. July 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="transhipment" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/4fon3xrl/transport-prekrcaj-tereta.xlsx" title="Transhipment " target="_blank">
+                                            Transhipment 
+                                            <em class="dateStamp">(11. February 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="registered-road-vehicles" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/rx4bmpuw/transport-registrirana-cestovna-vozila.xlsx" title="Registered road vehicles" target="_blank">
+                                            Registered road vehicles
+                                            <em class="dateStamp">(07. May 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="postal-courier-and-electronic-communication-services-until-2016" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/0tzbacnf/transport-postanske-kurirske-i-elektronicke-komunikacijske-usluge.xlsx" title="Postal, Courier and Electronic Communication services (until 2016)" target="_blank">
+                                            Postal, Courier and Electronic Communication services (until 2016)
+                                            <em class="dateStamp">(22. June 2022.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="daily-passenger-mobility" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/qc1dn1eb/transport-dnevna-mobilnost-putnika.xlsx" title="Daily Passenger Mobility" target="_blank">
+                                            Daily Passenger Mobility
+                                            <em class="dateStamp">(22. June 2022.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="transport-and-communications-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/waybgd4r/transport-pregled-po-zupanijama.xlsx" title="Transport and Communications - Review by Counties" target="_blank">
+                                            Transport and Communications - Review by Counties
+                                            <em class="dateStamp">(02. July 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="intermodal-transport" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/veeargug/transport-intermodalni-transport.xlsx" title="Intermodal Transport" target="_blank">
+                                            Intermodal Transport
+                                            <em class="dateStamp">(31. October 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="road-transport-by-light-goods-vehicles" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/puafyukn/transport-cestovni-prijevoz-lakim-teretnim-vozilima.xlsx" title="Road Transport by Light Goods Vehicles" target="_blank">
+                                            Road Transport by Light Goods Vehicles
+                                            <em class="dateStamp">(31. March 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                                        <li>
+                                            <h3>Traffic (08. May 2026.)</h3>
+
+                                                <div>
+                                                    <ul class="accordion-level3">
+
+                                                            <li>
+                                                                <a id="traffic-in-seaports-and-airport" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/l5gpbc2g/transport-promet-u-morskim-i-zracnim-lukama.xlsx" title="Traffic in Seaports and Airport" target="_blank">
+                                                                    Traffic in Seaports and Airport
+                                                                    <em class="dateStamp">(08. May 2026.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="cross-border-traffic" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/mt4eebrb/transport-granicni-promet.xlsx" title="Cross-Border Traffic" target="_blank">
+                                                                    Cross-Border Traffic
+                                                                    <em class="dateStamp">(08. May 2026.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="traffic-in-inland-waterway-ports" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/eowlpnpq/transport-promet-u-lukama-unutarnjih-vodnih-putova.xlsx" title="Traffic in Inland Waterway Ports" target="_blank">
+                                                                    Traffic in Inland Waterway Ports
+                                                                    <em class="dateStamp">(11. February 2026.)</em>
+                                                                </a>
+                                                            </li>
+                                                    </ul>
+                                                </div>
+                                        </li>
+                                        <li>
+                                            <h3>Transport and Communications (26. August 2025.)</h3>
+
+                                                <div>
+                                                    <ul class="accordion-level3">
+
+                                                            <li>
+                                                                <a id="railway-transport" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/2enkoldm/transport-01-%C5%BEeljezni%C4%8Dki-prijevoz.xlsx" title="Railway Transport" target="_blank">
+                                                                    Railway Transport
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="road-infrastructure-road-traffic-volume" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/wvtjnjf0/transport-02-cestovna-infrastruktura-obujam-cestovnog-prometa.xlsx" title="Road Infrastructure, Road Traffic Volume" target="_blank">
+                                                                    Road Infrastructure, Road Traffic Volume
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="road-transport-of-passengers" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/trba4wyo/transport-03-cestovni-prijevoz-putnika.xlsx" title="Road Transport of Passengers" target="_blank">
+                                                                    Road Transport of Passengers
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="road-transport-of-goods" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/dbnbsq1h/transport-04-cestovni-prijevoz-robe.xlsx" title="Road Transport of Goods" target="_blank">
+                                                                    Road Transport of Goods
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="cross-border-traffic" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/ohzkghyn/transport-05-granicni-promet.xlsx" title="Cross-Border Traffic" target="_blank">
+                                                                    Cross-Border Traffic
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="road-urban-transport" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/bc1hzuzf/transport-06-gradski-i-prigradski-prijevoz.xlsx" title="Road Urban Transport" target="_blank">
+                                                                    Road Urban Transport
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="transport-via-pipelines" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/vgjfmnn0/transport-07-cjevovodni-transport.xlsx" title="Transport via Pipelines" target="_blank">
+                                                                    Transport via Pipelines
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="seawater-and-coastal-transport" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/ejndsj3u/transport-08-pomorski-i-obalni-prijevoz.xlsx" title="Seawater and Coastal Transport" target="_blank">
+                                                                    Seawater and Coastal Transport
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="inland-waterway-transport" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/rpiknmhj/transport-09-prijevoz-unutarnjim-vodnim-putovima.xlsx" title="Inland Waterway Transport" target="_blank">
+                                                                    Inland Waterway Transport
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="air-transport" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/sh0dw0cx/transport-10-zra%C4%8Dni-prijevoz.xlsx" title="Air Transport" target="_blank">
+                                                                    Air Transport
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="transhipment" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/z5kbg3mb/transport-11-prekrcaj-tereta.xlsx" title="Transhipment" target="_blank">
+                                                                    Transhipment
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="traffic-in-seaports" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/jvqj0zui/transport-12-promet-u-morskim-lukama.xlsx" title="Traffic in Seaports" target="_blank">
+                                                                    Traffic in Seaports
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="traffic-in-inland-waterway-ports" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/agfbin3z/transport-13-promet-u-lukama-na-unutarnjim-vodnim-putovima.xlsx" title="Traffic in Inland Waterway Ports" target="_blank">
+                                                                    Traffic in Inland Waterway Ports
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="traffic-in-airports" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/nlrnluoc/transport-14-promet-u-zra%C4%8Dnim-lukama.xlsx" title="Traffic in Airports" target="_blank">
+                                                                    Traffic in Airports
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="postal-and-courier-services-until-2016" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/5n2kpc05/transport-15-po%C5%A1tanske-i-kurirske-usluge.xlsx" title="Postal and Courier Services (until 2016)" target="_blank">
+                                                                    Postal and Courier Services (until 2016)
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="electronic-communication-services-until-2016" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/czphfas1/transport-16-elektroni%C4%8Dke-komunikacijske-usluge.xlsx" title="Electronic Communication Services (until 2016)" target="_blank">
+                                                                    Electronic Communication Services (until 2016)
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="drivers-registered-vehicles-and-road-traffic-accidents" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/niwbdfag/transport-17-voza%C4%8Di-registrirana-vozila-i-cestovne-prometne-nesre%C4%87e.xlsx" title="Drivers, Registered Vehicles and Road Traffic Accidents" target="_blank">
+                                                                    Drivers, Registered Vehicles and Road Traffic Accidents
+                                                                    <em class="dateStamp">(26. August 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                    </ul>
+                                                </div>
+                                        </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Tourism (08. May 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="tourism" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/sppbdlmg/msi-turizam.xlsx" title="Tourism" target="_blank">
+                                            Tourism
+                                            <em class="dateStamp">(08. May 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="tourism-review-from-1954" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/24qbp5oy/turizam-pregled1954.xlsx" title="Tourism - Review from 1954" target="_blank">
+                                            Tourism - Review from 1954
+                                            <em class="dateStamp">(26. February 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="tourism-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/x14iegfq/turizam.xlsx" title="Tourism - Review by Counties" target="_blank">
+                                            Tourism - Review by Counties
+                                            <em class="dateStamp">(30. April 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Distributive Trade and Other Services (02. January 2023.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="retail-trade" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/k4nf1rif/msi-trgovina-na-malo.xlsx" title="Retail Trade" target="_blank">
+                                            Retail Trade
+                                            <em class="dateStamp">(29. March 2022.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="service-activities" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/vmvppy3j/msi-usluzne-djelatnosti.xlsx" title="Service Activities" target="_blank">
+                                            Service Activities
+                                            <em class="dateStamp">(29. March 2022.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="services-producer-prices" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/miljqkav/cijene-usluznih-djelatnosti.xlsx" title="Services Producer Prices" target="_blank">
+                                            Services Producer Prices
+                                            <em class="dateStamp">(29. March 2022.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="sales-capacities-in-retail-trade" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/jfpois5s/prodajni-kapaciteti-u-trgovini-na-malo.xlsx" title="Sales Capacities in Retail Trade" target="_blank">
+                                            Sales Capacities in Retail Trade
+                                            <em class="dateStamp">(02. January 2023.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="sales-of-motor-vehicles-and-motorcycles-and-their-parts-and-accessories" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/serms2cq/trgovina-motornim-vozilima.xlsx" title="Sales of motor vehicles and motorcycles and their parts and accessories" target="_blank">
+                                            Sales of motor vehicles and motorcycles and their parts and accessories
+                                            <em class="dateStamp">(02. January 2023.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Agriculture, Forestry and Fishing (27. April 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="agriculture-forestry-and-fishing" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/qjgfq2ag/msi-poljoprivreda.xlsx" title="Agriculture, Forestry and Fishing" target="_blank">
+                                            Agriculture, Forestry and Fishing
+                                            <em class="dateStamp">(27. April 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="agriculture-forestry-and-fishing-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/3wxjk1qk/poljoprivreda-pregled-po-zupanijama.xlsx" title="Agriculture, Forestry and Fishing - Review by Counties" target="_blank">
+                                            Agriculture, Forestry and Fishing - Review by Counties
+                                            <em class="dateStamp">(29. March 2022.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Foreign Trade in Goods (08. May 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="foreign-trade-in-goods" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/1kboqayb/robna-razmjena-s-inozemstvom.xlsx" title="Foreign Trade in Goods" target="_blank">
+                                            Foreign Trade in Goods
+                                            <em class="dateStamp">(08. May 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="foreign-trade-in-goods-by-enterprise-characteristics-tec" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/oerh1ure/robna-razmjena-republike-hrvatske-s-inozemstvom-prema-karakteristikama-poduzeca.xlsx" title="Foreign Trade in Goods - by Enterprise Characteristics (TEC)" target="_blank">
+                                            Foreign Trade in Goods - by Enterprise Characteristics (TEC)
+                                            <em class="dateStamp">(29. December 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="foreign-trade-in-goods-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/3bcdyo2j/robna-razmjena-s-inozemstvom-pregled-po-zupanijama.xlsx" title="Foreign Trade in Goods - Review by Counties" target="_blank">
+                                            Foreign Trade in Goods - Review by Counties
+                                            <em class="dateStamp">(11. March 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <a id="Prices"
+                           data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf"
+                           href="\media\1eulsigw\msi-cijene.xlsx"
+                           title="Prices"
+                           target="_blank">
+                            Prices
+                            <em class="dateStamp">(04. April 2025.)</em>
+                        </a>
+                    </li>
+                    <li>
+                        <a id="Introduction of the Euro – Average Retail Prices"
+                           data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf"
+                           href="\media\wazpwxde\prosjecne-mpc.xlsx"
+                           title="Introduction of the Euro – Average Retail Prices"
+                           target="_blank">
+                            Introduction of the Euro – Average Retail Prices
+                            <em class="dateStamp">(17. January 2024.)</em>
+                        </a>
+                    </li>
+                    <li>
+                        <h2>Living conditions, Income and Social Exclusion (20. March 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="indicators-of-poverty-and-social-exclusion" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/4qsdujvm/msi-pokazatelji-siromaštva-i-socijalne-isključenosti.xlsx" title="Indicators of Poverty and Social Exclusion" target="_blank">
+                                            Indicators of Poverty and Social Exclusion
+                                            <em class="dateStamp">(20. March 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="household-budget-survey-results" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/5gkhwt3k/rezultati-ankete-o-potrosnji-kucanstava-u-2022.xlsx" title="Household Budget Survey Results" target="_blank">
+                                            Household Budget Survey Results
+                                            <em class="dateStamp">(30. October 2024.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                                        <li>
+                                            <h3>Income and Living Conditions Survey Results (27. June 2025.)</h3>
+
+                                                <div>
+                                                    <ul class="accordion-level3">
+
+                                                            <li>
+                                                                <a id="monetary-poverty" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/mppiir5t/rezultati-ankete-o-dohotku-stanovni%C5%A1tva-1-monetarno-siroma%C5%A1tvo.xlsx" title="Monetary Poverty" target="_blank">
+                                                                    Monetary Poverty
+                                                                    <em class="dateStamp">(27. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="risk-of-poverty-or-social-exclusion" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/kkic1mx3/rezultati-ankete-o-dohotku-stanovni%C5%A1tva-2-rizik-od-siroma%C5%A1tva-ili-socijalne-isklju%C4%8Denosti.xlsx" title="Risk of Poverty or Social Exclusion" target="_blank">
+                                                                    Risk of Poverty or Social Exclusion
+                                                                    <em class="dateStamp">(27. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="monetary-poverty-and-material-and-social-deprivation-of-children" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/dobj5eoz/rezultati-ankete-o-dohotku-stanovni%C5%A1tva-3-monetarno-siroma%C5%A1tvo-i-materijalna-i-socijalna-deprivacija-djece.xlsx" title="Monetary Poverty and Material and Social Deprivation of Children" target="_blank">
+                                                                    Monetary Poverty and Material and Social Deprivation of Children
+                                                                    <em class="dateStamp">(27. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="distribution-of-income" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/y4chrrrl/rezultati-ankete-o-dohotku-stanovni%C5%A1tva-4-distribucija-dohotka.xlsx" title="Distribution of Income" target="_blank">
+                                                                    Distribution of Income
+                                                                    <em class="dateStamp">(27. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="distributions-of-households-and-population" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/uirnlynm/rezultati-ankete-o-dohotku-stanovni%C5%A1tva-5-distribucija-ku%C4%87anstva-i-populacije.xlsx" title="Distributions of Households and Population" target="_blank">
+                                                                    Distributions of Households and Population
+                                                                    <em class="dateStamp">(27. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="material-and-social-deprivation-and-severe-material-and-social-deprivation" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/pgppbu3m/rezultati-ankete-o-dohotku-stanovni%C5%A1tva-6-materijalna-i-socijalna-deprivacija-i-te%C5%A1ka-materijalna-i-socijalna-deprivacija.xlsx" title="Material and Social Deprivation and Severe Material and Social Deprivation" target="_blank">
+                                                                    Material and Social Deprivation and Severe Material and Social Deprivation
+                                                                    <em class="dateStamp">(27. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="economic-strain" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/0cgnv5zl/rezultati-ankete-o-dohotku-stanovni%C5%A1tva-7-ekonomsko-optere%C4%87enje.xlsx" title="Economic Strain" target="_blank">
+                                                                    Economic Strain
+                                                                    <em class="dateStamp">(27. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="housing-strain" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/bvrn1xyj/rezultati-ankete-o-dohotku-stanovni%C5%A1tva-8-stambeno-optere%C4%87enje.xlsx" title="Housing Strain" target="_blank">
+                                                                    Housing Strain
+                                                                    <em class="dateStamp">(27. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                    </ul>
+                                                </div>
+                                        </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Gross Domestic Product (22. April 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="gross-domestic-product" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/r1dhalwf/msi-bruto-domaci-proizvod.xlsx" title="Gross Domestic Product" target="_blank">
+                                            Gross Domestic Product
+                                            <em class="dateStamp">(27. February 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="gross-domestic-product-annual-calculation" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/c51dcmbr/bruto-domaci-proizvod-godisnji.xlsx" title="Gross Domestic Product - Annual Calculation" target="_blank">
+                                            Gross Domestic Product - Annual Calculation
+                                            <em class="dateStamp">(22. April 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="gross-domestic-product-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/rihnbma3/bruto-domaci-proizvod.xlsx" title="Gross Domestic Product - Review by Counties" target="_blank">
+                                            Gross Domestic Product - Review by Counties
+                                            <em class="dateStamp">(19. March 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                                        <li>
+                                            <h3>Tourism Satellite Account for the Republic of Croatia (10. April 2025.)</h3>
+
+                                                <div>
+                                                    <ul class="accordion-level3">
+
+                                                            <li>
+                                                                <a id="tourism-satellite-account-for-the-republic-of-croatia-2016" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/2slj4wyl/satelitski-racun-turizma.xlsx" title="Tourism Satellite Account for the Republic of Croatia, 2016" target="_blank">
+                                                                    Tourism Satellite Account for the Republic of Croatia, 2016
+                                                                    <em class="dateStamp">(28. April 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="tourism-satellite-account-for-the-republic-of-croatia-2019" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/j2lgazwi/satelitski-racuni-turizma_2019.xlsx" title="Tourism Satellite Account for the Republic of Croatia, 2019" target="_blank">
+                                                                    Tourism Satellite Account for the Republic of Croatia, 2019
+                                                                    <em class="dateStamp">(28. April 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="tourism-satellite-account-for-the-republic-of-croatia-2022" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/wvzffcoj/satelitski-racuni-turizma_2022.xlsx" title="Tourism Satellite Account for the Republic of Croatia, 2022" target="_blank">
+                                                                    Tourism Satellite Account for the Republic of Croatia, 2022
+                                                                    <em class="dateStamp">(10. April 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                    </ul>
+                                                </div>
+                                        </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Education and Culture (31. March 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="education-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/3uciakvi/obrazovanje.xlsx" title="Education - Review by Counties" target="_blank">
+                                            Education - Review by Counties
+                                            <em class="dateStamp">(29. August 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="culture-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/un1goq5u/kultura.xlsx" title="Culture - Review by Counties" target="_blank">
+                                            Culture - Review by Counties
+                                            <em class="dateStamp">(31. March 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Social Protection (27. February 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="social-protection-esspros-methodology-basic-indicators" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/t2qbi4ou/msi-socijalna-za%C5%A1tita-osnovni-pokazatelji.xlsx" title="Social Protection (ESSPROS Methodology) - Basic Indicators" target="_blank">
+                                            Social Protection (ESSPROS Methodology) - Basic Indicators
+                                            <em class="dateStamp">(27. February 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="social-protection-esspros-methodology-by-esspros-schemes" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/42wfdn3g/socijalna-za%C5%A1tita-prema-esspros-programima.xlsx" title="Social Protection (ESSPROS Methodology) - by ESSPROS Schemes" target="_blank">
+                                            Social Protection (ESSPROS Methodology) - by ESSPROS Schemes
+                                            <em class="dateStamp">(27. February 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Environment (18. July 2025.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="environment-review-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/ss3h2m0j/okolis.xlsx" title="Environment - Review by Counties" target="_blank">
+                                            Environment - Review by Counties
+                                            <em class="dateStamp">(18. July 2025.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <h2>Energy (20. April 2026.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="short-term-indicators-of-energy-statistics" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/lobezk4t/msi-energija.xlsx" title="Short-Term Indicators of Energy Statistics" target="_blank">
+                                            Short-Term Indicators of Energy Statistics
+                                            <em class="dateStamp">(15. April 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                    <li>
+                                        <a id="half-year-prices-of-electricity-and-natural-gas" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/keab25gi/polugodisnje-cijene-elektricne-energije-i-prirodnog-plina.xlsx" title="Half-Year Prices of Electricity and Natural Gas" target="_blank">
+                                            Half-Year Prices of Electricity and Natural Gas
+                                            <em class="dateStamp">(20. April 2026.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <a id="Towns and Municipalities in Statistics"
+                           data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf"
+                           href="\media\bz5hplcj\gradovi-u-statistici.xlsx"
+                           title="Towns and Municipalities in Statistics"
+                           target="_blank">
+                            Towns and Municipalities in Statistics
+                            <em class="dateStamp">(30. April 2026.)</em>
+                        </a>
+                    </li>
+                    <li>
+                        <h2>Census of Population, Households and Dwellings in 2021 (13. June 2025.)</h2>
+                        <div>
+                            <ul class="accordion-level2">
+                                    <li>
+                                        <a id="census-of-population-households-and-dwellings-in-2021-first-results" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/0y5d0lzh/popis-2021-prvi-rezultati.xlsx" title="Census of Population, Households and Dwellings in 2021 - First Results" target="_blank">
+                                            Census of Population, Households and Dwellings in 2021 - First Results
+                                            <em class="dateStamp">(30. June 2023.)</em>
+                                        </a>
+                                        
+                                    </li>
+                                                                        <li>
+                                            <h3>Census of Population, Households and Dwellings in 2021 - Population (13. June 2025.)</h3>
+
+                                                <div>
+                                                    <ul class="accordion-level3">
+
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-population-by-settlements" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/rqybclnx/popis_2021-stanovnistvo_po_naseljima.xlsx" title="Census of Population, Households and Dwellings in 2021 - Population by Settlements" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 - Population by Settlements
+                                                                    <em class="dateStamp">(22. September 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-population-by-towns-municipalities" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/td3jvrbu/popis_2021-stanovnistvo_po_gradovima_opcinama.xlsx" title="Census of Population, Households and Dwellings in 2021 - Population by Towns/Municipalities" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 - Population by Towns/Municipalities
+                                                                    <em class="dateStamp">(13. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-population-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/bahkzev0/popis_2021-stanovnistvo_po_zupanijama.xlsx" title="Census of Population, Households and Dwellings in 2021 – Population by Counties" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 – Population by Counties
+                                                                    <em class="dateStamp">(13. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-population-of-republic-of-croatia" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/3hue4q5v/popis_2021-stanovnistvo_rh.xlsx" title="Census of Population, Households and Dwellings in 2021 – Population of Republic of Croatia" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 – Population of Republic of Croatia
+                                                                    <em class="dateStamp">(31. January 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-major-towns-municipalities-and-settlements" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/y00bavu1/popis_2021-stanovnistvo_najveci_gradovi_opcine_i_naselja.xlsx" title="Census of Population, Households and Dwellings in 2021 – Major Towns, Municipalities and Settlements" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 – Major Towns, Municipalities and Settlements
+                                                                    <em class="dateStamp">(31. January 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-collective-reviews" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/qlyhbd0f/popis_2021-stanovnistvo_zbirni_pregledi.xlsx" title="Census of Population, Households and Dwellings in 2021 – Collective Reviews" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 – Collective Reviews
+                                                                    <em class="dateStamp">(31. January 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                    </ul>
+                                                </div>
+                                        </li>
+                                        <li>
+                                            <h3>Census of Population, Households and Dwellings in 2021 – Households and Families (12. December 2023.)</h3>
+
+                                                <div>
+                                                    <ul class="accordion-level3">
+
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-households-and-families-by-towns-and-municipalities" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/h0bb3mg5/popis-2021-kucanstva-i-obitelji-po-gradovima-i-opcinama.xlsx" title="Census of Population, Households and Dwellings in 2021 – Households and Families, by Towns and Municipalities" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 – Households and Families, by Towns and Municipalities
+                                                                    <em class="dateStamp">(12. December 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-households-and-families-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/uwwdydgu/popis-2021-kucanstva-i-obitelji-po-zupanijama.xlsx" title="Census of Population, Households and Dwellings in 2021 – Households and Families, by Counties" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 – Households and Families, by Counties
+                                                                    <em class="dateStamp">(12. December 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                    </ul>
+                                                </div>
+                                        </li>
+                                        <li>
+                                            <h3>Census of Population, Households and Dwellings in 2021 - Housing Units (12. December 2023.)</h3>
+
+                                                <div>
+                                                    <ul class="accordion-level3">
+
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-housing-units-by-towns-municipalities" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/ryynjuzk/popis-2021-stambene-jedinice-po-gradovima-i-opcinama.xlsx" title="Census of Population, Households and Dwellings in 2021 - Housing Units by Towns/Municipalities" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 - Housing Units by Towns/Municipalities
+                                                                    <em class="dateStamp">(12. December 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-housing-units-by-counties" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/af3etn0w/popis-2021-stambene-jedinice-po-zupanijama.xlsx" title="Census of Population, Households and Dwellings in 2021 – Housing Units by Counties" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 – Housing Units by Counties
+                                                                    <em class="dateStamp">(12. December 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a id="census-of-population-households-and-dwellings-in-2021-housing-units-of-republic-of-croatia" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="https://podaci.dzs.hr/media/34yb4iiw/popis-2021-stambene-jedinice-rh.xlsx" title="Census of Population, Households and Dwellings in 2021 – Housing Units of Republic of Croatia" target="_blank">
+                                                                    Census of Population, Households and Dwellings in 2021 – Housing Units of Republic of Croatia
+                                                                    <em class="dateStamp">(12. December 2023.)</em>
+                                                                </a>
+                                                            </li>
+                                                    </ul>
+                                                </div>
+                                        </li>
+                                        <li>
+                                            <h3>Data of Previous Censuses (13. June 2025.)</h3>
+
+                                                <div>
+                                                    <ul class="accordion-level3">
+
+                                                            <li>
+                                                                <a id="data-of-previous-censuses" data-udi="umb://media/3d02701ab8324a41b9c8a0167e2e21cf" href="/media/0h4n5q5v/podaci_proslih_popisa.xlsx" title="Data of Previous Censuses" target="_blank">
+                                                                    Data of Previous Censuses
+                                                                    <em class="dateStamp">(13. June 2025.)</em>
+                                                                </a>
+                                                            </li>
+                                                    </ul>
+                                                </div>
+                                        </li>
+                            </ul>
+                        </div>
+                    </li>
+        </ul>
+    </aside>
+
+<script src="/scripts/accordion.js"></script>
+                </div>
+            </div>
+
+            <link rel=stylesheet type=text/css href=//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css>
+<script src=//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js></script>
+<script>
+
+    $(document).ready(function
+        () {
+        $('ul.tabs').each(function () {
+            // For each set of tabs, we want to keep track of
+            // which tab is active and its associated content
+            var $active, $content, $links = $(this).find('a');
+
+            // If the location.hash matches one of the links, use that as the active tab.
+            // If no match is found, use the first link as the initial active tab.
+            $active = $($links.filter('[href="' + location.hash + '"]')[0] || $links[0]);
+            $active.addClass('active');
+
+            $content = $($active[0].hash);
+
+            // Hide the remaining content
+            $links.not($active).each(function () {
+                $(this.hash).hide();
+            });
+
+            // Bind the click event handler
+            $(this).on('click', 'a', function (e) {
+                console.log($(this));
+                // Make the old tab inactive.
+                $active.removeClass('active');
+                $content.hide();
+
+                // Update the variables with the new link and content
+                $active = $(this);
+                $content = $(this.hash);
+
+                // Make the tab active.
+                $active.addClass('active');
+                $content.show();
+
+                // Prevent the anchor's default click action
+                if (!$active.hasClass('disablePreventDefault')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        $('.infographics-slider').slick({
+            arrow: true,
+            dots: false,
+            centerMode: false,
+            centerPadding: '30px',
+            slidesToShow: 5,
+            prevArrow: '<button type="button" class="slick-prev"><svg class="icon icon-arrow-left" version="1.1" xmlns="http://www.w3.org/2000/svg" width="8" height="28" viewBox="0 0 8 28"><path d="M7.574 28c0.098 0 0.171-0.024 0.269-0.073 0.293-0.147 0.391-0.513 0.244-0.782l-6.841-13.145 6.866-13.145c0.147-0.293 0.049-0.635-0.244-0.782s-0.635-0.049-0.782 0.244l-7.012 13.414c-0.098 0.171-0.098 0.366 0 0.538l7.012 13.414c0.098 0.195 0.293 0.318 0.489 0.318z"></path></svg></button>',
+            nextArrow: '<button type="button" class="slick-next"><svg class="icon icon-arrow-right" version="1.1" xmlns="http://www.w3.org/2000/svg" width="8" height="28" viewBox="0 0 8 28"><path d="M0.586 28c-0.098 0-0.171-0.024-0.269-0.073-0.293-0.147-0.391-0.513-0.244-0.782l6.866-13.145-6.866-13.145c-0.147-0.293-0.049-0.635 0.244-0.782s0.635-0.049 0.782 0.244l7.012 13.414c0.098 0.171 0.098 0.366 0 0.538l-7.012 13.414c-0.098 0.195-0.318 0.318-0.513 0.318z"></path></svg></button>',
+            responsive: [{
+                breakpoint: 768,
+                settings: {
+                    arrows: false,
+                    centerMode: true,
+                    centerPadding: '10px',
+                    slidesToShow: 3
+                }
+            },
+            {
+                breakpoint: 480,
+                settings: {
+                    centerMode: true,
+                    centerPadding: '20px',
+                    slidesToShow: 1
+                }
+            }
+            ]
+        });
+    });
+</script>
+
+            
+
+<div class=footer>
+    <div class=container>
+        <div class=row>
+            <div class=col-md-3>
+                <span class=footer-logo>
+                    <img src="/svg/dzs-logo_white.svg" alt="">
+                    
+                </span>
+            </div>
+            <div class=col-md-5>
+                <p>
+                    Ilica 3, 10 000 Zagreb
+Republic of Croatia<br/>
+Phone: (+385 1) 48 06 111<br/>
+E-Mail: <a href="mailto:stat.info@dzs.hr" class="email-link">stat.info@dzs.hr</a>
+                </p>
+                <a class="email-link" href="/en/accessibility-statement/">Accessibility statement</a>
+            </div>
+            <div class=col-md-4>
+                <div class=social-buttons>
+                    <a target="_blank" href="https://hr-hr.facebook.com/statcroatia">
+                        <svg class="icon icon-facebook">
+                            <use xlink:href=/svg/symbol-defs.svg#icon-facebook> </use>
+                        </svg>
+                    </a>
+                    <a target="_blank" href="https://twitter.com/StatistikaHR">
+                        <svg class="icon icon-twitter">
+                            <use xlink:href=/svg/symbol-defs.svg#icon-twitter> </use>
+                        </svg>
+                    </a>
+                    <a target="_blank" href="https://www.instagram.com/drzavni.zavod.za.statistiku/">
+                        <svg class="icon icon-instagram">
+                            <use xlink:href=/svg/symbol-defs.svg#icon-instagram> </use>
+                        </svg>
+                    </a>
+                    <a target="_blank" href="https://www.youtube.com/channel/UCi9ifCO-fuKM71pE0cu6Kiw">
+                        <svg class="icon icon-youtube">
+                            <use xlink:href=/svg/symbol-defs.svg#icon-youtube> </use>
+                        </svg>
+                    </a>
+                    <a target="_blank" href="https://www.linkedin.com/company/croatian-bureau-of-statistics-dr-avni-zavod-za-statistiku-republike-hrvatske-">
+                        <svg class="icon icon-linkedin">
+                            <use xlink:href=/svg/symbol-defs.svg#icon-linkedin> </use>
+                        </svg>
+                    </a>
+                        <a target="_blank" href="/en/dzs-rss/">
+                            <svg class="icon icon-rss">
+                                <use xlink:href=/svg/symbol-defs.svg#icon-rss> </use>
+                            </svg>
+                        </a>
+                </div>
+            </div>
+        </div>
+        <br><br>
+        <div class=row>
+            <div class=col-md-3>
+                <a href="https://gov.hr" target="_blank">
+                    <img src=/images/govhr_logo@2x.png height=40 style=margin-left:60px;>
+                </a>
+            </div>
+            <div class=col-md-6>
+                <p class=small>
+                    Copyright &copy; 2026 Republic of Croatia - Croatian Bureau of Statistics
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .email-link,
+    .email-link:hover {
+        color: white;
+    }
+</style>
+
+            <a href="#" class="back-to-top scrollToTop" title="Go to top">
+                <svg class="icon icon-arrow-top">
+                    <use xlink:href="/svg/symbol-defs.svg#icon-arrow-top"></use>
+                </svg>
+            </a>
+        </div>
+    </div>
+    
+
+
+<div class="a11y-panel">
+    <a href="#" class="a11y-handle">
+        <img src="/images/a11y/icons8-web-accessibility-100.png" alt="" />
+    </a>
+    <div class="a11y-title">Accesibility settings</div>
+    <button class="a11y-button" data-action="size" data-max="4">
+        <img class="a11y-icon"
+             src="/images/a11y/icons8-font-size-100.png"
+             alt="" />
+        <div class="a11y-name">
+            Font size
+        </div>
+        <ul class="steps">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+    </button>
+    <button class="a11y-button" data-action="spacing" data-max="4">
+        <img class="a11y-icon"
+             src="/images/a11y/icons8-add-white-space-100.png"
+             alt="" />
+
+        <div class="a11y-name">
+            Letter spacing
+        </div>
+        <ul class="steps">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+    </button>
+    <button class="a11y-button" data-action="typography" data-max="1">
+        <img class="a11y-icon" src="/images/a11y/icons8-read-100.png" alt="" />
+
+        <div class="a11y-name">
+            Legible font
+        </div>
+        <ul class="steps">
+            <li></li>
+        </ul>
+    </button>
+    <button class="a11y-button" data-action="links" data-max="1">
+        <img class="a11y-icon"
+             src="/images/a11y/icons8-chisel-tip-marker-100.png"
+             alt="" />
+
+        <div class="a11y-name">
+            Highlighted links
+        </div>
+        <ul class="steps">
+            <li></li>
+        </ul>
+    </button>
+    <button id="accessibility_contrast" class="a11y-button" data-action="contrast" data-max="4">
+        <img class="a11y-icon"
+             src="/images/a11y/icons8-contrast-100.png"
+             alt="" />
+        <div>
+            <span class="a11y-name kontrast">Contrast</span>
+            <span class="a11y-name">Gray Shades</span>
+            <span class="a11y-name">Reverse Colors</span>
+            <span class="a11y-name">High Contrast</span>
+            <span class="a11y-name">Low Contrast</span>
+        </div>
+        <ul class="steps">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+    </button>
+    <button class="a11y-button" data-action="cursor" data-max="1">
+        <img class="a11y-icon"
+             src="/images/a11y/icons8-cursor-100.png"
+             alt="" />
+
+        <div class="a11y-name">
+            Larger pointer
+        </div>
+        <ul class="steps">
+            <li></li>
+        </ul>
+    </button>
+    <button class="a11y-reset">
+        <img class="a11y-icon" src="/images/a11y/icons8-reset-100.png" alt="" />
+
+        <div class="a11y-name">
+            Reset
+        </div>
+    </button>
+</div>
+
+
+
+<script src="/scripts/a11y.js"></script>
+
+
+    <script>
+
+        var allPanels = $('.level-2').hide();
+
+        $('.toggle-level').click(function () {
+            $this = $(this);
+            $target = $this.next();
+            $('.toggle-level').removeClass("_active");
+
+            if (!$target.hasClass('_active')) {
+                allPanels.removeClass('_active').slideUp();
+                $target.addClass('_active').slideDown();
+                $(this).addClass("_active");
+            } else {
+                allPanels.removeClass('_active').slideUp();
+            }
+
+            return false;
+        });
+
+        function footerBottom() {
+            var windowHeight = window.innerHeight;
+            var headerHeight = $(".header").outerHeight(true);
+            var footerHeight = $(".footer").outerHeight(true);
+            $(".faux-scroller > .container").not(".is-main-content").css("min-height", windowHeight - headerHeight - footerHeight + "px");
+        }
+
+        $(window).resize(function () {
+            footerBottom();
+        });
+
+
+        $(function () {
+
+            footerBottom();
+
+            //Click event to scroll to top
+            $('.scrollToTop').click(function () {
+                $('html, body, .faux-scroller').animate({ scrollTop: 0 }, 800);
+                return false;
+
+            });
+
+            $(window).scroll(function () {
+                if ($(this).scrollTop() > 300) {
+                    $('.scrollToTop').fadeIn();
+                } else {
+                    $('.scrollToTop').fadeOut();
+                }
+            });
+
+
+
+            var allPanels = $('.jsAccordionContent').hide();
+
+            $('.jsAccordionTrigger').click(function () {
+
+                $this = $(this);
+                $target = $this.next();
+                $('.jsAccordionTrigger').removeClass("_active");
+
+                if (!$target.hasClass('_active')) {
+                    allPanels.removeClass('_active').slideUp();
+                    $target.addClass('_active').slideDown();
+                    $(this).addClass("_active");
+
+                } else {
+                    allPanels.removeClass('_active').slideUp();
+                }
+
+                return false;
+            });
+
+
+            $(".activate-hamburger").on("click", function () {
+                $("body").addClass("hamburger-active");
+            });
+
+            $(".deactivate-hamburger").on("click", function () {
+                $("body").removeClass("hamburger-active");
+            });
+
+            $(".site-overlay").on("click", function () {
+                $("body").removeClass("hamburger-active search-active");
+            });
+
+        });
+
+
+        // hide content when vue link is clicked from navigation
+        // TODO improve??
+        $('#nav-panel-podaci,#nav-panel-obrasci').on('click', 'a', function () { $('.is-main-content').hide() });
+
+        // hide content + hide mobile menu on clicked taxonomy link
+        $("#mobile-taxonomy-nav").on("click", "a", function () {
+            $("body").removeClass("hamburger-active");
+            $('.is-main-content').hide();
+        });
+
+        // hide umbraco content on load if on Vue route: fixes problem after refreshing on vue location
+        // TODO improve?
+        $(function () {
+            if (window.location.pathname.indexOf("/v2") == 0 || window.location.pathname.indexOf("/v1") == 0)
+                $('.is-main-content').hide();
+        })
+
+    </script>
+
+
+    <script src=/assets/js/chunk-vendors.js></script>
+    <script src="/assets/js/app.js"></script>
+
+
+    <style type="text/css">
+        /* overflow graph for mobile phones */
+        @media(max-width:767px){
+            .graph-section-wrap[id^=table-] {
+                overflow-x: scroll;
+            }
+        }
+        .tooltip{
+            top:-1px;
+        }
+        .tooltip-trigger {
+            text-transform: lowercase;
+            background-color:#17384f;
+        }
+        .tooltip-content.tooltip-show{
+            z-index:999;
+        }
+    </style>
+</body>
+</html>

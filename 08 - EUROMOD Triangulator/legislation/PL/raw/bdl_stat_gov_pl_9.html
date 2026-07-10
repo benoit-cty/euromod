@@ -1,0 +1,846 @@
+
+
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>
+	GUS - Bank Danych Lokalnych
+</title><link rel="shortcut icon" href="https://bdl.stat.gov.pl/bdl/favicon.ico" /><meta http-equiv="X-UA-Compatible" content="IE=11;IE=edge" /><link href="App_Themes/Light/LightNew.css" type="text/css" rel="stylesheet" /><link href="/bdl/Telerik.Web.UI.WebResource.axd?d=PMrIT5dOWaVYIcpFWUE4nNXBr8KEWQ6y55zZvDD0AMsLxtNZlaBT2xZRXAFAL00q5eGWB5xdqZ6RhbrQIXEXOWBnonfEx_mGDH3nwPLD6cMT4hYH0&amp;t=638841126637275692&amp;compress=2&amp;_TSM_CombinedScripts_=%3b%3b%7c637747370477927469%3a2cc223ef%3bTelerik.Web.UI%2c+Version%3d2017.3.913.45%2c+Culture%3dneutral%2c+PublicKeyToken%3d121fae78165ba3d4%3apl-PL%3a03e3fdef-45f6-40a0-88ab-9645d53a0f37%3ad7e35272%3a505983de%3a3e0dfe6c%3ae7750fd8%3ae347b32f%3aa942ad92%3ab256253d%3a6e804bb4%3aa957bcf1%3ace6e779%3a21b4b2bb%3a69f99efe%3adc65d966%3ad747760e%3a45085116%3a27c5704c%3a9503e2d4%3a5675d0e5%3a3001050f" type="text/css" rel="stylesheet" /></head>
+<body class="normal" onkeydown="return (event.keyCode!=13)">
+    <form method="post" action="#" id="aspnetForm" class="mainForm">
+<div class="aspNetHidden">
+<input type="hidden" name="ctl00_StyleManager_TSSM" id="ctl00_StyleManager_TSSM" value="" />
+<input type="hidden" name="ctl00_MainScriptManager_TSM" id="ctl00_MainScriptManager_TSM" value="" />
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['aspnetForm'];
+if (!theForm) {
+    theForm = document.aspnetForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/bdl/WebResource.axd?d=pynGkmcFUV13He1Qd6_TZI9D70rHBXVP_3jbk_ruR4s7nbY_JdjwAEWQj7Xfqrv8Prqqig2&amp;t=638901608248157332" type="text/javascript"></script>
+
+
+<script src="/bdl/Telerik.Web.UI.WebResource.axd?_TSM_HiddenField_=ctl00_MainScriptManager_TSM&amp;compress=2&amp;_TSM_CombinedScripts_=%3b%3bSystem.Web.Extensions%2c+Version%3d4.0.0.0%2c+Culture%3dneutral%2c+PublicKeyToken%3d31bf3856ad364e35%3apl-PL%3aa8328cc8-0a99-4e41-8fe3-b58afac64e45%3aea597d4b%3ab25378d2%3bTelerik.Web.UI%3apl-PL%3a03e3fdef-45f6-40a0-88ab-9645d53a0f37%3a16e4e7cd%3af7645509%3a22a6274a%3a24ee1bba%3af46195d3%3a874f8ea2%3ab2e06756%3a92fe8ea0%3afa31b949%3a4877f69a%3a33715776%3ac128760b%3a19620875%3a490a9d4e%3abd8f85e4%3a86526ba7%3acda80b3%3a383e4ce8%3aed16cbdc%3a1e771326%3a88144a7a%3a8c2d243e%3aeaae47ab%3a4cacbc31%3adc752f02%3a58366029%3bSystem.Web.Extensions%2c+Version%3d4.0.0.0%2c+Culture%3dneutral%2c+PublicKeyToken%3d31bf3856ad364e35%3apl-PL%3aa8328cc8-0a99-4e41-8fe3-b58afac64e45%3a76254418" type="text/javascript"></script>
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="92558906" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="BjXWR1A1fjshLzyL3xxXUW0P8Sdyk6ezMxKDw7jUUKPLfwDQi7dQCVcX5N6OtBYyvzotw17xIdgKHsgT8sjJPi09r0TXRHyA25XZIRX76LOadR7oARF2I4xXk/buG/qWEx/Y6uDa8+IFGSuyddruR0ivWb0GZjajujqW7j6DTSsL70sGRx5eYBYCc/9EEHtoLP5kCy3tqs+6fbnht35jArH+pGYHY9i3c19DTRm8aEHtVB/kyK2KUZzEeMxhq9AGQ9re3AkZjscmAuShpsNqlJPQPCCIn/Lf8eSDlgSr2m6NoUi48rkS4ijKUjmg8qK9A3mbGHVZdX9SU2IvOHl/BRlpRBEyKfqpZo0hsTA6Mk8Z4Kan+0R2FlUzaQ+4Zd7+R8WhtB7zHhXH5xiTRiKSZKvtAWIxe6CRCmCV97+Sz0QXESlIfm97if0InS1zmG4BlZsvSD7IrbDNtFzOULh0BiFcskUYCUMS6F75p6hcJQ/h+hAb" />
+</div>
+        
+            <script type="text/javascript">
+                
+                (function (i, s, o, g, r, a, m) {
+                    i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                        (i[r].q = i[r].q || []).push(arguments)
+                    }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+                })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+                ga('create', 'UA-75153058-1', 'auto');
+                ga('send', 'pageview');
+                    
+
+                function createCookie(name, value, days) {
+                    if (days) {
+                        var date = new Date();
+                        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                        var expires = "; expires=" + date.toGMTString();
+                    }
+                    else var expires = "";
+                    document.cookie = name + "=" + value + expires + "; path=/";
+                }
+                function readCookie(name) {
+                    var nameEQ = name + "=";
+                    var ca = document.cookie.split(';');
+                    for (var i = 0; i < ca.length; i++) {
+                        var c = ca[i];
+                        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+                    }
+                    return null;
+                }
+                function eraseCookie(name) {
+                    createCookie(name, "", -1);
+                }
+                function linkButtonClicking(button, args) {
+                    window.location = button.get_navigateUrl();
+                    args.set_cancel(true);
+                }
+                (function ($) {
+                    $(document).ready(function () {
+                        var read = readCookie("cookie-accepted");
+                        if (!read || read != "true") {
+                            createCookie("cookie-accepted", "true", 365);
+                            $("#CookieInfo").show();
+                        }
+                    });
+                })($telerik.$);
+            </script>
+        
+
+        <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$MainScriptManager', 'aspnetForm', ['tctl00$MainToolTipManRTMPanel','','tctl00$ctl00$SessionTickerPanelPanel','','tctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$PanelPanel','','tctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$ctl00Panel','','tctl00$SidebarPlaceHolder$OptionsPanel$i5$DownloadedSubgroups$ctl00$SidebarPlaceHolder$OptionsPanel$i5$DownloadedSubgroups$FilesPanelPanel','','tctl00$MainAjaxManagerSU',''], ['ctl00$SessionTicker',''], [], 90, 'ctl00');
+//]]>
+</script>
+
+        <div id="ctl00_MainWindowMan" style="display:none;">
+	<!-- 2017.3.913.45 --><div id="ctl00_MainWindowMan_alerttemplate" style="display:none;">
+		<div class="rwDialog rwAlertDialog">
+			<div class="rwDialogContent">
+				<div class="rwDialogMessage">{1}</div>
+			</div>
+			<div class="rwDialogButtons">
+				<button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+			</div>
+		</div>
+		</div><div id="ctl00_MainWindowMan_prompttemplate" style="display:none;">
+		<div class="rwDialog rwPromptDialog">
+			<div class="rwDialogContent">
+				<div class="rwDialogMessage">{1}</div>
+				<div class="rwPromptInputContainer">
+					<script type="text/javascript">
+						function RadWindowprompt_detectenter(id, ev, input) {
+							if (!ev) ev = window.event;
+							if (ev.keyCode == 13) {
+								var but = input.parentNode.parentNode.parentNode.getElementsByTagName("button")[0];
+								if (but) {
+									if (but.click) {
+										but.click();
+									}
+									else if (but.onclick) {
+										but.focus();
+										var click = but.onclick;
+										but.onclick = null;
+										if (click) click.call(but);
+									}
+								}
+								return false;
+							}
+							else return true;
+						}
+					</script>
+					<input title="Enter Value" onkeydown="return RadWindowprompt_detectenter('{0}', event, this);" type="text" class="rwPromptInput radPreventDecorate" value="{2}" />
+				</div>
+			</div>
+			<div class="rwDialogButtons">
+				<button type="button" class="rwOkBtn" onclick="$find('{0}').close(this.parentNode.parentNode.getElementsByTagName('input')[0].value); return false;">##LOC[OK]##</button>
+				<button type="button" class="rwCancelBtn" onclick="$find('{0}').close(null); return false;">##LOC[Cancel]##</button>
+			</div>
+		</div>
+		</div><div id="ctl00_MainWindowMan_confirmtemplate" style="display:none;">
+		<div class="rwDialog rwConfirmDialog">
+			<div class="rwDialogContent">
+				<div class="rwDialogMessage">{1}</div>
+			</div>
+			<div class="rwDialogButtons">
+				<button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+				<button type="button" class="rwCancelBtn" onclick="$find('{0}').close(false); return false;">##LOC[Cancel]##</button>
+			</div>
+		</div>
+		</div><input id="ctl00_MainWindowMan_ClientState" name="ctl00_MainWindowMan_ClientState" type="hidden" />
+</div>
+        <div id="ctl00_MainFormDecorator" class="RadFormDecorator" style="display:none;">
+	<script type="text/javascript">
+//<![CDATA[
+
+if (typeof(WebForm_AutoFocus) != 'undefined' && !isWebFormAutoFocusMethodCalled)
+{   
+	var old_WebForm_AutoFocus = WebForm_AutoFocus;
+	WebForm_AutoFocus = function(arg)
+	{
+		Sys.Application.add_load(function()
+		{            
+			old_WebForm_AutoFocus(arg);
+			WebForm_AutoFocus = old_WebForm_AutoFocus;
+		});
+	}
+    var isWebFormAutoFocusMethodCalled = true;
+}
+if (typeof(Telerik) != 'undefined' && Type.isNamespace(Telerik.Web))
+{
+	if (Telerik.Web.UI.RadFormDecorator)
+	{
+		Telerik.Web.UI.RadFormDecorator.initializePage("ctl00_MainFormDecorator", "", "Default", 57343);
+	}
+}
+//]]>
+</script><input id="ctl00_MainFormDecorator_ClientState" name="ctl00_MainFormDecorator_ClientState" type="hidden" />
+</div>
+        <div id="ctl00_MainToolTipMan" class="ttipAuto" style="display:none;position:absolute;">
+	<div id="ctl00_MainToolTipManRTMPanel">
+
+	</div><input id="ctl00_MainToolTipMan_ClientState" name="ctl00_MainToolTipMan_ClientState" type="hidden" />
+</div>
+        <div id="ctl00_MainAjaxManagerSU">
+	<span id="ctl00_MainAjaxManager" style="display:none;"></span>
+</div>
+
+        
+
+        <div id="CookieInfo" style="display: none;">
+            
+                <div class="text">Nasza strona internetowa używa plików cookies (tzw. ciasteczka) w celach statystycznych oraz funkcjonalnych. Dzięki nim możemy indywidualnie dostosować stronę do twoich potrzeb. Każdy może zaakceptować pliki cookies albo ma możliwość wyłączenia ich w przeglądarce, dzięki czemu nie będą zbierane żadne informacje.</div>
+                <div class="close">
+                    <a href="#" onclick='$("#CookieInfo").hide();'>Zrozumiałem, zamknij ten komunikat</a>
+                </div>
+            
+        </div>
+
+        <div id="MainWrapper">
+            <div id="MainhHeader">
+                <div id="LinksWrapper">
+                    
+                        <div style="display: inline-block" class="dataState">
+                            <span>
+                                Dane wg stanu na 2026.05.07
+                            </span>
+                        </div>
+                        <div class="right">
+                            
+                                    Użytkownik: Gość
+                                
+                        </div>
+                    
+                </div>
+                <div id="NavigationWrapper" style="margin-bottom: 20px">
+                    <div id="ctl00_MainMenu_Menu" class="RadNavigation RadNavigation_Default">
+	<div class="rnvRootGroupWrapper">
+		<ul class="rnvRootGroup rnvGroup">
+			<li class="rnvItem rnvFirst icon right"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                
+                        <a href='/bdl/logowanie' title='Logowanie'>
+                            <img src='/bdl/App_Themes/Light/ico/sign_in.png' />
+                        </a>
+                    
+            
+			</div></li><li class="rnvItem  icon right small-hidden"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                <a href='/bdl/kontakt' title='Kontakt'>
+                    <img src="/bdl/App_Themes/Light/ico/mail.png" />
+                </a>
+            
+			</div></li><li class="rnvItem  icon right small-hidden"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                <a href='/bdl/rss/PL.rss' title='RSS' target="_blank">
+                    <img src="/bdl/App_Themes/Light/ico/rss.png" />
+                </a>
+            
+			</div></li><li class="rnvItem  icon right small-hidden"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                <a href='https://www.facebook.com/BankDanychLokalnych' target="_blank" title='FB.com/BankDanychLokalnych'>
+                    <img src="/bdl/App_Themes/Light/ico/facebook.png" />
+                </a>
+            
+			</div></li><li class="rnvItem  icon right small-hidden"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                <a href='/bdl/ankieta' title='Ankieta'>
+                    <img src="/bdl/App_Themes/Light/ico/talk.png" />
+                </a>
+            
+			</div></li><li class="rnvItem  icon right"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                <a href='/BDL/start?lang=en' title='Zmiana języka'>
+                    <img src="/bdl/img/en.png" />
+                </a>
+            
+			</div></li><li class="rnvItem  icon right"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                <a href='/BDL/start?theme=Dark'
+                    title='Motyw ciemny'>
+                    <img src="/bdl/App_Themes/Light/ico/eye_dark.png" />
+                </a>
+            
+			</div></li><li class="rnvItem  icon right"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                <a href='/BDL/start?theme=Dark' title='Motyw ciemny'>
+                    <img src="/bdl/App_Themes/Light/ico/eye_dark.png" />
+                </a>
+            
+			</div></li><li class="rnvItem rnvSelected icon right"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                <a href='/BDL/start?theme=Light' title='Motyw jasny'>
+                    <img src="/bdl/App_Themes/Light/ico/eye_light.png" />
+                </a>
+            
+			</div></li><li class="rnvItem  right search medium-hidden"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                <div id="ctl00_MainMenu_ctl09_SearchBox" class="RadSearchBox RadSearchBox_Default">
+					<span class="rsbInner"><input class="rsbInput radPreventDecorate rsbEmptyMessage" type="text" value="Szukaj cechy" name="ctl00_MainMenu_ctl09_SearchBox" id="ctl00_MainMenu_ctl09_SearchBox_Input" /><button class="rsbButton rsbButtonSearch" type="button"><span class="rsbIcon rsbIconSearch"><!-- &nbsp; --></span></button></span><input id="ctl00_MainMenu_ctl09_SearchBox_ClientState" name="ctl00_MainMenu_ctl09_SearchBox_ClientState" type="hidden" />
+				</div>
+            
+			</div></li><li class="rnvItem rnvSelected logo logoPL"><div class="rnvRootLink rnvLink rnvTemplate">
+				
+                <a href='/bdl/start'>
+                    Strona główna</a>
+            
+			</div></li><li class="rnvItem"><span class="rnvRootLink rnvLink"><span class="rnvText">DANE</span><span class="rnvToggle radIcon"></span></span><div class="rnvSlide">
+				<div class="radPopup rnvPopup">
+					<ul class="rnvUL">
+						<li class="rnvItem rnvFirst"><a class="rnvLink" href="/bdl/dane/podgrup/temat"><span class="rnvText">Dane według dziedzin</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/dane/teryt/jednostka"><span class="rnvText">Dane dla jednostki terytorialnej</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/obszary"><span class="rnvText">Obszary funkcjonalne</span></a></li><li class="rnvItem rnvLast"><a class="rnvLink" href="/bdl/rankingi"><span class="rnvText">Rankingi statystyczne</span></a></li>
+					</ul>
+				</div>
+			</div></li><li class="rnvItem"><span class="rnvRootLink rnvLink"><span class="rnvText">METADANE</span><span class="rnvToggle radIcon"></span></span><div class="rnvSlide">
+				<div class="radPopup rnvPopup">
+					<ul class="rnvUL">
+						<li class="rnvItem rnvFirst"><a class="rnvLink" href="/bdl/metadane"><span class="rnvText">Strona główna</span></a></li><li class="rnvItem"><span class="rnvLink"><span class="rnvText">Układ danych</span><span class="rnvToggle radIcon"></span></span><div class="rnvSlide">
+							<div class="radPopup rnvPopup">
+								<ul class="rnvUL">
+									<li class="rnvItem rnvFirst"><a class="rnvLink" href="/bdl/metadane/kategorie"><span class="rnvText">Kategorie</span></a></li><li class="rnvItem rnvLast"><a class="rnvLink" href="/bdl/metadane/cechy/szukaj"><span class="rnvText">Szukaj cechy</span></a></li>
+								</ul>
+							</div>
+						</div></li><li class="rnvItem"><span class="rnvLink"><span class="rnvText">Podział terytorialny</span><span class="rnvToggle radIcon"></span></span><div class="rnvSlide">
+							<div class="radPopup rnvPopup">
+								<ul class="rnvUL">
+									<li class="rnvItem rnvFirst"><a class="rnvLink" href="/bdl/metadane/teryt/lista"><span class="rnvText">Jednostki terytorialne</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/metadane/teryt/szukaj"><span class="rnvText">Znajdź jednostkę terytorialną</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/metadane/teryt/kod"><span class="rnvText">Kod terytorialny</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/metadane/nuts"><span class="rnvText">Jednostki statystyczne</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/metadane/teryt/miejscowosc"><span class="rnvText">Miejscowość statystyczna</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/metadane/teryt/rodzaj"><span class="rnvText">Rodzaj jednostki terytorialnej</span></a></li><li class="rnvItem rnvLast"><a class="rnvLink" href="/bdl/metadane/teryt/zmiany"><span class="rnvText">Zmiany w podziale terytorialnym</span></a></li>
+								</ul>
+							</div>
+						</div></li><li class="rnvItem"><span class="rnvLink"><span class="rnvText">Inne</span><span class="rnvToggle radIcon"></span></span><div class="rnvSlide">
+							<div class="radPopup rnvPopup">
+								<ul class="rnvUL">
+									<li class="rnvItem rnvFirst"><a class="rnvLink" href="/bdl/metadane/atrybut"><span class="rnvText">Atrybuty</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/metadane/agregaty"><span class="rnvText">Agregaty</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/metadane/jednostki"><span class="rnvText">Jednostki miary</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/metadane/pkd2004"><span class="rnvText">Klasyfikacja PKD 2004</span></a></li><li class="rnvItem rnvLast"><a class="rnvLink" href="/bdl/metadane/pkd2007"><span class="rnvText">Klasyfikacja PKD 2007</span></a></li>
+								</ul>
+							</div>
+						</div></li><li class="rnvItem rnvLast"><a class="rnvLink" href="/bdl/metadane/pojecia"><span class="rnvText">Pojęcia</span></a></li>
+					</ul>
+				</div>
+			</div></li><li class="rnvItem"><a class="rnvRootLink rnvLink" target="_blank" href="https://api.stat.gov.pl/"><span class="rnvText">API</span></a></li><li class="rnvItem"><span class="rnvRootLink rnvLink"><span class="rnvText">ARCHIWUM</span><span class="rnvToggle radIcon"></span></span><div class="rnvSlide">
+				<div class="radPopup rnvPopup">
+					<ul class="rnvUL">
+						<li class="rnvItem rnvFirst"><a class="rnvLink" href="/bdl/archiwum2011"><span class="rnvText">Archiwum wybranych tabel dla lat 2020-2021 z danymi bilansowanymi na podstawie wyników NSP 2011</span></a></li><li class="rnvItem rnvLast"><a class="rnvLink" href="/bdl/archiwum"><span class="rnvText">Archiwum kategorii LUDNOŚĆ z danymi bilansowanymi za rok 2010 na podstawie wyników NSP 2002</span></a></li>
+					</ul>
+				</div>
+			</div></li><li class="rnvItem rnvLast"><span class="rnvRootLink rnvLink"><span class="rnvText">POMOC</span><span class="rnvToggle radIcon"></span></span><div class="rnvSlide">
+				<div class="radPopup rnvPopup">
+					<ul class="rnvUL">
+						<li class="rnvItem rnvFirst"><a class="rnvLink" href="/bdl/pomoc"><span class="rnvText">Podręcznik użytkownika BDL</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/pomoc/komunikaty"><span class="rnvText">Komunikaty</span></a></li><li class="rnvItem"><a class="rnvLink" href="/bdl/pomoc/stanzasilenia"><span class="rnvText">Stan zasilenia danych</span></a></li><li class="rnvItem rnvLast"><a class="rnvLink" href="/bdl/pomoc/mapastrony"><span class="rnvText">Mapa strony</span></a></li>
+					</ul>
+				</div>
+			</div></li>
+		</ul>
+	</div><div class="rnvHiddenGroups">
+		
+	</div><input id="ctl00_MainMenu_Menu_ClientState" name="ctl00_MainMenu_Menu_ClientState" type="hidden" />
+</div>
+
+                </div>
+            </div>
+            <div id="MainSidebar" class="left">
+                
+
+    <div id="ctl00_SidebarPlaceHolder_OptionsPanel" class="RadPanelBar RadPanelBar_Default" style="width:100%;">
+	<ul class="rpRootGroup">
+		<li class="rpItem rpFirst"><span class="rpLink rpRootLink rpExpandable rpExpanded"><img alt="" src="/bdl/App_Themes/Light/ico/calendar.png" class="rpImage" /><span class="rpText">Stan zasilenia danych</span><span class="rpExpandHandle"><span class="p-icon p-i-arrow-chevron-up"></span></span></span><div class="rpSlide" style="display:block;">
+			<div class="rpTemplate">
+				
+                    <div style="padding: 15px">
+                        <a id="ctl00_SidebarPlaceHolder_OptionsPanel_i0_SupplyStateLinkCurrent" href="/bdl/pomoc/stanzasilenia?active=2">Dane dla roku 2026 (dane krótkookresowe)</a><br />
+
+                        <a id="ctl00_SidebarPlaceHolder_OptionsPanel_i0_SupplyStateLinkPrevious" href="/bdl/pomoc/stanzasilenia?active=1">Dane dla roku 2025</a><br />
+
+                        <a id="ctl00_SidebarPlaceHolder_OptionsPanel_i0_SupplyStateLinkPrePrevious" href="/bdl/pomoc/stanzasilenia?active=0">Dane dla roku 2024</a><br />
+
+                        <a id="ctl00_SidebarPlaceHolder_OptionsPanel_i0_MessagesLink" href="/bdl/pomoc/komunikaty">Komunikaty</a>
+                    </div>
+                
+			</div>
+		</div></li><li class="rpItem"><span class="rpLink rpRootLink rpExpandable rpExpanded"><img alt="" src="/bdl/App_Themes/Light/ico/talk.png" class="rpImage" /><span class="rpText">Ankieta</span><span class="rpExpandHandle"><span class="p-icon p-i-arrow-chevron-up"></span></span></span><div class="rpSlide" style="display:block;">
+			<div class="rpTemplate">
+				
+                    <div style="padding: 10px; text-align: center">
+                        <div>
+                            <a href="/bdl/ankieta"><img src="img/ankieta2025.svg" alt="Ankieta" style="height:60px;" /></a>
+                        </div>
+                        <p style="color:red; font-size: larger;"><b> NOWA ANKIETA</b></p>
+                        Zapraszamy do <a href="/bdl/ankieta">wypełnienia ankiety</a>. Państwa opinia pomoże nam zmienić BDL!
+                    </div>
+                
+			</div>
+		</div></li><li class="rpItem"><span class="rpLink rpRootLink rpExpandable"><img alt="" src="/bdl/App_Themes/Light/ico/last_data.png" class="rpImage" /><span class="rpText">Ostatnio aktualizowane</span><span class="rpExpandHandle"><span class="p-icon p-i-arrow-chevron-down"></span></span></span><div class="rpSlide">
+			<div class="rpTemplate">
+				
+                    
+
+<div>
+<div id="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_PreLoader" class="RadAjax RadAjax_Default" style="display:none;">
+					<div class="raDiv">
+
+					</div><div class="raColor raTransp">
+
+					</div>
+				</div>
+<div class="RadAjaxPanel" id="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_PanelPanel">
+					<div id="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Panel">
+						
+    <div id="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups" class="RadGrid RadGrid_Default noborder noaltcolor" PageSizes="5,10,25,50,100" style="border-style:None;">
+
+						<table class="rgMasterTable" id="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups_ctl00" style="width:100%;table-layout:auto;empty-cells:show;">
+							<colgroup>
+		<col  />
+		<col  />
+	</colgroup>
+<thead>
+								<tr>
+									<th scope="col" class="rgHeader">Podgrupa</th><th scope="col" class="rgHeader">Data</th>
+								</tr>
+							</thead><tfoot>
+								<tr class="rgPager">
+									<td class="rgPagerCell" colspan="2"><div class="NumericPages">
+										<div class="rgWrap rgNumPart">
+											<a onclick="return false;" class="rgCurrentPage" href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Subgroups$ctl00$ctl03$ctl01$ctl02&#39;,&#39;&#39;)">1</a><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Subgroups$ctl00$ctl03$ctl01$ctl03&#39;,&#39;&#39;)">2</a><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Subgroups$ctl00$ctl03$ctl01$ctl04&#39;,&#39;&#39;)">3</a><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Subgroups$ctl00$ctl03$ctl01$ctl05&#39;,&#39;&#39;)">4</a><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Subgroups$ctl00$ctl03$ctl01$ctl06&#39;,&#39;&#39;)">5</a>
+										</div>
+									</div></td>
+								</tr>
+							</tfoot><tbody>
+							<tr class="rgRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups_ctl00__0">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Subgroups$ctl00$ctl04$ctl00&#39;,&#39;&#39;)">Przeciętne ceny skupu ważniejszych produktów rolnych (dane miesięczne)</a></td><td>2026-05-07</td>
+							</tr><tr class="rgAltRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups_ctl00__1">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Subgroups$ctl00$ctl06$ctl00&#39;,&#39;&#39;)">Obiekty działalności wystawienniczej</a></td><td>2026-05-07</td>
+							</tr><tr class="rgRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups_ctl00__2">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Subgroups$ctl00$ctl08$ctl00&#39;,&#39;&#39;)">Pojazdy samochodowe fabrycznie nowe zarejestrowane po raz pierwszy na terytorium Polski (dane kwartalne)</a></td><td>2026-05-07</td>
+							</tr>
+							</tbody>
+
+						</table><div id="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups_SharedCalendarContainer" style="display:none;">
+
+						</div><input id="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups_ClientState" name="ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups_ClientState" type="hidden" />	</div>
+						    
+
+					</div>
+				</div>
+</div>
+
+                
+			</div>
+		</div></li><li class="rpItem"><span class="rpLink rpRootLink rpExpandable"><img alt="" src="/bdl/App_Themes/Light/ico/popular.png" class="rpImage" /><span class="rpText">Popularne podgrupy</span><span class="rpExpandHandle"><span class="p-icon p-i-arrow-chevron-down"></span></span></span><div class="rpSlide">
+			<div class="rpTemplate">
+				
+                    
+
+<div class="bpad10">
+<div id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_PreLoader" class="RadAjax RadAjax_Default" style="display:none;">
+					<div class="raDiv">
+
+					</div><div class="raColor raTransp">
+
+					</div>
+				</div>
+<div class="RadAjaxPanel" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_ctl00Panel">
+					<div id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_ctl00">
+						
+    <div id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups" class="RadGrid RadGrid_Default noborder noaltcolor" PageSizes="5,10,25,50,100" style="border-style:None;">
+
+						<table class="rgMasterTable" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00" style="width:100%;table-layout:auto;empty-cells:show;">
+							<colgroup>
+		<col  />
+	</colgroup>
+<thead>
+								<tr style="display:none;">
+									<th scope="col">&nbsp;</th>
+								</tr>
+							</thead><tbody>
+							<tr class="rgRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00__0">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00$ctl04$ctl00&#39;,&#39;&#39;)">Powierzchnia</a></td>
+							</tr><tr class="rgAltRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00__1">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00$ctl06$ctl00&#39;,&#39;&#39;)">Przeciętne miesięczne wynagrodzenia brutto</a></td>
+							</tr><tr class="rgRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00__2">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00$ctl08$ctl00&#39;,&#39;&#39;)">Dochody własne</a></td>
+							</tr><tr class="rgAltRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00__3">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00$ctl10$ctl00&#39;,&#39;&#39;)">Ludność w wieku przedprodukcyjnym (17 lat i mniej), produkcyjnym i poprodukcyjnym wg płci</a></td>
+							</tr><tr class="rgRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00__4">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00$ctl12$ctl00&#39;,&#39;&#39;)">Ludność wg miejsca zamieszkania i płci w podziale na miasto i wieś</a></td>
+							</tr><tr class="rgAltRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00__5">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00$ctl14$ctl00&#39;,&#39;&#39;)">Ludność wg grup wieku i płci</a></td>
+							</tr><tr class="rgRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00__6">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00$ctl16$ctl00&#39;,&#39;&#39;)">Ludność w gminach bez miast na prawach powiatu i w miastach na prawach powiatu wg płci</a></td>
+							</tr><tr class="rgAltRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00__7">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00$ctl18$ctl00&#39;,&#39;&#39;)">Stopa bezrobocia rejestrowanego</a></td>
+							</tr><tr class="rgRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00__8">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00$ctl20$ctl00&#39;,&#39;&#39;)">Gęstość zaludnienia oraz wskaźniki</a></td>
+							</tr><tr class="rgAltRow" id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00__9">
+								<td><a href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00$ctl22$ctl00&#39;,&#39;&#39;)">Turystyczne obiekty noclegowe wg rodzajów</a></td>
+							</tr>
+							</tbody>
+
+						</table><div id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_SharedCalendarContainer" style="display:none;">
+
+						</div><input id="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ClientState" name="ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ClientState" type="hidden" />	</div>
+						    
+
+					</div>
+				</div>
+</div>
+
+                
+			</div>
+		</div></li><li class="rpItem"><span class="rpLink rpRootLink rpExpandable"><img alt="" src="/bdl/App_Themes/Light/ico/download.png" class="rpImage" /><span class="rpText">Pobrane podgrupy</span><span class="rpExpandHandle"><span class="p-icon p-i-arrow-chevron-down"></span></span></span><div class="rpSlide">
+			<div class="rpTemplate">
+				
+                    
+    <script type="text/javascript">        
+        var filesRefreshInterval;       
+        function initFilesRefreshInterval() {
+            filesRefreshInterval = setInterval(function () {
+                $find('ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesPanel').ajaxRequest("Refresh");
+            }, 10000);
+        }
+        function refreshFilesList() {
+            $find('ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesPanel').ajaxRequest("Refresh");
+        }
+        function clearFilesRefreshInterval() {
+            try {
+                clearInterval(filesRefreshInterval);
+            } catch (e) {
+            }
+        }
+        function onFilesPanelClientRequestStart(sender, eventArgs) {
+            if (eventArgs.get_eventTarget().indexOf("Export")>-1)
+                eventArgs.set_enableAjax(false);
+        }
+        function filesDeleteConfirm() {
+            return confirm('Czy chcesz usunąć element?');
+        }
+    </script>
+
+
+<div id="ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesPreLoader" class="RadAjax RadAjax_Default" style="display:none;">
+					<div class="raDiv">
+
+					</div><div class="raColor raTransp">
+
+					</div>
+				</div>
+
+<div class="RadAjaxPanel" id="ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesPanelPanel">
+					<div id="ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesPanel">
+						    
+<div id="ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesList" class="RadGrid RadGrid_Default noborder noaltcolor" PageSizes="5,10,25,50,100" style="border-style:None;">
+
+						<table class="rgMasterTable" id="ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesList_ctl00" style="width:100%;table-layout:auto;empty-cells:show;">
+							<colgroup>
+		<col  />
+		<col  />
+		<col  />
+	</colgroup>
+<thead>
+								<tr>
+									<th scope="col" class="rgHeader">Podgrupa</th><th scope="col" class="rgHeader">Data</th><th scope="col" class="rgHeader">&nbsp;</th>
+								</tr>
+							</thead><tfoot>
+								<tr class=" rgPager">
+									<td class="rgPagerCell" colspan="3"><div class="NumericPages">
+										<div class="rgWrap rgNumPart">
+											<a onclick="return false;" class="rgCurrentPage" href="javascript:__doPostBack(&#39;ctl00$SidebarPlaceHolder$OptionsPanel$i5$DownloadedSubgroups$FilesList$ctl00$ctl03$ctl01$ctl02&#39;,&#39;&#39;)">1</a>
+										</div>
+									</div></td>
+								</tr>
+							</tfoot><tbody>
+							<tr class="rgNoRecords">
+								<td colspan="3" style="text-align:left;"><div>Brak wierszy do wyświetlenia.</div></td>
+							</tr>
+							</tbody>
+
+						</table><div id="ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesList_SharedCalendarContainer" style="display:none;">
+
+						</div><input id="ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesList_ClientState" name="ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesList_ClientState" type="hidden" />	</div>
+						
+
+					</div>
+				</div>
+                
+			</div>
+		</div></li><li class="rpItem rpLast"><span class="rpLink rpRootLink rpExpandable rpExpanded"><img alt="" src="/bdl/App_Themes/Light/ico/link.png" class="rpImage" /><span class="rpText">Linki</span><span class="rpExpandHandle"><span class="p-icon p-i-arrow-chevron-up"></span></span></span><div class="rpSlide" style="display:block;">
+			<div class="rpTemplate">
+				
+                    
+   
+<table class="tpad5 bpad5 lmarg13 rmarg13">
+    <tr><td>
+          
+        
+        
+		<a href='/bdl/pages/regionalareas/AtlasRegionowBDL.aspx'>Atlas Regionów</a>
+    </td></tr>
+    <tr><td>
+        <a href="http://stat.gov.pl/metainformacje/slownik-pojec/" target="_blank">Słownik Pojęć</a>        
+    </td></tr>
+        <tr><td>
+        <a href="http://bip.stat.gov.pl/dzialalnosc-statystyki-publicznej/rejestr-teryt/" target="_blank">TERYT</a>                
+    </td></tr>
+    <tr><td>
+        <a href="http://stat.gov.pl/Klasyfikacje/" target="_blank">Klasyfikacje</a>        
+    </td></tr>
+    <tr><td>
+        <a href="https://www.facebook.com/BankDanychLokalnych" target="_blank">Facebook</a>
+        <img src='/bdl/img/facebook.png' />         
+    </td></tr>
+    <tr><td>
+        <a href="http://stat.gov.pl/rodo/" target="_blank">RODO</a>        
+    </td></tr>
+
+</table>
+
+                
+			</div>
+		</div></li>
+	</ul><input id="ctl00_SidebarPlaceHolder_OptionsPanel_ClientState" name="ctl00_SidebarPlaceHolder_OptionsPanel_ClientState" type="hidden" />
+</div>
+
+
+            </div>
+            <div id="MainContent" class="right">
+                
+
+                
+   
+    
+        <script type="text/javascript">
+            Sys.Application.add_load(CheckStartRedirect);
+            function CheckStartRedirect() {
+                if (window.location.href.match("/$") == "/")
+                    window.location = '/bdl/start';
+                else
+                    Sys.Application.remove_load(CheckStartRedirect);
+            }
+        </script>
+    
+
+    <div class="linki">
+
+        <div class="link link_domain first">
+            <div>
+                <p class="title">
+                    Dane według dziedzin
+                </p>
+                <a href="/bdl/dane/podgrup/temat">
+                    Dane według dziedzin
+                </a>
+                <p>
+                    Dane roczne i krótkookresowe z wybranej dziedziny tematycznej dla wielu jednostek terytorialnych (administracyjnych i statystycznych). Informacje można prezentować w tablicach i na wykresach
+                </p>
+            </div>
+        </div>
+
+        <div class="link link_teryt">
+            <div>
+                <p class="title">
+                    Dane dla jednostki terytorialnej
+                </p>
+                <a href="/bdl/dane/teryt/jednostka">
+                    Dane dla jednostki terytorialnej
+                </a>
+                <p>
+                    Dane dla wybranej jednostki administracyjnej (miejscowości, gminy, powiatu, województwa, kraju) lub statystycznej (makroregionu, regionu, podregionu) z wielu dziedzin tematycznych.
+                </p>
+            </div>
+        </div>
+        
+        
+        <div class="link link_api last">
+            <div>
+                <p class="title">
+                    
+		  Obszary funkcjonalne
+	  
+                </p>
+                
+                <a href="/bdl/obszary">
+                    Obszary funkcjonalne
+                </a>
+                <p style="background-color: red;">
+                    
+		  Dane roczne dla wybranego obszaru funkcjonalnego (typu: MOF – Miejskie Obszary Funkcjonalne; OSI – Obszary Strategicznej Interwencji; miasta według wielkości, DOW – grupy obszarów wiejskich).
+	  
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="intro">
+        
+
+        
+        
+        <p>
+            
+    BANK DANYCH LOKALNYCH jest największą w Polsce bazą danych o gospodarce, społeczeństwie i środowisku. 
+    Pierwsze dane pochodzą z 1995 roku.
+        </p>
+        <ul>
+            <li>Dane i wskaźniki opisują miejscowości statystyczne, gminy, powiaty, województwa i Polskę, a także jednostki zgodne z nomenklaturą NUTS: makroregiony, regiony i podregiony.
+            </li>
+            <li>Zasoby informacyjne – pogrupowane tematycznie statystyki roczne i krótkookresowe, są na bieżąco uzupełniane oraz aktualizowane.
+            </li>
+            
+        </ul>
+        
+        
+    </div>
+
+
+
+                <div class="RadAjaxPanel" id="ctl00_ctl00_SessionTickerPanelPanel">
+	<div id="ctl00_SessionTickerPanel">
+		
+                    <span id="ctl00_SessionTicker" style="visibility:hidden;display:none;"></span>
+                
+	</div>
+</div>
+
+                
+            </div>
+            <div id="Clearer"></div>
+            <div id="MainLinks">
+                
+                    <ul style="list-style-type: none; margin: 0; padding: 0; overflow:auto;">
+                        <li style="float: left;">
+                    <a 
+                        href=' https://stat.gov.pl/' target="_blank">
+                            
+                        
+                        <img title="GUS" src='/bdl/logo/LogoGUS_short.svg'  />
+                        </a></li>
+                    <li style="float: left;">
+					<p><br />Zobacz także:</p></li>
+                    <li style="float: left;">
+                    <a 
+                           href='https://smup.gov.pl/' target="_blank">
+                        System Monitorowania<br />Usług Publicznych
+                    </a></li>
+                    <li style="float: left;">
+                    <a 
+                           href='https://dbw.stat.gov.pl/' target="_blank">
+                        Dziedzinowe<br />Bazy Wiedzy
+                    </a></li>
+                    <li style="float: left;">
+                    <a 
+                           href='https://svs.stat.gov.pl/'>
+                        Statystyczne Vademecum<br />Samorządowca
+                    </a></li>
+                    <li style="float: left;">
+                    <a 
+                           href='https://portal.geo.stat.gov.pl/' target="_blank">
+                        Portal<br />Geostatystyczny
+                    </a></li>
+                    <li style="float: left;">
+                    <a 
+                           href='https://strateg.stat.gov.pl/#/' target="_blank">
+                        STRATEG
+                    </a></li>
+                    <li style="float: left;">
+                    <a 
+                            href='https://sdg.gov.pl/' target="_blank">
+                        SDG
+                    </a></li>
+                </ul>
+                
+            
+
+                    
+
+                    
+            </div>
+            <div id="MainFooter">
+                
+                    <a href="https://creativecommons.org/licenses/by/4.0/legalcode.pl" target="_blank">Licencja międzynarodowa Creative Commons BY 4.0 – Uznanie autorstwa</a>
+                    <span class="small">Wersja: 20250326.1322</span>
+                    <div class="right">
+                        <a href="/bdl/privacy">Polityka prywatności</a>
+                        <a href="/bdl/accessibility">Deklaracja dostępności</a>
+                        <a href="#" title="Innowacyjna gospodarka">
+                            <img src='/bdl/img/ig_65x22.png' /></a>
+                        <a href=' https://stat.gov.pl/' target="_blank">
+                            <img title="GUS" src='/bdl/img/gus_51x22.png' /></a>
+                    </div>
+                
+            </div>
+        </div>
+
+    
+
+<script type="text/javascript">
+//<![CDATA[
+function f(){ clearFilesRefreshInterval(); initFilesRefreshInterval(); Sys.Application.remove_load(f);}Sys.Application.add_load(f);;(function() {
+                        function loadHandler() {
+                            var hf = $get('ctl00_StyleManager_TSSM');
+                            if (!hf._RSSM_init) { hf._RSSM_init = true; hf.value = ''; }
+                            hf.value += ';|637747370477927469:2cc223ef;Telerik.Web.UI, Version=2017.3.913.45, Culture=neutral, PublicKeyToken=121fae78165ba3d4:pl-PL:03e3fdef-45f6-40a0-88ab-9645d53a0f37:d7e35272:505983de:3e0dfe6c:e7750fd8:e347b32f:a942ad92:b256253d:6e804bb4:a957bcf1:ce6e779:21b4b2bb:69f99efe:dc65d966:d747760e:45085116:27c5704c:9503e2d4:5675d0e5:3001050f';
+                            Sys.Application.remove_load(loadHandler);
+                        };
+                        Sys.Application.add_load(loadHandler);
+                    })();Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadWindowManager, {"_renderMode":2,"clientStateFieldID":"ctl00_MainWindowMan_ClientState","enableShadow":true,"formID":"aspnetForm","iconUrl":"","minimizeIconUrl":"","name":"MainWindowMan","skin":"Default","windowControls":"[]"}, null, null, $get("ctl00_MainWindowMan"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadFormDecorator, {"_renderMode":2,"clientStateFieldID":"ctl00_MainFormDecorator_ClientState","decoratedControls":57343,"enableRoundedCorners":false,"enabled":true,"skin":"Default"}, null, null, $get("ctl00_MainFormDecorator"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadToolTipManager, {"_cssClass":"ttipAuto","_manualCloseButtonText":"Close","_renderMode":2,"_updatePanelUniqueId":"ctl00$MainToolTipManRTMPanel","autoCloseDelay":5000,"autoTooltipify":true,"clientStateFieldID":"ctl00_MainToolTipMan_ClientState","formID":"aspnetForm","isToolTipFactory":true,"loadOnDemand":false,"position":23,"relativeTo":1,"skin":"Default","targetControls":"[]"}, null, null, $get("ctl00_MainToolTipMan"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadAjaxManager, {"_updatePanels":"","ajaxSettings":[{InitControlID : "ctl00_SessionTicker",UpdatedControls : [{ControlID:"ctl00_SessionTickerPanel",PanelID:""}]}],"clientEvents":{OnRequestStart:"",OnResponseEnd:""},"defaultLoadingPanelID":"","enableAJAX":true,"enableHistory":false,"links":[],"styles":[],"uniqueID":"ctl00$MainAjaxManager","updatePanelsRenderMode":0}, null, null, $get("ctl00_MainAjaxManager"));
+});
+
+WebForm_InitCallback();Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadSearchBox, {"_emptyMessage":"Szukaj cechy","_enableAutoComplete":false,"_postBackOnSearch":true,"_postBackReference":"__doPostBack(\u0027ctl00$MainMenu$ctl09$SearchBox\u0027,\u0027arguments\u0027)","_renderMode":2,"_showAllResultsText":"Pokaż wszystkie wyniki","_skinName":"Default","_uniqueId":"ctl00$MainMenu$ctl09$SearchBox","clientStateFieldID":"ctl00_MainMenu_ctl09_SearchBox_ClientState","showLoadingIcon":false}, null, null, $get("ctl00_MainMenu_ctl09_SearchBox"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadNavigation, {"_renderMode":2,"_skin":"Default","clientStateFieldID":"ctl00_MainMenu_Menu_ClientState","nodesData":[{"text":"Login"},{"text":"Kontakt"},{"text":"Rss"},{"text":"Facebook"},{"text":"Ankieta"},{"text":"Jezyk"},{"text":"Dark"},{"text":"Dark","visible":false},{"text":"Light","visible":false,"selected":true},{},{"selected":true},{"text":"DANE","nodes":[{"text":"Dane według dziedzin","navigateUrl":"/bdl/dane/podgrup/temat"},{"text":"Dane dla jednostki terytorialnej","navigateUrl":"/bdl/dane/teryt/jednostka"},{"text":"Obszary funkcjonalne","navigateUrl":"/bdl/obszary"},{"text":"Rankingi statystyczne","navigateUrl":"/bdl/rankingi"}]},{"text":"METADANE","nodes":[{"text":"Strona główna","navigateUrl":"/bdl/metadane"},{"text":"Układ danych","nodes":[{"text":"Kategorie","navigateUrl":"/bdl/metadane/kategorie"},{"text":"Szukaj cechy","navigateUrl":"/bdl/metadane/cechy/szukaj"}]},{"text":"Podział terytorialny","nodes":[{"text":"Jednostki terytorialne","navigateUrl":"/bdl/metadane/teryt/lista"},{"text":"Znajdź jednostkę terytorialną","navigateUrl":"/bdl/metadane/teryt/szukaj"},{"text":"Kod terytorialny","navigateUrl":"/bdl/metadane/teryt/kod"},{"text":"Jednostki statystyczne","navigateUrl":"/bdl/metadane/nuts"},{"text":"Miejscowość statystyczna","navigateUrl":"/bdl/metadane/teryt/miejscowosc"},{"text":"Rodzaj jednostki terytorialnej","navigateUrl":"/bdl/metadane/teryt/rodzaj"},{"text":"Zmiany w podziale terytorialnym","navigateUrl":"/bdl/metadane/teryt/zmiany"}]},{"text":"Inne","nodes":[{"text":"Atrybuty","navigateUrl":"/bdl/metadane/atrybut"},{"text":"Agregaty","navigateUrl":"/bdl/metadane/agregaty"},{"text":"Jednostki miary","navigateUrl":"/bdl/metadane/jednostki"},{"text":"Klasyfikacja PKD 2004","navigateUrl":"/bdl/metadane/pkd2004"},{"text":"Klasyfikacja PKD 2007","navigateUrl":"/bdl/metadane/pkd2007"}]},{"text":"Pojęcia","navigateUrl":"/bdl/metadane/pojecia"}]},{"text":"API","navigateUrl":"https://api.stat.gov.pl/","target":"_blank"},{"text":"ARCHIWUM","nodes":[{"text":"Archiwum wybranych tabel dla lat 2020-2021 z danymi bilansowanymi na podstawie wyników NSP 2011","navigateUrl":"/bdl/archiwum2011"},{"text":"Archiwum kategorii LUDNOŚĆ z danymi bilansowanymi za rok 2010 na podstawie wyników NSP 2002","navigateUrl":"/bdl/archiwum"}]},{"text":"POMOC","nodes":[{"text":"Podręcznik użytkownika BDL","navigateUrl":"/bdl/pomoc"},{"text":"Komunikaty","navigateUrl":"/bdl/pomoc/komunikaty"},{"text":"Stan zasilenia danych","navigateUrl":"/bdl/pomoc/stanzasilenia"},{"text":"Mapa strony","navigateUrl":"/bdl/pomoc/mapastrony"}]}]}, null, null, $get("ctl00_MainMenu_Menu"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadAjaxLoadingPanel, {"initialDelayTime":0,"isSticky":false,"minDisplayTime":0,"skin":"Default","uniqueID":"ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$PreLoader","zIndex":90000}, null, null, $get("ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_PreLoader"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadGrid, {"ClientID":"ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups","ClientSettings":{"AllowAutoScrollOnDragDrop":true,"ShouldCreateRows":true,"DataBinding":{},"Selecting":{"CellSelectionMode":0},"Scrolling":{},"Resizing":{},"ClientMessages":{"DragToGroupOrReorder":"Przeciągnij do grupy lub zmień sortowanie","DragToResize":"Przeciągnij aby zmienić rozmiar","DropHereToReorder":"Upuść aby zmienić sortowanie","PagerTooltipFormatString":"Strona \u003cstrong\u003e{0}\u003c/strong\u003e z \u003cstrong\u003e{1}\u003c/strong\u003e","ColumnResizeTooltipFormatString":"Szerokość: \u003cstrong\u003e{0}\u003c/strong\u003e \u003cem\u003epikseli\u003c/em\u003e"},"KeyboardNavigationSettings":{"AllowActiveRowCycle":false,"EnableKeyboardShortcuts":true,"FocusKey":89,"InitInsertKey":73,"RebindKey":82,"ExitEditInsertModeKey":27,"UpdateInsertItemKey":13,"DeleteActiveRow":127,"ExpandDetailTableKey":39,"CollapseDetailTableKey":37,"MoveDownKey":40,"MoveUpKey":38,"SaveChangesKey":85,"CancelChangesKey":81},"Animation":{},"Virtualization":{}},"Skin":"Default","UniqueID":"ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Subgroups","_activeRowIndex":"","_controlToFocus":"","_currentPageIndex":0,"_defaultDateTimeFormat":"dd.MM.yyyy HH:mm:ss","_editIndexes":"[]","_embeddedSkin":true,"_freezeText":"Freeze","_gridTableViewsData":"[{\"ClientID\":\"ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups_ctl00\",\"UniqueID\":\"ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Subgroups$ctl00\",\"PageSize\":3,\"PageCount\":5,\"EditMode\":\"EditForms\",\"AllowPaging\":true,\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"PageButtonCount\":5,\"HasDetailTables\":false,\"HasMultiHeaders\":false,\"CheckListWebServicePath\":\"\",\"GroupLoadMode\":\"Server\",\"PagerAlwaysVisible\":true,\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"hasDetailItemTemplate\":false,\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"column\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":false,\"Groupable\":false,\"ColumnType\":\"GridButtonColumn\",\"ColumnGroupName\":\"\",\"Editable\":false,\"DataTypeName\":\"System.String\",\"ButtonType\":\"LinkButton\",\"CommandName\":\"Navigate\",\"CommandArgument\":\"\",\"Text\":\"\",\"DataTextField\":\"Name\",\"DataTextFormatString\":\"\",\"ImageUrl\":\"\",\"Display\":true},{\"UniqueName\":\"Timestamp\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridDateTimeColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.DateTime\",\"DataField\":\"Timestamp\",\"DataFormatString\":\"{0:yyyy-MM-dd}\",\"EnableRangeFiltering\":false,\"Display\":true}]}]","_masterClientID":"ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups_ctl00","_shouldFocusOnPage":false,"_unfreezeText":"Unfreeze","allowMultiRowSelection":false,"clientStateFieldID":"ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups_ClientState","expandItems":{},"renderMode":2}, null, null, $get("ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Subgroups"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadAjaxPanel, {"clientEvents":{OnRequestStart:"",OnResponseEnd:""},"enableAJAX":true,"enableHistory":false,"links":[],"loadingPanelID":"ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_PreLoader","styles":[],"uniqueID":"ctl00$SidebarPlaceHolder$OptionsPanel$i2$LastSubgroups$Panel"}, null, null, $get("ctl00_SidebarPlaceHolder_OptionsPanel_i2_LastSubgroups_Panel"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadAjaxLoadingPanel, {"initialDelayTime":0,"isSticky":false,"minDisplayTime":0,"skin":"Default","uniqueID":"ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$PreLoader","zIndex":90000}, null, null, $get("ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_PreLoader"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadGrid, {"ClientID":"ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups","ClientSettings":{"AllowAutoScrollOnDragDrop":true,"ShouldCreateRows":true,"DataBinding":{},"Selecting":{"CellSelectionMode":0},"Scrolling":{},"Resizing":{},"ClientMessages":{"DragToGroupOrReorder":"Przeciągnij do grupy lub zmień sortowanie","DragToResize":"Przeciągnij aby zmienić rozmiar","DropHereToReorder":"Upuść aby zmienić sortowanie","PagerTooltipFormatString":"Strona \u003cstrong\u003e{0}\u003c/strong\u003e z \u003cstrong\u003e{1}\u003c/strong\u003e","ColumnResizeTooltipFormatString":"Szerokość: \u003cstrong\u003e{0}\u003c/strong\u003e \u003cem\u003epikseli\u003c/em\u003e"},"KeyboardNavigationSettings":{"AllowActiveRowCycle":false,"EnableKeyboardShortcuts":true,"FocusKey":89,"InitInsertKey":73,"RebindKey":82,"ExitEditInsertModeKey":27,"UpdateInsertItemKey":13,"DeleteActiveRow":127,"ExpandDetailTableKey":39,"CollapseDetailTableKey":37,"MoveDownKey":40,"MoveUpKey":38,"SaveChangesKey":85,"CancelChangesKey":81},"Animation":{},"Virtualization":{}},"Skin":"Default","UniqueID":"ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups","_activeRowIndex":"","_controlToFocus":"","_currentPageIndex":0,"_defaultDateTimeFormat":"dd.MM.yyyy HH:mm:ss","_editIndexes":"[]","_embeddedSkin":true,"_freezeText":"Freeze","_gridTableViewsData":"[{\"ClientID\":\"ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00\",\"UniqueID\":\"ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$Subgroups$ctl00\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"AllowPaging\":true,\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"PageButtonCount\":5,\"HasDetailTables\":false,\"HasMultiHeaders\":false,\"CheckListWebServicePath\":\"\",\"GroupLoadMode\":\"Server\",\"PagerAlwaysVisible\":false,\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"hasDetailItemTemplate\":false,\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"column\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":false,\"Groupable\":false,\"ColumnType\":\"GridButtonColumn\",\"ColumnGroupName\":\"\",\"Editable\":false,\"DataTypeName\":\"System.String\",\"ButtonType\":\"LinkButton\",\"CommandName\":\"Navigate\",\"CommandArgument\":\"\",\"Text\":\"\",\"DataTextField\":\"Name\",\"DataTextFormatString\":\"\",\"ImageUrl\":\"\",\"Display\":true}]}]","_masterClientID":"ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ctl00","_shouldFocusOnPage":false,"_unfreezeText":"Unfreeze","allowMultiRowSelection":false,"clientStateFieldID":"ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups_ClientState","expandItems":{},"renderMode":2}, null, null, $get("ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_Subgroups"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadAjaxPanel, {"clientEvents":{OnRequestStart:"",OnResponseEnd:""},"enableAJAX":true,"enableHistory":false,"links":[],"loadingPanelID":"ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_PreLoader","styles":[],"uniqueID":"ctl00$SidebarPlaceHolder$OptionsPanel$i3$PopularSubgroups$ctl00"}, null, null, $get("ctl00_SidebarPlaceHolder_OptionsPanel_i3_PopularSubgroups_ctl00"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadAjaxLoadingPanel, {"initialDelayTime":0,"isSticky":false,"minDisplayTime":0,"skin":"Default","uniqueID":"ctl00$SidebarPlaceHolder$OptionsPanel$i5$DownloadedSubgroups$FilesPreLoader","zIndex":90000}, null, null, $get("ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesPreLoader"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadGrid, {"ClientID":"ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesList","ClientSettings":{"AllowAutoScrollOnDragDrop":true,"ShouldCreateRows":true,"DataBinding":{},"Selecting":{"CellSelectionMode":0},"Scrolling":{},"Resizing":{},"ClientMessages":{"DragToGroupOrReorder":"Przeciągnij do grupy lub zmień sortowanie","DragToResize":"Przeciągnij aby zmienić rozmiar","DropHereToReorder":"Upuść aby zmienić sortowanie","PagerTooltipFormatString":"Strona \u003cstrong\u003e{0}\u003c/strong\u003e z \u003cstrong\u003e{1}\u003c/strong\u003e","ColumnResizeTooltipFormatString":"Szerokość: \u003cstrong\u003e{0}\u003c/strong\u003e \u003cem\u003epikseli\u003c/em\u003e"},"KeyboardNavigationSettings":{"AllowActiveRowCycle":false,"EnableKeyboardShortcuts":true,"FocusKey":89,"InitInsertKey":73,"RebindKey":82,"ExitEditInsertModeKey":27,"UpdateInsertItemKey":13,"DeleteActiveRow":127,"ExpandDetailTableKey":39,"CollapseDetailTableKey":37,"MoveDownKey":40,"MoveUpKey":38,"SaveChangesKey":85,"CancelChangesKey":81},"Animation":{},"Virtualization":{}},"Skin":"Default","UniqueID":"ctl00$SidebarPlaceHolder$OptionsPanel$i5$DownloadedSubgroups$FilesList","_activeRowIndex":"","_controlToFocus":"","_currentPageIndex":0,"_defaultDateTimeFormat":"dd.MM.yyyy HH:mm:ss","_editIndexes":"[]","_embeddedSkin":true,"_freezeText":"Freeze","_gridTableViewsData":"[{\"ClientID\":\"ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesList_ctl00\",\"UniqueID\":\"ctl00$SidebarPlaceHolder$OptionsPanel$i5$DownloadedSubgroups$FilesList$ctl00\",\"PageSize\":3,\"PageCount\":1,\"EditMode\":\"EditForms\",\"AllowPaging\":true,\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"PageButtonCount\":5,\"HasDetailTables\":false,\"HasMultiHeaders\":false,\"CheckListWebServicePath\":\"\",\"GroupLoadMode\":\"Server\",\"PagerAlwaysVisible\":true,\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"hasDetailItemTemplate\":false,\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"Podgrupa\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"ColumnGroupName\":\"\",\"Editable\":false,\"DataTypeName\":\"System.String\",\"DataField\":\"\",\"Display\":true},{\"UniqueName\":\"When\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridDateTimeColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.DateTime\",\"DataField\":\"When\",\"DataFormatString\":\"{0:yyyy-MM-dd}\",\"EnableRangeFiltering\":false,\"Display\":true},{\"UniqueName\":\"TemplateColumn\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"ColumnGroupName\":\"\",\"Editable\":false,\"DataTypeName\":\"System.String\",\"DataField\":\"\",\"Display\":true}]}]","_masterClientID":"ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesList_ctl00","_shouldFocusOnPage":false,"_unfreezeText":"Unfreeze","allowMultiRowSelection":false,"clientStateFieldID":"ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesList_ClientState","renderMode":2}, null, null, $get("ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesList"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadAjaxPanel, {"clientEvents":{OnRequestStart:"onFilesPanelClientRequestStart",OnResponseEnd:""},"enableAJAX":true,"enableHistory":false,"links":[],"loadingPanelID":"ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesPreLoader","styles":[],"uniqueID":"ctl00$SidebarPlaceHolder$OptionsPanel$i5$DownloadedSubgroups$FilesPanel"}, null, null, $get("ctl00_SidebarPlaceHolder_OptionsPanel_i5_DownloadedSubgroups_FilesPanel"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadPanelBar, {"_renderMode":2,"_skin":"Default","clientStateFieldID":"ctl00_SidebarPlaceHolder_OptionsPanel_ClientState","collapseAnimation":"{\"duration\":450}","expandAnimation":"{\"duration\":450}","itemData":[{"text":"Stan zasilenia danych","expanded":true,"imageUrl":"/bdl/App_Themes/Light/ico/calendar.png","templated":true,"hasContentTemplate":true},{"text":"Ankieta","expanded":true,"imageUrl":"/bdl/App_Themes/Light/ico/talk.png","templated":true,"hasContentTemplate":true},{"text":"Ostatnio aktualizowane","imageUrl":"/bdl/App_Themes/Light/ico/last_data.png","templated":true,"hasContentTemplate":true},{"text":"Popularne podgrupy","imageUrl":"/bdl/App_Themes/Light/ico/popular.png","templated":true,"hasContentTemplate":true},{"text":"Pobrane podgrupy","imageUrl":"/bdl/App_Themes/Light/ico/download.png","templated":true,"hasContentTemplate":true},{"text":"Linki","expanded":true,"imageUrl":"/bdl/App_Themes/Light/ico/link.png","templated":true,"hasContentTemplate":true}]}, null, null, $get("ctl00_SidebarPlaceHolder_OptionsPanel"));
+});
+Sys.Application.add_init(function() {
+    $create(Sys.UI._Timer, {"enabled":true,"interval":300000,"uniqueID":"ctl00$SessionTicker"}, null, null, $get("ctl00_SessionTicker"));
+});
+//]]>
+</script>
+</form>
+</body>
+</html>
+
