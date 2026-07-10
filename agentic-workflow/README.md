@@ -29,7 +29,9 @@ uv run euromod-workflow queue
 
 cd ../ui
 npm install
-npm run tauri dev                        # WSL: LIBGL_ALWAYS_SOFTWARE=1 npm run tauri dev
+npm run tauri dev
+# WSL:
+LIBGL_ALWAYS_SOFTWARE=1 npm run tauri dev
 ```
 
 Traces: http://localhost:6006 → project `euromod-agentic-workflow`.

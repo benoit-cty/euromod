@@ -6,7 +6,10 @@
 //! rejected promise with the error string.
 
 mod db;
+mod ingest;
 mod store;
+
+use ingest::{IngestPayload, IngestState};
 
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -36,6 +39,12 @@ struct DecisionsPayload {
 #[derive(Deserialize)]
 struct DbPayload {
     db_url: String,
+}
+
+#[derive(Deserialize)]
+struct EvalRunPayload {
+    db_url: String,
+    run_pk: i64,
 }
 
 #[derive(Deserialize)]
@@ -115,6 +124,20 @@ async fn db_stats(payload: DbPayload) -> Result<Value, String> {
 }
 
 #[tauri::command]
+async fn eval_runs(payload: DbPayload) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || db::eval_runs(&payload.db_url))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn eval_run_detail(payload: EvalRunPayload) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || db::eval_run_detail(&payload.db_url, payload.run_pk))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
 async fn search_articles(payload: SearchPayload) -> Result<Value, String> {
     tauri::async_runtime::spawn_blocking(move || {
         db::search_articles(
@@ -127,6 +150,20 @@ async fn search_articles(payload: SearchPayload) -> Result<Value, String> {
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn run_ingest(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, IngestState>,
+    payload: IngestPayload,
+) -> Result<Value, String> {
+    ingest::run(app, state, payload).await
+}
+
+#[tauri::command]
+fn stop_ingest(state: tauri::State<'_, IngestState>, run_id: String) -> Result<Value, String> {
+    ingest::stop(state, run_id)
 }
 
 #[tauri::command]
@@ -146,6 +183,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .manage(IngestState::default())
         .invoke_handler(tauri::generate_handler![
             get_env_config,
             load_queue,
@@ -155,6 +193,10 @@ pub fn run() {
             pick_data_dir,
             db_stats,
             search_articles,
+            eval_runs,
+            eval_run_detail,
+            run_ingest,
+            stop_ingest,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

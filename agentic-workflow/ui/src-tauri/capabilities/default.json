@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Review UI: core + open external links",
   "windows": ["main"],
-  "permissions": ["core:default", "shell:allow-open", "dialog:default"]
+  "permissions": ["core:default", "core:event:default", "shell:allow-open", "dialog:default"]
 }
