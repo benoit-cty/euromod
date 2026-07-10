@@ -126,3 +126,88 @@ Postgres access (`agentic-workflow/ui/src-tauri/src/db.rs`); an "Evaluation" tab
 ```bash
 uv run --extra test pytest
 ```
+
+## Limitations: what we can (and cannot) do with EUROMOD parameters
+
+Findings from the FR deep-dive (`RAG/country_reports/FR_parameter_matching.md`, matching
+`extracted_parameters/FR.policy.json` — 702 parameters — against the Y16 country report).
+They bound what this pipeline can honestly evaluate.
+
+### 1. The extraction only sees named constants
+
+Every `model_target` is a `def_const` constant. Parameters defined *inside* EUROMOD
+functions never appear — for FR that includes the **IRPP bracket schedule, the quotient
+familial ceilings, BMAF and the 2025 CDHR minimum tax**: the most politically salient,
+yearly-updated numbers in the system. Until the connector exports in-function parameters,
+golden cases can only cover what `def_const` exposes; the headline tax schedule is
+untestable through the JSON.
+
+### 2. Stored values are not legal values
+
+- **Mid-year changes are stored as weighted averages** (FYA), e.g. SMIC 2024 =
+  `(1766.92*10+1801.80*2)/12#m`. The averaged number appears in **no legal text**; a RAG
+  that retrieves both décrets correctly still won't string-match the stored value.
+- **~75 % of FR parameters (530/702) hold formula strings**, some referencing other
+  constants (`$PSS * 4`) — a dependency graph, not a flat list.
+- Values carry **period suffixes** (`#m #y #q #w #d #l #s #c`) with fixed conversion
+  factors (yearly ÷12, weekly ×4.34, daily ×30.5, labour day ×21.73…).
+
+⇒ `value_pct` scoring must compare **normalised annualised values** (evaluate formulas,
+resolve constant refs, apply period conversion) — never raw strings. A correct legal
+answer can differ from the stored value for representation reasons alone.
+
+### 3. Not every "policy" parameter is derivable from legislation
+
+The classifier marked all 702 as `policy`, but the set mixes provenance classes:
+
+| Class | FR examples | Can a legislation RAG answer it? |
+|---|---|---|
+| Statutory value | SMIC, RSA base, tax thresholds | yes — the core use case |
+| Admin statistic | `$mc_yse_amt` (avg Covid self-employed compensation, "from official statistics") | no — needs admin publications |
+| Behavioural calibration | `$bsa00_BTA_rate` (RSA 20 % non-take-up) | no — national-team judgment |
+| Uprating index | Annex 1 factors (HICP, AMECO, INSEE series) | no — statistical sources |
+
+⇒ the golden set needs a **source-class field**, and `not_found` /
+`national_team_source` routing traps; scoring a RAG on non-legislative parameters
+measures nothing.
+
+### 4. Metadata quality is too poor to key on
+
+`unit` is wrong for rates (stored as `currency`), labels are often maintenance notes
+("FYA: annual increase takes place in July 2022…") or empty, `description` is empty,
+classification is a single un-reviewed Haiku pass. Key everything on `model_target`;
+treat labels as hints only.
+
+### 5. Provenance slots are empty — that is the job, and the baseline is zero
+
+`references`, `official_journal_date`, `legal_status` are empty on **all** value rows;
+`review_status` is `pending` everywhere. There is no existing citation ground truth to
+compare against — accepted citations for golden cases must be curated by hand (or from
+the country report), which is exactly what `build-dataset` + human verification does.
+
+### 6. Temporal coverage is uneven
+
+Only ~183/702 FR parameters have a 2025 value; 231 series are closed (abolished
+instruments like PPE, hard-dated excises); PAJE keeps three parallel cohort-split
+parameter sets ending in different years. ⇒ include **unchanged** and **dead-parameter
+abstention** cases, and don't read "no 2025 row" as "needs update" — it may be dormant
+by design.
+
+### 7. The country report is strong but not infallible ground truth
+
+The Y16 FR report contradicts itself at least once (Table 2.3 SMIC/PSS uprating
+percentages vs. narrative). CR-sourced golden values should be cross-checked against a
+second source before `verified: true` — and per-instrument "EUROMOD modelling" caveats
+(non-take-up adjustments, n-2 income assumptions, receipt-restricted simulation) explain
+why a legally-correct value can still be "wrong" for the model.
+
+### Consequences already reflected in this pipeline's design
+
+- deterministic value scoring with tolerance + normalisation (no string match);
+- routing classes include `not_found` and `national_team_source`;
+- human verification gate before a case enters the frozen set;
+- per-case NULL KPIs so abstention cases don't pollute `value_pct`.
+
+Still open: formula/FYA-aware value normalisation in `scoring.py` (evaluate
+`(a*n+b*m)/12`-style expressions and `$const` references before comparing), and a
+source-class stratum in the dataset builder.
