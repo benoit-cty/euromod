@@ -4,6 +4,8 @@
   import DetailPanel from './lib/components/DetailPanel.svelte';
   import AuditLog from './lib/components/AuditLog.svelte';
   import DatabaseTab from './lib/components/DatabaseTab.svelte';
+  import IngestTab from './lib/components/IngestTab.svelte';
+  import EvalTab from './lib/components/EvalTab.svelte';
 
   let config = $state({ data_dir: null, reviewer: 'reviewer', db_url: '' });
   let items = $state([]);
@@ -96,6 +98,8 @@
       <button class:primary={tab === 'review'} onclick={() => (tab = 'review')}>Review queue</button>
       <button class:primary={tab === 'audit'} onclick={showAudit}>Audit log</button>
       <button class:primary={tab === 'database'} onclick={() => (tab = 'database')}>Database</button>
+      <button class:primary={tab === 'ingest'} onclick={() => (tab = 'ingest')}>Ingest</button>
+      <button class:primary={tab === 'eval'} onclick={() => (tab = 'eval')}>Evaluation</button>
     </nav>
     <div class="spacer"></div>
     <label class="inline">
@@ -120,9 +124,17 @@
     <main class="single">
       <AuditLog {decisions} />
     </main>
-  {:else}
+  {:else if tab === 'database'}
     <main class="single">
       <DatabaseTab dbUrl={config.db_url} />
+    </main>
+  {:else if tab === 'ingest'}
+    <main class="single">
+      <IngestTab dbUrl={config.db_url} />
+    </main>
+  {:else}
+    <main class="single">
+      <EvalTab dbUrl={config.db_url} />
     </main>
   {/if}
 </div>

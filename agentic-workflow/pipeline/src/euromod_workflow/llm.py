@@ -17,23 +17,25 @@ from . import prompts
 from .schema import CritiqueFindings, ParameterRecord, ProposalDraft, RetrievalHit
 
 
-def get_chat_model(model: str, temperature: float = 0.2):
+def get_chat_model(model: str, temperature: float = 0.2, request_timeout: float | None = None):
     """Instantiate a LangChain chat model from a provider-prefixed name."""
+    timeout_kwargs = {} if request_timeout is None else {"timeout": request_timeout}
     provider, _, name = model.partition("/")
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
 
-        return ChatAnthropic(model_name=name, max_tokens=8000, temperature=temperature)
+        return ChatAnthropic(model_name=name, max_tokens=8000, temperature=temperature, **timeout_kwargs)
     if provider == "openai":
         from langchain_openai import ChatOpenAI
 
-        return ChatOpenAI(model=name, temperature=temperature)
+        return ChatOpenAI(model=name, temperature=temperature, **timeout_kwargs)
     if provider == "azure_openai":
         from langchain_openai import AzureChatOpenAI
 
         return AzureChatOpenAI(
             api_version=os.environ.get("OPENAI_API_VERSION"),
             azure_deployment=os.environ.get("AZURE_OPENAI_DEPLOYMENT", name),
+            **timeout_kwargs,
         )
     if provider == "openrouter":
         from langchain_openai import ChatOpenAI
@@ -44,6 +46,7 @@ def get_chat_model(model: str, temperature: float = 0.2):
             base_url="https://openrouter.ai/api/v1",
             temperature=temperature,
             streaming=False,
+            **timeout_kwargs,
         )
     if provider == "together":
         from langchain_openai import ChatOpenAI
@@ -54,6 +57,7 @@ def get_chat_model(model: str, temperature: float = 0.2):
             base_url="https://api.together.xyz/v1",
             temperature=temperature,
             streaming=False,
+            **timeout_kwargs,
         )
     raise ValueError(
         f"Unknown provider prefix in {model!r}; expected one of "

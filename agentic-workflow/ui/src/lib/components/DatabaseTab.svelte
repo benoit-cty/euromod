@@ -103,6 +103,35 @@
         </table>
       </div>
       <div>
+        <h3>Translation status</h3>
+        <table>
+          <thead>
+            <tr><th>Code</th><th>Authentic</th><th>Official transl.</th><th>Machine transl.</th><th>Coverage</th></tr>
+          </thead>
+          <tbody>
+            {#each stats.by_country as row}
+              {@const coverage = row.text_versions === 0 ? 0 : Math.round((row.en_versions / row.text_versions) * 100)}
+              <tr>
+                <td><strong>{row.code}</strong></td>
+                <td>{row.authentic}</td>
+                <td>{row.official_translation}</td>
+                <td>{row.machine_translation}</td>
+                <td>
+                  {#if row.text_versions === 0}
+                    <span class="muted">—</span>
+                  {:else if row.en_versions === 0}
+                    <span class="badge pending">no English</span>
+                  {:else}
+                    <span class="badge pass" class:pending={coverage < 100}
+                      >{coverage}% in English</span>
+                  {/if}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+      <div>
         <h3>Embedding models</h3>
         <table>
           <thead><tr><th>Id</th><th>Name</th><th>Provider</th><th>Dim</th><th>Default</th><th>Embedded chunks</th></tr></thead>
