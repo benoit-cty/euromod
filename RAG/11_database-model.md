@@ -42,7 +42,7 @@ The three-level split is the core idea:
 |---|---|---|---|
 | Structure | `legal_units` | "Article 197 CGI" as a timeless slot | Never mutated; renumbering = new row + `instrument_relations` lineage |
 | Time | `legal_unit_versions` | "what did it say between 2024-01-01 and 2025-01-01?" | `daterange` validity; **GiST exclusion constraint** forbids overlapping consolidations of one unit |
-| Language | `unit_texts` | "…in French / Dutch / machine-translated English?" | One row per version × language × authenticity |
+| Language | `unit_texts` | "…in French / Dutch / machine-translated English?" | One row per version × language × authenticity; `source_lang` records which original-language row a translation was rendered from |
 
 Point-in-time queries are a filter, not archaeology: `WHERE validity @> :as_of::date`. The exclusion constraint is the load-bearing integrity rule — a fetch skill *physically cannot* insert two contradictory consolidations for the same date; superseding a version means shrinking the old row's range in the same transaction (version *text* is immutable, only the range closes).
 
@@ -63,9 +63,21 @@ Hierarchy depth varies wildly (code→livre→titre→chapitre→article→alin�
 
 Every `legal_unit_versions.fetch_snapshot_id` is `NOT NULL`: **no legal text exists in the corpus without a provable origin** (URL, HTTP status, retrieval timestamp, sha256, raw payload inline or an object-store ref for large PDFs). Snapshots are append-only and deduplicated by content hash. `fetch_runs.frozen_label` (e.g. `eval-2026-09`) marks the snapshot set an evaluation ran against — the reproducibility mechanism promised in the retrieval-strategy doc.
 
-### 2.3 JSONB discipline
+### 2.3 Original-language + English side by side
 
-Same rule as the parameter schema (`Param_Schema/08`, §5.1): typed columns for anything filtered, joined, integrity-constrained, or part of the retrieval contract (`validity`, `lang`, `authenticity`, identifiers, provenance FK). `metadata jsonb DEFAULT '{}'` on every entity for country idiosyncrasies nobody queries relationally yet (Juriconnect sub-addressing, LEGI `etat` codes, Justel page refs). Promotion path: when a JSONB field shows up in a third country's skill, it graduates to a real column in a migration.
+Every consolidated version (`legal_unit_versions` row) can carry **any number of `unit_texts` rows**, one per `(lang, authenticity)` pair — this is how the original-country-language text and its English rendering coexist without ever overwriting each other:
+
+- `lang` — the language *of this row's content* (`'fr'`, `'nl'`, `'en'`, …), FK to `lang_fts_config`.
+- `authenticity` — `'authentic'` (this row *is* the original legal text), `'official_translation'` (a government/EU-published translation), or `'machine_translation'` (pipeline-generated, e.g. EN for retrieval).
+- `source_lang` — **the language this row was translated from**; `NULL` on `authentic` rows (they have no source, they *are* the source), required and different from `lang` on every translation row. This is the explicit "source language" column: no self-join needed to know that an `en`/`machine_translation` row came from `fr`.
+- `translation_of` — optional FK to the actual source `unit_texts` row *when it lives in this DB*; a trigger (`unit_texts_check_source_lang`) enforces that `source_lang` matches that row's `lang` whenever `translation_of` is set. It can be `NULL` while `source_lang` is still populated (e.g. an official EN translation fetched from a source whose original-language text isn't cached here yet).
+- `mt_engine` — set only for `machine_translation` rows (which engine/version produced it), enabling later re-translation/staleness detection alongside `content_hash`.
+
+So for a given article: one row `lang='fr', authenticity='authentic', source_lang=NULL` and one row `lang='en', authenticity='machine_translation', source_lang='fr', translation_of=<the fr row>` — both queryable independently (`WHERE lang = 'fr'` for lexical/semantic search in the country's own language, `WHERE lang = 'en'` for the English-only or cross-country view), and `chunks`/`embeddings` are built per `unit_text_id`, so both language variants get their own retrieval chunks and vectors (§4). Belgium's dual-authentic case (`fr` + `nl`, both `authenticity='authentic'`, both `source_lang=NULL`) shows the model doesn't assume a single "original" language either.
+
+### 2.4 JSONB discipline
+
+Same rule as the parameter schema (`Param_Schema/08`, §5.1): typed columns for anything filtered, joined, integrity-constrained, or part of the retrieval contract (`validity`, `lang`, `authenticity`, `source_lang`, identifiers, provenance FK). `metadata jsonb DEFAULT '{}'` on every entity for country idiosyncrasies nobody queries relationally yet (Juriconnect sub-addressing, LEGI `etat` codes, Justel page refs). Promotion path: when a JSONB field shows up in a third country's skill, it graduates to a real column in a migration.
 
 ## 3. Full-text search
 

@@ -229,15 +229,48 @@ CREATE TABLE unit_texts (
     content_html   text,                     -- optional original markup for display
     search_config  regconfig NOT NULL,       -- copied from lang_fts_config at insert
     tsv            tsvector GENERATED ALWAYS AS (to_tsvector(search_config, content)) STORED,
-    translation_of uuid REFERENCES unit_texts(id),   -- MT rows point at their source text
+    translation_of uuid REFERENCES unit_texts(id),   -- MT/translation rows point at their source text row (if it's in this DB)
+    source_lang    text REFERENCES lang_fts_config(lang),  -- language this row was translated FROM; NULL iff authenticity='authentic'
     mt_engine      text,                     -- NULL unless machine_translation
     content_hash   text NOT NULL,            -- sha256; idempotent re-fetch detection
     metadata       jsonb NOT NULL DEFAULT '{}',
     UNIQUE (version_id, lang, authenticity),
-    CHECK ((authenticity = 'machine_translation') = (mt_engine IS NOT NULL))
+    CHECK ((authenticity = 'machine_translation') = (mt_engine IS NOT NULL)),
+    -- 'authentic' rows ARE the original-language source, so they carry no source_lang;
+    -- any translation (official or machine) must record what language it was rendered from.
+    CHECK ((authenticity = 'authentic') = (source_lang IS NULL)),
+    CHECK (source_lang IS NULL OR source_lang <> lang)
 );
 CREATE INDEX unit_texts_tsv     ON unit_texts USING gin (tsv);
 CREATE INDEX unit_texts_version ON unit_texts (version_id);
+CREATE INDEX unit_texts_lang    ON unit_texts (version_id, lang);
+
+-- Keep source_lang consistent with translation_of whenever the source row is
+-- present in this DB (translation_of is optional: some official translations
+-- are fetched from a source with no in-DB original, e.g. an EU-level EN text).
+CREATE FUNCTION unit_texts_check_source_lang() RETURNS trigger
+LANGUAGE plpgsql AS
+$$
+DECLARE
+    v_src_lang text;
+BEGIN
+    IF NEW.translation_of IS NOT NULL THEN
+        SELECT lang INTO v_src_lang FROM unit_texts WHERE id = NEW.translation_of;
+        IF v_src_lang IS NULL THEN
+            RAISE EXCEPTION 'translation_of % not found', NEW.translation_of;
+        END IF;
+        IF NEW.source_lang IS DISTINCT FROM v_src_lang THEN
+            RAISE EXCEPTION 'source_lang (%) does not match translation_of row''s lang (%)',
+                NEW.source_lang, v_src_lang;
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER unit_texts_source_lang_biu
+    BEFORE INSERT OR UPDATE ON unit_texts
+    FOR EACH ROW EXECUTE FUNCTION unit_texts_check_source_lang();
 
 -- ----------------------------------------------------------------------------
 -- chunks — the retrieval grain and THE citable target (jrc_database_id).
@@ -386,7 +419,7 @@ $$;
 -- ----------------------------------------------------------------------------
 CREATE VIEW current_legal_texts AS
 SELECT j.code AS jurisdiction, i.title, u.citation, u.path,
-       v.id AS version_id, v.validity, t.lang, t.authenticity, t.content
+       v.id AS version_id, v.validity, t.lang, t.authenticity, t.source_lang, t.content
 FROM legal_units u
 JOIN instruments i ON i.id = u.instrument_id
 JOIN jurisdictions j ON j.id = i.jurisdiction_id
