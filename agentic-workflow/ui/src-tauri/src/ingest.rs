@@ -40,7 +40,7 @@ pub struct IngestPayload {
 
 /// Locate the `RAG/ingest` project directory by walking up from the current
 /// directory, or honour an explicit `EUROMOD_INGEST_DIR` override.
-fn ingest_dir() -> Option<PathBuf> {
+pub(crate) fn ingest_dir() -> Option<PathBuf> {
     if let Ok(dir) = std::env::var("EUROMOD_INGEST_DIR") {
         return Some(PathBuf::from(dir));
     }

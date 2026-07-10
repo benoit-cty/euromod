@@ -108,8 +108,12 @@ schema can evolve pipeline-side without lockstep releases.
   appended to `decisions.jsonl` and mirrored into the record's `lineage`.
 - **Audit log** — the decision log rendered as a table.
 - **Database** — corpus statistics (totals, per-jurisdiction, embedding
-  coverage) and point-in-time article search (citation trgm + FTS, country and
-  as-of filters) straight against the legislation DB.
+  coverage) and point-in-time article search straight against the legislation
+  DB. Search modes are language-aware FTS, multilingual BGE-M3 vectors, or
+  RRF-fused hybrid retrieval, with country / language / as-of filters and a
+  per-result score breakdown. Tauri owns a long-lived OpenVINO query-encoder
+  subprocess, so the first vector search loads the model and later searches
+  reuse it; full-text-only searches do not start the model.
 
 Stack note for the kick-off discussion: the Rust side is ~500 lines over plain
 files + Postgres; porting it to a small web service for a multi-user JRC

@@ -60,3 +60,5 @@ winget install jqlang.jq
 - Support for other sources in the database.
 - Bonus : Compare Country Report to legislation ?
 - MCP around the RAG database to query it
+- Name the project Nómos and the database Nomotheca, ingestion pipeline Nomosync, and agentic-workflow Nomoscope.
+- Document time needed for adapters.

@@ -34,7 +34,11 @@ fn write_json(path: &Path, value: &Value) -> Result<(), String> {
 }
 
 fn str_field(value: &Value, key: &str) -> String {
-    value.get(key).and_then(Value::as_str).unwrap_or_default().to_string()
+    value
+        .get(key)
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .to_string()
 }
 
 pub fn load_queue(data_dir: &Path) -> Result<Value, String> {
@@ -230,9 +234,16 @@ mod tests {
         )
         .unwrap();
         assert_eq!(updated["status"], "accepted");
-        assert_eq!(updated.pointer("/proposed_value/lineage/review_status").unwrap(), "accepted");
         assert_eq!(
-            updated.pointer("/proposed_record/values/0/lineage/reviewed_by").unwrap(),
+            updated
+                .pointer("/proposed_value/lineage/review_status")
+                .unwrap(),
+            "accepted"
+        );
+        assert_eq!(
+            updated
+                .pointer("/proposed_record/values/0/lineage/reviewed_by")
+                .unwrap(),
             "ben"
         );
 
@@ -261,8 +272,19 @@ mod tests {
             Some(&json!(0.25)),
         )
         .unwrap();
-        assert_eq!(updated.pointer("/proposed_value/value").unwrap(), &json!(0.25));
-        assert_eq!(updated.pointer("/proposed_record/values/0/value").unwrap(), &json!(0.25));
-        assert_eq!(updated.pointer("/proposed_value/lineage/review_status").unwrap(), "accepted");
+        assert_eq!(
+            updated.pointer("/proposed_value/value").unwrap(),
+            &json!(0.25)
+        );
+        assert_eq!(
+            updated.pointer("/proposed_record/values/0/value").unwrap(),
+            &json!(0.25)
+        );
+        assert_eq!(
+            updated
+                .pointer("/proposed_value/lineage/review_status")
+                .unwrap(),
+            "accepted"
+        );
     }
 }
