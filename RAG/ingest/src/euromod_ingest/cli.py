@@ -7,8 +7,14 @@ from typing import Annotated
 
 import psycopg
 import typer
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
-from euromod_ingest.core.embeddings import EMBEDDING_BACKENDS, BGE_M3_MODEL, SentenceTransformerBackend, build_embeddings
+from euromod_ingest.core.embeddings import (
+    EMBEDDING_BACKENDS,
+    BGE_M3_MODEL,
+    SentenceTransformerBackend,
+    build_embeddings,
+)
 from euromod_ingest.core.pipeline import PipelineResult, run_database_ingest
 from euromod_ingest.tui import PipelineTui
 
@@ -79,6 +85,15 @@ def build_chunk_embeddings(
     limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
     device: Annotated[str | None, typer.Option("--device", help="Optional device, e.g. cpu, cuda, or CPU.")] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Count stale chunks without writing embeddings.")] = False,
+    show_progress: Annotated[bool, typer.Option("--progress/--no-progress", help="Show live embedding progress.")] = True,
+    fix_mistral_regex: Annotated[
+        bool,
+        typer.Option("--fix-mistral-regex", help="Forward fix_mistral_regex=True to the tokenizer."),
+    ] = False,
+    slow_tokenizer: Annotated[
+        bool,
+        typer.Option("--slow-tokenizer", help="Use the slow tokenizer; may require sentencepiece."),
+    ] = False,
 ) -> None:
     """Build local BGE-M3 embeddings for chunks missing fresh vectors."""
     if backend not in EMBEDDING_BACKENDS:
@@ -87,16 +102,23 @@ def build_chunk_embeddings(
     embedding_backend = (
         _DryRunEmbeddingBackend()
         if dry_run
-        else SentenceTransformerBackend(model_path=model_path, device=device, backend=backend)
+        else SentenceTransformerBackend(
+            model_path=model_path,
+            device=device,
+            backend=backend,
+            fix_mistral_regex=fix_mistral_regex,
+            slow_tokenizer=slow_tokenizer,
+        )
     )
     with psycopg.connect(database_url) as conn:
-        stats = build_embeddings(
-            conn,
-            embedding_backend,
+        stats = _build_embeddings_with_optional_progress(
+            conn=conn,
+            embedding_backend=embedding_backend,
             model_id=model_id,
             batch_size=batch_size,
             limit=limit,
             dry_run=dry_run,
+            show_progress=show_progress,
         )
         conn.commit()
     if dry_run:
@@ -116,6 +138,72 @@ class _DryRunEmbeddingBackend:
 
     def encode(self, inputs: list[str]) -> list[list[float]]:
         return []
+
+
+def _build_embeddings_with_optional_progress(
+    *,
+    conn: psycopg.Connection,
+    embedding_backend: object,
+    model_id: int,
+    batch_size: int,
+    limit: int | None,
+    dry_run: bool,
+    show_progress: bool,
+):
+    """Build embeddings with an optional Rich progress display."""
+    if not show_progress:
+        return build_embeddings(
+            conn,
+            embedding_backend,
+            model_id=model_id,
+            batch_size=batch_size,
+            limit=limit,
+            dry_run=dry_run,
+        )
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.fields[status]}"),
+        TimeElapsedColumn(),
+    ) as progress:
+        task_id = progress.add_task("embedding chunks", total=limit, status="starting")
+
+        def update(event: dict[str, int | str]) -> None:
+            status = _embedding_progress_status(event, dry_run=dry_run)
+            scanned = int(event["scanned"])
+            embedded = int(event["embedded"])
+            phase = str(event["phase"])
+            completed = scanned if phase != "done" else embedded
+            total = scanned if phase == "done" and limit is None else limit
+            progress.update(task_id, completed=completed, total=total, status=status)
+
+        return build_embeddings(
+            conn,
+            embedding_backend,
+            model_id=model_id,
+            batch_size=batch_size,
+            limit=limit,
+            dry_run=dry_run,
+            progress=update,
+        )
+
+
+def _embedding_progress_status(event: dict[str, int | str], *, dry_run: bool) -> str:
+    """Return compact status text for the embedding progress bar."""
+    action = "would embed" if dry_run else "embedded"
+    phase = str(event["phase"])
+    scanned = int(event["scanned"])
+    embedded = int(event["embedded"])
+    batch_size = int(event["batch_size"])
+    if phase == "candidate":
+        return f"found={scanned} {action}={embedded} queued={batch_size}"
+    if phase == "encoding":
+        return f"encoding batch={batch_size} found={scanned} {action}={embedded}"
+    if phase == "embedded":
+        return f"found={scanned} {action}={embedded} last_batch={batch_size}"
+    return f"done found={scanned} {action}={embedded}"
 
 
 def _print_result(result: PipelineResult) -> None:

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from hashlib import sha256
+from importlib import import_module
 from typing import Protocol
 from uuid import UUID
 
@@ -15,6 +16,7 @@ from psycopg.rows import dict_row
 BGE_M3_MODEL = "BAAI/bge-m3"
 BGE_M3_DIM = 1024
 EMBEDDING_BACKENDS = ("torch", "openvino")
+TORCH_WRAPPER_DEVICE = "cpu"
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +37,9 @@ class EmbeddingBuildStats:
     skipped: int = 0
 
 
+EmbeddingProgressCallback = Callable[[dict[str, int | str]], None]
+
+
 class EmbeddingBackend(Protocol):
     """Minimal interface used by the database embedding builder."""
 
@@ -45,18 +50,38 @@ class EmbeddingBackend(Protocol):
 class SentenceTransformerBackend:
     """Local sentence-transformers backend for BGE-M3."""
 
-    def __init__(self, model_path: str = BGE_M3_MODEL, device: str | None = None, backend: str = "torch") -> None:
+    def __init__(
+        self,
+        model_path: str = BGE_M3_MODEL,
+        device: str | None = None,
+        backend: str = "torch",
+        fix_mistral_regex: bool = False,
+        slow_tokenizer: bool = False,
+    ) -> None:
         """Load a local or Hugging Face model path lazily."""
         if backend not in EMBEDDING_BACKENDS:
             msg = f"Unsupported embedding backend: {backend}"
             raise ValueError(msg)
+        if fix_mistral_regex and _looks_like_bge_m3(model_path):
+            msg = "Do not use fix_mistral_regex with BGE-M3; it breaks the XLM-R tokenizer in this stack."
+            raise ValueError(msg)
         try:
-            from sentence_transformers import SentenceTransformer
+            sentence_transformers = import_module("sentence_transformers")
         except ImportError as exc:  # pragma: no cover - exercised by operator environment
             msg = "Install embedding dependencies with: uv sync --extra embeddings"
             raise RuntimeError(msg) from exc
 
-        self.model = SentenceTransformer(model_path, device=device, backend=backend)
+        processor_kwargs = processor_kwargs_for(
+            fix_mistral_regex=fix_mistral_regex,
+            slow_tokenizer=slow_tokenizer,
+        )
+        load_kwargs = sentence_transformer_load_kwargs(backend=backend, device=device)
+        self.model = sentence_transformers.SentenceTransformer(
+            model_path,
+            backend=backend,
+            **load_kwargs,
+            processor_kwargs=processor_kwargs,
+        )
 
     def encode(self, inputs: Sequence[str]) -> list[list[float]]:
         """Encode passage inputs as normalized BGE-M3 embeddings."""
@@ -70,6 +95,31 @@ class SentenceTransformerBackend:
         return [vector.astype(float).tolist() for vector in vectors]
 
 
+def processor_kwargs_for(*, fix_mistral_regex: bool = False, slow_tokenizer: bool = False) -> dict[str, bool]:
+    """Build tokenizer/processor kwargs for sentence-transformers."""
+    kwargs: dict[str, bool] = {}
+    if fix_mistral_regex:
+        kwargs["fix_mistral_regex"] = True
+    if slow_tokenizer:
+        kwargs["use_fast"] = False
+    return kwargs
+
+
+def sentence_transformer_load_kwargs(*, backend: str, device: str | None = None) -> dict[str, object]:
+    """Build SentenceTransformer load kwargs without passing OpenVINO devices to Torch."""
+    if backend == "openvino":
+        kwargs: dict[str, object] = {"device": TORCH_WRAPPER_DEVICE}
+        if device:
+            kwargs["model_kwargs"] = {"device": device.upper()}
+        return kwargs
+    return {"device": device} if device else {}
+
+
+def _looks_like_bge_m3(model_path: str) -> bool:
+    """Return whether a model path/id appears to be BGE-M3."""
+    return "bge-m3" in model_path.lower()
+
+
 def build_embeddings(
     conn: Connection,
     backend: EmbeddingBackend,
@@ -78,6 +128,7 @@ def build_embeddings(
     batch_size: int = 16,
     limit: int | None = None,
     dry_run: bool = False,
+    progress: EmbeddingProgressCallback | None = None,
 ) -> EmbeddingBuildStats:
     """Embed chunks missing a fresh row for the requested model."""
     if not dry_run:
@@ -89,16 +140,35 @@ def build_embeddings(
     for chunk in iter_chunks_needing_embeddings(conn, model_id=model_id, limit=limit):
         stats = EmbeddingBuildStats(stats.scanned + 1, stats.embedded, stats.skipped)
         batch.append(chunk)
+        _emit_progress(progress, "candidate", stats, len(batch))
         if len(batch) >= batch_size:
+            _emit_progress(progress, "encoding", stats, len(batch))
             embedded = _embed_batch(conn, backend, batch, model_id=model_id, dry_run=dry_run)
             stats = EmbeddingBuildStats(stats.scanned, stats.embedded + embedded, stats.skipped)
+            _emit_progress(progress, "embedded", stats, embedded)
             batch = []
 
     if batch:
+        _emit_progress(progress, "encoding", stats, len(batch))
         embedded = _embed_batch(conn, backend, batch, model_id=model_id, dry_run=dry_run)
         stats = EmbeddingBuildStats(stats.scanned, stats.embedded + embedded, stats.skipped)
+        _emit_progress(progress, "embedded", stats, embedded)
+
+    _emit_progress(progress, "done", stats)
 
     return stats
+
+
+def _emit_progress(
+    progress: EmbeddingProgressCallback | None,
+    phase: str,
+    stats: EmbeddingBuildStats,
+    batch_size: int = 0,
+) -> None:
+    """Emit a progress event if a callback is registered."""
+    if progress is None:
+        return
+    progress({"phase": phase, "scanned": stats.scanned, "embedded": stats.embedded, "batch_size": batch_size})
 
 
 def iter_chunks_needing_embeddings(
