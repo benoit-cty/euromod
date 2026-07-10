@@ -22,6 +22,7 @@ from psycopg.types.json import Jsonb
 from euromod_ingest.core.chunker import chunk_text
 
 DEFAULT_TARGET_LANG = "en"
+DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS = 120.0
 # Newline-aware split size for LLM calls; keeps each completion well under
 # the 8k max_tokens configured in euromod_workflow.llm.get_chat_model.
 TRANSLATION_SEGMENT_CHARS = 6_000
@@ -87,7 +88,7 @@ class TranslationBackend(Protocol):
 class LLMTranslationBackend:
     """Translate through euromod_workflow.llm's provider-prefixed chat models."""
 
-    def __init__(self, model: str) -> None:
+    def __init__(self, model: str, *, request_timeout: float | None = DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS) -> None:
         """Load .env credentials and instantiate the chat model lazily."""
         try:
             from euromod_workflow.config import load_config
@@ -98,7 +99,7 @@ class LLMTranslationBackend:
 
         load_config()  # side effect: load_dotenv() for the provider API keys
         self.engine = model
-        self._llm = get_chat_model(model, temperature=0.0)
+        self._llm = get_chat_model(model, temperature=0.0, request_timeout=request_timeout)
 
     def translate(self, text: str, source_lang: str, target_lang: str) -> str:
         """Translate one segment, retrying transient provider errors."""
@@ -178,6 +179,32 @@ def _emit_progress(
     )
 
 
+def count_texts_needing_translation(
+    conn: Connection,
+    *,
+    target_lang: str = DEFAULT_TARGET_LANG,
+    limit: int | None = None,
+) -> int:
+    """Count the versions `iter_texts_needing_translation` would yield.
+
+    Same WHERE clause as the iterator (which keeps one source row per
+    version), so a progress display can know the total upfront.
+    """
+    query = """
+        SELECT count(DISTINCT t.version_id)
+        FROM unit_texts t
+        WHERE t.lang <> %(target)s
+          AND NOT EXISTS (
+              SELECT 1 FROM unit_texts e
+              WHERE e.version_id = t.version_id AND e.lang = %(target)s
+          )
+    """
+    with conn.cursor() as cur:
+        cur.execute(query, {"target": target_lang})
+        total = int(cur.fetchone()[0])
+    return min(total, limit) if limit is not None else total
+
+
 def iter_texts_needing_translation(
     conn: Connection,
     *,
@@ -229,7 +256,14 @@ def iter_texts_needing_translation(
 def translate_content(
     backend: TranslationBackend, content: str, source_lang: str, target_lang: str
 ) -> str:
-    """Translate a full text, splitting long content into newline-aware segments."""
+    """Translate a full text, splitting long content into newline-aware segments.
+
+    When the source is already in the target language (e.g. English-authentic
+    Irish legislation), the text is copied verbatim: no LLM call, no cost, and
+    no risk of the model paraphrasing an already-correct rendering.
+    """
+    if source_lang == target_lang:
+        return content
     segments = chunk_text(content, context_header="", max_chars=TRANSLATION_SEGMENT_CHARS)
     translated = [backend.translate(segment.content, source_lang, target_lang) for segment in segments]
     return "\n".join(part for part in translated if part)
