@@ -6,6 +6,43 @@ Initial Python implementation of the archive-first ingestion architecture descri
 The package is library-first: CLI commands call the same `ingest_citation` and
 `ingest_instrument` functions that an agentic cache-miss workflow can call in-process.
 
+## Translate unit texts to English
+
+`unit_texts` rows arrive in the source language ('fr', 'nl', ...). The batch
+translation worker finds every `legal_unit_versions` row without an English text,
+translates its best source text (authentic > official translation > machine
+translation) with an LLM, and stores the result as an ordinary `unit_texts` row
+with `authenticity='machine_translation'`, `source_lang`, `translation_of` and
+`mt_engine` filled in, plus its retrieval `chunks` (run `embeddings build`
+afterwards to vectorize them).
+
+The LLM connection reuses
+[`euromod_workflow.llm`](../../agentic-workflow/pipeline/src/euromod_workflow/llm.py):
+models are provider-prefixed strings (`anthropic/...`, `openai/...`,
+`azure_openai/...`, `openrouter/...`, `together/...`) and API keys are read from
+the environment / repo `.env` files.
+
+```bash
+uv sync --extra embeddings --extra translate   # uv sync installs exactly the listed extras
+set -a; source ../../../update-openfisca-with-ai/.env; set +a   # provider API keys
+uv run python -m euromod_ingest.cli translate run \
+	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
+	--model openrouter/google/gemma-4-31b-it:free
+```
+
+`euromod_workflow.config.load_config()` only auto-loads `.env` from the `euromod`
+repo root and `agentic-workflow/`; the shared keys currently live in the sibling
+`update-openfisca-with-ai/.env`, hence the `source` line (or create a repo-root
+`.env`).
+
+Use `--dry-run` to count untranslated texts without calling the LLM, `--limit N`
+to translate a first batch, and `--target-lang` for another language registered in
+`lang_fts_config`. The run is idempotent (already-translated versions are skipped)
+and commits after every stored translation, so it can be interrupted and resumed.
+Long texts are split into ~6k-character newline-aware segments per LLM call.
+A per-text failure is reported and skipped; the command exits non-zero if any
+text failed.
+
 ## Build embeddings
 
 Ingestion writes `chunks` synchronously. Vector embeddings are derived afterward with

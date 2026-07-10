@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:git.tricoteuses.fr)",
+      "Bash(curl -sS \"https://git.tricoteuses.fr/dila/donnees_juridiques/raw/branch/main/JORF/TEXT/00/00/51/16/80/JORFTEXT000051168007.json\")",
+      "Bash(python3 -m json.tool)",
+      "PowerShell(wsl -d Ubuntu-24.04 --cd /home/ben/Euromod/euromod docker compose config --quiet; echo \"exit: $LASTEXITCODE\")",
+      "WebSearch"
+    ]
+  }
+}
