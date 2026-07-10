@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from euromod_ingest.core.embeddings import BGE_M3_MODEL, SentenceTransformerBackend
+from euromod_ingest.core.embeddings import BGE_M3_MODEL, SentenceTransformerBackend, halfvec_literal
 
 
 def _default_model_path() -> str:
@@ -36,7 +36,7 @@ def main() -> None:
             if not query:
                 raise ValueError("query must not be empty")
             vector = backend.encode([query])[0]
-            print(json.dumps({"vector": vector}, separators=(",", ":")), flush=True)
+            print(json.dumps({"halfvec": halfvec_literal(vector)}, separators=(",", ":")), flush=True)
         except Exception as exc:
             print(json.dumps({"error": str(exc)}), flush=True)
 

@@ -6,9 +6,11 @@
 //! rejected promise with the error string.
 
 mod db;
+mod encoder;
 mod ingest;
 mod store;
 
+use encoder::EmbeddingState;
 use ingest::{IngestPayload, IngestState};
 
 use serde::Deserialize;
@@ -53,6 +55,8 @@ struct SearchPayload {
     query: String,
     country: Option<String>,
     as_of: Option<String>,
+    languages: Option<Vec<String>>,
+    mode: Option<String>,
     limit: Option<i64>,
 }
 
@@ -138,13 +142,25 @@ async fn eval_run_detail(payload: EvalRunPayload) -> Result<Value, String> {
 }
 
 #[tauri::command]
-async fn search_articles(payload: SearchPayload) -> Result<Value, String> {
+async fn search_articles(
+    state: tauri::State<'_, EmbeddingState>,
+    payload: SearchPayload,
+) -> Result<Value, String> {
+    let mode = db::SearchMode::parse(payload.mode.as_deref().unwrap_or("hybrid"))?;
+    let query_vector = if mode.uses_vector() {
+        Some(state.encode(&payload.query).await?)
+    } else {
+        None
+    };
     tauri::async_runtime::spawn_blocking(move || {
         db::search_articles(
             &payload.db_url,
             &payload.query,
             payload.country.as_deref(),
             payload.as_of.as_deref(),
+            payload.languages.as_deref(),
+            mode,
+            query_vector.as_deref(),
             payload.limit.unwrap_or(25),
         )
     })
@@ -183,6 +199,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .manage(EmbeddingState::default())
         .manage(IngestState::default())
         .invoke_handler(tauri::generate_handler![
             get_env_config,

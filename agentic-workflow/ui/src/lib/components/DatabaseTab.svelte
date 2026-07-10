@@ -11,8 +11,19 @@
   let query = $state('');
   let country = $state('');
   let asOf = $state('');
+  let language = $state('');
+  let mode = $state('hybrid');
   let results = $state(null);
   let searching = $state(false);
+
+  const modes = [
+    { value: 'hybrid', label: 'Hybrid' },
+    { value: 'full_text', label: 'Full text' },
+    { value: 'vector', label: 'Embeddings' },
+  ];
+
+  const formatScore = (value, digits = 5) => value == null ? '—' : Number(value).toFixed(digits);
+  const vectorSimilarity = (distance) => distance == null ? null : 1 - Number(distance);
 
   $effect(() => {
     if (dbUrl && !url) url = dbUrl;
@@ -42,6 +53,8 @@
         query,
         country: country || null,
         as_of: asOf || null,
+        languages: language ? [language] : null,
+        mode,
         limit: 25,
       });
     } catch (e) {
@@ -153,33 +166,92 @@
   {/if}
 
   <h2>Find law articles</h2>
-  <form class="row" onsubmit={search}>
-    <input
-      class="grow"
-      placeholder="Citation (e.g. CGI art 197) or full-text query (e.g. impôt revenu barème)…"
-      bind:value={query}
-    />
-    <select bind:value={country}>
-      <option value="">all countries</option>
-      {#each stats?.by_country ?? [] as row}<option value={row.code}>{row.code}</option>{/each}
-    </select>
-    <input type="date" bind:value={asOf} title="version in force at this date" />
-    <button class="primary" type="submit" disabled={searching}>
-      {searching ? 'Searching…' : 'Search'}
-    </button>
+  <form class="search-form" onsubmit={search}>
+    <div class="search-query row">
+      <input
+        class="grow"
+        placeholder="Ask in English, for example: personal income tax brackets and marginal rates"
+        bind:value={query}
+      />
+      <button class="primary" type="submit" disabled={searching}>
+        {searching ? (mode === 'full_text' ? 'Searching…' : 'Encoding and searching…') : 'Search'}
+      </button>
+    </div>
+    <div class="search-options">
+      <div class="segmented" aria-label="Search mode">
+        {#each modes as item}
+          <button
+            type="button"
+            class:active={mode === item.value}
+            aria-pressed={mode === item.value}
+            onclick={() => mode = item.value}
+          >{item.label}</button>
+        {/each}
+      </div>
+      <label>
+        Country
+        <select bind:value={country}>
+          <option value="">All</option>
+          {#each stats?.by_country ?? [] as row}<option value={row.code}>{row.code}</option>{/each}
+        </select>
+      </label>
+      <label>
+        Language
+        <select bind:value={language}>
+          <option value="">All languages</option>
+          <option value="en">English</option>
+          <option value="fr">French</option>
+          <option value="nl">Dutch</option>
+          <option value="es">Spanish</option>
+          <option value="lt">Lithuanian</option>
+        </select>
+      </label>
+      <label>
+        In force on
+        <input type="date" bind:value={asOf} />
+      </label>
+    </div>
   </form>
 
   {#if results}
-    <p class="muted">{results.results.length} result(s) for “{results.query}”</p>
+    <div class="retrieval-summary">
+      <strong>{results.results.length} result(s)</strong>
+      <span>{results.ranking}</span>
+      {#if results.model_id}<span>BGE-M3 · model {results.model_id}</span>{/if}
+      <span>
+        {results.filters.country ?? 'all countries'} ·
+        {results.filters.languages?.join(', ') ?? 'all languages'} ·
+        {results.filters.as_of ?? 'all validities'}
+      </span>
+    </div>
     {#each results.results as hit (hit.chunk_id)}
       <details>
         <summary>
           <strong>{hit.citation ?? hit.context_header}</strong>
           <span class="badge {hit.version_status === 'in_force' ? 'pass' : 'pending'}">{hit.version_status}</span>
           <span class="muted">
-            {hit.country} · {hit.lang} · {hit.validity} · score {hit.score.toFixed(3)}
+            {hit.country} · {hit.lang} · {hit.authenticity.replaceAll('_', ' ')} · score {formatScore(hit.score)}
           </span>
         </summary>
+        <div class="score-breakdown" aria-label="Retrieval score breakdown">
+          <div>
+            <span class="score-label">Full text</span>
+            <strong>{hit.full_text_rank ? `#${hit.full_text_rank}` : 'No match'}</strong>
+            <span>raw {formatScore(hit.full_text_score, 4)}</span>
+            <span>RRF +{formatScore(hit.full_text_contribution)}</span>
+          </div>
+          <div>
+            <span class="score-label">BGE-M3</span>
+            <strong>{hit.vector_rank ? `#${hit.vector_rank}` : 'Not ranked'}</strong>
+            <span>similarity {formatScore(vectorSimilarity(hit.vector_distance), 4)}</span>
+            <span>distance {formatScore(hit.vector_distance, 4)}</span>
+            <span>RRF +{formatScore(hit.vector_contribution)}</span>
+          </div>
+          <div class="score-total">
+            <span class="score-label">Final</span>
+            <strong>{formatScore(hit.score)}</strong>
+          </div>
+        </div>
         <p class="muted">{hit.context_header}</p>
         <div class="law-text">{hit.content}</div>
         <p class="muted mono">chunk {hit.chunk_id}</p>
@@ -207,7 +279,50 @@
   }
   .num { font-size: 1.4rem; font-weight: 700; }
   .tables { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+  .search-form { display: flex; flex-direction: column; gap: 0.65rem; }
+  .search-query input { min-height: 2.35rem; }
+  .search-options { display: flex; gap: 0.75rem; align-items: end; flex-wrap: wrap; }
+  .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .segmented button { border: 0; border-right: 1px solid var(--border); border-radius: 0; min-height: 2.1rem; }
+  .segmented button:last-child { border-right: 0; }
+  .segmented button.active { background: var(--accent); color: white; }
+  .retrieval-summary {
+    display: flex;
+    gap: 0.45rem 0.9rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .retrieval-summary strong { color: var(--text); }
   details { border-top: 1px solid var(--border); padding: 0.5rem 0; }
   summary { cursor: pointer; display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
+  .score-breakdown {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 1.3fr) minmax(7rem, 0.5fr);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 0.65rem 0;
+  }
+  .score-breakdown > div {
+    display: flex;
+    gap: 0.45rem 0.75rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+    padding: 0.55rem 0.7rem;
+    border-right: 1px solid var(--border);
+  }
+  .score-breakdown > div:last-child { border-right: 0; }
+  .score-breakdown span { color: var(--muted); font-size: 0.82rem; }
+  .score-breakdown .score-label { color: var(--text); font-weight: 600; }
+  .score-total { background: var(--panel-2); }
   @media (max-width: 1100px) { .tables { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) {
+    .score-breakdown { grid-template-columns: 1fr; }
+    .score-breakdown > div { border-right: 0; border-bottom: 1px solid var(--border); }
+    .score-breakdown > div:last-child { border-bottom: 0; }
+    .segmented { width: 100%; }
+    .segmented button { flex: 1; }
+  }
 </style>

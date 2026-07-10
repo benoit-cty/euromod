@@ -262,54 +262,242 @@ mod tests {
     }
 }
 
-/// Find law articles by citation (pg_trgm) or full text (FTS), optionally
-/// filtered by country and point-in-time validity.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum SearchMode {
+    Hybrid,
+    FullText,
+    Vector,
+}
+
+impl SearchMode {
+    pub fn parse(value: &str) -> Result<Self, String> {
+        match value {
+            "hybrid" => Ok(Self::Hybrid),
+            "full_text" => Ok(Self::FullText),
+            "vector" => Ok(Self::Vector),
+            _ => Err(format!("unsupported search mode: {value}")),
+        }
+    }
+
+    pub fn uses_vector(self) -> bool {
+        matches!(self, Self::Hybrid | Self::Vector)
+    }
+
+    fn uses_full_text(self) -> bool {
+        matches!(self, Self::Hybrid | Self::FullText)
+    }
+
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Hybrid => "hybrid",
+            Self::FullText => "full_text",
+            Self::Vector => "vector",
+        }
+    }
+}
+
+/// Search law chunks using FTS, BGE-M3 vectors, or RRF-fused hybrid ranking.
 pub fn search_articles(
     db_url: &str,
     query: &str,
     country: Option<&str>,
     as_of: Option<&str>,
+    languages: Option<&[String]>,
+    mode: SearchMode,
+    query_vector: Option<&str>,
     limit: i64,
 ) -> Result<Value, String> {
+    if query.trim().is_empty() {
+        return Err("query must not be empty".to_string());
+    }
+    if !(1..=50).contains(&limit) {
+        return Err("limit must be between 1 and 50".to_string());
+    }
+    if mode.uses_vector() && query_vector.is_none() {
+        return Err(format!("{} search requires a query vector", mode.as_str()));
+    }
+
     let mut client = connect(db_url)?;
+    client
+        .batch_execute(
+            "SET default_transaction_read_only = on;
+             SET statement_timeout = '30s';
+             SET hnsw.ef_search = 100;",
+        )
+        .map_err(|e| e.to_string())?;
+    let language_filter = languages.map(|values| values.to_vec());
+    let use_full_text = mode.uses_full_text();
+    let use_vector = mode.uses_vector();
     let rows = client
         .query(
-            "SELECT ch.id::text AS chunk_id, u.citation, ch.context_header,
-                    ch.content, t.lang, v.validity::text AS validity, v.version_status,
-                    j.code AS country, i.title AS instrument_title,
-                    GREATEST(
-                      similarity(u.citation, $1),
-                      coalesce(ts_rank_cd(ch.tsv, websearch_to_tsquery(ch.search_config, $1), 32), 0)
-                    )::float8 AS score
-             FROM chunks ch
-             JOIN unit_texts t          ON t.id = ch.unit_text_id
-             JOIN legal_unit_versions v ON v.id = t.version_id
-             JOIN legal_units u         ON u.id = v.legal_unit_id
-             JOIN instruments i         ON i.id = u.instrument_id
-             JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-             WHERE (u.citation % $1
-                    OR ch.tsv @@ websearch_to_tsquery(ch.search_config, $1))
-               AND ($2::text IS NULL OR j.code = $2)
-               AND ($3::text IS NULL OR v.validity @> ($3::text)::date)
-             ORDER BY score DESC, u.citation, lower(v.validity)
-             LIMIT $4",
-            &[&query, &country, &as_of, &limit],
+            "WITH candidate AS MATERIALIZED (
+                SELECT ch.id AS chunk_id, ch.tsv, ch.search_config, ch.seq,
+                       t.version_id, t.lang, t.authenticity,
+                       v.validity, v.version_status, u.citation,
+                       i.title AS instrument_title, j.code AS country
+                FROM chunks ch
+                JOIN unit_texts t          ON t.id = ch.unit_text_id
+                JOIN legal_unit_versions v ON v.id = t.version_id
+                JOIN legal_units u         ON u.id = v.legal_unit_id
+                JOIN instruments i         ON i.id = u.instrument_id
+                JOIN jurisdictions j       ON j.id = i.jurisdiction_id
+                WHERE ($2::text IS NULL OR j.code = upper($2))
+                  AND ($3::text IS NULL OR v.validity @> ($3::text)::date)
+                  AND ($4::text[] IS NULL OR t.lang = ANY($4::text[]))
+             ),
+             fts AS (
+                SELECT chunk_id,
+                       row_number() OVER (ORDER BY rank_score DESC, chunk_id) AS rank,
+                       rank_score
+                FROM (
+                    SELECT chunk_id,
+                           ts_rank_cd(tsv, websearch_to_tsquery(search_config, $1), 32) AS rank_score
+                    FROM candidate
+                    WHERE $6 AND tsv @@ websearch_to_tsquery(search_config, $1)
+                ) ranked_fts
+                ORDER BY rank_score DESC
+                LIMIT 50
+             ),
+             vec AS (
+                SELECT chunk_id,
+                       row_number() OVER (ORDER BY distance, chunk_id) AS rank,
+                       distance
+                FROM (
+                    SELECT e.chunk_id, e.embedding <=> $5::text::halfvec AS distance
+                    FROM embeddings e
+                    JOIN candidate USING (chunk_id)
+                    WHERE $7 AND e.model_id = 1
+                    ORDER BY e.embedding <=> $5::text::halfvec
+                    LIMIT 50
+                ) ranked_vec
+             ),
+             scored AS (
+                SELECT c.*,
+                       (coalesce(1.0 / (60 + f.rank), 0) +
+                        coalesce(1.0 / (60 + ve.rank), 0))::float8 AS score,
+                       f.rank AS full_text_rank,
+                       f.rank_score::float8 AS full_text_score,
+                       coalesce(1.0 / (60 + f.rank), 0)::float8 AS full_text_contribution,
+                       ve.rank AS vector_rank,
+                       ve.distance::float8 AS vector_distance,
+                       coalesce(1.0 / (60 + ve.rank), 0)::float8 AS vector_contribution
+                FROM fts f
+                FULL OUTER JOIN vec ve USING (chunk_id)
+                JOIN candidate c USING (chunk_id)
+             ),
+             deduplicated AS (
+                SELECT scored.*,
+                       row_number() OVER (
+                           PARTITION BY version_id, seq
+                           ORDER BY score DESC, chunk_id
+                       ) AS rendering_rank
+                FROM scored
+             )
+             SELECT d.chunk_id::text, d.citation, ch.context_header, ch.content,
+                    d.lang, d.authenticity, d.validity::text, d.version_status,
+                    d.country, d.instrument_title, d.score,
+                    d.full_text_rank, d.full_text_score, d.full_text_contribution,
+                    d.vector_rank, d.vector_distance, d.vector_contribution
+             FROM deduplicated d
+             JOIN chunks ch ON ch.id = d.chunk_id
+             WHERE d.rendering_rank = 1
+             ORDER BY d.score DESC, d.chunk_id
+             LIMIT $8",
+            &[
+                &query,
+                &country,
+                &as_of,
+                &language_filter,
+                &query_vector,
+                &use_full_text,
+                &use_vector,
+                &limit,
+            ],
         )
         .map_err(|e| e.to_string())?;
 
     Ok(json!({
         "query": query,
+        "mode": mode.as_str(),
+        "model_id": if use_vector { Some(1) } else { None },
+        "ranking": if mode == SearchMode::Hybrid {
+            "RRF(k=60) over full-text and BGE-M3 vector ranks"
+        } else if mode == SearchMode::Vector {
+            "BGE-M3 vector rank"
+        } else {
+            "full-text rank"
+        },
+        "filters": {
+            "country": country,
+            "as_of": as_of,
+            "languages": language_filter,
+        },
         "results": rows.iter().map(|r| json!({
             "chunk_id": r.get::<_, String>("chunk_id"),
             "citation": r.get::<_, Option<String>>("citation"),
-            "context_header": r.get::<_, Option<String>>("context_header"),
+            "context_header": r.get::<_, String>("context_header"),
             "content": r.get::<_, String>("content"),
             "lang": r.get::<_, String>("lang"),
+            "authenticity": r.get::<_, String>("authenticity"),
             "validity": r.get::<_, String>("validity"),
-            "version_status": r.get::<_, Option<String>>("version_status"),
+            "version_status": r.get::<_, String>("version_status"),
             "country": r.get::<_, String>("country"),
             "instrument_title": r.get::<_, Value>("instrument_title"),
             "score": r.get::<_, f64>("score"),
+            "full_text_rank": r.get::<_, Option<i64>>("full_text_rank"),
+            "full_text_score": r.get::<_, Option<f64>>("full_text_score"),
+            "full_text_contribution": r.get::<_, f64>("full_text_contribution"),
+            "vector_rank": r.get::<_, Option<i64>>("vector_rank"),
+            "vector_distance": r.get::<_, Option<f64>>("vector_distance"),
+            "vector_contribution": r.get::<_, f64>("vector_contribution"),
         })).collect::<Vec<_>>(),
     }))
+}
+
+#[cfg(test)]
+mod search_tests {
+    use super::SearchMode;
+
+    #[test]
+    fn validates_search_modes() {
+        assert_eq!(SearchMode::parse("hybrid").unwrap(), SearchMode::Hybrid);
+        assert_eq!(
+            SearchMode::parse("full_text").unwrap(),
+            SearchMode::FullText
+        );
+        assert_eq!(SearchMode::parse("vector").unwrap(), SearchMode::Vector);
+        assert!(SearchMode::parse("semantic").is_err());
+    }
+
+    #[test]
+    fn search_queries_smoke() {
+        let url = std::env::var("WORKFLOW_DATABASE_URL")
+            .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
+        let Ok(mut client) = super::connect(&url) else {
+            return;
+        };
+        let vector: String = client
+            .query_one(
+                "SELECT placeholder_embedding($1)::text",
+                &[&"income tax brackets"],
+            )
+            .unwrap()
+            .get(0);
+
+        for mode in [SearchMode::FullText, SearchMode::Vector, SearchMode::Hybrid] {
+            let query_vector = mode.uses_vector().then_some(vector.as_str());
+            let result = super::search_articles(
+                &url,
+                "income tax brackets",
+                None,
+                Some("2025-06-01"),
+                None,
+                mode,
+                query_vector,
+                5,
+            )
+            .unwrap_or_else(|error| panic!("{} search failed: {error}", mode.as_str()));
+            assert!(result["results"].is_array());
+        }
+    }
 }
