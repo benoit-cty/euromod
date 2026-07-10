@@ -16,12 +16,19 @@ from euromod_ingest.core.embeddings import (
     build_embeddings,
 )
 from euromod_ingest.core.pipeline import PipelineResult, run_database_ingest
+from euromod_ingest.core.translate import (
+    DEFAULT_TARGET_LANG,
+    LLMTranslationBackend,
+    build_translations,
+)
 from euromod_ingest.tui import PipelineTui
 
 
 app = typer.Typer(help="Archive-first legislation ingestion commands.")
 embeddings_app = typer.Typer(help="Build derived chunk embeddings.")
 app.add_typer(embeddings_app, name="embeddings")
+translate_app = typer.Typer(help="Machine-translate unit texts with an LLM.")
+app.add_typer(translate_app, name="translate")
 
 
 @app.command()
@@ -130,6 +137,101 @@ def build_chunk_embeddings(
         typer.echo(
             f"scanned={stats.scanned} embedded={stats.embedded} "
             f"model_id={model_id} backend={backend} dry_run=False"
+        )
+
+
+@translate_app.command("run")
+def run_translations(
+    database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
+    model: Annotated[
+        str,
+        typer.Option(
+            "--model",
+            "-m",
+            envvar="EUROMOD_TRANSLATE_MODEL",
+            help="Provider-prefixed model, e.g. anthropic/..., openai/..., openrouter/... (see euromod_workflow.llm).",
+        ),
+    ] = "openrouter/google/gemma-4-31b-it:free",
+    target_lang: Annotated[str, typer.Option("--target-lang", help="Target language (must exist in lang_fts_config).")] = DEFAULT_TARGET_LANG,
+    limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Count untranslated texts without calling the LLM.")] = False,
+    show_progress: Annotated[bool, typer.Option("--progress/--no-progress", help="Show live translation progress.")] = True,
+) -> None:
+    """Translate every unit text version missing a target-language rendering."""
+    backend = None if dry_run else LLMTranslationBackend(model)
+    with psycopg.connect(database_url) as conn:
+        stats = _build_translations_with_optional_progress(
+            conn=conn,
+            backend=backend,
+            target_lang=target_lang,
+            limit=limit,
+            dry_run=dry_run,
+            show_progress=show_progress,
+        )
+    action = "would_translate" if dry_run else "translated"
+    typer.echo(
+        f"scanned={stats.scanned} {action}={stats.scanned if dry_run else stats.translated} "
+        f"failed={stats.failed} model={model} target_lang={target_lang} dry_run={dry_run}"
+    )
+    if stats.failed:
+        raise typer.Exit(code=1)
+
+
+def _build_translations_with_optional_progress(
+    *,
+    conn: psycopg.Connection,
+    backend: LLMTranslationBackend | None,
+    target_lang: str,
+    limit: int | None,
+    dry_run: bool,
+    show_progress: bool,
+):
+    """Build translations with an optional Rich progress display."""
+    if not show_progress:
+
+        def report_failures(event: dict[str, int | str]) -> None:
+            if event["phase"] == "failed":
+                typer.echo(f"failed {event['detail']}", err=True)
+
+        return build_translations(
+            conn,
+            backend,
+            target_lang=target_lang,
+            limit=limit,
+            dry_run=dry_run,
+            progress=report_failures,
+        )
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.fields[status]}"),
+        TimeElapsedColumn(),
+    ) as progress:
+        task_id = progress.add_task("translating texts", total=limit, status="starting")
+
+        def update(event: dict[str, int | str]) -> None:
+            phase = str(event["phase"])
+            scanned = int(event["scanned"])
+            translated = int(event["translated"])
+            failed = int(event["failed"])
+            detail = str(event["detail"])
+            action = "would translate" if dry_run else "translated"
+            counts = f"found={scanned} {action}={scanned if dry_run else translated} failed={failed}"
+            if phase == "failed":
+                progress.console.print(f"[red]failed[/red] {detail}")
+            status = counts if phase == "done" else f"{counts} [{detail}]"
+            total = scanned if phase == "done" and limit is None else limit
+            progress.update(task_id, completed=scanned, total=total, status=status)
+
+        return build_translations(
+            conn,
+            backend,
+            target_lang=target_lang,
+            limit=limit,
+            dry_run=dry_run,
+            progress=update,
         )
 
 

@@ -72,6 +72,7 @@ flowchart TD
         LOADER["LegislationLoader\n(core/loader.py)"]
         EMB["core/embeddings.py :::new\nBGE-M3 (torch/OpenVINO)\nhalfvec embeddings"]
         MODELS["models/bge-m3 :::new\nlocal model + OpenVINO export script"]
+        TRANSLATE["Translate all text to english"]
     end
 
     subgraph DB["Postgres (pgvector/pgvector:pg17, port 5434)"]
@@ -109,6 +110,7 @@ flowchart TD
     SCHEMA --> DBEXPLORE
     REVIEW --> AUDIT
     PHX-->PHOENIX
+    TRANSLATE-->SCHEMA
 
     classDef new stroke-dasharray: 5 5,stroke:#e08800,color:inherit;
 ```

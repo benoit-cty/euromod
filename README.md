@@ -96,6 +96,6 @@ winget install jqlang.jq
 
 Things to do for the Euromod team :
 
-- How to deploy the project on Euromod IT infrastructure : Managed Postgresql at AWS ? Or Kubernetes ?
+- How to deploy the project on Euromod IT infrastructure : Docker or Managed Postgresql at AWS ? Or Kubernetes ?
 - How to run an embedding batch at night on the Euromod GPU ?
 - How to run a translation batch at night on the Euromod GPU ?
