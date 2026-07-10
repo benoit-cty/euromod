@@ -1,0 +1,14 @@
+{
+  "servers": {
+    "euromod-legislation": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "${workspaceFolder}/mcp-server",
+        "run",
+        "euromod-legislation-mcp"
+      ]
+    }
+  }
+}
