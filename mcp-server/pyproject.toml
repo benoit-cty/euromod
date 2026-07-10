@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "euromod-legislation-mcp"
+version = "0.1.0"
+description = "Read-only MCP tools for hybrid retrieval over the EUROMOD legislation database."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "mcp[cli]>=1.28,<2",
+  "psycopg[binary]>=3.2",
+  "euromod-legislation-ingest[embeddings]",
+]
+
+[project.scripts]
+euromod-legislation-mcp = "euromod_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/euromod_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.uv.sources]
+euromod-legislation-ingest = { path = "../RAG/ingest", editable = true }
