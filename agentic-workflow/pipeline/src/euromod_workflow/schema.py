@@ -221,6 +221,9 @@ class ReviewItem(BaseModel):
 
     id: str
     run_id: str
+    # OTel trace id (32 hex chars) of the run's root span in Phoenix — the link
+    # to the full agent process. None when tracing was disabled.
+    phoenix_trace_id: str | None = None
     created_at: datetime
     country: str
     model_target: str

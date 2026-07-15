@@ -96,10 +96,8 @@ This stage performs small, explainable transformations. It does not use an LLM a
 
 It may add:
 
-
 - a structured `model_address`, parsed from `model_target`;
 - `model_release`, parsed from `values[].lineage.model` when possible;
-- `system_year`, selected for the workflow from within the received model interval;
 - `raw_euromod_value`, renamed from `lineage.model_answer` for clarity;
 - a structured unit view while preserving the received `unit`;
 - an optional `parameter_group`, based on an EUROMOD-team-approved mapping;
@@ -305,11 +303,31 @@ The minimum tables are:
 - `model_values` - received model history and raw EUROMOD representations;
 - `parameter_usage` - received usage graph, optionally stored separately;
 - `proposals` - agent-generated candidate values and source metadata;
-- `references` - evidence attached to proposals;
+- `proposal_references` - evidence attached to proposals;
 - `extraction_runs` - agent, model, prompt, confidence, and retrieval trace;
 - `review_decisions` - append-only human decisions.
 
 This is intentionally smaller than a general fiscal-parameter database.
+
+This schema is implemented as the `params` schema of the shared legislation
+database: [agentic-workflow/pipeline/db/params_schema.sql](../agentic-workflow/pipeline/db/params_schema.sql)
+(`references` is a reserved SQL word, so that table is named
+`proposal_references`). It is applied and populated with:
+
+```bash
+cd agentic-workflow/pipeline
+uv run euromod-workflow init-param-db
+uv run euromod-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
+```
+
+Each `extraction_runs` row additionally carries `phoenix_trace_id`, the
+OpenTelemetry trace id of that run's root span. A reviewer can open the full
+agent process (frame, retrieve, propose, critique, diff) in Arize Phoenix at
+`http://localhost:6006/projects/<project-id>/traces/<phoenix_trace_id>`.
+This is a soft link for process transparency: the durable evidence remains the
+verbatim `supporting_extract` and chunk id on `proposal_references`. The
+`params.proposal_review` view joins a proposal, its current model value, and
+the trace id as the read surface for the validation UI.
 
 ## 11. Required fields and gates
 
@@ -336,20 +354,6 @@ This is intentionally smaller than a general fiscal-parameter database.
 
 `parameter_group`, structured units, offsets, and legal end dates are optional.
 
-## 12. Questions for the EUROMOD team
-
-1. Can `FR.enriched.json` be treated as the POC input contract, including its existing enrichment fields?
-2. Which fields are guaranteed directly by the connector, and which are produced by EUROMOD-side enrichment?
-3. Is parsing `country`, `policy`, `function`, and constant name from `model_target` acceptable?
-4. Can `J2.19` reliably be parsed from `lineage.model`, or should release be exported as a separate field?
-5. Do `valid_from` and `valid_to` always represent system applicability in these exports?
-6. When the received value is `"n/a"`, do you agree with normalized `value: null` while preserving raw `"n/a"`?
-7. Should expressions be preserved as text without evaluation in the POC?
-8. Is optional grouping useful for `$tin_upthres*` and `$tin_rate*`, and can the team validate the mappings?
-9. Why does J2.19 contain 11,496 for `$tin_upthres1` while the cited article states 11,497?
-10. May `usage` be stored separately for compact agent and UI payloads?
-11. Who signs off the input mapping and the first 5-10 worked examples?
-
 ## 13. Validation exercise
 
 Validate 5-10 records already present in `FR.enriched.json`:
@@ -362,4 +366,3 @@ Validate 5-10 records already present in `FR.enriched.json`:
 - optionally, two members of a validated parameter group;
 - one parameter routed to the national team.
 
-The POC format is sufficient when the EUROMOD team can recognize its existing export, distinguish received data from pipeline output, verify the evidence, and record a decision without additional mandatory fields.

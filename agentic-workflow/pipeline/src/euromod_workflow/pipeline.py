@@ -18,7 +18,7 @@ from typing import TypedDict
 from langgraph.graph import END, StateGraph
 from opentelemetry.trace import Tracer
 
-from . import AGENT_VERSION, llm, mock, queue_store, retrieval
+from . import AGENT_VERSION, llm, mock, paramdb, queue_store, retrieval
 from .config import WorkflowConfig
 from .prompts import PROMPT_VERSION
 from .schema import (
@@ -46,6 +46,7 @@ class WorkflowState(TypedDict, total=False):
     parameter_file: str
     as_of: date
     run_id: str
+    phoenix_trace_id: str | None
     force: bool
     query: str
     citations: list[str]
@@ -226,6 +227,7 @@ def build_graph(cfg: WorkflowConfig, tracer: Tracer):
             item = ReviewItem(
                 id=queue_store.item_id(info.country, info.model_target, as_of),
                 run_id=state["run_id"],
+                phoenix_trace_id=state.get("phoenix_trace_id"),
                 created_at=datetime.now(timezone.utc),
                 country=info.country,
                 model_target=info.model_target,
@@ -367,6 +369,7 @@ def run_parameter(
     info = record.information
     run_id = f"{datetime.now(timezone.utc):%Y-%m-%dT%H:%MZ}#{info.country.lower()}-{uuid.uuid4().hex[:6]}"
     graph = build_graph(cfg, tracer)
+    started_at = datetime.now(timezone.utc)
     with step_span(
         tracer,
         f"parameter_update {info.model_target}",
@@ -381,14 +384,23 @@ def run_parameter(
             "agent_version": AGENT_VERSION,
         },
     ) as span:
+        # The trace id is fixed at root-span creation; carried through the state
+        # so the queue item and params.extraction_runs both link to Phoenix.
+        span_context = span.get_span_context()
+        phoenix_trace_id = f"{span_context.trace_id:032x}" if span_context.is_valid else None
         result = graph.invoke(
             {
                 "record": record,
                 "parameter_file": str(parameter_file),
                 "as_of": as_of,
                 "run_id": run_id,
+                "phoenix_trace_id": phoenix_trace_id,
                 "force": force,
             }
         )
         set_output(span, {"routing": result["routing"], "item_id": result["item"].id})
-    return result["item"]
+    item: ReviewItem = result["item"]
+    paramdb.record_run_safe(
+        cfg, item, PROMPT_VERSION, AGENT_VERSION, started_at, datetime.now(timezone.utc)
+    )
+    return item

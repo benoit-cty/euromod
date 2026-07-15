@@ -48,6 +48,8 @@ winget install jqlang.jq
 
 ## PDF from Markdown
 
+Download Quarto from https://quarto.org/docs/download/
+
 ```sh
 cd Param_Schema
 quarto render 08_schema-proposal-for-validation.md --to typst \

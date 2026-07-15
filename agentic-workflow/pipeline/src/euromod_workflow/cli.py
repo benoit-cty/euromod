@@ -4,6 +4,8 @@
   uv run euromod-workflow run-all --as-of 2025-06-01
   uv run euromod-workflow queue
   uv run euromod-workflow export
+  uv run euromod-workflow init-param-db
+  uv run euromod-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
 """
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ from pathlib import Path
 
 import typer
 
-from . import pipeline, queue_store
+from . import paramdb, pipeline, queue_store
 from .config import load_config
 from .tracing import setup_tracing
 
@@ -88,6 +90,31 @@ def export(
     for path in written:
         typer.echo(f"exported {path}")
     typer.echo(f"{len(written)} record(s) exported.")
+
+
+@app.command("init-param-db")
+def init_param_db() -> None:
+    """Create/refresh the params schema in the legislation DB (idempotent)."""
+    cfg = load_config()
+    with paramdb.connect(cfg) as conn:
+        paramdb.apply_schema(conn)
+    typer.echo(f"params schema applied to {cfg.database_url}")
+
+
+@app.command("ingest-params")
+def ingest_params(
+    files: list[Path] = typer.Argument(..., help="Enriched country export(s), e.g. FR.enriched.json"),
+) -> None:
+    """Ingest enriched parameter exports into params.parameters/model_values/parameter_usage."""
+    cfg = load_config()
+    with paramdb.connect(cfg) as conn:
+        paramdb.apply_schema(conn)
+        for path in files:
+            stats = paramdb.ingest_file(conn, path)
+            typer.echo(
+                f"{path.name}: {stats['parameters']} parameters, "
+                f"{stats['model_values']} model values, {stats['usage_edges']} usage edges"
+            )
 
 
 if __name__ == "__main__":
