@@ -1,185 +1,365 @@
-# Policy Parameter Format — Schema Proposal for Validation
+# EUROMOD-Assisted Parameter Update Format - Proposal for Validation
 
-*Draft for review by JRC.B.2 (Hannes, Luis, Kosta, Hugo) before any implementation. Please read §2 (the example) and §6 (decision points) even if you skip the rest.*
+*Draft for discussion with the EUROMOD team.*
 
----
+## 1. Purpose
 
-## 1. What problem this format solves
+The proof of concept assists a person updating EUROMOD parameters. For one existing parameter, it must:
 
-Our fiscal models (EUROMOD first) contain thousands of policy parameters — tax rates, thresholds, benefit amounts. Today, updating them means a person reads the law and edits the model. The AI pipeline we're building must **propose** such updates, and a human must be able to **verify** each proposal quickly. That requires every parameter value to carry, in one structured record:
+1. receive the parameter and its history from the EUROMOD team;
+2. select the relevant model value for a system year;
+3. search authoritative sources for a candidate value;
+4. show the candidate, exact supporting text, and citation;
+5. let a person accept, reject, or request a revision.
 
-1. **What** the value is, and **where in the model** it goes *(needed by the model)*
-2. **Since when** it applies, and until when *(needed by the model)*
-3. **Where it comes from** — the legal text, down to the exact sentence *(needed by the reviewer)*
-4. **How solid it is** — enacted law, or a bill still in parliament? extracted by an LLM, or confirmed by the national team? *(needed by the reviewer and for projections)*
+The pipeline is **export-first and human-gated**. It never writes directly into EUROMOD.
 
-Design principle, learned the hard way in OpenFisca-France (issue #1672, where optional metadata ended up filled 19–60% of the time): **only fields in group 1–2 are mandatory.** Groups 3–4 are enforced when a human *accepts* a proposal into the model — not when data enters the database. A parameter without a legal reference is valid data: it tells us it's national-team-sourced or not yet traced.
+The proposal is based on the files already received after a first draft format:
 
-## 2. A real example, end to end
+- `extracted_parameters/FR.policy.json` - the base parameter export;
+- `extracted_parameters/enriched/FR.enriched.json` - the same export with existing enrichment.
 
-France's *Contribution différentielle sur les hauts revenus* (CDHR), rate 20%, created by the 2025 budget law. As one record (JSON view):
+The POC should preserve this work rather than introduce a completely different format.
 
-See [parameter_sample](Param_Schema\parameter_sample.jsonc)
+## 2. What is already in the enriched French export
 
-What each block buys us:
+The large file was analysed with `jq`. It contains:
 
-- `model_target` — unambiguous write-back address in EUROMOD (system/policy/function/parameter). *Mandatory.*
-- `values[]` — full history, one entry per effective date; `valid_to: null` = still in force. Point-in-time queries ("what was the rate on 2025-06-01?") are a filter, not an archaeology exercise. *Value + valid_from mandatory.*
-- `supporting_extract` + `legal_unit_ref` — the exact sentence stating the value, linked to the chunk stored in our RAG. A reviewer verifies in seconds, and we can *automatically* check that the cited text really contains the value (our anti-hallucination KPI). *Required at acceptance for legislation-sourced values.*
-- `legal_status` — the key extension beyond OpenFisca. OpenFisca stores only enacted law, which blocks work on next-year projections. Here a bill's parameter is a legitimate record with `legal_status: "bill_proposed"` — routed and displayed differently, never silently mixed with enacted values.
-- `label`, `short_label`, `description` — language-keyed dictionaries, not separate one-off translation fields. This keeps the EU-facing interface ready for original-language review and multilingual display without changing the schema each time we add a language.
-- `lineage` — filled automatically by the pipeline; no human ever types it. It's how we audit and evaluate the system (Activity 4).
+| Observation | Result |
+|---|---:|
+| Parameter records | 702 |
+| Value-history rows | 3,886 |
+| Top-level shape | 702 records with `information` and `values` |
+| Unique `model_target` values | 702 |
+| Exported target kind | 702 `def_const` constants |
+| `value_type` | 702 `scalar` |
+| Numeric value rows | 2,961 |
+| String value rows | 925 |
+| Rows whose value is `"n/a"` | 758 |
+| Parameters with `coicop` | 227 |
+| `usage.defined_in` entries | 705 |
+| `usage.used_by` entries | 5,368 |
 
-### 2.1 A bracketed value (progressive schedule)
+Every `information` object contains:
 
-Most fiscal parameters aren't scalars — they're **scales**: income-tax bands, contribution ceilings, tapered benefits. These use `value_type: "bracket_schedule"`, and the only thing that changes is the shape of `value` (an ordered array of bands instead of a number). The whole envelope — `references`, `legal_status`, `confidence`, `lineage` — is identical to §2, so we show just the `parameter` header and one `values[]` entry:
+```text
+country, model_target, spine_order, value_type, unit,
+label, short_label, description, explanation,
+last_confirmed_valid_on, classification,
+usage, enrichment_lineage
+```
+
+`coicop` is additionally present for 227 consumption-tax parameters.
+
+Every existing `values[]` row contains:
+
+```text
+value, valid_from, valid_to,
+legal_status, source_type, official_journal_date,
+references, lineage
+```
+
+This is already close to the needs of the assisted updater. The main requirement is therefore to identify who supplies or fills each field.
+
+## 3. Data ownership and processing stages
+
+The proposed exchange record keeps the existing `information + values[]` envelope and adds proposal and review blocks. Comments in [`parameter_sample.jsonc`](parameter_sample.jsonc) use the same four labels as this section.
+
+### Stage A - received from the EUROMOD team
+
+For the POC, `FR.enriched.json` is the received input contract. The POC treats its existing content as read-only source data.
+
+The underlying base export already contains:
+
+- `country`, `model_target`, `spine_order`, `value_type`, and `unit`;
+- `label`, `description`, `explanation`, and `classification`;
+- the complete `values[]` history;
+- the raw EUROMOD representation in `values[].lineage.model_answer`;
+- the source model identifier in `values[].lineage.model`.
+
+The enriched file additionally contains or improves:
+
+- `short_label` for all 702 parameters;
+- `description` for all 702 parameters;
+- `usage` for all 702 parameters;
+- `enrichment_lineage` for all 702 parameters;
+- `coicop` for 227 parameters;
+- adjusted `unit` values for 211 parameters.
+
+The comparison found the same 702 targets and no changes to any of the 3,886 value-history rows. This means the enrichment adds context while preserving model values.
+
+The POC must not ask the value-search agent to regenerate labels, descriptions, classification, COICOP, or usage information that has already been supplied.
+
+### Stage B - deterministic POC post-processing
+
+This stage performs small, explainable transformations. It does not use an LLM and does not invent policy facts.
+
+It may add:
+
+
+- a structured `model_address`, parsed from `model_target`;
+- `model_release`, parsed from `values[].lineage.model` when possible;
+- `system_year`, selected for the workflow from within the received model interval;
+- `raw_euromod_value`, renamed from `lineage.model_answer` for clarity;
+- a structured unit view while preserving the received `unit`;
+- an optional `parameter_group`, based on an EUROMOD-team-approved mapping;
+- a simple comparison between the current model value and a proposal.
+
+The normalization rules for the POC are intentionally modest:
+
+1. Preserve the received fields for traceability.
+2. Convert a received model value of `"n/a"` to normalized `value: null`, but preserve `raw_euromod_value: "n/a"`.
+3. Preserve formulas such as `$PSS * 4` or `0.6 * 6/12 + 0.4 * 6/12` as raw text. Formula parsing is not required.
+4. Do not infer a legal effective date from a EUROMOD system year.
+5. Do not silently correct questionable labels or units. Keep the received value and mark any normalized interpretation as post-processing.
+
+### Stage C - agentic value search
+
+The agent searches legislation or another permitted source and creates a new entry in `proposals[]`. It does not overwrite `values[]`.
+
+The agent may supply:
+
+- `proposed_value`;
+- `effective_from` and `effective_to`, only when supported by the source;
+- `source_class`;
+- `legal_status`, when applicable;
+- `official_journal_date`;
+- one or more references;
+- an exact `supporting_extract`;
+- the cited RAG `chunks.id` as `jrc_database_id`;
+- extraction lineage and confidence;
+- a note explaining uncertainty or why the parameter should be routed to the national team.
+
+The central anti-hallucination rule remains mechanical:
+
+> For legislation-sourced proposals, `supporting_extract` must occur character-for-character in the cited RAG chunk before the proposal can be accepted.
+
+The agent is allowed to say that it cannot determine the value. It must not manufacture a citation or explain a model/legal difference without evidence.
+
+### Stage D - human review
+
+The validation UI appends entries to `review_decisions[]`:
+
+```text
+accepted | rejected | needs_revision
+```
+
+A decision records the proposal id, reviewer, timestamp, and note. Previous decisions are retained. An empty list means that the proposal is pending.
+
+## 4. Keep the existing parameter identity
+
+The received export uses:
+
+```text
+euromod://FR/tinkt_fr/def_const/$tin_upthres1
+```
+
+`model_target` remains the canonical compatibility identifier for the POC. Post-processing may expose its parts for the UI and database:
 
 ```json
 {
-  "information": {
-    "country": "FR",
-    "model_target": "euromod://FR/tin_fr/def_const/$tinsc_bareme",
-    "value_type": "bracket_schedule",
-    "unit": "/1",
-    "threshold_unit": "EUR",
-    "label": {
-      "fr": "Barème de l'impôt sur le revenu (par part de quotient familial)",
-      "en": "Income tax rate schedule (per family-quotient share)"
-    },
-    "short_label": {
-      "fr": "Barème IR",
-      "en": "Income tax schedule"
-    },
-    "description": {
-      "fr": "Barème progressif de l'impôt sur le revenu, avec un seuil inférieur et un taux pour chaque tranche.",
-      "en": "Progressive income-tax schedule, with a lower threshold and rate for each band."
-    },
-    "explanation" : {
-      "en": "Enforced by President following a strike."
-    },
-    "last_confirmed_valid_on": "2026-02-23",
-  },
-  "values": [
-    {
-      "value": [
-        { "threshold": 0,      "rate": 0.00 },
-        { "threshold": 11294,  "rate": 0.11 },
-        { "threshold": 28797,  "rate": 0.30 },
-        { "threshold": 82341,  "rate": 0.41 },
-        { "threshold": 177106, "rate": 0.45 }
-      ],
-      "valid_from": "2024-01-01",
-      "valid_to": "2024-12-31",
-      "legal_status": "enacted_in_force",
-      "source_type": "legislation",
-      "official_journal_date": "2025-02-15",
-      "confidence": 0.93,
-      "references": [
-        {
-          "title": "Code général des impôts, Article 197",
-          "href": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000047850595",
-          "jrc_database_id": "cb64e73f-a350-47b5-803c-7e37584c5e49",
-          "supporting_extract": "… le taux de : … 11 % pour la fraction supérieure à 11 294 € …",
-          "reviewer_note": "Refer to another document on specific notes."
-        }
-      ],
-      "lineage": {
-        "proposed_by": "pipeline",
-        "review_status": "accepted"
-      }
-    },
-    {
-      "value": [
-        { "threshold": 0,      "rate": 0.00 },
-        { "threshold": 11497,  "rate": 0.11 },
-        { "threshold": 29315,  "rate": 0.30 },
-        { "threshold": 83823,  "rate": 0.41 },
-        { "threshold": 180294, "rate": 0.45 }
-      ],
-      "valid_from": "2025-01-01",
-      "valid_to": null,
-      "legal_status": "enacted_in_force",
-      "source_type": "legislation",
-      "confidence": 0.93,
-      "references": [
-        {
-          "title": "Code général des impôts, Article 197",
-          "href": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051200000",
-          "jrc_database_id": "cb64e73f-a350-47b5-803c-7e37584c5e49",
-          "supporting_extract": "… le taux de : … 11 % pour la fraction supérieure à 11 497 € …"
-        }
-      ],
-      "lineage": {
-        "proposed_by": "pipeline",
-        "review_status": "pending"
-      }
-    }
-  ]
+  "country": "FR",
+  "policy": "tinkt_fr",
+  "function": "def_const",
+  "kind": "constant",
+  "name": "$tin_upthres1"
 }
 ```
 
-Notes on the bracket shape:
+This structured view is derived; it is not a request for the EUROMOD team to change the existing URI immediately. The team should confirm whether these parsed components are correct and sufficient for eventual write-back.
 
-- Each band carries only its **lower** `threshold` and its `rate`; the upper edge is implicitly the next band's threshold, and the last band runs to infinity. This matches EUROMOD's band tables and OpenFisca's `brackets`/`rates` pairs, so round-tripping stays lossless.
-- Thresholds and rates have **different units** — thresholds are amounts (`threshold_unit: "EUR"`), rates are dimensionless (`unit: "/1"`). This is exactly why decision point 2 (scale representation) and 3 (currency alongside unit) need your confirmation.
-- Amount-only scales (e.g. flat band ceilings with no rate) or amount-per-band scales would use the same array with an `amount` key instead of `rate`. We'd like JRC.B.2 to tell us which band variants EUROMOD actually needs so we don't over- or under-model this.
+## 5. Keep model history separate from proposals
 
-## 3. The lifecycle statuses
+The received `values[]` rows describe the values found in the exported model. For `$tin_upthres1`, the enriched file contains:
 
-| `legal_status` | Meaning | Typical use |
+| Model year derived from `valid_from` | Received value | Raw EUROMOD value |
+|---:|---:|---|
+| 2023 | 10,777 | `10777#y` |
+| 2024 | 11,294 | `11294#y` |
+| 2025 | 11,496 | `11496#y` |
+
+The cited version of CGI article 197 states `11 497 EUR`. The POC should display both facts:
+
+- **existing model value:** 11,496 for the 2025 system in release J2.19;
+- **agent proposal:** 11,497, supported by the cited legal extract.
+
+The agent must not replace the existing history. The reviewer decides whether a model update is appropriate and may ask the national team why the values differ.
+
+### Model release and system year
+
+The received lineage contains:
+
+```text
+euromod-connector:EUROMOD_MASTER_VERSION_J2.19
+```
+
+Post-processing can derive `model_release: "J2.19"`. For the latest annual row it can select `system_year: 2025` from the interval beginning at `valid_from: "2025-01-01"`.
+
+Some received rows cover several years. In that case `valid_from` and `valid_to` remain the model interval, while `system_year` is the particular year being reviewed within that interval. It must not always be treated as a rename of the `valid_from` year.
+
+Both are useful because a later release may revise the same system year. The original `valid_from`, `valid_to`, and lineage fields remain available until the EUROMOD team confirms that these derivations are reliable across countries.
+
+### Model dates versus legal dates
+
+All 3,886 received `valid_from` dates are 1 January, and every non-null `valid_to` is 31 December. For this POC, these dates are treated as model applicability intervals.
+
+Legal dates belong in the proposal as `effective_from` and `effective_to`. They are filled only when the source establishes them. A legal date may therefore remain `null` even when the system year is known.
+
+## 6. Values and units
+
+### Literal, unavailable, and expression values
+
+The received data uses the same `value` field for several representations:
+
+```json
+11496
+"n/a"
+"$PSS * 4"
+"0.6 * 6/12 + 0.4 * 6/12"
+```
+
+The normalized POC view uses:
+
+| Received value | Normalized value | Raw value retained |
 |---|---|---|
-| `enacted_in_force` | Published, effective | Normal updates |
-| `enacted_not_yet_in_force` | Published, future effective date | Next-year systems |
-| `adopted_pending_publication` | Voted, not yet in the official journal | Fast-track updates |
-| `bill_proposed` | In parliamentary procedure | Reform simulations |
-| `announced` | Government announcement only | Early scenario work |
-| `national_team_estimate` | No legal source; national team is the authority | Non-codified parameters |
+| `11496` | `11496` | `"11496#y"` |
+| `"n/a"` | `null` | `"n/a"` |
+| `"$PSS * 4"` | `null` | `"$PSS * 4"` |
+| weighted expression | `null` | complete expression |
 
-`legal_status` (where the *law* is in its life) is deliberately separate from `confidence` (how sure we are the *extraction* is right). An enacted law badly read by the LLM is high status / low confidence; a precise reading of a bill is low status / high confidence.
+Using `null` means “no normalized scalar is available”; it does not mean zero. Expressions remain visible to the reviewer, but the POC does not evaluate them.
 
-## 4. Mandatory vs. optional — the complete picture
+### Units
 
-| Requirement level | Enforced by | Fields |
-|---|---|---|
-| **Mandatory** | database (`NOT NULL`) | `country`, `model_target`, `value_type`, `unit`, `value`, `valid_from` |
-| **Acceptance-gated** | validation UI (can't click *Accept* without it) | `legal_status`; at least one `reference` **or** `source_type: national_team`; `supporting_extract` if legislation-sourced |
-| **Optional / auto-filled** | — | `label`, `short_label`, and `description` as language-keyed dictionaries, `valid_to`, `official_journal_date`, signature date, `confidence`, notes, all of `lineage` (machine-filled), `metadata` (free-form, see §5.1) |
+The received `unit` remains authoritative input, for example `currency/year`. Post-processing may add:
 
-## 5. Storage: database canonical, JSON as the exchange format
+```json
+{
+  "quantity": "money",
+  "currency": "EUR",
+  "period": "year",
+  "euromod_suffix": "#y"
+}
+```
 
-We propose **PostgreSQL as the single source of truth**, in the same database as the RAG:
+This structured unit is a convenience view. It is not allowed to hide the original value because the French data still contains questionable combinations, such as rates labelled `currency`.
 
-- Tables: `parameters`, `parameter_values`, `value_references`, `extraction_runs`, `review_decisions`.
-- Why: the mandatory tier becomes real constraints (OpenFisca's flat files couldn't enforce anything); `legal_unit_ref` becomes a foreign key into the RAG's legal chunks (a citation can't point at nothing); temporal and cross-country queries are one `WHERE` clause; the review log lives next to the data it judges.
-- The **JSON above is a generated view** — versioned JSON Schema (semver), round-trippable, and deliberately shaped like OpenFisca's YAML so it stays readable by economists. Pipeline and EUROMOD-side tooling consume/emit only this JSON; nothing outside the DB team touches SQL.
+## 7. Optional parameter groups
 
-So "EUROMOD prefers JSON" and "the DB is better" are both satisfied: JSON is the *interface*, the database is the *truth*.
+The received export correctly stores schedule components as separate scalar constants:
 
-### 5.1 Keeping the schema open — a `metadata` escape hatch
+```text
+$tin_upthres1 ... $tin_upthres5
+$tin_rate1 ... $tin_rate6
+```
 
-A hard constraint has a cost: the first time reality doesn't fit, you need a migration, a schema-version bump, and coordination with everyone who consumes the JSON. To avoid freezing v1.0 into a corner, we propose that **both the `parameters` and `parameter_values` tables carry a `metadata JSONB` column** (defaulting to `{}`), surfaced in the JSON view as an optional `metadata` object.
+The POC keeps every constant and `model_target` unchanged. Post-processing may optionally add:
 
-The rule of thumb:
+```json
+{
+  "id": "FR:tinkt_fr:income_tax_schedule",
+  "kind": "bracket_schedule",
+  "role": "upper_threshold",
+  "index": 1
+}
+```
 
-- Anything the **model needs** or the **reviewer gates on** is a *first-class, typed column* — never buried in `metadata`. The mandatory and acceptance-gated tiers (§4) stay strict.
-- Anything **experimental, country-specific, or not-yet-standardised** goes in `metadata` first. Examples we already anticipate: a national team's internal parameter id, EUROMOD spine-ordering hints, indexation notes before uprating is formalised (decision point 7), or a flag for a value type we haven't blessed yet.
-- When a `metadata` key proves it's used widely and reliably (the opposite of OpenFisca-France #1672), we **promote it to a real column** with a constraint, in a normal semver minor release. So `metadata` is a *staging area*, not a dumping ground — it lets us learn what's genuinely needed before committing the schema to it.
+This is only a display and retrieval hint. It does not combine values into an array and does not change write-back. Group mappings must be supplied or validated by the EUROMOD team; they should not be inferred from names alone for the POC.
 
-This gives us forward-compatibility without weakening the constraints that matter: `NOT NULL` still guards the model's inputs, foreign keys still guard citations, and the JSON Schema can still validate the typed fields strictly while allowing `metadata` to be any object.
+## 8. Source class, legal status, and references
 
-## 6. Decision points — what we need from you
+`source_class` answers “where did this candidate value come from?”:
 
-1. **Addressing** (`model_target`): is `system/policy/function/parameter` sufficient and stable as a write-back address in EUROMOD? Edge cases (parameters shared across policies, spine reordering between system years)?
-2. **Value types**: proposed set = `scalar | bracket_schedule | boolean | formula`. Enough for the pilot's parameter classes? How should we represent EUROMOD scale/band structures exactly?
-3. **Mandatory tier**: do you confirm the minimal set in §4? Anything the *model* strictly needs that's missing (e.g., currency alongside unit)?
-4. **Status enum**: are the six `legal_status` values right for how you work on projections and reforms? Should `national_team_estimate` be a status or only a `source_type`?
-5. **Alignment with the Ireland JSON prototype** (Hannes): field-name mapping session — where do we diverge and why?
-6. **One DB or two?** Parameters in the RAG's PostgreSQL (proposed) vs. a separate store. Any infra constraint against co-location? (Luis — does this fit the MCP integration you're exploring?)
-7. **Uprating/indexation rules**: in scope as a `formula` value type in v1, or explicitly deferred?
-8. **Language fields**: should `label`, `short_label`, and `description` be language-keyed dictionaries using ISO/BCP 47 language codes (`fr`, `en`, `ga`, `de-AT`, ...)? Which languages are required at acceptance: original legal language only, English, or both?
-9. **Forward-compatibility** (`metadata`, §5.1): do you agree with a free-form `metadata JSONB` escape hatch on both tables, with the discipline that model-critical / review-gated fields are never allowed to live there? Any field you'd want promoted to a real column from day one rather than staged in `metadata`?
-10. **Who signs off** this schema, and does sign-off freeze v1.0?
+```text
+legislation | administrative_guidance | official_statistics | national_team | other
+```
 
-## 7. What happens after validation
+`legal_status` answers “what is the lifecycle state of this legal measure?”:
 
-Schema v1.0 frozen → SQL DDL + JSON Schema committed to GitLab → agentic pipeline (Activity 3) and golden dataset (Activity 4) both expressed in this format → any later change goes through semver + decision log.
+```text
+enacted_in_force | enacted_not_yet_in_force | bill_proposed | announced
+```
+
+`legal_status` may be `null` for official statistics or national-team values. `national_team` is a source class, not a legal lifecycle status.
+
+For legislation, references attach to the proposal that they support, not to the parameter in general. A reference may include title, article, URL, legal-unit identifier, exact extract, RAG chunk id, and offsets.
+
+## 9. Usage and file size
+
+The received `usage` block is valuable context: it shows where a constant is defined and its 5,368 uses in the model. It should not be discarded.
+
+For the POC there are two acceptable options:
+
+1. keep `usage` in each full exchange record, matching `FR.enriched.json`; or
+2. place the unchanged usage graph in a sidecar file or table and keep a `usage_ref` in the compact review record.
+
+Option 2 reduces repeated data sent to the agent and UI. It is an optimization, not a change to the information supplied by the EUROMOD team.
+
+## 10. Minimal POC storage
+
+PostgreSQL remains the proposed canonical store; JSON remains the exchange format.
+
+The minimum tables are:
+
+- `parameters` - received information plus deterministic normalized fields;
+- `model_values` - received model history and raw EUROMOD representations;
+- `parameter_usage` - received usage graph, optionally stored separately;
+- `proposals` - agent-generated candidate values and source metadata;
+- `references` - evidence attached to proposals;
+- `extraction_runs` - agent, model, prompt, confidence, and retrieval trace;
+- `review_decisions` - append-only human decisions.
+
+This is intentionally smaller than a general fiscal-parameter database.
+
+## 11. Required fields and gates
+
+### Required POC input
+
+- received `information.model_target` and `information.country`;
+- received `values[]` history;
+- received raw model value and connector/model identifier;
+- enough received metadata to display the parameter to a reviewer.
+
+### Required agent proposal
+
+- `proposal_id`;
+- `proposed_value`, which may be `null` when the agent abstains;
+- `source_class`;
+- run id and confidence;
+- legal dates only when supported by evidence.
+
+### Required before acceptance
+
+- `legal_status` for legislation;
+- at least one citation and exact supporting extract for legislation;
+- otherwise, an appropriate source reference or explicit national-team note.
+
+`parameter_group`, structured units, offsets, and legal end dates are optional.
+
+## 12. Questions for the EUROMOD team
+
+1. Can `FR.enriched.json` be treated as the POC input contract, including its existing enrichment fields?
+2. Which fields are guaranteed directly by the connector, and which are produced by EUROMOD-side enrichment?
+3. Is parsing `country`, `policy`, `function`, and constant name from `model_target` acceptable?
+4. Can `J2.19` reliably be parsed from `lineage.model`, or should release be exported as a separate field?
+5. Do `valid_from` and `valid_to` always represent system applicability in these exports?
+6. When the received value is `"n/a"`, do you agree with normalized `value: null` while preserving raw `"n/a"`?
+7. Should expressions be preserved as text without evaluation in the POC?
+8. Is optional grouping useful for `$tin_upthres*` and `$tin_rate*`, and can the team validate the mappings?
+9. Why does J2.19 contain 11,496 for `$tin_upthres1` while the cited article states 11,497?
+10. May `usage` be stored separately for compact agent and UI payloads?
+11. Who signs off the input mapping and the first 5-10 worked examples?
+
+## 13. Validation exercise
+
+Validate 5-10 records already present in `FR.enriched.json`:
+
+- one plain statutory amount;
+- one rate;
+- one `"n/a"` value;
+- one raw expression;
+- the `$tin_upthres1` model/legal discrepancy;
+- optionally, two members of a validated parameter group;
+- one parameter routed to the national team.
+
+The POC format is sufficient when the EUROMOD team can recognize its existing export, distinguish received data from pipeline output, verify the evidence, and record a decision without additional mandatory fields.

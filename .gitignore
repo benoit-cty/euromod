@@ -3,3 +3,4 @@ RAG/ingest/.venv-linux/
 RAG/ingest/logs/
 RAG/ingest/models/*
 .env
+**/.quarto/

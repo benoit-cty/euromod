@@ -17,6 +17,7 @@ cd ../ui && npm install && npm run tauri dev
 
 Things to install to allow better works for agentic coding.
 
+```sh
 sudo apt-get update && sudo apt-get install -y --no-install-recommends \
     git \
     curl \
@@ -35,14 +36,24 @@ sudo apt-get update && sudo apt-get install -y --no-install-recommends \
     python-is-python3 \
     ripgrep \
     make \
-    # For pdfinfo
     poppler-utils \
     socat \
     && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+```
 
 In PowerShell :
-
+```sh
 winget install jqlang.jq
+```
+
+## PDF from Markdown
+
+```sh
+cd Param_Schema
+quarto render 08_schema-proposal-for-validation.md --to typst \
+  -M toc:true -M toc-depth:2 -M papersize:a4 \
+  -M shift-heading-level-by:-1 -M date:2026-07-15
+```
 
 ## Questions
 
