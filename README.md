@@ -52,9 +52,12 @@ Download Quarto from https://quarto.org/docs/download/
 
 ```sh
 cd Param_Schema
-quarto render 08_schema-proposal-for-validation.md --to typst \
+sed 's/^```mermaid$/```{mermaid}/' parameter_report.md > parameter_report.qmd
+quarto render parameter_report.qmd --to typst \
   -M toc:true -M toc-depth:2 -M papersize:a4 \
   -M shift-heading-level-by:-1 -M date:2026-07-15
+rm parameter_report.qmd
+
 ```
 
 ## Questions

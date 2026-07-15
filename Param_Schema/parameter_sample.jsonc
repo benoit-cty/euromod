@@ -66,7 +66,7 @@
       "status": "pending"
     },
 
-    // Parsed deterministically from model_target. The original URI remains above.
+    // [RECEIVED] Parsed deterministically from model_target. The original URI remains above.
     "model_address": {
       "policy": "tinkt_fr",
       "function": "def_const",
@@ -74,7 +74,7 @@
       "name": "$tin_upthres1"
     },
 
-    // [POST-PROCESSING]
+    // [RECEIVED]
     // Convenience view of the received unit and the suffix in the raw EUROMOD value.
     // It must not overwrite the received unit if the interpretation is uncertain.
     "structured_unit": {
@@ -84,7 +84,7 @@
       "euromod_suffix": "#y"
     },
 
-    // [POST-PROCESSING - OPTIONAL]
+    // [RECEIVED]
     // This scalar remains independently addressable. The group only helps the UI
     // show that $tin_upthres* and $tin_rate* form related schedule components.
     // The mapping must be validated by the EUROMOD team.
@@ -95,10 +95,6 @@
       "index": 1
     },
 
-    // [POST-PROCESSING - OPTIONAL SIZE OPTIMIZATION]
-    // The received `usage` object is stored unchanged outside this compact record.
-    // For this parameter it contains one defined_in entry and four used_by entries.
-    "usage_ref": "parameter-usage/FR:tinkt_fr:def_const:$tin_upthres1"
   },
 
   // [RECEIVED + POST-PROCESSING]
@@ -132,7 +128,6 @@
         "confidence": null,
         "retrieval_trace": null
       },
-      // [POST-PROCESSING] Deterministic convenience view.
       "normalized": {
         "model_release": "J2.19",
         // Selected system year for this annual interval. For compressed multi-year
