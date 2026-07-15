@@ -17,7 +17,17 @@ uv run euromod-workflow export
 # Parameter store (params schema in the legislation DB — db/params_schema.sql)
 uv run euromod-workflow init-param-db
 uv run euromod-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
+uv run euromod-workflow translate-params --country FR   # law-language search text (real model needed)
+uv run euromod-workflow ingest-openfisca ~/Euromod/openfisca-france/openfisca_france/parameters --country FR
 ```
+
+`ingest-params` accepts both export envelopes (the bare record list and the
+0.2.0 `{schema_version, country, parameters, groups}` object) and prefers
+received Stage B fields over local derivations. `translate-params` fills
+`params.parameter_texts` with law-language renderings of the English
+labels/descriptions; `frame` prefers them when building the retrieval query so
+the FTS leg of hybrid search is no longer cross-language (see
+[Param_Schema/openfisca_france_usage.md](../../Param_Schema/openfisca_france_usage.md) §5).
 
 Configuration: see [../.env.example](../.env.example). Set `WORKFLOW_MODEL`
 (e.g. `anthropic/claude-sonnet-5`) to use a real LLM. Traces land in Phoenix

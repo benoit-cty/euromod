@@ -18,7 +18,7 @@ from typing import TypedDict
 from langgraph.graph import END, StateGraph
 from opentelemetry.trace import Tracer
 
-from . import AGENT_VERSION, llm, mock, paramdb, queue_store, retrieval
+from . import AGENT_VERSION, llm, mock, paramdb, queue_store, retrieval, translate
 from .config import WorkflowConfig
 from .prompts import PROMPT_VERSION
 from .schema import (
@@ -98,7 +98,23 @@ def build_graph(cfg: WorkflowConfig, tracer: Tracer):
         info = record.information
         labels = {**(info.short_label or {}), **(info.label or {})}
         descriptions = info.description or {}
-        query = " ".join(dict.fromkeys([*labels.values(), *descriptions.values()])) or info.model_target
+        # Prefer law-language text for the query: the FTS leg of hybrid retrieval
+        # is language-specific, so an English-only record searches French law
+        # poorly. Translations live in params.parameter_texts (best-effort:
+        # no rows / no schema -> received text only, previous behaviour).
+        lang = retrieval.LANG_BY_COUNTRY.get(info.country, "en")
+        native: list[str] = []
+        if lang not in labels and lang not in descriptions:
+            try:
+                with paramdb.connect(cfg) as conn:
+                    texts = translate.law_language_texts(conn, info.model_target, lang)
+                native = [t for f in ("short_label", "label", "description") if (t := texts.get(f))]
+            except Exception:
+                native = []
+        query = (
+            " ".join(dict.fromkeys([*native, *labels.values(), *descriptions.values()]))
+            or info.model_target
+        )
         citations: list[str] = []
         for value in reversed(record.values):
             for ref in value.references:
@@ -106,7 +122,10 @@ def build_graph(cfg: WorkflowConfig, tracer: Tracer):
             if citations:
                 break
         with step_span(tracer, "frame", input_value={"model_target": info.model_target}) as span:
-            set_output(span, {"query": query, "citations": citations})
+            set_output(
+                span,
+                {"query": query, "citations": citations, "law_language_texts": len(native)},
+            )
         return {"query": query, "citations": list(dict.fromkeys(citations)), "attempts": 0}
 
     def retrieve(state: WorkflowState) -> dict:

@@ -112,7 +112,9 @@ class Lineage(BaseModel):
 class ParameterValue(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    value: list[Bracket] | bool | float | str
+    # None = "no normalized scalar available" (doc §6: n/a or expression rows
+    # in exports >= 0.2.0), never zero.
+    value: list[Bracket] | bool | float | str | None
     valid_from: date
     valid_to: date | None = None
     legal_status: LegalStatus | None = None

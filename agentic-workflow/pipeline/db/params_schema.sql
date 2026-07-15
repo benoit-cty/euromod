@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS params.parameters (
     id                      bigserial PRIMARY KEY,
     country                 text NOT NULL,             -- received information.country
     model_target            text NOT NULL UNIQUE,      -- canonical id: euromod://FR/tinkt_fr/def_const/$tin_upthres1
+    parameter_key           text,                      -- received information.parameter_id (export >= 0.2.0): 'FR:tinkt_fr:def_const:$tin_upthres1'
     -- Stage B: structured model_address parsed from model_target (doc §4)
     policy                  text,                      -- 'tinkt_fr'
     function                text,                      -- 'def_const'
@@ -53,8 +54,30 @@ CREATE TABLE IF NOT EXISTS params.parameters (
     source_file             text NOT NULL,             -- provenance of the ingest
     ingested_at             timestamptz NOT NULL DEFAULT now()
 );
+-- Additive migration for databases created before export 0.2.0 support
+-- (CREATE TABLE IF NOT EXISTS does not add columns to an existing table).
+ALTER TABLE params.parameters ADD COLUMN IF NOT EXISTS parameter_key text;
 CREATE INDEX IF NOT EXISTS parameters_country_idx ON params.parameters (country);
 CREATE INDEX IF NOT EXISTS parameters_policy_idx  ON params.parameters (country, policy);
+CREATE UNIQUE INDEX IF NOT EXISTS parameters_key_idx ON params.parameters (parameter_key)
+    WHERE parameter_key IS NOT NULL;
+
+-- ----------------------------------------------------------------------------
+-- parameter_groups — received group definitions (export >= 0.2.0; doc §7).
+-- Display/retrieval hints validated by the EUROMOD team; components reference
+-- parameters by their received parameter_key.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS params.parameter_groups (
+    id          bigserial PRIMARY KEY,
+    group_id    text NOT NULL UNIQUE,      -- 'FR:tscse_fr:sched_schedule'
+    country     text NOT NULL,
+    kind        text,                      -- 'bracket_schedule', ...
+    policy      text,
+    instances   jsonb NOT NULL DEFAULT '[]',
+    components  jsonb NOT NULL DEFAULT '[]',  -- [{parameter_id, role, band_index}, ...]
+    source_file text NOT NULL,
+    ingested_at timestamptz NOT NULL DEFAULT now()
+);
 
 -- ----------------------------------------------------------------------------
 -- model_values — received values[] history. NEVER overwritten by proposals
@@ -100,6 +123,99 @@ CREATE TABLE IF NOT EXISTS params.parameter_usage (
     source            text                     -- e.g. 'spine'
 );
 CREATE INDEX IF NOT EXISTS parameter_usage_param_idx ON params.parameter_usage (parameter_id);
+
+-- ----------------------------------------------------------------------------
+-- parameter_texts — derived language renderings of received label/description
+-- fields (Stage B enrichment; see Param_Schema/openfisca_france_usage.md §5).
+-- The received jsonb on params.parameters stays untouched; rows here carry
+-- provenance. Retrieval prefers the law-language rendering when present so
+-- the FTS leg of hybrid search stops being cross-language.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS params.parameter_texts (
+    id           bigserial PRIMARY KEY,
+    parameter_id bigint NOT NULL REFERENCES params.parameters(id) ON DELETE CASCADE,
+    lang         text NOT NULL,               -- BCP-47 primary tag: 'fr','nl',...
+    field        text NOT NULL CHECK (field IN ('label','short_label','description')),
+    content      text NOT NULL,
+    origin       text NOT NULL CHECK (origin IN ('machine_translation','openfisca','manual')),
+    engine       text,                        -- provider-prefixed model for machine_translation
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (parameter_id, lang, field, origin)
+);
+CREATE INDEX IF NOT EXISTS parameter_texts_param_idx ON params.parameter_texts (parameter_id, lang);
+
+-- ----------------------------------------------------------------------------
+-- external_* — curated external parameter corpora (OpenFisca country packages
+-- and compatible sources; see Param_Schema/openfisca_france_usage.md).
+-- Stored under their own corpus-native identity: NO mapping to EUROMOD is
+-- required at ingest time. parameter_links carries the sparse, human-validated
+-- mapping and is initially empty.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS params.external_corpora (
+    id          bigserial PRIMARY KEY,
+    kind        text NOT NULL,                  -- 'openfisca'
+    country     text NOT NULL,
+    repo_url    text,
+    commit_sha  text,                           -- pinned for reproducibility
+    license     text,
+    ingested_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (kind, country)
+);
+
+CREATE TABLE IF NOT EXISTS params.external_parameters (
+    id          bigserial PRIMARY KEY,
+    corpus_id   bigint NOT NULL REFERENCES params.external_corpora(id) ON DELETE CASCADE,
+    path        text NOT NULL,                  -- dotted corpus path: 'impot_revenu.bareme_ir_depuis_1945.bareme'
+    value_kind  text NOT NULL CHECK (value_kind IN ('scalar','bracket_schedule')),
+    description text,
+    short_label text,
+    unit        text,
+    metadata    jsonb NOT NULL DEFAULT '{}',    -- received metadata minus reference (stored relationally)
+    UNIQUE (corpus_id, path)
+);
+
+-- One row per (component, date): scalars use component 'value'; scales store
+-- each band part separately ('brackets[2].rate'), which is exactly the grain
+-- EUROMOD scalar constants are matched against (value-fingerprint matching).
+CREATE TABLE IF NOT EXISTS params.external_values (
+    id                    bigserial PRIMARY KEY,
+    external_parameter_id bigint NOT NULL REFERENCES params.external_parameters(id) ON DELETE CASCADE,
+    component             text NOT NULL DEFAULT 'value',
+    valid_from            date NOT NULL,
+    value_numeric         double precision,     -- NULL = expired/no scalar
+    value_raw             jsonb,
+    UNIQUE (external_parameter_id, component, valid_from)
+);
+CREATE INDEX IF NOT EXISTS external_values_numeric_idx ON params.external_values (value_numeric)
+    WHERE value_numeric IS NOT NULL;            -- fingerprint-matching probe
+
+CREATE TABLE IF NOT EXISTS params.external_references (
+    id                    bigserial PRIMARY KEY,
+    external_parameter_id bigint NOT NULL REFERENCES params.external_parameters(id) ON DELETE CASCADE,
+    valid_from            date,                 -- NULL for undated references
+    title                 text,
+    href                  text,
+    national_id           text,                 -- LEGIARTI/JORFTEXT/... parsed from href
+    official_journal_date text                  -- raw; occasionally lists several dates
+);
+CREATE INDEX IF NOT EXISTS external_references_natid_idx ON params.external_references (national_id)
+    WHERE national_id IS NOT NULL;
+
+-- Sparse EUROMOD <-> external mapping. Automated methods only ever suggest;
+-- a row counts as validated once validated_by is set.
+CREATE TABLE IF NOT EXISTS params.parameter_links (
+    id                    bigserial PRIMARY KEY,
+    parameter_id          bigint NOT NULL REFERENCES params.parameters(id) ON DELETE CASCADE,
+    external_parameter_id bigint NOT NULL REFERENCES params.external_parameters(id) ON DELETE CASCADE,
+    component             text NOT NULL DEFAULT 'value',  -- external component matched
+    match_method          text NOT NULL CHECK (match_method IN
+                            ('manual','fingerprint','structure','embedding_suggested','llm_suggested')),
+    score                 real,
+    validated_by          text,
+    validated_at          timestamptz,
+    created_at            timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (parameter_id, external_parameter_id, component)
+);
 
 -- ----------------------------------------------------------------------------
 -- extraction_runs — one row per agentic pipeline run for one

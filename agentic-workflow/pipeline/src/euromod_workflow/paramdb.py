@@ -117,37 +117,53 @@ def structured_unit(unit: str | None, raw_euromod_value: str | None) -> dict | N
 
 
 def ingest_file(conn: psycopg.Connection, path: Path) -> dict:
-    """Load one enriched export; upsert parameters, replace values and usage."""
-    records = json.loads(path.read_text(encoding="utf-8"))
-    stats = {"parameters": 0, "model_values": 0, "usage_edges": 0}
+    """Load one enriched export; upsert parameters, replace values and usage.
+
+    Accepts both envelopes: a bare list of records (export 0.1) and the
+    0.2.0 object {schema_version, country, parameters, groups}. Received
+    Stage B fields (model_address, structured_unit, normalized,
+    parameter_group) take precedence; local derivations only fill gaps
+    left by older exports.
+    """
+    data = json.loads(path.read_text(encoding="utf-8"))
+    records = data["parameters"] if isinstance(data, dict) else data
+    groups = data.get("groups", []) if isinstance(data, dict) else []
+    stats = {"parameters": 0, "model_values": 0, "usage_edges": 0, "groups": 0}
     with conn.transaction():
         for record in records:
             info = record["information"]
             parameter_id = _upsert_parameter(conn, info, str(path))
             stats["parameters"] += 1
-            stats["model_values"] += _replace_values(conn, parameter_id, record.get("values", []))
+            stats["model_values"] += _replace_values(
+                conn, parameter_id, record.get("values", []), info
+            )
             stats["usage_edges"] += _replace_usage(conn, parameter_id, info.get("usage") or {})
+        for group in groups:
+            _upsert_group(conn, group, str(path))
+            stats["groups"] += 1
     return stats
 
 
 def _upsert_parameter(conn: psycopg.Connection, info: dict, source_file: str) -> int:
-    address = parse_model_target(info["model_target"])
+    address = info.get("model_address") or parse_model_target(info["model_target"])
     row = conn.execute(
         """
         INSERT INTO params.parameters
-            (country, model_target, policy, function, name, spine_order,
-             value_type, unit, label, short_label, description, explanation,
+            (country, model_target, parameter_key, policy, function, name, spine_order,
+             value_type, unit, unit_structured, label, short_label, description, explanation,
              classification, coicop, last_confirmed_valid_on, enrichment_lineage,
-             source_file, ingested_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now())
+             parameter_group, source_file, ingested_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now())
         ON CONFLICT (model_target) DO UPDATE SET
             country = EXCLUDED.country,
+            parameter_key = EXCLUDED.parameter_key,
             policy = EXCLUDED.policy,
             function = EXCLUDED.function,
             name = EXCLUDED.name,
             spine_order = EXCLUDED.spine_order,
             value_type = EXCLUDED.value_type,
             unit = EXCLUDED.unit,
+            unit_structured = coalesce(EXCLUDED.unit_structured, params.parameters.unit_structured),
             label = EXCLUDED.label,
             short_label = EXCLUDED.short_label,
             description = EXCLUDED.description,
@@ -156,6 +172,7 @@ def _upsert_parameter(conn: psycopg.Connection, info: dict, source_file: str) ->
             coicop = EXCLUDED.coicop,
             last_confirmed_valid_on = EXCLUDED.last_confirmed_valid_on,
             enrichment_lineage = EXCLUDED.enrichment_lineage,
+            parameter_group = EXCLUDED.parameter_group,
             source_file = EXCLUDED.source_file,
             ingested_at = now()
         RETURNING id
@@ -163,12 +180,14 @@ def _upsert_parameter(conn: psycopg.Connection, info: dict, source_file: str) ->
         (
             info["country"],
             info["model_target"],
-            address["policy"],
-            address["function"],
-            address["name"],
+            info.get("parameter_id"),
+            address.get("policy"),
+            address.get("function"),
+            address.get("name"),
             info.get("spine_order"),
             info["value_type"],
             info["unit"],
+            _jsonb(info.get("structured_unit")),
             _jsonb(info.get("label")),
             _jsonb(info.get("short_label")),
             _jsonb(info.get("description")),
@@ -177,20 +196,61 @@ def _upsert_parameter(conn: psycopg.Connection, info: dict, source_file: str) ->
             _jsonb(info.get("coicop")),
             info.get("last_confirmed_valid_on"),
             _jsonb(info.get("enrichment_lineage")),
+            _jsonb(info.get("parameter_group")),
             source_file,
         ),
     ).fetchone()
     return row[0]
 
 
-def _replace_values(conn: psycopg.Connection, parameter_id: int, values: list[dict]) -> int:
+def _upsert_group(conn: psycopg.Connection, group: dict, source_file: str) -> None:
+    conn.execute(
+        """
+        INSERT INTO params.parameter_groups
+            (group_id, country, kind, policy, instances, components, source_file, ingested_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, now())
+        ON CONFLICT (group_id) DO UPDATE SET
+            country = EXCLUDED.country,
+            kind = EXCLUDED.kind,
+            policy = EXCLUDED.policy,
+            instances = EXCLUDED.instances,
+            components = EXCLUDED.components,
+            source_file = EXCLUDED.source_file,
+            ingested_at = now()
+        """,
+        (
+            group["id"],
+            group["id"].split(":", 1)[0],
+            group.get("kind"),
+            group.get("policy"),
+            _jsonb(group.get("instances") or []),
+            _jsonb(group.get("components") or []),
+            source_file,
+        ),
+    )
+
+
+def _replace_values(
+    conn: psycopg.Connection, parameter_id: int, values: list[dict], info: dict | None = None
+) -> int:
     conn.execute("DELETE FROM params.model_values WHERE parameter_id = %s", (parameter_id,))
     rows = []
     unit_probe = None
     for seq, value in enumerate(values):
         lineage = value.get("lineage") or {}
-        raw_euromod = lineage.get("model_answer")
+        normalized = value.get("normalized") or {}  # received Stage B (export >= 0.2.0)
+        raw_euromod = normalized.get("raw_euromod_value") or lineage.get("model_answer")
         numeric, kind = normalise_value(value["value"])
+        if "value" in normalized:
+            # 0.2.0 normalizes upstream: value is the scalar or null, and only
+            # raw_euromod_value distinguishes an 'n/a' from an expression.
+            numeric = normalized["value"]
+            if numeric is not None:
+                kind = "numeric"
+            elif raw_euromod and raw_euromod.strip().lower() == "n/a":
+                kind = "n_a"
+            else:
+                kind = "expression"
         unit_probe = unit_probe or raw_euromod
         rows.append(
             (
@@ -200,8 +260,9 @@ def _replace_values(conn: psycopg.Connection, parameter_id: int, values: list[di
                 numeric,
                 kind,
                 raw_euromod,
-                parse_model_release(lineage.get("model")),
-                derive_system_year(value["valid_from"], value.get("valid_to")),
+                normalized.get("model_release") or parse_model_release(lineage.get("model")),
+                normalized.get("system_year")
+                or derive_system_year(value["valid_from"], value.get("valid_to")),
                 value["valid_from"],
                 value.get("valid_to"),
                 value.get("legal_status"),
@@ -223,14 +284,16 @@ def _replace_values(conn: psycopg.Connection, parameter_id: int, values: list[di
             """,
             rows,
         )
-    # Stage B structured-unit hint on the parameter, derived from unit + suffix.
-    row = conn.execute(
-        "SELECT unit FROM params.parameters WHERE id = %s", (parameter_id,)
-    ).fetchone()
-    conn.execute(
-        "UPDATE params.parameters SET unit_structured = %s WHERE id = %s",
-        (_jsonb(structured_unit(row[0], unit_probe)), parameter_id),
-    )
+    # Stage B structured-unit hint, derived from unit + suffix — only when the
+    # export did not already supply a received structured_unit.
+    if not (info or {}).get("structured_unit"):
+        row = conn.execute(
+            "SELECT unit FROM params.parameters WHERE id = %s", (parameter_id,)
+        ).fetchone()
+        conn.execute(
+            "UPDATE params.parameters SET unit_structured = %s WHERE id = %s",
+            (_jsonb(structured_unit(row[0], unit_probe)), parameter_id),
+        )
     return len(rows)
 
 

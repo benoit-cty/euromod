@@ -15,7 +15,7 @@ from pathlib import Path
 
 import typer
 
-from . import paramdb, pipeline, queue_store
+from . import openfisca, paramdb, pipeline, queue_store, translate
 from .config import load_config
 from .tracing import setup_tracing
 
@@ -115,6 +115,57 @@ def ingest_params(
                 f"{path.name}: {stats['parameters']} parameters, "
                 f"{stats['model_values']} model values, {stats['usage_edges']} usage edges"
             )
+
+
+@app.command("ingest-openfisca")
+def ingest_openfisca(
+    parameters_dir: Path = typer.Argument(..., help="parameters/ directory of an OpenFisca country package"),
+    country: str = typer.Option(..., "--country", help="ISO country code of the package"),
+    kind: str = typer.Option("openfisca", "--kind", help="Corpus kind"),
+    license: str = typer.Option("AGPL-3.0", "--license", help="License of the corpus"),
+) -> None:
+    """Ingest an OpenFisca-format parameter corpus into params.external_* (no EUROMOD mapping)."""
+    cfg = load_config()
+    if not parameters_dir.is_dir():
+        typer.echo(f"not a directory: {parameters_dir}")
+        raise typer.Exit(1)
+    with paramdb.connect(cfg) as conn:
+        paramdb.apply_schema(conn)
+        stats = openfisca.ingest_corpus(
+            conn, parameters_dir, country.upper(), kind=kind, license=license, echo=typer.echo
+        )
+    typer.echo(
+        f"{stats['parameters']} external parameters, {stats['values']} value points, "
+        f"{stats['references']} references "
+        f"({stats['skipped_files']} node files skipped, {stats['errors']} parse errors)"
+    )
+
+
+@app.command("translate-params")
+def translate_params(
+    country: str = typer.Option("FR", "--country", help="Country code whose parameters to translate"),
+    lang: str = typer.Option(None, "--lang", help="Target language (default: the country's law language)"),
+    model: str = typer.Option(None, "--model", help="Override WORKFLOW_MODEL"),
+    batch_size: int = typer.Option(8, "--batch-size", help="Parameters per LLM call"),
+    limit: int = typer.Option(0, "--limit", help="Translate at most N parameters (0 = all pending)"),
+    force: bool = typer.Option(False, "--force", help="Re-translate parameters that already have MT rows"),
+) -> None:
+    """Machine-translate parameter labels/descriptions into the law language (params.parameter_texts)."""
+    cfg = load_config()
+    chosen = model or cfg.model
+    if chosen.startswith("mock"):
+        typer.echo("translate-params needs a real model — set WORKFLOW_MODEL or pass --model")
+        raise typer.Exit(1)
+    with paramdb.connect(cfg) as conn:
+        paramdb.apply_schema(conn)
+        stats = translate.translate_country(
+            conn, chosen, country.upper(), lang,
+            batch_size=batch_size, limit=limit, force=force, echo=typer.echo,
+        )
+    typer.echo(
+        f"{stats['parameters']} parameter(s) translated, {stats['texts']} text rows written"
+        + (f", {stats['mismatches']} mismatched model_targets skipped" if stats["mismatches"] else "")
+    )
 
 
 if __name__ == "__main__":
