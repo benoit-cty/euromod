@@ -152,7 +152,7 @@ The received export uses:
 euromod://FR/tinkt_fr/def_const/$tin_upthres1
 ```
 
-`model_target` remains the canonical compatibility identifier for the POC. Post-processing may expose its parts for the UI and database:
+`model_target` remains the canonical compatibility identifier. Then a field `model_address` split it like this:
 
 ```json
 {
@@ -229,7 +229,7 @@ Using `null` means “no normalized scalar is available”; it does not mean zer
 
 ### Units
 
-The received `unit` remains authoritative input, for example `currency/year`. Post-processing may add:
+A field `structured_unit`:
 
 ```json
 {
@@ -262,7 +262,7 @@ The POC keeps every constant and `model_target` unchanged. Post-processing may o
 }
 ```
 
-This is only a display and retrieval hint. It does not combine values into an array and does not change write-back. Group mappings must be supplied or validated by the EUROMOD team; they should not be inferred from names alone for the POC.
+This is only a display and retrieval hint. It does not combine values into an array and does not change write-back. Group mappings will be supplied by the EUROMOD team; they should not be inferred from names alone for the POC.
 
 ## 8. Source class, legal status, and references
 
@@ -366,3 +366,335 @@ Validate 5-10 records already present in `FR.enriched.json`:
 - optionally, two members of a validated parameter group;
 - one parameter routed to the national team.
 
+# Parameter Database Schema
+
+This diagram documents the `params` schema created by
+[`agentic-workflow/pipeline/db/params_schema.sql`](../agentic-workflow/pipeline/db/params_schema.sql).
+It follows the four-stage ownership model: received EUROMOD data, deterministic
+normalization, agent proposals, and append-only human review.
+
+```mermaid
+erDiagram
+    PARAMETERS {
+        bigint id PK
+        text country
+        text model_target UK
+        text policy
+        text function
+        text name
+        text spine_order
+        text value_type
+        text unit
+        jsonb unit_structured
+        jsonb label
+        jsonb short_label
+        jsonb description
+        jsonb explanation
+        jsonb classification
+        jsonb coicop
+        date last_confirmed_valid_on
+        jsonb enrichment_lineage
+        jsonb parameter_group
+        text source_file
+        timestamptz ingested_at
+    }
+
+    MODEL_VALUES {
+        bigint id PK
+        bigint parameter_id FK
+        integer seq
+        jsonb value_raw
+        float8 value_numeric
+        text value_kind
+        text raw_euromod_value
+        text model_release
+        integer system_year
+        date valid_from
+        date valid_to
+        text legal_status
+        text source_type
+        date official_journal_date
+        jsonb received_references
+        jsonb lineage
+    }
+
+    PARAMETER_USAGE {
+        bigint id PK
+        bigint parameter_id FK
+        text relation
+        text policy
+        text function
+        text function_comment
+        text group_name
+        text used_in_parameter
+        text_array systems
+        text source
+    }
+
+    EXTRACTION_RUNS {
+        bigint id PK
+        text run_id UK
+        bigint parameter_id FK
+        text country
+        text model_target
+        date as_of
+        text model
+        text critique_model
+        text prompt_version
+        text agent_version
+        text phoenix_project
+        text phoenix_trace_id
+        text routing
+        text critique_verdict
+        text item_id
+        jsonb retrieval_trace
+        timestamptz started_at
+        timestamptz finished_at
+    }
+
+    PROPOSALS {
+        bigint id PK
+        text proposal_id UK
+        bigint run_pk FK
+        bigint parameter_id FK
+        text model_target
+        jsonb proposed_value
+        float8 proposed_value_numeric
+        date effective_from
+        date effective_to
+        text legal_status
+        text source_class
+        date official_journal_date
+        real confidence
+        text reasoning
+        timestamptz created_at
+    }
+
+    PROPOSAL_REFERENCES {
+        bigint id PK
+        bigint proposal_pk FK
+        text title
+        text href
+        text legal_unit_ref
+        uuid jrc_chunk_id
+        text supporting_extract
+        integer extract_start
+        integer extract_end
+        text reviewer_note
+    }
+
+    REVIEW_DECISIONS {
+        bigint id PK
+        bigint proposal_pk FK
+        text item_id
+        text action
+        text reviewer
+        text note
+        timestamptz decided_at
+        timestamptz logged_at
+    }
+
+    PUBLIC_CHUNKS {
+        uuid id PK
+    }
+
+    PARAMETERS ||--o{ MODEL_VALUES : "has received history"
+    PARAMETERS ||--o{ PARAMETER_USAGE : "has usage edges"
+    PARAMETERS o|--o{ EXTRACTION_RUNS : "optionally targets"
+    EXTRACTION_RUNS ||--o{ PROPOSALS : "produces"
+    PARAMETERS o|--o{ PROPOSALS : "optionally identifies"
+    PROPOSALS ||--o{ PROPOSAL_REFERENCES : "is supported by"
+    PROPOSALS o|--o{ REVIEW_DECISIONS : "may receive"
+    PUBLIC_CHUNKS o|--o{ PROPOSAL_REFERENCES : "soft reference only"
+```
+
+## Relationship Notes
+
+- `parameters.model_target`, `extraction_runs.run_id`, and
+  `proposals.proposal_id` are unique business identifiers.
+- `model_values` is unique on `(parameter_id, seq)`; proposals never overwrite
+  this received value history.
+- `extraction_runs.parameter_id` and `proposals.parameter_id` are nullable so a
+  run can represent a target that has not been ingested.
+- `proposal_references.jrc_chunk_id` is deliberately not a foreign key. It is a
+  soft reference to `public.chunks.id`; cited-chunk retention is enforced by
+  `public.citation_registry`.
+- `review_decisions` is append-only. A row must have either `proposal_pk` or
+  `item_id`; `item_id` supports decisions on abstained or `not_found` queue
+  items that have no proposal row.
+- Phoenix trace IDs are also soft links because Phoenix data can be reset while
+  proposal evidence remains durable.
+
+## Review View
+
+`params.proposal_review` is the validation UI read surface. It combines each
+proposal with its run, parameter metadata, the model value applicable on the
+run's `as_of` date, and a count of review decisions.
+
+```mermaid
+flowchart LR
+    P[(parameters)] --> V{{proposal_review}}
+    MV[(model_values)] -->|latest interval containing as_of| V
+    ER[(extraction_runs)] --> V
+    PR[(proposals)] --> V
+    RD[(review_decisions)] -->|count by proposal| V
+    V --> UI[Validation UI]
+```
+
+The view does not include `proposal_references`; evidence is loaded separately
+from the proposal relationship when the reviewer opens citation details.
+
+## Using External Parameter Corpora in the Assisted-Update Pipeline
+
+This chapter focus on OpenFisca-France but it will be generic enought to be used for other sources we may later found.
+
+### 1. What OpenFisca-France offers
+
+OpenFisca-France maintains a human-curated database of French tax-benefit
+parameters as YAML files (`openfisca_france/parameters/**.yaml`): **4,012
+parameter files, ~2,500 of them carrying legal references**. One file, e.g.
+`impot_revenu/bareme_ir_depuis_1945/bareme.yaml`, contains:
+
+- the full value history (the income-tax scale back to 1945), as date-keyed
+  scalars or bracket structures;
+- per-date `metadata.reference` entries: `{title: "Loi 63-1241 du 19/12/1963
+  (LF pour 1964)", href: "https://www.legifrance.gouv.fr/...JORFTEXT000000875392"}`;
+- per-date `official_journal_date`;
+- `description` and `short_label` written in the law's own language (French),
+  sometimes an English label;
+- units (`rate_unit`, `threshold_unit`) and curated historical notes.
+
+Two properties make this directly useful:
+
+1. **The reference hrefs embed `LEGIARTI`/`JORFTEXT` identifiers** — the same
+   national ids the legislation database keys on (`legal_units.national_id`)
+   and that the retrieval citation fast path matches directly.
+2. **The file format is defined by openfisca-core, not by the France
+   package.** Every OpenFisca country package (and the PolicyEngine forks for
+   UK/US/CA) uses the same `values:/brackets:/metadata:` layout. A single
+   ingester covers all of them.
+
+Coverage varies by pilot member state: France is excellent; Spain and Belgium
+packages exist but are thinner; Ireland and Lithuania have none. OpenFisca is
+therefore an **optional per-country enrichment, never a dependency** — the
+same philosophy as the ingest country adapters.
+
+### 2. Storage: ingest first, match later
+
+The key design decision: **storage does not require a mapping to EUROMOD.**
+The corpus is ingested under its own identity (its dotted path, e.g.
+`impot_revenu.bareme_ir_depuis_1945.bareme`); linking to EUROMOD parameters is
+a separate, sparse, later step. Proposed tables in the `params` schema:
+
+- `external_corpora` — one row per source:
+  `(kind='openfisca', country, repo_url, commit, license)`. Pinning the git
+  commit keeps every downstream use reproducible, like the eval golden set.
+- `external_parameters` — `(corpus_id, path, description, short_label, unit,
+  metadata jsonb)`, keyed by the corpus-native path.
+- `external_values` — the date-keyed history, one row per
+  `(external_parameter_id, valid_from)`, with scalar and bracket forms.
+- `external_references` — per-date `{title, href, national_id, official_journal_date}`,
+  with the `LEGIARTI`/`JORFTEXT` id parsed out of the href at ingest time.
+- `parameter_links` — the EUROMOD mapping, **initially empty**:
+  `(parameter_id → params.parameters, external_parameter_id, match_method,
+  score, validated_by, validated_at)`.
+
+An unmatched external parameter is the normal state, not an error. The corpus
+is useful even before any link exists (e.g. as a browsable reference in the
+UI, and as a source of native-language vocabulary).
+
+### 3. The matching problem
+
+There is **no shared key** between `euromod://FR/tinkt_fr/def_const/$tin_upthres1`
+and `impot_revenu.bareme_ir_depuis_1945.bareme`. Names, granularity and
+structure all differ (EUROMOD stores the scale as ten separate scalar
+constants; OpenFisca stores one bracket object). Any automated matching can
+only produce **suggestions**; a human validates them in the UI, exactly like
+the `parameter_group` mappings in the format proposal. `match_method` and
+`score` are recorded so a bad heuristic can be rolled back wholesale.
+
+Candidate signals, in order of trustworthiness:
+
+1. **Value-fingerprint matching (deterministic, strongest).** Both sides hold
+   multi-year numeric histories. `$tin_upthres1` = 10,777 / 11,294 / 11,496
+   for 2023/2024/2025; the OpenFisca scale's second threshold holds nearly the
+   same series. Matching = same value in a majority of overlapping years,
+   within a tolerance — *not* exact equality, because the divergences are
+   precisely what the pipeline exists to surface (EUROMOD has 11,496 where the
+   law says 11,497). A ≥3-year fingerprint match is close to conclusive; the
+   same signal generalises to any country with no language dependence.
+2. **Structural compatibility (deterministic filter).** Units must be
+   compatible (`/1` rate ↔ `rate_unit: /1`; currency/year ↔
+   `currency_next_year`), bracket-group shape must fit (5 thresholds + 6 rates
+   ↔ a 5-bracket scale), COICOP codes narrow consumption-tax parameters.
+3. **Multilingual embedding similarity** between EUROMOD descriptions and
+   OpenFisca descriptions (BGE-M3 is already in the stack and is
+   cross-lingual, so English EUROMOD text scores against French OpenFisca text
+   without translation). Good for ranking candidates, not for deciding.
+4. **LLM adjudication of the top-k candidates** produced by 1–3, with the
+   verdict stored as a suggestion (`match_method='llm_suggested'`), never
+   auto-validated.
+
+Realistic expectation: fingerprints + structure alone should link the
+high-value numeric parameters (schedules, thresholds, rates with several years
+of history); text similarity mops up part of the rest; a tail stays unmatched
+and that is acceptable.
+
+### 4. What a validated link buys the pipeline
+
+1. **Retrieval hints — the biggest win.** Today `frame` derives citations from
+   previous `values[].references`, which are empty in the whole FR export. A
+   linked parameter contributes the OpenFisca reference titles and parsed
+   `LEGIARTI`/`JORFTEXT` ids for dates near `as_of` to the citation fast path,
+   and tells `euromod-ingest` exactly which instruments to fetch on a cache
+   miss. This attacks the hardest problem — *finding the right article* — with
+   human-curated pointers.
+2. **Cross-validation in critique — corroboration, never evidence.** A
+   deterministic check compares the proposal against the linked OpenFisca
+   value at `as_of`: agreement is noted on the critique report; disagreement
+   becomes an issue for the reviewer ("OpenFisca has 11,497 from 2025-01-01").
+   The verbatim-extract anti-hallucination rule is untouched: OpenFisca is a
+   curated *secondary* source and can never serve as the `supporting_extract`
+   for a legislation-sourced proposal. (`Lineage.proposed_by` already includes
+   `"openfisca"` for values that originate there.)
+3. **Golden-set expansion for the evaluation dataset.** Per-date values + official-journal
+   dates + citations are human-curated `(value, effective date, reference)`
+   triples — candidate `expected` blocks for eval cases, generated cheaply and
+   confirmed by a human.
+4. **Native-language parameter text for free.** OpenFisca descriptions are
+   human-written in the law's language — better than any machine translation
+   for the search problem below.
+
+### 5. Native-language search text
+
+The enriched EUROMOD export carries English-only labels and descriptions,
+while the legislation chunks are indexed with language-specific FTS (`fts_fr`
+for France). The vector leg of hybrid retrieval is multilingual (BGE-M3), but
+the full-text leg was effectively crippled cross-language.
+
+Implemented in the workflow package:
+
+- `params.parameter_texts` stores derived renderings of `label` /
+  `short_label` / `description` per language, with provenance
+  (`origin: machine_translation | openfisca | manual`, plus the engine used).
+  Received Stage A jsonb fields stay untouched — translations are Stage B
+  enrichment, marked as such.
+- `euromod-workflow translate-params` machine-translates the English texts
+  into the law language (batched, provider-agnostic via the shared `llm.py`).
+- `frame` prefers the law-language text when present for the retrieval query,
+  keeping the received text as a secondary signal. No translation, no DB —
+  behaviour is unchanged.
+
+Where a validated OpenFisca link exists, its human-written description should
+replace the machine translation (`origin='openfisca'` wins over
+`origin='machine_translation'`).
+
+### 6. Caveats
+
+- **License:** openfisca-france is AGPL-3.0. Using the data as a reference
+  input and storing derived rows is fine for the prototype; flag it in the
+  contract documentation before any redistribution.
+- **OpenFisca is not the law.** It is curated and occasionally wrong or
+  lagging; that is why it corroborates but never evidences.
+- **Mappings decay.** Both sides evolve; `parameter_links` carries the corpus
+  commit so a re-ingest can flag links whose external side changed.
