@@ -7,6 +7,7 @@ name = "nomotheca-legislation-ingest"
 version = "0.1.0"
 description = "Archive-first legislation ingestion pipeline for the EUROMOD RAG prototype."
 readme = "README.md"
+license = {text = "EUPL-1.2"}
 requires-python = ">=3.12"
 dependencies = [
   "httpx>=0.27",

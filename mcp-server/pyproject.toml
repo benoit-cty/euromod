@@ -7,6 +7,7 @@ name = "nomotheca-legislation-mcp"
 version = "0.1.0"
 description = "Read-only MCP tools for hybrid retrieval over the EUROMOD legislation database."
 readme = "README.md"
+license = {text = "EUPL-1.2"}
 requires-python = ">=3.12"
 dependencies = [
   "mcp[cli]>=1.28,<2",

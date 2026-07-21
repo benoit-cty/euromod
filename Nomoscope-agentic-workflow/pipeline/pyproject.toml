@@ -7,6 +7,7 @@ name = "nomoscope-agentic-workflow"
 version = "0.1.0"
 description = "Agentic parameter-update pipeline for EUROMOD: retrieval -> proposal -> critique -> diff -> human review queue."
 readme = "README.md"
+license = {text = "EUPL-1.2"}
 requires-python = ">=3.12"
 dependencies = [
   "pydantic-ai-slim[anthropic,openai]>=1.0",
