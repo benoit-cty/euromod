@@ -35,6 +35,15 @@ def citation_matches(expected: str, candidate: str | None) -> bool:
     return bool(a) and (a in b or b in a)
 
 
+def citation_equal(expected: str, candidate: str | None) -> bool:
+    """Punctuation/case-insensitive equality — no containment, so 'art. 2' never
+    claims 'art. 20'. Rank scoring (embedding eval) needs this strictness."""
+    if not candidate:
+        return False
+    a = _norm(expected)
+    return bool(a) and a == _norm(candidate)
+
+
 def values_equal(a, b) -> bool:
     """Scalar/bool/str/bracket-schedule comparison with float tolerance."""
     if isinstance(a, list) and isinstance(b, list):

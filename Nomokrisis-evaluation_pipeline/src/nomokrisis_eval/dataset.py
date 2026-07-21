@@ -1,4 +1,8 @@
-"""Load/save golden cases: one JSON file per case under dataset/<country>/."""
+"""Load/save golden cases: one JSON file per case under dataset/<country>/.
+
+Embedding (retrieval) cases follow the same one-file-per-case layout under
+dataset_embedding/<country>/ — a separate tree because load_cases rglobs every
+JSON below its root."""
 
 from __future__ import annotations
 
@@ -6,7 +10,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from .schema import GoldenCase
+from .schema import EmbeddingCase, GoldenCase
 
 
 def load_cases(
@@ -29,6 +33,33 @@ def load_cases(
 
 
 def save_case(dataset_dir: Path, case: GoldenCase) -> Path:
+    folder = dataset_dir / case.country.lower()
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{case.id}.json"
+    path.write_text(case.model_dump_json(indent=2, exclude_none=True) + "\n", encoding="utf-8")
+    return path
+
+
+def load_embedding_cases(
+    dataset_dir: Path,
+    countries: list[str] | None = None,
+    languages: list[str] | None = None,
+    verified_only: bool = False,
+) -> list[EmbeddingCase]:
+    cases: list[EmbeddingCase] = []
+    for path in sorted(dataset_dir.rglob("*.json")):
+        case = EmbeddingCase.model_validate_json(path.read_text(encoding="utf-8"))
+        if countries and case.country.upper() not in {c.upper() for c in countries}:
+            continue
+        if languages and case.language.lower() not in {l.lower() for l in languages}:
+            continue
+        if verified_only and not case.verified:
+            continue
+        cases.append(case)
+    return cases
+
+
+def save_embedding_case(dataset_dir: Path, case: EmbeddingCase) -> Path:
     folder = dataset_dir / case.country.lower()
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"{case.id}.json"

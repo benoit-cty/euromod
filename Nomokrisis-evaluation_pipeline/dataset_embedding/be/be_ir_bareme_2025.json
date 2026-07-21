@@ -1,0 +1,11 @@
+{
+  "id": "be_ir_bareme_2025",
+  "country": "BE",
+  "language": "fr",
+  "as_of": "2025-06-01",
+  "query": "barème de l'impôt de base par tranches de revenu et pourcentages applicables",
+  "expected_citations": ["CIR 92, art. 130"],
+  "verified": false,
+  "drafted_by": "claude-fable-5",
+  "notes": "Smoke case: the BE corpus currently holds a single chunk per language, so this checks plumbing (candidate filter, encoding, citation match), not ranking quality."
+}

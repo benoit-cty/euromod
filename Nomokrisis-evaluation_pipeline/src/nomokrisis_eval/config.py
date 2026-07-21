@@ -21,6 +21,7 @@ def _env(name: str, default: str) -> str:
 class EvalConfig:
     database_url: str = ""
     dataset_dir: Path = field(default_factory=lambda: EVAL_ROOT / "dataset")
+    embedding_dataset_dir: Path = field(default_factory=lambda: EVAL_ROOT / "dataset_embedding")
     runs_dir: Path = field(default_factory=lambda: EVAL_ROOT / ".eval_runs")
     builder_model: str = ""
     phoenix_project: str = ""
@@ -36,6 +37,9 @@ def load_eval_config() -> EvalConfig:
             _env("WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation"),
         ),
         dataset_dir=Path(_env("EVAL_DATASET_DIR", str(EVAL_ROOT / "dataset"))),
+        embedding_dataset_dir=Path(
+            _env("EVAL_EMBEDDING_DATASET_DIR", str(EVAL_ROOT / "dataset_embedding"))
+        ),
         runs_dir=Path(_env("EVAL_RUNS_DIR", str(EVAL_ROOT / ".eval_runs"))),
         builder_model=_env("EVAL_BUILDER_MODEL", "claude-fable-5"),
         phoenix_project=_env("EVAL_PHOENIX_PROJECT", "nomokrisis-evaluation"),

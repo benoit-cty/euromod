@@ -1,0 +1,11 @@
+{
+  "id": "nl_ib_tarief_2025",
+  "country": "NL",
+  "language": "nl",
+  "as_of": "2025-06-01",
+  "query": "tarieftabel van de belasting op het belastbare inkomen uit werk en woning, schijven en percentages",
+  "expected_citations": ["Wet IB 2001, artikel 2.10"],
+  "verified": false,
+  "drafted_by": "claude-fable-5",
+  "notes": "Smoke case: single-chunk NL corpus for now."
+}

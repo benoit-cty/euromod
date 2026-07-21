@@ -1,0 +1,11 @@
+{
+  "id": "fr_ir_bareme_2025",
+  "country": "FR",
+  "language": "fr",
+  "as_of": "2025-06-01",
+  "query": "Quel est le barème de l'impôt sur le revenu, les tranches et les taux applicables au calcul de l'impôt par part de revenu imposable ?",
+  "expected_citations": ["CGI, art. 197"],
+  "verified": false,
+  "drafted_by": "claude-fable-5",
+  "notes": "Discriminative case: ~1200 fr chunks in the FR candidate pool. Target chunk confirmed present and in force at as_of (CGI art. 197, version [2025-01-01,))."
+}

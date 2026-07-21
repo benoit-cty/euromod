@@ -12,14 +12,17 @@ prompts, critique and Phoenix tracing).
 
 ```
 dataset/<country>/*.json     golden cases (git-versioned; the frozen test set)
+dataset_embedding/<cc>/*.json  embedding/retrieval cases (query → relevant citations)
 src/nomokrisis_eval/
-  schema.py                  GoldenCase / Expected / CaseResult / RunManifest
+  schema.py                  GoldenCase / Expected / CaseResult / RunManifest (+ EmbeddingCase)
   dataset.py                 load/save cases + content-hash dataset_version
   build_dataset.py           Claude Fable drafts cases from a trusted document
   scoring.py                 KPI scoring (pure functions)
   runner.py                  drives nomoscope_workflow.run_parameter over the set
+  embedding_eval.py          ranks golden chunks under fts / vector / hybrid search
   db.py                      Postgres persistence (eval.runs / eval.results)
   cli.py                     nomokrisis-eval init-db | build-dataset | list-cases | run | report
+                             | list-embedding-cases | run-embeddings
 db/eval_schema.sql           tables + eval.run_summary view (the UI read surface)
 .eval_runs/<run_id>/         scratch queue + manifest.json + results.json per run (gitignored)
 ```
@@ -67,6 +70,52 @@ uv run nomokrisis-eval build-dataset docs/fr_country_report_2025.md --country FR
   refusal fallback to `claude-opus-4-8` is enabled, so a classifier false-positive
   degrades gracefully instead of failing the batch. Needs `ANTHROPIC_API_KEY` (loaded
   from the repo-root `.env`).
+
+## Embedding (retrieval) evaluation dataset
+
+`retrieval_recall_pct` above measures retrieval only through a full workflow run.
+`dataset_embedding/` isolates the Activity 2 retrieval layer: one JSON per case
+with a search **query** and the exact `legal_units.citation` string(s) of the
+chunk(s) a correct retriever must surface. No LLM, no parameter files — each
+case is ranked under three methods over the same as-of/country/lang candidate
+pool the production pipeline uses (Country Reports excluded):
+
+- `fts` — FTS-only leg (is BM25-ish text search enough?)
+- `vector` — pure cosine ranking over `embeddings` (**the embedding eval proper**:
+  this is the number that moves when the embedding model or backend changes)
+- `hybrid` — the production RRF fusion (what the workflow actually retrieves with)
+
+```bash
+uv run nomokrisis-eval list-embedding-cases
+uv run nomokrisis-eval run-embeddings                           # BGE-M3 (model_id 1); spawns the ingest query encoder
+uv run nomokrisis-eval run-embeddings --embedding-model-id 99   # in-SQL placeholder embedder, no encoder needed
+uv run nomokrisis-eval run-embeddings --country FR --k 20
+```
+
+Metrics per (query language, method): `hit@1`, `hit@k`, `MRR`. Per-case output
+also shows the candidate-pool size and how much of it is embedded — "ingested
+but not embedded" is the most common cause of a vector miss (same failure mode
+as `/debug-phoenix-trace`). Results go to `.eval_runs/embeval-*/` as JSON; no
+`eval`-schema tables yet (add them if/when embedding-model comparisons need to
+be queryable next to the workflow KPIs).
+
+Case-design rules:
+
+- `expected_citations` are matched with **strict normalised equality** (not the
+  golden set's containment match) so `art. 2` never claims `art. 20` — write
+  them exactly as stored in `legal_units.citation`.
+- `language` is the query language, `corpus_lang` the searched texts (defaults
+  to `language`); set both for **cross-lingual** cases (en query over the fr
+  corpus) — BGE-M3's multilingual space is exactly what those test.
+- Paraphrase, don't quote: a query copied verbatim from the chunk hands the win
+  to FTS and measures nothing about embeddings.
+- Same human gate as the golden set (`verified: false` drafts → review → flip),
+  but `run-embeddings` includes drafts by default: this eval is diagnostic
+  tooling, not the contractual KPI freeze.
+
+The seed set (10 cases) has real discriminative power only for FR (~1,200-chunk
+pool, incl. one cross-lingual and one amending-act needle); the BE/ES/IE/NL/LT
+cases are single-chunk smoke tests until those corpora are ingested for real.
 
 ## KPIs (per case, aggregated per language in `eval.run_summary`)
 
@@ -117,6 +166,7 @@ Postgres access (`Nomoscope-agentic-workflow/ui/src-tauri/src/db.rs`); an "Evalu
 |---|---|---|
 | `EVAL_DATABASE_URL` | falls back to `WORKFLOW_DATABASE_URL`, then `postgresql://jrc:jrc@localhost:5434/legislation` | where eval results go |
 | `EVAL_DATASET_DIR` | `Nomokrisis-evaluation_pipeline/dataset` | golden set location |
+| `EVAL_EMBEDDING_DATASET_DIR` | `Nomokrisis-evaluation_pipeline/dataset_embedding` | embedding/retrieval case location |
 | `EVAL_RUNS_DIR` | `Nomokrisis-evaluation_pipeline/.eval_runs` | scratch + manifests |
 | `EVAL_BUILDER_MODEL` | `claude-fable-5` | dataset drafting model |
 | `EVAL_PHOENIX_PROJECT` | `nomokrisis-evaluation` | Phoenix project for eval traces |

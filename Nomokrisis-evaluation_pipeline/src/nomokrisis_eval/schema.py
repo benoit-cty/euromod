@@ -47,6 +47,55 @@ class GoldenCase(BaseModel):
     notes: str | None = None
 
 
+class EmbeddingCase(BaseModel):
+    """One retrieval case: a search query plus the citation(s) of the legal unit(s)
+    a correct retriever must surface — evaluates the embedding/search layer alone,
+    with no LLM anywhere."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    country: str
+    language: str = Field(description="Language of the query (the aggregation key, as in GoldenCase)")
+    corpus_lang: str | None = Field(
+        default=None,
+        description="Language of the searched texts; defaults to `language`. "
+        "Set both for cross-lingual cases (e.g. an 'en' query over the 'fr' corpus).",
+    )
+    as_of: date
+    query: str
+    expected_citations: list[str] = Field(
+        min_length=1,
+        description="Relevant legal units, any-of; each must be the exact legal_units.citation "
+        'string (e.g. "CGI, art. 197") — compared with punctuation/case-insensitive equality, '
+        "not containment, so 'art. 2' never claims 'art. 20'",
+    )
+    verified: bool = Field(default=False, description="True once a human confirmed the ground truth")
+    drafted_by: str | None = Field(default=None, description="'human' or the drafting model name")
+    notes: str | None = None
+
+
+class EmbeddingCaseResult(BaseModel):
+    """Rank outcome of one embedding case under each search method.
+
+    ranks maps method ('fts' | 'vector' | 'hybrid') to the 1-based rank of the
+    first relevant hit, or None for a miss within top-k. A method absent from
+    the dict was not scored (e.g. query encoder unavailable — see error).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    case_id: str
+    country: str
+    language: str
+    corpus_lang: str
+    k: int
+    candidate_chunks: int | None = None
+    embedded_chunks: int | None = None
+    ranks: dict[str, int | None] = Field(default_factory=dict)
+    error: str | None = None
+
+
 class CaseResult(BaseModel):
     """Scored outcome of one golden case against one workflow run.
 

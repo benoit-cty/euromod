@@ -18,7 +18,7 @@ import typer
 from . import build_dataset as builder
 from . import db as evaldb
 from .config import load_eval_config
-from .dataset import dataset_version, load_cases, save_case
+from .dataset import dataset_version, load_cases, load_embedding_cases, save_case
 from .runner import run_evaluation, summarize
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -131,6 +131,94 @@ def run(
     for lang, kpis in summarize(results).items():
         pretty = "  ".join(f"{k}={v}" for k, v in kpis.items())
         typer.echo(f"  [{lang}] {pretty}")
+    typer.echo(f"\nmanifest + per-case results: {run_dir}")
+
+
+@app.command("list-embedding-cases")
+def list_embedding_cases(
+    country: list[str] = typer.Option(None, "--country"),
+    verified_only: bool = typer.Option(False, "--verified-only"),
+) -> None:
+    """List the embedding (retrieval) evaluation set."""
+    cfg = load_eval_config()
+    cases = load_embedding_cases(
+        cfg.embedding_dataset_dir, countries=country or None, verified_only=verified_only
+    )
+    for case in cases:
+        flag = "✓" if case.verified else "draft"
+        corpus = case.corpus_lang or case.language
+        xling = f"{case.language}→{corpus}" if corpus != case.language else case.language
+        typer.echo(
+            f"{flag:<6} {case.country} {xling:<6} as_of={case.as_of} "
+            f"expects={'; '.join(case.expected_citations)}  {case.id}"
+        )
+    typer.echo(
+        f"{len(cases)} case(s), dataset_version={dataset_version(cfg.embedding_dataset_dir)}"
+    )
+
+
+@app.command("run-embeddings")
+def run_embeddings(
+    country: list[str] = typer.Option(None, "--country", help="Restrict to country code(s)"),
+    language: list[str] = typer.Option(None, "--language", help="Restrict to query language(s)"),
+    k: int = typer.Option(10, "--k", help="Rank cutoff for hit@k / MRR"),
+    embedding_model_id: int = typer.Option(
+        1, "--embedding-model-id",
+        help="embeddings.model_id to evaluate (1 = BGE-M3; 99 = in-SQL placeholder demo embedder, no encoder needed)",
+    ),
+    verified_only: bool = typer.Option(
+        False, "--verified-only/--include-drafts",
+        help="Restrict to human-verified cases (drafts included by default — this eval is diagnostic, not the contractual KPI freeze)",
+    ),
+    notes: str = typer.Option(None, "--notes"),
+) -> None:
+    """Rank each case's ground-truth chunks under fts / vector / hybrid search."""
+    from .embedding_eval import run_embedding_eval, summarize_embedding
+
+    cfg = load_eval_config()
+    cases = load_embedding_cases(
+        cfg.embedding_dataset_dir,
+        countries=country or None,
+        languages=language or None,
+        verified_only=verified_only,
+    )
+    if not cases:
+        typer.echo("No matching embedding cases.")
+        raise typer.Exit(1)
+
+    manifest, results = run_embedding_eval(
+        cfg, cases, k=k, embedding_model_id=embedding_model_id, notes=notes
+    )
+
+    run_dir = cfg.runs_dir / manifest["run_id"]
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    (run_dir / "results.json").write_text(
+        json.dumps([r.model_dump(mode="json") for r in results], indent=2), encoding="utf-8"
+    )
+
+    def fmt_rank(result, method) -> str:
+        if method not in result.ranks:
+            return "-"
+        rank = result.ranks[method]
+        return f"#{rank}" if rank is not None else "miss"
+
+    typer.echo(f"run {manifest['run_id']}  model_id={embedding_model_id}  k={k}")
+    for result in results:
+        legs = "  ".join(f"{m}={fmt_rank(result, m):<5}" for m in ("fts", "vector", "hybrid"))
+        pool = (
+            f"({result.embedded_chunks}/{result.candidate_chunks} embedded)"
+            if result.candidate_chunks is not None
+            else ""
+        )
+        suffix = f"  ERROR {result.error}" if result.error else ""
+        typer.echo(f"  {result.case_id:<32} {legs} {pool}{suffix}")
+
+    for lang, methods in summarize_embedding(results).items():
+        typer.echo(f"  [{lang}]")
+        for method, metrics in methods.items():
+            pretty = "  ".join(f"{k_}={v}" for k_, v in metrics.items()) or "not scored"
+            typer.echo(f"    {method:<7} {pretty}")
     typer.echo(f"\nmanifest + per-case results: {run_dir}")
 
 

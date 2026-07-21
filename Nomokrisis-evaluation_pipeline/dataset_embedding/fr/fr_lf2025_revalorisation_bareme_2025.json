@@ -1,0 +1,11 @@
+{
+  "id": "fr_lf2025_revalorisation_bareme_2025",
+  "country": "FR",
+  "language": "fr",
+  "as_of": "2025-06-01",
+  "query": "revalorisation des seuils des tranches du barème de l'impôt sur le revenu par la loi de finances pour 2025",
+  "expected_citations": ["JORFTEXT000051168007, art. 2"],
+  "verified": false,
+  "drafted_by": "claude-fable-5",
+  "notes": "Hard case: LF2025 alone contributes 300+ fr chunks; art. 2 (the amending article carrying the new 11 497 € threshold) must beat its sibling articles. LF2026's equivalent (JORFTEXT000053508155, art. 4) is excluded by the as_of filter."
+}
