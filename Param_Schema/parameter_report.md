@@ -1,6 +1,17 @@
+---
+format:
+  typst:
+    grid:
+      body-width: 6in
+      margin-width: 0.4in
+      gutter-width: 0.15in
+---
+
 # EUROMOD-Assisted Parameter Update Format
 
 *Draft for discussion with the EUROMOD team.*
+
+This document is a report for the EXPERT CONTRACT - CT-EX2026D1438052-101 for Deliverable 1: It provide expertise for the extraction of Policy Parameters for the Fiscal Models. The document specify the format of the policy parameters of the respective models.
 
 ## Introduction
 
@@ -86,6 +97,8 @@ Following a first review round, the team delivered an updated enriched export
 draft. This document describes the 0.2.0 format as received; where a field was
 recommended in the draft and is now supplied upstream, this is noted
 explicitly.
+
+{{< pagebreak >}}
 
 ## 2. What is in the enriched French export (0.2.0)
 
@@ -210,6 +223,8 @@ accepted | rejected | needs_revision
 ```
 
 A decision records the proposal id, reviewer, timestamp, and note. Previous decisions are retained. An empty list means that the proposal is pending.
+
+{{< pagebreak >}}
 
 ## 4. Keep the existing parameter identity
 
@@ -353,6 +368,8 @@ enacted_in_force | enacted_not_yet_in_force | bill_proposed | announced
 
 For legislation, references attach to the proposal that they support, not to the parameter in general. A reference may include title, article, URL, legal-unit identifier, exact extract, RAG chunk id, and offsets.
 
+{{< pagebreak >}}
+
 ## 9. Usage and file size
 
 The received `usage` block is valuable context: it shows where a constant is defined and its 5,368 uses in the model. It should not be discarded.
@@ -443,6 +460,8 @@ Validate 5-10 records already present in `FR.enriched.json`:
 - optionally, two members of a validated parameter group;
 - one parameter routed to the national team.
 
+{{< pagebreak >}}
+
 ## Parameter Database Schema
 
 This diagram documents the `params` schema created by
@@ -450,10 +469,10 @@ This diagram documents the `params` schema created by
 It follows the four-stage ownership model: received EUROMOD data, deterministic
 normalization, agent proposals, and append-only human review.
 
-::: {.column-page-right}
+:::{.column-page}
 
 ```mermaid
-%%| fig-width: 6.5
+%%| fig-width: 7
 erDiagram
     PARAMETERS {
         bigint id PK
@@ -694,15 +713,18 @@ erDiagram
   mapping. `parameter_links` is the only bridge, is initially empty, and a row
   counts as validated only once `validated_by` is set.
 
+{{< pagebreak >}}
+
 ## Review View
 
 `params.proposal_review` is the validation UI read surface. It combines each
 proposal with its run, parameter metadata, the model value applicable on the
 run's `as_of` date, and a count of review decisions.
 
-::: {.column-page-right}
+:::{.column-page}
 
 ```mermaid
+%%| fig-width: 7
 flowchart LR
     P[(parameters)] --> V{{proposal_review}}
     MV[(model_values)] -->|latest interval containing as_of| V
@@ -716,6 +738,8 @@ flowchart LR
 
 The view does not include `proposal_references`; evidence is loaded separately
 from the proposal relationship when the reviewer opens citation details.
+
+{{< pagebreak >}}
 
 ## Using External Parameter Corpora in the Assisted-Update Pipeline
 
@@ -887,7 +911,9 @@ copy carries no cross-language signal).
   lagging; that is why it corroborates but never evidences.
 - **Mappings decay.** Both sides evolve; `parameter_links` carries the corpus
   commit so a re-ingest can flag links whose external side changed.
-- OpenFisca-France dates by income year where EUROMOD dates by system year, introducing a ±1-year offset for the matcher.
+- OpenFisca-France dates by income year : the last fiscal law for France is from 2026-02-20 but OpenFisca model says it apply from 2025-01-01 as it is for the income of 2025.
+
+{{< pagebreak >}}
 
 ## APPENDIX
 
@@ -1205,7 +1231,11 @@ parser, dependency graph, or evaluated result.
 */
 ```
 
+{{< pagebreak >}}
+
 ### How to run the parameter pipeline
+
+Please refer to Nomoscope-agentic-workflow/README.md for an up-to-date version.
 
 All commands below were executed against the French data and produce the
 figures quoted in this report. The pipeline lives in
