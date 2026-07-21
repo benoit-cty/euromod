@@ -141,6 +141,7 @@ def build_chunk_embeddings(
                 limit=limit,
                 dry_run=dry_run,
                 progress=_embedding_json_progress(total),
+                commit_each_batch=True,
             )
         else:
             stats = _build_embeddings_with_optional_progress(
@@ -362,6 +363,7 @@ def _build_embeddings_with_optional_progress(
             batch_size=batch_size,
             limit=limit,
             dry_run=dry_run,
+            commit_each_batch=True,
         )
 
     with Progress(
@@ -390,6 +392,7 @@ def _build_embeddings_with_optional_progress(
             limit=limit,
             dry_run=dry_run,
             progress=update,
+            commit_each_batch=True,
         )
 
 

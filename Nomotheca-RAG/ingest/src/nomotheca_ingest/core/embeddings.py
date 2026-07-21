@@ -129,10 +129,18 @@ def build_embeddings(
     limit: int | None = None,
     dry_run: bool = False,
     progress: EmbeddingProgressCallback | None = None,
+    commit_each_batch: bool = False,
 ) -> EmbeddingBuildStats:
-    """Embed chunks missing a fresh row for the requested model."""
+    """Embed chunks missing a fresh row for the requested model.
+
+    With commit_each_batch, every embedded batch is committed as it lands so a
+    killed or timed-out run keeps the vectors already computed — embedding is
+    minutes of CPU work, and the input-hash check makes re-runs resume cleanly.
+    """
     if not dry_run:
         ensure_bge_m3_model(conn, model_id=model_id)
+        if commit_each_batch:
+            conn.commit()  # the model row must survive even if the first batch doesn't
 
     stats = EmbeddingBuildStats()
     batch: list[ChunkForEmbedding] = []
@@ -144,6 +152,8 @@ def build_embeddings(
         if len(batch) >= batch_size:
             _emit_progress(progress, "encoding", stats, len(batch))
             embedded = _embed_batch(conn, backend, batch, model_id=model_id, dry_run=dry_run)
+            if commit_each_batch and not dry_run:
+                conn.commit()
             stats = EmbeddingBuildStats(stats.scanned, stats.embedded + embedded, stats.skipped)
             _emit_progress(progress, "embedded", stats, embedded)
             batch = []

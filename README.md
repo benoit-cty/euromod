@@ -80,6 +80,12 @@ rm parameter_report.qmd
 
 ```
 
+## Improvement Skill
+
+When you want to understand why a pipeline fail, just copy-past the ID and ask the Skill:
+
+`/debug-phoenix-trace <trace-id>`
+
 ## Questions
 
 - Form of my reports for each part : Word documents ? PDF.

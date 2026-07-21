@@ -32,15 +32,23 @@ from .query_encoder import ingest_dir
 from .schema import ParameterRecord
 
 INGEST_TIMEOUT = 600  # a single arrêté is seconds; a loi de finances, minutes
+# The embedding pass covers the whole backlog of unembedded chunks, not just the
+# scouted instrument (the CLI has no per-instrument scope), and BGE-M3 on CPU
+# runs at roughly one chunk per second — a freshly ingested loi de finances
+# alone is ~10 minutes. The build commits per batch, so even a timeout here
+# keeps the vectors computed so far; the retry then resumes where it stopped.
+EMBED_TIMEOUT = int(os.environ.get("WORKFLOW_SCOUT_EMBED_TIMEOUT", "1800"))
 
 # Per-country discovery rules: the official domains web search is restricted
 # to, and the id shapes the archive-first ingester can fetch directly.
 COUNTRY_SOURCES: dict[str, dict] = {
     "FR": {
         "domains": ["legifrance.gouv.fr"],
-        # JORF instruments (lois, décrets, arrêtés) — deliberately not
-        # LEGITEXT: ingesting a whole code by accident is not a gap-fill.
-        "id_pattern": re.compile(r"\bJORFTEXT\d{12}\b"),
+        # JORF instruments (lois, décrets, arrêtés) and single consolidated
+        # code articles (LEGIARTI — where most rates actually live once
+        # codified) — deliberately not LEGITEXT: ingesting a whole code by
+        # accident is not a gap-fill.
+        "id_pattern": re.compile(r"\b(?:JORFTEXT|LEGIARTI)\d{12}\b"),
     },
 }
 
@@ -56,7 +64,12 @@ Return:
   exact identifier ({id_hint}). NEVER guess or reconstruct an identifier.
 - reasoning: one sentence on what kind of act sets this value."""
 
-ID_HINTS = {"FR": "for France the JORFTEXT############ id shown in Légifrance URLs"}
+ID_HINTS = {
+    "FR": (
+        "for France the JORFTEXT############ id shown in Légifrance JORF URLs, "
+        "or the LEGIARTI############ id of the consolidated code article"
+    )
+}
 
 
 class ScoutSuggestion(BaseModel):
@@ -202,7 +215,7 @@ def _build_embeddings(cfg: WorkflowConfig) -> str | None:
     if (directory / "models" / "bge-m3-openvino").is_dir():
         command += ["--backend", "openvino", "--model-path", "models/bge-m3-openvino"]
     proc = subprocess.run(
-        command, cwd=directory, env=env, capture_output=True, text=True, timeout=INGEST_TIMEOUT
+        command, cwd=directory, env=env, capture_output=True, text=True, timeout=EMBED_TIMEOUT
     )
     if proc.returncode != 0:
         tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-3:]
@@ -272,7 +285,7 @@ def run(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> ScoutResul
         try:
             error = _build_embeddings(cfg)
         except subprocess.TimeoutExpired:
-            error = f"embeddings build timed out after {INGEST_TIMEOUT}s"
+            error = f"embeddings build timed out after {EMBED_TIMEOUT}s (partial vectors kept)"
         if error:
             result.errors.append(error)  # FTS still covers the new chunks
     return result
