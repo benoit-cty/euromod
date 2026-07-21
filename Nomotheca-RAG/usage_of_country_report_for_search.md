@@ -1,0 +1,14 @@
+Frame-step enrichment in pipeline.py: after building the base query from labels/descriptions, the frame probes the CR corpus and appends harvested terms to the retrieval query. The design settled after empirical testing against the live FR corpus, and two decisions matter:
+
+Probe with EUROMOD identity tokens only. A new helper euromod_ident_tokens() in retrieval.py turns euromod://FR/tin_fr/def_const/$tinrt_cdhr into ['tin', 'tinrt', 'cdhr']. Probing with label words mixed in was a dead end — "income tax rate" matches every fiscal section and the CSG chapter outranked the right one every time. Ident-only probes surface the correct section as hit #1 for all three FR parameters, because CR section headings carry the codes (— tinto01_s ("Contribution différentielle…", CDHR)) and headings are weight-A in the chunk tsvector.
+
+Harvest only from the first hit whose heading contains an identity token, heading-only, capped at 12 words. FTS rank alone isn't trusted: generic sections are rejected by the token gate, later ident-matching headings turned out to be cross-references contributing junk ("Carry-over from 2.7.6 … end of section" — caught in the live Phoenix traces and fixed), and chunk bodies (~6k chars) would dilute the query the same way the existing code comment warns about for mixed-language text. Words already in the query are skipped, so rich records get near-zero additions.
+
+Verified behavior
+For a sparse record (English-only label "Top marginal income tax rate"), the enrichment adds exactly the acronym→semantic translation the Triangulator insight promised: Personal Impôt sur le Revenu des Personnes Physiques IRPP — the official French name that makes the FTS leg hit French legislation. For the CDHR record, whose description already contains the French name, it adds only income. Failure modes are safe: no CR corpus, DB down, or no ident match → empty list, frame behaves exactly as before (try/except, same as the existing paramdb lookup).
+
+I ran the full workflow (run-all --as-of 2025-06-01 --force) — note it used your configured WORKFLOW_MODEL from .env, not mock, so it made a few real LLM calls and rewrote the three FR queue items. The Phoenix frame spans now record cr_terms and cr_headings for debuggability, and the evidence citations in all three runs remained pure legislation (CGI art. 197 / art. 224) — the corpus-class filter held.
+
+Also added test_cr_enrichment.py with 6 tests covering tokenization, the precision gate, dedup against the base query, the cap, and the no-ident case. The changes are uncommitted (retrieval.py, pipeline.py, the new test file) — ready for you to review and commit.
+
+One observation for later: enrichment quality depends on CR section headings carrying the parameter codes. The FR Markdown conversion has them; if you convert other countries' CRs, keeping codes in headings preserves this mechanism.

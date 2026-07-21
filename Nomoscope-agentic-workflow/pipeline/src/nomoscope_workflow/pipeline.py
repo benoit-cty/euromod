@@ -140,6 +140,27 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
         # and turns the OR'd FTS leg into noise.
         parts = native or [*labels.values(), *descriptions.values()]
         query = " ".join(dict.fromkeys(parts)) or info.model_target
+        # Country Report enrichment (acronym -> semantic): CR section headings
+        # translate EUROMOD codes into official native benefit/tax names
+        # ('tinto01_s' -> 'Contribution différentielle sur les hauts revenus').
+        # Context only — CR chunks are excluded from evidence retrieval.
+        # Probe with the identity tokens ALONE: label words match every fiscal
+        # section and drown the one heading that carries this parameter's code.
+        ident = retrieval.euromod_ident_tokens(info.model_target)
+        cr_terms: list[str] = []
+        cr_headings: list[str] = []
+        try:
+            if ident:
+                with retrieval.connect(cfg) as conn:
+                    cr_hits = retrieval.country_report_search(
+                        conn, info.country, state["as_of"], " ".join(ident), k=5
+                    )
+                cr_terms = retrieval.cr_enrichment_terms(cr_hits, ident, query)
+                cr_headings = [h.citation for h in cr_hits if h.citation]
+        except Exception:  # no CR corpus / DB hiccup -> frame works as before
+            cr_terms = []
+        if cr_terms:
+            query = " ".join([query, *cr_terms])
         citations: list[str] = []
         for value in reversed(record.values):
             for ref in value.references:
@@ -149,7 +170,13 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
         with step_span(tracer, "frame", input_value={"model_target": info.model_target}) as span:
             set_output(
                 span,
-                {"query": query, "citations": citations, "law_language_texts": len(native)},
+                {
+                    "query": query,
+                    "citations": citations,
+                    "law_language_texts": len(native),
+                    "cr_terms": cr_terms,
+                    "cr_headings": cr_headings,
+                },
             )
         return {"query": query, "citations": list(dict.fromkeys(citations)), "attempts": 0}
 
