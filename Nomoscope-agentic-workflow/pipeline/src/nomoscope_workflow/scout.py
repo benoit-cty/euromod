@@ -156,6 +156,24 @@ def _known_instruments(cfg: WorkflowConfig, ids: list[str]) -> set[str]:
         return set()
 
 
+def _proc_failure(what: str, proc: subprocess.CompletedProcess) -> str:
+    """Failure text with exit code and the tail of BOTH streams.
+
+    stderr alone is not enough: the benign BGE-M3 tokenizer warning always
+    lands there and would mask the real error when it went to stdout, and a
+    negative returncode (killed by a signal, e.g. memory pressure) leaves no
+    traceback at all — the exit code is then the only evidence.
+    """
+    parts = []
+    for stream, text in (("stderr", proc.stderr), ("stdout", proc.stdout)):
+        lines = (text or "").strip().splitlines()
+        if lines:
+            parts.append(f"{stream}: {' | '.join(lines[-4:])}")
+    detail = "; ".join(parts) or "no output"
+    signal_hint = " — killed by a signal, likely memory pressure" if proc.returncode < 0 else ""
+    return f"{what} failed (exit {proc.returncode}{signal_hint}): {detail}"
+
+
 def _ingest_instrument(cfg: WorkflowConfig, country: str, instrument_id: str) -> str | None:
     """Archive-first ingest of one instrument via the Nomotheca CLI; error text on failure."""
     directory = ingest_dir()
@@ -176,8 +194,7 @@ def _ingest_instrument(cfg: WorkflowConfig, country: str, instrument_id: str) ->
         timeout=INGEST_TIMEOUT,
     )
     if proc.returncode != 0:
-        tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-3:]
-        return f"{instrument_id}: ingest failed: {' | '.join(tail)}"
+        return _proc_failure(f"{instrument_id}: ingest", proc)
     return None
 
 
@@ -220,6 +237,9 @@ def _build_embeddings(cfg: WorkflowConfig) -> str | None:
     command = [
         "uv", "run", "--extra", "embeddings", "python", "-m", "nomotheca_ingest.cli",
         "embeddings", "build", "--database-url", cfg.database_url,
+        # Rich's live progress is noise in captured output and can bury the
+        # real error; the per-batch commits do not depend on it.
+        "--no-progress",
     ]
     if (directory / "models" / "bge-m3-openvino").is_dir():
         command += ["--backend", "openvino", "--model-path", "models/bge-m3-openvino"]
@@ -227,8 +247,7 @@ def _build_embeddings(cfg: WorkflowConfig) -> str | None:
         command, cwd=directory, env=env, capture_output=True, text=True, timeout=EMBED_TIMEOUT
     )
     if proc.returncode != 0:
-        tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-3:]
-        return f"embeddings build failed: {' | '.join(tail)}"
+        return _proc_failure("embeddings build", proc)
     return None
 
 
