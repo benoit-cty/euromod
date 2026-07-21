@@ -39,7 +39,7 @@ The key design decision: **storage does not require a mapping to EUROMOD.**
 The corpus is ingested under its own identity (its dotted path, e.g.
 `impot_revenu.bareme_ir_depuis_1945.bareme`); linking to EUROMOD parameters is
 a separate, sparse, later step. Implemented tables in the `params` schema
-(loaded with `euromod-workflow ingest-openfisca`; for France: 2,836 external
+(loaded with `nomoscope-workflow ingest-openfisca`; for France: 2,836 external
 parameters, 19,391 value points, 16,788 references at commit-pinned state):
 
 - `external_corpora` — one row per source:
@@ -102,7 +102,7 @@ and that is acceptable.
    previous `values[].references`, which are empty in the whole FR export. A
    linked parameter contributes the OpenFisca reference titles and parsed
    `LEGIARTI`/`JORFTEXT` ids for dates near `as_of` to the citation fast path,
-   and tells `euromod-ingest` exactly which instruments to fetch on a cache
+   and tells `nomotheca-ingest` exactly which instruments to fetch on a cache
    miss. This attacks the hardest problem — *finding the right article* — with
    human-curated pointers.
 2. **Cross-validation in critique — corroboration, never evidence.** A
@@ -135,7 +135,7 @@ The fix, implemented in the workflow package:
   (`origin: machine_translation | openfisca | manual`, plus the engine used).
   Received Stage A jsonb fields stay untouched — translations are Stage B
   enrichment, marked as such.
-- `euromod-workflow translate-params` machine-translates the English texts
+- `nomoscope-workflow translate-params` machine-translates the English texts
   into the law language (batched, provider-agnostic via the shared `llm.py`).
 - `frame` prefers the law-language text when present for the retrieval query,
   keeping the received text as a secondary signal. No translation, no DB —

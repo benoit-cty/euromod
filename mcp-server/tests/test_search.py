@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from euromod_mcp.search import _search_sql, search
+from nomotheca_mcp.search import _search_sql, search
 
 
 @pytest.mark.parametrize("mode", ["hybrid", "full_text", "vector"])

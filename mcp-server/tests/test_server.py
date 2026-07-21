@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from euromod_mcp import server
+from nomotheca_mcp import server
 
 
 def test_full_text_tool_does_not_load_encoder() -> None:

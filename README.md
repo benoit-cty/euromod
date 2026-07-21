@@ -1,17 +1,26 @@
-# Euromod
+# Nómos
 
+JRC expert-contract prototype that partially automates updating and validating EUROMOD
+fiscal parameters from legislation. Project codename: **Nómos**. Package/container names
+still use the `euromod-*` prefix; the top-level folders below carry a codename prefix
+kept alongside the original descriptive name for readability:
 
+| Codename | Folder | What it is |
+|---|---|---|
+| Nomotheca (DB) / Nomosync (pipeline) | [Nomotheca-RAG/](Nomotheca-RAG/) | Legislation DB + ingestion pipeline (Activity 2) |
+| Nomoscope | [Nomoscope-agentic-workflow/](Nomoscope-agentic-workflow/) | Agentic workflow + validation UI (Activity 3) |
+| Nomokrisis | [Nomokrisis-evaluation_pipeline/](Nomokrisis-evaluation_pipeline/) | Evaluation pipeline (Activity 4) |
 
 ## Agentic workflow (Activity 3)
 
-Working prototype in [agentic-workflow/](agentic-workflow/): PydanticAI-based pipeline
+Working prototype in [Nomoscope-agentic-workflow/](Nomoscope-agentic-workflow/): PydanticAI-based pipeline
 (retrieve → propose → critique → diff → review queue) over the legislation DB,
 traced to Arize Phoenix, plus a Tauri (Rust) + Svelte validation UI with review
 queue, side-by-side diff, citation viewer, audit log and a database explorer tab.
-See [agentic-workflow/README.md](agentic-workflow/README.md).
+See [Nomoscope-agentic-workflow/README.md](Nomoscope-agentic-workflow/README.md).
 
 ```bash
-cd agentic-workflow/pipeline && uv sync && uv run euromod-workflow run-all --as-of 2025-06-01
+cd Nomoscope-agentic-workflow/pipeline && uv sync && uv run nomoscope-workflow run-all --as-of 2025-06-01
 cd ../ui && npm install && npm run tauri dev
 ```
 
@@ -76,5 +85,5 @@ rm parameter_report.qmd
 - Support for other sources in the database.
 - Bonus : Compare Country Report to legislation ?
 - MCP around the RAG database to query it
-- Name the project Nómos and the database Nomotheca, ingestion pipeline Nomosync, and agentic-workflow Nomoscope.
+- ~~Name the project Nómos and the database Nomotheca, ingestion pipeline Nomosync, and agentic-workflow Nomoscope.~~ Done — evaluation pipeline named Nomokrisis; see the naming table above.
 - Document time needed for adapters.

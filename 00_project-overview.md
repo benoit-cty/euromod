@@ -68,7 +68,7 @@ flowchart TD
         CR["Country Report"]
     end
 
-    subgraph INGEST["RAG/ingest — euromod_ingest package"]
+    subgraph INGEST["Nomotheca-RAG/ingest — nomotheca_ingest package"]
         CLI["CLI (Typer)\ninstrument / citation / tui / embeddings build"]
         TUI["TUI (Textual)\ninteractive ingestion monitor"]
         FR["FR adapter\nfetcher.py + parser.py + resolver.py"]
@@ -93,13 +93,13 @@ flowchart TD
         EVAL_SCRIPT["Models evaluations"]
     end
 
-    subgraph AGENT["agentic-workflow/pipeline\neuromod_workflow (PydanticAI)"]
+    subgraph AGENT["Nomoscope-agentic-workflow/pipeline\nnomoscope_workflow (PydanticAI)"]
         RET["Retrieve"] --> PROP["Propose"] --> CRIT["Critique"] --> DIFF["Diff"]
         QUEUE["Review queue\ndata/queue/*.json"]
         DIFF --> QUEUE
     end
 
-    subgraph UI["agentic-workflow/ui\nTauri (Rust) + Svelte desktop app"]
+    subgraph UI["Nomoscope-agentic-workflow/ui\nTauri (Rust) + Svelte desktop app"]
         REVIEW["Review tab\n(queue list, detail, diff)"]
         AUDIT["Audit Log tab"]
         DBEXPLORE["Database explorer tab"]

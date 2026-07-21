@@ -277,9 +277,9 @@ wheels = [
 ]
 
 [[package]]
-name = "euromod-legislation-ingest"
+name = "nomotheca-legislation-ingest"
 version = "0.1.0"
-source = { editable = "../RAG/ingest" }
+source = { editable = "../Nomotheca-RAG/ingest" }
 dependencies = [
     { name = "httpx" },
     { name = "psycopg", extra = ["binary"] },
@@ -299,7 +299,7 @@ embeddings = [
 
 [package.metadata]
 requires-dist = [
-    { name = "euromod-agentic-workflow", marker = "extra == 'translate'", editable = "../agentic-workflow/pipeline" },
+    { name = "nomoscope-agentic-workflow", marker = "extra == 'translate'", editable = "../Nomoscope-agentic-workflow/pipeline" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pydantic", specifier = ">=2.8" },
@@ -313,18 +313,18 @@ requires-dist = [
 provides-extras = ["embeddings", "translate"]
 
 [[package]]
-name = "euromod-legislation-mcp"
+name = "nomotheca-legislation-mcp"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "euromod-legislation-ingest", extra = ["embeddings"] },
+    { name = "nomotheca-legislation-ingest", extra = ["embeddings"] },
     { name = "mcp", extra = ["cli"] },
     { name = "psycopg", extra = ["binary"] },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "euromod-legislation-ingest", extras = ["embeddings"], editable = "../RAG/ingest" },
+    { name = "nomotheca-legislation-ingest", extras = ["embeddings"], editable = "../Nomotheca-RAG/ingest" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.28,<2" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
 ]

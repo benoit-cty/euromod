@@ -22,8 +22,8 @@ Start PostgreSQL and ensure model-1 embeddings have been built:
 ```bash
 cd ..
 docker compose up -d
-cd RAG/ingest
-uv run euromod-ingest embeddings build --backend openvino
+cd Nomotheca-RAG/ingest
+uv run nomotheca-ingest embeddings build --backend openvino
 ```
 
 Then run the stdio server:
@@ -31,7 +31,7 @@ Then run the stdio server:
 ```bash
 cd ../../mcp-server
 uv sync
-uv run euromod-legislation-mcp
+uv run nomotheca-legislation-mcp
 ```
 
 Configuration:
@@ -48,7 +48,7 @@ same in-process model. Full-text calls do not load the model.
 
 ```bash
 uv run --with pytest pytest
-uv run mcp dev src/euromod_mcp/server.py
+uv run mcp dev src/nomotheca_mcp/server.py
 ```
 
 The repository's `.vscode/mcp.json` also registers the stdio server for VS Code.

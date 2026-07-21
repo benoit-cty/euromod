@@ -387,14 +387,14 @@ sources such as OpenFisca-France.
 This is intentionally smaller than a general fiscal-parameter database.
 
 This schema is implemented as the `params` schema of the shared legislation
-database: [agentic-workflow/pipeline/db/params_schema.sql](../agentic-workflow/pipeline/db/params_schema.sql)
+database: [Nomoscope-agentic-workflow/pipeline/db/params_schema.sql](../Nomoscope-agentic-workflow/pipeline/db/params_schema.sql)
 (`references` is a reserved SQL word, so that table is named
 `proposal_references`). It is applied and populated with:
 
 ```bash
-cd agentic-workflow/pipeline
-uv run euromod-workflow init-param-db
-uv run euromod-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
+cd Nomoscope-agentic-workflow/pipeline
+uv run nomoscope-workflow init-param-db
+uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
 ```
 
 Each `extraction_runs` row additionally carries `phoenix_trace_id`, the
@@ -446,9 +446,11 @@ Validate 5-10 records already present in `FR.enriched.json`:
 ## Parameter Database Schema
 
 This diagram documents the `params` schema created by
-[`agentic-workflow/pipeline/db/params_schema.sql`](../agentic-workflow/pipeline/db/params_schema.sql).
+[`Nomoscope-agentic-workflow/pipeline/db/params_schema.sql`](../Nomoscope-agentic-workflow/pipeline/db/params_schema.sql).
 It follows the four-stage ownership model: received EUROMOD data, deterministic
 normalization, agent proposals, and append-only human review.
+
+::: {.column-page-right}
 
 ```mermaid
 %%| fig-width: 6.5
@@ -663,6 +665,8 @@ erDiagram
     EXTERNAL_PARAMETERS ||--o{ PARAMETER_LINKS : "validated mapping"
 ```
 
+:::
+
 ## Relationship Notes
 
 - `parameters.model_target`, `parameters.parameter_key`,
@@ -696,6 +700,8 @@ erDiagram
 proposal with its run, parameter metadata, the model value applicable on the
 run's `as_of` date, and a count of review decisions.
 
+::: {.column-page-right}
+
 ```mermaid
 flowchart LR
     P[(parameters)] --> V{{proposal_review}}
@@ -705,6 +711,8 @@ flowchart LR
     RD[(review_decisions)] -->|count by proposal| V
     V --> UI[Validation UI]
 ```
+
+:::
 
 The view does not include `proposal_references`; evidence is loaded separately
 from the proposal relationship when the reviewer opens citation details.
@@ -823,7 +831,7 @@ and that is acceptable.
    previous `values[].references`, which are empty in the whole FR export. A
    linked parameter contributes the OpenFisca reference titles and parsed
    `LEGIARTI`/`JORFTEXT` ids for dates near `as_of` to the citation fast path,
-   and tells `euromod-ingest` exactly which instruments to fetch on a cache
+   and tells `nomotheca-ingest` exactly which instruments to fetch on a cache
    miss. This attacks the hardest problem — *finding the right article* — with
    human-curated pointers.
 2. **Cross-validation in critique — corroboration, never evidence.** A
@@ -856,7 +864,7 @@ Implemented in the workflow package:
   (`origin: machine_translation | openfisca | manual`, plus the engine used).
   Received Stage A jsonb fields stay untouched — translations are Stage B
   enrichment, marked as such.
-- `euromod-workflow translate-params` machine-translates the English texts
+- `nomoscope-workflow translate-params` machine-translates the English texts
   into the law language (batched, provider-agnostic via the shared `llm.py`).
 - `frame` prefers the law-language text when present for the retrieval query,
   keeping the received text as a secondary signal. No translation, no DB —
@@ -1201,7 +1209,7 @@ parser, dependency graph, or evaluated result.
 
 All commands below were executed against the French data and produce the
 figures quoted in this report. The pipeline lives in
-`agentic-workflow/pipeline`; commands run from that directory with `uv run`.
+`Nomoscope-agentic-workflow/pipeline`; commands run from that directory with `uv run`.
 
 #### Prerequisites
 
@@ -1216,7 +1224,7 @@ figures quoted in this report. The pipeline lives in
    (port 6006).
 
 2. **LLM credentials** in `.env` at the repository root or in
-   `agentic-workflow/.env`. Models are provider-prefixed strings
+   `Nomoscope-agentic-workflow/.env`. Models are provider-prefixed strings
    (`anthropic/…`, `openai/…`, `azure_openai/…`, `openrouter/…`); set
    `WORKFLOW_MODEL` accordingly. The special `mock/extractor` model runs the
    whole workflow without credentials for demonstration, but the translation
@@ -1225,7 +1233,7 @@ figures quoted in this report. The pipeline lives in
 #### Step 1 - Create the parameter store
 
 ```bash
-uv run euromod-workflow init-param-db
+uv run nomoscope-workflow init-param-db
 ```
 
 Applies `db/params_schema.sql` idempotently: the `params` schema described in
@@ -1235,7 +1243,7 @@ legislation database.
 #### Step 2 - Ingest the EUROMOD export
 
 ```bash
-uv run euromod-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
+uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
 # FR.enriched.json: 702 parameters, 3886 model values, 6073 usage edges
 ```
 
@@ -1248,7 +1256,7 @@ Re-ingesting the same country is idempotent: parameters upsert on
 #### Step 3 - Ingest the OpenFisca corpus
 
 ```bash
-uv run euromod-workflow ingest-openfisca ~/Euromod/openfisca-france/openfisca_france/parameters --country FR
+uv run nomoscope-workflow ingest-openfisca ~/Euromod/openfisca-france/openfisca_france/parameters --country FR
 # 2836 external parameters, 19391 value points, 16788 references
 ```
 
@@ -1267,7 +1275,7 @@ external-corpora chapter, planned for the next phase.
 #### Step 4 - Translate parameter texts into the law language
 
 ```bash
-uv run euromod-workflow translate-params --country FR
+uv run nomoscope-workflow translate-params --country FR
 # 702 French descriptions, 575 French labels in params.parameter_texts
 ```
 

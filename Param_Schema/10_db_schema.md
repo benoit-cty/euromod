@@ -1,7 +1,7 @@
 # Parameter Database Schema
 
 This diagram documents the `params` schema created by
-[`agentic-workflow/pipeline/db/params_schema.sql`](../agentic-workflow/pipeline/db/params_schema.sql).
+[`Nomoscope-agentic-workflow/pipeline/db/params_schema.sql`](../Nomoscope-agentic-workflow/pipeline/db/params_schema.sql).
 It follows the four-stage ownership model: received EUROMOD data, deterministic
 normalization, agent proposals, and append-only human review.
 

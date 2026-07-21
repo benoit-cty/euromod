@@ -30,9 +30,9 @@ The server owns query-time concerns:
 
 Existing components keep their responsibilities:
 
-- `RAG/ingest` fetches, versions, translates, chunks, and embeds legislation;
+- `Nomotheca-RAG/ingest` fetches, versions, translates, chunks, and embeds legislation;
 - Postgres remains the single source of truth and vector store;
-- `agentic-workflow/pipeline` remains the controlled update workflow;
+- `Nomoscope-agentic-workflow/pipeline` remains the controlled update workflow;
 - the validation UI remains the human approval boundary.
 
 ## Trust boundary
