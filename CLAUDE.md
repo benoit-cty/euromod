@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A JRC (EU Joint Research Centre) expert-contract prototype that partially automates updating and validating **EUROMOD** fiscal parameters from legislation. The mission (see [00_project-overview.md](00_project-overview.md)): a temporally-aware, multilingual **RAG** over the fiscal legislation of 5 pilot member states → an **agentic workflow** that proposes structured parameter updates → a **validation UI** where a human accepts/rejects → an **evaluation pipeline** that scores the whole thing against a golden set.
 
-**Naming:** the project codename is **Nómos**. Its three code subprojects are prefixed with their codenames on disk — `Nomotheca-RAG/` (legislation DB + ingestion, "Nomosync"), `Nomoscope-agentic-workflow/` (agentic pipeline + validation UI), `Nomokrisis-evaluation_pipeline/` (evaluation) — kept alongside the original descriptive names for readability. Package names, container names, and DB identifiers still use the `euromod-*`/`euromod_*` prefix and are unchanged.
+**Naming:** the project codename is **Nómos**. Its three code subprojects are prefixed with their codenames on disk — `Nomotheca-RAG/` (legislation DB + ingestion, "Nomosync"), `Nomoscope-agentic-workflow/` (agentic pipeline + validation UI), `Nomokrisis-evaluation_pipeline/` (evaluation) — kept alongside the original descriptive names for readability.
 
 The numbered top-level docs (`00_`–`07_`) are the contract plan; `01_`–`05_` map to the five deliverable "Activities". The three code subprojects each implement one Activity and depend on each other in a line: **ingest → agentic-workflow → evaluation_pipeline**, all reading/writing one shared Postgres.
 
@@ -70,6 +70,10 @@ cd Nomokrisis-evaluation_pipeline && uv run --extra test pytest
 ```
 
 Run a single test with `uv run pytest tests/test_cli.py::test_name` (or `-k pattern`). All packages set `pythonpath=["src"]` and `testpaths=["tests"]` in `pyproject.toml`.
+
+## Debugging a workflow run from a Phoenix trace id
+
+Given a trace id (or "why did this run fail?"), use the **`/debug-phoenix-trace`** skill ([.claude/skills/debug-phoenix-trace/SKILL.md](.claude/skills/debug-phoenix-trace/SKILL.md)): it inspects the trace's spans straight in the `phoenix` DB inside the shared Postgres container, cross-checks corpus/embedding coverage in the `legislation` DB, and lists the known failure modes. Rule of thumb: most `not_found` runs are corpus problems (act not ingested, or ingested but not yet embedded), not LLM problems.
 
 ## LLM provider configuration
 
