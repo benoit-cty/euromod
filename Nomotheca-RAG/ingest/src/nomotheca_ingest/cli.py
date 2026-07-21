@@ -82,6 +82,44 @@ def citation(
     _print_result(result)
 
 
+@app.command("country-report")
+def country_report(
+    jurisdiction: str,
+    file: str,
+    database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
+    vintage: Annotated[str, typer.Option("--vintage", help="CR vintage label, e.g. Y16.")] = "Y16",
+    valid_from: Annotated[
+        str, typer.Option("--valid-from", help="Start of the policy-year span the CR covers.")
+    ] = "2022-01-01",
+) -> None:
+    """Ingest a EUROMOD Country Report Markdown file as a non-legislative corpus.
+
+    Loaded instruments are tagged instrument_type='country_report' so the
+    agentic workflow can exclude them from citable evidence retrieval.
+    """
+    from nomotheca_ingest.core.country_reports import ingest_country_report
+
+    stats = ingest_country_report(
+        file,
+        jurisdiction,
+        database_url,
+        vintage=vintage,
+        valid_from=date.fromisoformat(valid_from),
+    )
+    typer.echo(
+        json.dumps(
+            {
+                "instruments": stats.instruments,
+                "units": stats.units,
+                "versions": stats.versions,
+                "texts": stats.texts,
+                "chunks": stats.chunks,
+            },
+            indent=2,
+        )
+    )
+
+
 @app.command()
 def tui() -> None:
     """Launch the interactive terminal UI for staged ingestion runs."""

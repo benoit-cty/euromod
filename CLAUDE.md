@@ -41,6 +41,7 @@ Python packages use **`uv`**. Run commands with `uv run` from inside each packag
 # Ingest (Nomotheca-RAG/ingest)
 uv run python -m nomotheca_ingest.cli tui                 # interactive Textual ingestion monitor
 uv run python -m nomotheca_ingest.cli fr instrument JORFTEXT000051168007
+uv run python -m nomotheca_ingest.cli country-report FR ../country_reports/Y16_CR_FR.md   # non-legislative corpus
 uv sync --extra embeddings                              # then: cli embeddings build --backend torch|openvino
 uv sync --extra embeddings --extra translate            # then: cli translate run --model openrouter/...
 
@@ -85,6 +86,7 @@ API keys come from `.env`. `load_config()` auto-loads `.env` only from the `euro
 
 - **The workflow is export-first and human-gated.** Never make the pipeline write back into EUROMOD parameter files; accepted values are exported, and only after a human Accept in the UI. Reviewed queue items are immutable to re-runs (unless `--force`); `decisions.jsonl` is append-only.
 - **The verbatim-quote rule is mechanical, not prompt-only.** If you touch `propose`/`critique`, keep the character-for-character extract check against the cited chunk — it's the anti-hallucination guarantee.
+- **Country Reports are context, never evidence.** EUROMOD Country Reports are ingested with `instrument_type='country_report'` (a separate corpus class); Nomoscope's evidence retrieval SQL excludes that type, and `retrieval.country_report_search()` is the only sanctioned way to read them (query framing, UI display). Never let `propose`/`critique` cite a CR chunk — the CR describes the model, so citing it as support is circular.
 - **`national_team_source` values route around the pipeline** and are never overwritten — not every EUROMOD parameter is legislation-derivable.
 - **Value scoring must normalise, not string-match.** EUROMOD stores mid-year changes as weighted averages, ~75% of FR params as formula strings (`$PSS * 4`), and period suffixes (`#m #y …`) with fixed conversion factors. Compare normalised annualised values. See the detailed "what we can/cannot do" findings at the bottom of [Nomokrisis-evaluation_pipeline/README.md](Nomokrisis-evaluation_pipeline/README.md).
 - **Embeddings on the target workstation (Intel Ultra 7 265H) prefer OpenVINO over ONNX** on the local CPU path. BGE-M3 with the `fix_mistral_regex` flag is a known breakage — leave it off (details in [Nomotheca-RAG/ingest/README.md](Nomotheca-RAG/ingest/README.md)).
