@@ -149,6 +149,14 @@ def report(
     def pct(value) -> str:
         return "-" if value is None else f"{value}%"
 
+    def impact(row) -> str:
+        if row.get("energy_kwh") is None:
+            return ""
+        return (
+            f"  energy={row['energy_kwh'] * 1000:.1f}Wh"
+            f"  co2={row['gwp_kgco2eq'] * 1000:.1f}g"
+        )
+
     for row in rows:
         typer.echo(
             f"{row['created_at']:%Y-%m-%d %H:%M}  {row['model_provider']}/{row['model_name']}"
@@ -156,6 +164,7 @@ def report(
             f"  routing={pct(row['routing_pct'])}  value={pct(row['value_pct'])}  date={pct(row['date_pct'])}"
             f"  citation={pct(row['citation_pct'])}  supported={pct(row['supportedness_pct'])}"
             f"  halluc={pct(row['hallucination_pct'])}  recall={pct(row['retrieval_recall_pct'])}"
+            f"{impact(row)}"
             f"  {row['run_id']}"
         )
 

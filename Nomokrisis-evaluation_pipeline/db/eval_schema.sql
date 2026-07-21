@@ -43,8 +43,24 @@ CREATE TABLE IF NOT EXISTS eval.results (
     latency_ms       integer,
     error            text,
     details          jsonb,                  -- full CaseResult for drill-down in the UI
+    phoenix_trace_id  text,                  -- exact link to the case's Phoenix trace
+    llm_calls         integer,               -- LLM spans in that trace (NULL for mock runs)
+    tokens_prompt     integer,
+    tokens_completion integer,
+    energy_kwh        double precision,      -- EcoLogits midpoint estimates (see impact.py)
+    gwp_kgco2eq       double precision,
     UNIQUE (run_pk, case_id)
 );
+
+-- Environmental-impact columns were added after the first deploys; CREATE TABLE
+-- IF NOT EXISTS does not alter existing tables, so migrate them explicitly.
+ALTER TABLE eval.results
+    ADD COLUMN IF NOT EXISTS phoenix_trace_id  text,
+    ADD COLUMN IF NOT EXISTS llm_calls         integer,
+    ADD COLUMN IF NOT EXISTS tokens_prompt     integer,
+    ADD COLUMN IF NOT EXISTS tokens_completion integer,
+    ADD COLUMN IF NOT EXISTS energy_kwh        double precision,
+    ADD COLUMN IF NOT EXISTS gwp_kgco2eq       double precision;
 
 CREATE INDEX IF NOT EXISTS eval_results_run_idx ON eval.results (run_pk);
 CREATE INDEX IF NOT EXISTS eval_results_lang_idx ON eval.results (language, country);
@@ -73,7 +89,14 @@ SELECT
     round(100 * avg(res.supportedness::int), 1)           AS supportedness_pct,
     round(100 * avg(res.hallucination::int), 1)           AS hallucination_pct,
     round(100 * avg(res.retrieval_hit::int), 1)           AS retrieval_recall_pct,
-    round(avg(res.latency_ms))                            AS avg_latency_ms
+    round(avg(res.latency_ms))                            AS avg_latency_ms,
+    -- Environmental impact (EcoLogits over Phoenix token counts): sums ignore
+    -- NULLs and are NULL for pure-mock runs. New columns are appended at the
+    -- end so CREATE OR REPLACE VIEW stays valid against the existing view.
+    sum(res.tokens_prompt)                                AS tokens_prompt,
+    sum(res.tokens_completion)                            AS tokens_completion,
+    sum(res.energy_kwh)                                   AS energy_kwh,
+    sum(res.gwp_kgco2eq)                                  AS gwp_kgco2eq
 FROM eval.runs r
 JOIN eval.results res ON res.run_pk = r.id
 GROUP BY r.id, res.language, res.country;

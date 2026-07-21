@@ -80,6 +80,15 @@ class CaseResult(BaseModel):
     proposed_value: object | None = None
     expected_value: object | None = None
 
+    # Environmental impact of this case's LLM calls, from EcoLogits over the
+    # Phoenix trace (nomoscope_workflow.impact). None for mock runs.
+    phoenix_trace_id: str | None = None
+    llm_calls: int | None = None
+    tokens_prompt: int | None = None
+    tokens_completion: int | None = None
+    energy_kwh: float | None = None
+    gwp_kgco2eq: float | None = None
+
 
 class RunManifest(BaseModel):
     """Reproducibility manifest, written next to the results and into eval.runs."""

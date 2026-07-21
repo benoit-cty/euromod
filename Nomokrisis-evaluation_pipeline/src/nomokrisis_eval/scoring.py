@@ -68,6 +68,7 @@ def score_item(case: GoldenCase, item: ReviewItem) -> CaseResult:
         routing_actual=item.routing.value,
         routing_correct=item.routing == expected.routing,
         item_id=item.id,
+        phoenix_trace_id=item.phoenix_trace_id,
         confidence=(
             proposed.lineage.confidence if proposed is not None and proposed.lineage else None
         ),

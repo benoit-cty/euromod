@@ -15,7 +15,8 @@ from collections import defaultdict
 from datetime import date, datetime, timezone
 
 from nomoscope_workflow import AGENT_VERSION
-from nomoscope_workflow.config import load_config as load_workflow_config
+from nomoscope_workflow.config import WorkflowConfig, load_config as load_workflow_config
+from nomoscope_workflow.impact import trace_impact
 from nomoscope_workflow.pipeline import run_parameter
 from nomoscope_workflow.prompts import PROMPT_VERSION
 from nomoscope_workflow.tracing import setup_tracing
@@ -96,7 +97,52 @@ def run_evaluation(
         result.latency_ms = int((time.perf_counter() - started) * 1000)
         results.append(result)
 
+    if not model.startswith("mock"):
+        _attach_impact(results, wf_cfg)
     return manifest, results
+
+
+def _attach_impact(results: list[CaseResult], wf_cfg: WorkflowConfig) -> None:
+    """Fill each case's token/energy columns from its Phoenix trace via EcoLogits.
+
+    Runs after the case loop so the OTLP batch exporter can be flushed first;
+    Phoenix bulk-inserts asynchronously, so a case whose spans are not yet
+    queryable gets one retry. Impact is a best-effort side metric: a missing
+    or down Phoenix DB must never fail the evaluation run.
+    """
+    try:
+        from opentelemetry import trace as otel_trace
+
+        provider = otel_trace.get_tracer_provider()
+        if hasattr(provider, "force_flush"):
+            provider.force_flush()
+    except Exception:
+        pass
+    pending = [r for r in results if r.phoenix_trace_id]
+    for attempt in range(2):
+        if not pending:
+            return
+        if attempt:
+            time.sleep(2)  # give Phoenix's async bulk inserter a beat
+        still_pending: list[CaseResult] = []
+        for result in pending:
+            try:
+                usage = trace_impact(
+                    wf_cfg.phoenix_database_url,
+                    result.phoenix_trace_id,
+                    electricity_mix_zone=wf_cfg.electricity_mix_zone,
+                )
+            except Exception:
+                return  # phoenix DB unreachable: leave the columns NULL
+            if usage is None:
+                still_pending.append(result)
+                continue
+            result.llm_calls = usage["llm_calls"]
+            result.tokens_prompt = usage["tokens_prompt"]
+            result.tokens_completion = usage["tokens_completion"]
+            result.energy_kwh = usage["energy_kwh"]
+            result.gwp_kgco2eq = usage["gwp_kgco2eq"]
+        pending = still_pending
 
 
 def summarize(results: list[CaseResult]) -> dict[str, dict[str, str]]:

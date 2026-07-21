@@ -57,9 +57,12 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                                           routing_actual, routing_correct, value_correct,
                                           date_correct, citation_correct, supportedness,
                                           hallucination, retrieval_hit, confidence,
-                                          latency_ms, error, details)
+                                          latency_ms, error, details,
+                                          phoenix_trace_id, llm_calls, tokens_prompt,
+                                          tokens_completion, energy_kwh, gwp_kgco2eq)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s)
                 """,
                 [
                     (
@@ -83,6 +86,12 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                         r.latency_ms,
                         r.error,
                         json.dumps(r.model_dump(mode="json")),
+                        r.phoenix_trace_id,
+                        r.llm_calls,
+                        r.tokens_prompt,
+                        r.tokens_completion,
+                        r.energy_kwh,
+                        r.gwp_kgco2eq,
                     )
                     for r in results
                 ],
