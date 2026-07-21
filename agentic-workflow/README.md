@@ -44,7 +44,8 @@ Real LLM: `uv run euromod-workflow run-all --as-of 2025-06-01 --force --model an
 
 ## 1. Workflow, step by step
 
-One run = one `(country, parameter, as_of)`. Steps are LangGraph nodes
+One run = one `(country, parameter, as_of)`. Steps are plain functions driven
+by an explicit control flow
 ([pipeline/src/euromod_workflow/pipeline.py](pipeline/src/euromod_workflow/pipeline.py)):
 
 | Step | Kind | Input → output | Failure mode & handling |
@@ -60,12 +61,13 @@ The anti-hallucination rule from the activity doc is mechanical, not prompt-only
 `supporting_extract` must be found character-for-character (whitespace-insensitive)
 inside the cited chunk, or `citation_verified=false` and the critique fails.
 
-## 2. Orchestrator: LangGraph (thin)
+## 2. Orchestrator: plain Python + PydanticAI (thin)
 
-- **LangGraph** graph-of-steps: fits the pipeline framing, gives conditional
-  edges (retry loop, not-found short-circuit) and later checkpointing. The graph
-  is deliberately thin — every node is an ordinary function, so swapping the
-  orchestrator is cheap if the comparison in the deliverable concludes otherwise.
+- The step sequence (retry loop, not-found short-circuit) is explicit Python
+  control flow — no orchestration framework. LLM steps are **PydanticAI**
+  agents with structured output straight into the Pydantic schemas. Every step
+  is an ordinary function, so swapping the orchestration style is cheap if the
+  comparison in the deliverable concludes otherwise.
 - **Multi-provider by config string** (`WORKFLOW_MODEL=<provider>/<model>`):
   anthropic, openai, azure_openai, openrouter, together — plus `mock/` for
   key-less demos and deterministic tests. Endpoint flexibility is the hard
@@ -128,8 +130,9 @@ Decision rationale in [observability.md](observability.md). Implementation
   critique → diff → enqueue`; retrieval spans carry the candidate chunks and
   scores, the root span carries run_id / model / prompt_version — the KPI
   slicing axes for Activities 4–5.
-- LangChain/LangGraph LLM calls are auto-instrumented via
-  `openinference-instrumentation-langchain`; pipeline steps use plain OTel
+- PydanticAI agent runs are instrumented natively (`Agent.instrument_all()`)
+  and mapped to OpenInference spans by
+  `openinference-instrumentation-pydantic-ai`; pipeline steps use plain OTel
   spans, so **mock runs trace identically to LLM runs** and no LangSmith-style
   vendor env vars exist anywhere (`grep -ri langsmith` returns nothing).
 - Exit strategy: everything is OTLP; pointing `PHOENIX_COLLECTOR_ENDPOINT`

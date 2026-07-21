@@ -24,7 +24,7 @@ from euromod_ingest.core.chunker import chunk_text
 DEFAULT_TARGET_LANG = "en"
 DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS = 120.0
 # Newline-aware split size for LLM calls; keeps each completion well under
-# the 8k max_tokens configured in euromod_workflow.llm.get_chat_model.
+# the 8k max_tokens configured in euromod_workflow.llm.run_agent.
 TRANSLATION_SEGMENT_CHARS = 6_000
 
 LANG_NAMES = {
@@ -86,20 +86,21 @@ class TranslationBackend(Protocol):
 
 
 class LLMTranslationBackend:
-    """Translate through euromod_workflow.llm's provider-prefixed chat models."""
+    """Translate through euromod_workflow.llm's provider-prefixed PydanticAI agents."""
 
     def __init__(self, model: str, *, request_timeout: float | None = DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS) -> None:
-        """Load .env credentials and instantiate the chat model lazily."""
+        """Load .env credentials and keep the provider-prefixed model name."""
         try:
             from euromod_workflow.config import load_config
-            from euromod_workflow.llm import get_chat_model
+            from euromod_workflow.llm import run_agent
         except ImportError as exc:  # pragma: no cover - exercised by operator environment
             msg = "Install translation dependencies with: uv sync --extra translate"
             raise RuntimeError(msg) from exc
 
         load_config()  # side effect: load_dotenv() for the provider API keys
         self.engine = model
-        self._llm = get_chat_model(model, temperature=0.0, request_timeout=request_timeout)
+        self._run_agent = run_agent
+        self._request_timeout = request_timeout
 
     def translate(self, text: str, source_lang: str, target_lang: str) -> str:
         """Translate one segment, retrying transient provider errors."""
@@ -112,13 +113,9 @@ class LLMTranslationBackend:
 
         @retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(3), reraise=True)
         def _invoke() -> str:
-            response = self._llm.invoke([("system", system), ("human", text)])
-            content = response.content
-            if isinstance(content, list):  # anthropic-style content blocks
-                content = "".join(
-                    block if isinstance(block, str) else block.get("text", "") for block in content
-                )
-            return content.strip()
+            return self._run_agent(
+                self.engine, system, text, temperature=0.0, timeout=self._request_timeout
+            ).strip()
 
         return _invoke()
 

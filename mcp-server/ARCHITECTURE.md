@@ -13,7 +13,7 @@ flowchart LR
     DB -->|chunks, provenance, ranks| MCP
     MCP -->|structured tool result| Host
 
-    WF[LangGraph workflow] --> DB
+    WF[PydanticAI workflow] --> DB
     WF --> REVIEW[Human review queue]
 ```
 

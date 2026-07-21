@@ -1,9 +1,9 @@
 """Provider-agnostic LLM access, keyed on "<provider>/<model>" strings.
 
-Pattern lifted from update_openfisca_ai's get_llm_instance: the provider prefix
-selects the LangChain chat class, so swapping models is a config-string change
-(hard requirement — Activity 5 compares different LLMs). "mock/..." is handled
-upstream in mock.py and never reaches this factory.
+The provider prefix selects the PydanticAI model class and provider, so
+swapping models is a config-string change (hard requirement — Activity 5
+compares different LLMs). "mock/..." is handled upstream in mock.py and never
+reaches this factory.
 """
 
 from __future__ import annotations
@@ -11,58 +11,73 @@ from __future__ import annotations
 import os
 from datetime import date
 
+from pydantic_ai import Agent
+from pydantic_ai.settings import ModelSettings
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 from . import prompts
 from .schema import CritiqueFindings, ParameterRecord, ProposalDraft, RetrievalHit
 
+ANTHROPIC_MAX_TOKENS = 8000
 
-def get_chat_model(model: str, temperature: float = 0.2, request_timeout: float | None = None):
-    """Instantiate a LangChain chat model from a provider-prefixed name."""
-    timeout_kwargs = {} if request_timeout is None else {"timeout": request_timeout}
+
+def get_model(model: str):
+    """Instantiate a PydanticAI model from a provider-prefixed name."""
     provider, _, name = model.partition("/")
     if provider == "anthropic":
-        from langchain_anthropic import ChatAnthropic
+        from pydantic_ai.models.anthropic import AnthropicModel
 
-        return ChatAnthropic(model_name=name, max_tokens=8000, temperature=temperature, **timeout_kwargs)
+        return AnthropicModel(name)
     if provider == "openai":
-        from langchain_openai import ChatOpenAI
+        from pydantic_ai.models.openai import OpenAIChatModel
 
-        return ChatOpenAI(model=name, temperature=temperature, **timeout_kwargs)
+        return OpenAIChatModel(name)
     if provider == "azure_openai":
-        from langchain_openai import AzureChatOpenAI
+        from pydantic_ai.models.openai import OpenAIChatModel
+        from pydantic_ai.providers.azure import AzureProvider
 
-        return AzureChatOpenAI(
-            api_version=os.environ.get("OPENAI_API_VERSION"),
-            azure_deployment=os.environ.get("AZURE_OPENAI_DEPLOYMENT", name),
-            **timeout_kwargs,
+        # AzureProvider reads AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY and
+        # OPENAI_API_VERSION from the environment.
+        return OpenAIChatModel(
+            os.environ.get("AZURE_OPENAI_DEPLOYMENT", name), provider=AzureProvider()
         )
     if provider == "openrouter":
-        from langchain_openai import ChatOpenAI
+        from pydantic_ai.models.openai import OpenAIChatModel
+        from pydantic_ai.providers.openrouter import OpenRouterProvider
 
-        return ChatOpenAI(
-            model=name,
-            api_key=os.environ.get("OPENROUTER_API_KEY"),
-            base_url="https://openrouter.ai/api/v1",
-            temperature=temperature,
-            streaming=False,
-            **timeout_kwargs,
-        )
+        return OpenAIChatModel(name, provider=OpenRouterProvider())
     if provider == "together":
-        from langchain_openai import ChatOpenAI
+        from pydantic_ai.models.openai import OpenAIChatModel
+        from pydantic_ai.providers.together import TogetherProvider
 
-        return ChatOpenAI(
-            model=name,
-            api_key=os.environ.get("TOGETHER_API_KEY"),
-            base_url="https://api.together.xyz/v1",
-            temperature=temperature,
-            streaming=False,
-            **timeout_kwargs,
-        )
+        return OpenAIChatModel(name, provider=TogetherProvider())
     raise ValueError(
         f"Unknown provider prefix in {model!r}; expected one of "
         "anthropic/, openai/, azure_openai/, openrouter/, together/, mock/"
     )
+
+
+def run_agent(
+    model: str,
+    system: str,
+    user: str,
+    output_type: type = str,
+    temperature: float = 0.2,
+    timeout: float | None = None,
+):
+    """One agent run: system + user prompt in, plain text or a schema instance out."""
+    settings: ModelSettings = {"temperature": temperature}
+    if model.partition("/")[0] == "anthropic":
+        settings["max_tokens"] = ANTHROPIC_MAX_TOKENS
+    if timeout is not None:
+        settings["timeout"] = timeout
+    agent = Agent(
+        get_model(model),
+        output_type=output_type,
+        instructions=system,
+        model_settings=settings,
+    )
+    return agent.run_sync(user).output
 
 
 @retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(3), reraise=True)
@@ -70,12 +85,11 @@ def propose_with_llm(
     model: str, record: ParameterRecord, as_of: date, hits: list[RetrievalHit]
 ) -> ProposalDraft:
     """Proposal step: structured output straight into the ProposalDraft schema."""
-    llm = get_chat_model(model).with_structured_output(ProposalDraft)
-    return llm.invoke(
-        [
-            ("system", prompts.PROPOSAL_SYSTEM),
-            ("human", prompts.build_proposal_user(record, as_of, hits)),
-        ]
+    return run_agent(
+        model,
+        prompts.PROPOSAL_SYSTEM,
+        prompts.build_proposal_user(record, as_of, hits),
+        output_type=ProposalDraft,
     )
 
 
@@ -84,10 +98,9 @@ def critique_with_llm(
     model: str, record: ParameterRecord, as_of: date, draft: ProposalDraft, hits: list[RetrievalHit]
 ) -> CritiqueFindings:
     """LLM critique pass (complements the mechanical checks in pipeline.py)."""
-    llm = get_chat_model(model).with_structured_output(CritiqueFindings)
-    return llm.invoke(
-        [
-            ("system", prompts.CRITIQUE_SYSTEM),
-            ("human", prompts.build_critique_user(record, as_of, draft, hits)),
-        ]
+    return run_agent(
+        model,
+        prompts.CRITIQUE_SYSTEM,
+        prompts.build_critique_user(record, as_of, draft, hits),
+        output_type=CritiqueFindings,
     )

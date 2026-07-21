@@ -17,7 +17,7 @@
 |---|---|---|---|---|
 | License | MIT (self-host) | **Elastic 2.0** (source-available) | Apache-2.0 (core; Signals/alerts need a license key) | Apache-2.0 |
 | Self-host footprint | Postgres + ClickHouse + Redis + S3 | **1 container** (SQLite, optional Postgres) | Postgres + ClickHouse + RabbitMQ (Rust app) | 4 containers incl. ClickHouse + MinIO |
-| Integration model | OTel-based SDK, LangGraph/OpenAI/Bedrock callbacks | OTel spans (OpenInference) | OTel spans | **Proxy** — change the base URL |
+| Integration model | OTel-based SDK, PydanticAI/OpenAI/Bedrock callbacks | OTel spans (OpenInference) | OTel spans | **Proxy** — change the base URL |
 | Evals / datasets | Strong — datasets, experiments, LLM-as-judge, prompt versioning | Strong — datasets, experiments, LLM-as-judge, notebook-friendly | Code-first eval SDK, good | Weak — analytics-first, no real evals/datasets |
 | Built for | General LLM app observability | RAG + LLM-pipeline tracing and experimentation | Long-running autonomous agents (transcript views, session replay) | Cost/usage analytics, caching, rate limits |
 

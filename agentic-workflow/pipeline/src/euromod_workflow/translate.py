@@ -15,7 +15,7 @@ import psycopg
 from pydantic import BaseModel, ConfigDict, Field
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
-from .llm import get_chat_model
+from .llm import run_agent
 from .retrieval import LANG_BY_COUNTRY
 
 LANG_NAMES = {
@@ -93,7 +93,6 @@ def pending(
 @retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(3), reraise=True)
 def translate_batch(model: str, country: str, lang: str, items: list[dict]) -> TranslationBatch:
     """One structured-output LLM call translating a batch of parameters."""
-    llm = get_chat_model(model, request_timeout=180).with_structured_output(TranslationBatch)
     payload = "\n\n".join(
         f"index: {i}\n"
         f"label: {item['label']}\n"
@@ -101,11 +100,12 @@ def translate_batch(model: str, country: str, lang: str, items: list[dict]) -> T
         f"description: {item['description']}"
         for i, item in enumerate(items)
     )
-    return llm.invoke(
-        [
-            ("system", _SYSTEM.format(language=LANG_NAMES.get(lang, lang), country=country)),
-            ("human", payload),
-        ]
+    return run_agent(
+        model,
+        _SYSTEM.format(language=LANG_NAMES.get(lang, lang), country=country),
+        payload,
+        output_type=TranslationBatch,
+        timeout=180,
     )
 
 

@@ -4,7 +4,7 @@
 
 ## Agentic workflow (Activity 3)
 
-Working prototype in [agentic-workflow/](agentic-workflow/): LangGraph pipeline
+Working prototype in [agentic-workflow/](agentic-workflow/): PydanticAI-based pipeline
 (retrieve → propose → critique → diff → review queue) over the legislation DB,
 traced to Arize Phoenix, plus a Tauri (Rust) + Svelte validation UI with review
 queue, side-by-side diff, citation viewer, audit log and a database explorer tab.

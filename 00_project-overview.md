@@ -93,7 +93,7 @@ flowchart TD
         EVAL_SCRIPT["Models evaluations"]
     end
 
-    subgraph AGENT["agentic-workflow/pipeline\neuromod_workflow (LangGraph)"]
+    subgraph AGENT["agentic-workflow/pipeline\neuromod_workflow (PydanticAI)"]
         RET["Retrieve"] --> PROP["Propose"] --> CRIT["Critique"] --> DIFF["Diff"]
         QUEUE["Review queue\ndata/queue/*.json"]
         DIFF --> QUEUE

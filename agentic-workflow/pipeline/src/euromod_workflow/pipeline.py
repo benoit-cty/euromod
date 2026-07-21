@@ -1,11 +1,12 @@
-"""The agentic workflow: a LangGraph graph-of-steps, deterministic wherever possible.
+"""The agentic workflow: an explicit pipeline of steps, deterministic wherever possible.
 
 frame -> retrieve -> propose -> critique -> diff -> enqueue
                  \\ (no hits) ----------------/    (one LLM retry on critique fail)
 
-LLM steps: propose, critique (skipped mechanics stay). Everything else is code:
-retrieval is SQL, citation verification is a string match against the corpus,
-diffing and routing are pure functions. One Phoenix trace per parameter run.
+LLM steps: propose, critique — both PydanticAI structured-output calls (skipped
+mechanics stay). Everything else is code: retrieval is SQL, citation
+verification is a string match against the corpus, diffing and routing are
+pure functions. One Phoenix trace per parameter run.
 """
 
 from __future__ import annotations
@@ -15,7 +16,6 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import TypedDict
 
-from langgraph.graph import END, StateGraph
 from opentelemetry.trace import Tracer
 
 from . import AGENT_VERSION, llm, mock, paramdb, queue_store, retrieval, translate
@@ -89,8 +89,8 @@ def _draft_value(draft: ProposalDraft):
     return draft.value_brackets if draft.value_brackets is not None else draft.value_scalar
 
 
-def build_graph(cfg: WorkflowConfig, tracer: Tracer):
-    """Compile the workflow graph; nodes close over config, DB and tracer."""
+def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
+    """Assemble the workflow as a plain function; steps close over config, DB and tracer."""
     is_mock = cfg.model.startswith("mock")
 
     def frame(state: WorkflowState) -> dict:
@@ -276,13 +276,10 @@ def build_graph(cfg: WorkflowConfig, tracer: Tracer):
             set_output(span, {"written": written, "path": str(queue_store.queue_dir(cfg.data_dir))})
         return {"item": item, "enqueued": written}
 
-    def _after_retrieve(state: WorkflowState) -> str:
-        return "propose" if state["hits"] else "diff"
-
-    def _after_critique(state: WorkflowState) -> str:
+    def _retry_proposal(state: WorkflowState) -> bool:
         report = state.get("critique")
         draft = state.get("draft")
-        retry = (
+        return (
             report is not None
             and report.verdict == "fail"
             and draft is not None
@@ -290,23 +287,22 @@ def build_graph(cfg: WorkflowConfig, tracer: Tracer):
             and state.get("attempts", 0) < MAX_PROPOSAL_ATTEMPTS
             and not is_mock  # the mock extractor is deterministic; retrying can't help
         )
-        return "propose" if retry else "diff"
 
-    graph = StateGraph(WorkflowState)
-    graph.add_node("frame", frame)
-    graph.add_node("retrieve", retrieve)
-    graph.add_node("propose", propose)
-    graph.add_node("critique", critique)
-    graph.add_node("diff", diff)
-    graph.add_node("enqueue", enqueue)
-    graph.set_entry_point("frame")
-    graph.add_edge("frame", "retrieve")
-    graph.add_conditional_edges("retrieve", _after_retrieve, {"propose": "propose", "diff": "diff"})
-    graph.add_edge("propose", "critique")
-    graph.add_conditional_edges("critique", _after_critique, {"propose": "propose", "diff": "diff"})
-    graph.add_edge("diff", "enqueue")
-    graph.add_edge("enqueue", END)
-    return graph.compile()
+    def invoke(state: WorkflowState) -> WorkflowState:
+        state = dict(state)
+        state.update(frame(state))
+        state.update(retrieve(state))
+        if state["hits"]:
+            while True:
+                state.update(propose(state))
+                state.update(critique(state))
+                if not _retry_proposal(state):
+                    break
+        state.update(diff(state))
+        state.update(enqueue(state))
+        return state
+
+    return invoke
 
 
 def _values_sane(unit: str, draft: ProposalDraft) -> bool:
@@ -387,7 +383,7 @@ def run_parameter(
     record = queue_store.load_record(parameter_file)
     info = record.information
     run_id = f"{datetime.now(timezone.utc):%Y-%m-%dT%H:%MZ}#{info.country.lower()}-{uuid.uuid4().hex[:6]}"
-    graph = build_graph(cfg, tracer)
+    workflow = build_workflow(cfg, tracer)
     started_at = datetime.now(timezone.utc)
     with step_span(
         tracer,
@@ -407,7 +403,7 @@ def run_parameter(
         # so the queue item and params.extraction_runs both link to Phoenix.
         span_context = span.get_span_context()
         phoenix_trace_id = f"{span_context.trace_id:032x}" if span_context.is_valid else None
-        result = graph.invoke(
+        result = workflow(
             {
                 "record": record,
                 "parameter_file": str(parameter_file),

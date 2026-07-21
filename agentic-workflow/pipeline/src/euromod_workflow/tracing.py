@@ -1,9 +1,10 @@
 """Arize Phoenix observability via OpenTelemetry (OpenInference semantics).
 
 One trace per (country, parameter, as_of) run, with nested spans
-retrieval -> proposal -> critique -> diff. LangChain/LangGraph LLM calls are
-auto-instrumented by openinference-instrumentation-langchain; the pipeline
-steps below get manual spans so mock runs trace identically to LLM runs.
+retrieval -> proposal -> critique -> diff. PydanticAI agent runs are
+instrumented natively (Agent.instrument_all) and mapped to OpenInference
+spans by openinference-instrumentation-pydantic-ai; the pipeline steps below
+get manual spans so mock runs trace identically to LLM runs.
 
 Swapping the backend is a config change (OTLP endpoint), not a re-instrumentation.
 """
@@ -29,17 +30,27 @@ def setup_tracing(cfg: WorkflowConfig) -> Tracer:
         try:
             from phoenix.otel import register
 
-            register(
+            tracer_provider = register(
                 project_name=cfg.phoenix_project,
                 endpoint=cfg.phoenix_endpoint.rstrip("/") + "/v1/traces",
-                auto_instrument=True,  # picks up openinference-instrumentation-langchain
+                auto_instrument=False,
                 set_global_tracer_provider=True,
                 verbose=False,
             )
+            _instrument_pydantic_ai(tracer_provider)
             _INITIALISED = True
         except Exception as exc:  # Phoenix down or package missing: run untraced
             print(f"[tracing] Phoenix disabled ({exc.__class__.__name__}: {exc})")
     return trace.get_tracer("euromod_workflow")
+
+
+def _instrument_pydantic_ai(tracer_provider: Any) -> None:
+    """Emit PydanticAI agent/LLM spans in OpenInference form for Phoenix."""
+    from openinference.instrumentation.pydantic_ai import OpenInferenceSpanProcessor
+    from pydantic_ai import Agent
+
+    tracer_provider.add_span_processor(OpenInferenceSpanProcessor())
+    Agent.instrument_all()
 
 
 @contextmanager
