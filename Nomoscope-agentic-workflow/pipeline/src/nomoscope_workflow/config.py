@@ -29,6 +29,8 @@ class WorkflowConfig:
     data_dir: Path = field(default_factory=lambda: WORKFLOW_ROOT / "data")
     phoenix_endpoint: str = ""
     phoenix_project: str = ""
+    phoenix_database_url: str = ""  # phoenix DB in the same Postgres (impact reports)
+    electricity_mix_zone: str = "EEE"  # EcoLogits zone; EEE = Europe, WOR = world
     tracing_enabled: bool = True
     scout: str = "off"  # off | llm | tavily — gap-fill source discovery on not_found
     tavily_api_key: str = ""
@@ -39,10 +41,11 @@ def load_config() -> WorkflowConfig:
     """Build the config from .env (repo root, then Nomoscope-agentic-workflow/) and the process env."""
     load_dotenv(WORKFLOW_ROOT.parent / ".env")
     load_dotenv(WORKFLOW_ROOT / ".env", override=True)
+    database_url = _env(
+        "WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation"
+    )
     return WorkflowConfig(
-        database_url=_env(
-            "WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation"
-        ),
+        database_url=database_url,
         model=_env("WORKFLOW_MODEL", "mock/extractor"),
         critique_model=_env("WORKFLOW_CRITIQUE_MODEL", "") or _env("WORKFLOW_MODEL", "mock/extractor"),
         embedding_model_id=int(_env("WORKFLOW_EMBEDDING_MODEL_ID", "99")),
@@ -50,6 +53,10 @@ def load_config() -> WorkflowConfig:
         data_dir=Path(_env("WORKFLOW_DATA_DIR", str(WORKFLOW_ROOT / "data"))),
         phoenix_endpoint=_env("PHOENIX_COLLECTOR_ENDPOINT", "http://localhost:6006"),
         phoenix_project=_env("PHOENIX_PROJECT_NAME", "nomoscope-agentic-workflow"),
+        phoenix_database_url=_env(
+            "PHOENIX_DATABASE_URL", database_url.rsplit("/", 1)[0] + "/phoenix"
+        ),
+        electricity_mix_zone=_env("ECOLOGITS_ELECTRICITY_MIX_ZONE", "EEE"),
         tracing_enabled=_env("WORKFLOW_TRACING", "true").lower() != "false",
         scout=_env("WORKFLOW_SCOUT", "off").lower(),
         tavily_api_key=_env("TAVILY_API_KEY", ""),

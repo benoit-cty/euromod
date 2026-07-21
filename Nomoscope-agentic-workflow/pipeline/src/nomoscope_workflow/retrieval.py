@@ -40,6 +40,8 @@ JOIN unit_texts t         ON t.version_id = v.id
 JOIN chunks ch            ON ch.unit_text_id = t.id
 WHERE j.code = %(country)s AND t.lang = %(lang)s
   AND v.validity @> %(as_of)s::date
+  -- Country Reports describe the model, not the law: never citable evidence.
+  AND i.instrument_type <> 'country_report'
   AND (similarity(u.citation, %(cit)s) > 0.55 OR u.national_id = %(cit)s)
 ORDER BY score DESC, ch.seq
 LIMIT %(k)s
@@ -55,6 +57,8 @@ WITH candidate AS (
   JOIN instruments i         ON i.id = u.instrument_id
   JOIN jurisdictions j       ON j.id = i.jurisdiction_id
   WHERE v.validity @> %(as_of)s::date AND j.code = %(country)s AND t.lang = %(lang)s
+    -- Country Reports describe the model, not the law: never citable evidence.
+    AND i.instrument_type <> 'country_report'
 ),
 fts AS (
   SELECT chunk_id,
@@ -189,6 +193,43 @@ def retrieve(
     ):
         merged.setdefault(hit.chunk_id, hit)
     return list(merged.values())[: cfg.retrieval_k]
+
+
+_CR_SEARCH_SQL = """
+SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
+       v.validity::text AS validity, v.version_status,
+       ts_rank_cd(ch.tsv, websearch_to_tsquery(ch.search_config, %(fts_q)s), 1|32)::float8 AS score
+FROM chunks ch
+JOIN unit_texts t          ON t.id = ch.unit_text_id
+JOIN legal_unit_versions v ON v.id = t.version_id
+JOIN legal_units u         ON u.id = v.legal_unit_id
+JOIN instruments i         ON i.id = u.instrument_id
+JOIN jurisdictions j       ON j.id = i.jurisdiction_id
+WHERE i.instrument_type = 'country_report'
+  AND j.code = %(country)s
+  AND v.validity @> %(as_of)s::date
+  AND ch.tsv @@ websearch_to_tsquery(ch.search_config, %(fts_q)s)
+ORDER BY score DESC
+LIMIT %(k)s
+"""
+
+
+def country_report_search(
+    conn: psycopg.Connection, country: str, as_of: date, query: str, k: int
+) -> list[RetrievalHit]:
+    """FTS over the Country Report corpus (instrument_type='country_report').
+
+    Context-only companion to retrieve(): CR sections translate EUROMOD
+    parameter acronyms into semantic, native-language descriptions and so
+    improve query framing — but they describe the model, not the law, and
+    must never be offered to propose/critique as citable evidence. CRs are
+    English, so no per-country lang mapping applies.
+    """
+    rows = conn.execute(
+        _CR_SEARCH_SQL,
+        {"country": country, "as_of": as_of, "fts_q": _fts_query(query), "k": k},
+    ).fetchall()
+    return [RetrievalHit(method="country_report", **row) for row in rows]
 
 
 def sibling_text(conn: psycopg.Connection, chunk_id: str, lang: str) -> str | None:

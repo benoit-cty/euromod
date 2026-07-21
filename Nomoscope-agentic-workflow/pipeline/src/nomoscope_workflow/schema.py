@@ -87,7 +87,7 @@ class RetrievalHit(BaseModel):
     chunk_id: str
     citation: str | None = None
     context_header: str | None = None
-    method: Literal["citation", "fts", "vector", "hybrid"] = "hybrid"
+    method: Literal["citation", "fts", "vector", "hybrid", "country_report"] = "hybrid"
     score: float | None = None
     validity: str | None = None
     version_status: str | None = None

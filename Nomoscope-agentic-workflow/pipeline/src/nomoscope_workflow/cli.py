@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import typer
@@ -41,7 +41,8 @@ def run(
         cfg.critique_model = model
     tracer = setup_tracing(cfg)
     reference_date = _parse_as_of(as_of)
-    for path in parameter_files:
+    for i, path in enumerate(parameter_files, 1):
+        typer.echo(f"[{i}/{len(parameter_files)}] {path.name}")
         item = pipeline.run_parameter(cfg, tracer, path, reference_date, force=force)
         verdict = item.critique.verdict if item.critique else "-"
         typer.echo(f"{item.id}: routing={item.routing} critique={verdict} -> queue/{item.id}.json")
@@ -203,6 +204,54 @@ def translate_params(
         f"{stats['parameters']} parameter(s) translated, {stats['texts']} text rows written"
         + (f", {stats['mismatches']} mismatched model_targets skipped" if stats["mismatches"] else "")
     )
+
+
+@app.command()
+def impact(
+    project: str = typer.Option(None, "--project", help="Restrict to one Phoenix project (default: all)"),
+    since: str = typer.Option(None, "--since", help="Only spans on/after this ISO date/datetime"),
+    until: str = typer.Option(None, "--until", help="Only spans before this ISO date/datetime"),
+    zone: str = typer.Option(None, "--zone", help="EcoLogits electricity mix zone (default: config, EEE)"),
+    json_output: bool = typer.Option(False, "--json", help="Machine-readable output (used by the UI)"),
+) -> None:
+    """Estimate the environmental impact of traced LLM calls (EcoLogits over Phoenix spans)."""
+    from . import impact as impact_mod
+
+    cfg = load_config()
+    report = impact_mod.build_report(
+        cfg.phoenix_database_url,
+        project=project,
+        since=datetime.fromisoformat(since) if since else None,
+        until=datetime.fromisoformat(until) if until else None,
+        electricity_mix_zone=zone or cfg.electricity_mix_zone,
+    )
+    if json_output:
+        typer.echo(json.dumps(report.as_dict(), ensure_ascii=False))
+        return
+    if not report.models:
+        typer.echo("No LLM spans with token counts found (mock runs carry none).")
+        return
+    typer.echo(
+        f"{'model':<36} {'calls':>6} {'out tok':>9} {'energy (kWh)':>16} {'GWP (gCO2eq)':>16}"
+    )
+    for m in report.models:
+        if m.estimated:
+            energy = f"{m.energy_kwh_min:.4f}–{m.energy_kwh_max:.4f}"
+            gwp = f"{m.gwp_kgco2eq_min * 1000:.2f}–{m.gwp_kgco2eq_max * 1000:.2f}"
+        else:
+            energy = gwp = "not in registry"
+        typer.echo(f"{m.model:<36} {m.calls:>6} {m.output_tokens:>9} {energy:>16} {gwp:>16}")
+    typer.echo(
+        f"{'TOTAL (estimated)':<36} {report.total_calls:>6} {report.total_output_tokens:>9} "
+        f"{report.energy_kwh_min:.4f}–{report.energy_kwh_max:.4f} "
+        f"{report.gwp_kgco2eq_min * 1000:>8.2f}–{report.gwp_kgco2eq_max * 1000:.2f}"
+    )
+    typer.echo(f"electricity mix zone: {report.electricity_mix_zone}")
+    if report.not_estimated:
+        typer.echo(
+            "not estimated (model missing from the EcoLogits registry): "
+            + ", ".join(report.not_estimated)
+        )
 
 
 if __name__ == "__main__":

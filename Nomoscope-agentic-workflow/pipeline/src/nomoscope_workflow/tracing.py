@@ -12,6 +12,8 @@ Swapping the backend is a config change (OTLP endpoint), not a re-instrumentatio
 from __future__ import annotations
 
 import json
+import os
+import time
 from contextlib import contextmanager
 from typing import Any, Iterator
 
@@ -21,6 +23,17 @@ from opentelemetry.trace import Tracer
 from .config import WorkflowConfig
 
 _INITIALISED = False
+
+# Console progress mirrors the span tree: one line at step start and end, so
+# anything streaming stdout (the validation UI console, a terminal) shows what
+# the run is doing during long silent stretches (model loads, LLM calls).
+# WORKFLOW_PROGRESS=0 silences it, e.g. for eval batch runs.
+_PROGRESS = os.environ.get("WORKFLOW_PROGRESS", "1").lower() not in {"0", "false", "off"}
+
+
+def progress(message: str) -> None:
+    if _PROGRESS:
+        print(message, flush=True)
 
 
 def setup_tracing(cfg: WorkflowConfig) -> Tracer:
@@ -65,12 +78,19 @@ def step_span(
     input_value: Any = None,
 ) -> Iterator[Any]:
     """Open an OpenInference-typed span; caller may attach output via span.set_attribute."""
+    progress(f"  › {name}")
+    started = time.monotonic()
     with tracer.start_as_current_span(name) as span:
         span.set_attribute("openinference.span.kind", kind)
         if input_value is not None:
             span.set_attribute("input.value", _as_json(input_value))
             span.set_attribute("input.mime_type", "application/json")
-        yield span
+        try:
+            yield span
+        except Exception:
+            progress(f"  ✗ {name} failed ({time.monotonic() - started:.1f}s)")
+            raise
+    progress(f"  ✓ {name} ({time.monotonic() - started:.1f}s)")
 
 
 def set_output(span: Any, output_value: Any) -> None:

@@ -37,7 +37,7 @@ from .schema import (
     Routing,
     SourceType,
 )
-from .tracing import set_output, step_span
+from .tracing import progress, set_output, step_span
 
 MAX_PROPOSAL_ATTEMPTS = 2
 
@@ -487,6 +487,8 @@ def run_parameter(
         # so the queue item and params.extraction_runs both link to Phoenix.
         span_context = span.get_span_context()
         phoenix_trace_id = f"{span_context.trace_id:032x}" if span_context.is_valid else None
+        if phoenix_trace_id:
+            progress(f"  phoenix trace {phoenix_trace_id} → {cfg.phoenix_endpoint}")
         result = workflow(
             {
                 "record": record,

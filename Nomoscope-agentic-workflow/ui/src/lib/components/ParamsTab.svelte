@@ -43,6 +43,12 @@
   let logLines = $state([]);
   let summary = $state('');
   let logEl;
+  // Liveness: when the run started, when the child last wrote a line, and a
+  // 1 s clock so both ages tick while the pipeline is silent (model loads,
+  // LLM calls) — a hang then looks different from a slow step.
+  let startedAt = $state(0);
+  let lastLogAt = $state(0);
+  let now = $state(0);
 
   const countries = $derived([...new Set(params.map((p) => p.country))].sort());
   const policies = $derived(
@@ -125,6 +131,7 @@
   onMount(() => {
     const unlisten = api.onWorkflowLog((payload) => {
       if (payload.run_id !== runId) return;
+      lastLogAt = Date.now();
       logLines = [...logLines, payload];
     });
     return () => unlisten.then((un) => un());
@@ -140,6 +147,20 @@
   $effect(() => {
     onrunning?.(running);
   });
+
+  $effect(() => {
+    if (!running) return;
+    const timer = setInterval(() => (now = Date.now()), 1000);
+    return () => clearInterval(timer);
+  });
+
+  function fmtDur(ms) {
+    const s = Math.max(0, Math.round(ms / 1000));
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}m ${String(s % 60).padStart(2, '0')}s`;
+    return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
+  }
 
   function toggleAll() {
     const next = { ...selected };
@@ -179,11 +200,22 @@
     summary = '';
     error = '';
     running = true;
+    startedAt = lastLogAt = now = Date.now();
     try {
       const res = await api.runWorkflow({ run_id: runId, args, db_url: dbUrl || null });
-      if (res.canceled) summary = 'Canceled.';
-      else if (res.success) summary = `Finished: ${targets.length} parameter(s) processed.`;
-      else summary = `Exited with code ${res.code ?? '?'}.`;
+      const took = fmtDur(Date.now() - startedAt);
+      let line;
+      if (res.canceled) {
+        summary = `Canceled after ${took}.`;
+        line = `✗ canceled after ${took}`;
+      } else if (res.success) {
+        summary = `Finished: ${targets.length} parameter(s) processed in ${took}.`;
+        line = `✓ finished (exit 0, ${took})`;
+      } else {
+        summary = `Exited with code ${res.code ?? '?'} after ${took}.`;
+        line = `✗ exited with code ${res.code ?? '?'} after ${took}`;
+      }
+      logLines = [...logLines, { run_id: runId, stream: res.success ? 'system' : 'stderr', line }];
     } catch (e) {
       error = String(e);
     } finally {
@@ -258,7 +290,7 @@
       Force (overwrite reviewed)
     </label>
     <button class="primary" onclick={runSelected} disabled={running || !selectedTargets.length}>
-      {running ? 'Running…' : `Run agentic update (${selectedTargets.length})`}
+      {running ? `Running… ${fmtDur(now - startedAt)}` : `Run agentic update (${selectedTargets.length})`}
     </button>
     <button onclick={stop} disabled={!running}>Stop</button>
   </div>
@@ -373,6 +405,12 @@
     </table>
   </div>
 
+  {#if running}
+    <div class="runstatus small" class:stale={now - lastLogAt > 60000}>
+      <span class="spinner"></span>
+      running {fmtDur(now - startedAt)} · last output {fmtDur(now - lastLogAt)} ago
+    </div>
+  {/if}
   {#if logLines.length || running}
     <div class="log" bind:this={logEl}>
       {#each logLines as l, i (i)}
@@ -420,6 +458,17 @@
     padding: 0 0.2rem;
     font-size: 0.85rem;
   }
+  .runstatus { display: flex; align-items: center; gap: 0.45rem; color: var(--muted); }
+  .runstatus.stale { color: var(--err); }
+  .spinner {
+    width: 0.7rem;
+    height: 0.7rem;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .log {
     max-height: 11rem;
     min-height: 4rem;

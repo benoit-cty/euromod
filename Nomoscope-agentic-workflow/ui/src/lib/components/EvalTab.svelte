@@ -73,6 +73,15 @@
     return v == null ? '—' : `${Math.round(v)} ms`;
   }
 
+  // EcoLogits midpoint estimates over the run's Phoenix traces (NULL for mock runs).
+  function energy(kwh) {
+    return kwh == null ? '—' : `${(kwh * 1000).toFixed(1)} Wh`;
+  }
+
+  function co2(kg) {
+    return kg == null ? '—' : `${(kg * 1000).toFixed(1)} g`;
+  }
+
   function caseFailed(c) {
     return (
       c.error != null ||
@@ -116,7 +125,7 @@
             <th>Run</th><th>Created</th><th>As of</th><th>Model</th><th>Prompt</th><th>Agent</th>
             <th>Countries</th><th>Cases</th><th>Err</th>
             {#each KPIS as k}<th>{k.label}</th>{/each}
-            <th>Latency</th>
+            <th>Latency</th><th>Energy</th><th>CO₂eq</th>
           </tr>
         </thead>
         <tbody>
@@ -133,6 +142,8 @@
               <td>{#if run.errors > 0}<span class="badge fail">{run.errors}</span>{:else}0{/if}</td>
               {#each KPIS as k}<td>{pct(run[k.key])}</td>{/each}
               <td>{ms(run.avg_latency_ms)}</td>
+              <td>{energy(run.energy_kwh)}</td>
+              <td>{co2(run.gwp_kgco2eq)}</td>
             </tr>
           {/each}
         </tbody>
@@ -167,6 +178,14 @@
           <div class="num">{ms(selectedRun.avg_latency_ms)}</div>
           <div class="muted">avg latency</div>
         </div>
+        <div class="card">
+          <div class="num">{energy(selectedRun.energy_kwh)}</div>
+          <div class="muted">energy (EcoLogits)</div>
+        </div>
+        <div class="card">
+          <div class="num">{co2(selectedRun.gwp_kgco2eq)}</div>
+          <div class="muted">emissions CO₂eq</div>
+        </div>
       </div>
 
       <h3>By language / country</h3>
@@ -175,7 +194,7 @@
           <tr>
             <th>Lang</th><th>Country</th><th>Cases</th><th>Err</th>
             {#each KPIS as k}<th>{k.label}</th>{/each}
-            <th>Latency</th>
+            <th>Latency</th><th>Energy</th><th>CO₂eq</th>
           </tr>
         </thead>
         <tbody>
@@ -187,6 +206,8 @@
               <td>{row.errors}</td>
               {#each KPIS as k}<td>{pct(row[k.key])}</td>{/each}
               <td>{ms(row.avg_latency_ms)}</td>
+              <td>{energy(row.energy_kwh)}</td>
+              <td>{co2(row.gwp_kgco2eq)}</td>
             </tr>
           {/each}
         </tbody>

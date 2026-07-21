@@ -122,7 +122,9 @@ pub fn eval_runs(db_url: &str) -> Result<Value, String> {
                     (100 * avg(res.supportedness::int))::float8     AS supportedness_pct,
                     (100 * avg(res.hallucination::int))::float8     AS hallucination_pct,
                     (100 * avg(res.retrieval_hit::int))::float8     AS retrieval_recall_pct,
-                    avg(res.latency_ms)::float8                     AS avg_latency_ms
+                    avg(res.latency_ms)::float8                     AS avg_latency_ms,
+                    sum(res.energy_kwh)::float8                     AS energy_kwh,
+                    sum(res.gwp_kgco2eq)::float8                    AS gwp_kgco2eq
              FROM eval.runs r
              LEFT JOIN eval.results res ON res.run_pk = r.id
              GROUP BY r.id
@@ -163,6 +165,8 @@ pub fn eval_runs(db_url: &str) -> Result<Value, String> {
             "hallucination_pct": r.get::<_, Option<f64>>("hallucination_pct"),
             "retrieval_recall_pct": r.get::<_, Option<f64>>("retrieval_recall_pct"),
             "avg_latency_ms": r.get::<_, Option<f64>>("avg_latency_ms"),
+            "energy_kwh": r.get::<_, Option<f64>>("energy_kwh"),
+            "gwp_kgco2eq": r.get::<_, Option<f64>>("gwp_kgco2eq"),
         })).collect::<Vec<_>>(),
     }))
 }
@@ -177,7 +181,7 @@ pub fn eval_run_detail(db_url: &str, run_pk: i64) -> Result<Value, String> {
                     routing_pct::float8, value_pct::float8, date_pct::float8,
                     citation_pct::float8, supportedness_pct::float8,
                     hallucination_pct::float8, retrieval_recall_pct::float8,
-                    avg_latency_ms::float8
+                    avg_latency_ms::float8, energy_kwh::float8, gwp_kgco2eq::float8
              FROM eval.run_summary
              WHERE run_pk = $1
              ORDER BY language, country",
@@ -212,6 +216,8 @@ pub fn eval_run_detail(db_url: &str, run_pk: i64) -> Result<Value, String> {
             "hallucination_pct": r.get::<_, Option<f64>>("hallucination_pct"),
             "retrieval_recall_pct": r.get::<_, Option<f64>>("retrieval_recall_pct"),
             "avg_latency_ms": r.get::<_, Option<f64>>("avg_latency_ms"),
+            "energy_kwh": r.get::<_, Option<f64>>("energy_kwh"),
+            "gwp_kgco2eq": r.get::<_, Option<f64>>("gwp_kgco2eq"),
         })).collect::<Vec<_>>(),
         "cases": cases.iter().map(|r| json!({
             "case_id": r.get::<_, String>("case_id"),

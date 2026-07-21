@@ -13,7 +13,7 @@ mod workflow;
 
 use encoder::EmbeddingState;
 use ingest::{IngestPayload, IngestState};
-use workflow::{WorkflowPayload, WorkflowState};
+use workflow::{ImpactPayload, WorkflowPayload, WorkflowState};
 
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -202,6 +202,11 @@ fn stop_workflow(state: tauri::State<'_, WorkflowState>, run_id: String) -> Resu
 }
 
 #[tauri::command]
+async fn impact_report(payload: ImpactPayload) -> Result<Value, String> {
+    workflow::impact_report(payload).await
+}
+
+#[tauri::command]
 async fn run_ingest(
     app: tauri::AppHandle,
     state: tauri::State<'_, IngestState>,
@@ -252,6 +257,7 @@ pub fn run() {
             phoenix_projects,
             run_workflow,
             stop_workflow,
+            impact_report,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

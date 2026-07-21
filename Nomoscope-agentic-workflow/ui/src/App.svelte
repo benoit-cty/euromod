@@ -7,6 +7,7 @@
   import IngestTab from './lib/components/IngestTab.svelte';
   import EvalTab from './lib/components/EvalTab.svelte';
   import ParamsTab from './lib/components/ParamsTab.svelte';
+  import ImpactTab from './lib/components/ImpactTab.svelte';
 
   let config = $state({ data_dir: null, reviewer: 'reviewer', db_url: '', phoenix_endpoint: '' });
   let items = $state([]);
@@ -119,6 +120,7 @@
       <button class:primary={tab === 'database'} onclick={() => (tab = 'database')}>Database</button>
       <button class:primary={tab === 'ingest'} onclick={() => (tab = 'ingest')}>Ingest</button>
       <button class:primary={tab === 'eval'} onclick={() => (tab = 'eval')}>Evaluation</button>
+      <button class:primary={tab === 'impact'} onclick={() => (tab = 'impact')}>Impact</button>
     </nav>
     <div class="spacer"></div>
     <label class="inline">
@@ -169,6 +171,11 @@
   {#if visited.eval}
     <main class="single" hidden={tab !== 'eval'}>
       <EvalTab dbUrl={config.db_url} />
+    </main>
+  {/if}
+  {#if visited.impact}
+    <main class="single" hidden={tab !== 'impact'}>
+      <ImpactTab dbUrl={config.db_url} />
     </main>
   {/if}
 </div>

@@ -157,6 +157,64 @@ pub async fn run(
     result
 }
 
+#[derive(Deserialize)]
+pub struct ImpactPayload {
+    /// Exported as WORKFLOW_DATABASE_URL; the CLI derives the phoenix DB URL
+    /// from it (same Postgres instance, `phoenix` database).
+    pub db_url: Option<String>,
+    /// Restrict to one Phoenix project (empty/None = all projects).
+    pub project: Option<String>,
+    /// EcoLogits electricity mix zone override (e.g. "EEE", "WOR").
+    pub zone: Option<String>,
+}
+
+/// Run `nomoscope-workflow impact --json` and return the parsed report.
+/// The EcoLogits math lives Python-side; this is a short one-shot call, so no
+/// streaming or cancellation machinery is needed.
+pub async fn impact_report(payload: ImpactPayload) -> Result<Value, String> {
+    let dir = pipeline_dir().ok_or_else(|| {
+        "could not locate Nomoscope-agentic-workflow/pipeline (set EUROMOD_WORKFLOW_DIR)".to_string()
+    })?;
+
+    let mut argv: Vec<String> = vec![
+        "run".into(),
+        "nomoscope-workflow".into(),
+        "impact".into(),
+        "--json".into(),
+    ];
+    if let Some(project) = payload.project.as_deref().filter(|p| !p.is_empty()) {
+        argv.push("--project".into());
+        argv.push(project.into());
+    }
+    if let Some(zone) = payload.zone.as_deref().filter(|z| !z.is_empty()) {
+        argv.push("--zone".into());
+        argv.push(zone.into());
+    }
+
+    let mut command = Command::new("uv");
+    command
+        .args(&argv)
+        .env_remove("VIRTUAL_ENV")
+        .current_dir(&dir)
+        .stdin(Stdio::null());
+    if let Some(db_url) = &payload.db_url {
+        command.env("WORKFLOW_DATABASE_URL", db_url);
+    }
+    let output = command
+        .output()
+        .await
+        .map_err(|e| format!("failed to spawn `uv` (is it on PATH?): {e}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let lines: Vec<&str> = stderr.lines().collect();
+        let tail = lines[lines.len().saturating_sub(6)..].join("\n");
+        return Err(format!("impact command failed: {tail}"));
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    serde_json::from_str(stdout.trim())
+        .map_err(|e| format!("impact output was not valid JSON: {e}"))
+}
+
 pub fn stop(state: State<'_, WorkflowState>, run_id: String) -> Result<Value, String> {
     let sender = state.cancels.lock().unwrap().remove(&run_id);
     match sender {

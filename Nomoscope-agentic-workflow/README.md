@@ -154,6 +154,15 @@ Decision rationale in [observability.md](observability.md). Implementation
 - Exit strategy: everything is OTLP; pointing `PHOENIX_COLLECTOR_ENDPOINT`
   elsewhere re-homes the traces without re-instrumentation. Phoenix down ≠
   pipeline down (tracing degrades to no-op with a console note).
+- **Environmental impact** ([impact.py](pipeline/src/nomoscope_workflow/impact.py)):
+  `uv run nomoscope-workflow impact` estimates energy/CO₂eq of all traced LLM
+  calls with [EcoLogits](https://ecologits.ai) over the Phoenix span token
+  counts — offline, retroactive, no hot-path instrumentation; the UI's
+  **Impact tab** shows the same report (`impact --json` under the hood), and
+  evaluation runs store per-case energy/CO₂eq next to the KPIs (Activity 5
+  accuracy-vs-impact comparisons). Models missing from the EcoLogits registry
+  are listed as not-estimated, never silently dropped. Knobs:
+  `PHOENIX_DATABASE_URL`, `ECOLOGITS_ELECTRICITY_MIX_ZONE` (default `EEE`).
 
 ## 6. Security & guardrails
 

@@ -21,6 +21,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import time
 from dataclasses import dataclass, field
 from datetime import date
 
@@ -30,6 +31,7 @@ from . import llm
 from .config import WorkflowConfig
 from .query_encoder import ingest_dir
 from .schema import ParameterRecord
+from .tracing import progress
 
 INGEST_TIMEOUT = 600  # a single arrêté is seconds; a loi de finances, minutes
 # The embedding pass covers the whole backlog of unembedded chunks, not just the
@@ -134,13 +136,20 @@ def _tavily_search(api_key: str, query: str, domains: list[str]) -> list[dict]:
 
 
 def _known_instruments(cfg: WorkflowConfig, ids: list[str]) -> set[str]:
-    """Ids already in the legislation DB — re-ingesting them cannot add chunks."""
+    """Ids already in the legislation DB — re-ingesting them cannot add chunks.
+
+    Article-level ids (FR LEGIARTI…/JORFARTI…) are stored as legal_units under
+    their parent code instrument, not as instruments — check both tables, or
+    every re-run re-ingests the same article forever.
+    """
     import psycopg
 
     try:
         with psycopg.connect(cfg.database_url) as conn:
             rows = conn.execute(
-                "SELECT national_id FROM instruments WHERE national_id = ANY(%s)", (ids,)
+                "SELECT national_id FROM instruments WHERE national_id = ANY(%s) "
+                "UNION SELECT national_id FROM legal_units WHERE national_id = ANY(%s)",
+                (ids, ids),
             ).fetchall()
         return {row[0] for row in rows}
     except Exception:
@@ -272,20 +281,40 @@ def run(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> ScoutResul
         result.candidate_ids = _rank_candidates(cfg, info, result.candidate_ids, titles)
     known = _known_instruments(cfg, result.candidate_ids)
     to_ingest = [i for i in result.candidate_ids if i not in known][: cfg.scout_max_ingest]
+    if result.candidate_ids:
+        progress(
+            f"  [scout] {len(result.candidate_ids)} candidate instrument(s), "
+            f"{len(known)} already in DB, {len(to_ingest)} to ingest"
+        )
     for instrument_id in to_ingest:
+        progress(
+            f"  [scout] ingesting {instrument_id} "
+            f"(archive-first: fetch → snapshot → parse → chunk; up to {INGEST_TIMEOUT}s)…"
+        )
+        started = time.monotonic()
         try:
             error = _ingest_instrument(cfg, info.country, instrument_id)
         except subprocess.TimeoutExpired:
             error = f"{instrument_id}: ingest timed out after {INGEST_TIMEOUT}s"
         if error is None:
             result.ingested.append(instrument_id)
+            progress(f"  [scout] ✓ {instrument_id} ingested ({time.monotonic() - started:.0f}s)")
         else:
             result.errors.append(error)
+            progress(f"  [scout] ✗ {error}")
     if result.ingested and cfg.embedding_model_id != 99:
+        progress(
+            "  [scout] embedding new chunks with BGE-M3 "
+            f"(~1 chunk/s on CPU — expect high CPU, up to {EMBED_TIMEOUT}s)…"
+        )
+        started = time.monotonic()
         try:
             error = _build_embeddings(cfg)
         except subprocess.TimeoutExpired:
             error = f"embeddings build timed out after {EMBED_TIMEOUT}s (partial vectors kept)"
         if error:
             result.errors.append(error)  # FTS still covers the new chunks
+            progress(f"  [scout] ✗ {error}")
+        else:
+            progress(f"  [scout] ✓ embeddings up to date ({time.monotonic() - started:.0f}s)")
     return result

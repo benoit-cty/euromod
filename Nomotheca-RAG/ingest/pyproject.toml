@@ -31,6 +31,10 @@ translate = [
 [[tool.uv.index]]
 name = "pytorch_cpu"
 url = "https://download.pytorch.org/whl/cpu"
+# Only torch (routed via [tool.uv.sources]) may come from this index: it also
+# mirrors common packages (e.g. packaging<=24.1) at stale versions, and uv's
+# first-match strategy would otherwise pin them below what other deps need.
+explicit = true
 
 [project.scripts]
 nomotheca-ingest = "nomotheca_ingest.cli:app"

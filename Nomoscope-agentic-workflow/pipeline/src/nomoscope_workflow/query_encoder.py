@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
 
 _process: subprocess.Popen | None = None
@@ -36,6 +37,11 @@ def _start() -> subprocess.Popen:
     directory = ingest_dir()
     if directory is None:
         raise RuntimeError("could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)")
+    print(
+        "[retrieval] starting BGE-M3 query encoder (first query — model load can take minutes, expect high CPU)…",
+        flush=True,
+    )
+    started = time.monotonic()
     env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
     env["PYTHONUNBUFFERED"] = "1"
     process = subprocess.Popen(
@@ -50,6 +56,7 @@ def _start() -> subprocess.Popen:
     if not ready.get("ready"):
         process.kill()
         raise RuntimeError(f"encoder failed to initialize: {ready}")
+    print(f"[retrieval] query encoder ready ({time.monotonic() - started:.0f}s)", flush=True)
     return process
 
 

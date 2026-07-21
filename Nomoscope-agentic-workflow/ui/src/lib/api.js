@@ -28,6 +28,10 @@ export const api = {
   paramsList: (dbUrl) => invoke('params_list', { payload: { db_url: dbUrl } }),
   phoenixProjects: (dbUrl) => invoke('phoenix_projects', { payload: { db_url: dbUrl } }),
   runWorkflow: (payload) => invoke('run_workflow', { payload }),
+  // Impact tab: EcoLogits report over Phoenix LLM spans, computed by the
+  // pipeline CLI (`nomoscope-workflow impact --json`).
+  impactReport: (dbUrl, project = '', zone = '') =>
+    invoke('impact_report', { payload: { db_url: dbUrl, project, zone } }),
   stopWorkflow: (runId) => invoke('stop_workflow', { runId }),
   onWorkflowLog: (handler) => listen('workflow-log', (event) => handler(event.payload)),
   openExternal: (url) => open(url),
