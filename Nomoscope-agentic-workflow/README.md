@@ -51,7 +51,7 @@ by an explicit control flow
 | Step | Kind | Input → output | Failure mode & handling |
 |---|---|---|---|
 | **frame** | code | Activity 1 record → search query + known citations | no labels → falls back to model_target |
-| **retrieve** | SQL | citation fast path (pg_trgm, similarity > 0.55) then hybrid FTS ∥ vector merged by RRF k=60, all pre-filtered by `validity @> as_of`, jurisdiction, lang | no hits → skip straight to diff, routing `not_found` |
+| **retrieve** | SQL | citation fast path (pg_trgm, similarity > 0.55) then hybrid FTS ∥ vector merged by RRF k=60 (vector top-3 guaranteed into the result: ts_rank_cd has no IDF, so common fiscal terms would otherwise crowd out the semantically-best chunk), all pre-filtered by `validity @> as_of`, jurisdiction, lang. FTS ORs the query terms; vector = BGE-M3 via the ingest package's query encoder (`WORKFLOW_EMBEDDING_MODEL_ID=1`), FTS-only fallback when unavailable | no hits → skip straight to diff, routing `not_found` |
 | **propose** | **LLM** | record + retrieved chunks → `ProposalDraft` (structured output: value, valid_from, legal_status, chunk_id, verbatim extract, quote + translation, confidence) | model can return `found=false`; never guesses |
 | **critique** | code + **LLM** | mechanical checks: extract is a verbatim quote of the cited chunk (offsets computed against `unit_texts.content`), dates consistent, units/brackets sane, schema-valid — then an LLM pass for semantic issues | verdict `fail` → one LLM retry, then goes to the human with the failed critique attached |
 | **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| national_team_source` | national-team-sourced values are never overwritten by the pipeline |
@@ -83,8 +83,10 @@ inside the cited chunk, or `citation_verified=false` and the critique fails.
   pydantic-validated ([schema.py](pipeline/src/nomoscope_workflow/schema.py)).
 - **Retrieval**: the legislation DB ([../Nomotheca-RAG/db/schema.sql](../Nomotheca-RAG/db/schema.sql));
   citations carry `jrc_database_id` = `chunks.id`, offsets refer to
-  `unit_texts.content`. Vector leg uses the seed's placeholder embedder
-  (model 99, embedded in SQL); wiring BGE-M3 replaces one function.
+  `unit_texts.content`. Vector leg encodes queries with real BGE-M3
+  (`WORKFLOW_EMBEDDING_MODEL_ID=1`, reusing the ingest package's OpenVINO
+  query-encoder subprocess); the seed's placeholder embedder (model 99,
+  embedded in SQL) remains for key-less demos.
 - **Out**: the same Activity 1 JSON with the new dated value appended, the
   previous open-ended value closed, and `lineage` fully machine-filled
   (run_id, prompt_version, agent_version, model, confidence, retrieval_trace,
@@ -99,6 +101,16 @@ schema can evolve pipeline-side without lockstep releases.
 
 - **Review queue** — filterable by country / routing / status / text; shows
   critique verdict and confidence per row.
+- **Parameters** — every parameter in the `params` schema (see
+  `ingest-params`), filterable by country / policy / run state / text, with
+  the current model value and the latest agentic run per row. Select
+  parameters and **launch an agentic update from the UI**: it spawns
+  `nomoscope-workflow run-targets <model_target>… --as-of …` (each target is
+  materialized from the DB as an Activity 1 file under
+  `data/parameters/db/`), streams the CLI output live, then refreshes.
+  Each run row links to the **review-queue item** and deep-links to the
+  run's **trace in Phoenix** (`/projects/<gid>/traces/<trace_id>`; the
+  project gid is resolved from the `phoenix` DB in the shared Postgres).
 - **Record detail** — side-by-side current vs proposed (bracket-level diff
   highlighting), critique checklist, verbatim quote, **citation viewer** with
   the supporting extract highlighted inside the retrieved legal text, full

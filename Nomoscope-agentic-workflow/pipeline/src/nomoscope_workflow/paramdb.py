@@ -23,7 +23,16 @@ from pathlib import Path
 import psycopg
 
 from .config import WorkflowConfig
-from .schema import ReviewItem, SourceType
+from .schema import (
+    LegalStatus,
+    Lineage,
+    ParameterInformation,
+    ParameterRecord,
+    ParameterValue,
+    Reference,
+    ReviewItem,
+    SourceType,
+)
 
 SCHEMA_SQL = Path(__file__).resolve().parents[2] / "db" / "params_schema.sql"
 
@@ -343,6 +352,105 @@ def _replace_usage(conn: psycopg.Connection, parameter_id: int, usage: dict) -> 
 
 def _jsonb(value) -> str | None:
     return None if value is None else json.dumps(value, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
+# Record reconstruction — params DB -> Activity 1 record, so the pipeline can
+# run parameters that exist only in the DB (e.g. runs launched from the UI's
+# Parameters tab). Received jsonb is filtered down to the strict Pydantic
+# vocabulary: enriched exports carry extra fields the models reject.
+# ---------------------------------------------------------------------------
+
+
+def _maybe_enum(enum_cls, value):
+    """Received text -> enum member, or None when outside the vocabulary."""
+    if value is None:
+        return None
+    try:
+        return enum_cls(value)
+    except ValueError:
+        return None
+
+
+def _clean_reference(ref: dict) -> Reference | None:
+    fields = {k: ref[k] for k in Reference.model_fields if ref.get(k) is not None}
+    fields.setdefault("title", ref.get("href") or "reference")
+    try:
+        return Reference(**fields)
+    except Exception:
+        return None
+
+
+def _clean_lineage(lineage: dict) -> Lineage | None:
+    fields = {k: lineage[k] for k in Lineage.model_fields if lineage.get(k) is not None}
+    if not fields:
+        return None
+    try:
+        return Lineage(**fields)
+    except Exception:
+        return None
+
+
+def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
+    """Rebuild the Activity 1 record for one parameter (model_target or
+    parameter_key) from params.parameters + params.model_values."""
+    row = conn.execute(
+        """
+        SELECT id, country, model_target, spine_order, value_type, unit,
+               label, short_label, description, explanation, last_confirmed_valid_on
+        FROM params.parameters
+        WHERE model_target = %s OR parameter_key = %s
+        """,
+        (target, target),
+    ).fetchone()
+    if row is None:
+        raise KeyError(f"parameter not in params DB (see ingest-params): {target}")
+    (parameter_id, country, model_target, spine_order, value_type, unit,
+     label, short_label, description, explanation, last_confirmed) = row
+
+    information = ParameterInformation(
+        country=country,
+        model_target=model_target,
+        spine_order=spine_order,
+        value_type=value_type,
+        unit=unit or "",
+        label=label,
+        short_label=short_label,
+        description=description,
+        explanation=explanation,
+        last_confirmed_valid_on=last_confirmed,
+    )
+
+    values: list[ParameterValue] = []
+    for (value_raw, valid_from, valid_to, legal_status, source_type,
+         oj_date, references, lineage) in conn.execute(
+        """
+        SELECT value_raw, valid_from, valid_to, legal_status, source_type,
+               official_journal_date, received_references, lineage
+        FROM params.model_values
+        WHERE parameter_id = %s
+        ORDER BY seq
+        """,
+        (parameter_id,),
+    ).fetchall():
+        envelope = dict(
+            valid_from=valid_from,
+            valid_to=valid_to,
+            legal_status=_maybe_enum(LegalStatus, legal_status),
+            source_type=_maybe_enum(SourceType, source_type),
+            official_journal_date=oj_date,
+            references=[r for r in map(_clean_reference, references or []) if r],
+            lineage=_clean_lineage(lineage or {}),
+        )
+        try:
+            values.append(ParameterValue(value=value_raw, **envelope))
+        except Exception:
+            # e.g. bracket lists with extra keys: keep the row, stringify the value
+            values.append(
+                ParameterValue(value=json.dumps(value_raw, ensure_ascii=False), **envelope)
+            )
+
+    return ParameterRecord(information=information, values=values)
 
 
 # ---------------------------------------------------------------------------

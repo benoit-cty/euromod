@@ -8,9 +8,10 @@ Two paths, per Nomotheca-RAG/11_database-model.md §5:
      FTS top-50 || vector top-50 merged by Reciprocal Rank Fusion (k=60),
      the SQL pattern from Nomotheca-RAG/db/demo_queries.sql (f).
 
-The vector leg runs only for the demo placeholder embedder (model_id 99,
-query embedded in SQL via placeholder_embedding()); wiring a real BGE-M3
-encoder means replacing embed-in-SQL with a query vector parameter.
+The vector leg encodes the query with the real BGE-M3 encoder (model_id 1,
+via query_encoder — the ingest package's OpenVINO subprocess) and falls back
+to FTS-only when the encoder is unavailable. The demo placeholder embedder
+(model_id 99) keeps its embed-in-SQL path via placeholder_embedding().
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from datetime import date
 import psycopg
 from psycopg.rows import dict_row
 
+from . import query_encoder
 from .config import WorkflowConfig
 from .schema import RetrievalHit
 
@@ -57,10 +59,10 @@ WITH candidate AS (
 fts AS (
   SELECT chunk_id,
          row_number() OVER (
-           ORDER BY ts_rank_cd(tsv, websearch_to_tsquery(search_config, %(q)s), 32) DESC
+           ORDER BY ts_rank_cd(tsv, websearch_to_tsquery(search_config, %(fts_q)s), 32) DESC
          ) AS r
   FROM candidate
-  WHERE tsv @@ websearch_to_tsquery(search_config, %(q)s)
+  WHERE tsv @@ websearch_to_tsquery(search_config, %(fts_q)s)
   LIMIT 50
 ){vec_cte}
 SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
@@ -83,6 +85,26 @@ vec AS (
   WHERE e.model_id = %(model_id)s
   LIMIT 50
 )"""
+
+_VEC_CTE_QVEC = """,
+vec AS (
+  SELECT e.chunk_id,
+         row_number() OVER (ORDER BY e.embedding <=> %(qvec)s::halfvec(1024)) AS r
+  FROM embeddings e JOIN candidate USING (chunk_id)
+  WHERE e.model_id = %(model_id)s
+  LIMIT 50
+)"""
+
+
+def _fts_query(query: str) -> str:
+    """OR-of-terms websearch query.
+
+    The framed query is long and often bilingual; websearch_to_tsquery ANDs
+    every term, so no single chunk can satisfy it. OR the distinct terms
+    instead and let ts_rank_cd surface the chunks matching most of them.
+    """
+    terms = dict.fromkeys(t for t in re.findall(r"\w{2,}", query.lower()) if t != "or")
+    return " OR ".join(terms) or query
 
 
 def connect(cfg: WorkflowConfig) -> psycopg.Connection:
@@ -112,19 +134,35 @@ def hybrid_search(
     query: str,
     model_id: int,
     k: int,
+    query_vector: str | None = None,
 ) -> list[RetrievalHit]:
     """RRF-merged FTS + vector search over as-of/jurisdiction/lang candidates."""
-    use_vector = model_id == 99  # placeholder embedder lives in SQL; see module docstring
+    use_placeholder = model_id == 99  # demo embedder lives in SQL; see module docstring
+    use_vector = use_placeholder or query_vector is not None
     sql = _HYBRID_SQL_TEMPLATE.format(
-        vec_cte=_VEC_CTE if use_vector else "",
+        vec_cte=(_VEC_CTE if use_placeholder else _VEC_CTE_QVEC) if use_vector else "",
+        # RRF, plus guaranteed slots for the vector top-3: ts_rank_cd has no
+        # IDF, so common fiscal terms let long amending acts crowd the FTS
+        # leg, and a chunk ranked #1 by the (semantically reliable) vector
+        # leg alone would lose the fusion to chunks present in both legs.
         score_expr=(
-            "(coalesce(1.0/(60+fts.r),0) + coalesce(1.0/(60+vec.r),0))::float8"
+            "(coalesce(1.0/(60+fts.r),0) + coalesce(1.0/(60+vec.r),0)"
+            " + CASE WHEN vec.r <= 3 THEN 1.0 ELSE 0 END)::float8"
             if use_vector
             else "(1.0/(60+fts.r))::float8"
         ),
         joined="fts FULL OUTER JOIN vec USING (chunk_id)" if use_vector else "fts",
     )
-    params = {"country": country, "lang": lang, "as_of": as_of, "q": query, "k": k, "model_id": model_id}
+    params = {
+        "country": country,
+        "lang": lang,
+        "as_of": as_of,
+        "q": query,
+        "fts_q": _fts_query(query),
+        "qvec": query_vector,
+        "k": k,
+        "model_id": model_id,
+    }
     rows = conn.execute(sql, params).fetchall()
     return [RetrievalHit(method="hybrid", **row) for row in rows]
 
@@ -142,7 +180,10 @@ def retrieve(
     merged: dict[str, RetrievalHit] = {}
     for hit in citation_fast_path(conn, country, lang, as_of, citations, cfg.retrieval_k):
         merged[hit.chunk_id] = hit
-    for hit in hybrid_search(conn, country, lang, as_of, query, cfg.embedding_model_id, cfg.retrieval_k):
+    query_vector = query_encoder.encode(query) if cfg.embedding_model_id != 99 else None
+    for hit in hybrid_search(
+        conn, country, lang, as_of, query, cfg.embedding_model_id, cfg.retrieval_k, query_vector
+    ):
         merged.setdefault(hit.chunk_id, hit)
     return list(merged.values())[: cfg.retrieval_k]
 

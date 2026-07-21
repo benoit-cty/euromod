@@ -49,7 +49,11 @@ def _instrument_pydantic_ai(tracer_provider: Any) -> None:
     from openinference.instrumentation.pydantic_ai import OpenInferenceSpanProcessor
     from pydantic_ai import Agent
 
-    tracer_provider.add_span_processor(OpenInferenceSpanProcessor())
+    # replace_default_processor=False: phoenix's provider otherwise drops its
+    # own OTLP export processor, and spans are created but never reach Phoenix.
+    tracer_provider.add_span_processor(
+        OpenInferenceSpanProcessor(), replace_default_processor=False
+    )
     Agent.instrument_all()
 
 

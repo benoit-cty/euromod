@@ -237,8 +237,141 @@ pub fn eval_run_detail(db_url: &str, run_pk: i64) -> Result<Value, String> {
     }))
 }
 
+/// All parameters in the `params` schema, each with its most recent model
+/// value and its most recent agentic extraction run (Parameters tab).
+pub fn params_list(db_url: &str) -> Result<Value, String> {
+    let mut client = connect(db_url)?;
+    let rows = client
+        .query(
+            "SELECT p.country, p.model_target, p.policy, p.function, p.name,
+                    p.value_type, p.unit,
+                    coalesce(p.short_label->>'en', p.label->>'en') AS label,
+                    p.description->>'en'            AS description,
+                    p.classification->>'category'   AS category,
+                    p.parameter_group               AS groups,
+                    mv.value_raw                    AS current_value,
+                    mv.raw_euromod_value            AS current_raw,
+                    mv.valid_from::text             AS current_valid_from,
+                    mv.source_type                  AS current_source_type,
+                    r.run_id                        AS last_run_id,
+                    r.as_of::text                   AS last_as_of,
+                    r.model                         AS last_model,
+                    r.routing                       AS last_routing,
+                    r.critique_verdict              AS last_verdict,
+                    r.phoenix_project               AS last_phoenix_project,
+                    r.phoenix_trace_id              AS last_trace_id,
+                    r.item_id                       AS last_item_id,
+                    r.finished_at::text             AS last_finished_at
+             FROM params.parameters p
+             LEFT JOIN LATERAL (
+                 SELECT * FROM params.model_values v
+                 WHERE v.parameter_id = p.id
+                 ORDER BY v.valid_from DESC LIMIT 1
+             ) mv ON true
+             LEFT JOIN LATERAL (
+                 SELECT * FROM params.extraction_runs er
+                 WHERE er.model_target = p.model_target
+                 ORDER BY er.started_at DESC LIMIT 1
+             ) r ON true
+             ORDER BY p.country, p.policy, p.name",
+            &[],
+        )
+        .map_err(|e| {
+            format!("params query failed (has `nomoscope-workflow ingest-params` been run?): {e}")
+        })?;
+
+    Ok(json!({
+        "parameters": rows.iter().map(|r| json!({
+            "country": r.get::<_, String>("country"),
+            "model_target": r.get::<_, String>("model_target"),
+            "policy": r.get::<_, Option<String>>("policy"),
+            "function": r.get::<_, Option<String>>("function"),
+            "name": r.get::<_, Option<String>>("name"),
+            "value_type": r.get::<_, String>("value_type"),
+            "unit": r.get::<_, Option<String>>("unit"),
+            "label": r.get::<_, Option<String>>("label"),
+            "description": r.get::<_, Option<String>>("description"),
+            "category": r.get::<_, Option<String>>("category"),
+            // group memberships: [{id, kind, role, index}, …] or null
+            "groups": r.get::<_, Option<Value>>("groups"),
+            "current_value": r.get::<_, Option<Value>>("current_value"),
+            "current_raw": r.get::<_, Option<String>>("current_raw"),
+            "current_valid_from": r.get::<_, Option<String>>("current_valid_from"),
+            "current_source_type": r.get::<_, Option<String>>("current_source_type"),
+            "last_run_id": r.get::<_, Option<String>>("last_run_id"),
+            "last_as_of": r.get::<_, Option<String>>("last_as_of"),
+            "last_model": r.get::<_, Option<String>>("last_model"),
+            "last_routing": r.get::<_, Option<String>>("last_routing"),
+            "last_verdict": r.get::<_, Option<String>>("last_verdict"),
+            "last_phoenix_project": r.get::<_, Option<String>>("last_phoenix_project"),
+            "last_trace_id": r.get::<_, Option<String>>("last_trace_id"),
+            "last_item_id": r.get::<_, Option<String>>("last_item_id"),
+            "last_finished_at": r.get::<_, Option<String>>("last_finished_at"),
+        })).collect::<Vec<_>>(),
+    }))
+}
+
+/// Replace the database name in a Postgres URL, preserving any `?options`.
+fn swap_database(db_url: &str, dbname: &str) -> String {
+    let (base, query) = match db_url.split_once('?') {
+        Some((b, q)) => (b, Some(q)),
+        None => (db_url, None),
+    };
+    let swapped = match base.rsplit_once('/') {
+        // Guard against URLs with no db path: the part after the last '/'
+        // must look like a db name, not `host:port` or `user@host`.
+        Some((head, tail)) if !tail.contains('@') && !tail.contains(':') && !head.ends_with(':') => {
+            format!("{head}/{dbname}")
+        }
+        _ => format!("{base}/{dbname}"),
+    };
+    match query {
+        Some(q) => format!("{swapped}?{q}"),
+        None => swapped,
+    }
+}
+
+/// Phoenix project name -> GraphQL global id (base64 of "Project:<id>"), read
+/// from the `phoenix` database that shares this Postgres instance. The GID is
+/// what Phoenix's trace deep-links use:
+///   <endpoint>/projects/<gid>/traces/<trace_id>
+pub fn phoenix_projects(db_url: &str) -> Result<Value, String> {
+    use base64::engine::general_purpose::STANDARD;
+    use base64::Engine;
+
+    let mut client = connect(&swap_database(db_url, "phoenix"))?;
+    let rows = client
+        .query("SELECT id, name FROM projects", &[])
+        .map_err(|e| format!("phoenix projects query failed: {e}"))?;
+    Ok(json!({
+        "projects": rows.iter().map(|r| {
+            let id: i32 = r.get("id");
+            json!({
+                "name": r.get::<_, String>("name"),
+                "gid": STANDARD.encode(format!("Project:{id}")),
+            })
+        }).collect::<Vec<_>>(),
+    }))
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn swap_database_keeps_host_and_options() {
+        assert_eq!(
+            super::swap_database("postgresql://jrc:jrc@localhost:5434/legislation", "phoenix"),
+            "postgresql://jrc:jrc@localhost:5434/phoenix"
+        );
+        assert_eq!(
+            super::swap_database("postgresql://jrc:jrc@localhost:5434/legislation?sslmode=disable", "phoenix"),
+            "postgresql://jrc:jrc@localhost:5434/phoenix?sslmode=disable"
+        );
+        assert_eq!(
+            super::swap_database("postgresql://jrc:jrc@localhost:5434", "phoenix"),
+            "postgresql://jrc:jrc@localhost:5434/phoenix"
+        );
+    }
+
     /// Exercises the eval queries and row→JSON type mappings against the live
     /// stack; silently skipped when the DB is down or `init-db` hasn't run.
     #[test]

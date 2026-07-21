@@ -111,10 +111,11 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 native = [t for f in ("short_label", "label", "description") if (t := texts.get(f))]
             except Exception:
                 native = []
-        query = (
-            " ".join(dict.fromkeys([*native, *labels.values(), *descriptions.values()]))
-            or info.model_target
-        )
+        # Native texts REPLACE the received ones in the query rather than being
+        # appended: a mixed-language ~60-term query dilutes the BGE-M3 embedding
+        # and turns the OR'd FTS leg into noise.
+        parts = native or [*labels.values(), *descriptions.values()]
+        query = " ".join(dict.fromkeys(parts)) or info.model_target
         citations: list[str] = []
         for value in reversed(record.values):
             for ref in value.references:

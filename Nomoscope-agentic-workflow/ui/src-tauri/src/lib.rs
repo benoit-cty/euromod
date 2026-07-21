@@ -9,9 +9,11 @@ mod db;
 mod encoder;
 mod ingest;
 mod store;
+mod workflow;
 
 use encoder::EmbeddingState;
 use ingest::{IngestPayload, IngestState};
+use workflow::{WorkflowPayload, WorkflowState};
 
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -85,10 +87,13 @@ fn get_env_config() -> Result<Value, String> {
         .unwrap_or_else(|_| "reviewer".to_string());
     let db_url = std::env::var("WORKFLOW_DATABASE_URL")
         .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
+    let phoenix_endpoint = std::env::var("PHOENIX_COLLECTOR_ENDPOINT")
+        .unwrap_or_else(|_| "http://localhost:6006".to_string());
     Ok(json!({
         "data_dir": default_data_dir().map(|p| p.display().to_string()),
         "reviewer": reviewer,
         "db_url": db_url,
+        "phoenix_endpoint": phoenix_endpoint.trim_end_matches('/'),
     }))
 }
 
@@ -169,6 +174,34 @@ async fn search_articles(
 }
 
 #[tauri::command]
+async fn params_list(payload: DbPayload) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || db::params_list(&payload.db_url))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn phoenix_projects(payload: DbPayload) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || db::phoenix_projects(&payload.db_url))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn run_workflow(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, WorkflowState>,
+    payload: WorkflowPayload,
+) -> Result<Value, String> {
+    workflow::run(app, state, payload).await
+}
+
+#[tauri::command]
+fn stop_workflow(state: tauri::State<'_, WorkflowState>, run_id: String) -> Result<Value, String> {
+    workflow::stop(state, run_id)
+}
+
+#[tauri::command]
 async fn run_ingest(
     app: tauri::AppHandle,
     state: tauri::State<'_, IngestState>,
@@ -201,6 +234,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(EmbeddingState::default())
         .manage(IngestState::default())
+        .manage(WorkflowState::default())
         .invoke_handler(tauri::generate_handler![
             get_env_config,
             load_queue,
@@ -214,6 +248,10 @@ pub fn run() {
             eval_run_detail,
             run_ingest,
             stop_ingest,
+            params_list,
+            phoenix_projects,
+            run_workflow,
+            stop_workflow,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

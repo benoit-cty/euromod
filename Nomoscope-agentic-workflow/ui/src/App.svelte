@@ -6,8 +6,9 @@
   import DatabaseTab from './lib/components/DatabaseTab.svelte';
   import IngestTab from './lib/components/IngestTab.svelte';
   import EvalTab from './lib/components/EvalTab.svelte';
+  import ParamsTab from './lib/components/ParamsTab.svelte';
 
-  let config = $state({ data_dir: null, reviewer: 'reviewer', db_url: '' });
+  let config = $state({ data_dir: null, reviewer: 'reviewer', db_url: '', phoenix_endpoint: '' });
   let items = $state([]);
   let facets = $state(null);
   let selectedId = $state(null);
@@ -78,6 +79,13 @@
     }
   }
 
+  // Jump from the Parameters tab to a freshly created review-queue item.
+  async function openReviewItem(id) {
+    await refresh();
+    selectedId = id;
+    tab = 'review';
+  }
+
   async function showAudit() {
     tab = 'audit';
     try {
@@ -96,6 +104,7 @@
     <h1>EUROMOD Parameter Review</h1>
     <nav>
       <button class:primary={tab === 'review'} onclick={() => (tab = 'review')}>Review queue</button>
+      <button class:primary={tab === 'params'} onclick={() => (tab = 'params')}>Parameters</button>
       <button class:primary={tab === 'audit'} onclick={showAudit}>Audit log</button>
       <button class:primary={tab === 'database'} onclick={() => (tab = 'database')}>Database</button>
       <button class:primary={tab === 'ingest'} onclick={() => (tab = 'ingest')}>Ingest</button>
@@ -119,6 +128,14 @@
     <main>
       <QueueList {items} {facets} {selectedId} onselect={(id) => (selectedId = id)} />
       <DetailPanel item={selected} ondecide={decide} />
+    </main>
+  {:else if tab === 'params'}
+    <main class="single">
+      <ParamsTab
+        dbUrl={config.db_url}
+        phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
+        onopenitem={openReviewItem}
+      />
     </main>
   {:else if tab === 'audit'}
     <main class="single">

@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date
 from pathlib import Path
 
@@ -60,6 +61,42 @@ def run_all(
     if not files:
         typer.echo(f"No parameter files in {folder}")
         raise typer.Exit(1)
+    run(parameter_files=files, as_of=as_of, model=model, force=force)
+
+
+@app.command("run-targets")
+def run_targets(
+    targets: list[str] = typer.Argument(
+        ..., help="model_target ids (euromod://…) or parameter_keys of parameters in the params DB"
+    ),
+    as_of: str = typer.Option(..., "--as-of", help="Reference date, YYYY-MM-DD"),
+    model: str = typer.Option(None, "--model", help="Override WORKFLOW_MODEL"),
+    force: bool = typer.Option(False, "--force", help="Overwrite already-reviewed queue items"),
+) -> None:
+    """Run the workflow for parameters stored in the params DB (see ingest-params).
+
+    Each target is materialized as an Activity 1 JSON file under
+    <data>/parameters/db/ (a subdirectory, so run-all's glob ignores it),
+    then goes through the standard file-based workflow.
+    """
+    cfg = load_config()
+    out_dir = cfg.data_dir / "parameters" / "db"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    files: list[Path] = []
+    with paramdb.connect(cfg) as conn:
+        for target in targets:
+            try:
+                record = paramdb.load_record(conn, target)
+            except KeyError as exc:
+                typer.echo(str(exc))
+                raise typer.Exit(1)
+            path = out_dir / f"{queue_store.slugify(record.information.model_target)}.json"
+            path.write_text(
+                json.dumps(record.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            typer.echo(f"materialized {path.relative_to(cfg.data_dir)}")
+            files.append(path)
     run(parameter_files=files, as_of=as_of, model=model, force=force)
 
 

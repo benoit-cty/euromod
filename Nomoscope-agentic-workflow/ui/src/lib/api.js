@@ -23,5 +23,12 @@ export const api = {
   // Subscribe to streamed log lines: handler({ run_id, stream, line }).
   // Returns a promise resolving to an unlisten function.
   onIngestLog: (handler) => listen('ingest-log', (event) => handler(event.payload)),
+  // Parameters tab: params-schema listing, Phoenix trace-link resolution, and
+  // launching the agentic workflow CLI (same contract as runIngest/onIngestLog).
+  paramsList: (dbUrl) => invoke('params_list', { payload: { db_url: dbUrl } }),
+  phoenixProjects: (dbUrl) => invoke('phoenix_projects', { payload: { db_url: dbUrl } }),
+  runWorkflow: (payload) => invoke('run_workflow', { payload }),
+  stopWorkflow: (runId) => invoke('stop_workflow', { runId }),
+  onWorkflowLog: (handler) => listen('workflow-log', (event) => handler(event.payload)),
   openExternal: (url) => open(url),
 };
