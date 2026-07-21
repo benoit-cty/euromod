@@ -7,9 +7,20 @@ kept alongside the original descriptive name for readability:
 
 | Codename | Folder | What it is |
 |---|---|---|
-| Nomotheca (DB) / Nomosync (pipeline) | [Nomotheca-RAG/](Nomotheca-RAG/) | Legislation DB + ingestion pipeline (Activity 2) |
+| Nomotheca (+ Nomosync) | [Nomotheca-RAG/](Nomotheca-RAG/) | Legislation DB (Nomotheca) + its ingestion pipeline (Nomosync); package `nomotheca-ingest` (Activity 2) |
 | Nomoscope | [Nomoscope-agentic-workflow/](Nomoscope-agentic-workflow/) | Agentic workflow + validation UI (Activity 3) |
 | Nomokrisis | [Nomokrisis-evaluation_pipeline/](Nomokrisis-evaluation_pipeline/) | Evaluation pipeline (Activity 4) |
+
+### Why these names
+
+Every name is built on the Greek root **νόμος (_nómos_)**, "law" — fitting for a system that
+reads and reasons over fiscal legislation.
+
+- **Nómos** (νόμος, "law") — the project as a whole.
+- **Nomotheca** — _nómos_ + _thēkē_ (θήκη, "repository/case", as in _bibliotheca_): **the law library**, i.e. the legislation database.
+- **Nomosync** — _nómos_ + _sync_: **keeping the law in sync**, i.e. the ingestion pipeline that fetches, snapshots and loads legislation into Nomotheca. It is a pipeline within the Nomotheca-RAG subproject, not a separate package — the code ships as `nomotheca-ingest`.
+- **Nomoscope** — _nómos_ + _-scope_ (_skopein_, "to examine/observe"): **the law examiner**, i.e. the agentic workflow that inspects legislation and proposes parameter updates.
+- **Nomokrisis** — _nómos_ + _krisis_ (κρίσις, "judgment/decision", root of _critic_): **the judgment of the law**, i.e. the evaluation pipeline that scores the proposals.
 
 ## Agentic workflow (Activity 3)
 
