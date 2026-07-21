@@ -41,6 +41,9 @@ class Routing(StrEnum):
     NEW = "new"
     NOT_FOUND = "not_found"
     NATIONAL_TEAM_SOURCE = "national_team_source"
+    # The value is a formula over other parameters ($PSS * 4): legislation
+    # never states it directly, so the anchor parameter is what gets updated.
+    DERIVED = "derived"
 
 
 class ItemStatus(StrEnum):
@@ -242,3 +245,8 @@ class ReviewItem(BaseModel):
     proposed_record: ParameterRecord | None = None
     parameter_file: str | None = None
     decision: Decision | None = None
+    # routing=derived: the $parameters this value is a formula over.
+    derived_from: list[str] | None = None
+    # Gap-fill provenance: queries run / instruments auto-ingested before the
+    # final retrieval, so the reviewer sees the corpus was extended by this run.
+    scout: dict | None = None

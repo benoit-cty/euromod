@@ -5,7 +5,16 @@
   import { onMount } from 'svelte';
   import { api } from '../api.js';
 
-  let { dbUrl = '', phoenixEndpoint = 'http://localhost:6006', onopenitem = null } = $props();
+  // The component stays mounted (hidden) while other tabs are shown, so a
+  // launched run keeps streaming; `active` re-triggers the log auto-scroll on
+  // return and `onrunning` lets the shell show a run indicator on the tab.
+  let {
+    dbUrl = '',
+    phoenixEndpoint = 'http://localhost:6006',
+    onopenitem = null,
+    active = true,
+    onrunning = null,
+  } = $props();
 
   let params = $state([]);
   let gids = $state({}); // phoenix project name -> GraphQL gid (for trace deep-links)
@@ -16,7 +25,7 @@
   let country = $state('');
   let policy = $state('');
   let group = $state(''); // parameter-group id, e.g. 'FR:ConstDef_fr:tsc_schedule_2'
-  let runState = $state(''); // '' | never | ran | changed | not_found | pass | fail
+  let runState = $state(''); // '' | never | ran | changed | not_found | derived | pass | fail
   let search = $state('');
 
   // --- selection (model_target -> true) ---
@@ -63,6 +72,7 @@
       if (runState === 'ran' && !p.last_run_id) return false;
       if (runState === 'changed' && p.last_routing !== 'changed') return false;
       if (runState === 'not_found' && p.last_routing !== 'not_found') return false;
+      if (runState === 'derived' && p.last_routing !== 'derived') return false;
       if (runState === 'pass' && p.last_verdict !== 'pass') return false;
       if (runState === 'fail' && p.last_verdict !== 'fail') return false;
       if (q) {
@@ -120,10 +130,15 @@
     return () => unlisten.then((un) => un());
   });
 
-  // Auto-scroll the log as lines arrive.
+  // Auto-scroll the log as lines arrive — and when the tab is shown again
+  // (while hidden the pane has no layout, so scrollHeight was 0).
   $effect(() => {
     logLines.length;
-    if (logEl) logEl.scrollTop = logEl.scrollHeight;
+    if (active && logEl) logEl.scrollTop = logEl.scrollHeight;
+  });
+
+  $effect(() => {
+    onrunning?.(running);
   });
 
   function toggleAll() {
@@ -213,6 +228,7 @@
         <option value="ran">has a run</option>
         <option value="changed">routing: changed</option>
         <option value="not_found">routing: not found</option>
+        <option value="derived">routing: derived</option>
         <option value="pass">critique: pass</option>
         <option value="fail">critique: fail</option>
       </select>

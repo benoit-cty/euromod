@@ -59,7 +59,10 @@ WITH candidate AS (
 fts AS (
   SELECT chunk_id,
          row_number() OVER (
-           ORDER BY ts_rank_cd(tsv, websearch_to_tsquery(search_config, %(fts_q)s), 32) DESC
+           -- 1|32: log-length normalisation, then rank/(rank+1). Without the
+           -- length term, long amending acts that repeat common fiscal words
+           -- outrank the short implementing act that actually sets the value.
+           ORDER BY ts_rank_cd(tsv, websearch_to_tsquery(search_config, %(fts_q)s), 1|32) DESC
          ) AS r
   FROM candidate
   WHERE tsv @@ websearch_to_tsquery(search_config, %(fts_q)s)

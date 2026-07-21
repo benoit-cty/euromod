@@ -4,3 +4,4 @@ Nomotheca-RAG/ingest/logs/
 Nomotheca-RAG/ingest/models/*
 .env
 **/.quarto/
+Nomoscope-agentic-workflow/data/parameters/db/*.json

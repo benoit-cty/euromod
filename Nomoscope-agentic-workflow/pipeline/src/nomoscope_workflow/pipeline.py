@@ -11,6 +11,7 @@ pure functions. One Phoenix trace per parameter run.
 
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -18,7 +19,7 @@ from typing import TypedDict
 
 from opentelemetry.trace import Tracer
 
-from . import AGENT_VERSION, llm, mock, paramdb, queue_store, retrieval, translate
+from . import AGENT_VERSION, llm, mock, paramdb, queue_store, retrieval, scout, translate
 from .config import WorkflowConfig
 from .prompts import PROMPT_VERSION
 from .schema import (
@@ -57,6 +58,8 @@ class WorkflowState(TypedDict, total=False):
     routing: Routing
     item: ReviewItem
     enqueued: bool
+    derived_from: list[str]
+    scout: scout.ScoutResult
 
 
 def _values_equal(a, b) -> bool:
@@ -75,6 +78,27 @@ def _values_equal_bracket(a: Bracket, b: Bracket) -> bool:
         return (x is None) == (y is None) and (x is None or abs(x - y) < 1e-9)
 
     return eq(a.threshold, b.threshold) and eq(a.rate, b.rate) and eq(a.amount, b.amount)
+
+
+_PARAM_REF = re.compile(r"\$[A-Za-z_]\w*")
+
+
+def _derived_refs(record: ParameterRecord, current: ParameterValue | None) -> list[str]:
+    """$references to other parameters in the current value / raw EUROMOD string.
+
+    A value like `$PSS * 4` has no independent legislative existence: the
+    anchor parameter is what legislation sets, so asking the corpus about the
+    derived one is a guaranteed not_found.
+    """
+    if current is None:
+        return []
+    own = record.information.model_target.rsplit("/", 1)[-1]
+    sources = [
+        current.value if isinstance(current.value, str) else "",
+        (current.lineage.model_answer or "") if current.lineage else "",
+    ]
+    refs = dict.fromkeys(m for s in sources for m in _PARAM_REF.findall(s))
+    return [r for r in refs if r != own]
 
 
 def _current_value(record: ParameterRecord, as_of: date) -> ParameterValue | None:
@@ -155,8 +179,19 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
 
     def propose(state: WorkflowState) -> dict:
         record, as_of, hits = state["record"], state["as_of"], state["hits"]
+        # A retry that repeats the same inputs re-rolls the same draft — feed
+        # the failed critique back so the second attempt can actually differ.
+        feedback = None
+        if state.get("attempts", 0) and state.get("critique") and state["critique"].issues:
+            feedback = "\n".join(f"- {issue}" for issue in state["critique"].issues)
         with step_span(
-            tracer, "propose", input_value={"attempt": state.get("attempts", 0) + 1, "model": cfg.model}
+            tracer,
+            "propose",
+            input_value={
+                "attempt": state.get("attempts", 0) + 1,
+                "model": cfg.model,
+                "feedback": feedback,
+            },
         ) as span:
             if is_mock:
                 def translation_lookup(chunk_id: str) -> str | None:
@@ -165,7 +200,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
 
                 draft = mock.propose_with_mock(record, as_of, hits, translation_lookup)
             else:
-                draft = llm.propose_with_llm(cfg.model, record, as_of, hits)
+                draft = llm.propose_with_llm(cfg.model, record, as_of, hits, feedback)
             set_output(span, draft)
         return {"draft": draft, "attempts": state.get("attempts", 0) + 1}
 
@@ -176,6 +211,10 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
             report = CritiqueReport(schema_valid=draft is not None, critique_model=cfg.critique_model)
             if draft is None or not draft.found:
                 report.issues.append("no value proposed")
+                # Surface WHY to the reviewer — the refusal usually names the
+                # exact source that is missing from the corpus.
+                if draft is not None and draft.reasoning:
+                    report.issues.append(f"model: {draft.reasoning}")
             else:
                 hit_ids = {h.chunk_id for h in hits}
                 if draft.citation_chunk_id in hit_ids and draft.supporting_extract:
@@ -230,7 +269,9 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
             current = _current_value(record, as_of)
             proposed_value, proposed_record = None, None
 
-            if current is not None and current.source_type == SourceType.NATIONAL_TEAM:
+            if state.get("derived_from"):
+                routing = Routing.DERIVED
+            elif current is not None and current.source_type == SourceType.NATIONAL_TEAM:
                 routing = Routing.NATIONAL_TEAM_SOURCE
             elif draft is None or not draft.found:
                 routing = Routing.NOT_FOUND
@@ -264,6 +305,8 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 ],
                 proposed_record=proposed_record,
                 parameter_file=state.get("parameter_file"),
+                derived_from=state.get("derived_from") or None,
+                scout=state["scout"].summary() if state.get("scout") else None,
             )
             set_output(span, {"routing": routing, "item_id": item.id})
         return {"routing": routing, "item": item}
@@ -289,16 +332,56 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
             and not is_mock  # the mock extractor is deterministic; retrying can't help
         )
 
+    def scout_step(state: WorkflowState) -> dict:
+        record, as_of = state["record"], state["as_of"]
+        with step_span(
+            tracer,
+            "scout",
+            kind="TOOL",
+            input_value={"mode": cfg.scout, "model_target": record.information.model_target},
+        ) as span:
+            result = scout.run(cfg, record, as_of)
+            set_output(span, result.summary())
+        return {"scout": result}
+
+    def _propose_and_critique(state: WorkflowState) -> None:
+        while True:
+            state.update(propose(state))
+            state.update(critique(state))
+            if not _retry_proposal(state):
+                break
+
     def invoke(state: WorkflowState) -> WorkflowState:
         state = dict(state)
+        record, as_of = state["record"], state["as_of"]
+
+        # Formula parameters ($PSS * 4) are never stated by legislation: route
+        # them to their anchor without spending retrieval or LLM calls.
+        derived = _derived_refs(record, _current_value(record, as_of))
+        if derived:
+            with step_span(tracer, "derived", input_value={"references": derived}) as span:
+                set_output(span, {"routing": Routing.DERIVED})
+            state.update({"derived_from": derived, "hits": [], "citations": [], "attempts": 0})
+            state.update(diff(state))
+            state.update(enqueue(state))
+            return state
+
         state.update(frame(state))
         state.update(retrieve(state))
         if state["hits"]:
-            while True:
-                state.update(propose(state))
-                state.update(critique(state))
-                if not _retry_proposal(state):
-                    break
+            _propose_and_critique(state)
+
+        # Gap-fill: nothing usable retrieved -> discover + archive-first ingest
+        # the missing instrument, then retry retrieval once. Mock runs skip it
+        # to stay deterministic and offline.
+        draft = state.get("draft")
+        if cfg.scout != "off" and not is_mock and (draft is None or not draft.found):
+            state.update(scout_step(state))
+            if state["scout"].ingested:
+                state.update(retrieve(state))
+                if state["hits"]:
+                    _propose_and_critique(state)
+
         state.update(diff(state))
         state.update(enqueue(state))
         return state

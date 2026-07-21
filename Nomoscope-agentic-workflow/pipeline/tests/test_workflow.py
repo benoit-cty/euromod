@@ -105,3 +105,47 @@ def test_queue_roundtrip_preserves_reviewed_items(tmp_path: Path):
     assert queue_store.write_item(decided, tmp_path, force=True)
     assert not queue_store.write_item(item, tmp_path)
     assert queue_store.write_item(item, tmp_path, force=True)
+
+
+def test_derived_refs_detects_formula_parameters():
+    from nomoscope_workflow.pipeline import _derived_refs
+    from nomoscope_workflow.schema import Lineage
+
+    record = ParameterRecord(
+        information=ParameterInformation(
+            country="FR",
+            model_target="euromod://FR/tinty_fr/def_const/$csg_red_thres",
+            value_type="scalar",
+            unit="currency",
+        ),
+        values=[
+            ParameterValue(
+                value=185568.0,
+                valid_from=date(2024, 1, 1),
+                lineage=Lineage(model_answer="$PSS * 4"),
+            )
+        ],
+    )
+    current = _current_value(record, date(2025, 6, 1))
+    assert _derived_refs(record, current) == ["$PSS"]
+
+    # a plain numeric answer is not derived, and a self-reference does not count
+    plain = record.model_copy(deep=True)
+    plain.values[0].lineage.model_answer = "11496#y"
+    assert _derived_refs(plain, _current_value(plain, date(2025, 6, 1))) == []
+    self_ref = record.model_copy(deep=True)
+    self_ref.values[0].lineage.model_answer = "$csg_red_thres"
+    assert _derived_refs(self_ref, _current_value(self_ref, date(2025, 6, 1))) == []
+    assert _derived_refs(record, None) == []
+
+
+def test_fts_query_ors_distinct_terms():
+    from nomoscope_workflow.retrieval import _fts_query
+
+    q = _fts_query("Taux de la tranche 1 taux marginal de l'impôt")
+    assert " OR " in q
+    terms = q.split(" OR ")
+    assert len(terms) == len(set(terms))  # deduplicated
+    assert "taux" in terms and "marginal" in terms
+    assert "or" not in terms  # websearch operator keyword never emitted as a term
+    assert _fts_query("") == ""  # degenerate input falls through unchanged

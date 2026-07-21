@@ -28,6 +28,8 @@ uv run nomoscope-workflow run-all --as-of 2025-06-01    # mock model — no API 
 uv run nomoscope-workflow queue
 
 cd ../ui
+# OR
+cd Nomoscope-agentic-workflow/ui
 npm install
 npm run tauri dev
 # WSL:
@@ -50,11 +52,13 @@ by an explicit control flow
 
 | Step | Kind | Input → output | Failure mode & handling |
 |---|---|---|---|
+| **derived check** | code | current value / raw EUROMOD string scanned for `$parameter` references (`$PSS * 4`) | referenced → routing `derived`, no retrieval/LLM spent: legislation never states formula values, only their anchor parameter |
 | **frame** | code | Activity 1 record → search query + known citations | no labels → falls back to model_target |
 | **retrieve** | SQL | citation fast path (pg_trgm, similarity > 0.55) then hybrid FTS ∥ vector merged by RRF k=60 (vector top-3 guaranteed into the result: ts_rank_cd has no IDF, so common fiscal terms would otherwise crowd out the semantically-best chunk), all pre-filtered by `validity @> as_of`, jurisdiction, lang. FTS ORs the query terms; vector = BGE-M3 via the ingest package's query encoder (`WORKFLOW_EMBEDDING_MODEL_ID=1`), FTS-only fallback when unavailable | no hits → skip straight to diff, routing `not_found` |
 | **propose** | **LLM** | record + retrieved chunks → `ProposalDraft` (structured output: value, valid_from, legal_status, chunk_id, verbatim extract, quote + translation, confidence) | model can return `found=false`; never guesses |
 | **critique** | code + **LLM** | mechanical checks: extract is a verbatim quote of the cited chunk (offsets computed against `unit_texts.content`), dates consistent, units/brackets sane, schema-valid — then an LLM pass for semantic issues | verdict `fail` → one LLM retry, then goes to the human with the failed critique attached |
-| **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| national_team_source` | national-team-sourced values are never overwritten by the pipeline |
+| **scout** | **LLM** + web + ingest | on `not_found` (`WORKFLOW_SCOUT=llm\|tavily`): the LLM names the official act that sets the value; Tavily searches official domains only (FR: legifrance.gouv.fr) and instrument ids (FR: `JORFTEXT…`) are harvested from result URLs, LLM-ranked against the result titles, then **archive-first ingested** via `nomotheca_ingest` (+ incremental BGE-M3 embedding) before one retrieval retry | web text is never evidence — only discovery; quotes still verify against the DB. Ingested ids and queries are recorded on the review item |
+| **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| national_team_source \| derived` | national-team-sourced values are never overwritten by the pipeline |
 | **enqueue** | code | full `ReviewItem` (side-by-side values, critique, retrieval trace incl. source texts, merged candidate record with `lineage`) → `data/queue/*.json` | re-runs never clobber an already-reviewed item (unless `--force`) |
 
 The anti-hallucination rule from the activity doc is mechanical, not prompt-only:
@@ -155,6 +159,9 @@ Decision rationale in [observability.md](observability.md). Implementation
 
 - Schema enforcement at every LLM boundary (structured output into pydantic).
 - Verbatim-quote rule checked mechanically against the corpus.
+- The gap-fill scout never uses web text as evidence: search results only
+  nominate official instrument ids, the text enters through Nomotheca's
+  archive-first ingest, and quotes verify against the database as always.
 - No write-back without human acceptance; export-first even then.
 - Reviewed queue items are immutable to re-runs; the decision log is
   append-only; national-team values route around the pipeline entirely.

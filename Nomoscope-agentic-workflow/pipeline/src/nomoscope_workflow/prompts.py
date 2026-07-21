@@ -24,6 +24,9 @@ Rules:
 - Bracket schedules: ordered ascending, each band carries its LOWER threshold plus rate (or amount);
   the first band starts at threshold 0; the last band runs to infinity.
 - valid_from is the date the value takes effect (from the version validity or the text itself).
+- Several extracts may state this value for different periods (annual implementing acts are
+  common): choose the one whose period covers the reference date. Never prefer an extract
+  merely because it matches the current value — detecting a change IS the job.
 - If the extracts do not determine the value, return found=false with a short reasoning. Never guess.
 - original_language_quote is the supporting extract in the source language; english_translation is
   your faithful translation of it.
@@ -72,13 +75,24 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
     )
 
 
-def build_proposal_user(record: ParameterRecord, as_of: date, hits: list[RetrievalHit]) -> str:
-    """User message for the proposal step."""
-    return (
+def build_proposal_user(
+    record: ParameterRecord,
+    as_of: date,
+    hits: list[RetrievalHit],
+    feedback: str | None = None,
+) -> str:
+    """User message for the proposal step; feedback carries a failed critique on retries."""
+    message = (
         _parameter_block(record, as_of)
         + "\n\nRetrieved legal extracts:\n\n"
         + _hits_block(hits)
     )
+    if feedback:
+        message += (
+            "\n\nYour previous proposal was rejected by review. "
+            "Produce a corrected proposal that addresses every issue below:\n" + feedback
+        )
+    return message
 
 
 def build_critique_user(

@@ -30,6 +30,9 @@ class WorkflowConfig:
     phoenix_endpoint: str = ""
     phoenix_project: str = ""
     tracing_enabled: bool = True
+    scout: str = "off"  # off | llm | tavily — gap-fill source discovery on not_found
+    tavily_api_key: str = ""
+    scout_max_ingest: int = 2
 
 
 def load_config() -> WorkflowConfig:
@@ -48,4 +51,7 @@ def load_config() -> WorkflowConfig:
         phoenix_endpoint=_env("PHOENIX_COLLECTOR_ENDPOINT", "http://localhost:6006"),
         phoenix_project=_env("PHOENIX_PROJECT_NAME", "nomoscope-agentic-workflow"),
         tracing_enabled=_env("WORKFLOW_TRACING", "true").lower() != "false",
+        scout=_env("WORKFLOW_SCOUT", "off").lower(),
+        tavily_api_key=_env("TAVILY_API_KEY", ""),
+        scout_max_ingest=int(_env("WORKFLOW_SCOUT_MAX_INGEST", "2")),
     )

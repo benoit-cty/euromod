@@ -14,11 +14,19 @@
   let selectedId = $state(null);
   let decisions = $state([]);
   let tab = $state('review');
+  // Tabs are kept alive once visited (hidden, not destroyed): switching away
+  // must not kill an in-flight agentic run or reset filters/selections.
+  let visited = $state({ review: true });
+  let paramsRunning = $state(false);
   let error = $state('');
   let statusMsg = $state('');
   let dark = $state(localStorage.getItem('theme') === 'dark');
 
   const selected = $derived(items.find((i) => i.id === selectedId) ?? null);
+
+  $effect(() => {
+    visited[tab] = true;
+  });
 
   $effect(() => {
     document.body.classList.toggle('dark', dark);
@@ -104,7 +112,9 @@
     <h1>EUROMOD Parameter Review</h1>
     <nav>
       <button class:primary={tab === 'review'} onclick={() => (tab = 'review')}>Review queue</button>
-      <button class:primary={tab === 'params'} onclick={() => (tab = 'params')}>Parameters</button>
+      <button class:primary={tab === 'params'} onclick={() => (tab = 'params')}>
+        Parameters{#if paramsRunning}<span class="running-dot" title="agentic run in progress">●</span>{/if}
+      </button>
       <button class:primary={tab === 'audit'} onclick={showAudit}>Audit log</button>
       <button class:primary={tab === 'database'} onclick={() => (tab = 'database')}>Database</button>
       <button class:primary={tab === 'ingest'} onclick={() => (tab = 'ingest')}>Ingest</button>
@@ -124,33 +134,40 @@
   {#if error}<div class="banner error">{error}</div>{/if}
   {#if statusMsg}<div class="banner">{statusMsg}</div>{/if}
 
-  {#if tab === 'review'}
-    <main>
+  {#if visited.review}
+    <main hidden={tab !== 'review'}>
       <QueueList {items} {facets} {selectedId} onselect={(id) => (selectedId = id)} />
       <DetailPanel item={selected} ondecide={decide} />
     </main>
-  {:else if tab === 'params'}
-    <main class="single">
+  {/if}
+  {#if visited.params}
+    <main class="single" hidden={tab !== 'params'}>
       <ParamsTab
         dbUrl={config.db_url}
         phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
         onopenitem={openReviewItem}
+        active={tab === 'params'}
+        onrunning={(v) => (paramsRunning = v)}
       />
     </main>
-  {:else if tab === 'audit'}
-    <main class="single">
+  {/if}
+  {#if visited.audit}
+    <main class="single" hidden={tab !== 'audit'}>
       <AuditLog {decisions} />
     </main>
-  {:else if tab === 'database'}
-    <main class="single">
+  {/if}
+  {#if visited.database}
+    <main class="single" hidden={tab !== 'database'}>
       <DatabaseTab dbUrl={config.db_url} />
     </main>
-  {:else if tab === 'ingest'}
-    <main class="single">
+  {/if}
+  {#if visited.ingest}
+    <main class="single" hidden={tab !== 'ingest'}>
       <IngestTab dbUrl={config.db_url} />
     </main>
-  {:else}
-    <main class="single">
+  {/if}
+  {#if visited.eval}
+    <main class="single" hidden={tab !== 'eval'}>
       <EvalTab dbUrl={config.db_url} />
     </main>
   {/if}
@@ -172,6 +189,14 @@
   }
   header h1 { margin: 0 0.8rem 0 0; }
   nav { display: flex; gap: 0.3rem; }
+  .running-dot {
+    margin-left: 0.35rem;
+    color: var(--accent);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    50% { opacity: 0.25; }
+  }
   .spacer { flex: 1; }
   .inline { display: flex; align-items: center; gap: 0.35rem; color: var(--muted); }
   .banner {
@@ -189,4 +214,6 @@
     min-height: 0;
   }
   main.single { grid-template-columns: 1fr; }
+  /* display:grid above would override the hidden attribute's default */
+  main[hidden] { display: none; }
 </style>

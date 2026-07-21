@@ -239,7 +239,7 @@ CREATE TABLE IF NOT EXISTS params.extraction_runs (
     agent_version    text,
     phoenix_project  text,
     phoenix_trace_id text,                       -- lower-case 32-hex OTel trace id
-    routing          text,                       -- unchanged|changed|new|not_found|national_team_source
+    routing          text,                       -- unchanged|changed|new|not_found|national_team_source|derived
     critique_verdict text,                       -- pass|fail
     item_id          text,                       -- review-queue file id (data/queue/<item_id>.json)
     retrieval_trace  jsonb,                      -- chunk ids/scores, content stripped

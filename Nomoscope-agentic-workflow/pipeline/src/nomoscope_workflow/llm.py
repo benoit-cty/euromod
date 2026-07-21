@@ -82,13 +82,17 @@ def run_agent(
 
 @retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(3), reraise=True)
 def propose_with_llm(
-    model: str, record: ParameterRecord, as_of: date, hits: list[RetrievalHit]
+    model: str,
+    record: ParameterRecord,
+    as_of: date,
+    hits: list[RetrievalHit],
+    feedback: str | None = None,
 ) -> ProposalDraft:
     """Proposal step: structured output straight into the ProposalDraft schema."""
     return run_agent(
         model,
         prompts.PROPOSAL_SYSTEM,
-        prompts.build_proposal_user(record, as_of, hits),
+        prompts.build_proposal_user(record, as_of, hits, feedback),
         output_type=ProposalDraft,
     )
 

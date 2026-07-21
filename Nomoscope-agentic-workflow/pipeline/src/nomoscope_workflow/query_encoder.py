@@ -19,7 +19,7 @@ _process: subprocess.Popen | None = None
 _disabled = False
 
 
-def _ingest_dir() -> Path | None:
+def ingest_dir() -> Path | None:
     """Locate Nomotheca-RAG/ingest (EUROMOD_INGEST_DIR overrides the repo walk)."""
     override = os.environ.get("EUROMOD_INGEST_DIR")
     if override:
@@ -33,7 +33,7 @@ def _ingest_dir() -> Path | None:
 
 
 def _start() -> subprocess.Popen:
-    directory = _ingest_dir()
+    directory = ingest_dir()
     if directory is None:
         raise RuntimeError("could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)")
     env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
