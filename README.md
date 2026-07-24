@@ -104,3 +104,6 @@ When you want to understand why a pipeline fail, just copy-past the ID and ask t
 - MCP around the RAG database to query it
 - ~~Name the project Nómos and the database Nomotheca, ingestion pipeline Nomosync, and agentic-workflow Nomoscope.~~ Done — evaluation pipeline named Nomokrisis; see the naming table above.
 - Document time needed for adapters.
+
+Future improvement :
+- VIGIL: A Reflective Runtime for Self-Healing LLM Agents : https://openreview.net/pdf?id=bE8nRXcWC1
