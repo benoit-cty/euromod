@@ -107,3 +107,4 @@ When you want to understand why a pipeline fail, just copy-past the ID and ask t
 
 Future improvement :
 - VIGIL: A Reflective Runtime for Self-Healing LLM Agents : https://openreview.net/pdf?id=bE8nRXcWC1
+- GraphRAG
