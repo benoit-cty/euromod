@@ -64,8 +64,9 @@ flowchart TD
         subgraph CL["Country legislation"]
             TRI["French legislation\nTricoteuses git mirror\n(DILA raw JSON, HTTPS)"]
         end
-        EUROMOD["Euromod parameters"]
+        EUROMOD["Euromod parameters\n(Activity 1 JSON export)"]
         CR["Country Report"]
+        OF["OpenFisca country package\nparameters/**.yaml\n(commit-pinned, optional per country)"]
     end
 
     subgraph INGEST["Nomotheca-RAG/ingest — nomotheca_ingest package"]
@@ -81,6 +82,12 @@ flowchart TD
 
     subgraph DB["Postgres (pgvector/pgvector:pg17, port 5434)"]
         SCHEMA["legislation DB\njurisdictions, instruments, units,\nchunks, embeddings (HNSW), fetch_runs"]
+        subgraph PARAMS["params schema"]
+            PARAMDB["parameters + values\n(EUROMOD, Activity 1 format)"]
+            PTEXTS["parameter_texts\nlaw-language renderings\n(machine_translation | openfisca | manual)"]
+            EXT["external_corpora / external_parameters\nexternal_values / external_references\n(LEGIARTI/JORFTEXT parsed from href)"]
+            LINKS["parameter_links\nEUROMOD ↔ OpenFisca\nmatch_method, score, validated_by"]
+        end
         EVAL["Evaluation results"]
         PGADMIN["pgAdmin (port 5050)"]
         PHOENIX["Observability database"]
@@ -94,9 +101,12 @@ flowchart TD
     end
 
     subgraph AGENT["Nomoscope-agentic-workflow/pipeline\nnomoscope_workflow (PydanticAI)"]
-        RET["Retrieve"] --> PROP["Propose"] --> CRIT["Critique"] --> DIFF["Diff"]
+        FRAME["Frame\nlaw-language query + citation hints"]
+        FRAME --> RET["Retrieve"] --> PROP["Propose"] --> CRIT["Critique"] --> DIFF["Diff"]
         QUEUE["Review queue\ndata/queue/*.json"]
         DIFF --> QUEUE
+        PARAMCLI["CLI: ingest-params / ingest-openfisca\ntranslate-params"]
+        MATCH["Matcher (planned)\nvalue fingerprint + structure\n→ link suggestions"]
     end
 
     subgraph UI["Nomoscope-agentic-workflow/ui\nTauri (Rust) + Svelte desktop app"]
@@ -104,9 +114,11 @@ flowchart TD
         AUDIT["Audit Log tab"]
         DBEXPLORE["Database explorer tab"]
         EVAL_RESULTS["Evaluation results summary"]
+        LINKVAL["Link validation (planned)\naccept/reject match suggestions"]
     end
 
     TRI --> FR --> PIPE --> LOADER --> SCHEMA
+    CR --> PIPE
     CLI --> PIPE
     TUI --> PIPE
     CLI --> EMB
@@ -123,5 +135,22 @@ flowchart TD
     EVAL-->EVAL_RESULTS
     EVAL_SCRIPT-->EVAL
 
+    EUROMOD --> PARAMCLI
+    OF --> PARAMCLI
+    PARAMCLI --> PARAMDB
+    PARAMCLI --> EXT
+    PARAMCLI --> PTEXTS
+    PARAMDB --> FRAME
+    PTEXTS --> FRAME
+    LINKS -. "citation hints (LEGIARTI/JORFTEXT)" .-> FRAME
+    LINKS -. "corroboration, never evidence" .-> CRIT
+    PARAMDB --> MATCH
+    EXT --> MATCH
+    MATCH --> LINKS
+    LINKS --> LINKVAL
+    LINKVAL -. validated .-> LINKS
+    EXT -. "candidate expected blocks" .-> EVAL_SCRIPT
+
     classDef new stroke-dasharray: 5 5,stroke:#e08800,color:inherit;
+    class MATCH,LINKVAL,LINKS new;
 ```
