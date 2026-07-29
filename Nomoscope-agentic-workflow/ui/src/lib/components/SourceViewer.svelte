@@ -10,6 +10,9 @@
   // chunk_id -> { loading, error, renderings[] } ; chunk_id -> unit_text_id
   let langs = $state({});
   let chosen = $state({});
+  // chunk_id -> bool. `open` is a reactive attribute: without remembering what
+  // the reviewer opened, picking a language would slam the panel shut again.
+  let opened = $state({});
   const requested = new Set(); // plain: guards the fetch, must not be reactive
 
   const AUTHENTICITY_LABEL = {
@@ -77,8 +80,11 @@
   <h3>Cited legal text ({trace.length} retrieved)</h3>
   {#each trace as hit (hit.chunk_id)}
     <details
-      open={hit.chunk_id === citedChunkId}
-      ontoggle={(e) => e.currentTarget.open && loadLangs(hit.chunk_id)}
+      open={opened[hit.chunk_id] ?? hit.chunk_id === citedChunkId}
+      ontoggle={(e) => {
+        opened[hit.chunk_id] = e.currentTarget.open;
+        if (e.currentTarget.open) loadLangs(hit.chunk_id);
+      }}
     >
       <summary>
         <strong>{hit.citation ?? hit.context_header}</strong>
