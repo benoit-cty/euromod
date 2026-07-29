@@ -317,6 +317,69 @@ pub fn params_list(db_url: &str) -> Result<Value, String> {
     }))
 }
 
+/// Every language rendering of the legal-unit version a cited chunk belongs to.
+///
+/// A chunk hangs off one `unit_texts` row = one language rendering of one
+/// version; the sibling renderings (authentic BE fr/nl, official or machine
+/// translations) are the other `unit_texts` rows of the same `version_id`.
+/// Translations are chunked independently, so the sibling chunk is matched on
+/// `seq` and we fall back to the full version text when there is none.
+pub fn chunk_renderings(db_url: &str, chunk_id: &str) -> Result<Value, String> {
+    let mut client = connect(db_url)?;
+    client
+        .batch_execute(
+            "SET default_transaction_read_only = on;
+             SET statement_timeout = '15s';",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = client
+        .query(
+            "SELECT t.id::text                     AS unit_text_id,
+                    t.lang,
+                    t.authenticity,
+                    t.mt_engine,
+                    t.source_lang,
+                    c.id::text                     AS chunk_id,
+                    c.seq,
+                    coalesce(c.content, t.content) AS content,
+                    (c.id IS NOT NULL)             AS aligned,
+                    (t.id = src_text.id)           AS is_cited,
+                    u.citation,
+                    v.validity::text               AS validity
+             FROM chunks src
+             JOIN unit_texts src_text        ON src_text.id = src.unit_text_id
+             JOIN unit_texts t               ON t.version_id = src_text.version_id
+             JOIN legal_unit_versions v      ON v.id = t.version_id
+             JOIN legal_units u              ON u.id = v.legal_unit_id
+             LEFT JOIN chunks c              ON c.unit_text_id = t.id AND c.seq = src.seq
+             WHERE src.id = ($1::text)::uuid
+             ORDER BY (t.id = src_text.id) DESC,
+                      (t.authenticity = 'authentic') DESC,
+                      t.lang",
+            &[&chunk_id],
+        )
+        .map_err(|e| format!("chunk renderings query failed: {e}"))?;
+
+    Ok(json!({
+        "chunk_id": chunk_id,
+        "renderings": rows.iter().map(|r| json!({
+            "unit_text_id": r.get::<_, String>("unit_text_id"),
+            "lang": r.get::<_, String>("lang"),
+            "authenticity": r.get::<_, String>("authenticity"),
+            "mt_engine": r.get::<_, Option<String>>("mt_engine"),
+            "source_lang": r.get::<_, Option<String>>("source_lang"),
+            "chunk_id": r.get::<_, Option<String>>("chunk_id"),
+            "seq": r.get::<_, Option<i32>>("seq"),
+            "content": r.get::<_, String>("content"),
+            // false = no chunk with this seq in that language: full text shown
+            "aligned": r.get::<_, bool>("aligned"),
+            "is_cited": r.get::<_, bool>("is_cited"),
+            "citation": r.get::<_, Option<String>>("citation"),
+            "validity": r.get::<_, Option<String>>("validity"),
+        })).collect::<Vec<_>>(),
+    }))
+}
+
 /// Replace the database name in a Postgres URL, preserving any `?options`.
 fn swap_database(db_url: &str, dbname: &str) -> String {
     let (base, query) = match db_url.split_once('?') {

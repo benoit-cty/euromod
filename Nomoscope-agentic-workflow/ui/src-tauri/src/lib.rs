@@ -32,6 +32,9 @@ struct DecisionPayload {
     reviewer: String,
     note: Option<String>,
     edited_value: Option<Value>,
+    /// Patch of the other reviewer-editable proposal fields (validity dates,
+    /// legal/source status, references). `None` = leave them as proposed.
+    edited_fields: Option<Value>,
 }
 
 #[derive(Deserialize)]
@@ -43,6 +46,12 @@ struct DecisionsPayload {
 #[derive(Deserialize)]
 struct DbPayload {
     db_url: String,
+}
+
+#[derive(Deserialize)]
+struct ChunkPayload {
+    db_url: String,
+    chunk_id: String,
 }
 
 #[derive(Deserialize)]
@@ -89,11 +98,15 @@ fn get_env_config() -> Result<Value, String> {
         .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
     let phoenix_endpoint = std::env::var("PHOENIX_COLLECTOR_ENDPOINT")
         .unwrap_or_else(|_| "http://localhost:6006".to_string());
+    // same default as the pipeline's config.py, so trace deep-links resolve
+    let phoenix_project = std::env::var("PHOENIX_PROJECT_NAME")
+        .unwrap_or_else(|_| "nomoscope-agentic-workflow".to_string());
     Ok(json!({
         "data_dir": default_data_dir().map(|p| p.display().to_string()),
         "reviewer": reviewer,
         "db_url": db_url,
         "phoenix_endpoint": phoenix_endpoint.trim_end_matches('/'),
+        "phoenix_project": phoenix_project,
     }))
 }
 
@@ -111,6 +124,7 @@ fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
         &payload.reviewer,
         payload.note.as_deref(),
         payload.edited_value.as_ref(),
+        payload.edited_fields.as_ref(),
     )
 }
 
@@ -178,6 +192,15 @@ async fn params_list(payload: DbPayload) -> Result<Value, String> {
     tauri::async_runtime::spawn_blocking(move || db::params_list(&payload.db_url))
         .await
         .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn chunk_renderings(payload: ChunkPayload) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        db::chunk_renderings(&payload.db_url, &payload.chunk_id)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -254,6 +277,7 @@ pub fn run() {
             run_ingest,
             stop_ingest,
             params_list,
+            chunk_renderings,
             phoenix_projects,
             run_workflow,
             stop_workflow,

@@ -9,7 +9,15 @@
   import ParamsTab from './lib/components/ParamsTab.svelte';
   import ImpactTab from './lib/components/ImpactTab.svelte';
 
-  let config = $state({ data_dir: null, reviewer: 'reviewer', db_url: '', phoenix_endpoint: '' });
+  let config = $state({
+    data_dir: null,
+    reviewer: 'reviewer',
+    db_url: '',
+    phoenix_endpoint: '',
+    phoenix_project: '',
+  });
+  // GraphQL gid of the workflow's Phoenix project, for trace deep-links
+  let phoenixGid = $state('');
   let items = $state([]);
   let facets = $state(null);
   let selectedId = $state(null);
@@ -41,6 +49,14 @@
     } catch (e) {
       error = String(e);
     }
+    try {
+      const res = await api.phoenixProjects(config.db_url);
+      const project =
+        res.projects.find((p) => p.name === config.phoenix_project) ?? res.projects[0];
+      phoenixGid = project?.gid ?? '';
+    } catch {
+      phoenixGid = ''; // Phoenix links degrade to the projects page
+    }
   }
 
   async function refresh() {
@@ -54,7 +70,9 @@
     }
   }
 
-  async function decide(action, note, editedValue) {
+  // editedFields patches the non-value parts of the proposal (validity dates,
+  // legal/source status, references); both are null on a plain accept.
+  async function decide(action, note, editedValue, editedFields) {
     try {
       const updated = await api.saveDecision({
         data_dir: config.data_dir,
@@ -62,7 +80,8 @@
         action,
         reviewer: config.reviewer,
         note: note || null,
-        edited_value: editedValue ?? null,
+        edited_value: editedValue === undefined ? null : editedValue,
+        edited_fields: editedFields ?? null,
       });
       items = items.map((i) => (i.id === updated.id ? updated : i));
       statusMsg = `${updated.id}: ${action}`;
@@ -139,7 +158,13 @@
   {#if visited.review}
     <main hidden={tab !== 'review'}>
       <QueueList {items} {facets} {selectedId} onselect={(id) => (selectedId = id)} />
-      <DetailPanel item={selected} ondecide={decide} />
+      <DetailPanel
+        item={selected}
+        ondecide={decide}
+        dbUrl={config.db_url}
+        phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
+        {phoenixGid}
+      />
     </main>
   {/if}
   {#if visited.params}

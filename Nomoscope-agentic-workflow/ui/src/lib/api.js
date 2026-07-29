@@ -13,6 +13,10 @@ export const api = {
   pickDataDir: () => invoke('pick_data_dir'),
   dbStats: (dbUrl) => invoke('db_stats', { payload: { db_url: dbUrl } }),
   searchArticles: (payload) => invoke('search_articles', { payload }),
+  // Every language rendering (authentic / official / machine translation) of the
+  // legal-unit version a cited chunk belongs to.
+  chunkRenderings: (dbUrl, chunkId) =>
+    invoke('chunk_renderings', { payload: { db_url: dbUrl, chunk_id: chunkId } }),
   evalRuns: (dbUrl) => invoke('eval_runs', { payload: { db_url: dbUrl } }),
   evalRunDetail: (dbUrl, runPk) =>
     invoke('eval_run_detail', { payload: { db_url: dbUrl, run_pk: runPk } }),

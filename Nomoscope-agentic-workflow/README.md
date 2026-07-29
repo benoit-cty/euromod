@@ -118,12 +118,27 @@ schema can evolve pipeline-side without lockstep releases.
 - **Record detail** — side-by-side current vs proposed (bracket-level diff
   highlighting), critique checklist, verbatim quote, **citation viewer** with
   the supporting extract highlighted inside the retrieved legal text, full
-  provenance (run, model, prompt version, confidence).
-- **Decisions** — Accept / Edit (accept with modified value) / Reject /
-  Escalate to national team. The **Accept button enforces the
-  acceptance-gated tier** (doc 08 §4): `legal_status` + at least one reference
-  with a `supporting_extract` (or national-team source). Every decision is
-  appended to `decisions.jsonl` and mirrored into the record's `lineage`.
+  provenance (run, model, prompt version, confidence) and a deep link to the
+  run's Phoenix trace.
+- **Language switcher on the cited text** — each retrieved hit lists the
+  language renderings the DB actually holds for that legal-unit version
+  (authentic originals, official translations, BGE-M3-pipeline machine
+  translations with their engine), resolved on demand from `unit_texts` and
+  matched to the sibling chunk on `seq` (falling back to the full version text
+  when a translation chunks differently). The verbatim highlight stays on the
+  cited rendering only — a translated text is reading aid, not evidence.
+- **Decisions** — the proposal is **always shown as an editable form** (validity
+  dates, legal/source status, value, and each reference with its chunk id and
+  supporting extract), so the reviewer sees field by field what they are signing
+  off on. Accept / Reject / Escalate to national team, plus Revert edits;
+  accepting a modified proposal is recorded as `edited`. Items stay editable
+  **after** a decision — re-deciding overwrites the item and appends a new audit
+  entry. The **Accept button enforces the acceptance-gated tier** (doc 08 §4) on
+  the edited form: `valid_from` + `legal_status` + at least one reference with a
+  `supporting_extract` (or national-team source), so filling a gap in the form
+  unblocks Accept. Hand-editing an extract drops its verified `extract_offsets`.
+  Every decision is appended to `decisions.jsonl` and mirrored into the record's
+  `lineage`.
 - **Audit log** — the decision log rendered as a table.
 - **Database** — corpus statistics (totals, per-jurisdiction, embedding
   coverage) and point-in-time article search straight against the legislation

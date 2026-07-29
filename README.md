@@ -22,6 +22,23 @@ reads and reasons over fiscal legislation.
 - **Nomoscope** — _nómos_ + _-scope_ (_skopein_, "to examine/observe"): **the law examiner**, i.e. the agentic workflow that inspects legislation and proposes parameter updates.
 - **Nomokrisis** — _nómos_ + _krisis_ (κρίσις, "judgment/decision", root of _critic_): **the judgment of the law**, i.e. the evaluation pipeline that scores the proposals.
 
+## Quick start
+
+Launch the server side:
+```sh
+git clone XXXX
+cd XXXX
+docker compose up
+```
+
+Launch the UI in another terminal:
+```sh
+cd Nomoscope-agentic-workflow/ui
+npm install
+npm run tauri dev
+LIBGL_ALWAYS_SOFTWARE=1 npm run tauri dev
+```
+
 ## Agentic workflow (Activity 3)
 
 Working prototype in [Nomoscope-agentic-workflow/](Nomoscope-agentic-workflow/): PydanticAI-based pipeline
