@@ -185,14 +185,41 @@ def test_income_year_date_issues():
     assert _income_year_date_issues(date(2025, 1, 1), date(2026, 2, 21), 2025) == ([], False)
     # LF 2025 slipped to February 2025 (censure): still inside the 2024 window
     assert _income_year_date_issues(date(2024, 1, 1), date(2025, 2, 15), 2024) == ([], False)
-    # valid_from not back-dated into the income year — a proposal defect, not provisional
-    issues, provisional = _income_year_date_issues(date(2026, 2, 21), date(2026, 2, 21), 2025)
-    assert any("back-dated" in i for i in issues) and not provisional
+    # valid_from not back-dated to the income-year start — a proposal defect, not provisional
+    for wrong in (date(2026, 2, 21), date(2025, 2, 16)):
+        issues, provisional = _income_year_date_issues(wrong, date(2026, 2, 21), 2025)
+        assert any("2025-01-01" in i for i in issues) and not provisional
     # stale corpus: version from LF 2025 (2024-income barème) cited for income year 2025
     issues, provisional = _income_year_date_issues(date(2025, 1, 1), date(2025, 2, 15), 2025)
     assert any("provisional" in i for i in issues) and provisional
+    # CDHR exemption: enacted Feb 2025 FOR 2025 income — the cited text names the
+    # income year, which proves the vintage despite predating the December window
+    cdhr = "Le I s'applique à compter de l'imposition des revenus de l'année 2025."
+    assert _income_year_date_issues(date(2025, 1, 1), date(2025, 2, 15), 2025, cdhr) == ([], False)
+    # ...but a text naming some OTHER year does not exempt
+    issues, provisional = _income_year_date_issues(
+        date(2025, 1, 1), date(2025, 2, 15), 2025, "revenus de l'année 2024"
+    )
+    assert provisional
     # no cited version validity -> only the back-dating check applies
     assert _income_year_date_issues(date(2025, 1, 1), None, 2025) == ([], False)
+
+
+def test_cross_article_year_proof():
+    from nomoscope_workflow.pipeline import _cross_article_year_proof
+
+    # LF 2025 art. 10 ties CGI art. 224 to income year 2025 by cross-reference
+    lf_text = (
+        "III. - A. - 1. La contribution mentionnée au I de l'article 224 du code général "
+        "des impôts due au titre de l'imposition des revenus de l'année 2025 donne lieu "
+        "au versement d'un acompte entre le 1er décembre et le 15 décembre 2025."
+    )
+    assert _cross_article_year_proof("CGI, art. 224", lf_text, 2025)
+    assert not _cross_article_year_proof("CGI, art. 224", lf_text, 2026)
+    # a mention of a DIFFERENT article near the year is not proof
+    assert not _cross_article_year_proof("CGI, art. 197", lf_text, 2025)
+    assert not _cross_article_year_proof(None, lf_text, 2025)
+    assert not _cross_article_year_proof("no article here", lf_text, 2025)
 
 
 def test_year_anchor_and_cli_mapping():

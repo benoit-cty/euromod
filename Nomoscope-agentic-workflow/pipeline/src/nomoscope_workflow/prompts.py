@@ -7,7 +7,7 @@ from datetime import date
 
 from .schema import ParameterRecord, ProposalDraft, RetrievalHit
 
-PROMPT_VERSION = "0.3.0"
+PROMPT_VERSION = "0.3.3"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -55,7 +55,13 @@ each producing one boolean (true = the check passes):
    and the reference date. When the parameter block declares "Temporal basis: INCOME YEAR",
    valid_from must instead be 1 January of the reference (income) year, and a version entering
    into force AFTER the income year is correct, not an inconsistency — but a version consolidated
-   before December of the income year likely states the PREVIOUS year's value: fail the check.
+   before December of the income year likely states the PREVIOUS year's value: fail the check,
+   UNLESS the income year is established by the extracts taken together: an applicability
+   clause ("à compter de l'imposition des revenus de l'année N") in another extract of the
+   same article, or a cross-reference in another retrieved extract that ties the cited article
+   to the income year (e.g. "la contribution mentionnée au I de l'article 224 … due au titre
+   de l'imposition des revenus de l'année N") each prove the vintage regardless of enactment
+   date — never require the value and the year to appear in a single extract.
 3. values_sane — units plausible (rates in [0,1] for unit "/1"), bracket thresholds strictly
    ascending, no absurd magnitude versus the current value.
 
@@ -102,7 +108,14 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
             f"income. valid_from must be {year}-01-01. Prefer the version enacted for income year "
             f"{year}; a version in force since early {year} or before almost certainly states the "
             f"schedule for {year - 1} income — if only that is available, the act for {year} income "
-            f"is not yet in the corpus."
+            f"is not yet in the corpus. When several extracts state the same value, CITE one from "
+            f"the article whose text names income year {year} (typically the finance-act article: "
+            f"its applicability clause, e.g. \"à compter de l'imposition des revenus de l'année "
+            f"{year}\", may sit in a DIFFERENT extract than the value — that is fine: cite the "
+            f"value-stating extract of that article) rather than a consolidated code article that "
+            f"names no year. Do NOT require a single extract to contain both the value and the "
+            f"year: one extract stating the value plus another extract of the same act naming "
+            f"income year {year} is sufficient evidence to propose the value."
         )
     return (
         f"Parameter: {info.model_target} (country {info.country})\n"
@@ -137,13 +150,26 @@ def build_proposal_user(
 
 
 def build_critique_user(
-    record: ParameterRecord, as_of: date, draft: ProposalDraft, hits: list[RetrievalHit]
+    record: ParameterRecord,
+    as_of: date,
+    draft: ProposalDraft,
+    hits: list[RetrievalHit],
+    mechanical_notes: list[str] | None = None,
 ) -> str:
-    """User message for the critique step."""
-    return (
+    """User message for the critique step; mechanical_notes carry facts the
+    deterministic checks already established (e.g. income-year vintage proven
+    by a cross-reference) so the critique does not re-litigate them."""
+    message = (
         _parameter_block(record, as_of)
         + "\n\nProposal to review:\n"
         + json.dumps(draft.model_dump(mode="json"), ensure_ascii=False, indent=2)
         + "\n\nLegal extracts the proposal was based on:\n\n"
         + _hits_block(hits)
     )
+    if mechanical_notes:
+        message += (
+            "\n\nEstablished by the deterministic pre-checks (treat as verified facts, "
+            "do not fail a check for lack of what they already establish):\n"
+            + "\n".join(f"- {note}" for note in mechanical_notes)
+        )
+    return message

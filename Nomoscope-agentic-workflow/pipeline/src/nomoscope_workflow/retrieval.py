@@ -298,6 +298,31 @@ def cr_enrichment_terms(
     return terms
 
 
+def unit_chunks(conn: psycopg.Connection, chunk_id: str) -> list[RetrievalHit]:
+    """ALL chunks of the unit text a chunk belongs to, in document order.
+
+    Long articles are split into several chunks and retrieval may surface only
+    one of them; income-year date checks (and the proposal retry) need the
+    whole article — e.g. LF 2025 art. 10 states the CDHR mechanism in chunk 1
+    and its "revenus de l'année 2025" applicability clause in chunk 2.
+    """
+    rows = conn.execute(
+        """
+        SELECT c2.id::text AS chunk_id, u.citation, c2.context_header, c2.content,
+               t.lang, v.validity::text AS validity, v.version_status
+        FROM chunks c1
+        JOIN unit_texts t ON t.id = c1.unit_text_id
+        JOIN legal_unit_versions v ON v.id = t.version_id
+        JOIN legal_units u ON u.id = v.legal_unit_id
+        JOIN chunks c2 ON c2.unit_text_id = t.id
+        WHERE c1.id = %(chunk_id)s::uuid
+        ORDER BY c2.seq
+        """,
+        {"chunk_id": chunk_id},
+    ).fetchall()
+    return [RetrievalHit(method="sibling", **row) for row in rows]
+
+
 def sibling_text(conn: psycopg.Connection, chunk_id: str, lang: str) -> str | None:
     """Content of the same version's chunk (same seq) in another language, if ingested."""
     row = conn.execute(

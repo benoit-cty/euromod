@@ -120,7 +120,10 @@ def _retrieval_as_of(record: ParameterRecord, as_of: date) -> date:
 
 
 def _income_year_date_issues(
-    valid_from: date | None, version_start: date | None, income_year: int
+    valid_from: date | None,
+    version_start: date | None,
+    income_year: int,
+    cited_text: str = "",
 ) -> tuple[list[str], bool]:
     """Mechanical date checks for income_year parameters.
 
@@ -131,22 +134,31 @@ def _income_year_date_issues(
     version almost certainly states the previous year's value: the act for Y
     is not in the corpus (yet), which routes the item to PROVISIONAL rather
     than plain critique failure.
+
+    Exemption: a cited text that NAMES the income year ("à compter de
+    l'imposition des revenus de l'année 2025") proves its own vintage, however
+    early it was enacted — the CDHR was instituted by LF 2025 (Feb 2025) FOR
+    2025 income. Consolidated code articles drop such clauses (CGI art. 224
+    never says 2025), so the year-naming extract is the finance-act article;
+    the propose prompt nudges the model towards it.
     """
     issues: list[str] = []
     provisional = False
-    if valid_from is None or valid_from.year != income_year:
+    if valid_from != date(income_year, 1, 1):
         issues.append(
-            f"income-year parameter: valid_from must be back-dated into income year "
-            f"{income_year}, got {valid_from.isoformat() if valid_from else 'none'}"
+            f"income-year parameter: valid_from must be exactly {income_year}-01-01 "
+            f"(the income-year start, NOT the act's publication or in-force date), got "
+            f"{valid_from.isoformat() if valid_from else 'none'}"
         )
     window = date(income_year, 12, 1)
-    if version_start is not None and version_start < window:
+    names_year = re.search(rf"\b{income_year}\b", cited_text) is not None
+    if version_start is not None and version_start < window and not names_year:
         provisional = True
         issues.append(
             f"cited version in force since {version_start.isoformat()} predates the "
-            f"budget-act window for income year {income_year} — likely the previous "
-            f"year's value; the act for {income_year} income may not be in the corpus "
-            f"yet (treat as provisional)"
+            f"budget-act window for income year {income_year} and its text does not "
+            f"name {income_year} — likely the previous year's value; the act for "
+            f"{income_year} income may not be in the corpus yet (treat as provisional)"
         )
     return issues, provisional
 
@@ -163,6 +175,32 @@ def _unchanged_window(proposed: ParameterValue, current: ParameterValue) -> Para
     return proposed.model_copy(
         update={"valid_from": current.valid_from, "valid_to": current.valid_to}
     )
+
+
+_ARTICLE_NUM = re.compile(r"art(?:icle|\.)\s*([0-9]+(?:\s+[A-Za-z]+)*)", re.IGNORECASE)
+
+
+def _cross_article_year_proof(cited_citation: str | None, text: str, income_year: int) -> bool:
+    """True when `text` ties the CITED article to the income year.
+
+    Finance acts often state the applicability of a code article they created
+    in a cross-reference — LF 2025 art. 10: "La contribution mentionnée au I
+    de l'article 224 du code général des impôts due au titre de l'imposition
+    des revenus de l'année 2025…". A mention of the cited article number with
+    the income year nearby (±400 chars) proves the vintage of the cited
+    consolidated article, which itself names no year.
+    """
+    if not cited_citation:
+        return False
+    match = _ARTICLE_NUM.search(cited_citation)
+    if not match:
+        return False
+    number = match.group(1).strip()
+    for hit in re.finditer(rf"article\s+{re.escape(number)}\b", text, re.IGNORECASE):
+        window = text[max(0, hit.start() - 400) : hit.end() + 400]
+        if re.search(rf"\b{income_year}\b", window):
+            return True
+    return False
 
 
 def _current_value(record: ParameterRecord, as_of: date) -> ParameterValue | None:
@@ -301,6 +339,9 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
     def critique(state: WorkflowState) -> dict:
         record, as_of, draft, hits = state["record"], state["as_of"], state["draft"], state["hits"]
         info = record.information
+        extra_hits: list[RetrievalHit] = []
+        mech_notes: list[str] = []
+        income_year_dates_proven = False
         with step_span(tracer, "critique", input_value=draft) as span:
             report = CritiqueReport(schema_valid=draft is not None, critique_model=cfg.critique_model)
             if draft is None or not draft.found:
@@ -330,14 +371,92 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                     # for income year Y arrives in Y+1); the real checks are
                     # back-dating and the budget-act window.
                     cited = next((h for h in hits if h.chunk_id == draft.citation_chunk_id), None)
+                    # Vintage is proven at ARTICLE level: the value and the
+                    # applicability clause ("revenus de l'année 2025") usually
+                    # sit in different chunks of the same article — and the
+                    # clause's chunk may not even have been retrieved. Read the
+                    # cited article's FULL text from the corpus.
+                    article_text = cited.content if cited else ""
+                    if cited is not None:
+                        try:
+                            with retrieval.connect(cfg) as conn:
+                                siblings = retrieval.unit_chunks(conn, cited.chunk_id)
+                            article_text = " ".join(h.content for h in siblings) or article_text
+                        except Exception:
+                            siblings = []  # DB hiccup: fall back to the retrieved chunk
+                    version_start = retrieval.validity_start(cited.validity) if cited else None
                     date_issues, provisional = _income_year_date_issues(
-                        draft.valid_from,
-                        retrieval.validity_start(cited.validity) if cited else None,
-                        as_of.year,
+                        draft.valid_from, version_start, as_of.year, article_text
                     )
+                    if provisional:
+                        # Provisional means CORPUS GAP. If a different article's
+                        # extract names the income year, the corpus is fine —
+                        # the proposal just cited the wrong act (consolidated
+                        # article instead of the year-naming finance act):
+                        # ordinary critique failure, retriable with feedback.
+                        cited_citation = cited.citation if cited else None
+                        alt = next(
+                            (
+                                h
+                                for h in hits
+                                if h.citation != cited_citation
+                                and re.search(rf"\b{as_of.year}\b", h.content or "")
+                            ),
+                            None,
+                        )
+                        if alt is not None:
+                            provisional = False
+                            # Pull the WHOLE year-naming article: the proving
+                            # clause may sit in a chunk retrieval never
+                            # surfaced (LF 2025 art. 10: CDHR in chunk 1, its
+                            # 2025 clause in chunk 2).
+                            try:
+                                with retrieval.connect(cfg) as conn:
+                                    alt_siblings = retrieval.unit_chunks(conn, alt.chunk_id)
+                            except Exception:
+                                alt_siblings = [alt]
+                            known = {h.chunk_id for h in hits}
+                            extra_hits = [h for h in alt_siblings if h.chunk_id not in known]
+                            alt_text = " ".join(h.content for h in alt_siblings)
+                            if _cross_article_year_proof(cited_citation, alt_text, as_of.year):
+                                # The year-naming act explicitly references the
+                                # cited article for this income year: vintage
+                                # proven, whatever chunk the model cited.
+                                date_issues.pop()
+                                mech_notes.append(
+                                    f"applicability of the cited article to income year "
+                                    f"{as_of.year} is established by the cross-reference in "
+                                    f"({alt.citation}); its early in-force date is NOT an "
+                                    f"inconsistency"
+                                )
+                                report.issues.append(
+                                    f"note: applicability to income year {as_of.year} "
+                                    f"established by cross-reference in ({alt.citation})"
+                                )
+                            else:
+                                date_issues[-1] = (
+                                    f"the cited article never names income year {as_of.year}, "
+                                    f"but ({alt.citation}) does — cite the value from the "
+                                    f"article whose text names income year {as_of.year} (the "
+                                    f"value extract and the year clause may be different "
+                                    f"portions of that article)"
+                                )
                     report.dates_consistent = not date_issues
                     report.provisional = provisional
                     report.issues.extend(date_issues)
+                    # All mechanical income-year date checks passed: the
+                    # semantics are exactly what they encode, and LLM critics
+                    # routinely mis-handle retroactive acts — the mechanical
+                    # result is authoritative; LLM date doubts stay as issues.
+                    income_year_dates_proven = not date_issues
+                    if income_year_dates_proven and version_start is not None:
+                        mech_notes.append(
+                            f"the income-year vintage ({as_of.year}) of the cited article was "
+                            f"verified deterministically against the full corpus text; do not "
+                            f"fail dates_consistent for the in-force date "
+                            f"({version_start.isoformat()}) or for the year clause sitting in "
+                            f"another extract"
+                        )
                 else:
                     report.dates_consistent = draft.valid_from is not None and (
                         draft.legal_status != "enacted_in_force" or draft.valid_from <= as_of
@@ -351,14 +470,24 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 if not report.values_sane:
                     report.issues.append("values fail sanity checks (unit range or bracket order)")
 
+                # The LLM critique must see the sibling chunks too — the
+                # applicability clause they carry is exactly what it needs to
+                # judge dates_consistent.
+                if extra_hits:
+                    hits = [*hits, *extra_hits]
+
                 findings = (
                     mock.critique_with_mock(draft)
                     if is_mock
-                    else llm.critique_with_llm(cfg.critique_model, record, as_of, draft, hits)
+                    else llm.critique_with_llm(
+                        cfg.critique_model, record, as_of, draft, hits, mech_notes or None
+                    )
                 )
                 report.issues.extend(findings.issues)
                 report.citation_verified = report.citation_verified and findings.citation_supports_value
-                report.dates_consistent = report.dates_consistent and findings.dates_consistent
+                report.dates_consistent = report.dates_consistent and (
+                    findings.dates_consistent or income_year_dates_proven
+                )
                 report.values_sane = report.values_sane and findings.values_sane
 
                 if (
@@ -369,6 +498,10 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 ):
                     report.verdict = "pass"
             set_output(span, report)
+        if extra_hits:
+            # Sibling chunks of the year-naming article, so the proposal retry
+            # (and the reviewer's source view) can see the applicability clause.
+            return {"critique": report, "hits": hits}
         return {"critique": report}
 
     def diff(state: WorkflowState) -> dict:

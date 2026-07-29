@@ -261,10 +261,13 @@
 
     {#if item.routing === 'provisional'}
       <p class="provisional-note">
-        The act setting this income-year parameter for system year
-        {item.system_year ?? item.as_of?.slice(0, 4)} is not (fully) in the corpus:
-        the value shown is likely the <strong>previous year's</strong>. Nothing to
-        accept yet — ingest/embed the missing finance act and re-run.
+        The cited text cannot be tied to system year
+        {item.system_year ?? item.as_of?.slice(0, 4)}: it predates the budget-act
+        window and does not name the year, so the value shown is likely the
+        <strong>previous year's</strong>. Nothing to accept yet — either the finance
+        act for this year is missing from the corpus (ingest/embed it), or the
+        proposal cited a consolidated article instead of the act's own
+        year-naming clause; re-run after fixing.
       </p>
     {/if}
 

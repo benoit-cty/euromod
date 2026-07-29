@@ -108,7 +108,9 @@ class RetrievalHit(BaseModel):
     chunk_id: str
     citation: str | None = None
     context_header: str | None = None
-    method: Literal["citation", "fts", "vector", "hybrid", "country_report"] = "hybrid"
+    # "sibling": not retrieved by search — another chunk of an already-retrieved
+    # article, pulled in so the whole article is visible (income-year checks).
+    method: Literal["citation", "fts", "vector", "hybrid", "country_report", "sibling"] = "hybrid"
     score: float | None = None
     validity: str | None = None
     version_status: str | None = None

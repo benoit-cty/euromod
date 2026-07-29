@@ -91,8 +91,14 @@ re-ingests) get three behaviours:
 - **critique** replaces the in-force date check with two mechanical ones:
   `valid_from` must fall inside the income year, and the cited version must have
   entered into force on/after 1 December of the income year (the budget-act
-  window — LF 2025 slipped to Feb 2025 and still passes). A version older than
-  that means *likely the previous year's value / act not yet in the corpus*:
+  window — LF 2025 slipped to Feb 2025 and still passes), **unless the cited
+  text itself names the income year**: an applicability clause ("à compter de
+  l'imposition des revenus de l'année 2025") proves its own vintage however
+  early it was enacted — the CDHR was instituted by LF 2025 (Feb 2025) *for*
+  2025 income, and consolidated code articles drop such clauses, so the
+  propose prompt steers citations toward the year-naming finance-act article.
+  A version older than the window with no year named means *likely the
+  previous year's value / act not yet in the corpus*:
   the item routes to **`provisional`** (a normal state of the world, distinct
   from `not_found`), the scout gap-fill gets a chance to ingest the missing
   act, no LLM retry is spent (it is a corpus state, not a proposal defect),

@@ -99,12 +99,17 @@ def propose_with_llm(
 
 @retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(3), reraise=True)
 def critique_with_llm(
-    model: str, record: ParameterRecord, as_of: date, draft: ProposalDraft, hits: list[RetrievalHit]
+    model: str,
+    record: ParameterRecord,
+    as_of: date,
+    draft: ProposalDraft,
+    hits: list[RetrievalHit],
+    mechanical_notes: list[str] | None = None,
 ) -> CritiqueFindings:
     """LLM critique pass (complements the mechanical checks in pipeline.py)."""
     return run_agent(
         model,
         prompts.CRITIQUE_SYSTEM,
-        prompts.build_critique_user(record, as_of, draft, hits),
+        prompts.build_critique_user(record, as_of, draft, hits, mechanical_notes),
         output_type=CritiqueFindings,
     )
