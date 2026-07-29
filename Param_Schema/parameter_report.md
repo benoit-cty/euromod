@@ -9,8 +9,6 @@ format:
 
 # EUROMOD-Assisted Parameter Update Format
 
-*Draft for discussion with the EUROMOD team.*
-
 This document is a report for the EXPERT CONTRACT - CT-EX2026D1438052-101 for Deliverable 1: It provide expertise for the extraction of Policy Parameters for the Fiscal Models. The document specify the format of the policy parameters of the respective models.
 
 ## Introduction
