@@ -344,7 +344,7 @@
     <table>
       <thead>
         <tr>
-          <th><input type="checkbox" checked={allFilteredSelected} onchange={toggleAll} title="select all filtered" /></th>
+          <th class="pick"><input class="bigcheck" type="checkbox" checked={allFilteredSelected} onchange={toggleAll} title="select all filtered" /></th>
           <th>CC</th>
           <th>Parameter</th>
           <th>Policy</th>
@@ -360,8 +360,9 @@
             class:expandedrow={expanded === p.model_target}
             onclick={() => (expanded = expanded === p.model_target ? null : p.model_target)}
           >
-            <td onclick={(e) => e.stopPropagation()}>
+            <td class="pick" onclick={(e) => e.stopPropagation()}>
               <input
+                class="bigcheck"
                 type="checkbox"
                 checked={!!selected[p.model_target]}
                 onchange={() => toggle(p.model_target)}
@@ -499,6 +500,15 @@
     z-index: 1;
   }
   tbody td { padding: 0.35rem 0.6rem; border-top: 1px solid var(--border); vertical-align: top; }
+  /* wide, easy-to-hit selection column */
+  th.pick, td.pick { width: 2.6rem; text-align: center; padding-left: 0.3rem; padding-right: 0.3rem; }
+  input.bigcheck {
+    width: 1.6rem;
+    height: 1.6rem;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
   tbody tr { cursor: pointer; }
   tbody tr.detail, tbody tr.detail td { cursor: default; }
   tr.expandedrow td { border-bottom: none; }
