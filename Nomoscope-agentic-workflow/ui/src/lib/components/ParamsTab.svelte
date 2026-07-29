@@ -33,7 +33,13 @@
   let expanded = $state(null);
 
   // --- run form ---
-  let asOf = $state(new Date().toISOString().slice(0, 10));
+  // One run verifies ONE EUROMOD system year, and only the years the export
+  // actually defines (FR J2.19: 2006-2025). Never default to today's date: a
+  // run anchored on a year EUROMOD has no system for compares the proposal
+  // against the newest value on file, so every parameter comes back `changed`
+  // on no evidence. Null until the params list loads and supplies the years.
+  let systemYears = $state({}); // country -> [year, …] ascending
+  let systemYear = $state(null);
   let model = $state('');
   let force = $state(false);
 
@@ -142,12 +148,37 @@
     filtered.length > 0 && filtered.every((p) => selected[p.model_target])
   );
 
+  // Years offered = those defined for every country in the run. Selecting
+  // across countries intersects them, so the run can never be anchored on a
+  // year one of those countries has no system for.
+  const runCountries = $derived.by(() => {
+    const byTarget = new Map(params.map((p) => [p.model_target, p.country]));
+    const picked = selectedTargets.map((t) => byTarget.get(t)).filter(Boolean);
+    return [...new Set(picked.length ? picked : filtered.map((p) => p.country))];
+  });
+
+  const availableYears = $derived.by(() => {
+    const lists = runCountries.map((c) => systemYears[c]).filter(Boolean);
+    if (!lists.length) return [];
+    const common = lists.reduce((acc, years) => acc.filter((y) => years.includes(y)));
+    return [...common].sort((a, b) => b - a); // newest first
+  });
+
+  // Keep the choice valid as the selection changes: fall back to the newest
+  // year the current countries share rather than silently keeping a stale one.
+  $effect(() => {
+    if (availableYears.length && !availableYears.includes(systemYear)) {
+      systemYear = availableYears[0];
+    }
+  });
+
   async function refresh() {
     if (!dbUrl) return;
     loading = true;
     try {
       const res = await api.paramsList(dbUrl);
       params = res.parameters;
+      systemYears = res.system_years ?? {};
       error = '';
     } catch (e) {
       error = String(e);
@@ -230,8 +261,8 @@
 
   async function runSelected() {
     const targets = selectedTargets;
-    if (!targets.length || running) return;
-    const args = ['run-targets', ...targets, '--as-of', asOf];
+    if (!targets.length || running || !systemYear) return;
+    const args = ['run-targets', ...targets, '--year', String(systemYear)];
     if (model.trim()) args.push('--model', model.trim());
     if (force) args.push('--force');
     runId = crypto.randomUUID();
@@ -320,8 +351,12 @@
     </span>
     <div class="spacer"></div>
     <label>
-      As of
-      <input type="date" bind:value={asOf} />
+      System year
+      <select bind:value={systemYear} disabled={!availableYears.length}>
+        {#each availableYears as year}
+          <option value={year}>{year}</option>
+        {/each}
+      </select>
     </label>
     <label>
       Model
@@ -331,7 +366,7 @@
       <input type="checkbox" bind:checked={force} />
       Force (overwrite reviewed)
     </label>
-    <button class="primary" onclick={runSelected} disabled={running || !selectedTargets.length}>
+    <button class="primary" onclick={runSelected} disabled={running || !selectedTargets.length || !systemYear}>
       {running ? `Running… ${fmtDur(now - startedAt)}` : `Run agentic update (${selectedTargets.length})`}
     </button>
     <button onclick={stop} disabled={!running}>Stop</button>

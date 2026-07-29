@@ -6,6 +6,7 @@
   uv run nomoscope-workflow export
   uv run nomoscope-workflow init-param-db
   uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
+  uv run nomoscope-workflow curate-params curation/FR.curation.yaml
 """
 
 from __future__ import annotations
@@ -47,8 +48,8 @@ def _anchor_date(year: int | None, as_of: str | None) -> date:
     return parsed
 
 
-def _readiness_banner(cfg, files: list[Path], anchor: date) -> None:
-    """Per-country corpus readiness for the system year, printed once, up front."""
+def _countries_in(files: list[Path]) -> tuple[dict[str, int], dict[str, int]]:
+    """Parameter counts per country, and how many of them are income-year."""
     totals: dict[str, int] = {}
     income_year: dict[str, int] = {}
     for path in files:
@@ -62,6 +63,38 @@ def _readiness_banner(cfg, files: list[Path], anchor: date) -> None:
         totals[country] = totals.get(country, 0) + 1
         if info.get("temporal_basis") == "income_year":
             income_year[country] = income_year.get(country, 0) + 1
+    return totals, income_year
+
+
+def _assert_system_year(cfg, files: list[Path], anchor: date) -> None:
+    """Refuse a system year EUROMOD does not define for the country.
+
+    Anchoring on today's date is the easy mistake (the UI used to default to it)
+    and it is not harmless: no system exists for the year, so the run compares
+    the proposal against the newest value on file and routes every parameter
+    `changed` — a confident-looking queue item for a system nobody can accept.
+    """
+    totals, _ = _countries_in(files)
+    try:
+        with paramdb.connect(cfg) as conn:
+            bounds = {c: paramdb.system_year_bounds(conn, c) for c in sorted(totals)}
+    except Exception:
+        return  # DB unreachable: the run itself will fail with a clearer error
+    for country, span in bounds.items():
+        if span is None:
+            continue
+        first, last = span
+        if not first <= anchor.year <= last:
+            typer.echo(
+                f"{country} has no EUROMOD system year {anchor.year} "
+                f"(the export defines {first}-{last}); did you mean --year {last}?"
+            )
+            raise typer.Exit(2)
+
+
+def _readiness_banner(cfg, files: list[Path], anchor: date) -> None:
+    """Per-country corpus readiness for the system year, printed once, up front."""
+    totals, income_year = _countries_in(files)
     for country in sorted(totals):
         try:
             with retrieval.connect(cfg) as conn:
@@ -93,6 +126,7 @@ def run(
         cfg.critique_model = model
     tracer = setup_tracing(cfg)
     reference_date = _anchor_date(year, as_of)
+    _assert_system_year(cfg, parameter_files, reference_date)
     _readiness_banner(cfg, parameter_files, reference_date)
     for i, path in enumerate(parameter_files, 1):
         typer.echo(f"[{i}/{len(parameter_files)}] {path.name}")
@@ -208,6 +242,27 @@ def ingest_params(
                 f"{path.name}: {stats['parameters']} parameters, "
                 f"{stats['model_values']} model values, {stats['usage_edges']} usage edges"
             )
+
+
+@app.command("curate-params")
+def curate_params(
+    files: list[Path] = typer.Argument(..., help="Curation overlay(s), e.g. curation/FR.curation.yaml"),
+) -> None:
+    """Apply curated fields (temporal_basis) the EUROMOD export does not carry.
+
+    Run after ingest-params. Idempotent — re-run it whenever a new export lands.
+    """
+    cfg = load_config()
+    exit_code = 0
+    with paramdb.connect(cfg) as conn:
+        paramdb.apply_schema(conn)
+        for path in files:
+            stats = paramdb.apply_curation(conn, path)
+            typer.echo(f"{path.name}: {stats['updated']} updated, {stats['unchanged']} already set")
+            for target in stats["missing"]:
+                typer.echo(f"  ! not in params DB: {target}")
+                exit_code = 1
+    raise typer.Exit(exit_code)
 
 
 @app.command("ingest-openfisca")

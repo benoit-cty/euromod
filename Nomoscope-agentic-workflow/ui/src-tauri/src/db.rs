@@ -286,7 +286,31 @@ pub fn params_list(db_url: &str) -> Result<Value, String> {
             format!("params query failed (has `nomoscope-workflow ingest-params` been run?): {e}")
         })?;
 
+    // The EUROMOD system years each country actually defines. The run form must
+    // offer these and nothing else: anchoring a run on today's date verifies a
+    // system that does not exist, and every parameter then comes back `changed`
+    // against the newest value on file rather than against real evidence.
+    let year_rows = client
+        .query(
+            "SELECT p.country,
+                    array_agg(DISTINCT v.system_year ORDER BY v.system_year) AS years
+             FROM params.model_values v
+             JOIN params.parameters p ON p.id = v.parameter_id
+             WHERE v.system_year IS NOT NULL
+             GROUP BY p.country",
+            &[],
+        )
+        .map_err(|e| format!("system-year query failed: {e}"))?;
+    let mut system_years = serde_json::Map::new();
+    for r in &year_rows {
+        system_years.insert(
+            r.get::<_, String>("country"),
+            json!(r.get::<_, Vec<i32>>("years")),
+        );
+    }
+
     Ok(json!({
+        "system_years": system_years,
         "parameters": rows.iter().map(|r| json!({
             "country": r.get::<_, String>("country"),
             "model_target": r.get::<_, String>("model_target"),

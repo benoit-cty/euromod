@@ -55,7 +55,9 @@ CREATE TABLE IF NOT EXISTS params.parameters (
     -- so a hand-set value survives re-ingest). 'income_year' = system year is
     -- the income year and the enacting finance act is published the following
     -- year (FR income tax family); retrieval and critique shift accordingly.
-    -- Set via: UPDATE params.parameters SET temporal_basis='income_year' WHERE model_target='…';
+    -- Set from the versioned overlay, NOT by hand (a hand-run UPDATE is lost on
+    -- `docker compose down -v` and invisible to review):
+    --   uv run nomoscope-workflow curate-params curation/<CC>.curation.yaml
     temporal_basis          text NOT NULL DEFAULT 'in_force'
                             CHECK (temporal_basis IN ('in_force', 'income_year')),
     source_file             text NOT NULL,             -- provenance of the ingest

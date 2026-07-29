@@ -61,7 +61,7 @@ by an explicit control flow
 |---|---|---|---|
 | **derived check** | code | current value / raw EUROMOD string scanned for `$parameter` references (`$PSS * 4`) | referenced → routing `derived`, no retrieval/LLM spent: legislation never states formula values, only their anchor parameter |
 | **frame** | code | Activity 1 record → search query + known citations | no labels → falls back to model_target |
-| **retrieve** | SQL | citation fast path (pg_trgm, similarity > 0.55) then hybrid FTS ∥ vector merged by RRF k=60 (vector top-3 guaranteed into the result: ts_rank_cd has no IDF, so common fiscal terms would otherwise crowd out the semantically-best chunk), all pre-filtered by `validity @> as_of`, jurisdiction, lang. FTS ORs the query terms; vector = BGE-M3 via the ingest package's query encoder (`WORKFLOW_EMBEDDING_MODEL_ID=1`), FTS-only fallback when unavailable | no hits → skip straight to diff, routing `not_found` |
+| **retrieve** | SQL | citation fast path (pg_trgm, similarity > 0.55) then hybrid FTS ∥ vector merged by RRF k=60 (vector top-3 guaranteed into the result: ts_rank_cd has no IDF, so common fiscal terms would otherwise crowd out the semantically-best chunk), all pre-filtered by `validity @> as_of`, jurisdiction, lang, and reduced to **one version per article** (`DISTINCT ON (instrument, citation)` keeping the latest `lower(validity)`: the same article can exist twice — a new consolidation per amendment, and a different structural path when fetched standalone — leaving two open-ended `in_force` versions where the superseded text can outrank its replacement). FTS ORs the query terms; vector = BGE-M3 via the ingest package's query encoder (`WORKFLOW_EMBEDDING_MODEL_ID=1`), FTS-only fallback when unavailable | no hits → skip straight to diff, routing `not_found` |
 | **propose** | **LLM** | record + retrieved chunks → `ProposalDraft` (structured output: value, valid_from, legal_status, chunk_id, verbatim extract, quote + translation, confidence) | model can return `found=false`; never guesses |
 | **critique** | code + **LLM** | mechanical checks: extract is a verbatim quote of the cited chunk (offsets computed against `unit_texts.content`), dates consistent, units/brackets sane, schema-valid — then an LLM pass for semantic issues | verdict `fail` → one LLM retry, then goes to the human with the failed critique attached |
 | **scout** | **LLM** + web + ingest | on `not_found` (`WORKFLOW_SCOUT=llm\|tavily`): the LLM names the official act that sets the value; Tavily searches official domains only (FR: legifrance.gouv.fr) and instrument ids (FR: `JORFTEXT…`) are harvested from result URLs, LLM-ranked against the result titles, then **archive-first ingested** via `nomotheca_ingest` (+ incremental BGE-M3 embedding) before one retrieval retry | web text is never evidence — only discovery; quotes still verify against the DB. Ingested ids and queries are recorded on the review item |
@@ -79,9 +79,22 @@ EUROMOD's system year **is** the income year, but for the FR income-tax family
 the income year it governs: the barème for 2025 income sits in the act
 consolidated around February 2026. Retrieving the version in force *at* `as_of`
 would therefore silently return the **previous** year's schedule. Parameters
-tagged `"temporal_basis": "income_year"` in `information` (curated — the EUROMOD
-export cannot know it; also a column in `params.parameters`, preserved across
-re-ingests) get three behaviours:
+tagged `"temporal_basis": "income_year"` get three behaviours.
+
+The flag is **curated — the EUROMOD export does not carry it** (0 of 702
+parameters in `FR.enriched.json`), and that export is read-only: never edit it.
+The versioned source of truth is [`pipeline/curation/FR.curation.yaml`](pipeline/curation/FR.curation.yaml),
+applied onto `params.parameters.temporal_basis` after ingest:
+
+```bash
+uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
+uv run nomoscope-workflow curate-params curation/FR.curation.yaml   # idempotent
+```
+
+The ingest upsert never touches the column, so the flag also survives a
+re-ingest of a new export; the overlay is what makes it survive
+`docker compose down -v`, and it records *why* each parameter is tagged. The
+three behaviours:
 
 - **retrieve/scout** use a shifted date — versions in force on 1 July of
   `as_of.year + 1` — so the retroactive act is the one selected;

@@ -1,0 +1,50 @@
+# Curated parameter knowledge for FR — NOT part of the EUROMOD export.
+#
+# extracted_parameters/enriched/FR.enriched.json is delivered by the EUROMOD
+# team and is READ-ONLY: never edit it. Anything we know that the export does
+# not carry lives here instead, and is applied on top of the ingested rows by
+#
+#     uv run nomoscope-workflow curate-params curation/FR.curation.yaml
+#
+# run after `ingest-params`. The ingest upsert deliberately never touches these
+# columns, so a re-ingest of a new export preserves them; this file exists so
+# the knowledge also survives `docker compose down -v`, is reviewable in git,
+# and can say *why* each parameter is flagged.
+
+country: FR
+
+temporal_basis:
+  - basis: income_year
+    note: >-
+      French income tax is assessed on a calendar income year but its schedule is
+      enacted by the finance act of the FOLLOWING year (the barème for income
+      2025 sits in LOI 2026-103 du 19 février 2026, art. 4, whose applicability
+      clause reads « … s'appliquent à l'impôt sur le revenu dû au titre de
+      l'année 2025 »). Retrieval and the critique's budget-act window shift
+      accordingly. Deliberately NOT set on CSG/CRDS, which are withheld at
+      source and follow `in_force`.
+    targets:
+      # Barème: marginal rates and band boundaries (CGI art. 197, I-1)
+      - euromod://FR/tinkt_fr/def_const/$tin_rate1
+      - euromod://FR/tinkt_fr/def_const/$tin_rate2
+      - euromod://FR/tinkt_fr/def_const/$tin_rate3
+      - euromod://FR/tinkt_fr/def_const/$tin_rate4
+      - euromod://FR/tinkt_fr/def_const/$tin_rate5
+      - euromod://FR/tinkt_fr/def_const/$tin_rate6
+      - euromod://FR/tinkt_fr/def_const/$tin_upthres1
+      - euromod://FR/tinkt_fr/def_const/$tin_upthres2
+      - euromod://FR/tinkt_fr/def_const/$tin_upthres3
+      - euromod://FR/tinkt_fr/def_const/$tin_upthres4
+      - euromod://FR/tinkt_fr/def_const/$tin_upthres5
+      # Décote (CGI art. 197, I-4)
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_amt
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_amt2
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_lim1
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_lim2
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_rate
+      # Plafonnement du quotient familial
+      - euromod://FR/tin_fr/def_const/$tinto_lim1
+      - euromod://FR/tin_fr/def_const/$tinto_lim2
+      - euromod://FR/tin_fr/def_const/$tinto_lim3
+      - euromod://FR/tin_fr/def_const/$tinto_rate1
+      - euromod://FR/tin_fr/def_const/$tinto_rate2

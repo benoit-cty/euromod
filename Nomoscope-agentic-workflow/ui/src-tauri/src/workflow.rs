@@ -3,7 +3,7 @@
 //! and supporting cancellation. Mirrors ingest.rs.
 //!
 //! The frontend builds the argument vector (e.g. `run-targets <model_target>…
-//! --as-of 2025-06-01 [--model …] [--force]`); only a whitelisted set of
+//! --year 2025 [--model …] [--force]`); only a whitelisted set of
 //! subcommands may be launched. The child runs with
 //! `Nomoscope-agentic-workflow/pipeline` as the working directory so `uv`
 //! resolves the project there, and inherits this app's environment (provider
@@ -32,7 +32,7 @@ pub struct WorkflowState {
 pub struct WorkflowPayload {
     /// Frontend-generated id used to tag log events and to target cancellation.
     pub run_id: String,
-    /// CLI tokens, subcommand first: ["run-targets", "euromod://…", "--as-of", …].
+    /// CLI tokens, subcommand first: ["run-targets", "euromod://…", "--year", …].
     pub args: Vec<String>,
     /// Exported as WORKFLOW_DATABASE_URL for the child (a
     /// Nomoscope-agentic-workflow/.env can still override it).

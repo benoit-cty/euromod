@@ -36,37 +36,51 @@ def validity_start(validity: str | None) -> date | None:
     match = _VALIDITY_START.match(validity or "")
     return date.fromisoformat(match.group(1)) if match else None
 
-_CITATION_SQL = """
+# One version per article, not per (legal_unit, version) row. `validity @> as_of`
+# alone stops discriminating whenever the same article exists twice: Legifrance
+# mints a new consolidated text per amendment, and an article fetched standalone
+# nests under a different path than the same article fetched with its code, so
+# ingest can leave two open-ended `in_force` versions side by side (CGI art. 197:
+# the seeded 2025 barème at 11 497 next to the ingested 2026 one at 11 600).
+# Both then compete in the ranking and the superseded text can win. Keep the one
+# with the latest start — the article as consolidated on the reference date.
+_LIVE_VERSION_CTE = """
+live_version AS (
+  SELECT DISTINCT ON (i.id, coalesce(u.citation, u.id::text)) v.id AS version_id
+  FROM legal_unit_versions v
+  JOIN legal_units u         ON u.id = v.legal_unit_id
+  JOIN instruments i         ON i.id = u.instrument_id
+  JOIN jurisdictions j       ON j.id = i.jurisdiction_id
+  WHERE v.validity @> %(as_of)s::date AND j.code = %(country)s
+    -- Country Reports describe the model, not the law: never citable evidence.
+    AND i.instrument_type <> 'country_report'
+  ORDER BY i.id, coalesce(u.citation, u.id::text), lower(v.validity) DESC
+)"""
+
+_CITATION_SQL = f"""
+WITH {_LIVE_VERSION_CTE}
 SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
        v.validity::text AS validity, v.version_status,
        similarity(u.citation, %(cit)s)::float8 AS score
 FROM legal_units u
-JOIN instruments i        ON i.id = u.instrument_id
-JOIN jurisdictions j      ON j.id = i.jurisdiction_id
 JOIN legal_unit_versions v ON v.legal_unit_id = u.id
-JOIN unit_texts t         ON t.version_id = v.id
-JOIN chunks ch            ON ch.unit_text_id = t.id
-WHERE j.code = %(country)s AND t.lang = %(lang)s
-  AND v.validity @> %(as_of)s::date
-  -- Country Reports describe the model, not the law: never citable evidence.
-  AND i.instrument_type <> 'country_report'
+JOIN live_version lv       ON lv.version_id = v.id
+JOIN unit_texts t          ON t.version_id = v.id
+JOIN chunks ch             ON ch.unit_text_id = t.id
+WHERE t.lang = %(lang)s
   AND (similarity(u.citation, %(cit)s) > 0.55 OR u.national_id = %(cit)s)
 ORDER BY score DESC, ch.seq
 LIMIT %(k)s
 """
 
-_HYBRID_SQL_TEMPLATE = """
-WITH candidate AS (
+_HYBRID_SQL_TEMPLATE = f"""
+WITH {_LIVE_VERSION_CTE},
+candidate AS (
   SELECT c.id AS chunk_id, c.tsv, c.search_config
   FROM chunks c
-  JOIN unit_texts t          ON t.id = c.unit_text_id
-  JOIN legal_unit_versions v ON v.id = t.version_id
-  JOIN legal_units u         ON u.id = v.legal_unit_id
-  JOIN instruments i         ON i.id = u.instrument_id
-  JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-  WHERE v.validity @> %(as_of)s::date AND j.code = %(country)s AND t.lang = %(lang)s
-    -- Country Reports describe the model, not the law: never citable evidence.
-    AND i.instrument_type <> 'country_report'
+  JOIN unit_texts t    ON t.id = c.unit_text_id
+  JOIN live_version lv ON lv.version_id = t.version_id
+  WHERE t.lang = %(lang)s
 ),
 fts AS (
   SELECT chunk_id,
@@ -79,11 +93,11 @@ fts AS (
   FROM candidate
   WHERE tsv @@ websearch_to_tsquery(search_config, %(fts_q)s)
   LIMIT 50
-){vec_cte}
+){{vec_cte}}
 SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
        v.validity::text AS validity, v.version_status,
-       {score_expr} AS score
-FROM {joined}
+       {{score_expr}} AS score
+FROM {{joined}}
 JOIN chunks ch             ON ch.id = chunk_id
 JOIN unit_texts t          ON t.id = ch.unit_text_id
 JOIN legal_unit_versions v ON v.id = t.version_id

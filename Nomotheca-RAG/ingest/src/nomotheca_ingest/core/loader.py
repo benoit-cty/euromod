@@ -82,11 +82,43 @@ class LegislationLoader:
             )
             return cur.fetchone()[0]
 
+    def _existing_unit_id(self, instrument_id: UUID, unit: UnitIR) -> UUID | None:
+        """Find the same article already loaded under a different structural path.
+
+        A full-code ingest nests articles under their book/chapter (path
+        'liv_1.art_197'); fetching that same article standalone — what the
+        workflow's scout does — yields a flat path ('art_197'). Keyed on path
+        alone the two become separate legal_units, and because the
+        no-overlap EXCLUDE constraint is per legal_unit, a superseded
+        consolidation then stays open-ended next to its replacement and can
+        outrank it in retrieval. Match on the stable article identity first.
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id FROM legal_units
+                WHERE instrument_id = %s
+                  AND ((national_id IS NOT NULL AND national_id = %s)
+                       OR (citation IS NOT NULL AND citation = %s))
+                ORDER BY (national_id = %s) DESC, nlevel(path) DESC
+                LIMIT 1
+                """,
+                (instrument_id, unit.national_id, unit.citation, unit.national_id),
+            )
+            row = cur.fetchone()
+        return row[0] if row else None
+
     def _upsert_units(self, instrument_id: UUID, units: list[UnitIR], stats: LoadStats) -> dict[str, UUID]:
         """Insert or update structural units and return ids keyed by IR path."""
         unit_ids: dict[str, UUID] = {}
         for unit in sorted(units, key=lambda item: item.path.count(".")):
             parent_id = unit_ids.get(unit.parent_path) if unit.parent_path else None
+            if not unit.is_container:
+                existing = self._existing_unit_id(instrument_id, unit)
+                if existing is not None:
+                    unit_ids[unit.path] = existing
+                    stats.units += 1
+                    continue
             with self.conn.cursor() as cur:
                 cur.execute(
                     """
@@ -118,6 +150,43 @@ class LegislationLoader:
                 stats.units += 1
         return unit_ids
 
+    def _chain_versions(self, unit_id: UUID, version: VersionIR) -> Any:
+        """Close the version a new consolidation supersedes; bound the new one.
+
+        Legifrance mints a fresh consolidated text (open-ended validity) every
+        time an article is amended, and says nothing about the previous one.
+        Loaded verbatim, two versions of the same article stay 'in_force' at
+        once and `validity @> as_of` — the temporal filter every consumer
+        relies on — stops discriminating. Chain them instead: the older
+        version ends where the newer begins.
+
+        Returns the upper bound to use for the incoming version: its own
+        valid_to, or the start of an already-loaded later version when it is
+        open-ended.
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE legal_unit_versions
+                SET validity = daterange(lower(validity), %(from)s, '[)'),
+                    version_status = CASE WHEN version_status = 'in_force'
+                                          THEN 'repealed' ELSE version_status END
+                WHERE legal_unit_id = %(unit)s
+                  AND lower(validity) < %(from)s
+                  AND (upper(validity) IS NULL OR upper(validity) > %(from)s)
+                """,
+                {"unit": unit_id, "from": version.valid_from},
+            )
+            if version.valid_to is not None:
+                return version.valid_to
+            cur.execute(
+                "SELECT min(lower(validity)) FROM legal_unit_versions "
+                "WHERE legal_unit_id = %s AND lower(validity) > %s",
+                (unit_id, version.valid_from),
+            )
+            row = cur.fetchone()
+        return row[0] if row else None
+
     def _upsert_version(self, unit_id: UUID, version: VersionIR) -> UUID:
         """Insert a legal unit version unless its source version already exists."""
         if version.source_version_id:
@@ -135,6 +204,17 @@ class LegislationLoader:
 
         with self.conn.cursor() as cur:
             cur.execute(
+                "SELECT id FROM legal_unit_versions "
+                "WHERE legal_unit_id = %s AND lower(validity) = %s",
+                (unit_id, version.valid_from),
+            )
+            row = cur.fetchone()
+        if row is not None:
+            return row[0]
+
+        valid_to = self._chain_versions(unit_id, version)
+        with self.conn.cursor() as cur:
+            cur.execute(
                 """
                 INSERT INTO legal_unit_versions
                   (legal_unit_id, validity, version_status, source_version_id, eli_version,
@@ -145,7 +225,7 @@ class LegislationLoader:
                 (
                     unit_id,
                     version.valid_from,
-                    version.valid_to,
+                    valid_to,
                     version.status.value,
                     version.source_version_id,
                     version.eli_version,

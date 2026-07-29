@@ -25,7 +25,9 @@ class WorkflowConfig:
     model: str = ""
     critique_model: str = ""
     embedding_model_id: int = 99
-    retrieval_k: int = 8
+    # 8 was too tight: the correct CGI art. 197 consolidation ranked #11 behind
+    # amending finance-act articles that repeat the same fiscal vocabulary.
+    retrieval_k: int = 15
     data_dir: Path = field(default_factory=lambda: WORKFLOW_ROOT / "data")
     phoenix_endpoint: str = ""
     phoenix_project: str = ""
@@ -49,7 +51,7 @@ def load_config() -> WorkflowConfig:
         model=_env("WORKFLOW_MODEL", "mock/extractor"),
         critique_model=_env("WORKFLOW_CRITIQUE_MODEL", "") or _env("WORKFLOW_MODEL", "mock/extractor"),
         embedding_model_id=int(_env("WORKFLOW_EMBEDDING_MODEL_ID", "99")),
-        retrieval_k=int(_env("WORKFLOW_RETRIEVAL_K", "8")),
+        retrieval_k=int(_env("WORKFLOW_RETRIEVAL_K", "15")),
         data_dir=Path(_env("WORKFLOW_DATA_DIR", str(WORKFLOW_ROOT / "data"))),
         phoenix_endpoint=_env("PHOENIX_COLLECTOR_ENDPOINT", "http://localhost:6006"),
         phoenix_project=_env("PHOENIX_PROJECT_NAME", "nomoscope-agentic-workflow"),

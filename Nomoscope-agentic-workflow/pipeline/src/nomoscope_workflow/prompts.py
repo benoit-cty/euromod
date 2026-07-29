@@ -7,7 +7,7 @@ from datetime import date
 
 from .schema import ParameterRecord, ProposalDraft, RetrievalHit
 
-PROMPT_VERSION = "0.3.3"
+PROMPT_VERSION = "0.4.0"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -31,6 +31,14 @@ Rules:
   (11 % -> 0.11); durations in months become decimal years only if the unit says so.
 - Bracket schedules: ordered ascending, each band carries its LOWER threshold plus rate (or amount);
   the first band starts at threshold 0; the last band runs to infinity.
+- A band boundary is ONE figure with two names. Statute states a progressive schedule as the
+  amount a fraction of income must exceed for each rate ("la fraction ... qui excède 11 497 €
+  ... 11 %"), whereas EUROMOD names that same 11 497 the UPPER limit of the band below. So a
+  parameter described as the top of a band is satisfied by the extract stating that figure as
+  the LOWER bound of the next rate, and vice versa. This includes an exempt "0 % band", which
+  statutes typically never name at all — its upper limit is simply the amount above which the
+  first positive rate applies. Never return found=false merely because the extract's wording
+  ("11 %") differs from the parameter's ("upper limit of the 0% band"): match the boundary.
 - valid_from is the date the value takes effect (from the version validity or the text itself).
   EXCEPTION — when the parameter block declares "Temporal basis: INCOME YEAR", valid_from MUST be
   1 January of the reference year (the income year), NOT the act's publication or in-force date:

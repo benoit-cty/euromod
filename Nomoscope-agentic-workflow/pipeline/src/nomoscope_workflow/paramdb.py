@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 
 import psycopg
+import yaml
 
 from .config import WorkflowConfig
 from .schema import (
@@ -151,6 +152,67 @@ def ingest_file(conn: psycopg.Connection, path: Path) -> dict:
         for group in groups:
             _upsert_group(conn, group, str(path))
             stats["groups"] += 1
+    return stats
+
+
+def system_year_bounds(conn: psycopg.Connection, country: str) -> tuple[int, int] | None:
+    """First and last EUROMOD system year the export defines for a country.
+
+    EUROMOD ships one system per year (FR J2.19: 2006-2025) and the workflow
+    verifies exactly one of them. A run anchored outside that range verifies a
+    system that does not exist — it silently compares against the newest value
+    it can find, so every parameter comes back `changed` on no evidence.
+    Returns None when nothing is ingested for the country (no basis to judge).
+    """
+    row = conn.execute(
+        "SELECT min(v.system_year), max(v.system_year) "
+        "FROM params.model_values v JOIN params.parameters p ON p.id = v.parameter_id "
+        "WHERE p.country = %s AND v.system_year IS NOT NULL",
+        (country,),
+    ).fetchone()
+    if row is None or row[0] is None:
+        return None
+    return int(row[0]), int(row[1])
+
+
+def apply_curation(conn: psycopg.Connection, path: Path) -> dict:
+    """Apply a curation overlay (curation/<CC>.curation.yaml) onto ingested rows.
+
+    The EUROMOD export carries no `temporal_basis`: it is knowledge we hold, not
+    theirs, and the enriched JSON is read-only. Before this, the flag was a
+    hand-run UPDATE recorded nowhere — lost on `docker compose down -v` and
+    invisible to review. The overlay is the versioned source of truth; applying
+    it is idempotent, so it is safe to re-run after every `ingest-params`.
+
+    Unknown model_targets are reported rather than silently ignored: a typo or a
+    parameter renamed in a new export would otherwise leave the flag unset and
+    the affected runs quietly wrong.
+    """
+    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    country = doc.get("country")
+    stats = {"updated": 0, "unchanged": 0, "missing": []}
+    with conn.transaction():
+        for rule in doc.get("temporal_basis") or []:
+            basis = rule["basis"]
+            for target in rule.get("targets") or []:
+                row = conn.execute(
+                    "UPDATE params.parameters SET temporal_basis = %s "
+                    "WHERE model_target = %s AND temporal_basis IS DISTINCT FROM %s "
+                    "RETURNING model_target",
+                    (basis, target, basis),
+                ).fetchone()
+                if row is not None:
+                    stats["updated"] += 1
+                    continue
+                exists = conn.execute(
+                    "SELECT 1 FROM params.parameters WHERE model_target = %s", (target,)
+                ).fetchone()
+                if exists is None:
+                    stats["missing"].append(target)
+                else:
+                    stats["unchanged"] += 1
+    if country:
+        stats["country"] = country
     return stats
 
 
