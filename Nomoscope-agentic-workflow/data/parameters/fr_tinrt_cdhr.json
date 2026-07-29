@@ -10,7 +10,8 @@
       "fr": "Taux de la contribution différentielle sur les hauts revenus.",
       "en": "Rate of the differential contribution on high incomes."
     },
-    "last_confirmed_valid_on": "2025-02-23"
+    "last_confirmed_valid_on": "2025-02-23",
+    "temporal_basis": "income_year"
   },
   "values": [
     {

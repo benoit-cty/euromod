@@ -18,6 +18,22 @@ class LegalStatus(StrEnum):
     NATIONAL_TEAM_ESTIMATE = "national_team_estimate"
 
 
+class TemporalBasis(StrEnum):
+    """How legislation dates map to the parameter's validity interval.
+
+    in_force: the value applies from the date the enacting text is in force
+      (SMIC, CSG, benefit amounts) — the default.
+    income_year: system year = income year; the enacting act (loi de finances)
+      is published AFTER the income year starts, often the following year, yet
+      applies retroactively to that year's income (FR income tax schedule).
+      valid_from is back-dated to the income year start (OpenFisca convention),
+      and retrieval must look for versions consolidated ~a year later.
+    """
+
+    IN_FORCE = "in_force"
+    INCOME_YEAR = "income_year"
+
+
 class SourceType(StrEnum):
     LEGISLATION = "legislation"
     NATIONAL_TEAM = "national_team"
@@ -141,6 +157,8 @@ class ParameterInformation(BaseModel):
     description: dict[str, str] | None = None
     explanation: dict[str, str] | None = None
     last_confirmed_valid_on: date | None = None
+    # Curated, never derivable from the EUROMOD export (see TemporalBasis).
+    temporal_basis: TemporalBasis = TemporalBasis.IN_FORCE
 
 
 class ParameterRecord(BaseModel):

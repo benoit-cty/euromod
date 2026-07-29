@@ -46,6 +46,15 @@
     // A successful review may update this later; the value-search agent does not invent it.
     "last_confirmed_valid_on": null,
 
+    // [CURATED] Optional, default "in_force". "income_year" marks parameters where
+    // the EUROMOD system year is the income year while the enacting finance act is
+    // published the following year (FR income-tax family: this threshold for 2025
+    // income sits in the act consolidated in early 2026). valid_from stays back-dated
+    // to the income-year start; the workflow shifts retrieval a year ahead and
+    // checks the cited version against the budget-act window.
+    // Never derivable from the EUROMOD export; never overwritten by re-ingest.
+    "temporal_basis": "income_year",
+
     // [RECEIVED] Existing classification from the prior Haiku classification pass.
     "classification": {
       "category": "policy",

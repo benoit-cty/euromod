@@ -10,7 +10,8 @@
       "fr": "Taux de la tranche supérieure du barème de l'impôt sur le revenu.",
       "en": "Rate of the top bracket of the income tax schedule."
     },
-    "last_confirmed_valid_on": "2024-06-01"
+    "last_confirmed_valid_on": "2024-06-01",
+    "temporal_basis": "income_year"
   },
   "values": [
     {

@@ -9,9 +9,10 @@ any real evaluation uses a real provider via llm.py.
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import date
 from typing import Callable
 
+from .retrieval import validity_start
 from .schema import (
     Bracket,
     CritiqueFindings,
@@ -19,6 +20,7 @@ from .schema import (
     ParameterRecord,
     ProposalDraft,
     RetrievalHit,
+    TemporalBasis,
 )
 
 # "11 % pour la fraction supérieure à 11 497 €" / "11% for the fraction above EUR 11,497"
@@ -39,11 +41,6 @@ def _num(text: str) -> float:
 
 def _num_en(text: str) -> float:
     return float(text.replace(",", ""))
-
-
-def _validity_start(validity: str | None) -> date | None:
-    match = re.match(r"[\[\(](\d{4}-\d{2}-\d{2})", validity or "")
-    return datetime.strptime(match.group(1), "%Y-%m-%d").date() if match else None
 
 
 def _pick_hit(hits: list[RetrievalHit]) -> RetrievalHit | None:
@@ -82,9 +79,17 @@ def propose_with_mock(
 
     info = record.information
     bands, span = _band_matches(hit.content)
+    # income_year parameters are back-dated to the income year start: the
+    # version's in-force date is the consolidation date of the finance act,
+    # not when the value applies (system year = income year).
+    valid_from = (
+        date(as_of.year, 1, 1)
+        if info.temporal_basis == TemporalBasis.INCOME_YEAR
+        else validity_start(hit.validity)
+    )
     draft = ProposalDraft(
         found=False,
-        valid_from=_validity_start(hit.validity),
+        valid_from=valid_from,
         legal_status=_STATUS_MAP.get(hit.version_status or ""),
         citation_chunk_id=hit.chunk_id,
         reasoning=f"mock extractor over chunk {hit.chunk_id} ({hit.citation})",

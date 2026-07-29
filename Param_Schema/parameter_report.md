@@ -288,6 +288,21 @@ All 3,886 received `valid_from` dates are 1 January, and every non-null `valid_t
 
 Legal dates belong in the proposal as `effective_from` and `effective_to`. They are filled only when the source establishes them. A legal date may therefore remain `null` even when the system year is known.
 
+### Temporal basis: income-year parameters
+
+For most parameters the model interval and the law agree: the value applies from the date the enacting text is in force (minimum wage, social contributions, benefit amounts). The French income-tax family breaks this alignment. EUROMOD's system year **is** the income year, but the enacting finance act is published months after that income year starts — the schedule for 2025 income sits in the finance act consolidated around February 2026. (OpenFisca-France resolves the same mismatch by back-dating: the act of 2026-02-20 is stored as applying from 2025-01-01. That convention coincides exactly with EUROMOD's system-year-equals-income-year rule, so both models place the value in the same interval.)
+
+The `temporal_basis` field makes this explicit per parameter:
+
+- `in_force` (default) — the value applies from the enacting text's in-force date; nothing changes.
+- `income_year` — system year = income year; the enacting act is published the following year and applies retroactively. `valid_from` stays back-dated to 1 January of the income year, while the workflow shifts *retrieval* to legislation versions in force around mid-year `Y+1` and mechanically checks that the cited version entered into force on or after 1 December of the income year (the budget-act window; the 2025 finance act, promulgated February 2025 after the censure, still passes for income year 2024). An older version is flagged as "likely the previous year's value / act not yet in the corpus" and fails the critique.
+
+Three consequences worth stating:
+
+1. **The legislation DB is never rewritten.** Legal in-force dates in the RAG corpus stay the archive-first legal record; the back-dating convention lives entirely in the parameter layer.
+2. **The flag is curated knowledge.** It cannot be derived from the EUROMOD export, so ingest never sets or overwrites it (JSON `information` block; `params.parameters.temporal_basis` in the database, preserved across re-ingests). For France it is set on the income-tax family: barème rates and thresholds, décote, CEHR, CDHR, top rate — and deliberately *not* on CSG, which is withheld at source and follows `in_force`.
+3. **The EUROMOD dataset offset is unrelated.** A dataset named `FR_2024_b1` holds income-year-2023 microdata that is uprated to the system year; that is an input-data concern and plays no role in parameter dating.
+
 ## 6. Values and units
 
 ### Literal, unavailable, and expression values
@@ -495,6 +510,7 @@ erDiagram
         date last_confirmed_valid_on
         jsonb enrichment_lineage
         jsonb parameter_group
+        text temporal_basis
         text source_file
         timestamptz ingested_at
     }
@@ -967,6 +983,15 @@ copy carries no cross-language signal).
     // [RECEIVED] Currently null for all 702 French parameters.
     // A successful review may update this later; the value-search agent does not invent it.
     "last_confirmed_valid_on": null,
+
+    // [CURATED] Optional, default "in_force". "income_year" marks parameters where
+    // the EUROMOD system year is the income year while the enacting finance act is
+    // published the following year (FR income-tax family: this threshold for 2025
+    // income sits in the act consolidated in early 2026). valid_from stays back-dated
+    // to the income-year start; the workflow shifts retrieval a year ahead and
+    // checks the cited version against the budget-act window (see §5).
+    // Never derivable from the EUROMOD export; never overwritten by re-ingest.
+    "temporal_basis": "income_year",
 
     // [RECEIVED] Existing classification from the prior Haiku classification pass.
     "classification": {

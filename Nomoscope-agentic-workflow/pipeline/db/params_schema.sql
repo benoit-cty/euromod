@@ -51,12 +51,20 @@ CREATE TABLE IF NOT EXISTS params.parameters (
     last_confirmed_valid_on date,
     enrichment_lineage      jsonb,                     -- received enrichment provenance
     parameter_group         jsonb,                     -- optional display hint (doc §7); EUROMOD-team-validated only
+    -- Curated, NOT in the EUROMOD export (the ingest upsert never touches it,
+    -- so a hand-set value survives re-ingest). 'income_year' = system year is
+    -- the income year and the enacting finance act is published the following
+    -- year (FR income tax family); retrieval and critique shift accordingly.
+    -- Set via: UPDATE params.parameters SET temporal_basis='income_year' WHERE model_target='…';
+    temporal_basis          text NOT NULL DEFAULT 'in_force'
+                            CHECK (temporal_basis IN ('in_force', 'income_year')),
     source_file             text NOT NULL,             -- provenance of the ingest
     ingested_at             timestamptz NOT NULL DEFAULT now()
 );
 -- Additive migration for databases created before export 0.2.0 support
 -- (CREATE TABLE IF NOT EXISTS does not add columns to an existing table).
 ALTER TABLE params.parameters ADD COLUMN IF NOT EXISTS parameter_key text;
+ALTER TABLE params.parameters ADD COLUMN IF NOT EXISTS temporal_basis text NOT NULL DEFAULT 'in_force';
 CREATE INDEX IF NOT EXISTS parameters_country_idx ON params.parameters (country);
 CREATE INDEX IF NOT EXISTS parameters_policy_idx  ON params.parameters (country, policy);
 CREATE UNIQUE INDEX IF NOT EXISTS parameters_key_idx ON params.parameters (parameter_key)

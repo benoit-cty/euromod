@@ -36,6 +36,7 @@ from .schema import (
     ReviewItem,
     Routing,
     SourceType,
+    TemporalBasis,
 )
 from .tracing import progress, set_output, step_span
 
@@ -46,6 +47,9 @@ class WorkflowState(TypedDict, total=False):
     record: ParameterRecord
     parameter_file: str
     as_of: date
+    # Date used to select in-force legislation versions; differs from as_of
+    # for income_year parameters (see _retrieval_as_of).
+    retrieval_as_of: date
     run_id: str
     phoenix_trace_id: str | None
     force: bool
@@ -99,6 +103,62 @@ def _derived_refs(record: ParameterRecord, current: ParameterValue | None) -> li
     ]
     refs = dict.fromkeys(m for s in sources for m in _PARAM_REF.findall(s))
     return [r for r in refs if r != own]
+
+
+def _retrieval_as_of(record: ParameterRecord, as_of: date) -> date:
+    """The date used to select in-force legislation versions.
+
+    income_year parameters (FR income tax family): the enacting finance act is
+    published months AFTER the income year it governs, so the version in force
+    at as_of states the PREVIOUS year's value. Look for versions consolidated
+    mid-year Y+1 instead; open-ended current versions still match, and the
+    critique's version-window check catches the act not being in the corpus yet.
+    """
+    if record.information.temporal_basis == TemporalBasis.INCOME_YEAR:
+        return date(as_of.year + 1, 7, 1)
+    return as_of
+
+
+def _income_year_date_issues(
+    valid_from: date | None, version_start: date | None, income_year: int
+) -> list[str]:
+    """Mechanical date checks for income_year parameters (empty = consistent).
+
+    The budget-act window opens 1 December of the income year: finance acts for
+    income year Y are normally promulgated late December Y (or later — Feb 2025
+    for LF 2025). A cited version consolidated before that window predates the
+    act for Y and almost certainly states the previous year's value — the
+    corpus is stale or the act does not exist yet (provisional window).
+    """
+    issues: list[str] = []
+    if valid_from is None or valid_from.year != income_year:
+        issues.append(
+            f"income-year parameter: valid_from must be back-dated into income year "
+            f"{income_year}, got {valid_from.isoformat() if valid_from else 'none'}"
+        )
+    window = date(income_year, 12, 1)
+    if version_start is not None and version_start < window:
+        issues.append(
+            f"cited version in force since {version_start.isoformat()} predates the "
+            f"budget-act window for income year {income_year} — likely the previous "
+            f"year's value; the act for {income_year} income may not be in the corpus "
+            f"yet (treat as provisional)"
+        )
+    return issues
+
+
+def _unchanged_window(proposed: ParameterValue, current: ParameterValue) -> ParameterValue:
+    """The proposal rewritten to keep the validity window already in force.
+
+    The value the law states is the one EUROMOD already holds, so the existing
+    period simply continues: proposing a fresh valid_from (the model's date, or
+    as_of) would read as a legislative change that did not happen. The citation
+    re-confirms the value, it does not restart it — everything else about the
+    proposal (evidence, legal_status, OJ date) is kept as proposed.
+    """
+    return proposed.model_copy(
+        update={"valid_from": current.valid_from, "valid_to": current.valid_to}
+    )
 
 
 def _current_value(record: ParameterRecord, as_of: date) -> ParameterValue | None:
@@ -182,6 +242,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
 
     def retrieve(state: WorkflowState) -> dict:
         info = state["record"].information
+        retrieval_as_of = state.get("retrieval_as_of", state["as_of"])
         with step_span(
             tracer,
             "retrieve",
@@ -190,12 +251,14 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 "query": state["query"],
                 "citations": state["citations"],
                 "as_of": state["as_of"].isoformat(),
+                "retrieval_as_of": retrieval_as_of.isoformat(),
+                "temporal_basis": info.temporal_basis,
                 "country": info.country,
             },
         ) as span:
             with retrieval.connect(cfg) as conn:
                 hits = retrieval.retrieve(
-                    conn, cfg, info.country, state["as_of"], state["query"], state["citations"]
+                    conn, cfg, info.country, retrieval_as_of, state["query"], state["citations"]
                 )
             for i, hit in enumerate(hits):
                 span.set_attribute(f"retrieval.documents.{i}.document.id", hit.chunk_id)
@@ -258,11 +321,26 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 else:
                     report.issues.append("citation_chunk_id missing or not among retrieved chunks")
 
-                report.dates_consistent = draft.valid_from is not None and (
-                    draft.legal_status != "enacted_in_force" or draft.valid_from <= as_of
-                )
-                if not report.dates_consistent:
-                    report.issues.append("valid_from missing or inconsistent with legal_status/as_of")
+                if info.temporal_basis == TemporalBasis.INCOME_YEAR:
+                    # Publication after as_of is EXPECTED here (the finance act
+                    # for income year Y arrives in Y+1); the real checks are
+                    # back-dating and the budget-act window.
+                    cited = next((h for h in hits if h.chunk_id == draft.citation_chunk_id), None)
+                    date_issues = _income_year_date_issues(
+                        draft.valid_from,
+                        retrieval.validity_start(cited.validity) if cited else None,
+                        as_of.year,
+                    )
+                    report.dates_consistent = not date_issues
+                    report.issues.extend(date_issues)
+                else:
+                    report.dates_consistent = draft.valid_from is not None and (
+                        draft.legal_status != "enacted_in_force" or draft.valid_from <= as_of
+                    )
+                    if not report.dates_consistent:
+                        report.issues.append(
+                            "valid_from missing or inconsistent with legal_status/as_of"
+                        )
 
                 report.values_sane = _values_sane(info.unit, draft)
                 if not report.values_sane:
@@ -308,6 +386,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                     routing = Routing.NEW
                 elif _values_equal(current.value, proposed_value.value):
                     routing = Routing.UNCHANGED
+                    proposed_value = _unchanged_window(proposed_value, current)
                 else:
                     routing = Routing.CHANGED
                 proposed_record = _merge_record(record, proposed_value, as_of, routing)
@@ -367,7 +446,9 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
             kind="TOOL",
             input_value={"mode": cfg.scout, "model_target": record.information.model_target},
         ) as span:
-            result = scout.run(cfg, record, as_of)
+            # Scout hunts the ENACTING act: for income_year parameters that act
+            # lives around the shifted retrieval date, not around as_of.
+            result = scout.run(cfg, record, state.get("retrieval_as_of", as_of))
             set_output(span, result.summary())
         return {"scout": result}
 
@@ -381,6 +462,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
     def invoke(state: WorkflowState) -> WorkflowState:
         state = dict(state)
         record, as_of = state["record"], state["as_of"]
+        state["retrieval_as_of"] = _retrieval_as_of(record, as_of)
 
         # Formula parameters ($PSS * 4) are never stated by legislation: route
         # them to their anchor without spending retrieval or LLM calls.

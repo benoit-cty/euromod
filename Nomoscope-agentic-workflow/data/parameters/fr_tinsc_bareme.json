@@ -11,7 +11,8 @@
       "fr": "Barème progressif de l'impôt sur le revenu par part de quotient familial.",
       "en": "Progressive income tax schedule applied to each family-quotient share."
     },
-    "last_confirmed_valid_on": "2024-06-01"
+    "last_confirmed_valid_on": "2024-06-01",
+    "temporal_basis": "income_year"
   },
   "values": [
     {

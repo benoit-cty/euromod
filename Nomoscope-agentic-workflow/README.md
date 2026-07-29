@@ -58,12 +58,38 @@ by an explicit control flow
 | **propose** | **LLM** | record + retrieved chunks → `ProposalDraft` (structured output: value, valid_from, legal_status, chunk_id, verbatim extract, quote + translation, confidence) | model can return `found=false`; never guesses |
 | **critique** | code + **LLM** | mechanical checks: extract is a verbatim quote of the cited chunk (offsets computed against `unit_texts.content`), dates consistent, units/brackets sane, schema-valid — then an LLM pass for semantic issues | verdict `fail` → one LLM retry, then goes to the human with the failed critique attached |
 | **scout** | **LLM** + web + ingest | on `not_found` (`WORKFLOW_SCOUT=llm\|tavily`): the LLM names the official act that sets the value; Tavily searches official domains only (FR: legifrance.gouv.fr) and instrument ids (FR: `JORFTEXT…`) are harvested from result URLs, LLM-ranked against the result titles, then **archive-first ingested** via `nomotheca_ingest` (+ incremental BGE-M3 embedding) before one retrieval retry | web text is never evidence — only discovery; quotes still verify against the DB. Ingested ids and queries are recorded on the review item |
-| **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| national_team_source \| derived` | national-team-sourced values are never overwritten by the pipeline |
+| **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| national_team_source \| derived`. On `unchanged` the proposal keeps the validity window already in force: the citation re-confirms the value, it does not restart it, so no new `valid_from` is proposed | national-team-sourced values are never overwritten by the pipeline |
 | **enqueue** | code | full `ReviewItem` (side-by-side values, critique, retrieval trace incl. source texts, merged candidate record with `lineage`) → `data/queue/*.json` | re-runs never clobber an already-reviewed item (unless `--force`) |
 
 The anti-hallucination rule from the activity doc is mechanical, not prompt-only:
 `supporting_extract` must be found character-for-character (whitespace-insensitive)
 inside the cited chunk, or `citation_verified=false` and the critique fails.
+
+### Income-year parameters (`temporal_basis: income_year`)
+
+EUROMOD's system year **is** the income year, but for the FR income-tax family
+(barème, top rate, CDHR…) the enacting finance act is published months *after*
+the income year it governs: the barème for 2025 income sits in the act
+consolidated around February 2026. Retrieving the version in force *at* `as_of`
+would therefore silently return the **previous** year's schedule. Parameters
+tagged `"temporal_basis": "income_year"` in `information` (curated — the EUROMOD
+export cannot know it; also a column in `params.parameters`, preserved across
+re-ingests) get three behaviours:
+
+- **retrieve/scout** use a shifted date — versions in force on 1 July of
+  `as_of.year + 1` — so the retroactive act is the one selected;
+- **propose** back-dates `valid_from` to 1 January of the income year (the
+  OpenFisca convention, which matches EUROMOD's system-year-equals-income-year
+  rule); publication after `as_of` is expected, not an inconsistency;
+- **critique** replaces the in-force date check with two mechanical ones:
+  `valid_from` must fall inside the income year, and the cited version must have
+  entered into force on/after 1 December of the income year (the budget-act
+  window — LF 2025 slipped to Feb 2025 and still passes). A version older than
+  that is flagged as *likely the previous year's value / act not yet in the
+  corpus (provisional)* and fails the critique, so the reviewer sees exactly why.
+
+The one-year offset of EUROMOD *datasets* (FR_2024_b1 holds 2023 incomes) is an
+input-data/uprating concern and deliberately plays no role in parameter dating.
 
 ## 2. Orchestrator: plain Python + PydanticAI (thin)
 

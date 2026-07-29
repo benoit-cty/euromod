@@ -6,7 +6,14 @@ from datetime import date
 from pathlib import Path
 
 from nomoscope_workflow import mock, queue_store
-from nomoscope_workflow.pipeline import _current_value, _values_equal
+from nomoscope_workflow.pipeline import (
+    _current_value,
+    _income_year_date_issues,
+    _retrieval_as_of,
+    _unchanged_window,
+    _values_equal,
+)
+from nomoscope_workflow.retrieval import validity_start
 from nomoscope_workflow.schema import (
     Bracket,
     ItemStatus,
@@ -16,6 +23,7 @@ from nomoscope_workflow.schema import (
     RetrievalHit,
     ReviewItem,
     Routing,
+    TemporalBasis,
 )
 
 FR_TEXT = (
@@ -40,10 +48,10 @@ def _hit(**kwargs) -> RetrievalHit:
     return RetrievalHit(**{**defaults, **kwargs})
 
 
-def _record(value_type: str, unit: str, value) -> ParameterRecord:
+def _record(value_type: str, unit: str, value, **info) -> ParameterRecord:
     return ParameterRecord(
         information=ParameterInformation(
-            country="FR", model_target="euromod://FR/test", value_type=value_type, unit=unit
+            country="FR", model_target="euromod://FR/test", value_type=value_type, unit=unit, **info
         ),
         values=[ParameterValue(value=value, valid_from=date(2024, 1, 1))],
     )
@@ -80,6 +88,19 @@ def test_values_equal_and_current_value():
     record = _record("scalar", "/1", 0.45)
     assert _current_value(record, date(2025, 6, 1)).value == 0.45
     assert _current_value(record, date(2023, 6, 1)) is None
+
+
+def test_unchanged_routing_keeps_the_current_validity_window():
+    # same value as the one in force -> no new period starts, whatever date the
+    # model read off the (re-confirming) legal text
+    current = ParameterValue(value=0.45, valid_from=date(2024, 1, 1))
+    proposed = ParameterValue(
+        value=0.45, valid_from=date(2025, 1, 1), valid_to=date(2025, 12, 31)
+    )
+    kept = _unchanged_window(proposed, current)
+    assert kept.valid_from == date(2024, 1, 1)
+    assert kept.valid_to is None
+    assert kept.value == 0.45
 
 
 def test_queue_roundtrip_preserves_reviewed_items(tmp_path: Path):
@@ -137,6 +158,48 @@ def test_derived_refs_detects_formula_parameters():
     self_ref.values[0].lineage.model_answer = "$csg_red_thres"
     assert _derived_refs(self_ref, _current_value(self_ref, date(2025, 6, 1))) == []
     assert _derived_refs(record, None) == []
+
+
+def test_income_year_shifts_retrieval_date():
+    # FR barème: the finance act for income year 2025 is consolidated in 2026,
+    # so version selection must look a year ahead of as_of.
+    bareme = _record("bracket_schedule", "/1", None, temporal_basis=TemporalBasis.INCOME_YEAR)
+    assert _retrieval_as_of(bareme, date(2025, 6, 1)) == date(2026, 7, 1)
+    in_force = _record("scalar", "/1", 0.45)  # default basis: unchanged
+    assert _retrieval_as_of(in_force, date(2025, 6, 1)) == date(2025, 6, 1)
+
+
+def test_income_year_mock_backdates_valid_from_to_income_year_start():
+    record = _record(
+        "bracket_schedule", "/1", [Bracket(threshold=0, rate=0.0)],
+        temporal_basis=TemporalBasis.INCOME_YEAR,
+    )
+    # version consolidated 2026-02-21 (LF 2026) -> proposal back-dated to 2025-01-01
+    draft = mock.propose_with_mock(record, date(2025, 6, 1), [_hit(validity="[2026-02-21,)")])
+    assert draft.found
+    assert draft.valid_from == date(2025, 1, 1)
+
+
+def test_income_year_date_issues():
+    # act for income year 2025 consolidated Feb 2026, proposal back-dated: consistent
+    assert _income_year_date_issues(date(2025, 1, 1), date(2026, 2, 21), 2025) == []
+    # LF 2025 slipped to February 2025 (censure): still inside the 2024 window
+    assert _income_year_date_issues(date(2024, 1, 1), date(2025, 2, 15), 2024) == []
+    # valid_from not back-dated into the income year
+    issues = _income_year_date_issues(date(2026, 2, 21), date(2026, 2, 21), 2025)
+    assert any("back-dated" in i for i in issues)
+    # stale corpus: version from LF 2025 (2024-income barème) cited for income year 2025
+    issues = _income_year_date_issues(date(2025, 1, 1), date(2025, 2, 15), 2025)
+    assert any("provisional" in i for i in issues)
+    # no cited version validity -> only the back-dating check applies
+    assert _income_year_date_issues(date(2025, 1, 1), None, 2025) == []
+
+
+def test_validity_start_parses_pg_daterange():
+    assert validity_start("[2025-02-15,)") == date(2025, 2, 15)
+    assert validity_start("(2025-02-15,2026-01-01)") == date(2025, 2, 15)
+    assert validity_start(None) is None
+    assert validity_start("empty") is None
 
 
 def test_fts_query_ors_distinct_terms():

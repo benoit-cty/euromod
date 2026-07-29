@@ -28,6 +28,14 @@ from .schema import RetrievalHit
 
 LANG_BY_COUNTRY = {"FR": "fr", "BE": "fr", "NL": "nl", "ES": "es", "IE": "en", "LT": "lt"}
 
+_VALIDITY_START = re.compile(r"[\[\(](\d{4}-\d{2}-\d{2})")
+
+
+def validity_start(validity: str | None) -> date | None:
+    """Lower bound of a Postgres daterange rendered as text ('[2025-02-15,)')."""
+    match = _VALIDITY_START.match(validity or "")
+    return date.fromisoformat(match.group(1)) if match else None
+
 _CITATION_SQL = """
 SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
        v.validity::text AS validity, v.version_status,

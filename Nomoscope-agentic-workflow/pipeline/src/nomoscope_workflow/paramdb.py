@@ -32,6 +32,7 @@ from .schema import (
     Reference,
     ReviewItem,
     SourceType,
+    TemporalBasis,
 )
 
 SCHEMA_SQL = Path(__file__).resolve().parents[2] / "db" / "params_schema.sql"
@@ -397,7 +398,8 @@ def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
     row = conn.execute(
         """
         SELECT id, country, model_target, spine_order, value_type, unit,
-               label, short_label, description, explanation, last_confirmed_valid_on
+               label, short_label, description, explanation, last_confirmed_valid_on,
+               temporal_basis
         FROM params.parameters
         WHERE model_target = %s OR parameter_key = %s
         """,
@@ -406,7 +408,7 @@ def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
     if row is None:
         raise KeyError(f"parameter not in params DB (see ingest-params): {target}")
     (parameter_id, country, model_target, spine_order, value_type, unit,
-     label, short_label, description, explanation, last_confirmed) = row
+     label, short_label, description, explanation, last_confirmed, temporal_basis) = row
 
     information = ParameterInformation(
         country=country,
@@ -419,6 +421,7 @@ def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
         description=description,
         explanation=explanation,
         last_confirmed_valid_on=last_confirmed,
+        temporal_basis=_maybe_enum(TemporalBasis, temporal_basis) or TemporalBasis.IN_FORCE,
     )
 
     values: list[ParameterValue] = []
