@@ -50,6 +50,43 @@
   let lastLogAt = $state(0);
   let now = $state(0);
 
+  // --- progress state ---
+  // Same bar as the Ingest tab, but fed from the workflow CLI's own console
+  // output instead of `@progress` JSON: `run` prints "[i/N] file.json" per
+  // parameter, tracing prints "  › step" / the final "…: routing=…" line.
+  // Before the first parameter (readiness banner, model load) there is no
+  // total yet, so the bar runs indeterminate like a no-total ingest run.
+  const HEAD_RE = /^\[(\d+)\/(\d+)\]\s*(.*)$/;
+  const STEP_RE = /^\s+›\s+(.+)$/;
+  const ROUTED_RE = /\brouting=(\S+)/;
+  let progress = $state(null); // { done, total, current, detail }
+  let pct = $derived(
+    progress ? (progress.total > 0 ? Math.min(100, Math.round((progress.done / progress.total) * 100)) : 100) : 0
+  );
+
+  function trackProgress(line) {
+    const head = line.match(HEAD_RE);
+    if (head) {
+      // The parameter is starting: done counts the ones already finished.
+      progress = { done: Number(head[1]) - 1, total: Number(head[2]), current: head[3], detail: '' };
+      return;
+    }
+    if (!progress) return;
+    const step = line.match(STEP_RE);
+    if (step) {
+      progress = { ...progress, detail: step[1] };
+      return;
+    }
+    const routed = line.match(ROUTED_RE);
+    if (routed) {
+      progress = {
+        ...progress,
+        done: Math.min(progress.done + 1, progress.total),
+        detail: routed[1],
+      };
+    }
+  }
+
   const countries = $derived([...new Set(params.map((p) => p.country))].sort());
   const policies = $derived(
     [...new Set(params.filter((p) => !country || p.country === country).map((p) => p.policy).filter(Boolean))].sort()
@@ -133,6 +170,7 @@
     const unlisten = api.onWorkflowLog((payload) => {
       if (payload.run_id !== runId) return;
       lastLogAt = Date.now();
+      trackProgress(payload.line);
       logLines = [...logLines, payload];
     });
     return () => unlisten.then((un) => un());
@@ -198,6 +236,7 @@
     if (force) args.push('--force');
     runId = crypto.randomUUID();
     logLines = [];
+    progress = null;
     summary = '';
     error = '';
     running = true;
@@ -212,6 +251,7 @@
       } else if (res.success) {
         summary = `Finished: ${targets.length} parameter(s) processed in ${took}.`;
         line = `✓ finished (exit 0, ${took})`;
+        if (progress) progress = { ...progress, done: progress.total, current: '', detail: 'done' };
       } else {
         summary = `Exited with code ${res.code ?? '?'} after ${took}.`;
         line = `✗ exited with code ${res.code ?? '?'} after ${took}`;
@@ -407,10 +447,24 @@
     </table>
   </div>
 
-  {#if running}
-    <div class="runstatus small" class:stale={now - lastLogAt > 60000}>
-      <span class="spinner"></span>
-      running {fmtDur(now - startedAt)} · last output {fmtDur(now - lastLogAt)} ago
+  {#if running || progress}
+    <div class="progressbox">
+      {#if progress}
+        <div class="bar"><div class="fill" style="width: {pct}%"></div></div>
+      {:else}
+        <div class="bar indeterminate"><div class="fill"></div></div>
+      {/if}
+      <div class="pstatus small" class:stale={running && now - lastLogAt > 60000}>
+        {#if running}<span class="spinner"></span>{/if}
+        {#if progress}
+          {progress.done}/{progress.total} ({pct}%)
+          {#if progress.current} · <span class="mono">{progress.current}</span>{/if}
+          {#if progress.detail} · {progress.detail}{/if}
+        {:else}
+          Starting…
+        {/if}
+        {#if running} · {fmtDur(now - startedAt)} · last output {fmtDur(now - lastLogAt)} ago{/if}
+      </div>
     </div>
   {/if}
   {#if logLines.length || running}
@@ -460,9 +514,26 @@
     padding: 0 0.2rem;
     font-size: 0.85rem;
   }
-  .runstatus { display: flex; align-items: center; gap: 0.45rem; color: var(--muted); }
-  .runstatus.stale { color: var(--err); }
+  .progressbox { display: flex; flex-direction: column; gap: 0.3rem; }
+  .bar {
+    height: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .bar .fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
+  .bar.indeterminate .fill { width: 30%; animation: bar-slide 1.2s ease-in-out infinite; }
+  @keyframes bar-slide {
+    from { margin-left: -30%; }
+    to { margin-left: 100%; }
+  }
+  .pstatus { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pstatus.stale { color: var(--err); }
   .spinner {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.2rem;
     width: 0.7rem;
     height: 0.7rem;
     border: 2px solid var(--border);
