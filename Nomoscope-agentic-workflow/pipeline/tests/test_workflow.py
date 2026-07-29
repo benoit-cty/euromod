@@ -182,17 +182,31 @@ def test_income_year_mock_backdates_valid_from_to_income_year_start():
 
 def test_income_year_date_issues():
     # act for income year 2025 consolidated Feb 2026, proposal back-dated: consistent
-    assert _income_year_date_issues(date(2025, 1, 1), date(2026, 2, 21), 2025) == []
+    assert _income_year_date_issues(date(2025, 1, 1), date(2026, 2, 21), 2025) == ([], False)
     # LF 2025 slipped to February 2025 (censure): still inside the 2024 window
-    assert _income_year_date_issues(date(2024, 1, 1), date(2025, 2, 15), 2024) == []
-    # valid_from not back-dated into the income year
-    issues = _income_year_date_issues(date(2026, 2, 21), date(2026, 2, 21), 2025)
-    assert any("back-dated" in i for i in issues)
+    assert _income_year_date_issues(date(2024, 1, 1), date(2025, 2, 15), 2024) == ([], False)
+    # valid_from not back-dated into the income year — a proposal defect, not provisional
+    issues, provisional = _income_year_date_issues(date(2026, 2, 21), date(2026, 2, 21), 2025)
+    assert any("back-dated" in i for i in issues) and not provisional
     # stale corpus: version from LF 2025 (2024-income barème) cited for income year 2025
-    issues = _income_year_date_issues(date(2025, 1, 1), date(2025, 2, 15), 2025)
-    assert any("provisional" in i for i in issues)
+    issues, provisional = _income_year_date_issues(date(2025, 1, 1), date(2025, 2, 15), 2025)
+    assert any("provisional" in i for i in issues) and provisional
     # no cited version validity -> only the back-dating check applies
-    assert _income_year_date_issues(date(2025, 1, 1), None, 2025) == []
+    assert _income_year_date_issues(date(2025, 1, 1), None, 2025) == ([], False)
+
+
+def test_year_anchor_and_cli_mapping():
+    from nomoscope_workflow.cli import _anchor_date
+
+    assert _anchor_date(2025, None) == date(2025, 7, 1)
+    assert _anchor_date(None, "2025-06-01") == date(2025, 6, 1)  # deprecated alias
+    import pytest
+    import typer
+
+    with pytest.raises(typer.Exit):
+        _anchor_date(None, None)
+    with pytest.raises(typer.Exit):
+        _anchor_date(2025, "2025-06-01")
 
 
 def test_validity_start_parses_pg_daterange():

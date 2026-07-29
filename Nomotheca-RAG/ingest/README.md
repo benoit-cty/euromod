@@ -76,6 +76,7 @@ uv run python scripts/optimize_bge_m3_openvino.py \
 Then build embeddings with the exported model:
 
 ```bash
+cd Nomotheca-RAG/ingest
 uv run python -m nomotheca_ingest.cli embeddings build \
 	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
 	--model-path models/bge-m3-openvino \

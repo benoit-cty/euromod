@@ -24,7 +24,7 @@ docker compose up -d                     # repo root: legislation DB + pgAdmin +
 
 cd Nomoscope-agentic-workflow/pipeline
 uv sync
-uv run nomoscope-workflow run-all --as-of 2025-06-01    # mock model — no API key needed
+uv run nomoscope-workflow run-all --year 2025           # mock model — no API key needed; one run = one system year
 uv run nomoscope-workflow queue
 
 cd ../ui
@@ -37,16 +37,23 @@ LIBGL_ALWAYS_SOFTWARE=1 npm run tauri dev
 ```
 
 Traces: http://localhost:6006 → project `nomoscope-agentic-workflow`.
-The three demo parameters exercise the three routing outcomes against the seed
-corpus: barème IR → `changed` (2025 thresholds), top marginal rate →
-`unchanged`, CDHR → `not_found` (article absent from corpus).
+The three demo parameters exercise distinct routing outcomes against the seed
+corpus: with `--year 2024`, barème IR → `changed` (revalorised thresholds) and
+top marginal rate → `unchanged`; with `--year 2025`, both → `provisional`
+(the corpus only holds the LF-2025 consolidation = 2024-income values); CDHR →
+`not_found` (article absent from corpus).
 
-Real LLM: `uv run nomoscope-workflow run-all --as-of 2025-06-01 --force --model anthropic/claude-sonnet-5`
+Real LLM: `uv run nomoscope-workflow run-all --year 2025 --force --model anthropic/claude-sonnet-5`
 (or `azure_openai/…`, `openai/…`, `openrouter/…`, `together/…` — see `.env.example`).
 
 ## 1. Workflow, step by step
 
-One run = one `(country, parameter, as_of)`. Steps are plain functions driven
+One run = one `(country, parameter, system year)` — mirroring EUROMOD’s
+one-software-version-per-year model (`--year 2025`; `--as-of` is a deprecated
+alias, only its year matters). Before running, the CLI prints a **corpus
+readiness banner**: which finance-act vintages (for Y and for Y+1) are in the
+corpus and how many of their chunks are embedded, so “N income-year parameters
+will be provisional” is said once, up front. Steps are plain functions driven
 by an explicit control flow
 ([pipeline/src/nomoscope_workflow/pipeline.py](pipeline/src/nomoscope_workflow/pipeline.py)):
 
@@ -58,7 +65,7 @@ by an explicit control flow
 | **propose** | **LLM** | record + retrieved chunks → `ProposalDraft` (structured output: value, valid_from, legal_status, chunk_id, verbatim extract, quote + translation, confidence) | model can return `found=false`; never guesses |
 | **critique** | code + **LLM** | mechanical checks: extract is a verbatim quote of the cited chunk (offsets computed against `unit_texts.content`), dates consistent, units/brackets sane, schema-valid — then an LLM pass for semantic issues | verdict `fail` → one LLM retry, then goes to the human with the failed critique attached |
 | **scout** | **LLM** + web + ingest | on `not_found` (`WORKFLOW_SCOUT=llm\|tavily`): the LLM names the official act that sets the value; Tavily searches official domains only (FR: legifrance.gouv.fr) and instrument ids (FR: `JORFTEXT…`) are harvested from result URLs, LLM-ranked against the result titles, then **archive-first ingested** via `nomotheca_ingest` (+ incremental BGE-M3 embedding) before one retrieval retry | web text is never evidence — only discovery; quotes still verify against the DB. Ingested ids and queries are recorded on the review item |
-| **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| national_team_source \| derived`. On `unchanged` the proposal keeps the validity window already in force: the citation re-confirms the value, it does not restart it, so no new `valid_from` is proposed | national-team-sourced values are never overwritten by the pipeline |
+| **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| provisional \| national_team_source \| derived`. On `unchanged` the proposal keeps the validity window already in force: the citation re-confirms the value, it does not restart it, so no new `valid_from` is proposed. `provisional` (income-year params whose enacting act is missing) keeps the found value visible but no `proposed_record` — nothing acceptable to export | national-team-sourced values are never overwritten by the pipeline |
 | **enqueue** | code | full `ReviewItem` (side-by-side values, critique, retrieval trace incl. source texts, merged candidate record with `lineage`) → `data/queue/*.json` | re-runs never clobber an already-reviewed item (unless `--force`) |
 
 The anti-hallucination rule from the activity doc is mechanical, not prompt-only:
@@ -85,8 +92,11 @@ re-ingests) get three behaviours:
   `valid_from` must fall inside the income year, and the cited version must have
   entered into force on/after 1 December of the income year (the budget-act
   window — LF 2025 slipped to Feb 2025 and still passes). A version older than
-  that is flagged as *likely the previous year's value / act not yet in the
-  corpus (provisional)* and fails the critique, so the reviewer sees exactly why.
+  that means *likely the previous year's value / act not yet in the corpus*:
+  the item routes to **`provisional`** (a normal state of the world, distinct
+  from `not_found`), the scout gap-fill gets a chance to ingest the missing
+  act, no LLM retry is spent (it is a corpus state, not a proposal defect),
+  and the UI blocks Accept with an explanation.
 
 The one-year offset of EUROMOD *datasets* (FR_2024_b1 holds 2023 incomes) is an
 input-data/uprating concern and deliberately plays no role in parameter dating.
@@ -135,7 +145,7 @@ schema can evolve pipeline-side without lockstep releases.
   `ingest-params`), filterable by country / policy / run state / text, with
   the current model value and the latest agentic run per row. Select
   parameters and **launch an agentic update from the UI**: it spawns
-  `nomoscope-workflow run-targets <model_target>… --as-of …` (each target is
+  `nomoscope-workflow run-targets <model_target>… --year …` (each target is
   materialized from the DB as an Activity 1 file under
   `data/parameters/db/`), streams the CLI output live, then refreshes.
   Each run row links to the **review-queue item** and deep-links to the

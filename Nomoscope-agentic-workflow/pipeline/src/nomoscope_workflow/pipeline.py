@@ -121,16 +121,19 @@ def _retrieval_as_of(record: ParameterRecord, as_of: date) -> date:
 
 def _income_year_date_issues(
     valid_from: date | None, version_start: date | None, income_year: int
-) -> list[str]:
-    """Mechanical date checks for income_year parameters (empty = consistent).
+) -> tuple[list[str], bool]:
+    """Mechanical date checks for income_year parameters.
 
-    The budget-act window opens 1 December of the income year: finance acts for
-    income year Y are normally promulgated late December Y (or later — Feb 2025
-    for LF 2025). A cited version consolidated before that window predates the
-    act for Y and almost certainly states the previous year's value — the
-    corpus is stale or the act does not exist yet (provisional window).
+    Returns (issues, provisional): issues empty = consistent; provisional=True
+    when the cited version predates the budget-act window — the window opens
+    1 December of the income year: finance acts for income year Y are normally
+    promulgated late December Y (or later — Feb 2025 for LF 2025). An older
+    version almost certainly states the previous year's value: the act for Y
+    is not in the corpus (yet), which routes the item to PROVISIONAL rather
+    than plain critique failure.
     """
     issues: list[str] = []
+    provisional = False
     if valid_from is None or valid_from.year != income_year:
         issues.append(
             f"income-year parameter: valid_from must be back-dated into income year "
@@ -138,13 +141,14 @@ def _income_year_date_issues(
         )
     window = date(income_year, 12, 1)
     if version_start is not None and version_start < window:
+        provisional = True
         issues.append(
             f"cited version in force since {version_start.isoformat()} predates the "
             f"budget-act window for income year {income_year} — likely the previous "
             f"year's value; the act for {income_year} income may not be in the corpus "
             f"yet (treat as provisional)"
         )
-    return issues
+    return issues, provisional
 
 
 def _unchanged_window(proposed: ParameterValue, current: ParameterValue) -> ParameterValue:
@@ -326,12 +330,13 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                     # for income year Y arrives in Y+1); the real checks are
                     # back-dating and the budget-act window.
                     cited = next((h for h in hits if h.chunk_id == draft.citation_chunk_id), None)
-                    date_issues = _income_year_date_issues(
+                    date_issues, provisional = _income_year_date_issues(
                         draft.valid_from,
                         retrieval.validity_start(cited.validity) if cited else None,
                         as_of.year,
                     )
                     report.dates_consistent = not date_issues
+                    report.provisional = provisional
                     report.issues.extend(date_issues)
                 else:
                     report.dates_consistent = draft.valid_from is not None and (
@@ -380,6 +385,12 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 routing = Routing.NATIONAL_TEAM_SOURCE
             elif draft is None or not draft.found:
                 routing = Routing.NOT_FOUND
+            elif report is not None and report.provisional:
+                # The evidence found is (likely) the previous year's value: keep
+                # the proposed_value so the reviewer sees WHAT was found, but no
+                # proposed_record — there is nothing acceptable to export yet.
+                routing = Routing.PROVISIONAL
+                proposed_value = _build_proposed_value(state, cfg)
             else:
                 proposed_value = _build_proposed_value(state, cfg)
                 if current is None:
@@ -399,6 +410,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 country=info.country,
                 model_target=info.model_target,
                 as_of=as_of,
+                system_year=as_of.year,
                 value_type=info.value_type,
                 unit=info.unit,
                 label=(info.short_label or info.label or {}).get("en"),
@@ -432,6 +444,9 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
         return (
             report is not None
             and report.verdict == "fail"
+            # provisional is a corpus state, not a proposal defect: another
+            # LLM attempt over the same chunks cannot produce the missing act
+            and not report.provisional
             and draft is not None
             and draft.found
             and state.get("attempts", 0) < MAX_PROPOSAL_ATTEMPTS
@@ -480,11 +495,14 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
         if state["hits"]:
             _propose_and_critique(state)
 
-        # Gap-fill: nothing usable retrieved -> discover + archive-first ingest
-        # the missing instrument, then retry retrieval once. Mock runs skip it
-        # to stay deterministic and offline.
+        # Gap-fill: nothing usable retrieved — or only the previous year's value
+        # (provisional) — -> discover + archive-first ingest the missing
+        # instrument, then retry retrieval once. Mock runs skip it to stay
+        # deterministic and offline.
         draft = state.get("draft")
-        if cfg.scout != "off" and not is_mock and (draft is None or not draft.found):
+        critique_report = state.get("critique")
+        provisional = critique_report is not None and critique_report.provisional
+        if cfg.scout != "off" and not is_mock and (draft is None or not draft.found or provisional):
             state.update(scout_step(state))
             if state["scout"].ingested:
                 state.update(retrieve(state))

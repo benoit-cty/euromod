@@ -135,6 +135,14 @@
   // against the *edited* form, so filling a gap in the form unblocks Accept.
   const gate = $derived.by(() => {
     if (!form) return { ok: false, reason: 'no proposed value to accept' };
+    if (item?.routing === 'provisional') {
+      return {
+        ok: false,
+        reason:
+          'provisional: the evidence is likely the previous year\'s value — ' +
+          'ingest the missing finance act and re-run instead of accepting',
+      };
+    }
     if (!form.valid_from) return { ok: false, reason: 'missing valid from' };
     // dates are hand-editable text, so they are checked before they can be saved
     for (const field of ['valid_from', 'valid_to', 'official_journal_date']) {
@@ -243,11 +251,22 @@
     <header>
       <div>
         <h2>{item.label ?? item.model_target}</h2>
-        <div class="muted mono">{item.model_target} · as of {item.as_of}</div>
+        <div class="muted mono">
+          {item.model_target} · system year {item.system_year ?? item.as_of?.slice(0, 4)}
+        </div>
       </div>
       <span class="badge {item.routing}">{item.routing}</span>
       <span class="badge {item.status}">{item.status}</span>
     </header>
+
+    {#if item.routing === 'provisional'}
+      <p class="provisional-note">
+        The act setting this income-year parameter for system year
+        {item.system_year ?? item.as_of?.slice(0, 4)} is not (fully) in the corpus:
+        the value shown is likely the <strong>previous year's</strong>. Nothing to
+        accept yet — ingest/embed the missing finance act and re-run.
+      </p>
+    {/if}
 
     <div class="side-by-side">
       <ValueView title="Current value" value={item.current_value} unit={item.unit} />
@@ -466,6 +485,14 @@
   .checks li::before { content: '✗ '; color: var(--err); }
   .checks li.ok::before { content: '✓ '; color: var(--ok); }
   .issues { color: var(--err); margin: 0.3rem 0; }
+  .provisional-note {
+    margin: 0;
+    padding: 0.5rem 0.8rem;
+    border-left: 3px solid var(--info);
+    background: var(--info-soft);
+    color: var(--info);
+    border-radius: 0 8px 8px 0;
+  }
   blockquote {
     margin: 0.3rem 0;
     padding: 0.5rem 0.8rem;

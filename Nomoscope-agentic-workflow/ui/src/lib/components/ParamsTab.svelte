@@ -78,6 +78,7 @@
       if (runState === 'ran' && !p.last_run_id) return false;
       if (runState === 'changed' && p.last_routing !== 'changed') return false;
       if (runState === 'not_found' && p.last_routing !== 'not_found') return false;
+      if (runState === 'provisional' && p.last_routing !== 'provisional') return false;
       if (runState === 'derived' && p.last_routing !== 'derived') return false;
       if (runState === 'pass' && p.last_verdict !== 'pass') return false;
       if (runState === 'fail' && p.last_verdict !== 'fail') return false;
@@ -260,6 +261,7 @@
         <option value="ran">has a run</option>
         <option value="changed">routing: changed</option>
         <option value="not_found">routing: not found</option>
+        <option value="provisional">routing: provisional</option>
         <option value="derived">routing: derived</option>
         <option value="pass">critique: pass</option>
         <option value="fail">critique: fail</option>

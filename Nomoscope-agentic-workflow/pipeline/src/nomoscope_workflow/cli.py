@@ -1,7 +1,7 @@
 """CLI: run the workflow, inspect the queue, export accepted records.
 
-  uv run nomoscope-workflow run data/parameters/fr_tinsc_bareme.json --as-of 2025-06-01
-  uv run nomoscope-workflow run-all --as-of 2025-06-01
+  uv run nomoscope-workflow run data/parameters/fr_tinsc_bareme.json --year 2025
+  uv run nomoscope-workflow run-all --year 2025
   uv run nomoscope-workflow queue
   uv run nomoscope-workflow export
   uv run nomoscope-workflow init-param-db
@@ -16,31 +16,84 @@ from pathlib import Path
 
 import typer
 
-from . import openfisca, paramdb, pipeline, queue_store, translate
+from . import openfisca, paramdb, pipeline, queue_store, readiness, retrieval, translate
 from .config import load_config
 from .tracing import setup_tracing
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
+# One run verifies ONE EUROMOD system year — mirroring EUROMOD's
+# one-software-version-per-year model. The mid-year anchor date only feeds
+# "version in force at" selection for in_force parameters; income_year
+# parameters shift it internally (see pipeline._retrieval_as_of).
+_YEAR_ANCHOR_MONTH_DAY = (7, 1)
 
-def _parse_as_of(value: str) -> date:
-    return date.fromisoformat(value)
+_YEAR_HELP = "EUROMOD system year to verify (e.g. 2025). One run = one system year."
+_AS_OF_HELP = "Deprecated: reference date YYYY-MM-DD; use --year (only the year matters)."
+
+
+def _anchor_date(year: int | None, as_of: str | None) -> date:
+    """Resolve --year/--as-of into the run's anchor date (exactly one required)."""
+    if (year is None) == (as_of is None):
+        typer.echo("Pass exactly one of --year or --as-of (prefer --year).")
+        raise typer.Exit(2)
+    if year is not None:
+        return date(year, *_YEAR_ANCHOR_MONTH_DAY)
+    parsed = date.fromisoformat(as_of)
+    typer.echo(
+        f"note: --as-of is deprecated; this run verifies system year {parsed.year} "
+        f"(same as --year {parsed.year})"
+    )
+    return parsed
+
+
+def _readiness_banner(cfg, files: list[Path], anchor: date) -> None:
+    """Per-country corpus readiness for the system year, printed once, up front."""
+    totals: dict[str, int] = {}
+    income_year: dict[str, int] = {}
+    for path in files:
+        try:
+            info = json.loads(path.read_text(encoding="utf-8")).get("information", {})
+        except (OSError, ValueError):
+            continue  # jsonc / unreadable: the per-file run will report it
+        country = info.get("country")
+        if not country:
+            continue
+        totals[country] = totals.get(country, 0) + 1
+        if info.get("temporal_basis") == "income_year":
+            income_year[country] = income_year.get(country, 0) + 1
+    for country in sorted(totals):
+        try:
+            with retrieval.connect(cfg) as conn:
+                statuses = readiness.finance_act_readiness(conn, country, anchor.year)
+        except Exception:
+            return  # DB unreachable: the run itself will fail with a clearer error
+        if not statuses:
+            continue
+        typer.echo(
+            f"system year {anchor.year} — corpus readiness ({country}, "
+            f"{totals[country]} parameter(s), {income_year.get(country, 0)} income-year):"
+        )
+        for status in statuses:
+            typer.echo(readiness.describe(status, income_year.get(country, 0)))
 
 
 @app.command()
 def run(
     parameter_files: list[Path] = typer.Argument(..., help="Activity 1 parameter JSON file(s)"),
-    as_of: str = typer.Option(..., "--as-of", help="Reference date, YYYY-MM-DD"),
+    year: int = typer.Option(None, "--year", help=_YEAR_HELP),
+    as_of: str = typer.Option(None, "--as-of", help=_AS_OF_HELP),
     model: str = typer.Option(None, "--model", help="Override WORKFLOW_MODEL (e.g. anthropic/claude-sonnet-5)"),
     force: bool = typer.Option(False, "--force", help="Overwrite already-reviewed queue items"),
 ) -> None:
-    """Run the workflow for the given parameter file(s)."""
+    """Run the workflow for the given parameter file(s) for ONE system year."""
     cfg = load_config()
     if model:
         cfg.model = model
         cfg.critique_model = model
     tracer = setup_tracing(cfg)
-    reference_date = _parse_as_of(as_of)
+    reference_date = _anchor_date(year, as_of)
+    _readiness_banner(cfg, parameter_files, reference_date)
     for i, path in enumerate(parameter_files, 1):
         typer.echo(f"[{i}/{len(parameter_files)}] {path.name}")
         item = pipeline.run_parameter(cfg, tracer, path, reference_date, force=force)
@@ -51,18 +104,19 @@ def run(
 @app.command("run-all")
 def run_all(
     params_dir: Path = typer.Option(None, "--params-dir", help="Directory of parameter JSON files"),
-    as_of: str = typer.Option(..., "--as-of"),
+    year: int = typer.Option(None, "--year", help=_YEAR_HELP),
+    as_of: str = typer.Option(None, "--as-of", help=_AS_OF_HELP),
     model: str = typer.Option(None, "--model"),
     force: bool = typer.Option(False, "--force"),
 ) -> None:
-    """Run the workflow for every parameter file in a directory."""
+    """Run the workflow for every parameter file in a directory, for ONE system year."""
     cfg = load_config()
     folder = params_dir or cfg.data_dir / "parameters"
     files = sorted(p for p in folder.glob("*.json*") if p.suffix in (".json", ".jsonc"))
     if not files:
         typer.echo(f"No parameter files in {folder}")
         raise typer.Exit(1)
-    run(parameter_files=files, as_of=as_of, model=model, force=force)
+    run(parameter_files=files, year=year, as_of=as_of, model=model, force=force)
 
 
 @app.command("run-targets")
@@ -70,7 +124,8 @@ def run_targets(
     targets: list[str] = typer.Argument(
         ..., help="model_target ids (euromod://…) or parameter_keys of parameters in the params DB"
     ),
-    as_of: str = typer.Option(..., "--as-of", help="Reference date, YYYY-MM-DD"),
+    year: int = typer.Option(None, "--year", help=_YEAR_HELP),
+    as_of: str = typer.Option(None, "--as-of", help=_AS_OF_HELP),
     model: str = typer.Option(None, "--model", help="Override WORKFLOW_MODEL"),
     force: bool = typer.Option(False, "--force", help="Overwrite already-reviewed queue items"),
 ) -> None:
@@ -98,7 +153,7 @@ def run_targets(
             )
             typer.echo(f"materialized {path.relative_to(cfg.data_dir)}")
             files.append(path)
-    run(parameter_files=files, as_of=as_of, model=model, force=force)
+    run(parameter_files=files, year=year, as_of=as_of, model=model, force=force)
 
 
 @app.command()

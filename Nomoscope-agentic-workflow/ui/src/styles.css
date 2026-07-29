@@ -107,6 +107,7 @@ tr.selected td { background: var(--accent-soft); }
 .badge.unchanged { background: var(--ok-soft); color: var(--ok); }
 .badge.new { background: var(--accent-soft); color: var(--accent); }
 .badge.not_found { background: var(--err-soft); color: var(--err); }
+.badge.provisional { background: var(--info-soft); color: var(--info); }
 .badge.national_team_source { background: var(--info-soft); color: var(--info); }
 .badge.pass { background: var(--ok-soft); color: var(--ok); }
 .badge.fail { background: var(--err-soft); color: var(--err); }

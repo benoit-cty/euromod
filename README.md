@@ -48,7 +48,7 @@ queue, side-by-side diff, citation viewer, audit log and a database explorer tab
 See [Nomoscope-agentic-workflow/README.md](Nomoscope-agentic-workflow/README.md).
 
 ```bash
-cd Nomoscope-agentic-workflow/pipeline && uv sync && uv run nomoscope-workflow run-all --as-of 2025-06-01
+cd Nomoscope-agentic-workflow/pipeline && uv sync && uv run nomoscope-workflow run-all --year 2025
 cd ../ui && npm install && npm run tauri dev
 ```
 
@@ -92,7 +92,7 @@ cd Param_Schema
 sed 's/^```mermaid$/```{mermaid}/' parameter_report.md > parameter_report.qmd
 quarto render parameter_report.qmd --to typst \
   -M toc:true -M toc-depth:2 -M papersize:a4 \
-  -M shift-heading-level-by:-1 -M date:2026-07-21
+  -M shift-heading-level-by:-1 -M date:2026-07-29
 rm parameter_report.qmd
 
 ```

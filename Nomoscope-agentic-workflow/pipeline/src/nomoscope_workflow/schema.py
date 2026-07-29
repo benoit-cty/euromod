@@ -60,6 +60,11 @@ class Routing(StrEnum):
     # The value is a formula over other parameters ($PSS * 4): legislation
     # never states it directly, so the anchor parameter is what gets updated.
     DERIVED = "derived"
+    # income_year parameter whose enacting act for the system year is not in
+    # the corpus (yet): the best available evidence states the previous year's
+    # value. A normal state of the world (finance acts arrive in Y+1), distinct
+    # from not_found — there IS a value, it just cannot be confirmed for Y.
+    PROVISIONAL = "provisional"
 
 
 class ItemStatus(StrEnum):
@@ -218,6 +223,9 @@ class CritiqueReport(BaseModel):
     extract_offsets: tuple[int, int] | None = None
     dates_consistent: bool = False
     values_sane: bool = False
+    # income_year only: the cited version predates the budget-act window, so
+    # the proposal likely re-states the previous year's value (see Routing).
+    provisional: bool = False
     issues: list[str] = Field(default_factory=list)
     verdict: Literal["pass", "fail"] = "fail"
     critique_model: str | None = None
@@ -251,6 +259,9 @@ class ReviewItem(BaseModel):
     country: str
     model_target: str
     as_of: date
+    # The EUROMOD system year this run verifies (= as_of.year). One run, one
+    # system year — mirroring EUROMOD's one-software-version-per-year model.
+    system_year: int | None = None
     value_type: str
     unit: str
     label: str | None = None
