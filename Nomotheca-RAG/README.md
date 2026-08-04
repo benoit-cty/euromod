@@ -34,7 +34,8 @@ uv run python -m nomotheca_ingest.cli country-report fr ../country_reports/Y16_C
 |---|---|---|---|
 | FR | `countries/fr/` | Tricoteuses git mirror (DILA LEGI/JORF JSON), by direct id | [France_sources_analysis.md](France_sources_analysis.md) |
 | LT | `countries/lt/` | data.gov.lt Spinta API over TAR (`Dokumentas` + `Suvestine` dated consolidations) | [Lithuania_sources_analysis.md](Lithuania_sources_analysis.md) |
-| NL / ES / IE / BE | — (seed rows only) | candidates catalogued | [fiscal_law_sources.md](fiscal_law_sources.md) |
+| IE | `countries/ie/` | eISB as-enacted act XML by ELI, resolved through the Oireachtas Open Data API | [Ireland_sources_analysis.md](Ireland_sources_analysis.md) |
+| NL / ES / BE | — (seed rows only) | candidates catalogued | [fiscal_law_sources.md](fiscal_law_sources.md) |
 
 **Adding a country** is an adapter under `ingest/src/nomotheca_ingest/countries/<cc>/` plus a registry entry — core never changes. The step-by-step process (source analysis → seed rows → adapter → tests → end-to-end check, with the known gotchas) is captured in the [`add-country` skill](../.claude/skills/add-country/SKILL.md).
 

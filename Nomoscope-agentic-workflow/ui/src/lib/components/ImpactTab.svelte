@@ -50,6 +50,12 @@
     }
   }
 
+  // Target of the shell's Reload button while this tab is showing.
+  export async function reload() {
+    await loadProjects();
+    await load();
+  }
+
   const fmt = (n, digits = 2) =>
     n == null ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: digits });
 

@@ -56,7 +56,8 @@ INSERT INTO sources (jurisdiction_id, code, name, base_url, id_system, supports_
   ((SELECT id FROM jurisdictions WHERE code = 'NL'), 'NL-BWB',    'wetten.overheid.nl (BWB)',                 'https://wetten.overheid.nl',     'bwb_juriconnect', false, true,  'skills/nl-bwb',        '{"note": "Juriconnect identifiers, geldigheidsdatum for point-in-time"}'),
   ((SELECT id FROM jurisdictions WHERE code = 'LT'), 'LT-TAR',    'e-seimas / Teisės aktų registras (TAR)',   'https://www.e-tar.lt',           'tar',            true,  true,  'skills/lt-tar',        '{"note": "suvestines redakcijos = dated consolidations"}'),
   ((SELECT id FROM jurisdictions WHERE code = 'ES'), 'ES-BOE',    'Boletín Oficial del Estado (consolidado)', 'https://www.boe.es',             'boe',            true,  true,  'skills/es-boe',        '{}'),
-  ((SELECT id FROM jurisdictions WHERE code = 'IE'), 'IE-EISB',   'electronic Irish Statute Book',            'https://www.irishstatutebook.ie','eisb',           true,  false, 'skills/ie-eisb',       '{"note": "revised acts via Law Reform Commission; historical consolidation limited"}'),
+  ((SELECT id FROM jurisdictions WHERE code = 'IE'), 'IE-EISB',   'electronic Irish Statute Book',            'https://www.irishstatutebook.ie','eisb',           true,  false, 'skills/ie-eisb',       '{"note": "as-enacted text only; no consolidation and no query API. LRC Revised Acts do not cover the Taxes Consolidation Act 1997 at all (verified 2026-08-04)"}'),
+  ((SELECT id FROM jurisdictions WHERE code = 'IE'), 'IE-OIREACHTAS', 'Houses of the Oireachtas Open Data API', 'https://api.oireachtas.ie',    'oireachtas',     true,  false, 'skills/ie-eisb',       '{"note": "resolver only: act year/title -> actNo + statutebookURI (the eISB ELI). Serves no legal text."}'),
   ((SELECT id FROM jurisdictions WHERE code = 'BE'), 'BE-JUSTEL', 'Justel / Moniteur belge',                  'https://www.ejustice.just.fgov.be','justel_numac',   false, false, 'skills/be-justel',     '{"note": "numac identifiers; ELI partially deployed"}');
 
 -- ----------------------------------------------------------------------------
@@ -104,7 +105,10 @@ INSERT INTO instruments (id, jurisdiction_id, source_id, instrument_type, eli, n
    '{"es": "Ley 35/2006 del Impuesto sobre la Renta de las Personas Físicas", "en": "Personal Income Tax Act 35/2006"}', '2006-11-29',
    '{}'),
   ('b0000000-0000-4000-8000-000000000006', (SELECT id FROM jurisdictions WHERE code = 'IE'), (SELECT id FROM sources WHERE code = 'IE-EISB'),
-   'act', 'https://www.irishstatutebook.ie/eli/1997/act/39', '1997/39',
+   -- national_id must be the id the IE adapter emits ('{year}/act/{no}'), or a
+   -- real ingest of the same act inserts a second instrument and trips the
+   -- unique eli constraint instead of reconciling onto this row.
+   'act', 'https://www.irishstatutebook.ie/eli/1997/act/39', '1997/act/39',
    '{"en": "Taxes Consolidation Act 1997"}', '1997-11-30',
    '{}'),
   -- amending act used by instrument_relations
@@ -131,7 +135,7 @@ INSERT INTO legal_units (id, instrument_id, parent_id, unit_type, ordinal, path,
   ('c0000000-0000-4000-8000-000000000006', 'b0000000-0000-4000-8000-000000000005', NULL,
    'articulo', 63, 'art_63', 'Ley 35/2006, artículo 63', 'BOE-A-2006-20764-63', false),
   ('c0000000-0000-4000-8000-000000000007', 'b0000000-0000-4000-8000-000000000006', NULL,
-   'section', 15, 'sec_15', 'TCA 1997, s. 15', '1997/39-s15', false);
+   'section', 15, 'sec_15', 'Taxes Consolidation Act 1997, s. 15', '1997/act/39/section/15', false);
 
 -- ----------------------------------------------------------------------------
 -- Versions (validity intervals; '[)' convention)
@@ -158,8 +162,12 @@ INSERT INTO legal_unit_versions (id, legal_unit_id, validity, version_status, so
   ('d0000000-0000-4000-8000-000000000006', 'c0000000-0000-4000-8000-000000000006',
    daterange('2023-01-01', NULL, '[)'), 'in_force', NULL, 'Ley 35/2006, artículo 63',
    'a0000000-0000-4000-8000-000000000005', '{}'),
+  -- Starts at the EUROMOD window boundary: a real ingest of the TCA loads the
+  -- as-enacted baseline as [enactment, 2022-01-01) (Ireland publishes no
+  -- consolidation, see Ireland_sources_analysis.md), so an earlier start here
+  -- would overlap it and trip the no-overlap exclusion constraint.
   ('d0000000-0000-4000-8000-000000000007', 'c0000000-0000-4000-8000-000000000007',
-   daterange('2020-01-01', NULL, '[)'), 'in_force', NULL, 'TCA 1997, s. 15',
+   daterange('2022-01-01', NULL, '[)'), 'in_force', NULL, 'Taxes Consolidation Act 1997, s. 15',
    'a0000000-0000-4000-8000-000000000006', '{}');
 
 -- ----------------------------------------------------------------------------

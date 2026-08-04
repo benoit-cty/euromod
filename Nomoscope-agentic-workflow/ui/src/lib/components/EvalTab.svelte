@@ -65,6 +65,14 @@
     }
   }
 
+  // Target of the shell's Reload button while this tab is showing; the open
+  // run's detail is re-fetched too, unless that run is gone from the list.
+  export async function reload() {
+    const pk = selectedPk;
+    await loadRuns();
+    if (pk && runs?.some((r) => r.id === pk)) await selectRun(pk);
+  }
+
   function pct(v) {
     return v == null ? '—' : `${v.toFixed(1)}%`;
   }

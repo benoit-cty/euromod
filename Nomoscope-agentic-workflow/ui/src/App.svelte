@@ -30,6 +30,11 @@
   let error = $state('');
   let statusMsg = $state('');
   let dark = $state(localStorage.getItem('theme') === 'dark');
+  // Component instances, for the tab-aware Reload button below.
+  let dbTab = $state(null);
+  let paramsTab = $state(null);
+  let evalTab = $state(null);
+  let impactTab = $state(null);
 
   const selected = $derived(items.find((i) => i.id === selectedId) ?? null);
 
@@ -114,11 +119,34 @@
     tab = 'review';
   }
 
+  async function loadDecisions() {
+    const res = await api.loadDecisions(config.data_dir);
+    decisions = res.decisions;
+  }
+
   async function showAudit() {
     tab = 'audit';
     try {
-      const res = await api.loadDecisions(config.data_dir);
-      decisions = res.decisions;
+      await loadDecisions();
+    } catch (e) {
+      error = String(e);
+    }
+  }
+
+  // Each tab owns its own data source, so Reload acts on the tab in view —
+  // reloading the queue while the Database tab is up looks like a dead button.
+  const reloaders = {
+    review: refresh,
+    audit: loadDecisions,
+    database: () => dbTab?.reload(),
+    params: () => paramsTab?.reload(),
+    eval: () => evalTab?.reload(),
+    impact: () => impactTab?.reload(),
+  };
+
+  async function reloadActive() {
+    try {
+      await reloaders[tab]?.();
     } catch (e) {
       error = String(e);
     }
@@ -147,7 +175,9 @@
       <input size="10" bind:value={config.reviewer} />
     </label>
     <button onclick={pickDir} title={config.data_dir ?? 'no data directory'}>Data dir…</button>
-    <button onclick={refresh}>Reload</button>
+    <button onclick={reloadActive} disabled={!reloaders[tab]} title="Reload the current tab">
+      Reload
+    </button>
     <button onclick={exportAccepted}>Export accepted</button>
     <button onclick={() => (dark = !dark)}>{dark ? '☀' : '☾'}</button>
   </header>
@@ -170,6 +200,7 @@
   {#if visited.params}
     <main class="single" hidden={tab !== 'params'}>
       <ParamsTab
+        bind:this={paramsTab}
         dbUrl={config.db_url}
         phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
         onopenitem={openReviewItem}
@@ -185,7 +216,7 @@
   {/if}
   {#if visited.database}
     <main class="single" hidden={tab !== 'database'}>
-      <DatabaseTab dbUrl={config.db_url} />
+      <DatabaseTab bind:this={dbTab} dbUrl={config.db_url} />
     </main>
   {/if}
   {#if visited.ingest}
@@ -195,12 +226,12 @@
   {/if}
   {#if visited.eval}
     <main class="single" hidden={tab !== 'eval'}>
-      <EvalTab dbUrl={config.db_url} />
+      <EvalTab bind:this={evalTab} dbUrl={config.db_url} />
     </main>
   {/if}
   {#if visited.impact}
     <main class="single" hidden={tab !== 'impact'}>
-      <ImpactTab dbUrl={config.db_url} />
+      <ImpactTab bind:this={impactTab} dbUrl={config.db_url} />
     </main>
   {/if}
 </div>

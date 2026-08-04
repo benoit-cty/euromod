@@ -68,6 +68,13 @@
   $effect(() => {
     if (url && !stats && !loading && !error) loadStats();
   });
+
+  // Target of the shell's Reload button while this tab is showing: stats plus
+  // the current search, so results reflect a corpus that changed under us.
+  export async function reload() {
+    await loadStats();
+    if (results) await search();
+  }
 </script>
 
 <section class="panel db">

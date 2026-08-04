@@ -197,6 +197,11 @@
     if (dbUrl) refresh();
   });
 
+  // Target of the shell's Reload button while this tab is showing.
+  export function reload() {
+    return refresh();
+  }
+
   onMount(() => {
     const unlisten = api.onWorkflowLog((payload) => {
       if (payload.run_id !== runId) return;
