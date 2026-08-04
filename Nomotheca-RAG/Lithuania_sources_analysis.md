@@ -110,6 +110,10 @@ Scale check: 6 acts × ~10 consolidations ≈ 60 requests of 100–300 KB — tr
 
 ```sh
 cd Nomotheca-RAG/ingest/src/
+
+# Ingest the Country Report
+uv run python -m nomotheca_ingest.cli country-report fr ../country_reports/Y16_CR_LT.md -d postgresql://jrc:jrc@localhost:5434/legislation
+
 # Ingest the legislation (fast)
 export EUROMOD_DATABASE_URL=postgresql://jrc:jrc@localhost:5434/legislation
 for id in TAR.C677663D2202 TAR.0F9036415DBD TAR.068516AF734B TAR.1DEDD43B92AE TAR.3EEE59417F13 TAR.FDF42614DE52; do
