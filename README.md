@@ -31,6 +31,9 @@ cd XXXX
 docker compose up
 ```
 
+- Database interface: pgAdmin: http://localhost:5050
+- Phoenix (LLM traces / evals): http://localhost:6006
+
 Launch the UI in another terminal:
 ```sh
 cd Nomoscope-agentic-workflow/ui

@@ -117,3 +117,14 @@ Transformers release fixes it: in the current stack it breaks loading with
 `Metaspace object does not support item assignment`. The CLI exposes
 `--fix-mistral-regex` only as an opt-in for models that actually need it.
 
+#### Intel NPU usage
+
+The command never asked for the NPU. embeddings build has a --device option, and without it OpenVINO falls back to its default device, which is CPU (cli.py:140, core/embeddings.py:108-115). That's also the documented intent in CLAUDE.md: OpenVINO was chosen over ONNX for the local CPU path on the Ultra 7 265H, not for NPU offload. The 71% CPU is the embedding work happening where it was routed.
+
+Even if you passed --device NPU, it can't work under WSL. I just checked inside your venv: openvino.Core().available_devices returns ['CPU'], and there is no /dev/accel device node. WSL2 paravirtualizes the GPU (via /dev/dxg) but does not pass through the Intel NPU — Microsoft/Intel haven't shipped NPU passthrough for WSL2, so no Linux process in WSL can see it. Passing --device NPU would just make OpenVINO error out with "device not found".
+
+If you actually want the NPU used, the realistic paths are:
+
+Run the embedding build from native Windows (Windows Python + OpenVINO with the Intel NPU driver installed), pointing --database-url at the same Postgres on localhost:5434. Caveat: BGE-M3 uses dynamic input shapes, which the NPU plugin handles poorly — you'd likely need to reshape/pad to a static sequence length, and **throughput for this model may not beat the CPU anyway.**
+
+Otherwise, stay on CPU in WSL — that's the supported, tested path for this repo. If 71% CPU is too disruptive, lowering --batch-size or nice-ing the process is simpler than chasing the NPU.

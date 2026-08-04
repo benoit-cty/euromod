@@ -30,9 +30,9 @@ FR/NL/LT/ES/IE/BE rows already exist. Reset with `docker compose down -v && dock
 
 Create `ingest/src/nomotheca_ingest/countries/<cc>/` with `adapter.py`, `fetcher.py`, `parser.py`, `resolver.py`. The contract is `countries/base.py::CountryAdapter` (protocol) and the IR types in `core/ir.py`. Register it in `countries/registry.py` (`"<CC>": <Cc>Adapter` + import). Mirror the LT adapter — it is the most complete example.
 
-Load-bearing details the docs get subtly wrong (the **code** is authoritative):
+Load-bearing details that are easy to get wrong (the **code** is authoritative; `12_ingestion-architecture.md` §3–§5 now documents them too):
 
-- `parse(snapshot_bytes, ref, snapshot)` takes **three** args (the design doc shows two) — `snapshot.id` must land in every `VersionIR.fetch_snapshot_id`.
+- `parse(snapshot_bytes, ref, snapshot)` takes **three** args — `snapshot.id` must land in every `VersionIR.fetch_snapshot_id`.
 - **Adapters must construct with zero args** (`registry.get_adapter` calls `adapter_type()`).
 - `pipeline.ingest_instrument` defaults `source_code` to `f"{CC}-LEGI"` unless the adapter defines `default_source_code`. Set `default_source_code = "<your sources.code>"` on the adapter class — the Nomoscope scout invokes the CLI without `--source-code`, so a wrong default fails with `Unknown source code`.
 - `UnitIR.path` must be **ltree-safe** (letters/digits/underscore only — sanitize `6-1` → `6_1`); the loader casts it with `::ltree`.
@@ -41,7 +41,7 @@ Load-bearing details the docs get subtly wrong (the **code** is authoritative):
 - `InstrumentIR.title` is a `{lang: title}` dict — key it by the country language; the chunker's `context_header` picks from it.
 - Versions with open-ended validity: `valid_to=None`. If the source supplies already-closed contiguous ranges (LT), emit them as-is; the loader's supersession logic (`_chain_versions`) handles open-ended chains (FR-style) by closing the previous row.
 - `expand()` sees only the `ParsedDoc` — anything the next fetch generation needs must travel in `doc.metadata` (convention: a `child_refs` list of `{source_id, source_type, …}` dicts).
-- `SnapshotClient` is a dumb GET (no retries, no rate limiting, no `sources.terms` read despite the design doc). Politeness, auth, or anti-bot handling belongs inside your `fetcher.py`. Archive-first: parse only the bytes the snapshot stored.
+- `SnapshotClient` is a dumb GET (no retries, no rate limiting, no `sources.terms` read). Politeness, auth, or anti-bot handling belongs inside your `fetcher.py`. Archive-first: parse only the bytes the snapshot stored.
 - `canary_facts()` must return at least one `CanaryFact` per supported tax year. (No core runner exists yet — the facts still document the trust anchor and tests can assert them.)
 - Parsers are **pure functions** (no network/DB) — test them on inline fixture payloads.
 
