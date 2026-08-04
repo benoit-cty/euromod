@@ -131,13 +131,13 @@
   <header>
     <h1>EUROMOD Parameter Review</h1>
     <nav>
-      <button class:primary={tab === 'review'} onclick={() => (tab = 'review')}>Review queue</button>
+      <button class:primary={tab === 'ingest'} onclick={() => (tab = 'ingest')}>Ingest</button>
+      <button class:primary={tab === 'database'} onclick={() => (tab = 'database')}>Database</button>
       <button class:primary={tab === 'params'} onclick={() => (tab = 'params')}>
         Parameters{#if paramsRunning}<span class="running-dot" title="agentic run in progress">●</span>{/if}
       </button>
+      <button class:primary={tab === 'review'} onclick={() => (tab = 'review')}>Review queue</button>
       <button class:primary={tab === 'audit'} onclick={showAudit}>Audit log</button>
-      <button class:primary={tab === 'database'} onclick={() => (tab = 'database')}>Database</button>
-      <button class:primary={tab === 'ingest'} onclick={() => (tab = 'ingest')}>Ingest</button>
       <button class:primary={tab === 'eval'} onclick={() => (tab = 'eval')}>Evaluation</button>
       <button class:primary={tab === 'impact'} onclick={() => (tab = 'impact')}>Impact</button>
     </nav>
