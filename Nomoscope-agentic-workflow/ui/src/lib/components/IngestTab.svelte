@@ -26,7 +26,7 @@
   let embDryRun = $state(false);
 
   // --- translation form ---
-  let model = $state('azure_openai/gpt-5.4-nano');
+  let model = $state('azure_openai/gpt-5.6-luna');
   let targetLang = $state('en');
   let trLimit = $state('');
   let requestTimeout = $state(120);

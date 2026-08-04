@@ -26,7 +26,7 @@ the environment / repo `.env` files.
 uv sync --extra embeddings --extra translate   # uv sync installs exactly the listed extras
 uv run python -m nomotheca_ingest.cli translate run \
 	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
-	--model=azure_openai/gpt-5.4-nano
+	--model=azure_openai/gpt-5.6-luna
 ```
 
 `nomoscope_workflow.config.load_config()` only auto-loads `.env` from the `euromod`

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from nomotheca_ingest.countries.base import CountryAdapter
 from nomotheca_ingest.countries.fr.adapter import FrAdapter
+from nomotheca_ingest.countries.lt.adapter import LtAdapter
 
 
 _ADAPTERS: dict[str, type[CountryAdapter]] = {
     "FR": FrAdapter,
+    "LT": LtAdapter,
 }
 
 

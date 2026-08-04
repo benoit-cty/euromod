@@ -15,6 +15,7 @@ class FrAdapter:
     """France implementation of the country adapter protocol."""
 
     jurisdiction = "FR"
+    default_source_code = "FR-LEGI"
 
     def __init__(self, resolver: FrResolver | None = None) -> None:
         """Create the adapter with an optional resolver implementation."""
