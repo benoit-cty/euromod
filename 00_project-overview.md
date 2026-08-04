@@ -1,7 +1,6 @@
 # JRC Expert Contract — Project Overview & Master Plan
 
 **Client:** JRC.B.2 (Fiscal Policy Analysis Unit), Directorate B, Seville
-**Main contact:** Hannes Serruys
 **Goal:** Pipeline that partially automates the update & validation of EUROMOD (and potentially EDGE-M3 / DIRECT) fiscal parameters via a multilingual RAG system + agentic workflow, for 5 pilot member states.
 
 ---

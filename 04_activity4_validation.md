@@ -41,7 +41,7 @@ Dataset format: the Activity 1 schema itself, plus an `expected_*` block. Stored
 
 - Freeze golden set *before* running comparative evaluations (no tuning on the test set; keep a small dev set separate).
 - Every evaluation run: pinned model versions, prompts, retrieval config → run manifest committed to GitLab; results reproducible.
-- Human adjudication protocol for ambiguous cases (who decides, how disagreement is recorded) — likely national-team colleagues or Hannes/Luis/Hugo for pilot countries.
+- Human adjudication protocol for ambiguous cases (who decides, how disagreement is recorded) — likely national-team colleagues or Euromod team for pilot countries.
 
 ## 4. Sequencing
 

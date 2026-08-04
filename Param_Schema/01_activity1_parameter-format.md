@@ -55,7 +55,6 @@ Core tables (detailed in `08_schema-proposal-for-validation.md`):
 
 ## 6. Validation process before implementation
 
-- Circulate doc 08 + question list (`09_schema-validation-questions.md`) to Hannes, Luis, Kosta, Hugo ahead of kick-off; walk through the worked examples live; capture decisions in `07_risks-and-decisions.md` decision log.
 - Acceptance = JRC sign-off on doc 08's decision points; then freeze schema v1.0.
 
 ## 7. Inputs still needed from JRC

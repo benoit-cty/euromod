@@ -22,7 +22,7 @@ Ingest the fiscal law of 5 countries → normalize → chunk → embed → hybri
 - ❌ Ingestion cost dominates the project; refresh pipeline needed forever; most of the corpus never queried; OCR/parsing quality battles for hard-access countries.
 
 ### B. Pure agentic retrieval ("agent with country skills", no corpus)
-An agent with one **skill per country** (instructions + scripts: endpoints, search strategy, consolidation quirks — cf. Hugo's scraper/skills exploration) fetches live from official sources at run time.
+An agent with one **skill per country** (instructions + scripts: endpoints, search strategy, consolidation quirks — cf. scraper/skills exploration) fetches live from official sources at run time.
 - ✅ Near-zero ingestion; always current; effort scales with usage, not corpus size; per-country skills map 1:1 to the contract's "accessibility comparison" axis.
 - ❌ **Fails the contract's point-in-time requirement** wherever portals only serve current consolidations (FR LEGI supports as-of dates natively; most countries don't). Non-reproducible evaluation runs (live web changes between runs). Anti-bot friction (Anubis-type) moves from ingestion time to run time = unpredictable mid-run failures. No corpus asset delivered to JRC.
 
@@ -49,14 +49,16 @@ Framing for JRC: not "no RAG" but **"retrieval-first RAG with on-demand corpus c
 ## 4. What this buys the 20-day budget
 
 - Eliminates the bulk-ingestion workstream (the largest item in plan v1) — several days recovered.
-- The per-country skill for France can seed from existing Légifrance/DILA knowledge (Tricoteuses/Canutes lessons); Ireland aligns with Hannes's prototype; Hugo's skills exploration becomes mainline work, not a side track.
+- The per-country skill for France can seed from existing Légifrance/DILA knowledge (Tricoteuses/Canutes lessons); Ireland aligns with Hannes's prototype; skills exploration becomes mainline work, not a side track.
 - Embedding/reranking infrastructure (GPU, model choice, chunk tuning) drops out of the critical path entirely.
 - The vertical slice becomes achievable end-to-end in ~2–3 days: known parameter → citation lookup → skill fetch → proposal → review.
 
 ## 5. Questions to validate with the team
 
 1. ⭐ Does JRC expect an **exhaustive corpus** as a deliverable/asset in itself, or is a demand-driven cache acceptable? (This is the fork between A and C — everything else follows.)
-2. ⭐ Hugo — state of the scraper/skills exploration: which countries covered, what interface, can it be promoted to the official country-adapter mechanism?
+=> No, only the legislation needed for Euromod.
+
+2. ⭐ state of the scraper/skills exploration: which countries covered, what interface, can it be promoted to the official country-adapter mechanism?
 3. For the pilot countries: which official portals support historical/point-in-time consolidations natively (FR: yes via LEGI)? Where they don't, is lazy snapshotting from now on acceptable, accepting thin history for past dates?
 4. What share of pilot parameters have a prior citation in EUROMOD Country Reports? (If >80%, the lookup-first argument is empirically settled — checkable in an afternoon.)
 5. ⭐ Is "embeddings only if KPIs demand it" acceptable in the Deliverable 2 architecture, with the pgvector slot reserved? (Keeps the multilingual-embedding comparison available for the report if activated.)

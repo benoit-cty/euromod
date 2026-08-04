@@ -24,10 +24,10 @@ Grouped by theme; the ⭐ items materially affect deliverables or contractual fe
 
 ## D. Ways of working
 14. ⭐ Acceptance criteria per deliverable (payments are acceptance-gated) — agree in writing.
-15. Division of labour expert ↔ IT team for Activity 2 implementation and Activity 3 UI (who codes what; Kosta's role on UI?).
+15. Division of labour expert ↔ IT team for Activity 2 implementation and Activity 3 UI (who codes what; role on UI?).
 16. Fortnightly call slot + standing agenda; async channel (email? Teams?).
 17. Seville visit timing — propose Sep/Oct during architecture drafting (contract ties it to Activities 1–2).
-18. Roles of Hugo, Luis, Hannes, Kosta on the JRC side; who reviews which deliverable?
+18. Roles of the team on the JRC side; who reviews which deliverable?
 
 ## E. Report & publication
 19. Technical report template, publication channel, clearance timeline (does 31 Dec mean draft-final or cleared-final?).
