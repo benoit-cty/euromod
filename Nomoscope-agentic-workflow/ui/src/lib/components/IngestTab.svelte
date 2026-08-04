@@ -18,7 +18,7 @@
 
   // --- embeddings form ---
   let modelPath = $state('models/bge-m3-openvino');
-  let backend = $state('torch'); // torch | openvino
+  let backend = $state('openvino'); // torch | openvino
   let device = $state('');
   let modelId = $state(1);
   let batchSize = $state(16);
