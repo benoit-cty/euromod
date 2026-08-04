@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 
 from nomotheca_ingest.countries.lt.adapter import LtAdapter
-from nomotheca_ingest.countries.lt.parser import parse_tar_json
+from nomotheca_ingest.countries.lt.parser import _header_official_nr, parse_tar_json
 from nomotheca_ingest.countries.lt.resolver import LtResolver
 from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef
 
@@ -55,9 +55,14 @@ INDEX_PAYLOAD = json.dumps(
     }
 ).encode()
 
-CONSOLIDATION_TEXT = """Suvestinė redakcija nuo 2024-01-01 iki 2024-05-30
+CONSOLIDATION_TEXT = """LIETUVOS RESPUBLIKOS
+
+Suvestinė redakcija nuo 2024-01-01 iki 2024-05-30
 
 Įstatymas paskelbtas: Žin. 2002, Nr. 73-3085, i. k. 1021010ISTA0IX-1007
+
+Nauja įstatymo redakcija nuo 2012-01-01:
+Nr. XI-1772, 2011-12-01, Žin., 2011, Nr. 155-7353 (2011-12-20)
 
 LIETUVOS RESPUBLIKOS
 GYVENTOJŲ PAJAMŲ MOKESČIO
@@ -163,6 +168,12 @@ def test_consolidation_splits_articles_with_validity_and_citations():
     assert version.texts[0].lang == "lt"
     assert version.texts[0].content.startswith("20 straipsnis. Neapmokestinamasis pajamų dydis")
     assert "8 964 eurai" in version.texts[0].content
+
+
+def test_header_official_nr_skips_gazette_and_amending_act_numbers():
+    # The header cites the gazette (Nr. 73-3085) and an amending act (Nr. XI-1772)
+    # before the enactment line; only "2002 m. ... Nr. IX-1007" is the act's own number.
+    assert _header_official_nr(CONSOLIDATION_TEXT) == "IX-1007"
 
 
 def test_adapter_expands_child_refs_into_work_items():

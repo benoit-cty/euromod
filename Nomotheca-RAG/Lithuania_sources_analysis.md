@@ -108,6 +108,38 @@ Unlike FR (where resolve and fetch needed different sources), LT's single API se
 
 Scale check: 6 acts × ~10 consolidations ≈ 60 requests of 100–300 KB — trivial; the API is a state open-data platform designed for bulk consumption, no politeness concerns beyond the client's existing single-flight behaviour.
 
+```sh
+cd Nomotheca-RAG/ingest/src/
+# Ingest the legislation (fast)
+export EUROMOD_DATABASE_URL=postgresql://jrc:jrc@localhost:5434/legislation
+for id in TAR.C677663D2202 TAR.0F9036415DBD TAR.068516AF734B TAR.1DEDD43B92AE TAR.3EEE59417F13 TAR.FDF42614DE52; do
+  echo "=== $id ==="
+  uv run python -m nomotheca_ingest.cli instrument lt "$id" 2>&1 | tail -3
+done
+# Compute embeddings (~ 40 minutes on my laptop for 1 000 units)
+uv run --extra embeddings python -m nomotheca_ingest.cli embeddings build --model-path models/bge-m3-openvino --backend openvino --model-id 1 --batch-size 16 --progress-json --database-url postgresql://jrc:jrc@localhost:5434/legislation
+
+# Translate in english (a few hours because of API rate for azure/gpt5.6-luna)
+uv run python -m nomotheca_ingest.cli translate run \
+	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
+	--model=azure_openai/gpt-5.6-luna
+
+# Ingest the Euromod parameters
+uv  run  nomoscope-workflow  ingest-params  ../../extracted_parameters/enriched/LT.enriched.json
+
+```
+
+| Act | National id | Units | Dated versions |
+|---|---|---|---|
+| GPMĮ — personal income tax | IX-1007 | 43 | 380 |
+| VSDĮ — state social insurance | I-1336 | 45 | 719 |
+| LMSDĮ — sickness & maternity | IX-110 | 36 | 504 |
+| IVĮ — child benefits | I-621 | 27 | 131 |
+| PSPĮ — cash social assistance | IX-1675 | 31 | 279 |
+| NSDĮ — unemployment insurance | IX-1904 | 21 | 168 |
+
+Total: 203 units, 2 181 versions, ~2 900 chunks.
+
 ## 4. What transposes from the FR findings
 
 - **Same triangle, different winner.** Official portal (human, blocked) / official open-data API (authoritative, excellent) / community mirror (documentation only). For LT the official API corner wins outright — no Tricoteuses-style intermediary needed, and *resolve* needs no separate database at all.
@@ -121,3 +153,13 @@ Scale check: 6 acts × ~10 consolidations ≈ 60 requests of 100–300 KB — tr
 2. Government *nutarimai* for MMA/BSI/SPB: same API, but the values are in short standalone resolutions rather than consolidated acts — decide whether to ingest them as one-version instruments or route them via `national_team_source`.
 3. English translations on e-Seimas: worth ingesting as `authenticity='official_translation'` where they exist and are dated? (Convenience for the UI; MT-EN remains the retrieval path.)
 4. Rate limits / ToS: CC BY 4.0, keyless. Confirm no burst limits on get.data.gov.lt before a full 6-act seed (the lt-eli-mcp client retries on 429, suggesting they exist).
+
+## 6. Status (2026-08-04)
+
+All six anchor acts are ingested end-to-end (203 units, 2 181 dated versions across the 2022+ window): GPMĮ IX-1007, VSDĮ I-1336, LMSDĮ IX-110, IVĮ I-621, PSPĮ IX-1675, NSDĮ IX-1904. Header quirks found on the full sweep, all handled in `countries/lt/parser.py`:
+
+- Consolidation headers cite **amending** acts (`Nauja redakcija … Nr. XI-1772`) before the act's own number — the official number is taken from the enactment date line (`2003 m. liepos 1 d. Nr. IX-1675`), and for `KNOWN_ACTS` the curated number always wins so the Dokumentas and Suvestine phases reconcile to one instrument.
+- Some acts (IVĮ) open with a stray lone `LIETUVOS RESPUBLIKOS` line before the editorial notes — the title extractor collects all uppercase candidate blocks and prefers the one ending in `ĮSTATYMAS`.
+- The API intermittently returns HTTP 500 (HTML body) on large rows, more often under burst load — the fetcher retries with backoff (5 attempts) and raises a clear error instead of letting the HTML reach the JSON parser.
+
+Next: `country-report lt`, then `translate` + `embeddings` over the LT corpus.

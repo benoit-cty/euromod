@@ -34,9 +34,10 @@ KNOWN_ACTS: dict[str, tuple[str, str]] = {
 
 ARTICLE_RE = re.compile(r"^(\d+(?:-\d+)*)\s+straipsnis\.\s*(.*)$", re.MULTILINE)
 CHAPTER_RE = re.compile(r"^([IVXLC]+(?:-[IVXLC]+)*)\s+SKYRIUS\s*$", re.MULTILINE)
-# Seimas act numbers carry a roman-numeral term prefix (IX-1007); requiring the
-# letter prefix avoids grabbing the gazette number (Žin. 2002, Nr. 73-3085).
-OFFICIAL_NR_RE = re.compile(r"\bNr\.\s*([A-Z]+(?:-\d+)+)\b")
+# The act's own number sits on the enactment line ("2003 m. liepos 1 d. Nr. IX-1675").
+# Anchoring on that line skips both gazette numbers (Žin. 2002, Nr. 73-3085) and
+# "Nauja redakcija" notes citing amending acts (Nr. XI-1772, ...), which appear first.
+OFFICIAL_NR_RE = re.compile(r"^\d{4}\s+m\..*?\bNr\.\s*([A-Z]+(?:-\d+)+)\b", re.MULTILINE)
 
 
 def parse_tar_json(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
@@ -205,10 +206,15 @@ def _split_articles(text: str) -> list[tuple[str, str, str, str | None]]:
 
 
 def _act_identity(dokumento_id: str, official_nr: str | None) -> tuple[str, str]:
-    """Return (official number, short citation label) for an act."""
+    """Return (official number, short citation label) for an act.
+
+    For known acts the curated number always wins: the document row and each
+    consolidation must resolve to the same national_id or the loader inserts
+    duplicate instruments (and trips the unique eli constraint).
+    """
     known = KNOWN_ACTS.get(dokumento_id)
     if known:
-        return (official_nr or known[0], known[1])
+        return known
     number = official_nr or dokumento_id
     return (number, number)
 
@@ -220,16 +226,32 @@ def _header_official_nr(text: str) -> str | None:
 
 
 def _header_title(text: str) -> str | None:
-    """Extract the act title from the uppercase block heading a consolidation."""
-    lines = []
-    for line in text.splitlines()[:40]:
-        stripped = line.strip()
-        if not stripped or stripped.startswith("Suvestinė") or stripped.startswith("Įstatymas paskelbtas"):
-            continue
-        if stripped != stripped.upper():
-            break
-        lines.append(stripped)
-    return " ".join(lines).strip() or None
+    """Extract the act title: an uppercase block starting "LIETUVOS RESPUBLIKOS".
+
+    Editorial notes precede it (gazette reference, "Nauja redakcija" amendments),
+    and some acts open with a stray lone "LIETUVOS RESPUBLIKOS" line before those
+    notes — so collect every candidate block and prefer the one that actually
+    ends with the act-type word ("… ĮSTATYMAS").
+    """
+    blocks: list[list[str]] = []
+    current: list[str] | None = None
+    for line in text.splitlines()[:80]:
+        stripped = line.replace("\xa0", " ").strip()
+        uppercase = bool(stripped) and stripped == stripped.upper()
+        if current is None:
+            if uppercase and stripped.startswith("LIETUVOS RESPUBLIKOS"):
+                current = [stripped]
+        elif uppercase:
+            current.append(stripped)
+        else:
+            blocks.append(current)
+            current = None
+    if current:
+        blocks.append(current)
+    for block in blocks:
+        if block[-1].endswith("ĮSTATYMAS"):
+            return " ".join(block)
+    return " ".join(max(blocks, key=len)) if blocks else None
 
 
 def _instrument_type(rusis: str | None) -> str:

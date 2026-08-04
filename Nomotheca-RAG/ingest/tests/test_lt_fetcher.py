@@ -2,6 +2,8 @@
 
 from uuid import uuid4
 
+import pytest
+
 from nomotheca_ingest.countries.lt.fetcher import (
     consolidation_index_url,
     consolidation_url,
@@ -72,7 +74,7 @@ def test_fetch_tar_retries_transient_upstream_errors(monkeypatch):
     assert snapshot.http_status == 200
     assert client.calls == 2
 
-    exhausted = _FlakyClient(failures=5)
-    snapshot = fetch_tar(_ref("TAR.C677663D2202"), exhausted)
-    assert snapshot.http_status == 500
-    assert exhausted.calls == 3
+    exhausted = _FlakyClient(failures=99)
+    with pytest.raises(RuntimeError, match="HTTP 500 after retries"):
+        fetch_tar(_ref("TAR.C677663D2202"), exhausted)
+    assert exhausted.calls == 5

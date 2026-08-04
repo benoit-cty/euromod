@@ -76,7 +76,7 @@ def url_for_ref(ref: SourceRef) -> str:
 # open-ended consolidation); a plain retry succeeds. Failed attempts still
 # archive their snapshot, which is fine — snapshots are append-only provenance.
 _RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
-_MAX_ATTEMPTS = 3
+_MAX_ATTEMPTS = 5
 
 
 def fetch_tar(ref: SourceRef, http: SnapshotClient) -> Snapshot:
@@ -88,4 +88,9 @@ def fetch_tar(ref: SourceRef, http: SnapshotClient) -> Snapshot:
             break
         time.sleep(2**attempt)
         snapshot = http.get(ref, url)
+    if snapshot.http_status != 200:
+        # Nothing downstream checks the status; failing here keeps a 500's HTML
+        # body from surfacing as an opaque JSONDecodeError in the parser.
+        msg = f"TAR fetch failed with HTTP {snapshot.http_status} after retries: {url}"
+        raise RuntimeError(msg)
     return snapshot
