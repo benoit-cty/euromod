@@ -199,9 +199,14 @@ def build_chunk_embeddings(
         )
     else:
         typer.echo(
-            f"scanned={stats.scanned} embedded={stats.embedded} "
+            f"scanned={stats.scanned} embedded={stats.embedded} skipped={stats.skipped} "
             f"model_id={model_id} backend={backend} dry_run=False"
         )
+        if stats.skipped:
+            typer.echo(
+                f"note: {stats.skipped} chunk(s) were re-chunked by a concurrent ingest "
+                "during this run; re-run the build to embed the replacements."
+            )
 
 
 @translate_app.command("run")

@@ -104,10 +104,11 @@
         <h3>By jurisdiction</h3>
         <table>
           <thead>
-            <tr><th>Code</th><th>Name</th><th>Instr.</th><th>Units</th><th>Versions</th><th>In force</th><th>Texts</th><th>Chunks</th></tr>
+            <tr><th>Code</th><th>Name</th><th>Instr.</th><th>Units</th><th>Versions</th><th>In force</th><th>Texts</th><th>Chunks</th><th>Embedded</th></tr>
           </thead>
           <tbody>
             {#each stats.by_country as row}
+              {@const embedded = row.chunks === 0 ? 0 : Math.round((row.embedded_chunks / row.chunks) * 100)}
               <tr>
                 <td><strong>{row.code}</strong></td>
                 <td>{row.name}</td>
@@ -117,6 +118,16 @@
                 <td>{row.in_force}</td>
                 <td>{row.texts}</td>
                 <td>{row.chunks}</td>
+                <td>
+                  {#if row.chunks === 0}
+                    <span class="muted">—</span>
+                  {:else if row.embedded_chunks === 0}
+                    <span class="badge pending">none</span>
+                  {:else}
+                    <span class="badge pass" class:pending={embedded < 100}
+                      >{row.embedded_chunks} ({embedded}%)</span>
+                  {/if}
+                </td>
               </tr>
             {/each}
           </tbody>

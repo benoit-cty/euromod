@@ -151,17 +151,17 @@ def build_embeddings(
         _emit_progress(progress, "candidate", stats, len(batch))
         if len(batch) >= batch_size:
             _emit_progress(progress, "encoding", stats, len(batch))
-            embedded = _embed_batch(conn, backend, batch, model_id=model_id, dry_run=dry_run)
+            embedded, skipped = _embed_batch(conn, backend, batch, model_id=model_id, dry_run=dry_run)
             if commit_each_batch and not dry_run:
                 conn.commit()
-            stats = EmbeddingBuildStats(stats.scanned, stats.embedded + embedded, stats.skipped)
+            stats = EmbeddingBuildStats(stats.scanned, stats.embedded + embedded, stats.skipped + skipped)
             _emit_progress(progress, "embedded", stats, embedded)
             batch = []
 
     if batch:
         _emit_progress(progress, "encoding", stats, len(batch))
-        embedded = _embed_batch(conn, backend, batch, model_id=model_id, dry_run=dry_run)
-        stats = EmbeddingBuildStats(stats.scanned, stats.embedded + embedded, stats.skipped)
+        embedded, skipped = _embed_batch(conn, backend, batch, model_id=model_id, dry_run=dry_run)
+        stats = EmbeddingBuildStats(stats.scanned, stats.embedded + embedded, stats.skipped + skipped)
         _emit_progress(progress, "embedded", stats, embedded)
 
     _emit_progress(progress, "done", stats)
@@ -276,28 +276,40 @@ def _embed_batch(
     *,
     model_id: int,
     dry_run: bool,
-) -> int:
-    """Encode and persist a batch of chunks."""
+) -> tuple[int, int]:
+    """Encode and persist a batch of chunks, returning (embedded, skipped).
+
+    The candidate list is read before encoding, which takes minutes, so a
+    concurrent ingest can retire a chunk id in between: `_replace_chunks`
+    deletes and re-inserts a unit text's chunks with fresh UUIDs. Inserting
+    against `chunks` instead of blind-inserting the id drops those vanished
+    chunks rather than failing the run on the foreign key; the re-chunked rows
+    are picked up by the next build.
+    """
     if dry_run:
-        return len(batch)
+        return len(batch), 0
 
     vectors = backend.encode([chunk.input_text for chunk in batch])
     if len(vectors) != len(batch):
         msg = f"Backend returned {len(vectors)} vectors for {len(batch)} inputs"
         raise ValueError(msg)
 
+    embedded = 0
     with conn.transaction():
         with conn.cursor() as cur:
             for chunk, vector in zip(batch, vectors, strict=True):
                 cur.execute(
                     """
                     INSERT INTO embeddings (chunk_id, model_id, embedding, input_hash)
-                    VALUES (%s, %s, %s::halfvec, %s)
+                    SELECT c.id, %s, %s::halfvec, %s
+                    FROM chunks c
+                    WHERE c.id = %s
                     ON CONFLICT (chunk_id, model_id) DO UPDATE
                     SET embedding = EXCLUDED.embedding,
                         input_hash = EXCLUDED.input_hash,
                         embedded_at = now()
                     """,
-                    (chunk.id, model_id, halfvec_literal(vector), chunk.input_hash),
+                    (model_id, halfvec_literal(vector), chunk.input_hash, chunk.id),
                 )
-    return len(batch)
+                embedded += cur.rowcount
+    return embedded, len(batch) - embedded

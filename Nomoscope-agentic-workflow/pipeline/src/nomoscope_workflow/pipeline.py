@@ -612,9 +612,26 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
         record, as_of = state["record"], state["as_of"]
         state["retrieval_as_of"] = _retrieval_as_of(record, as_of)
 
+        current = _current_value(record, as_of)
+
+        # National-team-sourced values (a modelling assumption, a schedule set
+        # below the national level) have no legislation to cite and are never
+        # overwritten: route them without spending retrieval or LLM calls.
+        # Without this the run costs a full propose+critique and a scout attempt
+        # only for diff to discard the result at the very end.
+        if current is not None and current.source_type == SourceType.NATIONAL_TEAM:
+            with step_span(
+                tracer, "national_team_source", input_value={"as_of": as_of.isoformat()}
+            ) as span:
+                set_output(span, {"routing": Routing.NATIONAL_TEAM_SOURCE})
+            state.update({"hits": [], "citations": [], "attempts": 0})
+            state.update(diff(state))
+            state.update(enqueue(state))
+            return state
+
         # Formula parameters ($PSS * 4) are never stated by legislation: route
         # them to their anchor without spending retrieval or LLM calls.
-        derived = _derived_refs(record, _current_value(record, as_of))
+        derived = _derived_refs(record, current)
         if derived:
             with step_span(tracer, "derived", input_value={"references": derived}) as span:
                 set_output(span, {"routing": Routing.DERIVED})

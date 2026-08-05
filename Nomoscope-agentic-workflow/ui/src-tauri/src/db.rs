@@ -42,13 +42,15 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
                     count(DISTINCT t.id) FILTER (WHERE t.authenticity = 'authentic')::bigint            AS authentic,
                     count(DISTINCT t.id) FILTER (WHERE t.authenticity = 'official_translation')::bigint AS official_translation,
                     count(DISTINCT t.id) FILTER (WHERE t.authenticity = 'machine_translation')::bigint  AS machine_translation,
-                    count(DISTINCT c.id)::bigint  AS chunks
+                    count(DISTINCT c.id)::bigint  AS chunks,
+                    count(DISTINCT e.chunk_id)::bigint AS embedded_chunks
              FROM jurisdictions j
              LEFT JOIN instruments i         ON i.jurisdiction_id = j.id
              LEFT JOIN legal_units u         ON u.instrument_id = i.id
              LEFT JOIN legal_unit_versions v ON v.legal_unit_id = u.id
              LEFT JOIN unit_texts t          ON t.version_id = v.id
              LEFT JOIN chunks c              ON c.unit_text_id = t.id
+             LEFT JOIN embeddings e          ON e.chunk_id = c.id
              GROUP BY j.code, j.name ORDER BY j.code",
             &[],
         )
@@ -92,6 +94,7 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
             "official_translation": r.get::<_, i64>("official_translation"),
             "machine_translation": r.get::<_, i64>("machine_translation"),
             "chunks": r.get::<_, i64>("chunks"),
+            "embedded_chunks": r.get::<_, i64>("embedded_chunks"),
         })).collect::<Vec<_>>(),
         "embedding_models": models.iter().map(|r| json!({
             "id": r.get::<_, i32>(0),

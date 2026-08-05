@@ -175,14 +175,53 @@ def system_year_bounds(conn: psycopg.Connection, country: str) -> tuple[int, int
     return int(row[0]), int(row[1])
 
 
+_TEMPORAL_BASIS_SQL = (
+    "UPDATE params.parameters SET temporal_basis = %s "
+    "WHERE model_target = %s AND temporal_basis IS DISTINCT FROM %s "
+    "RETURNING model_target"
+)
+
+# source_type sits on the value rows, but curation states it for the parameter:
+# what makes a value national-team-sourced (a municipal fee schedule, an
+# assumption) is a property of the quantity, not of one version of it — so every
+# value of the target gets the flag, and _current_value() finds it whatever the
+# run's as_of.
+_SOURCE_TYPE_SQL = (
+    "UPDATE params.model_values v SET source_type = %s "
+    "FROM params.parameters p "
+    "WHERE v.parameter_id = p.id AND p.model_target = %s "
+    "AND v.source_type IS DISTINCT FROM %s "
+    "RETURNING p.model_target"
+)
+
+
+def _apply_curation_rule(
+    conn: psycopg.Connection, stats: dict, sql: str, target: str, value: str
+) -> None:
+    """Run one curation UPDATE, classifying the target as updated/unchanged/missing."""
+    if conn.execute(sql, (value, target, value)).fetchone() is not None:
+        stats["updated"] += 1
+        return
+    exists = conn.execute(
+        "SELECT 1 FROM params.parameters WHERE model_target = %s", (target,)
+    ).fetchone()
+    if exists is None:
+        stats["missing"].append(target)
+    else:
+        stats["unchanged"] += 1
+
+
 def apply_curation(conn: psycopg.Connection, path: Path) -> dict:
     """Apply a curation overlay (curation/<CC>.curation.yaml) onto ingested rows.
 
-    The EUROMOD export carries no `temporal_basis`: it is knowledge we hold, not
-    theirs, and the enriched JSON is read-only. Before this, the flag was a
-    hand-run UPDATE recorded nowhere — lost on `docker compose down -v` and
-    invisible to review. The overlay is the versioned source of truth; applying
-    it is idempotent, so it is safe to re-run after every `ingest-params`.
+    The EUROMOD export carries no `temporal_basis`, and its `source_type` is
+    empty even where we know a value is not legislation-derivable: that is
+    knowledge we hold, not theirs, and the enriched JSON is read-only. Before
+    this, the flag was a hand-run UPDATE recorded nowhere — lost on
+    `docker compose down -v` and invisible to review. The overlay is the
+    versioned source of truth; applying it is idempotent, so it is safe to
+    re-run after every `ingest-params` — and it MUST be re-run, since ingesting
+    a country file replaces its model_values rows.
 
     Unknown model_targets are reported rather than silently ignored: a typo or a
     parameter renamed in a new export would otherwise leave the flag unset and
@@ -193,24 +232,13 @@ def apply_curation(conn: psycopg.Connection, path: Path) -> dict:
     stats = {"updated": 0, "unchanged": 0, "missing": []}
     with conn.transaction():
         for rule in doc.get("temporal_basis") or []:
-            basis = rule["basis"]
+            basis = TemporalBasis(rule["basis"]).value  # loud on a typo'd overlay
             for target in rule.get("targets") or []:
-                row = conn.execute(
-                    "UPDATE params.parameters SET temporal_basis = %s "
-                    "WHERE model_target = %s AND temporal_basis IS DISTINCT FROM %s "
-                    "RETURNING model_target",
-                    (basis, target, basis),
-                ).fetchone()
-                if row is not None:
-                    stats["updated"] += 1
-                    continue
-                exists = conn.execute(
-                    "SELECT 1 FROM params.parameters WHERE model_target = %s", (target,)
-                ).fetchone()
-                if exists is None:
-                    stats["missing"].append(target)
-                else:
-                    stats["unchanged"] += 1
+                _apply_curation_rule(conn, stats, _TEMPORAL_BASIS_SQL, target, basis)
+        for rule in doc.get("source_type") or []:
+            source_type = SourceType(rule["type"]).value
+            for target in rule.get("targets") or []:
+                _apply_curation_rule(conn, stats, _SOURCE_TYPE_SQL, target, source_type)
     if country:
         stats["country"] = country
     return stats
