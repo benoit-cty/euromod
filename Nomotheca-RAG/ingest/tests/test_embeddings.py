@@ -14,6 +14,7 @@ from nomotheca_ingest.core.embeddings import (
     EMBEDDING_BACKENDS,
     EmbeddingProgressCallback,
     SentenceTransformerBackend,
+    build_embeddings,
     embedding_input,
     embedding_input_hash,
     halfvec_literal,
@@ -53,6 +54,77 @@ def test_halfvec_literal_rejects_wrong_dimension() -> None:
     """BGE-M3 embeddings must be 1024-dimensional before insertion."""
     with pytest.raises(ValueError, match="Expected 1024 dimensions"):
         halfvec_literal([0.1, 0.2])
+
+
+class _FakeCursor:
+    """Cursor stub serving the candidate scan and recording embedding inserts."""
+
+    def __init__(self, conn: "_FakeConn", *, dict_rows: bool) -> None:
+        self._conn = conn
+        self._dict_rows = dict_rows
+        self._rows: list[dict[str, object]] = []
+        self.rowcount = -1
+
+    def __enter__(self) -> "_FakeCursor":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def execute(self, sql: str, params: tuple[object, ...] = ()) -> None:
+        if "FROM chunks c" in sql and sql.lstrip().startswith("SELECT"):
+            self._rows = list(self._conn.candidates)
+        elif "INSERT INTO embeddings" in sql:
+            chunk_id = params[-1]
+            self.rowcount = 1 if chunk_id in self._conn.live_chunk_ids else 0
+            if self.rowcount:
+                self._conn.inserted.append(chunk_id)
+        else:
+            self._rows = []
+
+    def __iter__(self):
+        return iter(self._rows)
+
+
+class _FakeConn:
+    """Connection stub with a candidate list and a set of still-live chunks."""
+
+    def __init__(self, candidates: list[dict[str, object]], live_chunk_ids: set[str]) -> None:
+        self.candidates = candidates
+        self.live_chunk_ids = live_chunk_ids
+        self.inserted: list[object] = []
+
+    def cursor(self, row_factory: object = None) -> _FakeCursor:
+        return _FakeCursor(self, dict_rows=row_factory is not None)
+
+    def transaction(self) -> _FakeCursor:
+        return _FakeCursor(self, dict_rows=False)
+
+    def commit(self) -> None:
+        return None
+
+
+class _ConstantBackend:
+    """Backend stub returning one fixed vector per input."""
+
+    def encode(self, inputs: list[str]) -> list[list[float]]:
+        return [[0.1] * BGE_M3_DIM for _ in inputs]
+
+
+def test_build_embeddings_skips_chunks_removed_by_a_concurrent_ingest() -> None:
+    """A chunk re-chunked mid-run is skipped, not a foreign-key failure."""
+    candidates = [
+        {"id": "live-chunk", "context_header": "Code > Art. 1", "content": "un", "input_hash": None},
+        {"id": "vanished-chunk", "context_header": "Code > Art. 2", "content": "deux", "input_hash": None},
+    ]
+    conn = _FakeConn(candidates, live_chunk_ids={"live-chunk"})
+
+    stats = build_embeddings(conn, _ConstantBackend(), batch_size=2)
+
+    assert stats.scanned == 2
+    assert stats.embedded == 1
+    assert stats.skipped == 1
+    assert conn.inserted == ["live-chunk"]
 
 
 def test_supported_embedding_backends_are_explicit() -> None:
