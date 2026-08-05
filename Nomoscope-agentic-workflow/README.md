@@ -64,7 +64,7 @@ by an explicit control flow
 | **retrieve** | SQL | citation fast path (pg_trgm, similarity > 0.55) then hybrid FTS ∥ vector merged by RRF k=60 (vector top-3 guaranteed into the result: ts_rank_cd has no IDF, so common fiscal terms would otherwise crowd out the semantically-best chunk), all pre-filtered by `validity @> as_of`, jurisdiction, lang, and reduced to **one version per article** (`DISTINCT ON (instrument, citation)` keeping the latest `lower(validity)`: the same article can exist twice — a new consolidation per amendment, and a different structural path when fetched standalone — leaving two open-ended `in_force` versions where the superseded text can outrank its replacement). FTS ORs the query terms; vector = BGE-M3 via the ingest package's query encoder (`WORKFLOW_EMBEDDING_MODEL_ID=1`), FTS-only fallback when unavailable | no hits → skip straight to diff, routing `not_found` |
 | **propose** | **LLM** | record + retrieved chunks → `ProposalDraft` (structured output: value, valid_from, legal_status, chunk_id, verbatim extract, quote + translation, confidence) | model can return `found=false`; never guesses |
 | **critique** | code + **LLM** | mechanical checks: extract is a verbatim quote of the cited chunk (offsets computed against `unit_texts.content`), dates consistent, units/brackets sane, schema-valid — then an LLM pass for semantic issues | verdict `fail` → one LLM retry, then goes to the human with the failed critique attached |
-| **scout** | **LLM** + web + ingest | on `not_found` (`WORKFLOW_SCOUT=llm\|tavily`): the LLM names the official act that sets the value; Tavily searches official domains only (FR: legifrance.gouv.fr) and instrument ids (FR: `JORFTEXT…`) are harvested from result URLs, LLM-ranked against the result titles, then **archive-first ingested** via `nomotheca_ingest` (+ incremental BGE-M3 embedding) before one retrieval retry | web text is never evidence — only discovery; quotes still verify against the DB. Ingested ids and queries are recorded on the review item |
+| **scout** | **LLM** + web + ingest | on `not_found` (`WORKFLOW_SCOUT=llm\|tavily`): the LLM names the official act that sets the value; Tavily searches official domains only and instrument ids are harvested from result URLs (per-country rules in `scout.COUNTRY_SOURCES` — FR: legifrance.gouv.fr / `JORFTEXT…`, LT: e-seimas.lrs.lt / `TAR.…`), LLM-ranked against the result titles, then **archive-first ingested** via `nomotheca_ingest` (+ incremental BGE-M3 embedding) before one retrieval retry | web text is never evidence — only discovery; quotes still verify against the DB. Ingested ids and queries are recorded on the review item. A country absent from `COUNTRY_SOURCES` cannot gap-fill at all |
 | **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| provisional \| national_team_source \| derived`. On `unchanged` the proposal keeps the validity window already in force: the citation re-confirms the value, it does not restart it, so no new `valid_from` is proposed. `provisional` (income-year params whose enacting act is missing) keeps the found value visible but no `proposed_record` — nothing acceptable to export | national-team-sourced values are never overwritten by the pipeline |
 | **enqueue** | code | full `ReviewItem` (side-by-side values, critique, retrieval trace incl. source texts, merged candidate record with `lineage`) → `data/queue/*.json` | re-runs never clobber an already-reviewed item (unless `--force`) |
 
@@ -119,6 +119,34 @@ three behaviours:
 
 The one-year offset of EUROMOD *datasets* (FR_2024_b1 holds 2023 incomes) is an
 input-data/uprating concern and deliberately plays no role in parameter dating.
+
+### Parameters no legislation states (`source_type: national_team`)
+
+Not every EUROMOD parameter is legislation-derivable. Lithuanian childcare fees
+(`xcc_lt`) are the clean case: the fee for a municipal pre-school place and the
+discounts on it are set by each municipal council, so no national act exists to
+cite, and the EUROMOD values are the national team's assumption over those
+schedules. Left unflagged, such a parameter costs a full retrieve → propose →
+critique → scout round *per year* and lands as `not_found` every time — a
+corpus gap that can never be filled, reported as if it could.
+
+The export leaves `source_type` empty, so this too is curated, in the same
+overlay and applied by the same idempotent command
+([`pipeline/curation/LT.curation.yaml`](pipeline/curation/LT.curation.yaml)):
+
+```yaml
+source_type:
+  - type: national_team
+    note: why this quantity has no legal source
+    targets: [euromod://LT/xcc_lt/def_const/$xcc_amt1, …]
+```
+
+It applies to **every** value of the target — what makes a quantity
+national-team-sourced is a property of the quantity, not of one version of it.
+The run then short-circuits before retrieval (like formula parameters) and
+routes `national_team_source`: the value stays visible in the queue and is never
+overwritten. Re-run `curate-params` after every `ingest-params`, which replaces
+the country's `model_values` rows.
 
 ## 2. Orchestrator: plain Python + PydanticAI (thin)
 

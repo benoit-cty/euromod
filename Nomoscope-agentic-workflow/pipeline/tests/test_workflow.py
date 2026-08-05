@@ -253,3 +253,40 @@ def test_fts_query_ors_distinct_terms():
     assert "taux" in terms and "marginal" in terms
     assert "or" not in terms  # websearch operator keyword never emitted as a term
     assert _fts_query("") == ""  # degenerate input falls through unchanged
+
+
+def test_scout_country_rules_are_complete_and_render_the_prompt():
+    from nomoscope_workflow.scout import COUNTRY_SOURCES, ID_HINTS, SCOUT_SYSTEM
+
+    for country, rules in COUNTRY_SOURCES.items():
+        assert rules["domains"] and rules["id_pattern"]
+        # A country without an id hint would be asked for "exact official id",
+        # which is how the LLM starts inventing identifiers.
+        assert country in ID_HINTS
+        SCOUT_SYSTEM.format(
+            country=country, id_hint=ID_HINTS[country], act_kinds=rules["act_kinds"]
+        )
+
+
+def test_scout_lt_ids_are_harvested_from_e_seimas_urls():
+    from nomoscope_workflow.scout import COUNTRY_SOURCES
+
+    pattern = COUNTRY_SOURCES["LT"]["id_pattern"]
+    # Both TAR id generations, as they appear in portal URLs.
+    legacy = "https://e-seimas.lrs.lt/portal/legalAct/lt/TAD/TAR.C677663D2202/asr"
+    modern = "https://e-seimas.lrs.lt/portal/legalAct/lt/TAD/ce0f95d090d111e4bb408baba2bdddf3?jfwid=-1c37ov9nb"
+    assert pattern.findall(legacy) == ["TAR.C677663D2202"]
+    assert pattern.findall(modern) == ["ce0f95d090d111e4bb408baba2bdddf3"]
+    # The consolidation index is what gets ingested: the as-published text alone
+    # carries no value history.
+    assert COUNTRY_SOURCES["LT"]["ingest_suffix"] == "/asr"
+
+
+def test_scout_fr_ids_still_exclude_whole_codes():
+    from nomoscope_workflow.scout import COUNTRY_SOURCES
+
+    pattern = COUNTRY_SOURCES["FR"]["id_pattern"]
+    assert pattern.findall(
+        "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051521140"
+    ) == ["LEGIARTI000051521140"]
+    assert pattern.findall("https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006069577") == []

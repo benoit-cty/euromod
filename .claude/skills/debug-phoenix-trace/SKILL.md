@@ -94,6 +94,22 @@ code article but the id is discarded by the country `id_pattern` in
 (c) **The value genuinely lives elsewhere** (annual arrêté vs. code article) —
 verify with the regex corpus search before touching pipeline code.
 
+(d) **`no scout source rules for <CC>`** in the scout span's `errors`: the
+country has no entry in `scout.COUNTRY_SOURCES`, so gap-fill never ran. Add
+one (domains, `id_pattern`, `act_kinds`, and `ingest_suffix`/`known_key` where
+the portal id is not what the ingester fetches or not what the loader stores)
+— see Step 5 of the `add-country` skill.
+
+(e) **The parameter has no legal source at all.** Values the national team
+assumes rather than reads off a law (LT childcare fees, set by municipal
+council resolutions) will be `not_found` on every run forever. Tell-tale: the
+regex/term search finds the concept only in incidental clauses, and the
+parameter's own description points at a non-legislative schedule. The fix is
+not retrieval — flag it `source_type: national_team` in
+`Nomoscope-agentic-workflow/pipeline/curation/<CC>.curation.yaml`, apply with
+`curate-params`, and the run short-circuits to `national_team_source` before
+spending an LLM call.
+
 ## 4. Verify the fix
 
 Re-run just the affected parameter and compare the new trace with the same

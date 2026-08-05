@@ -59,6 +59,36 @@ uv run python -m nomotheca_ingest.cli instrument <cc> <national-or-source-id> -d
 
 Then check in SQL: instruments/units/versions/texts/chunks counts, a point-in-time query (`WHERE validity @> '<date>'`) returning the value your canary fact predicts, and `chunks.context_header` looking sane. Optionally ingest the Country Report (`cli country-report <cc> <path-to-md>` — fully generic, needs only the markdown; keep parameter codes in headings, the CR search enrichment depends on them) and build embeddings (`uv sync --extra embeddings`, then `cli embeddings build`).
 
+## Step 5 — Register the country with the Nomoscope scout
+
+An adapter nobody can call is half an integration. The workflow's gap-fill scout keys on
+`COUNTRY_SOURCES` in `Nomoscope-agentic-workflow/pipeline/src/nomoscope_workflow/scout.py`;
+a country missing from it fails every gap-fill with `no scout source rules for <CC>` and
+every corpus hole stays a `not_found` forever. Add an entry plus an `ID_HINTS` line:
+
+- `domains` — the official domains the web search is restricted to (the portal, even when
+  it 403s plain clients: the scout only harvests ids from the URLs, it never reads the page).
+- `id_pattern` — the id shapes that appear in those URLs **and** that
+  `cli instrument <cc> <id>` can fetch. Both must hold: a portal id the ingester cannot
+  resolve is a guaranteed failed ingest. Include every id generation still in use (LT has
+  two: `TAR.` + 12 hex and a 32-hex registration id).
+- `act_kinds` — the country's own words for the acts that fix values (`loi, décret or
+  arrêté`; `įstatymas, Vyriausybės nutarimas or ministro įsakymas`), interpolated into the
+  scout prompt.
+- `ingest_suffix` — when a bare portal id is not the right thing to ingest. LT appends
+  `/asr`: the as-published text carries no value history, the consolidation index does.
+  This should return the same reference your `resolve()` returns for a citation.
+- `known_key` — the `instruments.metadata` key holding this id, when the loader stores
+  something else in `national_id` (LT stores the official number `IX-1007` and files the
+  TAR id under `metadata.dokumento_id`). Skip it and the scout re-ingests the same act on
+  every run.
+
+Then check the parameters themselves: values the country's national team assumes rather
+than reads off a law (childcare fees set by municipalities, imputations) have no act to
+cite and must be flagged `source_type: national_team` in
+`Nomoscope-agentic-workflow/pipeline/curation/<CC>.curation.yaml`, or the pipeline burns a
+full LLM run per parameter per year to rediscover that the corpus cannot answer.
+
 ## Anti-goals (hold the line)
 
 No country-specific columns in the IR (use `metadata`; promote per the JSONB discipline). No `if jurisdiction == 'XX'` in `core/`. No adapter writing SQL. No tree-walk discovery of "current" versions without a canary — mirrors lie about what is in force (the FR staleness trap).

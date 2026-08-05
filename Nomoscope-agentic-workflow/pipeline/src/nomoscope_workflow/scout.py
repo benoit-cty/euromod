@@ -43,6 +43,14 @@ EMBED_TIMEOUT = int(os.environ.get("WORKFLOW_SCOUT_EMBED_TIMEOUT", "1800"))
 
 # Per-country discovery rules: the official domains web search is restricted
 # to, and the id shapes the archive-first ingester can fetch directly.
+#
+# Keys:
+#   domains      — official domains the web search is restricted to
+#   id_pattern   — id shapes harvested from result URLs and from the LLM's answer
+#   act_kinds    — the country's own words for the acts that fix values (prompt)
+#   ingest_suffix— appended to a bare id to make it what the ingester should fetch
+#   known_key    — instruments.metadata key holding this id, when national_id is
+#                  something else (else the known-check misses and we re-ingest)
 COUNTRY_SOURCES: dict[str, dict] = {
     "FR": {
         "domains": ["legifrance.gouv.fr"],
@@ -51,13 +59,32 @@ COUNTRY_SOURCES: dict[str, dict] = {
         # codified) — deliberately not LEGITEXT: ingesting a whole code by
         # accident is not a gap-fill.
         "id_pattern": re.compile(r"\b(?:JORFTEXT|LEGIARTI)\d{12}\b"),
+        "act_kinds": "loi, décret or arrêté",
+    },
+    "LT": {
+        # e-seimas is the register's public portal; e-tar.lt serves the same
+        # acts. Both put the TAR document id in the /legalAct/ URL path, which
+        # is the id the Spinta open-data API (what Nomotheca fetches) keys on.
+        "domains": ["e-seimas.lrs.lt", "e-tar.lt"],
+        # Two id generations coexist in TAR: "TAR." + 12 uppercase hex for acts
+        # migrated into the register in 2014, and a 32-lowercase-hex
+        # registration id for everything since.
+        "id_pattern": re.compile(r"\b(?:TAR\.[0-9A-F]{12}|[0-9a-f]{32})\b"),
+        "act_kinds": "įstatymas, Vyriausybės nutarimas or ministro įsakymas",
+        # A bare id fetches the act as published; its value history lives in the
+        # dated consolidations listed by the /asr index — the same reference
+        # LtResolver returns for a citation. Ingest the index, not the original.
+        "ingest_suffix": "/asr",
+        # LT instruments are keyed by official number (IX-1007); the TAR id the
+        # scout harvests is kept in instruments.metadata.
+        "known_key": "dokumento_id",
     },
 }
 
 SCOUT_SYSTEM = """You are a legal-sources librarian for {country} tax-benefit legislation.
 A retrieval system searched a legislation database and could not find the legal text that
 sets the value of a policy parameter. Identify the official publication(s) that fix this
-parameter's value (the specific loi, décret, arrêté or equivalent — many values are set by
+parameter's value (the specific {act_kinds} or equivalent — many values are set by
 annual implementing acts rather than by the statutes that define them).
 Return:
 - search_queries: 1-3 short web-search queries in the law's language, phrased to find the
@@ -70,7 +97,11 @@ ID_HINTS = {
     "FR": (
         "for France the JORFTEXT############ id shown in Légifrance JORF URLs, "
         "or the LEGIARTI############ id of the consolidated code article"
-    )
+    ),
+    "LT": (
+        "for Lithuania the TAR document id shown in e-seimas /portal/legalAct/lt/TAD/<id> "
+        "URLs — either TAR.############ or a 32-character hexadecimal id"
+    ),
 }
 
 
@@ -135,22 +166,30 @@ def _tavily_search(api_key: str, query: str, domains: list[str]) -> list[dict]:
     return response.json().get("results", [])
 
 
-def _known_instruments(cfg: WorkflowConfig, ids: list[str]) -> set[str]:
+def _known_instruments(cfg: WorkflowConfig, ids: list[str], rules: dict) -> set[str]:
     """Ids already in the legislation DB — re-ingesting them cannot add chunks.
 
     Article-level ids (FR LEGIARTI…/JORFARTI…) are stored as legal_units under
     their parent code instrument, not as instruments — check both tables, or
-    every re-run re-ingests the same article forever.
+    every re-run re-ingests the same article forever. Where the scouted id is
+    not the stored national_id at all (LT keys instruments by official number
+    and files the TAR id under metadata.dokumento_id), `known_key` says which
+    metadata key to match instead.
     """
     import psycopg
 
+    sql = (
+        "SELECT national_id FROM instruments WHERE national_id = ANY(%(ids)s) "
+        "UNION SELECT national_id FROM legal_units WHERE national_id = ANY(%(ids)s)"
+    )
+    if rules.get("known_key"):
+        sql += (
+            " UNION SELECT metadata->>%(key)s FROM instruments "
+            "WHERE metadata->>%(key)s = ANY(%(ids)s)"
+        )
     try:
         with psycopg.connect(cfg.database_url) as conn:
-            rows = conn.execute(
-                "SELECT national_id FROM instruments WHERE national_id = ANY(%s) "
-                "UNION SELECT national_id FROM legal_units WHERE national_id = ANY(%s)",
-                (ids, ids),
-            ).fetchall()
+            rows = conn.execute(sql, {"ids": ids, "key": rules.get("known_key")}).fetchall()
         return {row[0] for row in rows}
     except Exception:
         return set()
@@ -264,7 +303,9 @@ def run(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> ScoutResul
         suggestion = llm.run_agent(
             cfg.model,
             SCOUT_SYSTEM.format(
-                country=info.country, id_hint=ID_HINTS.get(info.country, "exact official id")
+                country=info.country,
+                id_hint=ID_HINTS.get(info.country, "exact official id"),
+                act_kinds=rules.get("act_kinds", "act, decree or order"),
             ),
             (
                 f"Parameter: {info.model_target}\n"
@@ -298,21 +339,22 @@ def run(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> ScoutResul
     result.candidate_ids = list(dict.fromkeys(ids))
     if len(result.candidate_ids) > 1 and titles:
         result.candidate_ids = _rank_candidates(cfg, info, result.candidate_ids, titles)
-    known = _known_instruments(cfg, result.candidate_ids)
+    known = _known_instruments(cfg, result.candidate_ids, rules)
     to_ingest = [i for i in result.candidate_ids if i not in known][: cfg.scout_max_ingest]
     if result.candidate_ids:
         progress(
             f"  [scout] {len(result.candidate_ids)} candidate instrument(s), "
             f"{len(known)} already in DB, {len(to_ingest)} to ingest"
         )
+    suffix = rules.get("ingest_suffix", "")
     for instrument_id in to_ingest:
         progress(
-            f"  [scout] ingesting {instrument_id} "
+            f"  [scout] ingesting {instrument_id}{suffix} "
             f"(archive-first: fetch → snapshot → parse → chunk; up to {INGEST_TIMEOUT}s)…"
         )
         started = time.monotonic()
         try:
-            error = _ingest_instrument(cfg, info.country, instrument_id)
+            error = _ingest_instrument(cfg, info.country, instrument_id + suffix)
         except subprocess.TimeoutExpired:
             error = f"{instrument_id}: ingest timed out after {INGEST_TIMEOUT}s"
         if error is None:
