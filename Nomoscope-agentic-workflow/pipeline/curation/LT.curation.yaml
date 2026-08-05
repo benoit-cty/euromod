@@ -1,0 +1,37 @@
+# Curated parameter knowledge for LT — NOT part of the EUROMOD export.
+#
+# extracted_parameters/enriched/LT.enriched.json is delivered by the EUROMOD
+# team and is READ-ONLY: never edit it. Anything we know that the export does
+# not carry lives here instead, and is applied on top of the ingested rows by
+#
+#     uv run nomoscope-workflow curate-params curation/LT.curation.yaml
+#
+# run after `ingest-params` (ingesting a country file replaces its model_values
+# rows, so the overlay has to follow it). This file exists so the knowledge also
+# survives `docker compose down -v`, is reviewable in git, and can say *why*
+# each parameter is flagged.
+
+country: LT
+
+source_type:
+  - type: national_team
+    note: >-
+      Childcare fees in Lithuania are not set by national legislation. The fee
+      for attending a municipal pre-school (atlyginimas už ikimokyklinio ugdymo
+      įstaigos lankymą — in practice the daily meal charge) and the discounts on
+      it are fixed by each municipal council's own resolution under the Law on
+      Education, so there is no national act for the pipeline to cite. The
+      EUROMOD values are the national team's assumption over those municipal
+      schedules, documented in the Country Report's childcarecost theme, and
+      change when the team revises that assumption — not when a law changes.
+      Routing them `national_team_source` stops the pipeline from reporting them
+      as `not_found` every run and protects them from being overwritten.
+      Confirmed against the corpus: `ikimokyklin*` appears only in eligibility
+      clauses of the benefit laws, never in a fee schedule.
+    targets:
+      # Gross daily fee by age group (xcc_lt ArithOp "Childcare cost for …")
+      - euromod://LT/xcc_lt/def_const/$xcc_amt1
+      - euromod://LT/xcc_lt/def_const/$xcc_amt2
+      # Discount rates on that fee (partial / full exemption categories)
+      - euromod://LT/xcc_lt/def_const/$xcc_ded_rate1
+      - euromod://LT/xcc_lt/def_const/$xcc_ded_rate2
