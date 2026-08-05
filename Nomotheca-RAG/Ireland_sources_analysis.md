@@ -190,6 +190,9 @@ uv run python -m nomotheca_ingest.cli country-report ie "../../08 - EUROMOD Tria
 # Derived rows
 uv run --extra embeddings python -m nomotheca_ingest.cli embeddings build \
   --model-path models/bge-m3-openvino --backend openvino --model-id 1 --batch-size 16
+
+# Country report
+uv  run  nomoscope-workflow  ingest-params  ../../extracted_parameters/enriched/IE.enriched.json
 ```
 
 No `translate` step: Ireland's authentic fiscal text is English, so the MT-EN leg is a no-op. Irish-language versions exist on eISB for some acts and are equally authentic constitutionally; they are out of scope for the pilot and would enter as a second `TextIR` with `lang='ga'` (the `fts_ga` config already exists in the schema).

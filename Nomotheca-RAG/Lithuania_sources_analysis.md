@@ -112,7 +112,7 @@ Scale check: 6 acts × ~10 consolidations ≈ 60 requests of 100–300 KB — tr
 cd Nomotheca-RAG/ingest/src/
 
 # Ingest the Country Report
-uv run python -m nomotheca_ingest.cli country-report fr ../country_reports/Y16_CR_LT.md -d postgresql://jrc:jrc@localhost:5434/legislation
+uv run python -m nomotheca_ingest.cli country-report lt "../../08 - EUROMOD Triangulator/country-reports/Y16/LT_Y16.md"  -d postgresql://jrc:jrc@localhost:5434/legislation
 
 # Ingest the legislation (fast)
 export EUROMOD_DATABASE_URL=postgresql://jrc:jrc@localhost:5434/legislation
@@ -123,7 +123,7 @@ done
 # Compute embeddings (~ 40 minutes on my laptop for 1 000 units)
 uv run --extra embeddings python -m nomotheca_ingest.cli embeddings build --model-path models/bge-m3-openvino --backend openvino --model-id 1 --batch-size 16 --progress-json --database-url postgresql://jrc:jrc@localhost:5434/legislation
 
-# Translate in english (a few hours because of API rate for azure/gpt5.6-luna)
+# Translate in english (more than 4 hours, probably because of API rate for azure/gpt5.6-luna)
 uv run python -m nomotheca_ingest.cli translate run \
 	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
 	--model=azure_openai/gpt-5.6-luna
