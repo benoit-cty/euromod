@@ -49,7 +49,7 @@ Community project ([tricoteuses.fr](https://tricoteuses.fr/)) that converts the 
 
 ### C. Tricoteuses MCP server — `https://mcp.code4code.eu/mcp` ✔ freshest
 
-MCP server "moulineuse" over the Tricoteuses PostgreSQL database (legal + parliamentary data). Tools verified live: `search_recipes`/`get_recipe`, `search_legal_texts` (Typesense FTS), `list_tables`/`describe_table`/`query_sql` (schemas: `legifrance`, `assemblee`, `senat`, `annuaire`, `droits_et_demarches`), `get_pastilled_article`, `run_script`, real-time Assemblée events. The `legifrance` schema holds `article`, `texte_version`, `section_ta`, `article_lien`, … with the raw DILA JSON in a `data jsonb` column, indexed by `(texte cid, num)`.
+MCP server "Moulineuse" over the Tricoteuses PostgreSQL database (legal + parliamentary data). Tools verified live: `search_recipes`/`get_recipe`, `search_legal_texts` (Typesense FTS), `list_tables`/`describe_table`/`query_sql` (schemas: `legifrance`, `assemblee`, `senat`, `annuaire`, `droits_et_demarches`), `get_pastilled_article`, `run_script`, real-time Assemblée events. The `legifrance` schema holds `article`, `texte_version`, `section_ta`, `article_lien`, … with the raw DILA JSON in a `data jsonb` column, indexed by `(texte cid, num)`.
 
 **Freshness verified**: `query_sql` for CGI art. 197 returns the 2026-02-21 version as `VIGUEUR` and correctly marks 2024/2025 ones `MODIFIE` — i.e. the database *does not have* the stale-metadata problem of the git mirror's file tree. One SQL query resolves *(code, article number, date)* → exact `LEGIARTI` id. This is precisely the **resolve** step the retrieval pipeline needs.
 
@@ -57,7 +57,7 @@ Caveats: community-run, no SLA, no authentication story, and for JRC provenance 
 
 ### D. Local PostgreSQL dump — `/home/ben/legi.sql.gz` (3.8 GB)
 
-Same moulineuse schema as C (`public.article`, `texte_version`, `section_ta`, `last_update`, …; needs `ltree` + `pg_trgm`). Its `last_update` table pins the source git commits; the LEGI commit dates to **2025-12-09** → the dump **contains LF2025 consolidations but predates LF2026** (promulgated 2026-02-19). Usable as a zero-latency local resolver for LF2025 work, but needs a refresh (or the MCP fallback) for anything the LF2026 changed. Same JSON payloads as A, so the extraction code is shared.
+Same Moulineuse schema as C (`public.article`, `texte_version`, `section_ta`, `last_update`, …; needs `ltree` + `pg_trgm`). Its `last_update` table pins the source git commits; the LEGI commit dates to **2025-12-09** → the dump **contains LF2025 consolidations but predates LF2026** (promulgated 2026-02-19). Usable as a zero-latency local resolver for LF2025 work, but needs a refresh (or the MCP fallback) for anything the LF2026 changed. Same JSON payloads as A, so the extraction code is shared.
 
 ### E. Tricoteuses Markdown repo — `git.tricoteuses.fr/dila/textes_juridiques`
 
@@ -75,7 +75,7 @@ The country skill contract has two operations; each source above is good at exac
 
 **Resolve** — citation or query → exact version id at a date:
 ```sql
--- moulineuse schema (local Postgres now, MCP query_sql as freshness fallback)
+-- Moulineuse schema (local Postgres now, MCP query_sql as freshness fallback)
 SELECT id FROM legifrance.article
 WHERE data->'CONTEXTE'->'TEXTE'->>'@cid' = 'LEGITEXT000006069577'   -- CGI
   AND num = '197'
@@ -110,7 +110,7 @@ See [RAG\fscal_law_sources.md](RAG\fscal_law_sources.md) for the data source for
 ## 5. Open points
 
 1. Register for a PISTE/Légifrance API account now (approval latency), even if the pilot runs on Tricoteuses.
-2. Refresh path for the local `legi.sql.gz`: re-download vs. rebuild from the daily git increments — and whether the JRC deployment hosts its own moulineuse instance instead.
+2. Refresh path for the local `legi.sql.gz`: re-download vs. rebuild from the daily git increments — and whether the JRC deployment hosts its own Moulineuse instance instead.
 3. Whether to add the Tricoteuses MCP as a configured MCP server for the fetch skill (`{"transport":"http","url":"https://mcp.code4code.eu/mcp"}`) or to call its SQL via a thin HTTP client — MCP is the natural fit for the *agentic* fetch step in the retrieval pipeline (§5.3 of the DB doc).
 4. Ask Tricoteuses (tricoteuses@tricoteuses.fr) about the stale `ETAT`/section metadata in `donnees_juridiques` — bug or known limitation of the stock+delta fusion?
 5. LF2026 Markdown rendition missing — monitor whether `textes_juridiques` catches up; until then FR chunking needs the HTML-strip path.

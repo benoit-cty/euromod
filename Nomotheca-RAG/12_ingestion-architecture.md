@@ -37,7 +37,7 @@ ingest/
       fr/              # (lt/ has the same shape; it is the most complete example)
         adapter.py     # wires the three FR pieces below; class attrs: jurisdiction,
                        #   default_source_code, canary_facts()
-        resolver.py    # (code, num, as_of) → LEGIARTI id: moulineuse Postgres, MCP fallback
+        resolver.py    # (code, num, as_of) → LEGIARTI id: Moulineuse Postgres, MCP fallback
         fetcher.py     # direct-id raw JSON from git.tricoteuses.fr (id → path scheme)
         parser.py      # DILA JSON → IR: pure functions, no I/O (shared by JORF & LEGI fonds)
     cli.py             # typer entry points
@@ -93,7 +93,7 @@ Contract details that carry load:
 
 `ParsedDoc` is the country-neutral IR — pydantic models mirroring the DB entities one-to-one: `InstrumentIR`, `UnitIR` (with `path`, `unit_type`, `citation`), `VersionIR` (`validity` as explicit dates, `source_version_id`, `eli_version`), `TextIR` (`lang`, `authenticity`, `content`, `content_html`). Adapters produce IR; **only `core/loader.py` turns IR into SQL**. That keeps every DB integrity rule (exclusion constraint handling, snapshot FK, JSONB discipline) implemented exactly once, and makes "add NL" a parsing exercise, not a database exercise.
 
-Sub-interfaces stay swappable *within* a country: `fr/resolver.py` has two implementations behind one interface — local moulineuse Postgres (fast, currently stale past 2025-12-09) and the Tricoteuses MCP `query_sql` (fresh, no SLA) — chosen per call by the canary. The fetcher interface is deliberately shaped like the PISTE API (`get_article(version_id)`), so the decided long-term swap to the official Légifrance API replaces one file.
+Sub-interfaces stay swappable *within* a country: `fr/resolver.py` has two implementations behind one interface — local Moulineuse Postgres (fast, currently stale past 2025-12-09) and the Tricoteuses MCP `query_sql` (fresh, no SLA) — chosen per call by the canary. The fetcher interface is deliberately shaped like the PISTE API (`get_article(version_id)`), so the decided long-term swap to the official Légifrance API replaces one file.
 
 ## 4. The loader — where the DB's integrity rules become code
 
@@ -126,7 +126,7 @@ Outcome is three-valued per (resolver, tax-year): `fresh` → use it; `stale` �
 
 1. **JORF skeleton** — direct-id fetch of the `JORFTEXT` file; parse → `InstrumentIR` (loi type, ELI, NOR); `expand` yields the `SCTA` ids.
 2. **Structure + LF articles** — fetch each `SCTA`, then each `JORFARTI`; load ~2 instruments' worth of units/versions/texts/chunks (LF articles are single-version, validity `[2025-02-16, ∞)`). `expand` reads each article's `LIENS` → the set of touched `LEGIARTI` cids, loaded as `instrument_relations` (`amends`, with `to_ref_text` until the target exists).
-3. **Consolidations** — for each touched CGI/CSS article: `resolve(code, num, as_of=2025-06-30)` plus the immediately preceding version (for diffing) via moulineuse SQL; fetch each version's `ARTI` JSON by direct id path; load with proper `daterange`, closing superseded rows. Body text: prefer the Markdown repo rendition when the id exists there (pre-computed breadcrumb), else strip `BLOC_TEXTUEL` HTML — that preference lives inside `fr/fetcher.py`.
+3. **Consolidations** — for each touched CGI/CSS article: `resolve(code, num, as_of=2025-06-30)` plus the immediately preceding version (for diffing) via Moulineuse SQL; fetch each version's `ARTI` JSON by direct id path; load with proper `daterange`, closing superseded rows. Body text: prefer the Markdown repo rendition when the id exists there (pre-computed breadcrumb), else strip `BLOC_TEXTUEL` HTML — that preference lives inside `fr/fetcher.py`.
 4. **Verify** — canary set for 2025 must pass against *the ingested corpus itself* (post-condition, not just resolver gate): `resolve_rag_uri('rag://unit/{art197}@2025-06-01')` must return the 11 497 € text. The run gets `frozen_label` when it seeds an evaluation set.
 
 Scale check: two laws + a few hundred articles ≈ low thousands of HTTP requests worst case, well under any politeness threshold at 1 req/s per source. (No central rate limiter exists — `SnapshotClient` is a dumb GET and `sources.terms` is not read; any throttling, auth, or anti-bot handling a source needs lives in that country's `fetcher.py`.)
@@ -137,7 +137,7 @@ Scale check: two laws + a few hundred articles ≈ low thousands of HTTP request
 |---|---|---|
 | Schema / loader / chunker / snapshots / canary runner / CLI | build once | **zero change** |
 | Seed rows (`jurisdictions`, `sources`, `lang_fts_config`) | in `seed.sql` | ~3 rows |
-| `resolve` | moulineuse SQL / MCP | thin client for the local equivalent (BWB SRU for NL, e-TAR for LT, BOE API for ES, …) |
+| `resolve` | Moulineuse SQL / MCP | thin client for the local equivalent (BWB SRU for NL, e-TAR for LT, BOE API for ES, …) |
 | `fetch` | Tricoteuses raw by id | national portal/API client — the genuinely new work |
 | `parse` | DILA JSON → IR | national format → IR; pure + fixture-tested |
 | Canary fact | CGI art. 197 barème | one known-changed fact per tax year |
