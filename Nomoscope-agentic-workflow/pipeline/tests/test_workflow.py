@@ -128,6 +128,45 @@ def test_queue_roundtrip_preserves_reviewed_items(tmp_path: Path):
     assert queue_store.write_item(item, tmp_path, force=True)
 
 
+def test_migrate_item_ids_collapses_same_year_runs(tmp_path: Path):
+    """Old date-keyed ids re-key to the system year; same-year runs collapse."""
+
+    def item(as_of: date, created: str, status: ItemStatus = ItemStatus.PENDING) -> ReviewItem:
+        return ReviewItem(
+            id=f"fr_euromod_fr_test_{as_of.isoformat()}",
+            run_id=f"run-{created}",
+            created_at=created,
+            country="FR",
+            model_target="euromod://FR/test",
+            as_of=as_of,
+            system_year=None,  # written before --year existed
+            value_type="scalar",
+            unit="/1",
+            routing=Routing.UNCHANGED,
+            status=status,
+        )
+
+    old = item(date(2025, 6, 1), "2026-07-09T00:00:00Z", ItemStatus.ACCEPTED)
+    newer = item(date(2025, 7, 1), "2026-08-05T00:00:00Z")
+    other_year = item(date(2024, 7, 1), "2026-08-05T00:00:00Z")
+    for entry in (old, newer, other_year):
+        assert queue_store.write_item(entry, tmp_path, force=True)
+
+    queue_store.migrate_item_ids(tmp_path, apply=True)
+    loaded = {i.id: i for i in queue_store.load_items(tmp_path)}
+    assert set(loaded) == {"fr_euromod_fr_test_2025", "fr_euromod_fr_test_2024"}
+    # the decided run wins over the newer pending one, and keeps its decision
+    kept = loaded["fr_euromod_fr_test_2025"]
+    assert kept.status == ItemStatus.ACCEPTED
+    assert kept.system_year == 2025
+    # the loser is archived, not deleted
+    assert [p.name for p in (tmp_path / "queue_superseded").iterdir()] == [
+        "fr_euromod_fr_test_2025-07-01.json"
+    ]
+    # idempotent: a second pass has nothing left to move
+    assert {e["action"] for e in queue_store.migrate_item_ids(tmp_path)} == {"keep"}
+
+
 def test_derived_refs_detects_formula_parameters():
     from nomoscope_workflow.pipeline import _derived_refs
     from nomoscope_workflow.schema import Lineage

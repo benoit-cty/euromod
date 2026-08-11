@@ -536,7 +536,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 proposed_record = _merge_record(record, proposed_value, as_of, routing)
 
             item = ReviewItem(
-                id=queue_store.item_id(info.country, info.model_target, as_of),
+                id=queue_store.item_id(info.country, info.model_target, as_of.year),
                 run_id=state["run_id"],
                 phoenix_trace_id=state.get("phoenix_trace_id"),
                 created_at=datetime.now(timezone.utc),

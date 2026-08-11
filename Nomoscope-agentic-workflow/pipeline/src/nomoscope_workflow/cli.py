@@ -4,6 +4,7 @@
   uv run nomoscope-workflow run-all --year 2025
   uv run nomoscope-workflow queue
   uv run nomoscope-workflow export
+  uv run nomoscope-workflow migrate-queue-ids --apply
   uv run nomoscope-workflow init-param-db
   uv run nomoscope-workflow sync-decisions
   uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
@@ -18,7 +19,16 @@ from pathlib import Path
 
 import typer
 
-from . import openfisca, paramdb, pipeline, queue_store, readiness, retrieval, translate
+from . import (
+    openfisca,
+    openfisca_match,
+    paramdb,
+    pipeline,
+    queue_store,
+    readiness,
+    retrieval,
+    translate,
+)
 from .config import load_config
 from .tracing import setup_tracing
 
@@ -208,6 +218,43 @@ def queue() -> None:
         )
 
 
+@app.command("migrate-queue-ids")
+def migrate_queue_ids(
+    apply: bool = typer.Option(False, "--apply", help="Write the changes (default: dry run)"),
+    db: bool = typer.Option(True, "--db/--no-db", help="Also re-point the params DB's item ids"),
+) -> None:
+    """Re-key queue files onto the system-year id and collapse the duplicates.
+
+    Queue items used to be keyed by anchor date, so every re-run of the same
+    parameter for the same system year left another near-identical review. This
+    renames each file to `<country>_<target>_<year>.json` and moves the extra
+    runs to `<data>/queue_superseded/` (kept, not deleted). Decided items win
+    over pending ones; the newest wins among equals. Run it once per data dir.
+
+    The params DB stores the same ids (extraction_runs.item_id is the Parameters
+    tab's link into the queue), so they are rewritten too. data/decisions.jsonl
+    is append-only and keeps the ids as they were logged.
+    """
+    cfg = load_config()
+    plan = queue_store.migrate_item_ids(cfg.data_dir, apply=apply)
+    counts: dict[str, int] = {}
+    for entry in plan:
+        counts[entry["action"]] = counts.get(entry["action"], 0) + 1
+        if entry["action"] == "keep":
+            continue
+        detail = entry.get("reason") or f"-> {entry['new_id']} ({entry.get('status')})"
+        typer.echo(f"{entry['action']:<10} {entry['path'].name} {detail}")
+    summary = ", ".join(f"{n} {action}" for action, n in sorted(counts.items())) or "nothing to do"
+    typer.echo(f"queue: {summary}{'' if apply else ' — dry run, pass --apply to write'}")
+    if db:
+        try:
+            rows = paramdb.remap_item_ids(cfg, apply=apply)
+        except Exception as exc:  # the file queue is the primary store
+            typer.echo(f"params DB not migrated ({exc.__class__.__name__}: {exc})")
+            return
+        typer.echo("db: " + ", ".join(f"{n} {table}" for table, n in rows.items()))
+
+
 @app.command()
 def export(
     out_dir: Path = typer.Option(None, "--out-dir", help="Defaults to <data>/export"),
@@ -224,11 +271,12 @@ def export(
 def sync_decisions(
     log: Path = typer.Option(None, "--log", help="Defaults to <data>/decisions.jsonl"),
 ) -> None:
-    """Replay the local decision mirror into params.review_decisions.
+    """Replay the local decision copy into params.review_decisions.
 
-    The validation UI writes both, so this is only needed after a decision was
-    taken while Postgres was unreachable. Idempotent: entries already recorded
-    are skipped, so replaying the whole log is always safe.
+    A repair tool. The UI records decisions in the database directly and refuses
+    the decision if it cannot, so the two only drift if a write succeeded in the
+    DB but failed on disk, or the log is being restored from a backup.
+    Idempotent: entries already recorded are skipped.
     """
     cfg = load_config()
     path = log or cfg.data_dir / "decisions.jsonl"
@@ -309,6 +357,59 @@ def ingest_openfisca(
         f"{stats['parameters']} external parameters, {stats['values']} value points, "
         f"{stats['references']} references "
         f"({stats['skipped_files']} node files skipped, {stats['errors']} parse errors)"
+    )
+
+
+@app.command("match-openfisca")
+def match_openfisca(
+    country: str = typer.Option("FR", "--country", help="Country code to match"),
+    kind: str = typer.Option("openfisca", "--kind", help="External corpus kind"),
+    min_years: int = typer.Option(3, "--min-years", help="Years that must agree for a fingerprint"),
+    factors: str = typer.Option(
+        "1", "--factors", help="Comma-separated scales to try (euromod = factor * external), e.g. 1,3,4,8"
+    ),
+    seed: Path = typer.Option(
+        None, "--seed", help="JSON file of curated pairs, stored as match_method='manual'"
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print candidates without writing"),
+    limit: int = typer.Option(30, "--limit", help="Candidates to print (0 = all)"),
+) -> None:
+    """Suggest params.parameter_links rows from value fingerprints (+ curated seeds).
+
+    Suggestions only: a link counts as validated once a human sets
+    `validated_by`, and rows already validated are never overwritten.
+    """
+    cfg = load_config()
+    scales = tuple(float(f) for f in factors.split(",") if f.strip())
+    with paramdb.connect(cfg) as conn:
+        paramdb.apply_schema(conn)
+        links = openfisca_match.fingerprint_candidates(
+            conn, country.upper(), kind=kind, min_years=min_years, factors=scales
+        )
+        curated: list = []
+        if seed is not None:
+            curated, skipped = openfisca_match.seed_links(conn, seed, country.upper(), kind=kind)
+            for message in skipped:
+                typer.echo(f"  ~ skipped {message}")
+        # Curated pairs win over a fingerprint for the same (parameter, component).
+        curated_keys = {(l.parameter_id, l.external_parameter_id, l.component) for l in curated}
+        links = curated + [
+            l for l in links if (l.parameter_id, l.external_parameter_id, l.component) not in curated_keys
+        ]
+        for link in links[: limit or None]:
+            typer.echo(
+                f"{link.score:.2f} {link.match_method:<11} {link.model_target} -> {link.path}"
+                + (f" :: {link.component}" if link.component != "value" else "")
+                + (f"  ({link.note})" if link.note else "")
+                + (f"  [{link.matched_years}/{link.euromod_years} yrs]" if link.euromod_years else "")
+            )
+        if dry_run:
+            typer.echo(f"{len(links)} candidate link(s); nothing written (--dry-run).")
+            return
+        written = openfisca_match.store_links(conn, links)
+    typer.echo(
+        f"{len(links)} candidate link(s) ({len(curated)} curated), {written} row(s) written to "
+        "params.parameter_links — unvalidated suggestions until a human sets validated_by."
     )
 
 

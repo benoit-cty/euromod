@@ -675,9 +675,9 @@ def record_run_safe(
 
 
 # ---------------------------------------------------------------------------
-# Stage D: reviewer decisions. params.review_decisions is the system of record;
-# data/decisions.jsonl is the UI's write-ahead mirror, replayed by
-# `nomoscope-workflow sync-decisions` when the DB was down at decision time.
+# Stage D: reviewer decisions. params.review_decisions is the system of record —
+# the UI's Accept/Reject/Edit fails if this insert does. data/decisions.jsonl is
+# a redundant local copy, replayed by `nomoscope-workflow sync-decisions`.
 # ---------------------------------------------------------------------------
 
 
@@ -735,6 +735,49 @@ def record_decision(conn: psycopg.Connection, entry: dict) -> int | None:
         ),
     ).fetchone()
     return row[0] if row else None
+
+
+# Old queue ids ended on the run's anchor date; the system-year id keeps its year.
+_OLD_ITEM_ID = r"_(\d{4})-\d{2}-\d{2}$"
+
+
+def remap_item_ids(cfg: WorkflowConfig, apply: bool = False) -> dict[str, int]:
+    """Re-point stored item ids at the system-year queue ids (see
+    queue_store.migrate_item_ids). Idempotent — rows already migrated don't match.
+
+    extraction_runs.item_id is what the Parameters tab follows to open a review
+    item, so a stale id there is a dead link; proposals.proposal_id embeds the
+    item id as "<run_id>/<item_id>" and is how a decision finds its proposal.
+    """
+    statements = {
+        "extraction_runs": (
+            "UPDATE params.extraction_runs "
+            "SET item_id = regexp_replace(item_id, %s, '_\\1') WHERE item_id ~ %s"
+        ),
+        "review_decisions": (
+            "UPDATE params.review_decisions "
+            "SET item_id = regexp_replace(item_id, %s, '_\\1') WHERE item_id ~ %s"
+        ),
+        # "<run_id>/<item_id>", and run ids never contain a slash
+        "proposals": (
+            "UPDATE params.proposals "
+            "SET proposal_id = left(proposal_id, position('/' in proposal_id)) "
+            "  || regexp_replace(substr(proposal_id, position('/' in proposal_id) + 1), "
+            "                    %s, '_\\1') "
+            "WHERE position('/' in proposal_id) > 0 "
+            "  AND substr(proposal_id, position('/' in proposal_id) + 1) ~ %s"
+        ),
+    }
+    counts: dict[str, int] = {}
+    with connect(cfg) as conn:
+        for table, sql in statements.items():
+            # one transaction per table: a unique-index clash in the audit table
+            # must not take the (independent) extraction_runs remap down with it
+            with conn.transaction():
+                counts[table] = conn.execute(sql, (_OLD_ITEM_ID, _OLD_ITEM_ID)).rowcount
+                if not apply:
+                    raise psycopg.Rollback
+    return counts
 
 
 def sync_decisions(cfg: WorkflowConfig, entries: list[dict]) -> tuple[int, int]:

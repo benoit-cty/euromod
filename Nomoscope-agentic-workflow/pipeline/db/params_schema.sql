@@ -20,8 +20,10 @@
 --     phoenix_trace_id links it to the full agent trace in Phoenix
 --     (http://localhost:6006), which shares this Postgres instance.
 --   Stage D (human)         -> review_decisions, append-only. The validation
---     UI writes here on every Accept/Reject/Edit; data/decisions.jsonl is a
---     local mirror kept for offline resilience, not the system of record.
+--     UI writes here on every Accept/Reject/Edit, and refuses the decision if
+--     it cannot: this table gates the queue-item write, so a decision that
+--     never reached the audit log never looks accepted. data/decisions.jsonl
+--     is a redundant local copy, not the system of record.
 --
 -- Applied idempotently by `nomoscope-workflow init-param-db`.
 -- ============================================================================
@@ -228,6 +230,16 @@ CREATE TABLE IF NOT EXISTS params.parameter_links (
     created_at            timestamptz NOT NULL DEFAULT now(),
     UNIQUE (parameter_id, external_parameter_id, component)
 );
+-- euromod_value = factor * external_value. Most links are plain identities
+-- (factor 1); EUROMOD also stores derived constants ($tsc_group2_lim is three
+-- times the monthly PSS), and those only line up with a scale recorded here.
+ALTER TABLE params.parameter_links ADD COLUMN IF NOT EXISTS factor double precision NOT NULL DEFAULT 1;
+-- Year offset applied to the EUROMOD system year to reach the external
+-- corpus's date key (OpenFisca dates income-tax parameters by income year).
+-- Diagnostic only: expected values are derived from temporal_basis, never
+-- from this column.
+ALTER TABLE params.parameter_links ADD COLUMN IF NOT EXISTS year_offset smallint NOT NULL DEFAULT 0;
+ALTER TABLE params.parameter_links ADD COLUMN IF NOT EXISTS note text;
 
 -- ----------------------------------------------------------------------------
 -- extraction_runs — one row per agentic pipeline run for one
@@ -314,8 +326,9 @@ CREATE INDEX IF NOT EXISTS proposal_references_proposal_idx ON params.proposal_r
 -- decisions. Rows are only ever inserted; an empty set for a proposal means
 -- "pending". Columns carry the whole audit entry the UI produces, including the
 -- reviewer's edits, because this log is future training/validation data.
--- data/decisions.jsonl is a local write-ahead mirror, replayed here by
--- `nomoscope-workflow sync-decisions`; see paramdb.record_decision.
+-- The UI's decision fails outright if this insert does, so the table is never
+-- behind what the queue shows. data/decisions.jsonl is a redundant local copy,
+-- replayable by `nomoscope-workflow sync-decisions`; see paramdb.record_decision.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS params.review_decisions (
     id          bigserial PRIMARY KEY,
