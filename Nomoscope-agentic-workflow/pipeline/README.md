@@ -19,6 +19,11 @@ uv run nomoscope-workflow init-param-db
 uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
 uv run nomoscope-workflow translate-params --country FR   # law-language search text (real model needed)
 uv run nomoscope-workflow ingest-openfisca ~/Euromod/openfisca-france/openfisca_france/parameters --country FR
+
+# Reviewer decisions live in params.review_decisions; the UI writes them there
+# directly. Only needed after a decision taken while Postgres was unreachable —
+# replays data/decisions.jsonl, idempotently.
+uv run nomoscope-workflow sync-decisions
 ```
 
 `ingest-params` accepts both export envelopes (the bare record list and the

@@ -2,8 +2,13 @@
 //!
 //! Same layout as the Python side (pipeline/src/nomoscope_workflow/queue_store.py):
 //!   <data>/queue/*.json    one ReviewItem per file
-//!   <data>/decisions.jsonl append-only audit log
+//!   <data>/decisions.jsonl local mirror of the decision log
 //!   <data>/export/*.json   accepted records, Activity 1 format
+//!
+//! Reviewer decisions live in Postgres (params.review_decisions, see db.rs);
+//! decisions.jsonl is written first, as a write-ahead mirror, so a decision
+//! taken while the DB is unreachable is never lost — `nomoscope-workflow
+//! sync-decisions` replays it.
 //!
 //! Items stay loosely typed (serde_json::Value) so the queue schema can evolve
 //! in the pipeline without lockstep releases of the UI.
@@ -95,9 +100,10 @@ fn apply_edits(target: &mut Value, edited_value: Option<&Value>, edited_fields: 
 }
 
 /// Apply a reviewer decision: update the queue item, mirror the review fields
-/// into the exported record's lineage, and append to the audit log. Decided
-/// items stay editable — re-deciding overwrites the item and appends a new
-/// audit entry.
+/// into the exported record's lineage, and append to the local audit mirror.
+/// Decided items stay editable — re-deciding overwrites the item and appends a
+/// new audit entry. Returns `(updated item, audit entry)`; the caller is
+/// responsible for persisting the entry to params.review_decisions.
 pub fn save_decision(
     data_dir: &Path,
     item_id: &str,
@@ -106,7 +112,7 @@ pub fn save_decision(
     note: Option<&str>,
     edited_value: Option<&Value>,
     edited_fields: Option<&Value>,
-) -> Result<Value, String> {
+) -> Result<(Value, Value), String> {
     let review_status = match action {
         "accepted" | "edited" => "accepted",
         "rejected" => "rejected",
@@ -157,6 +163,9 @@ pub fn save_decision(
 
     let log_entry = json!({
         "logged_at": now,
+        // decided_at is the (item, instant) dedupe key the DB replays on — it
+        // must be the same instant that went into the item's decision block.
+        "decided_at": now,
         "item_id": item_id,
         "action": action,
         "reviewer": reviewer,
@@ -171,7 +180,7 @@ pub fn save_decision(
         "critique_verdict": item.pointer("/critique/verdict"),
     });
     append_decision(data_dir, &log_entry)?;
-    Ok(item)
+    Ok((item, log_entry))
 }
 
 fn append_decision(data_dir: &Path, entry: &Value) -> Result<(), String> {
@@ -185,6 +194,8 @@ fn append_decision(data_dir: &Path, entry: &Value) -> Result<(), String> {
     writeln!(file, "{entry}").map_err(|e| e.to_string())
 }
 
+/// Read the local mirror. Only used when the DB is unreachable — the Audit tab
+/// reads params.review_decisions (db::load_decisions) otherwise.
 pub fn load_decisions(data_dir: &Path, limit: usize) -> Result<Vec<Value>, String> {
     let path = data_dir.join("decisions.jsonl");
     if !path.exists() {
@@ -262,7 +273,8 @@ mod tests {
             None,
             None,
         )
-        .unwrap();
+        .unwrap()
+        .0;
         assert_eq!(updated["status"], "accepted");
         assert_eq!(
             updated
@@ -302,7 +314,8 @@ mod tests {
             Some(&json!(0.25)),
             None,
         )
-        .unwrap();
+        .unwrap()
+        .0;
         assert_eq!(
             updated.pointer("/proposed_value/value").unwrap(),
             &json!(0.25)
@@ -340,7 +353,8 @@ mod tests {
             Some(&json!(0.3)),
             Some(&fields),
         )
-        .unwrap();
+        .unwrap()
+        .0;
 
         for base in ["/proposed_value", "/proposed_record/values/0"] {
             assert_eq!(
@@ -393,7 +407,8 @@ mod tests {
             Some(&json!(0.4)),
             Some(&json!({ "legal_status": "enacted_in_force" })),
         )
-        .unwrap();
+        .unwrap()
+        .0;
         assert_eq!(updated["status"], "edited");
         assert_eq!(updated.pointer("/proposed_value/value").unwrap(), &json!(0.4));
         // the audit log keeps both decisions

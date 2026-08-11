@@ -672,3 +672,80 @@ def record_run_safe(
             f"[paramdb] run {item.run_id} not recorded "
             f"({exc.__class__.__name__}: {exc}) — run `nomoscope-workflow init-param-db`?"
         )
+
+
+# ---------------------------------------------------------------------------
+# Stage D: reviewer decisions. params.review_decisions is the system of record;
+# data/decisions.jsonl is the UI's write-ahead mirror, replayed by
+# `nomoscope-workflow sync-decisions` when the DB was down at decision time.
+# ---------------------------------------------------------------------------
+
+
+def record_decision(conn: psycopg.Connection, entry: dict) -> int | None:
+    """Insert one audit entry; returns its id, or None if it was already there.
+
+    Deduplication is on (item_id, decided_at), so replaying the whole log is
+    idempotent while a genuine re-decision (a new instant) still appends.
+    """
+    if not entry.get("action"):
+        raise ValueError("decision entry has no action")
+    item_id = entry.get("item_id")
+    run_id = entry.get("run_id")
+    proposal_pk = None
+    if run_id and item_id:
+        # record_run keys proposals as "<run_id>/<item_id>"
+        row = conn.execute(
+            "SELECT id FROM params.proposals WHERE proposal_id = %s", (f"{run_id}/{item_id}",)
+        ).fetchone()
+        proposal_pk = row[0] if row else None
+
+    def as_json(key: str) -> str | None:
+        value = entry.get(key)
+        return None if value is None else json.dumps(value, ensure_ascii=False)
+
+    row = conn.execute(
+        """
+        INSERT INTO params.review_decisions
+            (proposal_pk, item_id, run_id, model_target, as_of, routing, action,
+             reviewer, note, edited_value, edited_fields, confidence,
+             critique_verdict, decided_at, logged_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                coalesce(%s::timestamptz, now()))
+        ON CONFLICT DO NOTHING
+        RETURNING id
+        """,
+        (
+            proposal_pk,
+            item_id,
+            run_id,
+            entry.get("model_target"),
+            entry.get("as_of"),
+            entry.get("routing"),
+            entry["action"],
+            entry.get("reviewer"),
+            entry.get("note"),
+            as_json("edited_value"),
+            as_json("edited_fields"),
+            entry.get("confidence"),
+            entry.get("critique_verdict"),
+            # log lines written before decided_at was added dedupe on logged_at,
+            # which the UI set to the same instant
+            entry.get("decided_at") or entry.get("logged_at"),
+            entry.get("logged_at"),
+        ),
+    ).fetchone()
+    return row[0] if row else None
+
+
+def sync_decisions(cfg: WorkflowConfig, entries: list[dict]) -> tuple[int, int]:
+    """Replay audit entries into params.review_decisions.
+
+    Returns (inserted, skipped); skipped are entries already in the table, so
+    replaying the whole log after every outage is safe.
+    """
+    inserted = 0
+    with connect(cfg) as conn, conn.transaction():
+        for entry in entries:
+            if record_decision(conn, entry) is not None:
+                inserted += 1
+    return inserted, len(entries) - inserted

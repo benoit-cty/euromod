@@ -7,8 +7,8 @@ export const api = {
   getEnvConfig: () => invoke('get_env_config'),
   loadQueue: (dataDir) => invoke('load_queue', { payload: { data_dir: dataDir } }),
   saveDecision: (payload) => invoke('save_decision', { payload }),
-  loadDecisions: (dataDir, limit = 200) =>
-    invoke('load_decisions', { payload: { data_dir: dataDir, limit } }),
+  loadDecisions: (dataDir, dbUrl, limit = 200) =>
+    invoke('load_decisions', { payload: { data_dir: dataDir, db_url: dbUrl, limit } }),
   exportAccepted: (dataDir) => invoke('export_accepted', { payload: { data_dir: dataDir } }),
   pickDataDir: () => invoke('pick_data_dir'),
   dbStats: (dbUrl) => invoke('db_stats', { payload: { db_url: dbUrl } }),

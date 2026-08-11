@@ -5,6 +5,7 @@
   uv run nomoscope-workflow queue
   uv run nomoscope-workflow export
   uv run nomoscope-workflow init-param-db
+  uv run nomoscope-workflow sync-decisions
   uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
   uv run nomoscope-workflow curate-params curation/FR.curation.yaml
 """
@@ -217,6 +218,28 @@ def export(
     for path in written:
         typer.echo(f"exported {path}")
     typer.echo(f"{len(written)} record(s) exported.")
+
+
+@app.command("sync-decisions")
+def sync_decisions(
+    log: Path = typer.Option(None, "--log", help="Defaults to <data>/decisions.jsonl"),
+) -> None:
+    """Replay the local decision mirror into params.review_decisions.
+
+    The validation UI writes both, so this is only needed after a decision was
+    taken while Postgres was unreachable. Idempotent: entries already recorded
+    are skipped, so replaying the whole log is always safe.
+    """
+    cfg = load_config()
+    path = log or cfg.data_dir / "decisions.jsonl"
+    if not path.exists():
+        typer.echo(f"No decision log at {path} — nothing to sync.")
+        return
+    entries = [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
+    inserted, skipped = paramdb.sync_decisions(cfg, entries)
+    typer.echo(f"{path}: {inserted} decision(s) recorded, {skipped} already present.")
 
 
 @app.command("init-param-db")

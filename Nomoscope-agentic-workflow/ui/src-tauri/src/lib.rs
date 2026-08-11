@@ -27,6 +27,7 @@ struct DataDirPayload {
 #[derive(Deserialize)]
 struct DecisionPayload {
     data_dir: String,
+    db_url: String,
     item_id: String,
     action: String,
     reviewer: String,
@@ -40,6 +41,7 @@ struct DecisionPayload {
 #[derive(Deserialize)]
 struct DecisionsPayload {
     data_dir: String,
+    db_url: String,
     limit: Option<usize>,
 }
 
@@ -115,9 +117,17 @@ fn load_queue(payload: DataDirPayload) -> Result<Value, String> {
     store::load_queue(Path::new(&payload.data_dir))
 }
 
+/// Record a reviewer decision. The queue item and the local decisions.jsonl
+/// mirror are written first, then the decision is persisted to
+/// params.review_decisions, which is the system of record.
+///
+/// A DB failure is reported as a warning rather than an error: the reviewer's
+/// work is already durable on disk and `nomoscope-workflow sync-decisions`
+/// replays it. Failing the command instead would block review whenever
+/// Postgres is down, and would leave the item decided on disk anyway.
 #[tauri::command]
-fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
-    store::save_decision(
+async fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
+    let (item, entry) = store::save_decision(
         Path::new(&payload.data_dir),
         &payload.item_id,
         &payload.action,
@@ -125,13 +135,39 @@ fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
         payload.note.as_deref(),
         payload.edited_value.as_ref(),
         payload.edited_fields.as_ref(),
-    )
+    )?;
+    let db_url = payload.db_url.clone();
+    let persisted = tauri::async_runtime::spawn_blocking(move || db::insert_decision(&db_url, &entry))
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(json!({
+        "item": item,
+        "db_error": persisted.as_ref().err(),
+        "decision": persisted.ok(),
+    }))
 }
 
+/// The audit log from params.review_decisions, falling back to the local
+/// mirror when the DB is unreachable (so the tab still shows this session's
+/// decisions offline). `source` tells the UI which one it got.
 #[tauri::command]
-fn load_decisions(payload: DecisionsPayload) -> Result<Value, String> {
-    let entries = store::load_decisions(Path::new(&payload.data_dir), payload.limit.unwrap_or(200))?;
-    Ok(json!({ "decisions": entries }))
+async fn load_decisions(payload: DecisionsPayload) -> Result<Value, String> {
+    let limit = payload.limit.unwrap_or(200);
+    let db_url = payload.db_url.clone();
+    let from_db =
+        tauri::async_runtime::spawn_blocking(move || db::load_decisions(&db_url, limit as i64))
+            .await
+            .map_err(|e| e.to_string())?;
+    match from_db {
+        Ok(mut value) => {
+            value["source"] = json!("database");
+            Ok(value)
+        }
+        Err(db_error) => {
+            let entries = store::load_decisions(Path::new(&payload.data_dir), limit)?;
+            Ok(json!({ "decisions": entries, "source": "file", "db_error": db_error }))
+        }
+    }
 }
 
 #[tauri::command]

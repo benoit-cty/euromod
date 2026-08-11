@@ -22,6 +22,8 @@
   let facets = $state(null);
   let selectedId = $state(null);
   let decisions = $state([]);
+  // 'database' (params.review_decisions) or 'file' (decisions.jsonl fallback)
+  let decisionSource = $state('database');
   let tab = $state('review');
   // Tabs are kept alive once visited (hidden, not destroyed): switching away
   // must not kill an in-flight agentic run or reset filters/selections.
@@ -88,8 +90,9 @@
   // legal/source status, references); both are null on a plain accept.
   async function decide(action, note, editedValue, editedFields) {
     try {
-      const updated = await api.saveDecision({
+      const res = await api.saveDecision({
         data_dir: config.data_dir,
+        db_url: config.db_url,
         item_id: selected.id,
         action,
         reviewer: config.reviewer,
@@ -97,7 +100,14 @@
         edited_value: editedValue === undefined ? null : editedValue,
         edited_fields: editedFields ?? null,
       });
+      const updated = res.item;
       items = items.map((i) => (i.id === updated.id ? updated : i));
+      // The decision is on disk either way; surface a failed DB write so the
+      // reviewer knows the audit log needs `sync-decisions` to catch up.
+      error = res.db_error
+        ? `Decision saved locally but not recorded in the database: ${res.db_error}` +
+          ' — run `nomoscope-workflow sync-decisions` once Postgres is back.'
+        : '';
       statusMsg = `${updated.id}: ${action}`;
     } catch (e) {
       error = String(e);
@@ -129,8 +139,10 @@
   }
 
   async function loadDecisions() {
-    const res = await api.loadDecisions(config.data_dir);
+    const res = await api.loadDecisions(config.data_dir, config.db_url);
     decisions = res.decisions;
+    decisionSource = res.source;
+    if (res.db_error) error = `Audit log read from the local mirror: ${res.db_error}`;
   }
 
   async function showAudit() {
@@ -222,7 +234,7 @@
   {/if}
   {#if visited.audit}
     <main class="single" hidden={tab !== 'audit'}>
-      <AuditLog {decisions} />
+      <AuditLog {decisions} source={decisionSource} />
     </main>
   {/if}
   {#if visited.database}

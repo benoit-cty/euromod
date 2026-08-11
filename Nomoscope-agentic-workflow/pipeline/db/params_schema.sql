@@ -19,7 +19,9 @@
 --     One extraction_runs row per (country, parameter, as_of) pipeline run;
 --     phoenix_trace_id links it to the full agent trace in Phoenix
 --     (http://localhost:6006), which shares this Postgres instance.
---   Stage D (human)         -> review_decisions, append-only.
+--   Stage D (human)         -> review_decisions, append-only. The validation
+--     UI writes here on every Accept/Reject/Edit; data/decisions.jsonl is a
+--     local mirror kept for offline resilience, not the system of record.
 --
 -- Applied idempotently by `nomoscope-workflow init-param-db`.
 -- ============================================================================
@@ -308,23 +310,52 @@ CREATE TABLE IF NOT EXISTS params.proposal_references (
 CREATE INDEX IF NOT EXISTS proposal_references_proposal_idx ON params.proposal_references (proposal_pk);
 
 -- ----------------------------------------------------------------------------
--- review_decisions — Stage D, append-only. Rows are only ever inserted;
--- an empty set for a proposal means "pending". Mirrors data/decisions.jsonl.
+-- review_decisions — Stage D, append-only and the system of record for human
+-- decisions. Rows are only ever inserted; an empty set for a proposal means
+-- "pending". Columns carry the whole audit entry the UI produces, including the
+-- reviewer's edits, because this log is future training/validation data.
+-- data/decisions.jsonl is a local write-ahead mirror, replayed here by
+-- `nomoscope-workflow sync-decisions`; see paramdb.record_decision.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS params.review_decisions (
     id          bigserial PRIMARY KEY,
     proposal_pk bigint REFERENCES params.proposals(id),
     item_id     text,                             -- review-queue id, for decisions on abstain/not_found items
+    run_id      text,                             -- the extraction run the reviewer was looking at
+    model_target text,
+    as_of       date,
+    routing     text,
     action      text NOT NULL CHECK (action IN
                   ('accepted','rejected','edited','escalated','needs_revision')),
     reviewer    text,
     note        text,
+    edited_value  jsonb,                          -- reviewer's replacement value, null on a plain accept
+    edited_fields jsonb,                          -- patch of validity dates / legal status / references
+    confidence  real,                             -- the proposal's confidence, denormalised for KPI queries
+    critique_verdict text,
     decided_at  timestamptz,
     logged_at   timestamptz NOT NULL DEFAULT now(),
     CHECK (proposal_pk IS NOT NULL OR item_id IS NOT NULL)
 );
+-- Columns added after the table shipped; ALTER keeps existing DBs migrating on
+-- apply_schema() rather than needing a docker compose down -v.
+ALTER TABLE params.review_decisions ADD COLUMN IF NOT EXISTS run_id text;
+ALTER TABLE params.review_decisions ADD COLUMN IF NOT EXISTS model_target text;
+ALTER TABLE params.review_decisions ADD COLUMN IF NOT EXISTS as_of date;
+ALTER TABLE params.review_decisions ADD COLUMN IF NOT EXISTS routing text;
+ALTER TABLE params.review_decisions ADD COLUMN IF NOT EXISTS edited_value jsonb;
+ALTER TABLE params.review_decisions ADD COLUMN IF NOT EXISTS edited_fields jsonb;
+ALTER TABLE params.review_decisions ADD COLUMN IF NOT EXISTS confidence real;
+ALTER TABLE params.review_decisions ADD COLUMN IF NOT EXISTS critique_verdict text;
 CREATE INDEX IF NOT EXISTS review_decisions_proposal_idx ON params.review_decisions (proposal_pk)
     WHERE proposal_pk IS NOT NULL;
+CREATE INDEX IF NOT EXISTS review_decisions_item_idx ON params.review_decisions (item_id, decided_at DESC);
+-- Replaying decisions.jsonl must not duplicate rows: one decision per
+-- (item, instant). Append-only still holds — re-deciding an item yields a new
+-- decided_at, so both rows survive.
+CREATE UNIQUE INDEX IF NOT EXISTS review_decisions_replay_idx
+    ON params.review_decisions (item_id, decided_at)
+    WHERE item_id IS NOT NULL AND decided_at IS NOT NULL;
 
 -- ----------------------------------------------------------------------------
 -- proposal_review — the read surface for the validation UI: proposal next to

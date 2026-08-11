@@ -11,7 +11,8 @@ Nomoscope-agentic-workflow/
 ├── data/
 │   ├── parameters/  input records (Activity 1 JSON, git-versioned) — 3 FR demo params
 │   ├── queue/       review items written by the pipeline, read/written by the UI
-│   ├── decisions.jsonl  append-only audit log (future training/validation data)
+│   ├── decisions.jsonl  write-ahead mirror of the audit log; the log itself is
+│   │                    params.review_decisions in Postgres
 │   └── export/      accepted records, Activity 1 format (export-first write-back)
 ├── observability.md decision document: why Arize Phoenix
 └── .env.example     all configuration knobs
@@ -220,9 +221,13 @@ schema can evolve pipeline-side without lockstep releases.
   the edited form: `valid_from` + `legal_status` + at least one reference with a
   `supporting_extract` (or national-team source), so filling a gap in the form
   unblocks Accept. Hand-editing an extract drops its verified `extract_offsets`.
-  Every decision is appended to `decisions.jsonl` and mirrored into the record's
-  `lineage`.
-- **Audit log** — the decision log rendered as a table.
+  Every decision is recorded in `params.review_decisions` — append-only, linked
+  to its proposal row — and mirrored into the record's `lineage`. It is written
+  to `data/decisions.jsonl` first, so a decision taken while Postgres is down
+  survives; `nomoscope-workflow sync-decisions` replays the log (idempotently)
+  once the DB is back.
+- **Audit log** — `params.review_decisions` rendered as a table, falling back to
+  the local mirror (flagged in the header) when the DB is unreachable.
 - **Database** — corpus statistics (totals, per-jurisdiction, embedding
   coverage) and point-in-time article search straight against the legislation
   DB. Search modes are language-aware FTS, multilingual BGE-M3 vectors, or
