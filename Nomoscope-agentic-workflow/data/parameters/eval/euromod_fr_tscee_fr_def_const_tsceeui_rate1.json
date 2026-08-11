@@ -1,0 +1,118 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tscee_fr/def_const/$tsceeui_rate1",
+    "spine_order": "20",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Rate for employee unemployment insurance contribution"
+    },
+    "short_label": {
+      "en": "$tsceeui_rate1"
+    },
+    "description": {
+      "en": "This is the general employee unemployment insurance contribution rate, currently 0%, used as the Comp_perTU parameter of the 'Unemployment insurance contribution' BenCalc function in policy tscee_fr. The Contributions theme note ('Employee Unemployment') reports a contribution rate of 0% for the current period, reflecting that employee unemployment insurance contributions were abolished (shifted to being employer-financed) under the régime général, matching this constant's value."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Parameters for employee social insurance contributions"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": 0.0244,
+      "valid_from": "2006-01-01",
+      "valid_to": "2006-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.0244",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.024,
+      "valid_from": "2007-01-01",
+      "valid_to": "2017-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.0240",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.0095,
+      "valid_from": "2018-01-01",
+      "valid_to": "2018-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.0095",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.0,
+      "valid_from": "2019-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

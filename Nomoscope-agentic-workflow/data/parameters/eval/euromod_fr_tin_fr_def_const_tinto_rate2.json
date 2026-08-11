@@ -1,0 +1,72 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tin_fr/def_const/$tinto_rate2",
+    "spine_order": "31",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Rate 2 for exceptional contributions"
+    },
+    "short_label": {
+      "en": "$tinto_rate2"
+    },
+    "description": {
+      "en": "Marginal rate of 4% applied to the top band of reference tax income (RFR) under the CEHR exceptional contribution on high incomes. In tin_fr's SchedCalc function it is used as the Band_Rate for the top part of the exceptional-contribution schedule, applying to income above EUR 500,000 for singles and above EUR 1,000,000 for couples (also the rate applied to singles between EUR 500,000 and EUR 1,000,000 per Table 2.82). Despite the JSON 'currency' unit tag, the value (0.04) is a percentage rate."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Parameters for exceptional contributions on high income"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "income_year"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": "2012-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.04,
+      "valid_from": "2013-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.04",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

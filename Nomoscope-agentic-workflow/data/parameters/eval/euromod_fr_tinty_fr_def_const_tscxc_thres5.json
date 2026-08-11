@@ -1,0 +1,210 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tinty_fr/def_const/$tscxc_thres5",
+    "spine_order": "26",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "1 share higher threshold for median rate"
+    },
+    "short_label": {
+      "en": "$tscxc_thres5"
+    },
+    "description": {
+      "en": "This is the RFR (reference tax income) threshold — 26,004 EUR for 2025 — for a single-share tax unit, above which pension income moves from the reduced CSG rate to the median CSG rate (below the full standard rate of 8.3%), part of the graduated CSG-on-pensions schedule. It is used in policy tinty_fr in the ArithOp that 'calculates the applicable threshold for median rate for pensions', paired with $tscxc_thres6 (the per-additional-half-share increment)."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Parameters for determining net taxable income (RNI)"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": "2018-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 22580.0,
+      "valid_from": "2019-01-01",
+      "valid_to": "2019-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "22580#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 22941.0,
+      "valid_from": "2020-01-01",
+      "valid_to": "2020-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "22941#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 23146.0,
+      "valid_from": "2021-01-01",
+      "valid_to": "2021-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "23146#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 23193.0,
+      "valid_from": "2022-01-01",
+      "valid_to": "2022-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "23193#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 23564.0,
+      "valid_from": "2023-01-01",
+      "valid_to": "2023-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "23564#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 24813.0,
+      "valid_from": "2024-01-01",
+      "valid_to": "2024-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "24813#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 26004.0,
+      "valid_from": "2025-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "26004#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

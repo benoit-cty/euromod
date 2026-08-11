@@ -19,11 +19,13 @@ decides which applies:
 - `in_force` (SMIC, PSS, benefit amounts): the expected value is the OpenFisca
   value in force at `as_of`, and the expected `valid_from` is the date that
   value took effect.
-- `income_year` (the FR income-tax family): EUROMOD system year Y is income
-  year Y, and the pipeline back-dates `valid_from` to Y-01-01 — which is also
-  how OpenFisca keys those parameters. The expected value is therefore the
-  OpenFisca value in force at Y-01-01, whatever the enacting finance act's own
-  publication date (LF 2026 for income year 2025).
+- `income_year` (the FR income-tax family): the system year is the year the tax
+  is assessed, and French law assesses it on the PREVIOUS year's income —
+  system year 2025 is income year 2024 ("impôt 2025 sur les revenus 2024").
+  `schema.income_year_for` owns that mapping. OpenFisca keys these parameters
+  by income year too, so the expected value is its entry at
+  `income_year_for(system year)-01-01`, and the expected `valid_from` is that
+  same date, whatever the enacting finance act's own publication date.
 
 OpenFisca stores change points only, so "the value at date D" always means the
 latest entry at or before D — never an entry keyed exactly D.
@@ -40,7 +42,13 @@ from pathlib import Path
 import psycopg
 
 from nomoscope_workflow.queue_store import slugify
-from nomoscope_workflow.schema import Bracket, ParameterRecord, Routing, TemporalBasis
+from nomoscope_workflow.schema import (
+    Bracket,
+    ParameterRecord,
+    Routing,
+    TemporalBasis,
+    income_year_for,
+)
 from nomoscope_workflow import paramdb
 
 from .build_dataset import _current_value
@@ -116,6 +124,33 @@ def value_at(
         (external_parameter_id, component, on),
     ).fetchone()
     return (None, None) if row is None else (row[0], row[1])
+
+
+def is_annually_indexed(
+    conn: psycopg.Connection,
+    external_parameter_id: int,
+    component: str,
+    before: date,
+    years: int = 3,
+    min_changes: int = 2,
+) -> bool:
+    """Does this series move nearly every year in the `years` before `before`?
+
+    Tells "OpenFisca has no entry for this income year because the law did not
+    change" (a tax rate, the CEHR thresholds — untouched since 2012) apart from
+    "because the corpus has not caught up with the finance act" (any indexed
+    amount). Only the second is a lag worth warning a reviewer about.
+    """
+    pattern = "brackets%" if component == "brackets" else component
+    row = conn.execute(
+        """
+        SELECT count(DISTINCT valid_from) FROM params.external_values
+        WHERE external_parameter_id = %s AND component LIKE %s
+          AND valid_from >= %s AND valid_from < %s
+        """,
+        (external_parameter_id, pattern, date(before.year - years, before.month, before.day), before),
+    ).fetchone()
+    return bool(row and row[0] >= min_changes)
 
 
 def schedule_at(
@@ -271,7 +306,7 @@ def draft_case(
         return outcome
 
     income_year = record.information.temporal_basis == TemporalBasis.INCOME_YEAR
-    target_date = date(as_of.year, 1, 1) if income_year else as_of
+    target_date = date(income_year_for(as_of.year), 1, 1) if income_year else as_of
     factor = float(entry.get("factor", 1))
     component = entry.get("component", "value")
 
@@ -295,7 +330,7 @@ def draft_case(
         expected_value = value * factor
         raw = value
 
-    valid_from = date(as_of.year, 1, 1) if income_year else source_date
+    valid_from = date(income_year_for(as_of.year), 1, 1) if income_year else source_date
 
     # Routing is deterministic: the drafted value against the value EUROMOD
     # currently holds. Formula and weighted-average ("FYA") values cannot be
@@ -353,6 +388,29 @@ def draft_case(
         f"link: {entry.get('match_method', 'manual')}"
         + (f" score {entry['score']:.2f}" if entry.get("score") is not None else ""),
     ]
+    # An annually indexed income-year parameter whose backing change point
+    # predates the income year is the update lag itself, not a confirmed "no
+    # change": the finance act setting that year's value has not reached the
+    # OpenFisca corpus, so the expectation just repeats the previous year.
+    # EUROMOD is a year behind for the same reason, so both sides agree and the
+    # case reads `unchanged` — which would freeze the lag into the golden set if
+    # a reviewer accepts it. A rate or ceiling the law simply has not touched
+    # (the 45 % band, the CEHR thresholds) is excluded: there, no change point
+    # in the income year is the correct answer, not a gap.
+    if (
+        income_year
+        and source_date
+        and source_date < target_date
+        and is_annually_indexed(conn, external["id"], component, target_date)
+    ):
+        lag = (
+            f"lag warning: OpenFisca has no change point in income year {target_date.year}; "
+            f"the expected value is the {source_date.year} one carried forward. Do not accept "
+            f"an `unchanged` verdict on this basis — re-draft once the finance act for income "
+            f"year {target_date.year} is in the OpenFisca corpus."
+        )
+        note_parts.append(lag)
+        outcome.warnings.append(lag)
     if unresolved:
         note_parts.append("references not resolved in the legislation corpus: " + "; ".join(unresolved))
     if entry.get("note"):
@@ -483,4 +541,41 @@ def build_dataset(
         exclude = {e["model_target"] for e in entries if e.get("model_target")}
         extra = entries_from_links(conn, country, as_of, (limit - written) * 3, exclude, kind=kind)
         drain(extra)
+    _retire_skipped(dataset_dir, outcomes, as_of, country)
     return outcomes
+
+
+def _retire_skipped(
+    dataset_dir: Path, outcomes: list[DraftOutcome], as_of: date, country: str
+) -> None:
+    """Delete the case file of an entry that stopped drafting this run.
+
+    An entry can stop producing a case because the world changed under it — the
+    CDHR has no value in the income year the system year now maps to. Leaving
+    the previous run's file on disk would keep a case in the golden set that
+    the current rules no longer generate, and the count would still read 50.
+    A reviewed case is never removed: a human verdict outranks a rebuild, and
+    the mismatch is worth seeing rather than silently erasing.
+    """
+    for outcome in outcomes:
+        if outcome.case is not None or not outcome.skipped:
+            continue
+        target = outcome.entry.get("model_target") or outcome.entry.get("group_id")
+        if not target:
+            continue
+        slug = outcome.entry.get("id") or (
+            _case_slug(target, country) if target.startswith("euromod://") else slugify(target)
+        )
+        folder = country.lower()
+        stale = dataset_dir / folder / f"{folder}_{slug}_{as_of.isoformat()}.json"
+        if not stale.exists():
+            continue
+        existing = json.loads(stale.read_text(encoding="utf-8"))
+        if existing.get("reviewed_by"):
+            outcome.warnings.append(
+                f"reviewed case {stale.name} kept on disk although the entry no longer drafts "
+                f"({outcome.skipped}) — re-verify or delete it by hand"
+            )
+            continue
+        stale.unlink()
+        outcome.warnings.append(f"removed stale draft {stale.name} ({outcome.skipped})")

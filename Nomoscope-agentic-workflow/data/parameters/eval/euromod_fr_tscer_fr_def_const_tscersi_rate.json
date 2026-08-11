@@ -1,0 +1,118 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tscer_fr/def_const/$tscersi_rate",
+    "spine_order": "21",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Employer sickness insurance contributions rate (from 2019: income > 2.5 SMIC )"
+    },
+    "short_label": {
+      "en": "$tscersi_rate"
+    },
+    "description": {
+      "en": "This is the employer sickness (health) insurance contribution rate of 13%, applied to whole gross income for employees earning above the relevant SMIC multiple threshold (2.25 SMIC from 2025, previously 2.5 SMIC). It is used in tscer_fr's ArithOp function (Formula parameter, 'Sickness insurance contributions') and BenCalc (Comp_perTU parameter) to compute the higher-earner sickness contribution, which is eligible for the general reduction on low-wage employer contributions."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Reduction coefficient"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": 0.128,
+      "valid_from": "2006-01-01",
+      "valid_to": "2015-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.128",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.1284,
+      "valid_from": "2016-01-01",
+      "valid_to": "2016-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.1284",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.1289,
+      "valid_from": "2017-01-01",
+      "valid_to": "2017-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.1289",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.13,
+      "valid_from": "2018-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.13",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

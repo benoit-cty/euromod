@@ -1,0 +1,72 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tin_fr/def_const/$tinto_lim3",
+    "spine_order": "31",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Second income limit fo couples"
+    },
+    "short_label": {
+      "en": "$tinto_lim3"
+    },
+    "description": {
+      "en": "Income threshold of EUR 1,000,000 that marks the top band limit for couples under the CEHR exceptional contribution on high incomes. In tin_fr's SchedCalc function it is used as the Band_UpLim of the couples' schedule (comment: 'Exceptional contributions on high income earners: couples'), the point above which the top 4% rate applies to a couple's reference tax income (RFR), following the 0% band up to EUR 500,000 and the 3% band between EUR 500,000 and EUR 1,000,000."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Parameters for exceptional contributions on high income"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "income_year"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": "2012-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 1000000.0,
+      "valid_from": "2013-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "1000000#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

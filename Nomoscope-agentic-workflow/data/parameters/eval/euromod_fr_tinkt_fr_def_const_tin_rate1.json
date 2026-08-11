@@ -1,0 +1,49 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tinkt_fr/def_const/$tin_rate1",
+    "spine_order": "28",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Rate in band1"
+    },
+    "short_label": {
+      "en": "$tin_rate1"
+    },
+    "description": {
+      "en": "Marginal tax rate for the first (lowest) band of the progressive French personal income tax schedule (Table 2.77), currently 0%, applied to taxable income up to $tin_upthres1 (11 496 EUR in 2025). It is used as the Band_Rate parameter in the SchedCalc \"Gross income tax (before any IMAX corrections)\" function of tin_fr and again in tinkt_fr's SchedCalc \"Imax: New gross tax using new QF\" (which recomputes gross tax using an adjusted family quotient for the Plafonnement du quotient familial correction)."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Paramteres of the income tax"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "income_year"
+  },
+  "values": [
+    {
+      "value": 0.0,
+      "valid_from": "2006-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

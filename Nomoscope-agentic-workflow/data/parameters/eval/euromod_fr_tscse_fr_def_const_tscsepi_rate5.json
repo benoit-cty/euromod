@@ -1,0 +1,141 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tscse_fr/def_const/$tscsepi_rate5",
+    "spine_order": "22",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Second rate of pension insurance contributions-I&T"
+    },
+    "short_label": {
+      "en": "$tscsepi_rate5"
+    },
+    "description": {
+      "en": "This is the second-band main pension insurance contribution rate for self-employed artisans and industry-and-trade workers, set at 0.6%, applied to income above the PSS ceiling (complementing the 17.75% first-band rate, $tscsepi_rate4). It is used as the Band_Rate parameter of the same SchedCalc in tscse_fr, 'ARTISAN & I&T: Pension insurance contributions for artisans & industry & trade (MAIN)'. The theme note's 'Self-Employed old age' entry confirms a matching rate of '0.6% above [1 PSS]' for the 2025 system (rising to 0.72% in 2026)."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Parameters for self-employed contributions"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": "2013-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.002,
+      "valid_from": "2014-01-01",
+      "valid_to": "2014-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.002",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.0035,
+      "valid_from": "2015-01-01",
+      "valid_to": "2015-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.0035",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.005,
+      "valid_from": "2016-01-01",
+      "valid_to": "2016-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.0050",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.006,
+      "valid_from": "2017-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.0060",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

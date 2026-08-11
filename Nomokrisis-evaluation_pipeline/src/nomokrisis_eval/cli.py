@@ -115,6 +115,9 @@ def build_openfisca_dataset(
         label = outcome.entry.get("model_target") or outcome.entry.get("parameter_file", "?")
         if outcome.case is None:
             typer.echo(f"  ~ skipped {label}: {outcome.skipped}")
+            # A skip can retire a case the previous run wrote; never silently.
+            for warning in outcome.warnings:
+                typer.echo(f"    ! {warning}")
             continue
         written += 1
         expected = outcome.case.expected

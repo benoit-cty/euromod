@@ -1,0 +1,20 @@
+{
+  "id": "fr_bsa00_bsa00_amt1_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_bsa00_fr_def_const_bsa00_amt1.json",
+  "as_of": "2025-06-01",
+  "difficulty": "plain",
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 646.52,
+    "valid_from": "2025-04-01",
+    "citations": [
+      "JORFTEXT000051393086"
+    ]
+  },
+  "verified": false,
+  "drafted_by": "openfisca@a7038ee",
+  "notes": "openfisca: prestations_sociales.solidarite_insertion.minima_sociaux.rsa.rsa_m.montant_de_base_du_rsa | openfisca value at 2025-06-01: 646.52 (change point 2025-04-01) | euromod value in force at 2025-06-01: 646.52 from 2025-01-01 | link: fingerprint score 0.79 | references not resolved in the legislation corpus: Décret n° 2025-293 du 29 mars 2025, art. 1 [JORFTEXT000051393086] not in the corpus yet"
+}

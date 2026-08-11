@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from datetime import date
 
+from nomoscope_workflow.schema import income_year_for
+
 from nomokrisis_eval.openfisca_golden import _case_slug, schedule_at, value_at
 
 
@@ -86,3 +88,18 @@ def test_case_slug_drops_the_country_and_function_noise():
         _case_slug("euromod://FR/tinkt_fr/def_const/$tin_upthres1", "FR") == "tinkt_tin_upthres1"
     )
     assert _case_slug("euromod://FR/SetDefault_fr/def_const/$MinWage", "FR") == "setdefault_minwage"
+
+
+def test_system_year_maps_to_the_previous_income_year():
+    """The knob every FR income-tax expectation turns on.
+
+    France assesses in year Y the income of year Y-1, so a golden case anchored
+    on EUROMOD system year 2025 must read OpenFisca's income-year-2024 entry
+    (11 497), not the 2025 one (11 600) that LF 2026 introduced. Getting this
+    backwards produces a case that looks right and scores every correct
+    proposal as wrong.
+    """
+    assert income_year_for(2025) == 2024
+    conn = FakeConn(BAREME)
+    target = date(income_year_for(2025), 1, 1)
+    assert value_at(conn, 1, "brackets[2].threshold", target) == (11497.0, date(2024, 1, 1))

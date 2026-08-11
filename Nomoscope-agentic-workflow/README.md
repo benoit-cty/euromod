@@ -106,11 +106,19 @@ re-ingest of a new export; the overlay is what makes it survive
 `docker compose down -v`, and it records *why* each parameter is tagged. The
 three behaviours:
 
-- **retrieve/scout** use a shifted date — versions in force on 1 July of
-  `as_of.year + 1` — so the retroactive act is the one selected;
+The income year is **not** the system year: France assesses in year Y the
+income of year Y−1 («impôt 2025 sur les revenus 2024»), so system year 2025
+means income year 2024. That mapping is decided once, in
+`schema.income_year_for` (`INCOME_YEAR_OFFSET = -1`), and every behaviour below
+derives from it rather than re-deriving `as_of.year ± 1`. The
+three behaviours:
+
+- **retrieve/scout** use a shifted date — versions in force on 1 July of the
+  year *following* the income year (mid-2025 for income year 2024, when
+  LF 2025 is consolidated) — so the retroactive act is the one selected;
 - **propose** back-dates `valid_from` to 1 January of the income year (the
-  OpenFisca convention, which matches EUROMOD's system-year-equals-income-year
-  rule); publication after `as_of` is expected, not an inconsistency;
+  OpenFisca convention); publication after the income year is expected, not an
+  inconsistency;
 - **critique** replaces the in-force date check with two mechanical ones:
   `valid_from` must fall inside the income year, and the cited version must have
   entered into force on/after 1 December of the income year (the budget-act

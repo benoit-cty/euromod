@@ -1,0 +1,20 @@
+{
+  "id": "fr_constdef_tsc_groupc_lim_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_constdef_fr_def_const_tsc_groupc_lim.json",
+  "as_of": "2025-06-01",
+  "difficulty": "combine",
+  "source_class": "gazette",
+  "expected": {
+    "routing": "unchanged",
+    "value": 31400.0,
+    "valid_from": "2025-01-01",
+    "citations": [
+      "JORFTEXT000050854392"
+    ]
+  },
+  "verified": false,
+  "drafted_by": "openfisca@a7038ee",
+  "notes": "openfisca: prelevements_sociaux.pss.plafond_securite_sociale_mensuel x8 | openfisca value at 2025-06-01: 3925.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 31400.0 from 2025-01-01 | link: manual | Complementary-pension income limit: 8x the monthly PSS."
+}

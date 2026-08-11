@@ -1,0 +1,72 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tin_fr/def_const/$tinto_lim1",
+    "spine_order": "31",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "First income limit for singles"
+    },
+    "short_label": {
+      "en": "$tinto_lim1"
+    },
+    "description": {
+      "en": "Income threshold of EUR 250,000 marking the start of the taxable band for single taxpayers under the Contribution Exceptionnelle sur les Hauts Revenus (CEHR), France's exceptional tax on high earners in place since 2013. In tin_fr's SchedCalc function it is used as the Band_UpLim of the first tax band (comment: 'Exceptional contributions on high income earners: singles'), i.e. the upper limit of the band taxed at 0% and the point above which the 3% rate starts to apply on the reference tax income (RFR, personal income tax base plus taxable capital income). It is also used in tinto01_fr's Elig function as the eligibility condition for single taxpayers under the related Contribution Différentielle sur les Hauts Revenus (CDHR), a 2025 one-year (subsequently renewed) top-up levy that also applies from EUR 250,000 RFR for singles."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Parameters for exceptional contributions on high income"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "income_year"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": "2012-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 250000.0,
+      "valid_from": "2013-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "250000#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

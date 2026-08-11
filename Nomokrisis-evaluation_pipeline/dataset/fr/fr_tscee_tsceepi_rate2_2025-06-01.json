@@ -1,0 +1,18 @@
+{
+  "id": "fr_tscee_tsceepi_rate2_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tscee_fr_def_const_tsceepi_rate2.json",
+  "as_of": "2025-06-01",
+  "difficulty": "plain",
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 0.004,
+    "valid_from": "2017-01-01",
+    "citations": []
+  },
+  "verified": false,
+  "drafted_by": "openfisca@a7038ee",
+  "notes": "openfisca: prelevements_sociaux.cotisations_securite_sociale_regime_general.cnav.salarie.vieillesse_deplafonnee :: brackets[1].rate | openfisca value at 2025-06-01: 0.004 (change point 2017-01-01) | euromod value in force at 2025-06-01: 0.004 from 2017-01-01 | link: fingerprint score 0.80 | references not resolved in the legislation corpus: Article D242-4 du Code de la Sécurité sociale [LEGIARTI000029924557] not in the corpus (not scorable); Décret 2014-1531 du 17/12/2014, art. 4 [JORFARTI000029920866] not in the corpus (not scorable)"
+}
