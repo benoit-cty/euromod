@@ -90,6 +90,18 @@ winget install jqlang.jq
 
 Download Quarto from https://quarto.org/docs/download/
 
+Convert it_needs_for_deployment.md:
+
+```sh
+sed 's/^```mermaid$/```{mermaid}/' it_needs_for_deployment.md > it_needs_for_deployment.qmd
+quarto render it_needs_for_deployment.qmd --to typst \
+  -M toc:true -M toc-depth:2 -M papersize:a4 \
+  -M shift-heading-level-by:-1 -M date:2026-08-11
+rm it_needs_for_deployment.qmd
+```
+
+Convert Param_Schema/parameter_report.md:
+
 ```sh
 cd Param_Schema
 sed 's/^```mermaid$/```{mermaid}/' parameter_report.md > parameter_report.qmd
@@ -97,8 +109,8 @@ quarto render parameter_report.qmd --to typst \
   -M toc:true -M toc-depth:2 -M papersize:a4 \
   -M shift-heading-level-by:-1 -M date:2026-07-29
 rm parameter_report.qmd
-
 ```
+
 
 ## Improvement Skill
 
