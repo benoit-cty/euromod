@@ -61,6 +61,24 @@ COUNTRY_SOURCES: dict[str, dict] = {
         "id_pattern": re.compile(r"\b(?:JORFTEXT|LEGIARTI)\d{12}\b"),
         "act_kinds": "loi, décret or arrêté",
     },
+    "ES": {
+        # boe.es is both the official gazette and the consolidated-legislation
+        # service; the same domain serves the human view and the open-data API
+        # Nomotheca fetches, so one domain covers discovery and ingestion.
+        "domains": ["boe.es"],
+        # The BOE analytical id, as it appears in /buscar/act.php?id=… and
+        # /diario_boe/txt.php?id=… URLs. Restricted to the -A- series: that is
+        # the "disposiciones generales" series, and the only one the
+        # legislacion-consolidada API serves (-B- and -S- are not consolidated).
+        "id_pattern": re.compile(r"\bBOE-A-\d{4}-\d+\b"),
+        # The LPGE was prorogued for 2024 and 2025, so recent values arrive via
+        # ordinary laws and decree-laws rather than the budget law — the scout
+        # must not look only for "Ley de Presupuestos".
+        "act_kinds": "ley, real decreto-ley, real decreto legislativo or real decreto",
+        # No ingest_suffix: a bare BOE id is exactly what EsResolver returns and
+        # what the API serves in full (metadata + every block + every version).
+        # No known_key: instruments.national_id *is* the BOE id.
+    },
     "LT": {
         # e-seimas is the register's public portal; e-tar.lt serves the same
         # acts. Both put the TAR document id in the /legalAct/ URL path, which
@@ -94,6 +112,11 @@ Return:
 - reasoning: one sentence on what kind of act sets this value."""
 
 ID_HINTS = {
+    "ES": (
+        "for Spain the BOE-A-YYYY-NNNNN identifier shown in boe.es "
+        "/buscar/act.php?id=<id> and /diario_boe/txt.php?id=<id> URLs "
+        "(note the ELI URL, boe.es/eli/es/l/2006/11/28/35, does NOT contain it)"
+    ),
     "FR": (
         "for France the JORFTEXT############ id shown in Légifrance JORF URLs, "
         "or the LEGIARTI############ id of the consolidated code article"

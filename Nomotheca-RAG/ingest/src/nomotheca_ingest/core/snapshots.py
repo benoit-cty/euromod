@@ -35,9 +35,15 @@ class SnapshotClient:
     user_agent: str = "nomotheca-legislation-ingest/0.1"
     timeout_seconds: float = 30.0
 
-    def get(self, ref: SourceRef, url: str) -> Snapshot:
-        """Fetch a URL, persist the raw response, and return snapshot metadata."""
-        headers = {"User-Agent": self.user_agent}
+    def get(self, ref: SourceRef, url: str, headers: dict[str, str] | None = None) -> Snapshot:
+        """Fetch a URL, persist the raw response, and return snapshot metadata.
+
+        ``headers`` lets an adapter add request headers its source requires —
+        content negotiation is a per-source HTTP concern, not a parser one (the
+        BOE API 400s unless ``Accept: application/xml`` is sent). They are
+        merged over the default User-Agent, which callers may also override.
+        """
+        headers = {"User-Agent": self.user_agent, **(headers or {})}
         with httpx.Client(timeout=self.timeout_seconds, headers=headers, follow_redirects=True) as client:
             response = client.get(url)
         content_hash = sha256(response.content).hexdigest()

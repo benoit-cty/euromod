@@ -8,11 +8,11 @@ from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 
 
 class FrResolver:
-    """Placeholder resolver for French citations until moulineuse wiring lands."""
+    """Placeholder resolver for French citations until Moulineuse wiring lands."""
 
     def resolve(self, ref: CitationRef, as_of: date) -> list[SourceRef]:
         """Resolve a French citation at a date to exact source references."""
-        raise NotImplementedError("FR citation resolution needs moulineuse SQL or MCP wiring.")
+        raise NotImplementedError("FR citation resolution needs Moulineuse SQL or MCP wiring.")
 
 
 def canary_facts() -> list[CanaryFact]:

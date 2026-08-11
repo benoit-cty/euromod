@@ -177,5 +177,7 @@
 2. Test Fisconetplus crawlability (BE) and identify what the BE national team uses internally.
 3. Confirm eISB bulk/XML retrieval options (IE) vs. crawling ELI URLs.
 4. Confirm BOFiP open-data dump format and update cadence (FR).
-5. ~~Clarify EUROMOD ES scope re: regional IRPF and foral regimes~~ — **resolved via CR Y16**: regional IRPF fully modelled per region; foral regimes excluded. Follow-ups: (a) ask the ES national team where they source the 19 annual budget laws and regional credit rules today; (b) test BOE API coverage of each region's ceded-tax *texto refundido* and annual tax-measure laws.
+5. ~~Clarify EUROMOD ES scope re: regional IRPF and foral regimes~~ — **resolved via CR Y16**: regional IRPF fully modelled per region; foral regimes excluded. Follow-ups: (a) ask the ES national team where they source the 19 annual budget laws and regional credit rules today; ~~(b) test BOE API coverage of each region's ceded-tax *texto refundido*~~ — **resolved 2026-08-11, coverage is partial**: BOE consolidada does carry autonomic norms (`ambito = Autonómico`), and Galicia's DL 1/2011 (`BOE-A-2011-18161`) and C. Valenciana's Ley 13/1997 (`BOE-A-1998-8202`) are fully consolidated with per-provision version history — but Madrid's DL 1/2010 and Andalucía's DL 1/2018 are **absent**, so those regions need their own gazettes (BOCM, BOJA). Regions BOE covers need no new adapter, only a different id. See [`Spain_sources_analysis.md`](Spain_sources_analysis.md) §2E.
+
+   Note also that the ES row above describes the BOE API as JSON: it is **XML-only**, and rejects any request without `Accept: application/xml`.
 6. Request BWB initial set from KOOP (NL) if NL enters the slice — lead time for the USB/download delivery.
