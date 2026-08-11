@@ -37,6 +37,15 @@
   let impactTab = $state(null);
 
   const selected = $derived(items.find((i) => i.id === selectedId) ?? null);
+  // Every run of the selected parameter (newest first, as loadQueue sorts them):
+  // the list collapses them to one row, the detail panel navigates between them.
+  const siblings = $derived(
+    selected
+      ? items.filter(
+          (i) => i.country === selected.country && i.model_target === selected.model_target,
+        )
+      : [],
+  );
 
   $effect(() => {
     visited[tab] = true;
@@ -190,6 +199,8 @@
       <QueueList {items} {facets} {selectedId} onselect={(id) => (selectedId = id)} />
       <DetailPanel
         item={selected}
+        {siblings}
+        onselectrun={(id) => (selectedId = id)}
         ondecide={decide}
         dbUrl={config.db_url}
         phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}

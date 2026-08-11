@@ -6,11 +6,25 @@
 
   let {
     item,
+    // every queue run of the same parameter, newest first (this one included)
+    siblings = [],
+    onselectrun = () => {},
     ondecide,
     dbUrl = '',
     phoenixEndpoint = 'http://localhost:6006',
     phoenixGid = '',
   } = $props();
+
+  const runIndex = $derived(siblings.findIndex((r) => r.id === item?.id));
+
+  function runLabel(run) {
+    return run.system_year ?? run.as_of?.slice(0, 4) ?? '—';
+  }
+
+  function stepRun(delta) {
+    const next = siblings[runIndex + delta];
+    if (next) onselectrun(next.id);
+  }
 
   // Param_Schema doc 01 §"legal_status enum" / schema.py LegalStatus & SourceType.
   const LEGAL_STATUSES = [
@@ -259,6 +273,39 @@
       <span class="badge {item.status}">{item.status}</span>
     </header>
 
+    {#if siblings.length > 1}
+      <!-- The queue keeps one item per (parameter, as-of) run; the list shows
+           only the newest, so the other runs are reachable from here. -->
+      <div class="runs">
+        <span class="muted">Runs ({runIndex + 1}/{siblings.length})</span>
+        <button
+          class="step"
+          disabled={runIndex <= 0}
+          title="Newer run"
+          onclick={() => stepRun(-1)}>‹</button
+        >
+        <div class="run-chips">
+          {#each siblings as run (run.id)}
+            <button
+              class="chip"
+              class:current={run.id === item.id}
+              title="{run.as_of} · {run.routing} · {run.status} · run {run.run_id ?? '—'}"
+              onclick={() => onselectrun(run.id)}
+            >
+              <span class="year">{runLabel(run)}</span>
+              <span class="badge {run.status}">{run.status}</span>
+            </button>
+          {/each}
+        </div>
+        <button
+          class="step"
+          disabled={runIndex < 0 || runIndex >= siblings.length - 1}
+          title="Older run"
+          onclick={() => stepRun(1)}>›</button
+        >
+      </div>
+    {/if}
+
     {#if item.routing === 'provisional'}
       <p class="provisional-note">
         The cited text cannot be tied to system year
@@ -484,6 +531,31 @@
   header { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
   header h2 { margin: 0; }
   .side-by-side { display: flex; gap: 1.2rem; flex-wrap: wrap; }
+  .runs { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; min-width: 0; }
+  .run-chips { display: flex; gap: 0.3rem; overflow-x: auto; padding-bottom: 0.15rem; }
+  .runs .chip {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--panel-2);
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .runs .chip.current { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+  .runs .chip .year { font-variant-numeric: tabular-nums; }
+  .runs .step {
+    padding: 0.05rem 0.45rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .runs .step:disabled { color: var(--muted); cursor: default; }
   .checks { list-style: none; padding: 0; margin: 0.3rem 0; display: flex; gap: 1rem; flex-wrap: wrap; }
   .checks li::before { content: '✗ '; color: var(--err); }
   .checks li.ok::before { content: '✓ '; color: var(--ok); }
