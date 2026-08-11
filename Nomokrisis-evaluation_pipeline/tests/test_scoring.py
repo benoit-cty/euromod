@@ -23,7 +23,7 @@ def make_case(**expected_kwargs) -> GoldenCase:
         id="fr_test_case",
         country="FR",
         language="fr",
-        parameter_file="agentic-workflow/data/parameters/fr_tinrt_top_rate.json",
+        parameter_file="Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinkt_fr_def_const_tin_rate6.json",
         as_of=date(2025, 6, 1),
         expected=Expected(**expected_kwargs),
         verified=True,

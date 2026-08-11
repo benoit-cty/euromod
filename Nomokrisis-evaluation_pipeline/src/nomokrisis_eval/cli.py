@@ -17,6 +17,7 @@ import typer
 
 from . import build_dataset as builder
 from . import db as evaldb
+from . import openfisca_golden
 from .config import load_eval_config
 from .dataset import dataset_version, load_cases, load_embedding_cases, save_case
 from .runner import run_evaluation, summarize
@@ -73,6 +74,80 @@ def build_dataset_cmd(
             typer.echo(f"  -> {path} (verified=false — review before freezing)")
             written += 1
     typer.echo(f"{written} draft case(s) written. Review them, set verified=true, commit to git.")
+
+
+@app.command("build-openfisca-dataset")
+def build_openfisca_dataset(
+    year: int = typer.Option(..., "--year", help="EUROMOD system year to draft cases for, e.g. 2025"),
+    country: str = typer.Option("FR", "--country", help="ISO country code"),
+    source: Path = typer.Option(
+        None, "--source", help="Curated selection file (default: golden_sources/openfisca_<cc>.json)"
+    ),
+    limit: int = typer.Option(50, "--limit", help="Maximum number of cases to write"),
+    fill: bool = typer.Option(
+        True, "--fill/--curated-only", help="Top the set up from params.parameter_links suggestions"
+    ),
+    as_of: str = typer.Option(
+        None, "--as-of", help="Anchor date inside the system year (default: <year>-06-01)"
+    ),
+) -> None:
+    """Draft golden cases from the ingested OpenFisca corpus (verified=false).
+
+    Ground truth comes from OpenFisca's curated per-date values and legal
+    references; routing is computed deterministically against what EUROMOD
+    holds. Review each case in the UI's Golden set tab before it counts.
+    """
+    cfg = load_eval_config()
+    from .config import EVAL_ROOT
+
+    selection = source or EVAL_ROOT / "golden_sources" / f"openfisca_{country.lower()}.json"
+    if not selection.exists():
+        typer.echo(f"no selection file at {selection} — pass --source or use --curated-only")
+        selection = None
+    anchor = _parse_date(as_of) if as_of else date(year, 6, 1)
+    with evaldb.connect(cfg.database_url) as conn:
+        outcomes = openfisca_golden.build_dataset(
+            conn, cfg.dataset_dir, selection, anchor,
+            country=country.upper(), limit=limit, fill_from_links=fill,
+        )
+    written = 0
+    for outcome in outcomes:
+        label = outcome.entry.get("model_target") or outcome.entry.get("parameter_file", "?")
+        if outcome.case is None:
+            typer.echo(f"  ~ skipped {label}: {outcome.skipped}")
+            continue
+        written += 1
+        expected = outcome.case.expected
+        typer.echo(
+            f"  {expected.routing:<10} {outcome.case.id}"
+            f"  value={expected.value}  valid_from={expected.valid_from}"
+            f"  citations={expected.citations or '[]'}"
+        )
+    typer.echo(
+        f"\n{written} draft case(s) in {cfg.dataset_dir} (verified=false). "
+        "Review them in the UI's Golden set tab (or `nomokrisis-eval verify <id>`) before running an evaluation."
+    )
+
+
+@app.command()
+def verify(
+    case_ids: list[str] = typer.Argument(..., help="Golden case ids to mark as human-verified"),
+    unverify: bool = typer.Option(False, "--unverify", help="Clear the flag instead of setting it"),
+    reviewer: str = typer.Option(None, "--reviewer", help="Recorded in the case's notes"),
+) -> None:
+    """Flip `verified` on golden cases — the human gate before the set counts as ground truth."""
+    cfg = load_eval_config()
+    cases = {case.id: case for case in load_cases(cfg.dataset_dir)}
+    for case_id in case_ids:
+        case = cases.get(case_id)
+        if case is None:
+            typer.echo(f"  ! unknown case {case_id}")
+            continue
+        case.verified = not unverify
+        if reviewer and not unverify:
+            case.notes = " | ".join(filter(None, [case.notes, f"verified by {reviewer}"]))
+        save_case(cfg.dataset_dir, case)
+        typer.echo(f"  {'verified' if case.verified else 'unverified'} {case_id}")
 
 
 @app.command("list-cases")

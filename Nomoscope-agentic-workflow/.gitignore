@@ -1,6 +1,7 @@
 # runtime artefacts of the workflow (queue/decisions/export are runtime state;
 # input parameters/ ARE tracked — they are the git-versioned parameter records)
 data/queue/
+data/queue_superseded/
 data/export/
 data/decisions.jsonl
 .env

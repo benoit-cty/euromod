@@ -1,7 +1,8 @@
 """CLI: run the workflow, inspect the queue, export accepted records.
 
-  uv run nomoscope-workflow run data/parameters/fr_tinsc_bareme.json --year 2025
-  uv run nomoscope-workflow run-all --year 2025
+  uv run nomoscope-workflow run-targets 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025
+  uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule --year 2025
+  uv run nomoscope-workflow run-all --params-dir data/parameters/db --year 2025
   uv run nomoscope-workflow queue
   uv run nomoscope-workflow export
   uv run nomoscope-workflow migrate-queue-ids --apply
@@ -159,7 +160,15 @@ def run_all(
     folder = params_dir or cfg.data_dir / "parameters"
     files = sorted(p for p in folder.glob("*.json*") if p.suffix in (".json", ".jsonc"))
     if not files:
-        typer.echo(f"No parameter files in {folder}")
+        # The parameter store is the source; <data>/parameters holds only
+        # materialized subdirectories (db/ from run-targets, eval/ from the
+        # golden-set builder), so an empty top level is the normal state.
+        typer.echo(
+            f"No parameter files in {folder}. Parameters live in the params DB — "
+            "materialize them with `run-targets <model_target|group:...>`, or point "
+            "--params-dir at a directory of already-materialized records "
+            f"(e.g. {folder / 'db'})."
+        )
         raise typer.Exit(1)
     run(parameter_files=files, year=year, as_of=as_of, model=model, force=force)
 
@@ -167,7 +176,9 @@ def run_all(
 @app.command("run-targets")
 def run_targets(
     targets: list[str] = typer.Argument(
-        ..., help="model_target ids (euromod://…) or parameter_keys of parameters in the params DB"
+        ...,
+        help="model_target ids (euromod://…), parameter_keys, or 'group:<group_id>' "
+        "for a bracket schedule assembled from params.parameter_groups",
     ),
     year: int = typer.Option(None, "--year", help=_YEAR_HELP),
     as_of: str = typer.Option(None, "--as-of", help=_AS_OF_HELP),
@@ -176,9 +187,14 @@ def run_targets(
 ) -> None:
     """Run the workflow for parameters stored in the params DB (see ingest-params).
 
-    Each target is materialized as an Activity 1 JSON file under
-    <data>/parameters/db/ (a subdirectory, so run-all's glob ignores it),
-    then goes through the standard file-based workflow.
+    The DB is the source: each target is materialized as an Activity 1 JSON file
+    under <data>/parameters/db/ (a subdirectory, so run-all's glob ignores it),
+    then goes through the standard file-based workflow. Those files are derived
+    artefacts — regenerated on every run, never hand-edited.
+
+    A `group:` target assembles one bracket schedule out of the scalar constants
+    the export declares as its bands, e.g.
+    `group:FR:tinkt_fr:tin_schedule` for the French income-tax barème.
     """
     cfg = load_config()
     out_dir = cfg.data_dir / "parameters" / "db"
@@ -187,8 +203,12 @@ def run_targets(
     with paramdb.connect(cfg) as conn:
         for target in targets:
             try:
-                record = paramdb.load_record(conn, target)
-            except KeyError as exc:
+                record = (
+                    paramdb.load_group_record(conn, target.removeprefix("group:"))
+                    if target.startswith("group:")
+                    else paramdb.load_record(conn, target)
+                )
+            except (KeyError, ValueError) as exc:
                 typer.echo(str(exc))
                 raise typer.Exit(1)
             path = out_dir / f"{queue_store.slugify(record.information.model_target)}.json"

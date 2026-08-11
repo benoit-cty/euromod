@@ -17,6 +17,9 @@ export const api = {
   // legal-unit version a cited chunk belongs to.
   chunkRenderings: (dbUrl, chunkId) =>
     invoke('chunk_renderings', { payload: { db_url: dbUrl, chunk_id: chunkId } }),
+  // Golden set: drafted evaluation cases on disk, and the reviewer's verdict.
+  goldenCases: (datasetDir) => invoke('golden_cases', { payload: { dataset_dir: datasetDir } }),
+  setGoldenVerified: (payload) => invoke('set_golden_verified', { payload }),
   evalRuns: (dbUrl) => invoke('eval_runs', { payload: { db_url: dbUrl } }),
   evalRunDetail: (dbUrl, runPk) =>
     invoke('eval_run_detail', { payload: { db_url: dbUrl, run_pk: runPk } }),

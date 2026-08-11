@@ -252,15 +252,17 @@ INSERT INTO instrument_relations (from_instrument_id, to_instrument_id, to_unit_
    '{"jorf": "2025-02-15", "note": "barème IR indexé"}');
 
 -- ----------------------------------------------------------------------------
--- Citation registry: the EXTERNAL parameter JSON (income-tax schedule) cites
--- both dated versions of CGI art. 197. Reference only — no parameter content.
+-- Citation registry: the income-tax schedule cites both dated versions of
+-- CGI art. 197. Reference only — no parameter content. The external_ref is
+-- the id paramdb.load_group_record derives for the schedule assembled from
+-- the export's own parameter group FR:tinkt_fr:tin_schedule.
 -- ----------------------------------------------------------------------------
 INSERT INTO citation_registry (cited_version_id, cited_chunk_id, external_ref, external_kind) VALUES
   ('d0000000-0000-4000-8000-000000000001',
    (SELECT id FROM chunks WHERE unit_text_id = 'e0000000-0000-4000-8000-000000000001' AND seq = 0),
-   'euromod://FR/tin_fr/def_const/$tinsc_bareme', 'euromod_parameter'),
+   'euromod://FR/tinkt_fr/group/tin_schedule', 'euromod_parameter'),
   ('d0000000-0000-4000-8000-000000000002',
    (SELECT id FROM chunks WHERE unit_text_id = 'e0000000-0000-4000-8000-000000000003' AND seq = 0),
-   'euromod://FR/tin_fr/def_const/$tinsc_bareme', 'euromod_parameter');
+   'euromod://FR/tinkt_fr/group/tin_schedule', 'euromod_parameter');
 
 ANALYZE;

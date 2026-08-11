@@ -13,15 +13,18 @@ prompts, critique and Phoenix tracing).
 ```
 dataset/<country>/*.json     golden cases (git-versioned; the frozen test set)
 dataset_embedding/<cc>/*.json  embedding/retrieval cases (query → relevant citations)
+golden_sources/openfisca_<cc>.json  curated EUROMOD ↔ OpenFisca pairs the drafter starts from
 src/nomokrisis_eval/
   schema.py                  GoldenCase / Expected / CaseResult / RunManifest (+ EmbeddingCase)
   dataset.py                 load/save cases + content-hash dataset_version
   build_dataset.py           Claude Fable drafts cases from a trusted document
+  openfisca_golden.py        drafts cases from the ingested OpenFisca corpus (no LLM)
   scoring.py                 KPI scoring (pure functions)
   runner.py                  drives nomoscope_workflow.run_parameter over the set
   embedding_eval.py          ranks golden chunks under fts / vector / hybrid search
   db.py                      Postgres persistence (eval.runs / eval.results)
-  cli.py                     nomokrisis-eval init-db | build-dataset | list-cases | run | report
+  cli.py                     nomokrisis-eval init-db | build-dataset | build-openfisca-dataset
+                             | list-cases | verify | run | report
                              | list-embedding-cases | run-embeddings
 db/eval_schema.sql           tables + eval.run_summary view (the UI read surface)
 .eval_runs/<run_id>/         scratch queue + manifest.json + results.json per run (gitignored)
@@ -70,6 +73,97 @@ uv run nomokrisis-eval build-dataset docs/fr_country_report_2025.md --country FR
   refusal fallback to `claude-opus-4-8` is enabled, so a classifier false-positive
   degrades gracefully instead of failing the batch. Needs `ANTHROPIC_API_KEY` (loaded
   from the repo-root `.env`).
+
+### Building it from OpenFisca-France
+
+`build-openfisca-dataset` drafts cases from the **OpenFisca corpus already
+ingested into `params.external_*`** (`nomoscope-workflow ingest-openfisca`;
+2,836 FR parameters, 19,391 value points, 16,788 references at a pinned git
+commit). OpenFisca is a human-curated parameter database with per-date values
+*and* per-date `LEGIARTI`/`JORFTEXT` references — exactly the
+`(value, effective date, citation)` triple a golden case needs, at scale and
+with no LLM in the loop.
+
+```bash
+# 0. the parameter store must hold the parameters under test (once per DB reset)
+cd ../Nomoscope-agentic-workflow/pipeline
+uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
+uv run nomoscope-workflow ingest-params ../../extracted_parameters/curated/FR.in_function.json
+uv run nomoscope-workflow curate-params curation/FR.curation.yaml
+
+# 1. suggest EUROMOD <-> OpenFisca links (workflow package, writes params.parameter_links)
+uv run nomoscope-workflow match-openfisca --seed ../../Nomokrisis-evaluation_pipeline/golden_sources/openfisca_fr.json
+
+# 2. draft the golden set from those links
+cd -
+uv run nomokrisis-eval build-openfisca-dataset --year 2025            # 50 drafts, verified=false
+uv run nomokrisis-eval build-openfisca-dataset --year 2025 --curated-only
+```
+
+- **Linking** is value-fingerprint matching plus a curated seed file
+  ([golden_sources/openfisca_fr.json](golden_sources/openfisca_fr.json)):
+  both sides hold multi-year numeric histories, so a link is proposed when the
+  same value appears in the same year on both sides at least three times. The
+  seed file pins the families that no fingerprint can find on its own — the
+  ones the JRC asked for by name (barème IR, CDHR, CEHR, SMIC, PSS) and
+  EUROMOD's derived constants (`$tsc_group2_lim` is 3× the monthly PSS, carried
+  as `factor`).
+- **The parameter under test always comes from the parameter store**, never
+  from a hand-authored file: `model_target` for a single parameter, `group_id`
+  for a bracket schedule assembled from `params.parameter_groups` (the FR barème
+  is 4 thresholds + 5 rates in the export; its `groups` block is the only place
+  it exists as an object — `paramdb.load_group_record`). Parameters EUROMOD
+  defines *inside functions* rather than as named constants, which the connector
+  cannot export at all (CDHR), reach the store through
+  [extracted_parameters/curated/FR.in_function.json](../extracted_parameters/curated/FR.in_function.json)
+  via the ordinary `ingest-params` + `curate-params` path. Records are
+  materialized under `data/parameters/eval/` because the workflow entry point
+  takes a path — a derived artifact regenerated on every build, like
+  `run-targets`' `data/parameters/db/`.
+- **Ground truth** is re-derived from the parameter's own `temporal_basis`,
+  never from the link: `income_year` parameters expect the OpenFisca value keyed
+  `<year>-01-01` (income year, which is also the pipeline's back-dated
+  `valid_from`), `in_force` ones the value in force at `as_of`. OpenFisca stores
+  change points only, so "the value at D" always means the latest entry at or
+  before D.
+- **Routing** is computed by comparing that value against what EUROMOD holds at
+  `as_of` — the model never decides it. A parameter whose EUROMOD value is a
+  formula or FYA weighted average is *skipped with a reason* rather than guessed
+  (see §2 of the limitations below).
+- **Citations** are resolved against the legislation DB: an OpenFisca reference
+  id that maps to a `legal_units.citation` becomes the expected citation; an
+  instrument-level id that is not ingested yet is kept anyway (the case then
+  scores an honest retrieval miss); an article-level id of an act we do not hold
+  is recorded as provenance only, because no string the pipeline could produce
+  would match it.
+- Every case is `verified: false` with its provenance in `notes` (OpenFisca
+  path, component, scale, the reference titles, what did not resolve).
+  **OpenFisca is curated, not the law** — it is occasionally wrong or lagging,
+  which is why nothing counts until a human accepts it.
+
+### Reviewing drafts (validation UI → *Golden set* tab)
+
+The UI reads the dataset directory straight off disk and writes the verdict
+back into the case file:
+
+```bash
+cd ../Nomoscope-agentic-workflow/ui && npm run tauri dev    # WSL: prefix LIBGL_ALWAYS_SOFTWARE=1
+```
+
+Each case shows the parameter under test, **the value EUROMOD holds next to the
+value OpenFisca states**, the expected routing/date/citations, Legifrance
+deep-links for every cited act, and the draft's provenance. *Accept* sets
+`verified: true`; *Reject* leaves it false but stamps `reviewed_by`, so
+"a human said no" stays distinct from "nobody has looked yet". Both write only
+those three fields, so the rest of the case survives untouched — commit the
+file to freeze it into the set.
+
+Same thing without the GUI:
+
+```bash
+uv run nomokrisis-eval verify fr_constdef_pss_2025-06-01 --reviewer ben
+uv run nomokrisis-eval verify fr_tinkt_tin_rate1_2025-06-01 --unverify
+```
 
 ## Embedding (retrieval) evaluation dataset
 

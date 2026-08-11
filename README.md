@@ -51,7 +51,8 @@ queue, side-by-side diff, citation viewer, audit log and a database explorer tab
 See [Nomoscope-agentic-workflow/README.md](Nomoscope-agentic-workflow/README.md).
 
 ```bash
-cd Nomoscope-agentic-workflow/pipeline && uv sync && uv run nomoscope-workflow run-all --year 2025
+cd Nomoscope-agentic-workflow/pipeline && uv sync
+uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025   # mock model, no API key needed
 cd ../ui && npm install && npm run tauri dev
 ```
 

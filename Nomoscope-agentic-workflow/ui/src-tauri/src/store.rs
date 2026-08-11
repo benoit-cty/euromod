@@ -5,10 +5,12 @@
 //!   <data>/decisions.jsonl local mirror of the decision log
 //!   <data>/export/*.json   accepted records, Activity 1 format
 //!
-//! Reviewer decisions live in Postgres (params.review_decisions, see db.rs);
-//! decisions.jsonl is written first, as a write-ahead mirror, so a decision
-//! taken while the DB is unreachable is never lost — `nomoscope-workflow
-//! sync-decisions` replays it.
+//! Reviewer decisions live in Postgres (params.review_decisions, see db.rs) and
+//! are written there first: [prepare_decision] only computes, [commit_decision]
+//! writes to disk, and the caller puts the DB insert between them. A decision
+//! the database refused therefore leaves no trace on disk — the item stays
+//! pending and the reviewer takes it again. decisions.jsonl is a redundant
+//! local copy of what the DB already holds, not a queue of pending writes.
 //!
 //! Items stay loosely typed (serde_json::Value) so the queue schema can evolve
 //! in the pipeline without lockstep releases of the UI.
@@ -99,12 +101,15 @@ fn apply_edits(target: &mut Value, edited_value: Option<&Value>, edited_fields: 
     }
 }
 
-/// Apply a reviewer decision: update the queue item, mirror the review fields
-/// into the exported record's lineage, and append to the local audit mirror.
-/// Decided items stay editable — re-deciding overwrites the item and appends a
-/// new audit entry. Returns `(updated item, audit entry)`; the caller is
-/// responsible for persisting the entry to params.review_decisions.
-pub fn save_decision(
+/// Compute a reviewer decision without writing anything: the updated queue item
+/// (review fields mirrored into the exported record's lineage) and the audit
+/// entry for params.review_decisions.
+///
+/// Deciding is split prepare → DB → [commit_decision] on purpose. The database
+/// is the system of record, so it commits first; if it refuses, nothing has
+/// touched the disk and the item is still pending. Decided items stay editable —
+/// re-deciding overwrites the item and appends a new audit entry.
+pub fn prepare_decision(
     data_dir: &Path,
     item_id: &str,
     action: &str,
@@ -119,8 +124,7 @@ pub fn save_decision(
         "escalated" => "needs_revision",
         other => return Err(format!("unknown action: {other}")),
     };
-    let path = data_dir.join("queue").join(format!("{item_id}.json"));
-    let mut item = read_json(&path)?;
+    let mut item = read_json(&queue_item_path(data_dir, item_id))?;
     let now = Utc::now().to_rfc3339();
 
     item["status"] = json!(action);
@@ -159,8 +163,6 @@ pub fn save_decision(
             }
         }
     }
-    write_json(&path, &item)?;
-
     let log_entry = json!({
         "logged_at": now,
         // decided_at is the (item, instant) dedupe key the DB replays on — it
@@ -179,8 +181,24 @@ pub fn save_decision(
         "confidence": item.pointer("/proposed_value/lineage/confidence"),
         "critique_verdict": item.pointer("/critique/verdict"),
     });
-    append_decision(data_dir, &log_entry)?;
     Ok((item, log_entry))
+}
+
+fn queue_item_path(data_dir: &Path, item_id: &str) -> PathBuf {
+    data_dir.join("queue").join(format!("{item_id}.json"))
+}
+
+/// Persist a decision to disk, once params.review_decisions has accepted it:
+/// the updated queue item, then the decisions.jsonl mirror. Both are downstream
+/// of the database — the mirror is a convenience copy, not the audit log.
+pub fn commit_decision(
+    data_dir: &Path,
+    item_id: &str,
+    item: &Value,
+    entry: &Value,
+) -> Result<(), String> {
+    write_json(&queue_item_path(data_dir, item_id), item)?;
+    append_decision(data_dir, entry)
 }
 
 fn append_decision(data_dir: &Path, entry: &Value) -> Result<(), String> {
@@ -259,12 +277,53 @@ mod tests {
         write_json(&queue.join("fr_test_2025-06-01.json"), &item).unwrap();
     }
 
+    /// prepare + commit, the way lib.rs does it around the DB insert.
+    fn decide(
+        dir: &Path,
+        item_id: &str,
+        action: &str,
+        reviewer: &str,
+        note: Option<&str>,
+        edited_value: Option<&Value>,
+        edited_fields: Option<&Value>,
+    ) -> Result<Value, String> {
+        let (item, entry) =
+            prepare_decision(dir, item_id, action, reviewer, note, edited_value, edited_fields)?;
+        commit_decision(dir, item_id, &item, &entry)?;
+        Ok(item)
+    }
+
+    /// The hard-fail guarantee: when the DB refuses the entry, lib.rs never
+    /// reaches commit_decision, and the reviewer must find the item exactly as
+    /// they left it — still pending, with nothing in the audit mirror.
+    #[test]
+    fn prepare_alone_writes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        seed_item(dir.path());
+        let (item, _entry) = prepare_decision(
+            dir.path(),
+            "fr_test_2025-06-01",
+            "accepted",
+            "ben",
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        assert_eq!(item["status"], "accepted", "the computed item is decided");
+
+        let on_disk = read_json(&queue_item_path(dir.path(), "fr_test_2025-06-01")).unwrap();
+        assert_eq!(on_disk["status"], "pending", "but disk is untouched");
+        assert!(!dir.path().join("decisions.jsonl").exists());
+        assert!(load_decisions(dir.path(), 10).unwrap().is_empty());
+    }
+
     #[test]
     fn decision_roundtrip_and_export() {
         let dir = tempfile::tempdir().unwrap();
         seed_item(dir.path());
 
-        let updated = save_decision(
+        let updated = decide(
             dir.path(),
             "fr_test_2025-06-01",
             "accepted",
@@ -273,8 +332,7 @@ mod tests {
             None,
             None,
         )
-        .unwrap()
-        .0;
+        .unwrap();
         assert_eq!(updated["status"], "accepted");
         assert_eq!(
             updated
@@ -305,7 +363,7 @@ mod tests {
     fn edited_value_replaces_proposal() {
         let dir = tempfile::tempdir().unwrap();
         seed_item(dir.path());
-        let updated = save_decision(
+        let updated = decide(
             dir.path(),
             "fr_test_2025-06-01",
             "edited",
@@ -314,8 +372,7 @@ mod tests {
             Some(&json!(0.25)),
             None,
         )
-        .unwrap()
-        .0;
+        .unwrap();
         assert_eq!(
             updated.pointer("/proposed_value/value").unwrap(),
             &json!(0.25)
@@ -344,7 +401,7 @@ mod tests {
             "references": [ { "title": "JORF, art. 1", "supporting_extract": "le taux est de 30 %" } ],
             "lineage": { "review_status": "spoofed" },
         });
-        let updated = save_decision(
+        let updated = decide(
             dir.path(),
             "fr_test_2025-06-01",
             "edited",
@@ -353,8 +410,7 @@ mod tests {
             Some(&json!(0.3)),
             Some(&fields),
         )
-        .unwrap()
-        .0;
+        .unwrap();
 
         for base in ["/proposed_value", "/proposed_record/values/0"] {
             assert_eq!(
@@ -388,7 +444,7 @@ mod tests {
     fn decided_item_can_be_edited_again() {
         let dir = tempfile::tempdir().unwrap();
         seed_item(dir.path());
-        save_decision(
+        decide(
             dir.path(),
             "fr_test_2025-06-01",
             "rejected",
@@ -398,7 +454,7 @@ mod tests {
             None,
         )
         .unwrap();
-        let updated = save_decision(
+        let updated = decide(
             dir.path(),
             "fr_test_2025-06-01",
             "edited",
@@ -407,8 +463,7 @@ mod tests {
             Some(&json!(0.4)),
             Some(&json!({ "legal_status": "enacted_in_force" })),
         )
-        .unwrap()
-        .0;
+        .unwrap();
         assert_eq!(updated["status"], "edited");
         assert_eq!(updated.pointer("/proposed_value/value").unwrap(), &json!(0.4));
         // the audit log keeps both decisions

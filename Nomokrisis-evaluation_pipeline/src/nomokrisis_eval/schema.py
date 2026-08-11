@@ -43,7 +43,14 @@ class GoldenCase(BaseModel):
     source_class: Literal["codified_law", "gazette", "national_team"] | None = None
     expected: Expected
     verified: bool = Field(default=False, description="True once a human confirmed the ground truth")
-    drafted_by: str | None = Field(default=None, description="'human' or the drafting model name")
+    drafted_by: str | None = Field(
+        default=None, description="'human', the drafting model name, or 'openfisca@<commit>'"
+    )
+    # Who reviewed the draft, and what they concluded. reviewed_by distinguishes
+    # "rejected by a human" (reviewed_by set, verified false) from "not looked at
+    # yet" — both of which keep the case out of a frozen evaluation run.
+    reviewed_by: str | None = None
+    review_note: str | None = None
     notes: str | None = None
 
 

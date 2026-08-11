@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import psycopg
@@ -25,6 +25,7 @@ import yaml
 
 from .config import WorkflowConfig
 from .schema import (
+    Bracket,
     LegalStatus,
     Lineage,
     ParameterInformation,
@@ -544,6 +545,132 @@ def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
             )
 
     return ParameterRecord(information=information, values=values)
+
+
+def load_group_record(conn: psycopg.Connection, group_id: str) -> ParameterRecord:
+    """Rebuild a bracket schedule as ONE Activity 1 record from params.parameter_groups.
+
+    EUROMOD stores a schedule as separate scalar constants (the FR income-tax
+    barème is 4 thresholds + 5 rates); the export's `groups` block says which
+    constants form which band, and that block is the only place the schedule
+    exists as an object. Assembling it here means a schedule-shaped parameter
+    needs no hand-authored file: the DB stays the single source.
+
+    Threshold semantics: the export's role is `upper_threshold`, while a
+    Bracket's `threshold` is the band's LOWER bound — so band n's threshold is
+    band n-1's upper limit, verbatim, and the first band starts at 0. Verbatim
+    and not +1: in practice the exported values ARE the law's lower bounds (they
+    match exactly through system year 2024). FR 2025 sits one euro below the law
+    (11 496 where CGI art. 197 says 11 497); the EUROMOD economists team has
+    confirmed that as an error on their side, to be corrected in a future
+    release — so it must show up as a diff, not be silently normalised away.
+
+    One value row per distinct member change date, each holding the schedule in
+    force over that interval — the same shape as a scalar parameter's history.
+
+    The record's id is derived, `euromod://<cc>/<policy>/group/<name>`: a
+    schedule has no `model_target` of its own in the export, and inventing a
+    def_const that EUROMOD does not define is exactly the kind of untraceable
+    artefact this function exists to remove. db/seed.sql keys the barème's
+    citation-registry rows on the derived id.
+    """
+    row = conn.execute(
+        """
+        SELECT group_id, country, kind, policy, components, instances
+        FROM params.parameter_groups WHERE group_id = %s
+        """,
+        (group_id,),
+    ).fetchone()
+    if row is None:
+        raise KeyError(f"parameter group not in params DB (see ingest-params): {group_id}")
+    group_id, country, kind, policy, components, instances = row
+    if kind != "bracket_schedule":
+        raise ValueError(f"{group_id}: only bracket_schedule groups assemble into a record, not {kind!r}")
+
+    # band_index -> {role: (parameter_id, model_target, [(valid_from, valid_to, value)])}
+    bands: dict[int, dict[str, tuple[str, list]]] = {}
+    for component in components:
+        member = conn.execute(
+            "SELECT id, model_target FROM params.parameters WHERE parameter_key = %s OR model_target = %s",
+            (component.get("parameter_id"), component.get("parameter_id")),
+        ).fetchone()
+        if member is None:
+            continue  # a component the export names but never defines: skip the band role
+        history = conn.execute(
+            """
+            SELECT valid_from, valid_to, value_numeric FROM params.model_values
+            WHERE parameter_id = %s ORDER BY valid_from
+            """,
+            (member[0],),
+        ).fetchall()
+        bands.setdefault(int(component.get("band_index", 0)), {})[component.get("role")] = (
+            member[1], history
+        )
+
+    def value_on(history: list, on: date) -> float | None:
+        for valid_from, valid_to, value in history:
+            if valid_from <= on and (valid_to is None or valid_to >= on):
+                return value
+        return None
+
+    starts = sorted({
+        valid_from
+        for roles in bands.values()
+        for _, history in roles.values()
+        for valid_from, _, _ in history
+    })
+    ordered = sorted(bands)
+    values: list[ParameterValue] = []
+    for i, start in enumerate(starts):
+        end = starts[i + 1] - timedelta(days=1) if i + 1 < len(starts) else None
+        schedule: list[Bracket] = []
+        previous_upper: float | None = None
+        for band_index in ordered:
+            roles = bands[band_index]
+            rate = value_on(roles["rate"][1], start) if "rate" in roles else None
+            upper = value_on(roles["upper_threshold"][1], start) if "upper_threshold" in roles else None
+            if rate is None and upper is None:
+                continue  # band not in force in this interval (abolished or not yet created)
+            schedule.append(Bracket(threshold=previous_upper or 0.0, rate=rate))
+            previous_upper = upper
+        if not schedule:
+            continue
+        if values and values[-1].value == schedule:
+            values[-1].valid_to = end  # nothing in the schedule actually moved
+            continue
+        values.append(ParameterValue(value=schedule, valid_from=start, valid_to=end))
+
+    members = ", ".join(
+        f"band {band_index} {role}={bands[band_index][role][0]}"
+        for band_index in ordered for role in sorted(bands[band_index])
+    )
+    information = ParameterInformation(
+        country=country,
+        model_target=f"euromod://{country}/{policy}/group/{group_id.rsplit(':', 1)[-1]}",
+        value_type="bracket_schedule",
+        unit="/1",
+        short_label={"en": group_id},
+        explanation={
+            "en": f"Assembled from params.parameter_groups {group_id} ({members}). "
+            "EUROMOD's role is upper_threshold; brackets carry the band's lower bound."
+        },
+        temporal_basis=_group_temporal_basis(conn, bands),
+    )
+    return ParameterRecord(information=information, values=values)
+
+
+def _group_temporal_basis(conn: psycopg.Connection, bands: dict) -> TemporalBasis:
+    """A schedule inherits its members' basis; mixed members fall back to in_force."""
+    targets = [target for roles in bands.values() for target, _ in roles.values()]
+    if not targets:
+        return TemporalBasis.IN_FORCE
+    rows = conn.execute(
+        "SELECT DISTINCT temporal_basis FROM params.parameters WHERE model_target = ANY(%s)",
+        (targets,),
+    ).fetchall()
+    if len(rows) == 1:
+        return _maybe_enum(TemporalBasis, rows[0][0]) or TemporalBasis.IN_FORCE
+    return TemporalBasis.IN_FORCE
 
 
 # ---------------------------------------------------------------------------

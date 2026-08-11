@@ -1,6 +1,7 @@
 <script>
   let { items, facets, selectedId, onselect } = $props();
 
+  let sectionEl = $state(null);
   let search = $state('');
   let country = $state('');
   let routing = $state('');
@@ -54,9 +55,62 @@
   function year(item) {
     return item.system_year ?? item.as_of?.slice(0, 4) ?? '—';
   }
+
+  // Move the selection by `delta` rows (the rows as displayed, so collapsed
+  // groups count once). With nothing selected yet, enter the list from the end
+  // the reviewer is arrowing towards.
+  function move(delta) {
+    if (!rows.length) return;
+    const current = rows.findIndex((row) => row.runs.some((r) => r.id === selectedId));
+    const next =
+      current === -1
+        ? delta > 0
+          ? 0
+          : rows.length - 1
+        : Math.min(rows.length - 1, Math.max(0, current + delta));
+    const id = shown(rows[next]).id;
+    if (id !== selectedId) onselect(id);
+  }
+
+  // Arrow keys walk the queue. Bound on the window rather than on a focusable
+  // row so the reviewer can key straight through the list without clicking one
+  // first — but only while this list is on screen, and never when the focus is
+  // somewhere that owns its arrow keys (a filter dropdown, the detail panel's
+  // fields, a scrollable evidence pane).
+  function onkeydown(event) {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (!sectionEl || sectionEl.offsetParent === null) return;
+    const active = document.activeElement;
+    if (active && active !== document.body) {
+      // Buttons ignore arrow keys anyway, so "Accept, then arrow to the next
+      // item" keeps working with the focus left in the detail panel.
+      const passive = active.tagName === 'BUTTON';
+      if (!passive && !sectionEl.contains(active)) return;
+      // The search box is fine (up/down do nothing there); a <select> is not.
+      if (active.matches('select')) return;
+    }
+    if (event.key === 'ArrowDown') move(1);
+    else if (event.key === 'ArrowUp') move(-1);
+    else if (event.key === 'PageDown') move(10);
+    else if (event.key === 'PageUp') move(-10);
+    else if (event.key === 'Home') move(-rows.length);
+    else if (event.key === 'End') move(rows.length);
+    else return;
+    event.preventDefault();
+  }
+
+  // Keep the selected row visible when the selection moved by key rather than
+  // by click; 'nearest' is a no-op when the row is already in view.
+  $effect(() => {
+    selectedId;
+    rows;
+    sectionEl?.querySelector('tr.selected')?.scrollIntoView({ block: 'nearest' });
+  });
 </script>
 
-<section class="panel queue">
+<svelte:window {onkeydown} />
+
+<section class="panel queue" bind:this={sectionEl}>
   <div class="filters">
     <input placeholder="Search parameter…" bind:value={search} />
     <select bind:value={country}>
@@ -129,6 +183,9 @@
 
 <style>
   .queue { display: flex; flex-direction: column; min-height: 0; }
+  /* The selected row doubles as the keyboard cursor, so it needs to read as
+     more than the hover highlight it otherwise shares. */
+  tbody tr.selected td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
   .filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   .filters input { flex: 1; min-width: 10rem; }
   .scroll { overflow: auto; flex: 1; }

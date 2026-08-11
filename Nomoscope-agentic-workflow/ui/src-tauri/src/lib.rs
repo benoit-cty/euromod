@@ -7,11 +7,13 @@
 
 mod db;
 mod encoder;
+mod golden;
 mod ingest;
 mod store;
 mod workflow;
 
 use encoder::EmbeddingState;
+use golden::{GoldenPayload, GoldenVerifyPayload};
 use ingest::{IngestPayload, IngestState};
 use workflow::{ImpactPayload, WorkflowPayload, WorkflowState};
 
@@ -90,6 +92,24 @@ fn default_data_dir() -> Option<PathBuf> {
     None
 }
 
+/// Default golden-set location: $EVAL_DATASET_DIR, else the eval package's
+/// `dataset/` next to the workflow package (same walk as [default_data_dir]).
+fn default_dataset_dir() -> Option<PathBuf> {
+    if let Ok(dir) = std::env::var("EVAL_DATASET_DIR") {
+        return Some(PathBuf::from(dir));
+    }
+    let cwd = std::env::current_dir().ok()?;
+    for ancestor in cwd.ancestors() {
+        let candidate = ancestor
+            .join("Nomokrisis-evaluation_pipeline")
+            .join("dataset");
+        if candidate.is_dir() {
+            return Some(candidate);
+        }
+    }
+    None
+}
+
 #[tauri::command]
 fn get_env_config() -> Result<Value, String> {
     let reviewer = std::env::var("REVIEWER")
@@ -105,6 +125,7 @@ fn get_env_config() -> Result<Value, String> {
         .unwrap_or_else(|_| "nomoscope-agentic-workflow".to_string());
     Ok(json!({
         "data_dir": default_data_dir().map(|p| p.display().to_string()),
+        "dataset_dir": default_dataset_dir().map(|p| p.display().to_string()),
         "reviewer": reviewer,
         "db_url": db_url,
         "phoenix_endpoint": phoenix_endpoint.trim_end_matches('/'),
@@ -113,22 +134,32 @@ fn get_env_config() -> Result<Value, String> {
 }
 
 #[tauri::command]
+fn golden_cases(payload: GoldenPayload) -> Result<Value, String> {
+    golden::load_cases(Path::new(&payload.dataset_dir))
+}
+
+#[tauri::command]
+fn set_golden_verified(payload: GoldenVerifyPayload) -> Result<Value, String> {
+    golden::set_verified(&payload)
+}
+
+#[tauri::command]
 fn load_queue(payload: DataDirPayload) -> Result<Value, String> {
     store::load_queue(Path::new(&payload.data_dir))
 }
 
-/// Record a reviewer decision. The queue item and the local decisions.jsonl
-/// mirror are written first, then the decision is persisted to
-/// params.review_decisions, which is the system of record.
+/// Record a reviewer decision. params.review_decisions is the system of record,
+/// so it commits first; the queue item and the decisions.jsonl mirror are
+/// written only once it has accepted the entry.
 ///
-/// A DB failure is reported as a warning rather than an error: the reviewer's
-/// work is already durable on disk and `nomoscope-workflow sync-decisions`
-/// replays it. Failing the command instead would block review whenever
-/// Postgres is down, and would leave the item decided on disk anyway.
+/// An unreachable database therefore fails the whole decision, leaving the item
+/// pending and nothing written to disk. That is deliberate: a decision the audit
+/// log never received must not look accepted in the UI.
 #[tauri::command]
 async fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
-    let (item, entry) = store::save_decision(
-        Path::new(&payload.data_dir),
+    let data_dir = PathBuf::from(&payload.data_dir);
+    let (item, entry) = store::prepare_decision(
+        &data_dir,
         &payload.item_id,
         &payload.action,
         &payload.reviewer,
@@ -136,15 +167,28 @@ async fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
         payload.edited_value.as_ref(),
         payload.edited_fields.as_ref(),
     )?;
+
     let db_url = payload.db_url.clone();
-    let persisted = tauri::async_runtime::spawn_blocking(move || db::insert_decision(&db_url, &entry))
+    let for_db = entry.clone();
+    let decision = tauri::async_runtime::spawn_blocking(move || db::insert_decision(&db_url, &for_db))
         .await
-        .map_err(|e| e.to_string())?;
-    Ok(json!({
-        "item": item,
-        "db_error": persisted.as_ref().err(),
-        "decision": persisted.ok(),
-    }))
+        .map_err(|e| e.to_string())?
+        .map_err(|e| {
+            // The two ways this fails look very different to a reviewer: a
+            // stopped container, or a database that never had the params
+            // schema applied (fresh stack / after `docker compose down -v`).
+            let hint = if e.contains("params.review_decisions") || e.contains("schema \"params\"") {
+                "the params schema is missing — run `nomoscope-workflow init-param-db`"
+            } else {
+                "the database is unreachable — check it is running, then take the decision again"
+            };
+            format!("Decision not recorded, so nothing was changed: the audit log lives in the database and {hint}. ({e})")
+        })?;
+
+    // Recorded in the audit log. A disk failure from here on leaves the queue
+    // item stale rather than the decision lost, which is the safe direction.
+    store::commit_decision(&data_dir, &payload.item_id, &item, &entry)?;
+    Ok(json!({ "item": item, "decision": decision }))
 }
 
 /// The audit log from params.review_decisions, falling back to the local
@@ -310,6 +354,8 @@ pub fn run() {
             search_articles,
             eval_runs,
             eval_run_detail,
+            golden_cases,
+            set_golden_verified,
             run_ingest,
             stop_ingest,
             params_list,

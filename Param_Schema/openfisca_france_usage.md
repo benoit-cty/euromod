@@ -162,7 +162,15 @@ replace the machine translation (`origin='openfisca'` wins over
    `external_*` tables (no matching required)~~ — done. Note for the matcher:
    OpenFisca dates income-tax parameters by income year while EUROMOD dates by
    system year, so fingerprint matching must tolerate a ±1-year offset.
-3. Fingerprint + structure matcher producing `parameter_links` suggestions;
-   validation affordance in the UI.
-4. Citation hints in `frame` from validated links; critique cross-check;
-   golden-set generation.
+3. ~~Fingerprint + structure matcher producing `parameter_links` suggestions~~ —
+   done (`nomoscope-workflow match-openfisca`, module `openfisca_match.py`).
+   Value fingerprints over shared years, with the ±1-year offset and a `factor`
+   for EUROMOD's derived constants, plus `--seed` for curated pairs stored as
+   `match_method='manual'`. Every row is a suggestion until `validated_by` is
+   set; ~120 FR candidates at the pinned commit.
+4. ~~Golden-set generation~~ — done (`nomokrisis-eval
+   build-openfisca-dataset`): 50 FR cases drafted from the links, expected
+   values re-derived from each parameter's `temporal_basis`, citations resolved
+   against the legislation DB, reviewed in the validation UI's *Golden set* tab.
+   See Nomokrisis-evaluation_pipeline/README.md.
+5. Citation hints in `frame` from validated links; critique cross-check.

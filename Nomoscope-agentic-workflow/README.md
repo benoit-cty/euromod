@@ -9,10 +9,13 @@ Nomoscope-agentic-workflow/
 ├── pipeline/        Python (uv): frame → retrieve → propose → critique → diff → enqueue
 ├── ui/              Tauri 2 (Rust) + Svelte 5 validation UI
 ├── data/
-│   ├── parameters/  input records (Activity 1 JSON, git-versioned) — 3 FR demo params
+│   ├── parameters/  Activity 1 records materialized FROM the params DB — derived,
+│   │                never hand-authored: db/ (run-targets), eval/ (golden set)
 │   ├── queue/       review items written by the pipeline, read/written by the UI
-│   ├── decisions.jsonl  write-ahead mirror of the audit log; the log itself is
-│   │                    params.review_decisions in Postgres
+│   │                one file per (parameter, system year): <country>_<target>_<year>.json
+│   ├── queue_superseded/  older runs collapsed by `migrate-queue-ids` (kept, never read)
+│   ├── decisions.jsonl  redundant local copy of the audit log; the log itself
+│   │                    is params.review_decisions in Postgres
 │   └── export/      accepted records, Activity 1 format (export-first write-back)
 ├── observability.md decision document: why Arize Phoenix
 └── .env.example     all configuration knobs
@@ -25,7 +28,9 @@ docker compose up -d                     # repo root: legislation DB + pgAdmin +
 
 cd Nomoscope-agentic-workflow/pipeline
 uv sync
-uv run nomoscope-workflow run-all --year 2025           # mock model — no API key needed; one run = one system year
+uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025
+                                                        # mock model — no API key needed; one run = one system year
+uv run nomoscope-workflow run-all --params-dir data/parameters/db --year 2025   # re-run everything materialized so far
 uv run nomoscope-workflow queue
 
 cd ../ui
@@ -38,13 +43,17 @@ LIBGL_ALWAYS_SOFTWARE=1 npm run tauri dev
 ```
 
 Traces: http://localhost:6006 → project `nomoscope-agentic-workflow`.
-The three demo parameters exercise distinct routing outcomes against the seed
-corpus: with `--year 2024`, barème IR → `changed` (revalorised thresholds) and
-top marginal rate → `unchanged`; with `--year 2025`, both → `provisional`
-(the corpus only holds the LF-2025 consolidation = 2024-income values); CDHR →
-`not_found` (article absent from corpus).
+The two demo targets exercise distinct routing outcomes against the seed
+corpus: the barème IR schedule (assembled from the export's own parameter group)
+routes `changed` for `--year 2024` and `provisional` for `--year 2025` when the
+corpus holds only the LF-2025 consolidation (= 2024-income values); CDHR routes
+`not_found` while its article is absent from the corpus.
 
-Real LLM: `uv run nomoscope-workflow run-all --year 2025 --force --model anthropic/claude-sonnet-5`
+Parameters always come from the parameter store — `data/parameters/` holds only
+records materialized from it, so ingest first (`ingest-params` + `curate-params`,
+see below) and reach for `run-targets` rather than adding a file by hand.
+
+Real LLM: add `--force --model anthropic/claude-sonnet-5` to either command
 (or `azure_openai/…`, `openai/…`, `openrouter/…`, `together/…` — see `.env.example`).
 
 ## 1. Workflow, step by step
@@ -67,7 +76,7 @@ by an explicit control flow
 | **critique** | code + **LLM** | mechanical checks: extract is a verbatim quote of the cited chunk (offsets computed against `unit_texts.content`), dates consistent, units/brackets sane, schema-valid — then an LLM pass for semantic issues | verdict `fail` → one LLM retry, then goes to the human with the failed critique attached |
 | **scout** | **LLM** + web + ingest | on `not_found` (`WORKFLOW_SCOUT=llm\|tavily`): the LLM names the official act that sets the value; Tavily searches official domains only and instrument ids are harvested from result URLs (per-country rules in `scout.COUNTRY_SOURCES` — FR: legifrance.gouv.fr / `JORFTEXT…`, LT: e-seimas.lrs.lt / `TAR.…`), LLM-ranked against the result titles, then **archive-first ingested** via `nomotheca_ingest` (+ incremental BGE-M3 embedding) before one retrieval retry | web text is never evidence — only discovery; quotes still verify against the DB. Ingested ids and queries are recorded on the review item. A country absent from `COUNTRY_SOURCES` cannot gap-fill at all |
 | **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| provisional \| national_team_source \| derived`. On `unchanged` the proposal keeps the validity window already in force: the citation re-confirms the value, it does not restart it, so no new `valid_from` is proposed. `provisional` (income-year params whose enacting act is missing) keeps the found value visible but no `proposed_record` — nothing acceptable to export | national-team-sourced values are never overwritten by the pipeline |
-| **enqueue** | code | full `ReviewItem` (side-by-side values, critique, retrieval trace incl. source texts, merged candidate record with `lineage`) → `data/queue/*.json` | re-runs never clobber an already-reviewed item (unless `--force`) |
+| **enqueue** | code | full `ReviewItem` (side-by-side values, critique, retrieval trace incl. source texts, merged candidate record with `lineage`) → `data/queue/<country>_<target>_<system year>.json` | re-runs of the same system year overwrite that item; an already-reviewed one is never clobbered (unless `--force`) |
 
 The anti-hallucination rule from the activity doc is mechanical, not prompt-only:
 `supporting_extract` must be found character-for-character (whitespace-insensitive)
@@ -222,12 +231,23 @@ schema can evolve pipeline-side without lockstep releases.
   `supporting_extract` (or national-team source), so filling a gap in the form
   unblocks Accept. Hand-editing an extract drops its verified `extract_offsets`.
   Every decision is recorded in `params.review_decisions` — append-only, linked
-  to its proposal row — and mirrored into the record's `lineage`. It is written
-  to `data/decisions.jsonl` first, so a decision taken while Postgres is down
-  survives; `nomoscope-workflow sync-decisions` replays the log (idempotently)
-  once the DB is back.
+  to its proposal row — and mirrored into the record's `lineage`. **The database
+  write gates the decision:** it commits first, and only then are the queue item
+  and the `data/decisions.jsonl` copy written. If Postgres is unreachable the
+  decision fails with an explanatory error and the item stays pending, rather
+  than looking accepted in a log that never received it. `nomoscope-workflow
+  sync-decisions` replays the local copy (idempotently) if the two ever drift.
 - **Audit log** — `params.review_decisions` rendered as a table, falling back to
   the local mirror (flagged in the header) when the DB is unreachable.
+- **Golden set** — the human gate on drafted *evaluation* ground truth
+  (`Nomokrisis-evaluation_pipeline/dataset/`, drafted from the OpenFisca corpus
+  by `nomokrisis-eval build-openfisca-dataset` with `verified: false`). Each
+  case shows the parameter under test, the value EUROMOD holds next to the value
+  OpenFisca states, the expected routing/date/citations, and Legifrance
+  deep-links. Accept sets `verified: true`; Reject stamps `reviewed_by` and
+  leaves it false, so "a human said no" stays distinct from "nobody has looked".
+  Only those three fields are written back, straight into the case file — this
+  tab touches the eval dataset, never the review queue.
 - **Database** — corpus statistics (totals, per-jurisdiction, embedding
   coverage) and point-in-time article search straight against the legislation
   DB. Search modes are language-aware FTS, multilingual BGE-M3 vectors, or

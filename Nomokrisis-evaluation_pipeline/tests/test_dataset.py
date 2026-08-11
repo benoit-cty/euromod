@@ -13,7 +13,13 @@ def test_committed_cases_parse():
     cases = load_cases(DATASET_DIR)
     assert len(cases) >= 2
     assert all(c.country == "FR" for c in cases)
-    assert all((DATASET_DIR.parents[1] / c.parameter_file).exists() or True for c in cases)
+
+
+def test_every_case_points_at_a_parameter_file():
+    """A case whose parameter file is missing fails only at run time, one case in."""
+    repo_root = DATASET_DIR.parents[1]
+    missing = [c.id for c in load_cases(DATASET_DIR) if not (repo_root / c.parameter_file).exists()]
+    assert not missing, f"parameter_file missing for {missing}"
 
 
 def test_filters():

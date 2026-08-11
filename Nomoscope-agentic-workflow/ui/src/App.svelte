@@ -6,11 +6,13 @@
   import DatabaseTab from './lib/components/DatabaseTab.svelte';
   import IngestTab from './lib/components/IngestTab.svelte';
   import EvalTab from './lib/components/EvalTab.svelte';
+  import GoldenTab from './lib/components/GoldenTab.svelte';
   import ParamsTab from './lib/components/ParamsTab.svelte';
   import ImpactTab from './lib/components/ImpactTab.svelte';
 
   let config = $state({
     data_dir: null,
+    dataset_dir: null,
     reviewer: 'reviewer',
     db_url: '',
     phoenix_endpoint: '',
@@ -36,6 +38,7 @@
   let dbTab = $state(null);
   let paramsTab = $state(null);
   let evalTab = $state(null);
+  let goldenTab = $state(null);
   let impactTab = $state(null);
 
   const selected = $derived(items.find((i) => i.id === selectedId) ?? null);
@@ -100,14 +103,11 @@
         edited_value: editedValue === undefined ? null : editedValue,
         edited_fields: editedFields ?? null,
       });
+      // Throws if the database refused the decision, in which case nothing was
+      // written and the item is still pending — the catch below shows why.
       const updated = res.item;
       items = items.map((i) => (i.id === updated.id ? updated : i));
-      // The decision is on disk either way; surface a failed DB write so the
-      // reviewer knows the audit log needs `sync-decisions` to catch up.
-      error = res.db_error
-        ? `Decision saved locally but not recorded in the database: ${res.db_error}` +
-          ' — run `nomoscope-workflow sync-decisions` once Postgres is back.'
-        : '';
+      error = '';
       statusMsg = `${updated.id}: ${action}`;
     } catch (e) {
       error = String(e);
@@ -161,6 +161,7 @@
     audit: loadDecisions,
     database: () => dbTab?.reload(),
     params: () => paramsTab?.reload(),
+    golden: () => goldenTab?.reload(),
     eval: () => evalTab?.reload(),
     impact: () => impactTab?.reload(),
   };
@@ -187,6 +188,7 @@
       </button>
       <button class:primary={tab === 'review'} onclick={() => (tab = 'review')}>Review queue</button>
       <button class:primary={tab === 'audit'} onclick={showAudit}>Audit log</button>
+      <button class:primary={tab === 'golden'} onclick={() => (tab = 'golden')}>Golden set</button>
       <button class:primary={tab === 'eval'} onclick={() => (tab = 'eval')}>Evaluation</button>
       <button class:primary={tab === 'impact'} onclick={() => (tab = 'impact')}>Impact</button>
     </nav>
@@ -245,6 +247,15 @@
   {#if visited.ingest}
     <main class="single" hidden={tab !== 'ingest'}>
       <IngestTab dbUrl={config.db_url} />
+    </main>
+  {/if}
+  {#if visited.golden}
+    <main class="single" hidden={tab !== 'golden'}>
+      <GoldenTab
+        bind:this={goldenTab}
+        datasetDir={config.dataset_dir}
+        reviewer={config.reviewer}
+      />
     </main>
   {/if}
   {#if visited.eval}
