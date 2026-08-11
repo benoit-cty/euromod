@@ -23,15 +23,36 @@ class TemporalBasis(StrEnum):
 
     in_force: the value applies from the date the enacting text is in force
       (SMIC, CSG, benefit amounts) — the default.
-    income_year: system year = income year; the enacting act (loi de finances)
-      is published AFTER the income year starts, often the following year, yet
-      applies retroactively to that year's income (FR income tax schedule).
-      valid_from is back-dated to the income year start (OpenFisca convention),
-      and retrieval must look for versions consolidated ~a year later.
+    income_year: the value belongs to an income year that is NOT the system
+      year — see `income_year_for`. The enacting act (loi de finances) is
+      published during or after that income year, and valid_from is back-dated
+      to the income year start (the OpenFisca convention), so retrieval must
+      look for versions consolidated later than the income year itself.
     """
 
     IN_FORCE = "in_force"
     INCOME_YEAR = "income_year"
+
+
+#: System-year → income-year offset for `temporal_basis: income_year`.
+#: EUROMOD system year 2025 holds the schedule assessed in 2025, which French
+#: law levies on 2024 income ("impôt 2025 sur les revenus 2024"), so the offset
+#: is -1. Confirmed with the EUROMOD side on 2026-08-11. Note the FR Country
+#: Report's Table 2.77 heads that column "Taxation 2025 (income 2025)" — the
+#: label is wrong; the values in it are the income-year-2024 barème.
+INCOME_YEAR_OFFSET = -1
+
+
+def income_year_for(system_year: int) -> int:
+    """The income year an `income_year` parameter's system year refers to.
+
+    The single place this mapping is decided. Everything downstream derives
+    from it: which OpenFisca key a golden case reads, which consolidation date
+    retrieval targets, the `valid_from` a proposal must carry, and where the
+    critique's budget-act window opens. Changing the offset here moves all four
+    together — do not re-derive `as_of.year ± 1` at a call site.
+    """
+    return system_year + INCOME_YEAR_OFFSET
 
 
 class SourceType(StrEnum):

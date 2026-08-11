@@ -21,6 +21,7 @@ from .schema import (
     ProposalDraft,
     RetrievalHit,
     TemporalBasis,
+    income_year_for,
 )
 
 # "11 % pour la fraction supérieure à 11 497 €" / "11% for the fraction above EUR 11,497"
@@ -81,9 +82,10 @@ def propose_with_mock(
     bands, span = _band_matches(hit.content)
     # income_year parameters are back-dated to the income year start: the
     # version's in-force date is the consolidation date of the finance act,
-    # not when the value applies (system year = income year).
+    # not when the value applies. The income year is not the system year —
+    # `income_year_for` owns that mapping.
     valid_from = (
-        date(as_of.year, 1, 1)
+        date(income_year_for(as_of.year), 1, 1)
         if info.temporal_basis == TemporalBasis.INCOME_YEAR
         else validity_start(hit.validity)
     )

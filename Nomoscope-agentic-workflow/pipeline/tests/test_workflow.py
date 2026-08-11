@@ -24,6 +24,7 @@ from nomoscope_workflow.schema import (
     ReviewItem,
     Routing,
     TemporalBasis,
+    income_year_for,
 )
 
 FR_TEXT = (
@@ -199,11 +200,16 @@ def test_derived_refs_detects_formula_parameters():
     assert _derived_refs(record, None) == []
 
 
+def test_income_year_maps_system_year_to_the_previous_income_year():
+    # «impôt 2025 sur les revenus 2024»: system year 2025 assesses income 2024.
+    assert income_year_for(2025) == 2024
+
+
 def test_income_year_shifts_retrieval_date():
-    # FR barème: the finance act for income year 2025 is consolidated in 2026,
-    # so version selection must look a year ahead of as_of.
+    # System year 2025 = income year 2024, whose barème is enacted by LF 2025
+    # (Feb 2025) — so version selection targets mid-2025, not as_of.
     bareme = _record("bracket_schedule", "/1", None, temporal_basis=TemporalBasis.INCOME_YEAR)
-    assert _retrieval_as_of(bareme, date(2025, 6, 1)) == date(2026, 7, 1)
+    assert _retrieval_as_of(bareme, date(2025, 6, 1)) == date(2025, 7, 1)
     in_force = _record("scalar", "/1", 0.45)  # default basis: unchanged
     assert _retrieval_as_of(in_force, date(2025, 6, 1)) == date(2025, 6, 1)
 
@@ -213,10 +219,11 @@ def test_income_year_mock_backdates_valid_from_to_income_year_start():
         "bracket_schedule", "/1", [Bracket(threshold=0, rate=0.0)],
         temporal_basis=TemporalBasis.INCOME_YEAR,
     )
-    # version consolidated 2026-02-21 (LF 2026) -> proposal back-dated to 2025-01-01
-    draft = mock.propose_with_mock(record, date(2025, 6, 1), [_hit(validity="[2026-02-21,)")])
+    # version consolidated 2025-02-14 (LF 2025) -> proposal back-dated to the
+    # income year it governs, 2024-01-01 — not to the system year.
+    draft = mock.propose_with_mock(record, date(2025, 6, 1), [_hit(validity="[2025-02-14,)")])
     assert draft.found
-    assert draft.valid_from == date(2025, 1, 1)
+    assert draft.valid_from == date(2024, 1, 1)
 
 
 def test_income_year_date_issues():

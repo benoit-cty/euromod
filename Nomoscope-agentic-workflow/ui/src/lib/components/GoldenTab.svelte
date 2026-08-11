@@ -19,6 +19,8 @@
   let note = $state('');
   let filter = $state('unreviewed');
   let saving = $state(false);
+  let listEl = $state(null);
+  let sectionEl = $state(null);
 
   const FILTERS = [
     { key: 'all', label: 'All' },
@@ -74,6 +76,52 @@
   function select(c) {
     selectedPath = c._path;
     note = c.review_note ?? '';
+  }
+
+  // Accept/Reject steps to the next case on its own, so the row it lands on can
+  // be below the fold of a list that now scrolls independently. Same for the
+  // arrow keys below.
+  $effect(() => {
+    selectedPath;
+    visible;
+    listEl?.querySelector('tr.selected')?.scrollIntoView({ block: 'nearest' });
+  });
+
+  // Move the selection by `delta` rows of the current filter. With nothing
+  // selected yet, enter the list from the end the reviewer is arrowing towards.
+  function move(delta) {
+    if (!visible.length) return;
+    const current = visible.findIndex((c) => c._path === selectedPath);
+    const next =
+      current === -1
+        ? delta > 0
+          ? 0
+          : visible.length - 1
+        : Math.min(visible.length - 1, Math.max(0, current + delta));
+    if (visible[next]._path !== selectedPath) select(visible[next]);
+  }
+
+  // Arrow keys walk the worklist. Bound on the window rather than on a focusable
+  // row so the reviewer can key straight through the cases without clicking one
+  // first — but only while this tab is on screen, and never when the focus is
+  // somewhere that owns its arrow keys. Text fields are excluded here (unlike
+  // the review queue's search box): the note field is part of the verdict, and
+  // stepping away from it would discard what is being typed.
+  function onkeydown(event) {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (!sectionEl || sectionEl.offsetParent === null) return;
+    const active = document.activeElement;
+    // Buttons ignore arrow keys anyway, so "Accept, then arrow on" keeps working
+    // with the focus left on the verdict button.
+    if (active && active !== document.body && active.tagName !== 'BUTTON') return;
+    if (event.key === 'ArrowDown') move(1);
+    else if (event.key === 'ArrowUp') move(-1);
+    else if (event.key === 'PageDown') move(10);
+    else if (event.key === 'PageUp') move(-10);
+    else if (event.key === 'Home') move(-visible.length);
+    else if (event.key === 'End') move(visible.length);
+    else return;
+    event.preventDefault();
   }
 
   async function decide(verified) {
@@ -138,7 +186,9 @@
   }
 </script>
 
-<section class="panel golden">
+<svelte:window {onkeydown} />
+
+<section class="panel golden" bind:this={sectionEl}>
   <div class="row">
     <label class="grow">
       Golden dataset directory
@@ -163,28 +213,30 @@
     </div>
 
     <div class="split">
-      <table class="list">
-        <thead>
-          <tr><th></th><th>Case</th><th>Routing</th><th>Expected</th><th>From</th></tr>
-        </thead>
-        <tbody>
-          {#each visible as c (c._path)}
-            <tr class:selected={c._path === selectedPath} onclick={() => select(c)}>
-              <td>
-                {#if c.verified}<span class="tick ok" title="accepted">✓</span>
-                {:else if c.reviewed_by}<span class="tick bad" title="rejected">✗</span>
-                {:else}<span class="muted" title="not reviewed">·</span>{/if}
-              </td>
-              <td class="mono">{c.id}</td>
-              <td>{c.expected?.routing}</td>
-              <td class="num">{fmt(c.expected?.value)}</td>
-              <td class="muted">{c.expected?.valid_from ?? '—'}</td>
-            </tr>
-          {:else}
-            <tr><td colspan="5" class="muted">No cases in this filter.</td></tr>
-          {/each}
-        </tbody>
-      </table>
+      <div class="scroll" bind:this={listEl}>
+        <table class="list">
+          <thead>
+            <tr><th></th><th>Case</th><th>Routing</th><th>Expected</th><th>From</th></tr>
+          </thead>
+          <tbody>
+            {#each visible as c (c._path)}
+              <tr class:selected={c._path === selectedPath} onclick={() => select(c)}>
+                <td>
+                  {#if c.verified}<span class="tick ok" title="accepted">✓</span>
+                  {:else if c.reviewed_by}<span class="tick bad" title="rejected">✗</span>
+                  {:else}<span class="muted" title="not reviewed">·</span>{/if}
+                </td>
+                <td class="mono">{c.id}</td>
+                <td>{c.expected?.routing}</td>
+                <td class="num">{fmt(c.expected?.value)}</td>
+                <td class="muted">{c.expected?.valid_from ?? '—'}</td>
+              </tr>
+            {:else}
+              <tr><td colspan="5" class="muted">No cases in this filter.</td></tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
 
       <div class="detail">
         {#if !selected}
@@ -287,7 +339,9 @@
 </section>
 
 <style>
-  .golden { overflow: auto; display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
+  /* The panel itself never scrolls: the list and the detail pane each own their
+     own scrollbar, so running down a long worklist leaves the detail in place. */
+  .golden { overflow: hidden; display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
   .row { display: flex; gap: 0.5rem; align-items: end; flex-wrap: wrap; }
   .row.between { justify-content: space-between; align-items: center; }
   .grow { flex: 1; min-width: 16rem; }
@@ -295,10 +349,21 @@
   label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }
   label input { width: 100%; }
   .error { color: var(--err); }
-  .split { display: grid; grid-template-columns: minmax(24rem, 2fr) 3fr; gap: 0.8rem; min-height: 0; }
+  .split {
+    display: grid;
+    grid-template-columns: minmax(24rem, 2fr) 3fr;
+    gap: 0.8rem;
+    flex: 1;
+    min-height: 0;
+  }
+  .split > * { min-height: 0; }
+  .scroll { overflow: auto; }
   .list tbody tr { cursor: pointer; }
   .list tbody tr:hover { background: var(--panel-2); }
+  /* The selected row doubles as the keyboard cursor, so it gets a marker the
+     hover highlight does not have. */
   .list tbody tr.selected { background: var(--accent-soft); }
+  .list tbody tr.selected td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
   .detail { border-left: 1px solid var(--border); padding-left: 0.8rem; overflow: auto; }
   .detail h2 { margin: 0; }
   .detail h3 { margin: 0.9rem 0 0.3rem; }

@@ -50,6 +50,12 @@ one back into a single `bracket_schedule` record (the FR barème:
 delivered export and flagged in `curation/<CC>.curation.yaml` like everything
 else. `extracted_parameters/enriched/<CC>.enriched.json` stays read-only.
 
+`ingest-openfisca` **replaces the corpus wholesale**, and `parameter_links`
+references `external_parameters` `ON DELETE CASCADE` — so re-ingesting drops
+every link, curated and validated alike. Always follow it with
+`match-openfisca --seed …/golden_sources/openfisca_fr.json` to rebuild them, and
+re-check `validated_by` if anyone had signed links off.
+
 `match-openfisca` suggests `params.parameter_links` rows between EUROMOD
 parameters and the ingested OpenFisca corpus, by **value fingerprint**: both
 sides hold multi-year numeric histories, so the same value in the same year at

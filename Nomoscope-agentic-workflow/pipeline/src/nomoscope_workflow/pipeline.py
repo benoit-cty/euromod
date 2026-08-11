@@ -37,6 +37,7 @@ from .schema import (
     Routing,
     SourceType,
     TemporalBasis,
+    income_year_for,
 )
 from .tracing import progress, set_output, step_span
 
@@ -109,13 +110,14 @@ def _retrieval_as_of(record: ParameterRecord, as_of: date) -> date:
     """The date used to select in-force legislation versions.
 
     income_year parameters (FR income tax family): the enacting finance act is
-    published months AFTER the income year it governs, so the version in force
-    at as_of states the PREVIOUS year's value. Look for versions consolidated
-    mid-year Y+1 instead; open-ended current versions still match, and the
-    critique's version-window check catches the act not being in the corpus yet.
+    published months AFTER the income year it governs, so look for versions
+    consolidated mid-way through the year FOLLOWING the income year — for
+    system year 2025 (income year 2024) that is 1 July 2025, when LF 2025 is
+    consolidated. Open-ended current versions still match, and the critique's
+    version-window check catches the act not being in the corpus yet.
     """
     if record.information.temporal_basis == TemporalBasis.INCOME_YEAR:
-        return date(as_of.year + 1, 7, 1)
+        return date(income_year_for(as_of.year) + 1, 7, 1)
     return as_of
 
 
@@ -386,7 +388,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                             siblings = []  # DB hiccup: fall back to the retrieved chunk
                     version_start = retrieval.validity_start(cited.validity) if cited else None
                     date_issues, provisional = _income_year_date_issues(
-                        draft.valid_from, version_start, as_of.year, article_text
+                        draft.valid_from, version_start, income_year_for(as_of.year), article_text
                     )
                     if provisional:
                         # Provisional means CORPUS GAP. If a different article's
