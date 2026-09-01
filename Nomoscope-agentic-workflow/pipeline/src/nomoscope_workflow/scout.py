@@ -79,6 +79,26 @@ COUNTRY_SOURCES: dict[str, dict] = {
         # what the API serves in full (metadata + every block + every version).
         # No known_key: instruments.national_id *is* the BOE id.
     },
+    "NL": {
+        # wetten.overheid.nl is the human-facing portal for the Basiswettenbestand;
+        # it rate-limits plain clients, but the scout only harvests BWB ids from
+        # the URLs, it never reads the page. The repository host Nomotheca
+        # actually fetches from serves no search results, so it is not listed.
+        "domains": ["wetten.overheid.nl"],
+        # The BWB regulation id, as it appears both in the plain path
+        # (/BWBR0011353/2025-01-01) and in the Juriconnect form
+        # (/jci1.3:c:BWBR0011353&artikel=2.10&z=2025-01-01). BWBV… ids are
+        # treaties, deliberately excluded.
+        "id_pattern": re.compile(r"\bBWBR\d{7}\b"),
+        # Dutch fiscal values are usually fixed by the annual Belastingplan or by
+        # a December bijstellingsregeling in the Staatscourant, not by the
+        # substantive act itself.
+        "act_kinds": "wet, algemene maatregel van bestuur or ministeriële regeling",
+        # No ingest_suffix: a bare BWB id is exactly what NlResolver returns, and
+        # the repository serves it as the act's manifest — the version index
+        # listing every dated toestand. No known_key: instruments.national_id
+        # *is* the BWB id.
+    },
     "LT": {
         # e-seimas is the register's public portal; e-tar.lt serves the same
         # acts. Both put the TAR document id in the /legalAct/ URL path, which
@@ -120,6 +140,10 @@ ID_HINTS = {
     "FR": (
         "for France the JORFTEXT############ id shown in Légifrance JORF URLs, "
         "or the LEGIARTI############ id of the consolidated code article"
+    ),
+    "NL": (
+        "for the Netherlands the BWBR####### identifier shown in wetten.overheid.nl "
+        "URLs — either /BWBR0011353/<date> or the Juriconnect form jci1.3:c:BWBR0011353"
     ),
     "LT": (
         "for Lithuania the TAR document id shown in e-seimas /portal/legalAct/lt/TAD/<id> "

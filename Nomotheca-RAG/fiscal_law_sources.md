@@ -55,6 +55,7 @@
 - Documented use case in the SRU manual is literally "the Belastingdienst ingesting all tax-related regulations" — strong fit signal.
 - **officielebekendmakingen.nl** (Staatsblad/Staatscourant) via the same KOOP SRU infrastructure for as-published texts.
 - Helpful third-party guide: **WetSuite dataset catalogue** (wetsuite.nl) — maps the whole Dutch legal open-data landscape.
+- **Verified and implemented 2026-09-01** — see [`Netherlands_sources_analysis.md`](Netherlands_sources_analysis.md): fetch is the static-XML BWB repository (`manifest.xml` per act + one document per dated *toestand*), resolve is the SRU 2.0 service (which needs `Accept: application/xml` or it answers 406). Note BWB is **bitemporal** — `geldigheid` (in force when) vs `zicht` (known when) — so a validity date alone matches several documents, all but one superseded.
 
 ### Administrative / parameter-value sources
 - **Belastingdienst** — rates/tables, **Handboek Loonheffingen** (annual), newsletters with parameter tables.

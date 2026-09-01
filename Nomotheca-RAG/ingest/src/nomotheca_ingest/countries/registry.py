@@ -7,6 +7,7 @@ from nomotheca_ingest.countries.es.adapter import EsAdapter
 from nomotheca_ingest.countries.fr.adapter import FrAdapter
 from nomotheca_ingest.countries.ie.adapter import IeAdapter
 from nomotheca_ingest.countries.lt.adapter import LtAdapter
+from nomotheca_ingest.countries.nl.adapter import NlAdapter
 
 
 _ADAPTERS: dict[str, type[CountryAdapter]] = {
@@ -14,6 +15,7 @@ _ADAPTERS: dict[str, type[CountryAdapter]] = {
     "FR": FrAdapter,
     "IE": IeAdapter,
     "LT": LtAdapter,
+    "NL": NlAdapter,
 }
 
 
