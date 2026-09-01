@@ -1,0 +1,141 @@
+{
+  "country": "IE",
+  "language": "en",
+  "corpus": "curated",
+  "description": "Hand-curated core of the IE golden set: 10 parameters in increasing pipeline difficulty, from the standard-rate band (the happy path) to cases the current pipeline cannot solve by design (derived formula values, statistics-based parameters) so that future improvements show up as KPI deltas. Ireland has no OpenFisca package, so unlike FR there is no corpus drafter: expected values are hand-curated here from the acts themselves (Finance Act / Social Welfare Act quote them verbatim), drafted into cases by hand or via build-dataset over a trusted document, and every case stays verified:false until a human confirms it. See golden_set_IE.md for the full rationale per entry.",
+  "conventions": {
+    "temporal_basis": "All selected IE parameters are in_force: the Finance Act states values 'for the year of assessment 2025', which IS the EUROMOD system year — no FR-style income-year offset. Record this in an IE curation overlay rather than deriving it.",
+    "expected_value": "Hand-curated ground truth (the LAW's value, cross-checked against the act text), since there is no OpenFisca corpus to read it from. Where it deliberately differs from EUROMOD's stored value the note says why. null means the value leg is not scored for this case.",
+    "routing": "Expected routing computed the FR way (route_against_current) wherever the stored value normalises; set explicitly here where the convention is ambiguous (percent strings, mid-year changes, formula values) or where the case exists to pin a routing trap.",
+    "source": "Every entry resolves through the parameter store via model_target; no entry reads a hand-authored parameter file. The IE export (old schema) has no groups block, so no assembled bracket-schedule case is possible — band and rate scalars stand in for the FR-style table case."
+  },
+  "entries": [
+    {
+      "model_target": "euromod://IE/ConstDef_ie/def_const/$tin_StdSingleband_lim",
+      "difficulty": "plain",
+      "source_class": "codified_law",
+      "routing": "changed",
+      "expected_value": "44000#y",
+      "expected_valid_from": "2025-01-01",
+      "citations": [
+        "Finance Act 2024, s. 3",
+        "TCA 1997, s. 15"
+      ],
+      "note": "EASY — the income-tax bracket case. Standard rate band, single person: 42,000 -> 44,000 for 2025, stated verbatim in Finance Act 2024 s. 3 (ingested, English, one section carries the whole PIT parameter set). The pipeline's happy path.",
+      "id": "tin_stdsingleband_lim"
+    },
+    {
+      "model_target": "euromod://IE/ConstDef_ie/def_const/$tin_high_rate",
+      "difficulty": "plain",
+      "source_class": "codified_law",
+      "routing": "unchanged",
+      "expected_value": 0.4,
+      "citations": [
+        "TCA 1997, s. 15"
+      ],
+      "note": "EASY — no-change trap. Higher rate 40%, unchanged since 2015: Budget coverage revalorises the bands around it every year, so the pipeline must resist proposing a change it cannot cite.",
+      "id": "tin_high_rate"
+    },
+    {
+      "model_target": "euromod://IE/ConstDef_ie/def_const/$tin_PersTC_amt",
+      "difficulty": "plain",
+      "source_class": "codified_law",
+      "routing": "changed",
+      "expected_value": "2000#y",
+      "expected_valid_from": "2025-01-01",
+      "citations": [
+        "Finance Act 2024, s. 3",
+        "TCA 1997, s. 461"
+      ],
+      "note": "EASY-MEDIUM — personal tax credit 1,875 -> 2,000 for 2025, in the same Finance Act section as the band: tests extracting several distinct parameters from one dense amending section without cross-contamination.",
+      "id": "tin_perstc_amt"
+    },
+    {
+      "model_target": "euromod://IE/txcin_ie/def_const/$txcin_rate3",
+      "difficulty": "plain",
+      "source_class": "codified_law",
+      "routing": "changed",
+      "expected_value": 0.03,
+      "expected_valid_from": "2025-01-01",
+      "citations": [
+        "Finance Act 2024, s. 2",
+        "TCA 1997, s. 531AN"
+      ],
+      "note": "MEDIUM — USC middle rate cut 4% -> 3% (Budget 2025). Stored numerically (0.03) so it scores cleanly, unlike the percent-string rates. USC lives in TCA Part 18D, amended by FA 2024 s. 2 — a different section than the PIT family.",
+      "id": "txcin_rate3"
+    },
+    {
+      "model_target": "euromod://IE/ConstDef_ie/def_const/$txcin_upthres2",
+      "difficulty": "plain",
+      "source_class": "codified_law",
+      "routing": "changed",
+      "expected_value": "27382#y",
+      "expected_valid_from": "2025-01-01",
+      "citations": [
+        "Finance Act 2024, s. 2",
+        "TCA 1997, s. 531AN"
+      ],
+      "note": "MEDIUM — USC 2% band ceiling. The law says 27,382 (12,012 + 15,370); EUROMOD stores 27,383 — a EUROMOD-side off-by-one, mirroring the FR bareme 1-euro erratum, to be reported to the economists team. Per the FR precedent the expected value is the LAW's (27,382), and the 1e-6 scoring tolerance keeps the difference visible.",
+      "id": "txcin_upthres2"
+    },
+    {
+      "model_target": "euromod://IE/bunct_ie/def_const/$bunct_Rate1",
+      "difficulty": "plain",
+      "source_class": "codified_law",
+      "routing": "changed",
+      "expected_value": "109.50#w",
+      "expected_valid_from": "2025-01-01",
+      "citations": [
+        "Social Welfare Act 2024",
+        "Social Welfare Consolidation Act 2005, Sch. 2"
+      ],
+      "note": "MEDIUM-HARD — Jobseeker's Benefit graduated personal rate (earnings band 1), 109.50/week for 2025. The value sits in a rates SCHEDULE (table retrieval, not prose) of the annual Social Welfare Act amending SWCA 2005 Sch. 2, and the weekly basis (#w) exercises the x4.34 cross-period conversion the FR set barely touches. Pin the exact amending section when drafting.",
+      "id": "bunct_rate1"
+    },
+    {
+      "model_target": "euromod://IE/tscee_ie/def_const/$tscee_prsiA_rate1",
+      "difficulty": "combine",
+      "source_class": "codified_law",
+      "routing": "changed",
+      "expected_value": "4.1%",
+      "citations": [
+        "Social Welfare Consolidation Act 2005, s. 13"
+      ],
+      "note": "HARD — employee PRSI Class A. Two traps at once: (1) the value is stored as the percent string '4.1%', which normalise_value cannot parse (falls back to strict string equality — a known scoring gap, hence the string-form expected value); (2) the rate steps every 1 October (4.0 -> 4.1 on 2024-10-01, -> 4.2 on 2025-10-01, per the Social Welfare (Miscellaneous Provisions) Act 2024 roadmap), so 'the 2025 value' is ambiguous between the value in force at as_of (4.1%), the post-October value (4.2%), and a FYA weighted average — exactly the ambiguity route_against_current refuses to draft, hence the explicit routing.",
+      "id": "tscee_prsia_rate1"
+    },
+    {
+      "model_target": "euromod://IE/benergy_cred_ie/def_const/$benergy_amt",
+      "difficulty": "plain",
+      "source_class": "gazette",
+      "routing": "changed",
+      "expected_value": "125#y",
+      "expected_valid_from": "2025-01-01",
+      "citations": [],
+      "note": "HARD / not_found today — the Budget 2025 electricity credit (2 x 125). Set by the one-off Electricity Costs (Domestic Electricity Accounts) Emergency Measures Acts, which are NOT among the 15 ingested IE acts, so the case measures ingest breadth + the scout gap-fill (IE was added to scout.COUNTRY_SOURCES for exactly this). Citations left empty until the act is ingested — an instrument-level citation of an act we do not hold is provenance, not ground truth. Verify the exact 2024/2025 act title and the per-credit vs annual amount when drafting.",
+      "id": "benergy_amt"
+    },
+    {
+      "model_target": "euromod://IE/bch_ie/def_const/$bch_amt1",
+      "difficulty": "combine",
+      "source_class": "codified_law",
+      "routing": "derived",
+      "expected_value": null,
+      "citations": [
+        "Social Welfare Consolidation Act 2005, Sch. 4"
+      ],
+      "note": "IMPOSSIBLE today, by design — Child Benefit stored as '140#m*$sw_weeks'. The $sw_weeks reference makes pipeline._derived_refs short-circuit to routing 'derived' before any retrieval, even though the legislated 140/month sits plainly in SWCA 2005 Sch. 4. Expected routing pins today's correct contract behaviour; the future improvement (resolve the anchor, retrieve and propose on the monthly amount, then recompose) flips this case's expectation to a scored value. Also exposes the scoring bug where normalise_value truncates the expression at '#'. Value deliberately not scored until then.",
+      "id": "bch_amt1"
+    },
+    {
+      "model_target": "euromod://IE/tco_ie/def_const/$tco_t_01131",
+      "difficulty": "plain",
+      "source_class": "national_team",
+      "routing": "national_team_source",
+      "expected_value": null,
+      "citations": [],
+      "note": "IMPOSSIBLE forever — an implicit consumption-tax rate derived from Household Budget Survey statistics, with no legislative source at all (stands for the whole 268-parameter tco_ie family). The correct behaviour is a national_team_source refusal, which requires creating curation/IE.curation.yaml (none exists yet) with a source_type: national_team block, mirroring LT's xcc_lt precedent. The FR set has zero such traps; this one tests that the pipeline routes around non-legislative parameters instead of reporting not_found every run.",
+      "id": "tco_t_01131"
+    }
+  ]
+}

@@ -98,6 +98,25 @@ COUNTRY_SOURCES: dict[str, dict] = {
         # the repository serves it as the act's manifest — the version index
         # listing every dated toestand. No known_key: instruments.national_id
         # *is* the BWB id.
+    "IE": {
+        # eISB (electronic Irish Statute Book) is the official statute book;
+        # the ELI act id in its URLs is exactly what the IE adapter fetches
+        # (irishstatutebook.ie/eli/<year>/act/<no>/enacted/en/xml) and what it
+        # stores as instruments.national_id (e.g. 1997/act/39 = TCA 1997).
+        # oireachtas.ie only serves bill pages and the act index — useful
+        # search context, but no harvestable instrument id in its URLs.
+        "domains": ["irishstatutebook.ie"],
+        # The eISB ELI act id: the <year>/act/<number> path segment. Acts of
+        # the Oireachtas only — the IE fetcher builds act URLs; statutory
+        # instruments (/eli/<year>/si/<no>) are not ingestible yet. Group is
+        # non-capturing on purpose: findall must return the whole id.
+        "id_pattern": re.compile(r"\b(?:19|20)\d{2}/act/\d{1,3}\b"),
+        # Fiscal values arrive via annual amending acts (never consolidated,
+        # never repealed): PIT/USC via the Finance Act, welfare rates and PRSI
+        # via the Social Welfare Act(s) of the preceding December.
+        "act_kinds": "Finance Act, Social Welfare Act or other Act of the Oireachtas",
+        # No ingest_suffix: `instrument ie <year>/act/<no>` is the exact CLI
+        # form. No known_key: instruments.national_id *is* the ELI act id.
     },
     "LT": {
         # e-seimas is the register's public portal; e-tar.lt serves the same
@@ -144,6 +163,10 @@ ID_HINTS = {
     "NL": (
         "for the Netherlands the BWBR####### identifier shown in wetten.overheid.nl "
         "URLs — either /BWBR0011353/<date> or the Juriconnect form jci1.3:c:BWBR0011353"
+    "IE": (
+        "for Ireland the eISB ELI act id — the <year>/act/<number> path segment of "
+        "irishstatutebook.ie/eli/<year>/act/<number>/… URLs (e.g. 1997/act/39 for the "
+        "Taxes Consolidation Act 1997)"
     ),
     "LT": (
         "for Lithuania the TAR document id shown in e-seimas /portal/legalAct/lt/TAD/<id> "

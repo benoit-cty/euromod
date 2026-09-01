@@ -1,0 +1,132 @@
+{
+  "country": "LT",
+  "language": "lt",
+  "corpus": "curated",
+  "description": "Hand-curated core of the LT golden set: 10 parameters in increasing pipeline difficulty, from the PIT rate schedule (GPMI art. 6, ingested) to cases the current pipeline cannot solve (values set by Government nutarimai not yet ingested, values that exist only through annual indexation or a statutory step schedule, and the ready-made national_team trap already curated in curation/LT.curation.yaml). Lithuania has no OpenFisca package, so expected values are hand-curated here from the six ingested anchor acts and cross-checked against LT_Y16.md, and every drafted case stays verified:false until a human confirms it. See golden_set_LT.md for the full rationale per entry.",
+  "conventions": {
+    "temporal_basis": "LT parameters are in_force (no income-year offset): tax and benefit values apply in the calendar year they are in force. The export carries uprating projections out to 2027, so drafting must read the value in force at as_of, not the last row.",
+    "expected_value": "Hand-curated ground truth from the acts (the LAW's value). Percent-string values are kept in string form because normalise_value has no % branch yet (known scoring gap); null means the value leg is not scored.",
+    "routing": "Expected routing is the truthful ideal, not what today's pipeline emits — impossible-tier cases are expected to score 0 on routing until scout/ingest/derivation improvements land, so progress shows up as KPI deltas. Set explicitly wherever the stored value cannot be normalised (percent strings) or the value is derived rather than stated.",
+    "source": "Every entry resolves through the parameter store: model_target for scalars, group_id for the PIT schedule assembled from the export's own groups block (LT is the new export schema, unlike IE). No entry reads a hand-authored parameter file. Run curate-params curation/LT.curation.yaml after ingest-params or the national_team case cannot route."
+  },
+  "entries": [
+    {
+      "group_id": "LT:ConstDef_lt:tin_schedule",
+      "difficulty": "table",
+      "source_class": "codified_law",
+      "routing": "unchanged",
+      "citations": [
+        "GPMĮ IX-1007, 6 straipsnis"
+      ],
+      "note": "EASY content, table difficulty — the PIT rate schedule (LT's answer to the FR bareme): 20% standard, 32% above the 60-VDU threshold, unchanged for 2025 (the 25% middle band only enters with the 2026 reform — $tin_HigherRate's first value row is 2026-01-01, so the assembled 2025 schedule has two live bands). Caveats to check when drafting: the group is rates-only (thresholds default to 0.0 in load_group_record output) and the component rates are percent strings.",
+      "id": "tin_schedule"
+    },
+    {
+      "model_target": "euromod://LT/ConstDef_lt/def_const/$tinta_basic_WithdRate_Higher",
+      "difficulty": "plain",
+      "source_class": "codified_law",
+      "routing": "changed",
+      "expected_value": 0.49,
+      "expected_valid_from": "2025-01-01",
+      "citations": [
+        "GPMĮ IX-1007, 20 straipsnis"
+      ],
+      "note": "EASY — the NPD (basic allowance) withdrawal coefficient in the GPMI art. 20 formula, 0.5 -> 0.49 for 2025. A genuine numeric change stated verbatim in an ingested act: the LT happy path.",
+      "id": "tinta_basic_withdrate_higher"
+    },
+    {
+      "model_target": "euromod://LT/ConstDef_lt/def_const/$tinta_max_amt",
+      "difficulty": "plain",
+      "source_class": "codified_law",
+      "routing": "unchanged",
+      "expected_value": "747#m",
+      "citations": [
+        "GPMĮ IX-1007, 20 straipsnis"
+      ],
+      "note": "MEDIUM — maximum NPD: EUROMOD stores 8964#y (the 2024 row, no 2025 change point), the law states 747/month; expected value 747#m so the case exercises the y<->m cross-period comparison. This is the lag-warning scenario: an annually-indexed-by-habit parameter where 'unchanged' happens to be genuinely correct for 2025 — only the act proves it, so the pipeline must cite the absence of an amendment rather than pattern-match the yearly-uprate habit.",
+      "id": "tinta_max_amt"
+    },
+    {
+      "model_target": "euromod://LT/ConstDef_lt/def_const/$tsceepi_rate",
+      "difficulty": "plain",
+      "source_class": "codified_law",
+      "routing": "unchanged",
+      "expected_value": "8.72%",
+      "citations": [
+        "VSDĮ I-1336"
+      ],
+      "note": "MEDIUM — employee pension social-insurance contribution, 8.72% since the 2019 tax reform. Unchanged trap plus the percent-string scoring gap (expected kept in string form until normalise_value grows a % branch). Pin the exact VSDI article (rates are approved via the annual SSI fund budget indicators law — decide which citation is canonical) when drafting.",
+      "id": "tsceepi_rate"
+    },
+    {
+      "model_target": "euromod://LT/ConstDef_lt/def_const/$bchnm_coef",
+      "difficulty": "plain",
+      "source_class": "codified_law",
+      "routing": "unchanged",
+      "expected_value": 1.75,
+      "citations": [
+        "Išmokų vaikams įstatymas I-621, 6 straipsnis"
+      ],
+      "note": "MEDIUM-HARD — universal child benefit coefficient, 1.75 since 2021. The law states benefit sizes as COEFFICIENTS of the basic social allowance (bazine socialine ismoka), not euros: tests that the pipeline extracts the legislated coefficient rather than the computed euro amount (1.75 x BSA), and that it does not 'update' the coefficient when only the BSA changes.",
+      "id": "bchnm_coef"
+    },
+    {
+      "model_target": "euromod://LT/ConstDef_lt/def_const/$tin_MaxLimit_coef3",
+      "difficulty": "combine",
+      "source_class": "codified_law",
+      "routing": "unchanged",
+      "expected_value": 60,
+      "citations": [
+        "GPMĮ IX-1007, 6 straipsnis",
+        "VSDĮ I-1336"
+      ],
+      "note": "HARD — the PIT/SIC ceiling coefficient: the law says '60 vidutiniu darbo uzmokesciu' (60 average wages, since 2021, after the 120 -> 84 -> 60 phase-in), EUROMOD stores the bare coefficient 60 while the euro cap is computed as $AMS x 60 / 12. Reconstruction case: the pipeline must recognise which quantity is legislated (the multiple) and which is EUROMOD arithmetic — the LT counterpart of FR's PSS x3/x4/x8 combine cases.",
+      "id": "tin_maxlimit_coef3"
+    },
+    {
+      "model_target": "euromod://LT/ConstDef_lt/def_const/$MMS",
+      "difficulty": "plain",
+      "source_class": "gazette",
+      "routing": "changed",
+      "expected_value": "1038#m",
+      "expected_valid_from": "2025-01-01",
+      "citations": [],
+      "note": "HARD / not_found today — gross minimum monthly salary, 924 -> 1038 for 2025, set by annual Vyriausybes nutarimas (Government resolution), an instrument class not yet ingested (open point 5.2 of Lithuania_sources_analysis.md). LT IS in scout.COUNTRY_SOURCES with nutarimai in its act_kinds, so this case measures nutarimas discovery + ingest through the Spinta API. Citations empty until the nutarimas is ingested; expect routing misses (not_found) until then.",
+      "id": "mms"
+    },
+    {
+      "model_target": "euromod://LT/ConstDef_lt/def_const/$BasicPens",
+      "difficulty": "combine",
+      "source_class": "gazette",
+      "routing": "changed",
+      "expected_value": "298.45#m",
+      "expected_valid_from": "2025-01-01",
+      "citations": [],
+      "note": "IMPOSSIBLE today — basic social insurance pension, 269.77 -> 298.45 for 2025. The pensions law states the indexation FORMULA (wage-bill indexation); the resulting euro amount appears only in the annual indexation resolution. Pure extraction can never produce 298.45 from the ingested acts: the case marks the derivation/indexation capability gap, and scores 0 until either the indexation instruments are ingested or a compute-from-formula step exists.",
+      "id": "basicpens"
+    },
+    {
+      "model_target": "euromod://LT/ConstDef_lt/def_const/$PensionAgeFemale",
+      "difficulty": "combine",
+      "source_class": "codified_law",
+      "routing": "changed",
+      "expected_value": 64.66,
+      "expected_valid_from": "2025-01-01",
+      "citations": [
+        "Valstybinių socialinio draudimo pensijų įstatymas I-549"
+      ],
+      "note": "IMPOSSIBLE today — official pension age for women in 2025: 64 years 8 months, i.e. 64.66 in EUROMOD's decimal convention. The statute states a STEP SCHEDULE (+4 months per year, reaching 65 in 2026), not the per-year value: the pipeline must derive the cohort value from the schedule and convert months to a decimal — derivation-not-extraction, plus a representation-convention trap (64.66 vs 64.67 vs 64+8/12). Pin the exact article/annex of the pension-age schedule when drafting.",
+      "id": "pensionagefemale"
+    },
+    {
+      "model_target": "euromod://LT/xcc_lt/def_const/$xcc_amt1",
+      "difficulty": "plain",
+      "source_class": "national_team",
+      "routing": "national_team_source",
+      "expected_value": null,
+      "citations": [],
+      "note": "IMPOSSIBLE by design, ready-made — municipal pre-school meal fee, already curated source_type: national_team in curation/LT.curation.yaml (fees are set by each municipal council, no national act exists). Tests that the pipeline short-circuits to national_team_source, never reports not_found, and never proposes an overwrite. The FR set has zero such traps; requires curate-params to have been run.",
+      "id": "xcc_amt1"
+    }
+  ]
+}
