@@ -14,7 +14,12 @@ import json
 import os
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
+
+EMBEDDING_EXTRA = "embeddings"
+CUDA_EXTRA = "embeddings-cuda"
+CUDA_ENVIRONMENT = ".venv-cuda"
 
 _process: subprocess.Popen | None = None
 _disabled = False
@@ -33,21 +38,50 @@ def ingest_dir() -> Path | None:
     return None
 
 
+@dataclass(frozen=True, slots=True)
+class EmbeddingProcess:
+    """How to spawn one of the ingest package's BGE-M3 subprocesses."""
+
+    command: list[str]
+    env: dict[str, str]
+    cuda: bool
+
+
+def embedding_process(directory: Path, module: str, *args: str) -> EmbeddingProcess:
+    """Build the `uv run` invocation for an ingest embedding subprocess.
+
+    The GPU wheels live in their own environment because CUDA and CPU torch are
+    conflicting extras in the ingest package: if the operator has run
+    `UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda` there,
+    point uv at it and BGE-M3 runs on the GPU (roughly 20x the CPU rate);
+    otherwise nothing changes and the CPU/OpenVINO `.venv` is used.
+    """
+    env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
+    env["PYTHONUNBUFFERED"] = "1"
+    cuda_environment = directory / CUDA_ENVIRONMENT
+    cuda = (cuda_environment / "pyvenv.cfg").is_file()
+    if cuda:
+        env["UV_PROJECT_ENVIRONMENT"] = str(cuda_environment)
+    extra = CUDA_EXTRA if cuda else EMBEDDING_EXTRA
+    command = ["uv", "run", "--extra", extra, "python", "-m", module, *args]
+    return EmbeddingProcess(command=command, env=env, cuda=cuda)
+
+
 def _start() -> subprocess.Popen:
     directory = ingest_dir()
     if directory is None:
         raise RuntimeError("could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)")
+    spec = embedding_process(directory, "nomotheca_ingest.query_embeddings")
+    load_note = "GPU" if spec.cuda else "expect high CPU"
     print(
-        "[retrieval] starting BGE-M3 query encoder (first query — model load can take minutes, expect high CPU)…",
+        f"[retrieval] starting BGE-M3 query encoder (first query — model load can take minutes, {load_note})…",
         flush=True,
     )
     started = time.monotonic()
-    env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
-    env["PYTHONUNBUFFERED"] = "1"
     process = subprocess.Popen(
-        ["uv", "run", "--extra", "embeddings", "python", "-m", "nomotheca_ingest.query_embeddings"],
+        spec.command,
         cwd=directory,
-        env=env,
+        env=spec.env,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         text=True,

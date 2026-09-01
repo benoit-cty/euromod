@@ -171,6 +171,12 @@ uv run nomokrisis-eval build-openfisca-dataset --year 2025 --curated-only
 
 ### Reviewing drafts (validation UI → *Golden set* tab)
 
+Install the UI dependencies:
+```bash
+sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev \
+  libssl-dev libayatana-appindicator3-dev librsvg2-dev libgtk-3-dev pkg-config
+```
+
 The UI reads the dataset directory straight off disk and writes the verdict
 back into the case file:
 

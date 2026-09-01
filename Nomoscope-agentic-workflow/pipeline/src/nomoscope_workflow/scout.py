@@ -24,12 +24,13 @@ import subprocess
 import time
 from dataclasses import dataclass, field
 from datetime import date
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import llm
 from .config import WorkflowConfig
-from .query_encoder import ingest_dir
+from .query_encoder import embedding_process, ingest_dir
 from .schema import ParameterRecord
 from .tracing import progress
 
@@ -37,8 +38,9 @@ INGEST_TIMEOUT = 600  # a single arrêté is seconds; a loi de finances, minutes
 # The embedding pass covers the whole backlog of unembedded chunks, not just the
 # scouted instrument (the CLI has no per-instrument scope), and BGE-M3 on CPU
 # runs at roughly one chunk per second — a freshly ingested loi de finances
-# alone is ~10 minutes. The build commits per batch, so even a timeout here
-# keeps the vectors computed so far; the retry then resumes where it stopped.
+# alone is ~10 minutes (roughly 20x faster when the .venv-cuda GPU environment
+# is installed). The build commits per batch, so even a timeout here keeps the
+# vectors computed so far; the retry then resumes where it stopped.
 EMBED_TIMEOUT = int(os.environ.get("WORKFLOW_SCOUT_EMBED_TIMEOUT", "1800"))
 
 # Per-country discovery rules: the official domains web search is restricted
@@ -98,6 +100,7 @@ COUNTRY_SOURCES: dict[str, dict] = {
         # the repository serves it as the act's manifest — the version index
         # listing every dated toestand. No known_key: instruments.national_id
         # *is* the BWB id.
+    },
     "IE": {
         # eISB (electronic Irish Statute Book) is the official statute book;
         # the ELI act id in its URLs is exactly what the IE adapter fetches
@@ -163,6 +166,7 @@ ID_HINTS = {
     "NL": (
         "for the Netherlands the BWBR####### identifier shown in wetten.overheid.nl "
         "URLs — either /BWBR0011353/<date> or the Juriconnect form jci1.3:c:BWBR0011353"
+    ),
     "IE": (
         "for Ireland the eISB ELI act id — the <year>/act/<number> path segment of "
         "irishstatutebook.ie/eli/<year>/act/<number>/… URLs (e.g. 1997/act/39 for the "
@@ -341,23 +345,47 @@ def _build_embeddings(cfg: WorkflowConfig) -> str | None:
     directory = ingest_dir()
     if directory is None:
         return "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)"
-    env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
-    env["PYTHONUNBUFFERED"] = "1"
-    command = [
-        "uv", "run", "--extra", "embeddings", "python", "-m", "nomotheca_ingest.cli",
-        "embeddings", "build", "--database-url", cfg.database_url,
+    cuda = _cuda_available(directory)
+    spec = embedding_process(
+        directory,
+        "nomotheca_ingest.cli",
+        "embeddings",
+        "build",
+        "--database-url",
+        cfg.database_url,
         # Rich's live progress is noise in captured output and can bury the
         # real error; the per-batch commits do not depend on it.
         "--no-progress",
-    ]
-    if (directory / "models" / "bge-m3-openvino").is_dir():
-        command += ["--backend", "openvino", "--model-path", "models/bge-m3-openvino"]
+        *_embedding_model_args(directory, cuda=cuda),
+    )
     proc = subprocess.run(
-        command, cwd=directory, env=env, capture_output=True, text=True, timeout=EMBED_TIMEOUT
+        spec.command, cwd=directory, env=spec.env, capture_output=True, text=True, timeout=EMBED_TIMEOUT
     )
     if proc.returncode != 0:
         return _proc_failure("embeddings build", proc)
     return None
+
+
+def _cuda_available(directory: Path) -> bool:
+    """Return whether the ingest package has its GPU environment installed."""
+    return embedding_process(directory, "nomotheca_ingest.cli").cuda
+
+
+def _embedding_model_args(directory: Path, *, cuda: bool) -> list[str]:
+    """Pick the local model for the environment we are about to run in.
+
+    The OpenVINO IR only loads under the OpenVINO backend, so on the GPU we ask
+    for the Torch export if one was downloaded and otherwise let the CLI fall
+    back to the Hugging Face id (device selection is the CLI's own job).
+    """
+    if cuda:
+        torch_model = directory / "models" / "bge-m3"
+        if (torch_model / "config.json").is_file():
+            return ["--model-path", "models/bge-m3"]
+        return []
+    if (directory / "models" / "bge-m3-openvino").is_dir():
+        return ["--backend", "openvino", "--model-path", "models/bge-m3-openvino"]
+    return []
 
 
 def run(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> ScoutResult:

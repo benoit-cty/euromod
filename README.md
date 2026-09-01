@@ -88,7 +88,13 @@ Into a running stack, from a custom-format dump (`--clean --if-exists` drops exi
 
 ```bash
 docker exec -i nomotheca-legislation-db pg_restore -U jrc -d legislation --clean --if-exists < backups/legislation_20260901.dump
-docker exec -i nomotheca-legislation-db pg_restore -U jrc -d phoenix     --clean --if-exists < backups/phoenix_20260901.dump
+docker compose stop phoenix
+
+docker exec -i nomotheca-legislation-db psql -U jrc -d postgres -c "DROP DATABASE IF EXISTS phoenix;"
+docker exec -i nomotheca-legislation-db psql -U jrc -d postgres -c "CREATE DATABASE phoenix OWNER jrc;"
+docker exec -i nomotheca-legislation-db pg_restore -U jrc -d phoenix < backups/phoenix_20260901.dump
+
+docker compose start phoenix
 ```
 
 From a plain-SQL dump:
