@@ -7,27 +7,45 @@ import json
 import sys
 from pathlib import Path
 
-from nomotheca_ingest.core.embeddings import BGE_M3_MODEL, SentenceTransformerBackend, halfvec_literal
+from nomotheca_ingest.core.embeddings import (
+    BGE_M3_MODEL,
+    SentenceTransformerBackend,
+    halfvec_literal,
+    torch_module,
+)
 
 
-def _default_model_path() -> str:
-    local_model = Path("models/bge-m3-openvino")
-    return str(local_model) if local_model.is_dir() else BGE_M3_MODEL
+def _default_backend() -> str:
+    """Prefer CUDA over the OpenVINO CPU path when this box has a usable GPU."""
+    torch = torch_module()
+    return "torch" if torch is not None and torch.cuda.is_available() else "openvino"
+
+
+def _default_model_path(backend: str) -> str:
+    """Return the local export matching the backend, else the Hugging Face id."""
+    local_model = Path("models/bge-m3-openvino") if backend == "openvino" else Path("models/bge-m3")
+    return str(local_model) if (local_model / "config.json").is_file() else BGE_M3_MODEL
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Encode retrieval queries as normalized BGE-M3 vectors.")
-    parser.add_argument("--model-path", default=_default_model_path())
-    parser.add_argument("--backend", choices=("torch", "openvino"), default="openvino")
-    parser.add_argument("--device", default="CPU")
+    parser.add_argument("--model-path", default=None)
+    parser.add_argument("--backend", choices=("auto", "torch", "openvino"), default="auto")
+    parser.add_argument("--device", default=None, help="Default: cuda when available, else the backend default.")
     args = parser.parse_args()
 
+    backend_name = _default_backend() if args.backend == "auto" else args.backend
+    model_path = args.model_path or _default_model_path(backend_name)
+    device = args.device or ("CPU" if backend_name == "openvino" else None)
+
     backend = SentenceTransformerBackend(
-        model_path=args.model_path,
-        backend=args.backend,
-        device=args.device,
+        model_path=model_path,
+        backend=backend_name,
+        device=device,
     )
-    print(json.dumps({"ready": True, "model": args.model_path}), flush=True)
+    # stdout is a strict JSON-lines protocol; diagnostics go to stderr.
+    print(backend.description, file=sys.stderr, flush=True)
+    print(json.dumps({"ready": True, "model": model_path, "backend": backend_name}), flush=True)
 
     for line in sys.stdin:
         try:

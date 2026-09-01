@@ -1,4 +1,10 @@
-"""Export BGE-M3 to a local OpenVINO sentence-transformers model directory."""
+"""Export BGE-M3 to a local OpenVINO sentence-transformers model directory.
+
+OpenVINO targets Intel devices only (CPU/iGPU/NPU): an NVIDIA card such as the
+GTX 1080 Ti is never reachable from here, and needs no export at all — run the
+build with `--backend torch` from the CUDA environment instead (see the
+"NVIDIA GPU (CUDA)" section of the package README).
+"""
 
 from __future__ import annotations
 

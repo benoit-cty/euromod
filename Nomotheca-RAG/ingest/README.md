@@ -62,6 +62,64 @@ Use `--model-path /path/to/local/bge-m3` to point at an already downloaded model
 Use `--dry-run` to count chunks that need fresh embeddings without loading the model
 or writing rows.
 
+### NVIDIA GPU (CUDA)
+
+OpenVINO cannot drive an NVIDIA card — its GPU plugin is Intel-only — so the
+workstation with the GTX 1080 Ti runs the **torch** backend on CUDA instead, and
+needs no model export. CUDA and CPU torch wheels cannot share one environment
+(they are declared as conflicting extras), so the CUDA build gets its own venv:
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda
+UV_PROJECT_ENVIRONMENT=.venv-cuda uv run python -m nomotheca_ingest.cli embeddings build \
+	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
+	--backend torch \
+	--batch-size 64 \
+	--encode-batch-size 16
+```
+
+Measured on this box (Threadripper 1950X + GTX 1080 Ti), 128 chunk-sized French
+fiscal texts (~3.9k characters each): **6.8 s on the GPU (18.7 chunks/s) against
+137.8 s on the CPU (0.93 chunks/s)** — about 20x, i.e. the 329-chunk French
+fiscal bill drops from minutes to ~18 s. An encode batch of 16 was the fastest;
+8 gave 16.7 chunks/s and 32 or 64 fell back to ~12.5, so raise `--batch-size`
+(commit granularity) rather than `--encode-batch-size` on this card.
+
+The default `.venv` (`uv sync --extra embeddings`) keeps CPU torch + OpenVINO, so
+the Tauri UI and `scout.py` — both of which spawn `uv run --extra embeddings` —
+are unaffected.
+
+With `--backend torch` and no `--device`, the build picks CUDA when a GPU is
+visible and CPU otherwise (`--device cpu` forces the old path, `--device cuda:1`
+selects a card, `--device auto` is the explicit spelling of the default). The
+resolved device is printed on stderr, stdout stays reserved for the `@progress`
+protocol:
+
+```
+backend=torch device=cuda gpu=NVIDIA GeForce GTX 1080 Ti vram=10.9GiB sm_61 dtype=float32
+```
+
+`query_embeddings.py` (the long-lived query encoder the UI and the workflow
+spawn) makes the same choice: `--backend auto` prefers torch+CUDA when a GPU is
+present and falls back to the local OpenVINO export otherwise.
+
+Three things are specific to this card:
+
+- **fp32, not fp16.** Pascal (sm_61) runs half precision at 1/64 of its fp32
+  rate, so half precision is only requested from Volta (sm_70) on.
+- **CUDA 12.6 wheels.** `embeddings-cuda` is routed to the cu126 index because
+  the cu128+ channels start at sm_75 and CUDA 13 dropped Pascal outright. A
+  torch build without kernels for the installed GPU is rejected at model load,
+  with the arch list it does ship, instead of failing mid-run with "no kernel
+  image is available for execution on the device".
+- **`--encode-batch-size`** caps how many chunks enter one forward pass, so
+  `--batch-size` can stay large (it is the commit granularity) without
+  overflowing 11 GB of VRAM; it defaults to `--batch-size`. A CUDA
+  out-of-memory halves the encode batch and retries instead of losing the run,
+  and the smaller size sticks for the remaining batches. The run above peaked
+  well under the card's memory, so OOM should only appear on unusually long
+  chunks.
+
 ### OpenVINO export
 
 Export the canonical `BAAI/bge-m3` model to a local OpenVINO directory:

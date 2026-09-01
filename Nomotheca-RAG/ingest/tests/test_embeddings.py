@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 import sys
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -14,11 +14,15 @@ from nomotheca_ingest.core.embeddings import (
     EMBEDDING_BACKENDS,
     EmbeddingProgressCallback,
     SentenceTransformerBackend,
+    arch_list_supports,
     build_embeddings,
+    cuda_dtype_for,
     embedding_input,
     embedding_input_hash,
     halfvec_literal,
     processor_kwargs_for,
+    raise_for_unsupported_cuda_arch,
+    resolve_torch_device,
     sentence_transformer_load_kwargs,
 )
 
@@ -169,6 +173,187 @@ def test_sentence_transformer_backend_rejects_mistral_fix_for_bge_m3() -> None:
     """The Mistral regex flag currently breaks BGE-M3's XLM-R tokenizer."""
     with pytest.raises(ValueError, match="Do not use fix_mistral_regex with BGE-M3"):
         SentenceTransformerBackend(model_path="models/bge-m3-openvino", fix_mistral_regex=True)
+
+
+class _FakeOutOfMemoryError(RuntimeError):
+    """Stand-in for torch.cuda.OutOfMemoryError."""
+
+
+class _FakeCuda:
+    """torch.cuda stub describing one GPU, with a recorded empty_cache count."""
+
+    OutOfMemoryError = _FakeOutOfMemoryError
+
+    def __init__(
+        self,
+        available: bool = True,
+        capability: tuple[int, int] = (6, 1),
+        arch_list: tuple[str, ...] = ("sm_50", "sm_60", "sm_61", "sm_70", "compute_70"),
+        name: str = "NVIDIA GeForce GTX 1080 Ti",
+    ) -> None:
+        self._available = available
+        self._capability = capability
+        self._arch_list = arch_list
+        self._name = name
+        self.emptied = 0
+
+    def is_available(self) -> bool:
+        return self._available
+
+    def get_device_capability(self, device: object = None) -> tuple[int, int]:
+        return self._capability
+
+    def get_arch_list(self) -> list[str]:
+        return list(self._arch_list)
+
+    def get_device_name(self, device: object = None) -> str:
+        return self._name
+
+    def get_device_properties(self, device: object = None) -> SimpleNamespace:
+        return SimpleNamespace(
+            name=self._name,
+            total_memory=11 * 1024**3,
+            major=self._capability[0],
+            minor=self._capability[1],
+        )
+
+    def empty_cache(self) -> None:
+        self.emptied += 1
+
+
+def _install_fake_torch(monkeypatch: pytest.MonkeyPatch, cuda: _FakeCuda) -> _FakeCuda:
+    """Register a torch stub so device resolution runs without a real install."""
+    fake_torch = ModuleType("torch")
+    fake_torch.cuda = cuda
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    return cuda
+
+
+class _FakeVector:
+    """Minimal stand-in for the numpy rows SentenceTransformer.encode returns."""
+
+    def __init__(self, values: list[float]) -> None:
+        self._values = values
+
+    def astype(self, _dtype: object) -> "_FakeVector":
+        return self
+
+    def tolist(self) -> list[float]:
+        return self._values
+
+
+def test_resolve_torch_device_prefers_cuda_when_available(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An unset device puts the torch backend on the GPU when there is one."""
+    _install_fake_torch(monkeypatch, _FakeCuda(available=True))
+
+    assert resolve_torch_device(None, backend="torch") == "cuda"
+    assert resolve_torch_device("auto", backend="torch") == "cuda"
+    assert resolve_torch_device("cpu", backend="torch") == "cpu"
+
+
+def test_resolve_torch_device_falls_back_to_cpu(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without a usable GPU the torch backend stays on CPU, and OpenVINO is untouched."""
+    _install_fake_torch(monkeypatch, _FakeCuda(available=False))
+
+    assert resolve_torch_device(None, backend="torch") == "cpu"
+    assert resolve_torch_device("NPU", backend="openvino") == "NPU"
+    assert resolve_torch_device(None, backend="openvino") is None
+
+
+def test_cuda_dtype_keeps_fp32_on_pascal(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pascal runs fp16 at 1/64 of its fp32 rate, so half precision is not requested."""
+    fake_torch = ModuleType("torch")
+    fake_torch.cuda = _FakeCuda(capability=(6, 1))
+    assert cuda_dtype_for(fake_torch, "cuda") is None
+
+    fake_torch.cuda = _FakeCuda(capability=(8, 6))
+    assert cuda_dtype_for(fake_torch, "cuda") == "float16"
+
+
+def test_load_kwargs_forward_dtype_only_when_set() -> None:
+    """The dtype reaches transformers through model_kwargs, and only when chosen."""
+    assert sentence_transformer_load_kwargs(backend="torch", device="cuda") == {"device": "cuda"}
+    assert sentence_transformer_load_kwargs(backend="torch", device="cuda", torch_dtype="float16") == {
+        "device": "cuda",
+        "model_kwargs": {"dtype": "float16"},
+    }
+
+
+def test_arch_list_supports_pascal_kernels() -> None:
+    """sm_61 needs same-major cubins or older PTX; cu128-style builds have neither."""
+    assert arch_list_supports((6, 1), ["sm_50", "sm_60", "sm_61", "sm_90"])
+    assert arch_list_supports((6, 1), ["sm_60"])  # binary compatible upward within a major
+    assert arch_list_supports((6, 1), ["compute_60"])  # PTX JITs forward
+    assert not arch_list_supports((6, 1), ["sm_75", "sm_80", "sm_90", "compute_90"])
+    assert not arch_list_supports((6, 1), ["sm_62"])  # newer minor, not backward compatible
+
+
+def test_unsupported_cuda_arch_names_the_cuda_extra(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A torch wheel without Pascal kernels fails at load with the install hint."""
+    fake_torch = ModuleType("torch")
+    fake_torch.cuda = _FakeCuda(capability=(6, 1), arch_list=("sm_75", "sm_90", "compute_90"))
+
+    with pytest.raises(RuntimeError, match="embeddings-cuda"):
+        raise_for_unsupported_cuda_arch(fake_torch, "cuda")
+
+
+def test_backend_encodes_on_cuda_with_pascal_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The GPU path loads in fp32, caps the forward pass, and reports the device."""
+    captured: dict[str, object] = {}
+
+    class FakeSentenceTransformer:
+        def __init__(self, model_path: str, **kwargs: object) -> None:
+            captured["model_path"] = model_path
+            captured.update(kwargs)
+
+        def encode(self, texts: list[str], **kwargs: object) -> list[_FakeVector]:
+            captured["batch_size"] = kwargs["batch_size"]
+            return [_FakeVector([0.1] * BGE_M3_DIM) for _ in texts]
+
+    fake_module = ModuleType("sentence_transformers")
+    fake_module.SentenceTransformer = FakeSentenceTransformer
+    monkeypatch.setitem(sys.modules, "sentence_transformers", fake_module)
+    _install_fake_torch(monkeypatch, _FakeCuda(available=True))
+
+    backend = SentenceTransformerBackend(model_path="BAAI/bge-m3", encode_batch_size=8)
+    vectors = backend.encode(["un", "deux"])
+
+    assert backend.device == "cuda"
+    assert captured["device"] == "cuda"
+    assert "model_kwargs" not in captured  # fp32 stays the transformers default on sm_61
+    assert captured["batch_size"] == 2  # never larger than the batch actually given
+    assert len(vectors) == 2
+    assert "GTX 1080 Ti" in backend.description
+    assert "sm_61" in backend.description
+
+
+def test_backend_halves_the_batch_after_a_cuda_oom(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An out-of-memory batch is retried smaller, and the smaller size sticks."""
+    attempts: list[int] = []
+
+    class FakeSentenceTransformer:
+        def __init__(self, model_path: str, **kwargs: object) -> None:
+            return None
+
+        def encode(self, texts: list[str], **kwargs: object) -> list[_FakeVector]:
+            batch_size = int(kwargs["batch_size"])
+            attempts.append(batch_size)
+            if batch_size > 4:
+                raise _FakeOutOfMemoryError("CUDA out of memory")
+            return [_FakeVector([0.1] * BGE_M3_DIM) for _ in texts]
+
+    fake_module = ModuleType("sentence_transformers")
+    fake_module.SentenceTransformer = FakeSentenceTransformer
+    monkeypatch.setitem(sys.modules, "sentence_transformers", fake_module)
+    cuda = _install_fake_torch(monkeypatch, _FakeCuda(available=True))
+
+    backend = SentenceTransformerBackend(model_path="BAAI/bge-m3", encode_batch_size=16)
+    vectors = backend.encode(["texte"] * 16)
+
+    assert attempts == [16, 8, 4]
+    assert len(vectors) == 16
+    assert backend.encode_batch_size == 4
+    assert cuda.emptied == 2
 
 
 def test_openvino_export_uses_openvino_device_kwargs() -> None:

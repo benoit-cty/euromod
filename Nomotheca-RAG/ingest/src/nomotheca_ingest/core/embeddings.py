@@ -6,7 +6,9 @@ from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from hashlib import sha256
 from importlib import import_module
-from typing import Protocol
+import sys
+from types import ModuleType
+from typing import Any, Protocol
 from uuid import UUID
 
 from psycopg import Connection
@@ -17,6 +19,15 @@ BGE_M3_MODEL = "BAAI/bge-m3"
 BGE_M3_DIM = 1024
 EMBEDDING_BACKENDS = ("torch", "openvino")
 TORCH_WRAPPER_DEVICE = "cpu"
+AUTO_DEVICE = "auto"
+# Half precision is only a win from Volta (sm_70) on. Pascal cards — the GTX
+# 1080 Ti on this workstation is sm_61 — run fp16 arithmetic at 1/64 of their
+# fp32 rate, so asking for it there is a large slowdown, not a speedup.
+CUDA_FP16_MIN_CAPABILITY = (7, 0)
+CUDA_INSTALL_HINT = (
+    "Install the CUDA build in its own environment: "
+    "UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,8 +68,14 @@ class SentenceTransformerBackend:
         backend: str = "torch",
         fix_mistral_regex: bool = False,
         slow_tokenizer: bool = False,
+        encode_batch_size: int | None = None,
     ) -> None:
-        """Load a local or Hugging Face model path lazily."""
+        """Load a local or Hugging Face model path lazily.
+
+        With the torch backend and no explicit device, an available CUDA GPU is
+        used; `encode_batch_size` caps how many texts reach the GPU at once,
+        independently of the caller's database batch size.
+        """
         if backend not in EMBEDDING_BACKENDS:
             msg = f"Unsupported embedding backend: {backend}"
             raise ValueError(msg)
@@ -71,28 +88,165 @@ class SentenceTransformerBackend:
             msg = "Install embedding dependencies with: uv sync --extra embeddings"
             raise RuntimeError(msg) from exc
 
+        self.backend = backend
+        self.device = resolve_torch_device(device, backend=backend)
+        self.encode_batch_size = encode_batch_size
+        self._torch = torch_module() if is_cuda_device(self.device) else None
+        torch_dtype: str | None = None
+        if self._torch is not None:
+            raise_for_unsupported_cuda_arch(self._torch, self.device)
+            torch_dtype = cuda_dtype_for(self._torch, self.device)
+
         processor_kwargs = processor_kwargs_for(
             fix_mistral_regex=fix_mistral_regex,
             slow_tokenizer=slow_tokenizer,
         )
-        load_kwargs = sentence_transformer_load_kwargs(backend=backend, device=device)
+        load_kwargs = sentence_transformer_load_kwargs(
+            backend=backend,
+            device=self.device,
+            torch_dtype=torch_dtype,
+        )
         self.model = sentence_transformers.SentenceTransformer(
             model_path,
             backend=backend,
             **load_kwargs,
             processor_kwargs=processor_kwargs,
         )
+        self.description = describe_backend(
+            backend=backend,
+            device=self.device,
+            torch_dtype=torch_dtype,
+            torch=self._torch,
+        )
 
     def encode(self, inputs: Sequence[str]) -> list[list[float]]:
         """Encode passage inputs as normalized BGE-M3 embeddings."""
-        vectors = self.model.encode(
-            list(inputs),
-            batch_size=len(inputs),
-            normalize_embeddings=True,
-            convert_to_numpy=True,
-            show_progress_bar=False,
-        )
+        texts = list(inputs)
+        batch_size = min(self.encode_batch_size, len(texts)) if self.encode_batch_size else len(texts)
+        vectors = self._encode_with_oom_backoff(texts, batch_size)
         return [vector.astype(float).tolist() for vector in vectors]
+
+    def _encode_with_oom_backoff(self, texts: list[str], batch_size: int) -> Any:
+        """Encode, halving the GPU batch until it fits in VRAM.
+
+        Chunk lengths vary a lot, so a batch size that fits most of the corpus
+        can still overflow an 11 GB card on a run of long articles. The reduced
+        size sticks for the rest of the run: the next batch would fail the same
+        way, and re-raising would throw away work the run already committed.
+        """
+        while True:
+            try:
+                return self.model.encode(
+                    texts,
+                    batch_size=batch_size,
+                    normalize_embeddings=True,
+                    convert_to_numpy=True,
+                    show_progress_bar=False,
+                )
+            except cuda_oom_errors(self._torch):
+                if batch_size <= 1:
+                    raise
+                batch_size = max(1, batch_size // 2)
+                self.encode_batch_size = batch_size
+                print(
+                    f"warning: CUDA out of memory; retrying with encode batch size {batch_size}",
+                    file=sys.stderr,
+                )
+                self._torch.cuda.empty_cache()
+
+
+def torch_module() -> ModuleType | None:
+    """Import torch, or return None when only the OpenVINO path is installed."""
+    try:
+        return import_module("torch")
+    except ImportError:  # pragma: no cover - exercised by operator environment
+        return None
+
+
+def is_cuda_device(device: str | None) -> bool:
+    """Return whether a resolved device string targets a CUDA GPU."""
+    return bool(device) and device.lower().startswith("cuda")
+
+
+def resolve_torch_device(device: str | None, *, backend: str = "torch") -> str | None:
+    """Resolve the requested device, defaulting the torch backend to CUDA when present.
+
+    OpenVINO device names (CPU/GPU/NPU) mean something else entirely and are
+    handed through untouched; only the torch backend auto-detects.
+    """
+    if backend != "torch":
+        return device
+    if device and device.lower() != AUTO_DEVICE:
+        return device
+    torch = torch_module()
+    if torch is not None and torch.cuda.is_available():
+        return "cuda"
+    return "cpu"
+
+
+def cuda_dtype_for(torch: Any, device: str) -> str | None:
+    """Return the model dtype for a CUDA device, or None to keep the fp32 default."""
+    if torch.cuda.get_device_capability(device) >= CUDA_FP16_MIN_CAPABILITY:
+        return "float16"
+    return None
+
+
+def cuda_oom_errors(torch: Any) -> tuple[type[BaseException], ...]:
+    """Return the exception types signalling exhausted VRAM."""
+    return (torch.cuda.OutOfMemoryError,) if torch is not None else ()
+
+
+def arch_list_supports(capability: tuple[int, int], arch_list: Sequence[str]) -> bool:
+    """Return whether a torch build carries kernels runnable on this GPU.
+
+    A cubin runs on the same major version from its minor version up (sm_60
+    code runs on the 1080 Ti's sm_61), and embedded PTX from any older arch
+    can be JIT-compiled forward.
+    """
+    for arch in arch_list:
+        kind, _, version = arch.partition("_")
+        digits = "".join(character for character in version if character.isdigit())
+        if len(digits) < 2:
+            continue
+        arch_capability = (int(digits[:-1]), int(digits[-1]))
+        if kind == "compute" and arch_capability <= capability:
+            return True
+        if kind == "sm" and arch_capability[0] == capability[0] and arch_capability[1] <= capability[1]:
+            return True
+    return False
+
+
+def raise_for_unsupported_cuda_arch(torch: Any, device: str) -> None:
+    """Fail before model load when the installed wheel has no kernels for this GPU.
+
+    PyTorch's cu128 and CUDA 13 wheels dropped Pascal, and the failure they
+    produce mid-run ("no kernel image is available for execution on the
+    device") does not say which wheel to install instead.
+    """
+    capability = tuple(torch.cuda.get_device_capability(device))
+    arch_list = list(torch.cuda.get_arch_list())
+    if arch_list_supports(capability, arch_list):
+        return
+    name = torch.cuda.get_device_name(device)
+    msg = (
+        f"This PyTorch build has no CUDA kernels for {name} "
+        f"(compute capability {capability[0]}.{capability[1]}); it ships: {', '.join(arch_list)}. "
+        f"{CUDA_INSTALL_HINT}, or run with --device cpu."
+    )
+    raise RuntimeError(msg)
+
+
+def describe_backend(*, backend: str, device: str | None, torch_dtype: str | None, torch: Any) -> str:
+    """Return a one-line operator-facing description of the loaded backend."""
+    description = f"backend={backend} device={device or 'default'}"
+    if torch is None or not is_cuda_device(device):
+        return description
+    properties = torch.cuda.get_device_properties(device)
+    return (
+        f"{description} gpu={properties.name} "
+        f"vram={properties.total_memory / 1024**3:.1f}GiB "
+        f"sm_{properties.major}{properties.minor} dtype={torch_dtype or 'float32'}"
+    )
 
 
 def processor_kwargs_for(*, fix_mistral_regex: bool = False, slow_tokenizer: bool = False) -> dict[str, bool]:
@@ -105,14 +259,22 @@ def processor_kwargs_for(*, fix_mistral_regex: bool = False, slow_tokenizer: boo
     return kwargs
 
 
-def sentence_transformer_load_kwargs(*, backend: str, device: str | None = None) -> dict[str, object]:
+def sentence_transformer_load_kwargs(
+    *,
+    backend: str,
+    device: str | None = None,
+    torch_dtype: str | None = None,
+) -> dict[str, object]:
     """Build SentenceTransformer load kwargs without passing OpenVINO devices to Torch."""
     if backend == "openvino":
         kwargs: dict[str, object] = {"device": TORCH_WRAPPER_DEVICE}
         if device:
             kwargs["model_kwargs"] = {"device": device.upper()}
         return kwargs
-    return {"device": device} if device else {}
+    kwargs = {"device": device} if device else {}
+    if torch_dtype:
+        kwargs["model_kwargs"] = {"dtype": torch_dtype}
+    return kwargs
 
 
 def _looks_like_bge_m3(model_path: str) -> bool:

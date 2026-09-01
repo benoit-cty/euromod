@@ -137,7 +137,17 @@ def build_chunk_embeddings(
     model_id: Annotated[int, typer.Option("--model-id", min=1)] = 1,
     batch_size: Annotated[int, typer.Option("--batch-size", min=1)] = 16,
     limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
-    device: Annotated[str | None, typer.Option("--device", help="Optional device, e.g. cpu, cuda, or CPU.")] = None,
+    device: Annotated[
+        str | None,
+        typer.Option(
+            "--device",
+            help="torch: cpu, cuda, cuda:1 (default: cuda when available). openvino: CPU, GPU, NPU.",
+        ),
+    ] = None,
+    encode_batch_size: Annotated[
+        int | None,
+        typer.Option("--encode-batch-size", min=1, help="Texts per forward pass; defaults to --batch-size."),
+    ] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Count stale chunks without writing embeddings.")] = False,
     show_progress: Annotated[bool, typer.Option("--progress/--no-progress", help="Show live embedding progress.")] = True,
     progress_json: Annotated[
@@ -166,8 +176,12 @@ def build_chunk_embeddings(
             backend=backend,
             fix_mistral_regex=fix_mistral_regex,
             slow_tokenizer=slow_tokenizer,
+            encode_batch_size=encode_batch_size or batch_size,
         )
     )
+    if not dry_run:
+        # stderr: stdout carries the '@progress' protocol a wrapping UI parses.
+        typer.echo(embedding_backend.description, err=True)
     with psycopg.connect(database_url) as conn:
         if progress_json:
             total = count_chunks_needing_embeddings(conn, model_id=model_id, limit=limit)
@@ -200,7 +214,7 @@ def build_chunk_embeddings(
     else:
         typer.echo(
             f"scanned={stats.scanned} embedded={stats.embedded} skipped={stats.skipped} "
-            f"model_id={model_id} backend={backend} dry_run=False"
+            f"model_id={model_id} backend={backend} device={embedding_backend.device} dry_run=False"
         )
         if stats.skipped:
             typer.echo(

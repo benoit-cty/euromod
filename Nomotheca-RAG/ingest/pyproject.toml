@@ -24,6 +24,14 @@ embeddings = [
   "sentence-transformers[openvino]>=3.0",
   "torch>=2.13.0",
 ]
+# Same packages, but torch comes from the CUDA 12.6 wheel index (see
+# [tool.uv.sources]); for the workstation with an NVIDIA GPU. Kept conflicting
+# with `embeddings` so the two never share one environment:
+#   UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda
+embeddings-cuda = [
+  "sentence-transformers[openvino]>=3.0",
+  "torch>=2.13.0",
+]
 translate = [
   "nomoscope-agentic-workflow",
 ]
@@ -36,6 +44,19 @@ url = "https://download.pytorch.org/whl/cpu"
 # first-match strategy would otherwise pin them below what other deps need.
 explicit = true
 
+[[tool.uv.index]]
+name = "pytorch_cu126"
+url = "https://download.pytorch.org/whl/cu126"
+# CUDA 12.6 is the newest PyTorch channel that still ships Pascal (sm_61)
+# kernels, which is what the GTX 1080 Ti needs; the cu128+ channels start at
+# sm_75 and CUDA 13 dropped Pascal outright. Same explicit-only rule as above.
+explicit = true
+
+[tool.uv]
+# One environment cannot hold both torch builds; uv needs the conflict declared
+# before it will resolve the extra-scoped torch sources below.
+conflicts = [[{ extra = "embeddings" }, { extra = "embeddings-cuda" }]]
+
 [project.scripts]
 nomotheca-ingest = "nomotheca_ingest.cli:app"
 
@@ -47,5 +68,8 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [tool.uv.sources]
-torch = { index = "pytorch_cpu" }
+torch = [
+  { index = "pytorch_cpu", extra = "embeddings" },
+  { index = "pytorch_cu126", extra = "embeddings-cuda" },
+]
 nomoscope-agentic-workflow = { path = "../../Nomoscope-agentic-workflow/pipeline", editable = true }
