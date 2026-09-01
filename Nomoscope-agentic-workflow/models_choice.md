@@ -52,3 +52,15 @@ Euromod current models :
 - GPT-OSS
 - MiniMax 2.7
 - Llama 3.3 70B
+
+
+Models tested throught Azure :
+Models 	Input (Per 1M tokens) 	Cached Input (Per 1M tokens) 	Output (Per 1M tokens)
+azure_openai/DeepSeek-V4-Flash : $0.19 	$0.028 	$0.51
+azure_openai/mistral-medium-3-5 	Input: $1.50/1M Tokens Output: $7.50/1M Tokens 
+azure_openai/gpt-5.4-nano-2
+azure_openai/gpt-5.6-Luna
+azure_openai/gpt-5.6-Terra
+azure_openai/gpt-5.6-Sol
+azure_openai/Mistral-Large-3
+azure_openai/Cohere-command-a-plus-05-2026 Input: $0.80/1M Tokens Output: $3.20/1M Tokens 
