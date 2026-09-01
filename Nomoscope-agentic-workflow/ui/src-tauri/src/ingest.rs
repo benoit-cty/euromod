@@ -9,7 +9,7 @@
 //! any sourced `.env` are visible to the child.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::Mutex;
 
@@ -59,9 +59,30 @@ fn command_spec(command: &str) -> Option<(Vec<&'static str>, Vec<&'static str>)>
     match command {
         "instrument" => Some((vec![], vec!["instrument"])),
         "citation" => Some((vec![], vec!["citation"])),
-        "embeddings" => Some((vec!["--extra", "embeddings"], vec!["embeddings", "build"])),
+        // BGE-M3 picks its extra at spawn time: see `embedding_environment`.
+        "embeddings" => Some((vec![], vec!["embeddings", "build"])),
         "translate" => Some((vec!["--extra", "translate"], vec!["translate", "run"])),
         _ => None,
+    }
+}
+
+pub(crate) const EMBEDDING_EXTRA: &str = "embeddings";
+pub(crate) const CUDA_EXTRA: &str = "embeddings-cuda";
+pub(crate) const CUDA_ENVIRONMENT: &str = ".venv-cuda";
+
+/// Pick the `uv` extra, and project environment, that runs BGE-M3 in `dir`.
+///
+/// CUDA and CPU torch are conflicting extras in the ingest package, so its GPU
+/// build lives in a second environment (`UV_PROJECT_ENVIRONMENT=.venv-cuda uv
+/// sync --extra embeddings-cuda`). Where an operator has installed it, point
+/// `uv` there and BGE-M3 runs on the GPU; otherwise nothing changes and the
+/// default `.venv` (CPU torch + OpenVINO) is used.
+pub(crate) fn embedding_environment(dir: &Path) -> (&'static str, Option<PathBuf>) {
+    let environment = dir.join(CUDA_ENVIRONMENT);
+    if environment.join("pyvenv.cfg").is_file() {
+        (CUDA_EXTRA, Some(environment))
+    } else {
+        (EMBEDDING_EXTRA, None)
     }
 }
 
@@ -102,6 +123,14 @@ pub async fn run(
 
     let mut argv: Vec<String> = vec!["run".into()];
     argv.extend(extras.into_iter().map(String::from));
+    let project_environment = if payload.command == "embeddings" {
+        let (extra, environment) = embedding_environment(&dir);
+        argv.push("--extra".into());
+        argv.push(extra.into());
+        environment
+    } else {
+        None
+    };
     argv.push("python".into());
     argv.push("-m".into());
     argv.push("nomotheca_ingest.cli".into());
@@ -113,7 +142,8 @@ pub async fn run(
     emit_log(&app, &payload.run_id, "system", &format!("$ uv {}", argv.join(" ")));
     emit_log(&app, &payload.run_id, "system", &format!("cwd: {}", dir.display()));
 
-    let mut child = Command::new("uv")
+    let mut command = Command::new("uv");
+    command
         .args(&argv)
         // Drop any inherited VIRTUAL_ENV so `uv` uses Nomotheca-RAG/ingest's own `.venv`
         // instead of warning that an unrelated active venv doesn't match.
@@ -124,7 +154,18 @@ pub async fn run(
         .current_dir(&dir)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some(environment) = &project_environment {
+        command.env("UV_PROJECT_ENVIRONMENT", environment);
+        emit_log(
+            &app,
+            &payload.run_id,
+            "system",
+            &format!("UV_PROJECT_ENVIRONMENT: {} (GPU)", environment.display()),
+        );
+    }
+
+    let mut child = command
         .spawn()
         .map_err(|e| format!("failed to spawn `uv` (is it on PATH?): {e}"))?;
 
@@ -167,5 +208,33 @@ pub fn stop(state: State<'_, IngestState>, run_id: String) -> Result<Value, Stri
             Ok(json!({ "stopped": true }))
         }
         None => Ok(json!({ "stopped": false })),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{embedding_environment, CUDA_EXTRA, EMBEDDING_EXTRA};
+
+    #[test]
+    fn embedding_environment_defaults_to_the_cpu_venv() {
+        let dir = tempfile::tempdir().unwrap();
+
+        let (extra, environment) = embedding_environment(dir.path());
+
+        assert_eq!(extra, EMBEDDING_EXTRA);
+        assert!(environment.is_none());
+    }
+
+    #[test]
+    fn embedding_environment_prefers_an_installed_cuda_venv() {
+        let dir = tempfile::tempdir().unwrap();
+        let cuda = dir.path().join(".venv-cuda");
+        std::fs::create_dir(&cuda).unwrap();
+        std::fs::write(cuda.join("pyvenv.cfg"), "home = /usr/bin\n").unwrap();
+
+        let (extra, environment) = embedding_environment(dir.path());
+
+        assert_eq!(extra, CUDA_EXTRA);
+        assert_eq!(environment.unwrap(), cuda);
     }
 }

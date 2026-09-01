@@ -7,7 +7,7 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, Lines};
 use tokio::process::{Child, ChildStdin, ChildStdout, Command};
 use tokio::sync::Mutex;
 
-use crate::ingest::ingest_dir;
+use crate::ingest::{embedding_environment, ingest_dir};
 
 struct EncoderProcess {
     child: Child,
@@ -52,11 +52,14 @@ impl EmbeddingState {
 async fn spawn_encoder() -> Result<EncoderProcess, String> {
     let dir = ingest_dir()
         .ok_or_else(|| "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)".to_string())?;
-    let mut child = Command::new("uv")
+    // Runs on the GPU where the ingest package's CUDA environment is installed.
+    let (extra, project_environment) = embedding_environment(&dir);
+    let mut command = Command::new("uv");
+    command
         .args([
             "run",
             "--extra",
-            "embeddings",
+            extra,
             "python",
             "-m",
             "nomotheca_ingest.query_embeddings",
@@ -66,7 +69,13 @@ async fn spawn_encoder() -> Result<EncoderProcess, String> {
         .current_dir(dir)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
+        // The encoder reports its resolved device (CPU/GPU) on stderr.
+        .stderr(Stdio::inherit());
+    if let Some(environment) = project_environment {
+        command.env("UV_PROJECT_ENVIRONMENT", environment);
+    }
+
+    let mut child = command
         .spawn()
         .map_err(|error| format!("failed to start BGE-M3 query encoder: {error}"))?;
 
