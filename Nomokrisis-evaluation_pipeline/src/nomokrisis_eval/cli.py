@@ -20,6 +20,7 @@ import typer
 from nomoscope_workflow.tracing import set_progress
 
 from . import build_dataset as builder
+from . import curated_golden
 from . import db as evaldb
 from . import openfisca_golden
 from .config import EvalConfig, load_eval_config
@@ -141,6 +142,58 @@ def build_openfisca_dataset(
             f"  value={expected.value}  valid_from={expected.valid_from}"
             f"  citations={expected.citations or '[]'}"
         )
+    typer.echo(
+        f"\n{written} draft case(s) in {cfg.dataset_dir} (verified=false). "
+        "Review them in the UI's Golden set tab (or `nomokrisis-eval verify <id>`) before running an evaluation."
+    )
+
+
+@app.command("build-curated-dataset")
+def build_curated_dataset(
+    year: int = typer.Option(..., "--year", help="EUROMOD system year to draft cases for, e.g. 2025"),
+    country: str = typer.Option(..., "--country", help="ISO country code, e.g. IE"),
+    source: Path = typer.Option(
+        None, "--source", help="Curated selection file (default: golden_sources/<cc>.json)"
+    ),
+    as_of: str = typer.Option(
+        None, "--as-of", help="Anchor date inside the system year (default: <year>-06-01)"
+    ),
+) -> None:
+    """Draft golden cases from a hand-curated selection file (verified=false).
+
+    For countries with no external corpus to read ground truth from (IE, LT):
+    the expected values are curated in golden_sources/<cc>.json from the acts
+    themselves. The parameter under test still comes from the params DB, and
+    the selection's routing is cross-checked against what EUROMOD holds.
+    """
+    cfg = load_eval_config()
+
+    selection = source or curated_golden.selection_path(country)
+    if not selection.exists():
+        typer.echo(f"no selection file at {selection}")
+        raise typer.Exit(1)
+    anchor = _parse_date(as_of) if as_of else date(year, 6, 1)
+    with evaldb.connect(cfg.database_url) as conn:
+        outcomes = curated_golden.build_dataset(
+            conn, cfg.dataset_dir, selection, anchor, country=country.upper()
+        )
+    written = 0
+    for outcome in outcomes:
+        label = outcome.entry.get("model_target") or outcome.entry.get("group_id", "?")
+        if outcome.case is None:
+            typer.echo(f"  ~ skipped {label}: {outcome.skipped}")
+            for warning in outcome.warnings:
+                typer.echo(f"    ! {warning}")
+            continue
+        written += 1
+        expected = outcome.case.expected
+        typer.echo(
+            f"  {expected.routing:<20} {outcome.case.id}"
+            f"  value={expected.value}  valid_from={expected.valid_from}"
+            f"  citations={expected.citations or '[]'}"
+        )
+        for warning in outcome.warnings:
+            typer.echo(f"    ! {warning}")
     typer.echo(
         f"\n{written} draft case(s) in {cfg.dataset_dir} (verified=false). "
         "Review them in the UI's Golden set tab (or `nomokrisis-eval verify <id>`) before running an evaluation."

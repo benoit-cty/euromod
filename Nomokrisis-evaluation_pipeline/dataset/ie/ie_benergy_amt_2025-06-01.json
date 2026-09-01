@@ -1,0 +1,18 @@
+{
+  "id": "ie_benergy_amt_2025-06-01",
+  "country": "IE",
+  "language": "en",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_benergy_cred_ie_def_const_benergy_amt.json",
+  "as_of": "2025-06-01",
+  "difficulty": "plain",
+  "source_class": "gazette",
+  "expected": {
+    "routing": "changed",
+    "value": "125#y",
+    "valid_from": "2025-01-01",
+    "citations": []
+  },
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: ie.json#benergy_amt | euromod value in force at 2025-06-01: 125.0 from 2025-01-01 | HARD / not_found today — the Budget 2025 electricity credit (2 x 125). Set by the one-off Electricity Costs (Domestic Electricity Accounts) Emergency Measures Acts, which are NOT among the 15 ingested IE acts, so the case measures ingest breadth + the scout gap-fill (IE was added to scout.COUNTRY_SOURCES for exactly this). Citations left empty until the act is ingested — an instrument-level citation of an act we do not hold is provenance, not ground truth. Verify the exact 2024/2025 act title and the per-credit vs annual amount when drafting. | drafting warning: selection says routing 'changed' but the store routes 'unchanged' (EUROMOD holds 125.0 at 2025-06-01) — one of the two is wrong | drafting warning: no citations: the citation leg is unscored until the source act is ingested"
+}

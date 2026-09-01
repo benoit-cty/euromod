@@ -1,4 +1,4 @@
-"""Golden-set loading: the committed FR cases must parse, and filters must work."""
+"""Golden-set loading: every committed case must parse, and filters must work."""
 
 from __future__ import annotations
 
@@ -12,7 +12,12 @@ DATASET_DIR = Path(__file__).resolve().parents[1] / "dataset"
 def test_committed_cases_parse():
     cases = load_cases(DATASET_DIR)
     assert len(cases) >= 2
-    assert all(c.country == "FR" for c in cases)
+    # FR is drafted from the OpenFisca corpus, IE and LT from their curated
+    # selection files; each case sits in dataset/<country>/ (save_case).
+    assert {c.country for c in cases} <= {"FR", "IE", "LT"}
+    assert all(
+        (DATASET_DIR / c.country.lower() / f"{c.id}.json").exists() for c in cases
+    )
 
 
 def test_every_case_points_at_a_parameter_file():

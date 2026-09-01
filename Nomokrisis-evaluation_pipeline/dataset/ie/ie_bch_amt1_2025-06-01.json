@@ -1,0 +1,18 @@
+{
+  "id": "ie_bch_amt1_2025-06-01",
+  "country": "IE",
+  "language": "en",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_bch_ie_def_const_bch_amt1.json",
+  "as_of": "2025-06-01",
+  "difficulty": "combine",
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "derived",
+    "citations": [
+      "Social Welfare Consolidation Act 2005, Sch. 4"
+    ]
+  },
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: ie.json#bch_amt1 | euromod value in force at 2025-06-01: '140#m*$sw_weeks' from 2025-01-01 | value leg not scored: the selection states no expected_value (the law's value is not established for this case yet) | IMPOSSIBLE today, by design — Child Benefit stored as '140#m*$sw_weeks'. The $sw_weeks reference makes pipeline._derived_refs short-circuit to routing 'derived' before any retrieval, even though the legislated 140/month sits plainly in SWCA 2005 Sch. 4. Expected routing pins today's correct contract behaviour; the future improvement (resolve the anchor, retrieve and propose on the monthly amount, then recompose) flips this case's expectation to a scored value. Also exposes the scoring bug where normalise_value truncates the expression at '#'. Value deliberately not scored until then. | drafting warning: value leg not scored (no expected_value in the selection)"
+}

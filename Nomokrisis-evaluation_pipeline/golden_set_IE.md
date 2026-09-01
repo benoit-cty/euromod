@@ -31,13 +31,14 @@ with the greatest validity start ≤ `as_of`.
 cd ../Nomoscope-agentic-workflow/pipeline
 uv run nomoscope-workflow ingest-params            # loads extracted_parameters/enriched/IE.enriched.json
 
-# 2. Draft the 10 cases from golden_sources/ie.json — by hand from the acts, or with
-#    build-dataset over a trusted document (IE_Y16.md §2.2 "Budget 2025"), cross-checked
-#    against the acts before verification. Routing is computed deterministically, never
-#    by a model; ie.json sets it explicitly where the convention is ambiguous.
+# 2. Draft the 10 cases from golden_sources/ie.json (no LLM: the expected values are the
+#    curated ones, the parameter under test comes from the params DB). Routing is never
+#    decided by a model; ie.json sets it explicitly, and the drafter cross-checks it
+#    against what EUROMOD holds and reports every disagreement.
+cd ../../Nomokrisis-evaluation_pipeline
+uv run nomokrisis-eval build-curated-dataset --country IE --year 2025
 
 # 3. Human-verify each case (the freeze gate — run evaluates verified-only)
-cd ../../Nomokrisis-evaluation_pipeline
 uv run nomokrisis-eval verify <case-id> --reviewer ben
 
 # 4. Run

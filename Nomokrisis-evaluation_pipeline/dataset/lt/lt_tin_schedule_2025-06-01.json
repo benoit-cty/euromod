@@ -1,0 +1,18 @@
+{
+  "id": "lt_tin_schedule_2025-06-01",
+  "country": "LT",
+  "language": "lt",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_lt_constdef_lt_group_tin_schedule.json",
+  "as_of": "2025-06-01",
+  "difficulty": "table",
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "citations": [
+      "GPMĮ IX-1007, 6 straipsnis"
+    ]
+  },
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: lt.json#tin_schedule | euromod value in force at 2025-06-01: none | value leg not scored: the selection states no expected_value (the law's value is not established for this case yet) | EASY content, table difficulty — the PIT rate schedule (LT's answer to the FR bareme): 20% standard, 32% above the 60-VDU threshold, unchanged for 2025 (the 25% middle band only enters with the 2026 reform — $tin_HigherRate's first value row is 2026-01-01, so the assembled 2025 schedule has two live bands). Caveats to check when drafting: the group is rates-only (thresholds default to 0.0 in load_group_record output) and the component rates are percent strings. | drafting warning: value leg not scored (no expected_value in the selection)"
+}

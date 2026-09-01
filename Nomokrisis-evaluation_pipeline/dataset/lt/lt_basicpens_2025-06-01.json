@@ -1,0 +1,18 @@
+{
+  "id": "lt_basicpens_2025-06-01",
+  "country": "LT",
+  "language": "lt",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_lt_constdef_lt_def_const_basicpens.json",
+  "as_of": "2025-06-01",
+  "difficulty": "combine",
+  "source_class": "gazette",
+  "expected": {
+    "routing": "changed",
+    "value": "298.45#m",
+    "valid_from": "2025-01-01",
+    "citations": []
+  },
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: lt.json#basicpens | euromod value in force at 2025-06-01: 298.45 from 2025-01-01 | IMPOSSIBLE today — basic social insurance pension, 269.77 -> 298.45 for 2025. The pensions law states the indexation FORMULA (wage-bill indexation); the resulting euro amount appears only in the annual indexation resolution. Pure extraction can never produce 298.45 from the ingested acts: the case marks the derivation/indexation capability gap, and scores 0 until either the indexation instruments are ingested or a compute-from-formula step exists. | drafting warning: selection says routing 'changed' but the store routes 'unchanged' (EUROMOD holds 298.45 at 2025-06-01) — one of the two is wrong | drafting warning: no citations: the citation leg is unscored until the source act is ingested"
+}

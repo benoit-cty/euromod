@@ -32,13 +32,14 @@ cd ../Nomoscope-agentic-workflow/pipeline
 uv run nomoscope-workflow ingest-params
 uv run nomoscope-workflow curate-params curation/LT.curation.yaml
 
-# 2. Draft the 10 cases from golden_sources/lt.json — by hand from the acts, or with
-#    build-dataset over a trusted document (LT_Y16.md §2.2.3), cross-checked against the
-#    acts. The PIT schedule case uses group_id LT:ConstDef_lt:tin_schedule (the LT export
-#    is the new schema and carries a groups block, unlike IE).
+# 2. Draft the 10 cases from golden_sources/lt.json (no LLM: the expected values are the
+#    curated ones, the parameter under test comes from the params DB). The PIT schedule
+#    case uses group_id LT:ConstDef_lt:tin_schedule (the LT export is the new schema and
+#    carries a groups block, unlike IE).
+cd ../../Nomokrisis-evaluation_pipeline
+uv run nomokrisis-eval build-curated-dataset --country LT --year 2025
 
 # 3. Human-verify (the freeze gate)
-cd ../../Nomokrisis-evaluation_pipeline
 uv run nomokrisis-eval verify <case-id> --reviewer ben
 
 # 4. Run

@@ -1,0 +1,70 @@
+{
+  "information": {
+    "country": "LT",
+    "model_target": "euromod://LT/xcc_lt/def_const/$xcc_amt1",
+    "spine_order": "67",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Childcare cost amounts for meals (daily amounts for a five-day week)"
+    },
+    "short_label": {
+      "en": "$xcc_amt1"
+    },
+    "description": {
+      "en": "This constant sets the daily gross childcare fee (in EUR) charged for a younger age group of children in formal, centre-based childcare, based on a five-day working week. It is used in the xcc_lt policy's ArithOp function (comment 'Childcare cost for children younger than 3') to compute the gross childcare cost input before any discounts are applied. According to the LT childcarecost theme description, municipal childcare fees are fixed daily amounts that vary by child age; the value of 2.9 EUR corresponds to the daily fee (meal fee per day, three meals) for children aged 1-2 years under the updated 2026 fee schedule, up from 2.6 EUR previously."
+    },
+    "explanation": {},
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": 2.6,
+      "valid_from": "2024-01-01",
+      "valid_to": "2025-12-31",
+      "legal_status": null,
+      "source_type": "national_team",
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "2.6#l",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 2.9,
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
+      "legal_status": null,
+      "source_type": "national_team",
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "2.9#l",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

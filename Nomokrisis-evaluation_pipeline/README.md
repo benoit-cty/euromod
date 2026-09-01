@@ -14,17 +14,19 @@ prompts, critique and Phoenix tracing).
 dataset/<country>/*.json     golden cases (git-versioned; the frozen test set)
 dataset_embedding/<cc>/*.json  embedding/retrieval cases (query → relevant citations)
 golden_sources/openfisca_<cc>.json  curated EUROMOD ↔ OpenFisca pairs the drafter starts from
+golden_sources/<cc>.json     hand-curated selection for countries with no external corpus (IE, LT)
 src/nomokrisis_eval/
   schema.py                  GoldenCase / Expected / CaseResult / RunManifest (+ EmbeddingCase)
   dataset.py                 load/save cases + content-hash dataset_version
   build_dataset.py           Claude Fable drafts cases from a trusted document
   openfisca_golden.py        drafts cases from the ingested OpenFisca corpus (no LLM)
+  curated_golden.py          drafts cases from a hand-curated selection file (no LLM)
   scoring.py                 KPI scoring (pure functions)
   runner.py                  drives nomoscope_workflow.run_parameter over the set
   embedding_eval.py          ranks golden chunks under fts / vector / hybrid search
   db.py                      Postgres persistence (eval.runs / eval.results)
   cli.py                     nomokrisis-eval init-db | build-dataset | build-openfisca-dataset
-                             | list-cases | verify | run | report
+                             | build-curated-dataset | list-cases | verify | run | report
                              | list-embedding-cases | run-embeddings
 db/eval_schema.sql           tables + eval.run_summary view (the UI read surface)
 .eval_runs/<run_id>/         scratch queue + manifest.json + results.json per run (gitignored)
@@ -168,6 +170,54 @@ uv run nomokrisis-eval build-openfisca-dataset --year 2025 --curated-only
   path, component, scale, the reference titles, what did not resolve).
   **OpenFisca is curated, not the law** — it is occasionally wrong or lagging,
   which is why nothing counts until a human accepts it.
+
+### Building it by hand (countries with no external corpus)
+
+Ireland and Lithuania have no OpenFisca package, so their ground truth is
+hand-curated from the acts themselves into
+[golden_sources/ie.json](golden_sources/ie.json) /
+[golden_sources/lt.json](golden_sources/lt.json) (`"corpus": "curated"`) — 10
+parameters each, in increasing pipeline difficulty, rationale per entry in
+[golden_set_IE.md](golden_set_IE.md) / [golden_set_LT.md](golden_set_LT.md).
+`build-curated-dataset` turns a selection into cases:
+
+```bash
+# 0. the parameter store must hold the parameters under test (once per DB reset)
+cd ../Nomoscope-agentic-workflow/pipeline
+uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/LT.enriched.json
+uv run nomoscope-workflow curate-params curation/LT.curation.yaml   # national_team flags
+
+# 1. draft the cases (verified=false)
+cd -
+uv run nomokrisis-eval build-curated-dataset --country LT --year 2025
+uv run nomokrisis-eval build-curated-dataset --country IE --year 2025
+```
+
+Same guarantees as the OpenFisca drafter, minus the corpus: the parameter under
+test is loaded from the params DB and materialized under
+`data/parameters/eval/`, and the value EUROMOD holds at `as_of` is written into
+the case notes so the reviewer sees it at the gate. What differs:
+
+- **Ground truth is the selection file's `expected_value`** — the LAW's value,
+  cross-checked against the act text. An entry that states none (or `null`)
+  leaves the value leg *unscored* rather than freezing EUROMOD's own value into
+  the golden set: `bch_amt1`, `tco_t_01131`, `xcc_amt1` and the LT PIT schedule
+  are routing-only cases today.
+- **Routing comes from the selection** — these sets exist to pin traps the
+  deterministic drafter refuses to guess (percent strings, mid-year steps,
+  derived values). It is still cross-checked against `route_against_current`,
+  and a disagreement is reported and written into the notes. A `changed` that
+  the store routes `unchanged` usually means the entry states the year-over-year
+  change rather than "EUROMOD differs from the law", which is what the routing
+  vocabulary means.
+- **A period difference is not a disagreement**: EUROMOD's stored scalar is a
+  bare magnitude (the `#y` of `8964#y` lives in the unit), so `8964` against a
+  curated `747#m` suppresses the cross-check with a warning instead of raising
+  a false alarm — while IE's `27383` against the law's `27382#y` stays the real
+  difference it is.
+- A `national_team_source` expectation warns when the store does not flag the
+  parameter (no `curation/IE.curation.yaml` exists yet — IE's `tco_ie` family
+  is still unflagged, LT's `xcc_lt` is curated).
 
 ### Reviewing drafts (validation UI → *Golden set* tab)
 

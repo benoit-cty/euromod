@@ -1,0 +1,21 @@
+{
+  "id": "ie_tin_perstc_amt_2025-06-01",
+  "country": "IE",
+  "language": "en",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_constdef_ie_def_const_tin_perstc_amt.json",
+  "as_of": "2025-06-01",
+  "difficulty": "plain",
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "changed",
+    "value": "2000#y",
+    "valid_from": "2025-01-01",
+    "citations": [
+      "Finance Act 2024, s. 3",
+      "TCA 1997, s. 461"
+    ]
+  },
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: ie.json#tin_perstc_amt | euromod value in force at 2025-06-01: 2000.0 from 2025-01-01 | EASY-MEDIUM — personal tax credit 1,875 -> 2,000 for 2025, in the same Finance Act section as the band: tests extracting several distinct parameters from one dense amending section without cross-contamination. | drafting warning: selection says routing 'changed' but the store routes 'unchanged' (EUROMOD holds 2000.0 at 2025-06-01) — one of the two is wrong"
+}

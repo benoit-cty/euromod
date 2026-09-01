@@ -1,0 +1,20 @@
+{
+  "id": "lt_tinta_basic_withdrate_higher_2025-06-01",
+  "country": "LT",
+  "language": "lt",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_lt_constdef_lt_def_const_tinta_basic_withdrate_higher.json",
+  "as_of": "2025-06-01",
+  "difficulty": "plain",
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "changed",
+    "value": 0.49,
+    "valid_from": "2025-01-01",
+    "citations": [
+      "GPMĮ IX-1007, 20 straipsnis"
+    ]
+  },
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: lt.json#tinta_basic_withdrate_higher | euromod value in force at 2025-06-01: 0.49 from 2025-01-01 | EASY — the NPD (basic allowance) withdrawal coefficient in the GPMI art. 20 formula, 0.5 -> 0.49 for 2025. A genuine numeric change stated verbatim in an ingested act: the LT happy path. | drafting warning: selection says routing 'changed' but the store routes 'unchanged' (EUROMOD holds 0.49 at 2025-06-01) — one of the two is wrong"
+}
