@@ -15,7 +15,8 @@
       "CGI, art. 223 sexies"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: impot_revenu.contributions_exceptionnelles.contribution_exceptionnelle_hauts_revenus.celibataire_ou_assimile :: brackets[3].rate | openfisca value at 2024-01-01: 0.04 (change point 2011-01-01) | euromod value in force at 2025-06-01: 0.04 from 2013-01-01 | link: manual | references not resolved in the legislation corpus: Article 223 sexies, I.1., du Code général des impôts [LEGIARTI000025049027] not in the corpus (not scorable) | CEHR second rate (4%)."
+  "notes": "openfisca: impot_revenu.contributions_exceptionnelles.contribution_exceptionnelle_hauts_revenus.celibataire_ou_assimile :: brackets[3].rate | openfisca value at 2024-01-01: 0.04 (change point 2011-01-01) | euromod value in force at 2025-06-01: 0.04 from 2013-01-01 | link: manual | references not resolved in the legislation corpus: Article 223 sexies, I.1., du Code général des impôts [LEGIARTI000025049027] not in the corpus (not scorable) | CEHR second rate (4%).",
+  "reviewed_by": "ben"
 }

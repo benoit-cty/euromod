@@ -14,7 +14,8 @@
       "JORFTEXT000050854392"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prelevements_sociaux.pss.plafond_securite_sociale_mensuel x8 | openfisca value at 2025-06-01: 3925.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 31400.0 from 2025-01-01 | link: manual | Complementary-pension income limit: 8x the monthly PSS."
+  "notes": "openfisca: prelevements_sociaux.pss.plafond_securite_sociale_mensuel x8 | openfisca value at 2025-06-01: 3925.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 31400.0 from 2025-01-01 | link: manual | Complementary-pension income limit: 8x the monthly PSS.",
+  "reviewed_by": "ben"
 }

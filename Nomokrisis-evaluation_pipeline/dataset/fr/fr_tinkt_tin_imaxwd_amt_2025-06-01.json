@@ -14,7 +14,8 @@
       "JORFTEXT000051168007, art. 2"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: impot_revenu.calcul_impot_revenu.plaf_qf.plafond_avantages_procures_par_demi_part.reduc_postplafond_veuf | openfisca value at 2024-01-01: 1993.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 1993.0 from 2025-01-01 | link: fingerprint score 0.72 | references not resolved in the legislation corpus: Article 197, I.2.§5 du Code général des impôts [LEGIARTI000046860759] not in the corpus (not scorable)"
+  "notes": "openfisca: impot_revenu.calcul_impot_revenu.plaf_qf.plafond_avantages_procures_par_demi_part.reduc_postplafond_veuf | openfisca value at 2024-01-01: 1993.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 1993.0 from 2025-01-01 | link: fingerprint score 0.72 | references not resolved in the legislation corpus: Article 197, I.2.§5 du Code général des impôts [LEGIARTI000046860759] not in the corpus (not scorable)",
+  "reviewed_by": "ben"
 }

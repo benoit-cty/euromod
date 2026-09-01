@@ -12,7 +12,8 @@
     "valid_from": "2024-01-01",
     "citations": []
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: impot_revenu.calcul_revenus_imposables.charges_deductibles.accueil_personne_agee.plafond | openfisca value at 2024-01-01: 4039.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 4039.0 from 2025-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Article 156, II-2° ter, du Code général des impôts [LEGIARTI000047622626] not in the corpus (not scorable)"
+  "notes": "openfisca: impot_revenu.calcul_revenus_imposables.charges_deductibles.accueil_personne_agee.plafond | openfisca value at 2024-01-01: 4039.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 4039.0 from 2025-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Article 156, II-2° ter, du Code général des impôts [LEGIARTI000047622626] not in the corpus (not scorable)",
+  "reviewed_by": "ben"
 }

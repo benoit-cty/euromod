@@ -15,7 +15,8 @@
       "CGI, art. 197"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: impot_revenu.bareme_ir_depuis_1945.bareme :: brackets[3].threshold | openfisca value at 2024-01-01: 29315.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 29314.0 from 2025-01-01 | link: manual | references not resolved in the legislation corpus: Article 197, I.1. du Code général des impôts [LEGIARTI000046860759] not in the corpus (not scorable) | Barème IR band 3 upper limit. EUROMOD's 2025 value is one euro below the law (a known EUROMOD-side error, being corrected by the economists team); the expected value is the law's."
+  "notes": "openfisca: impot_revenu.bareme_ir_depuis_1945.bareme :: brackets[3].threshold | openfisca value at 2024-01-01: 29315.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 29314.0 from 2025-01-01 | link: manual | references not resolved in the legislation corpus: Article 197, I.1. du Code général des impôts [LEGIARTI000046860759] not in the corpus (not scorable) | Barème IR band 3 upper limit. EUROMOD's 2025 value is one euro below the law (a known EUROMOD-side error, being corrected by the economists team); the expected value is the law's.",
+  "reviewed_by": "ben"
 }

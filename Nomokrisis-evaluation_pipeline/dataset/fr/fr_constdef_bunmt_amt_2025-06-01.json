@@ -12,7 +12,8 @@
     "valid_from": "2025-04-01",
     "citations": []
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: chomage.allocations_assurance_chomage.ass.montant_plein | openfisca value at 2025-06-01: 19.33 (change point 2025-04-01) | euromod value in force at 2025-06-01: 19.33 from 2025-01-01 | link: fingerprint score 0.82 | references not resolved in the legislation corpus: Décret n° 2025-302 du 31 mars 2025, article 1 [LEGIARTI000051403128] not in the corpus (not scorable)"
+  "notes": "openfisca: chomage.allocations_assurance_chomage.ass.montant_plein | openfisca value at 2025-06-01: 19.33 (change point 2025-04-01) | euromod value in force at 2025-06-01: 19.33 from 2025-01-01 | link: fingerprint score 0.82 | references not resolved in the legislation corpus: Décret n° 2025-302 du 31 mars 2025, article 1 [LEGIARTI000051403128] not in the corpus (not scorable)",
+  "reviewed_by": "ben"
 }

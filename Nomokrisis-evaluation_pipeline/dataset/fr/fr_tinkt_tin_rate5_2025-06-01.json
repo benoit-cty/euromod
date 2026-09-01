@@ -15,7 +15,8 @@
       "CGI, art. 197"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: impot_revenu.bareme_ir_depuis_1945.bareme :: brackets[4].rate | openfisca value at 2024-01-01: 0.41 (change point 2014-01-01) | euromod value in force at 2025-06-01: 0.41 from 2010-01-01 | link: manual | references not resolved in the legislation corpus: Article 197, I.1. du Code général des impôts [LEGIARTI000046860759] not in the corpus (not scorable) | Barème IR rate of band 4 (41%)."
+  "notes": "openfisca: impot_revenu.bareme_ir_depuis_1945.bareme :: brackets[4].rate | openfisca value at 2024-01-01: 0.41 (change point 2014-01-01) | euromod value in force at 2025-06-01: 0.41 from 2010-01-01 | link: manual | references not resolved in the legislation corpus: Article 197, I.1. du Code général des impôts [LEGIARTI000046860759] not in the corpus (not scorable) | Barème IR rate of band 4 (41%).",
+  "reviewed_by": "ben"
 }

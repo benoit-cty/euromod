@@ -14,7 +14,8 @@
       "JORFTEXT000050392683"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: marche_travail.salaire_minimum.smic.smic_b_horaire | openfisca value at 2025-06-01: 11.88 (change point 2024-11-01) | euromod value in force at 2025-06-01: 11.88 from 2025-01-01 | link: manual | references not resolved in the legislation corpus: Décret n° 2024-951 23/10/2024 [JORFTEXT000050392683] not in the corpus yet | SMIC, gross hourly — the value the décret actually states; the monthly figure is derived from it."
+  "notes": "openfisca: marche_travail.salaire_minimum.smic.smic_b_horaire | openfisca value at 2025-06-01: 11.88 (change point 2024-11-01) | euromod value in force at 2025-06-01: 11.88 from 2025-01-01 | link: manual | references not resolved in the legislation corpus: Décret n° 2024-951 23/10/2024 [JORFTEXT000050392683] not in the corpus yet | SMIC, gross hourly — the value the décret actually states; the monthly figure is derived from it.",
+  "reviewed_by": "ben"
 }

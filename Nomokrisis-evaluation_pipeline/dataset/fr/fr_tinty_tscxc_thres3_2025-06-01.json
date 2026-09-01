@@ -12,7 +12,8 @@
     "valid_from": "2025-01-01",
     "citations": []
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prelevements_sociaux.contributions_sociales.csg.remplacement.seuils.seuil_rfr2.seuil_rfr2 | openfisca value at 2025-06-01: 16755.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 16755.0 from 2025-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Article L136-8 du Code de la sécurité sociale (seuils avant revalorisation) [LEGIARTI000042683546] not in the corpus (not scorable); Lettre ministérielle D-24-019252 du 4/12/2024 (no Legifrance id)"
+  "notes": "openfisca: prelevements_sociaux.contributions_sociales.csg.remplacement.seuils.seuil_rfr2.seuil_rfr2 | openfisca value at 2025-06-01: 16755.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 16755.0 from 2025-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Article L136-8 du Code de la sécurité sociale (seuils avant revalorisation) [LEGIARTI000042683546] not in the corpus (not scorable); Lettre ministérielle D-24-019252 du 4/12/2024 (no Legifrance id)",
+  "reviewed_by": "ben"
 }
