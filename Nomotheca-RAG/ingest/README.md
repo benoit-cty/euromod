@@ -70,6 +70,7 @@ needs no model export. CUDA and CPU torch wheels cannot share one environment
 (they are declared as conflicting extras), so the CUDA build gets its own venv:
 
 ```bash
+cd Nomotheca-RAG/ingest
 UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda
 UV_PROJECT_ENVIRONMENT=.venv-cuda uv run python -m nomotheca_ingest.cli embeddings build \
 	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
