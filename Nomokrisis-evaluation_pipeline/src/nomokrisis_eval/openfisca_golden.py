@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -55,7 +56,7 @@ from .build_dataset import _current_value
 from .config import REPO_ROOT
 from .dataset import save_case
 from .schema import Expected, GoldenCase
-from .scoring import values_equal
+from .scoring import normalise_value, values_equal
 
 # Parameter files materialized from the params DB for the golden set. A
 # subdirectory, so `run-all`'s data/parameters/*.json glob ignores them — they
@@ -285,6 +286,79 @@ def _load_record(conn: psycopg.Connection, entry: dict) -> tuple[ParameterRecord
     return record, path
 
 
+def db_constants(conn: psycopg.Connection, country: str, as_of: date) -> dict[str, object]:
+    """$-constant resolution map for value normalisation, from the params DB.
+
+    Every parameter of the country, keyed by casefolded constant name, valued
+    by its value in force at as_of — the numeric scalar when the store has one,
+    else the raw EUROMOD string (scoring.normalise_value evaluates those
+    recursively, so '$csg_red_thres = $PSS * 4' resolves through '$PSS')."""
+    rows = conn.execute(
+        """
+        SELECT p.model_target, v.value_numeric, v.raw_euromod_value
+        FROM params.parameters p
+        JOIN LATERAL (
+            SELECT mv.value_numeric, mv.raw_euromod_value
+            FROM params.model_values mv
+            WHERE mv.parameter_id = p.id
+              AND mv.valid_from <= %s
+              AND (mv.valid_to IS NULL OR mv.valid_to >= %s)
+            ORDER BY mv.valid_from DESC
+            LIMIT 1
+        ) v ON true
+        WHERE p.country = %s
+        """,
+        (as_of, as_of, country),
+    ).fetchall()
+    constants: dict[str, object] = {}
+    for model_target, numeric, raw in rows:
+        name = model_target.rsplit("/", 1)[-1].lstrip("$").casefold()
+        value = numeric if numeric is not None else raw
+        if value is not None:
+            constants[name] = value
+    return constants
+
+
+def route_against_current(
+    current,
+    expected_value,
+    constants: Mapping[str, object] | None = None,
+) -> tuple[Routing, None] | tuple[None, str]:
+    """Deterministic routing of a drafted value against the recorded one.
+
+    Returns (routing, None), or (None, skip reason) when refusing to guess.
+    Formula and weighted-average ("FYA") values are normalised first
+    (scoring.normalise_value: arithmetic, $-references via `constants`, period
+    suffixes); formula rows materialize with value null, so the raw string is
+    read back from lineage.model_answer. Two situations still refuse to guess:
+    a raw string normalisation cannot read, and a formula value that normalises
+    but DIFFERS from the drafted point value — an FYA average never equals a
+    point value even when EUROMOD is right by convention, so 'changed' would be
+    a fabricated ground truth. Both route to the curation file, where an
+    explicit `routing:` on the entry overrides."""
+    if current is None:
+        return Routing.NEW, None
+    comparable = current.value
+    if comparable is None and current.lineage is not None:
+        comparable = current.lineage.model_answer
+    if comparable is None:
+        return None, "has no scalar and no raw string"
+    if isinstance(comparable, str) and normalise_value(comparable, constants) is None:
+        return None, (
+            f"cannot be normalised ({comparable!r}) "
+            "— set an explicit `routing:` in the selection file to include it"
+        )
+    if values_equal(comparable, expected_value, constants):
+        return Routing.UNCHANGED, None
+    if isinstance(comparable, str):
+        return None, (
+            f"is a formula/weighted average ({comparable!r}) that differs from the "
+            f"drafted point value ({expected_value!r}) — ambiguous by convention "
+            "(FYA); set an explicit `routing:` in the selection file"
+        )
+    return Routing.CHANGED, None
+
+
 def draft_case(
     conn: psycopg.Connection,
     entry: dict,
@@ -292,6 +366,7 @@ def draft_case(
     country: str,
     language: str,
     kind: str = "openfisca",
+    constants: Mapping[str, object] | None = None,
 ) -> DraftOutcome:
     outcome = DraftOutcome(entry=entry)
     try:
@@ -333,24 +408,16 @@ def draft_case(
     valid_from = date(income_year_for(as_of.year), 1, 1) if income_year else source_date
 
     # Routing is deterministic: the drafted value against the value EUROMOD
-    # currently holds. Formula and weighted-average ("FYA") values cannot be
-    # compared without normalisation, so those entries are reported, not guessed.
+    # currently holds (an explicit `routing:` on the entry overrides).
     current = _current_value(record, as_of)
     explicit = entry.get("routing")
     if explicit:
         routing = Routing(explicit)
-    elif current is None:
-        routing = Routing.NEW
-    elif isinstance(current.value, str):
-        outcome.skipped = (
-            f"EUROMOD value in force at {as_of} is a formula/weighted average "
-            f"({current.value!r}) — needs value normalisation before it can be scored"
-        )
-        return outcome
-    elif values_equal(current.value, expected_value):
-        routing = Routing.UNCHANGED
     else:
-        routing = Routing.CHANGED
+        routing, skip_reason = route_against_current(current, expected_value, constants)
+        if routing is None:
+            outcome.skipped = f"EUROMOD value in force at {as_of}: {skip_reason}"
+            return outcome
 
     references = references_at(conn, external["id"], target_date)
     citations: list[str] = []
@@ -521,13 +588,14 @@ def build_dataset(
         entries.extend(curated)
     outcomes: list[DraftOutcome] = []
     written = 0
+    constants = db_constants(conn, country, as_of)
 
     def drain(pool: list[dict]) -> None:
         nonlocal written
         for entry in pool:
             if written >= limit:
                 return
-            outcome = draft_case(conn, entry, as_of, country, language, kind=kind)
+            outcome = draft_case(conn, entry, as_of, country, language, kind=kind, constants=constants)
             outcomes.append(outcome)
             if outcome.case is not None:
                 save_case(dataset_dir, outcome.case)

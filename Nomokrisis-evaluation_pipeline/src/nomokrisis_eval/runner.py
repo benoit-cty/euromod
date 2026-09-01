@@ -7,6 +7,7 @@ runs never pollute the human review queue.
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import time
@@ -40,6 +41,44 @@ def _git_commit() -> str | None:
 
 def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+
+
+def _value_in_force(rows: list[dict], as_of: date):
+    """The value of the latest row in force at as_of; falls back to the raw
+    EUROMOD string in lineage.model_answer when the row has no normalised
+    scalar (FYA/formula rows materialize as value: null)."""
+    best: tuple[date, object] | None = None
+    for row in rows:
+        valid_from = date.fromisoformat(row["valid_from"])
+        valid_to = row.get("valid_to")
+        if valid_from <= as_of and (valid_to is None or date.fromisoformat(valid_to) >= as_of):
+            value = row.get("value")
+            if value is None:
+                value = (row.get("lineage") or {}).get("model_answer")
+            if best is None or valid_from >= best[0]:
+                best = (valid_from, value)
+    return best[1] if best else None
+
+
+def _scoring_constants(cases: list[GoldenCase], as_of: date) -> dict[str, dict[str, object]]:
+    """Per-country $-constant resolution map for scoring.values_equal: every
+    parameter file in the directories the cases point at, keyed by casefolded
+    constant name, valued by its value in force at as_of (a number, or the raw
+    EUROMOD string that normalise_value resolves recursively)."""
+    by_country: dict[str, dict[str, object]] = {}
+    for directory in sorted({(REPO_ROOT / c.parameter_file).parent for c in cases}):
+        for path in sorted(directory.glob("*.json")):
+            try:
+                record = json.loads(path.read_text(encoding="utf-8"))
+                info = record["information"]
+                name = info["model_target"].rsplit("/", 1)[-1].lstrip("$").casefold()
+                country = info["country"]
+                value = _value_in_force(record.get("values", []), as_of)
+            except (OSError, ValueError, KeyError, TypeError):
+                continue
+            if value is not None:
+                by_country.setdefault(country, {})[name] = value
+    return by_country
 
 
 def run_evaluation(
@@ -76,6 +115,7 @@ def run_evaluation(
         notes=notes,
     )
 
+    constants = _scoring_constants(cases, as_of)
     results: list[CaseResult] = []
     for case in cases:
         started = time.perf_counter()
@@ -83,7 +123,7 @@ def run_evaluation(
             item = run_parameter(
                 wf_cfg, tracer, REPO_ROOT / case.parameter_file, as_of, force=True
             )
-            result = score_item(case, item)
+            result = score_item(case, item, constants.get(case.country))
         except Exception as exc:  # score the failure, keep the run going
             result = CaseResult(
                 case_id=case.id,

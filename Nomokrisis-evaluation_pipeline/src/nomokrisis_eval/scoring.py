@@ -4,18 +4,31 @@ Pure functions only — no LLM judge in v1. KPI semantics follow
 04_activity4_validation.md:
 
   routing_correct   changed / unchanged / new / not_found / national_team_source
-  value_correct     exact match (scalars, tolerance 1e-9) or structure+cell match (brackets)
+  value_correct     normalised match (scalars, see below) or structure+cell match (brackets)
   date_correct      proposed valid_from == expected valid_from
   citation_correct  pinpoint citation matches one of the accepted citations
   supportedness     the cited text verbatim-contains the extract (mechanical check
                     already done by the workflow critique: citation_verified)
   hallucination     a value was proposed but its citation does not support it
   retrieval_hit     the ground-truth citation appears in the retrieval trace (recall@k)
+
+Value comparison never string-matches raw EUROMOD strings. Either side may be a
+raw value ("11496#y", the FYA average "(1766.92*10+1801.80*2)/12#m", the
+cross-reference "$PSS * 4"); both sides are normalised first — arithmetic
+evaluated, $constants resolved against a caller-supplied map, the period suffix
+converted to the monthly basis when the two sides state different periods. The
+tolerance is relative 1e-6: wide enough for float noise and period conversion,
+tight enough that a 1 € discrepancy on a 11 496 € threshold (the FR 2025 barème
+erratum, ~9e-5 relative) still scores as a difference.
 """
 
 from __future__ import annotations
 
+import ast
 import re
+from collections.abc import Mapping
+from dataclasses import dataclass
+from math import isclose
 
 from nomoscope_workflow.schema import Bracket, ReviewItem
 
@@ -44,25 +57,157 @@ def citation_equal(expected: str, candidate: str | None) -> bool:
     return bool(a) and a == _norm(candidate)
 
 
-def values_equal(a, b) -> bool:
-    """Scalar/bool/str/bracket-schedule comparison with float tolerance."""
+# ---------------------------------------------------------------------------
+# EUROMOD raw-value normalisation (FR_parameter_matching.md §1.1–1.2)
+# ---------------------------------------------------------------------------
+
+#: EUROMOD period suffix -> factor converting the magnitude to the monthly
+#: basis (the conversion table in FR_parameter_matching.md §1.1). '#c'
+#: (capital) has no time basis; like '#m' it is left unconverted.
+PERIOD_TO_MONTHLY: dict[str, float] = {
+    "m": 1.0,
+    "y": 1 / 12,
+    "q": 1 / 3,
+    "w": 4.34,
+    "d": 30.5,
+    "l": 21.73,
+    "s": 26.07,
+    "c": 1.0,
+}
+
+_SUFFIX_RE = re.compile(r"\s*#\s*([myqwdlsc])\s*$")
+_CONST_RE = re.compile(r"\$([A-Za-z_]\w*)")
+_ALLOWED_BINOPS = (ast.Add, ast.Sub, ast.Mult, ast.Div)
+_ALLOWED_UNARY = (ast.UAdd, ast.USub)
+
+#: Relative tolerance for normalised comparisons. Must stay below ~9e-5 so the
+#: FR 2025 barème's 1-€-below-the-law thresholds keep scoring as differences.
+_REL_TOL = 1e-6
+
+
+@dataclass(frozen=True)
+class NormalisedValue:
+    """A numeric magnitude plus the period basis its raw form stated, if any."""
+
+    magnitude: float
+    period: str | None = None  # 'm', 'y', … (no '#'); None = basis unstated
+
+    def monthly(self) -> float:
+        return self.magnitude * PERIOD_TO_MONTHLY.get(self.period or "m", 1.0)
+
+
+def _eval_expr(node: ast.AST) -> float:
+    if isinstance(node, ast.Expression):
+        return _eval_expr(node.body)
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return float(node.value)
+    if isinstance(node, ast.BinOp) and isinstance(node.op, _ALLOWED_BINOPS):
+        left, right = _eval_expr(node.left), _eval_expr(node.right)
+        if isinstance(node.op, ast.Add):
+            return left + right
+        if isinstance(node.op, ast.Sub):
+            return left - right
+        if isinstance(node.op, ast.Mult):
+            return left * right
+        return left / right
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, _ALLOWED_UNARY):
+        operand = _eval_expr(node.operand)
+        return operand if isinstance(node.op, ast.UAdd) else -operand
+    raise ValueError(f"unsupported expression node: {ast.dump(node)}")
+
+
+def normalise_value(
+    value,
+    constants: Mapping[str, object] | None = None,
+    _resolving: frozenset[str] = frozenset(),
+) -> NormalisedValue | None:
+    """Normalise a scalar to (magnitude, period), or None when it has neither.
+
+    Accepts plain numbers and raw EUROMOD strings: an optional trailing period
+    suffix ('#m', '#y', …) over an arithmetic expression that may reference
+    other parameters ('$PSS * 4'). References resolve through `constants`
+    (casefolded name without '$' -> number or raw string, resolved recursively
+    with a cycle guard); a reference's own period suffix is dropped — EUROMOD
+    formulas operate on the stored magnitude. Returns None for 'n/a', unknown
+    constants, multiplicative unit suffixes ('×1000') or anything else that is
+    not a scalar — callers then fall back to strict equality.
+    """
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return NormalisedValue(float(value))
+    if not isinstance(value, str):
+        return None
+
+    text = value.strip()
+    period = None
+    if m := _SUFFIX_RE.search(text):
+        period = m.group(1)
+        text = text[: m.start()].strip()
+    if not text or text.casefold() in ("n/a", "na"):
+        return None
+
+    def substitute(match: re.Match[str]) -> str:
+        name = match.group(1).casefold()
+        if name in _resolving:
+            raise ValueError(f"circular $-reference: {name}")
+        resolved = (constants or {}).get(name)
+        if resolved is None:
+            raise ValueError(f"unknown constant: ${match.group(1)}")
+        inner = normalise_value(resolved, constants, _resolving | {name})
+        if inner is None:
+            raise ValueError(f"unresolvable constant: ${match.group(1)}")
+        return f"({inner.magnitude!r})"
+
+    try:
+        text = _CONST_RE.sub(substitute, text)
+        magnitude = _eval_expr(ast.parse(text, mode="eval"))
+    except (ValueError, SyntaxError, ZeroDivisionError):
+        return None
+    return NormalisedValue(magnitude, period)
+
+
+def _num_equal(x: float | None, y: float | None) -> bool:
+    if x is None or y is None:
+        return (x is None) == (y is None)
+    return isclose(x, y, rel_tol=_REL_TOL, abs_tol=1e-9)
+
+
+def values_equal(a, b, constants: Mapping[str, object] | None = None) -> bool:
+    """Scalar/bool/str/bracket-schedule comparison after normalisation.
+
+    Scalars compare as normalised magnitudes; when both sides state a period
+    suffix and the periods differ, both convert to the monthly basis first (a
+    bare number carries the parameter's own storage basis, so no conversion is
+    guessed for it). Values that normalisation cannot read fall back to strict
+    equality.
+    """
     if isinstance(a, list) and isinstance(b, list):
         return len(a) == len(b) and all(_brackets_equal(x, y) for x, y in zip(a, b))
     if isinstance(a, bool) or isinstance(b, bool):
         return a == b
-    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
-        return abs(float(a) - float(b)) < 1e-9
+    na, nb = normalise_value(a, constants), normalise_value(b, constants)
+    if na is not None and nb is not None:
+        if na.period and nb.period and na.period != nb.period:
+            return _num_equal(na.monthly(), nb.monthly())
+        return _num_equal(na.magnitude, nb.magnitude)
     return a == b
 
 
 def _brackets_equal(a: Bracket, b: Bracket) -> bool:
     def eq(x: float | None, y: float | None) -> bool:
-        return (x is None) == (y is None) and (x is None or abs(x - y) < 1e-9)
+        return _num_equal(x, y)
 
     return eq(a.threshold, b.threshold) and eq(a.rate, b.rate) and eq(a.amount, b.amount)
 
 
-def score_item(case: GoldenCase, item: ReviewItem) -> CaseResult:
+def score_item(
+    case: GoldenCase,
+    item: ReviewItem,
+    constants: Mapping[str, object] | None = None,
+) -> CaseResult:
+    """Score one case. `constants` feeds $-reference resolution in values_equal
+    (casefolded constant name -> value in force for the case's country)."""
     expected = case.expected
     proposed = item.proposed_value
 
@@ -86,7 +231,9 @@ def score_item(case: GoldenCase, item: ReviewItem) -> CaseResult:
     )
 
     if expected.value is not None:
-        result.value_correct = proposed is not None and values_equal(proposed.value, expected.value)
+        result.value_correct = proposed is not None and values_equal(
+            proposed.value, expected.value, constants
+        )
 
     if expected.valid_from is not None:
         result.date_correct = proposed is not None and proposed.valid_from == expected.valid_from

@@ -13,9 +13,14 @@ from __future__ import annotations
 
 from datetime import date
 
-from nomoscope_workflow.schema import income_year_for
+from nomoscope_workflow.schema import Lineage, ParameterValue, Routing, income_year_for
 
-from nomokrisis_eval.openfisca_golden import _case_slug, schedule_at, value_at
+from nomokrisis_eval.openfisca_golden import (
+    _case_slug,
+    route_against_current,
+    schedule_at,
+    value_at,
+)
 
 
 class _Cursor:
@@ -103,3 +108,43 @@ def test_system_year_maps_to_the_previous_income_year():
     conn = FakeConn(BAREME)
     target = date(income_year_for(2025), 1, 1)
     assert value_at(conn, 1, "brackets[2].threshold", target) == (11497.0, date(2024, 1, 1))
+
+
+def _current(value, model_answer=None):
+    return ParameterValue(
+        value=value,
+        valid_from=date(2025, 1, 1),
+        lineage=Lineage(model_answer=model_answer) if model_answer else None,
+    )
+
+
+def test_routing_normalises_formula_values():
+    """The drafter no longer skips every formula parameter (§ 'Still open').
+
+    A derived value like '$csg_red_thres = $PSS * 4' routes deterministically
+    once the reference resolves; formula rows materialize with value null, so
+    the raw string is read back from lineage.model_answer.
+    """
+    constants = {"pss": 47100.0}
+    current = _current(None, model_answer="$PSS * 4")
+    assert route_against_current(current, 188400.0, constants) == (Routing.UNCHANGED, None)
+    assert route_against_current(None, 188400.0, constants) == (Routing.NEW, None)
+    assert route_against_current(_current(11496.0), 11497.0) == (Routing.CHANGED, None)
+
+
+def test_routing_refuses_to_guess_on_ambiguous_formulas():
+    # unknown $-reference: normalisation cannot read it
+    routing, reason = route_against_current(_current(None, model_answer="$Mystery * 2"), 5.0)
+    assert routing is None and "cannot be normalised" in reason
+
+    # FYA average differing from the point value: 'changed' would be fabricated
+    fya = _current(None, model_answer="(1766.92*10+1801.80*2)/12#m")
+    assert route_against_current(fya, (1766.92 * 10 + 1801.80 * 2) / 12) == (
+        Routing.UNCHANGED,
+        None,
+    )
+    routing, reason = route_against_current(fya, 1801.80)
+    assert routing is None and "ambiguous by convention" in reason
+
+    routing, reason = route_against_current(_current(None), 5.0)
+    assert routing is None and "no scalar and no raw string" in reason

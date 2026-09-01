@@ -245,14 +245,13 @@ later want LLM-judge evals.
 
 ## Displaying results in the Tauri app
 
-`eval.run_summary` is designed as the UI read surface. The app already has read-only
-Postgres access (`Nomoscope-agentic-workflow/ui/src-tauri/src/db.rs`); an "Evaluation" tab needs:
-
-1. a Rust command à la `db_stats` running
-   `SELECT * FROM eval.run_summary ORDER BY created_at DESC` (and
-   `SELECT details FROM eval.results WHERE run_pk = $1` for drill-down),
-2. an entry in `src/lib/api.js`,
-3. a Svelte component listing runs (model, language, KPI columns) with per-case detail.
+`eval.run_summary` is the UI read surface, and the app's **Evaluation tab** reads it:
+`db.rs::eval_runs` lists runs with whole-run KPI rates, `db.rs::eval_run_detail` adds the
+per-(language, country) breakdown from `eval.run_summary` plus every case row (with the
+`details` JSONB for drill-down). The Svelte side is
+`ui/src/lib/components/EvalTab.svelte`: runs table → KPI cards → per-language table →
+expandable per-case list with a failures-only filter. Exercised by the
+`eval_queries_smoke` cargo test against the live stack.
 
 ## Configuration (env vars, `.env` at repo root or here)
 
@@ -347,11 +346,20 @@ why a legally-correct value can still be "wrong" for the model.
 
 ### Consequences already reflected in this pipeline's design
 
-- deterministic value scoring with tolerance + normalisation (no string match);
+- deterministic value scoring with tolerance + normalisation (no string match):
+  `scoring.normalise_value` evaluates raw EUROMOD strings — FYA weighted averages
+  (`(1766.92*10+1801.80*2)/12#m`), `$const` cross-references (`$PSS * 4`, resolved
+  recursively against a constants map the runner builds from the run's parameter
+  files and `build-openfisca-dataset` builds from the params DB), and period
+  suffixes (`#m #y #q #w #d #l #s #c`, converted to the monthly basis when the two
+  sides state different periods). The relative tolerance is 1e-6 — deliberately
+  below the ~9e-5 of the FR 2025 barème's 1-€ erratum, so that discrepancy still
+  scores as a difference. Values normalisation cannot read fall back to strict
+  equality, never a guessed match; the OpenFisca drafter likewise refuses to draft
+  a routing when EUROMOD holds an FYA average that differs from the point value
+  (ambiguous by convention — set an explicit `routing:` in the selection file);
 - routing classes include `not_found` and `national_team_source`;
 - human verification gate before a case enters the frozen set;
 - per-case NULL KPIs so abstention cases don't pollute `value_pct`.
 
-Still open: formula/FYA-aware value normalisation in `scoring.py` (evaluate
-`(a*n+b*m)/12`-style expressions and `$const` references before comparing), and a
-source-class stratum in the dataset builder.
+Still open: a source-class stratum in the dataset builder.
