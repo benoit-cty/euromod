@@ -42,6 +42,85 @@ npm run tauri dev
 LIBGL_ALWAYS_SOFTWARE=1 npm run tauri dev
 ```
 
+## Backup and restore
+
+All persistent state lives in the one Postgres 17 + pgvector container (`nomotheca-legislation-db`, port 5434), which holds two databases:
+
+- `legislation` — the RAG corpus (`public` schema), plus the `params` schema (review queue / decisions, bootstrapped by `nomoscope-workflow`) and the `eval` schema (bootstrapped by `nomokrisis-eval init-db`) — all three live in this one database.
+- `phoenix` — Arize Phoenix trace storage.
+
+### Backup
+
+Logical dump (recommended — portable across Postgres versions, works while the stack is running):
+
+```bash
+mkdir -p backups
+docker exec nomotheca-legislation-db pg_dump -U jrc -Fc -d legislation > backups/legislation_$(date +%Y%m%d).dump
+docker exec nomotheca-legislation-db pg_dump -U jrc -Fc -d phoenix     > backups/phoenix_$(date +%Y%m%d).dump
+```
+
+`-Fc` (custom format) is compressed and restorable with `pg_restore`, including selective/parallel restore. For a plain-SQL dump instead (diff-friendly, restorable with `psql`):
+
+```bash
+docker exec nomotheca-legislation-db pg_dump -U jrc -d legislation > backups/legislation_$(date +%Y%m%d).sql
+```
+
+Whole-cluster alternative (both databases + roles in one file):
+
+```bash
+docker exec nomotheca-legislation-db pg_dumpall -U jrc > backups/cluster_$(date +%Y%m%d).sql
+```
+
+Volume-level (cold) backup — stop the DB first for a consistent snapshot; faster for full-disaster recovery but not portable across Postgres major versions:
+
+```bash
+docker compose stop db
+docker run --rm -v euromod_pgdata:/data -v "$(pwd)/backups":/backup alpine \
+  tar czf /backup/pgdata_$(date +%Y%m%d).tar.gz -C /data .
+docker compose start db
+```
+
+(`euromod_pgdata` is the Compose-generated volume name for this repo directory — check with `docker volume ls | grep pgdata` if you cloned it elsewhere.)
+
+### Restore
+
+Into a running stack, from a custom-format dump (`--clean --if-exists` drops existing objects first, so this also works for overwriting a stack that already has data):
+
+```bash
+docker exec -i nomotheca-legislation-db pg_restore -U jrc -d legislation --clean --if-exists < backups/legislation_20260901.dump
+docker exec -i nomotheca-legislation-db pg_restore -U jrc -d phoenix     --clean --if-exists < backups/phoenix_20260901.dump
+```
+
+From a plain-SQL dump:
+
+```bash
+docker exec -i nomotheca-legislation-db psql -U jrc -d legislation < backups/legislation_20260901.sql
+```
+
+From scratch (e.g. after `docker compose down -v`): bring the stack up first so the init scripts create the base `legislation`/`phoenix` databases, then restore — `pg_restore --clean` (or the dump's own `DROP SCHEMA`/`CREATE SCHEMA` statements) recreates `params`/`eval` along with everything else, so there's no need to run the app-level schema bootstraps separately first.
+
+```bash
+docker compose up -d
+docker exec -i nomotheca-legislation-db pg_restore -U jrc -d legislation --clean --if-exists < backups/legislation_20260901.dump
+docker exec -i nomotheca-legislation-db pg_restore -U jrc -d phoenix     --clean --if-exists < backups/phoenix_20260901.dump
+```
+
+Volume-level restore (full disaster recovery — replaces everything, matching Postgres major version required):
+
+```bash
+docker compose down
+docker volume rm euromod_pgdata
+docker run --rm -v euromod_pgdata:/data -v "$(pwd)/backups":/backup alpine \
+  tar xzf /backup/pgdata_20260901.tar.gz -C /data
+docker compose up -d
+```
+
+### Notes
+
+- `docker compose down -v` deletes the `pgdata` volume — never run it without a recent backup once a run holds real (non-seed) data.
+- Human review decisions are the one piece of state with a redundant copy outside Postgres: `Nomoscope-agentic-workflow/pipeline/data/decisions.jsonl` mirrors `params.review_decisions`. If a restore loses recent decisions, replay them with `uv run nomoscope-workflow sync-decisions` (from `Nomoscope-agentic-workflow/pipeline`) instead of re-deciding in the UI.
+- The review queue itself (`Nomoscope-agentic-workflow/pipeline/data/queue/`) and materialized parameter files under `data/parameters/db|eval/` are files, not database state — back them up separately (or regenerate the parameter files from the DB) if you need them.
+
 ## Agentic workflow (Activity 3)
 
 Working prototype in [Nomoscope-agentic-workflow/](Nomoscope-agentic-workflow/): PydanticAI-based pipeline
