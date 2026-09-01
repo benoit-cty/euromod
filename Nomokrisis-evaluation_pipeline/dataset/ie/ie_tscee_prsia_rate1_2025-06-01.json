@@ -13,7 +13,8 @@
       "Social Welfare Consolidation Act 2005, s. 13"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "human",
-  "notes": "curated: ie.json#tscee_prsia_rate1 | euromod value in force at 2025-06-01: '4.1%' from 2024-01-01 | HARD — employee PRSI Class A. Two traps at once: (1) the value is stored as the percent string '4.1%', which normalise_value cannot parse (falls back to strict string equality — a known scoring gap, hence the string-form expected value); (2) the rate steps every 1 October (4.0 -> 4.1 on 2024-10-01, -> 4.2 on 2025-10-01, per the Social Welfare (Miscellaneous Provisions) Act 2024 roadmap), so 'the 2025 value' is ambiguous between the value in force at as_of (4.1%), the post-October value (4.2%), and a FYA weighted average — exactly the ambiguity route_against_current refuses to draft, hence the explicit routing."
+  "notes": "curated: ie.json#tscee_prsia_rate1 | euromod value in force at 2025-06-01: '4.1%' from 2024-01-01 | HARD — employee PRSI Class A. Two traps at once: (1) the value is stored as the percent string '4.1%', which normalise_value cannot parse (falls back to strict string equality — a known scoring gap, hence the string-form expected value); (2) the rate steps every 1 October (4.0 -> 4.1 on 2024-10-01, -> 4.2 on 2025-10-01, per the Social Welfare (Miscellaneous Provisions) Act 2024 roadmap), so 'the 2025 value' is ambiguous between the value in force at as_of (4.1%), the post-October value (4.2%), and a FYA weighted average — exactly the ambiguity route_against_current refuses to draft, hence the explicit routing.",
+  "reviewed_by": "ben"
 }

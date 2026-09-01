@@ -12,7 +12,8 @@
     "valid_from": "2024-01-01",
     "citations": []
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: impot_revenu.calcul_revenus_imposables.deductions.abatpen.min | openfisca value at 2024-01-01: 450.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 450.0 from 2025-01-01 | link: fingerprint score 0.88 | references not resolved in the legislation corpus: Article 158, 5.a. du Code général des impôts [LEGIARTI000042909707] not in the corpus (not scorable)"
+  "notes": "openfisca: impot_revenu.calcul_revenus_imposables.deductions.abatpen.min | openfisca value at 2024-01-01: 450.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 450.0 from 2025-01-01 | link: fingerprint score 0.88 | references not resolved in the legislation corpus: Article 158, 5.a. du Code général des impôts [LEGIARTI000042909707] not in the corpus (not scorable)",
+  "reviewed_by": "ben"
 }

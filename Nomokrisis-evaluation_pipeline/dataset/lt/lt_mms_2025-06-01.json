@@ -12,7 +12,8 @@
     "valid_from": "2025-01-01",
     "citations": []
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "human",
-  "notes": "curated: lt.json#mms | euromod value in force at 2025-06-01: 1038.0 from 2025-01-01 | HARD / not_found today — gross minimum monthly salary, 924 -> 1038 for 2025, set by annual Vyriausybes nutarimas (Government resolution), an instrument class not yet ingested (open point 5.2 of Lithuania_sources_analysis.md). LT IS in scout.COUNTRY_SOURCES with nutarimai in its act_kinds, so this case measures nutarimas discovery + ingest through the Spinta API. Citations empty until the nutarimas is ingested; expect routing misses (not_found) until then. | drafting warning: selection says routing 'changed' but the store routes 'unchanged' (EUROMOD holds 1038.0 at 2025-06-01) — one of the two is wrong | drafting warning: no citations: the citation leg is unscored until the source act is ingested"
+  "notes": "curated: lt.json#mms | euromod value in force at 2025-06-01: 1038.0 from 2025-01-01 | HARD / not_found today — gross minimum monthly salary, 924 -> 1038 for 2025, set by annual Vyriausybes nutarimas (Government resolution), an instrument class not yet ingested (open point 5.2 of Lithuania_sources_analysis.md). LT IS in scout.COUNTRY_SOURCES with nutarimai in its act_kinds, so this case measures nutarimas discovery + ingest through the Spinta API. Citations empty until the nutarimas is ingested; expect routing misses (not_found) until then. | drafting warning: selection says routing 'changed' but the store routes 'unchanged' (EUROMOD holds 1038.0 at 2025-06-01) — one of the two is wrong | drafting warning: no citations: the citation leg is unscored until the source act is ingested",
+  "reviewed_by": "ben"
 }

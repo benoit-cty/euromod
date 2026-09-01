@@ -13,7 +13,8 @@
       "TCA 1997, s. 15"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "human",
-  "notes": "curated: ie.json#tin_high_rate | euromod value in force at 2025-06-01: 0.4 from 2015-01-01 | EASY — no-change trap. Higher rate 40%, unchanged since 2015: Budget coverage revalorises the bands around it every year, so the pipeline must resist proposing a change it cannot cite."
+  "notes": "curated: ie.json#tin_high_rate | euromod value in force at 2025-06-01: 0.4 from 2015-01-01 | EASY — no-change trap. Higher rate 40%, unchanged since 2015: Budget coverage revalorises the bands around it every year, so the pipeline must resist proposing a change it cannot cite.",
+  "reviewed_by": "ben"
 }

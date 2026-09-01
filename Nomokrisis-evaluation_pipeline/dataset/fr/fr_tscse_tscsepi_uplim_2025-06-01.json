@@ -14,7 +14,8 @@
       "JORFTEXT000025241814"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prelevements_sociaux.cotisations_taxes_independants_artisans_commercants.ret_comp_ac.art_ind_com.montant_du_plafond_rci | openfisca value at 2025-06-01: 43891.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 38340.0 from 2020-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Décret 2012-139 du 30/01/2012 [JORFTEXT000025241814] not in the corpus yet"
+  "notes": "openfisca: prelevements_sociaux.cotisations_taxes_independants_artisans_commercants.ret_comp_ac.art_ind_com.montant_du_plafond_rci | openfisca value at 2025-06-01: 43891.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 38340.0 from 2020-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Décret 2012-139 du 30/01/2012 [JORFTEXT000025241814] not in the corpus yet",
+  "reviewed_by": "ben"
 }

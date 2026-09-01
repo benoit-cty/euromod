@@ -13,7 +13,8 @@
       "GPMĮ IX-1007, 20 straipsnis"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "human",
-  "notes": "curated: lt.json#tinta_max_amt | euromod value in force at 2025-06-01: 8964.0 from 2024-01-01 | MEDIUM — maximum NPD: EUROMOD stores 8964#y (the 2024 row, no 2025 change point), the law states 747/month; expected value 747#m so the case exercises the y<->m cross-period comparison. This is the lag-warning scenario: an annually-indexed-by-habit parameter where 'unchanged' happens to be genuinely correct for 2025 — only the act proves it, so the pipeline must cite the absence of an amendment rather than pattern-match the yearly-uprate habit. | drafting warning: routing not cross-checked: EUROMOD holds 8964.0 with no period basis while the expected value states one ('747#m') — the difference may be the y/m basis alone. Confirm against the parameter's unit when verifying"
+  "notes": "curated: lt.json#tinta_max_amt | euromod value in force at 2025-06-01: 8964.0 from 2024-01-01 | MEDIUM — maximum NPD: EUROMOD stores 8964#y (the 2024 row, no 2025 change point), the law states 747/month; expected value 747#m so the case exercises the y<->m cross-period comparison. This is the lag-warning scenario: an annually-indexed-by-habit parameter where 'unchanged' happens to be genuinely correct for 2025 — only the act proves it, so the pipeline must cite the absence of an amendment rather than pattern-match the yearly-uprate habit. | drafting warning: routing not cross-checked: EUROMOD holds 8964.0 with no period basis while the expected value states one ('747#m') — the difference may be the y/m basis alone. Confirm against the parameter's unit when verifying",
+  "reviewed_by": "ben"
 }

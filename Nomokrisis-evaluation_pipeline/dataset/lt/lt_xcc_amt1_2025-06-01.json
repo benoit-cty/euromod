@@ -10,7 +10,8 @@
     "routing": "national_team_source",
     "citations": []
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "human",
-  "notes": "curated: lt.json#xcc_amt1 | euromod value in force at 2025-06-01: 2.6 from 2024-01-01 | value leg not scored: the selection states no expected_value (the law's value is not established for this case yet) | IMPOSSIBLE by design, ready-made — municipal pre-school meal fee, already curated source_type: national_team in curation/LT.curation.yaml (fees are set by each municipal council, no national act exists). Tests that the pipeline short-circuits to national_team_source, never reports not_found, and never proposes an overwrite. The FR set has zero such traps; requires curate-params to have been run. | drafting warning: value leg not scored (no expected_value in the selection) | drafting warning: no citations: the citation leg is unscored until the source act is ingested"
+  "notes": "curated: lt.json#xcc_amt1 | euromod value in force at 2025-06-01: 2.6 from 2024-01-01 | value leg not scored: the selection states no expected_value (the law's value is not established for this case yet) | IMPOSSIBLE by design, ready-made — municipal pre-school meal fee, already curated source_type: national_team in curation/LT.curation.yaml (fees are set by each municipal council, no national act exists). Tests that the pipeline short-circuits to national_team_source, never reports not_found, and never proposes an overwrite. The FR set has zero such traps; requires curate-params to have been run. | drafting warning: value leg not scored (no expected_value in the selection) | drafting warning: no citations: the citation leg is unscored until the source act is ingested",
+  "reviewed_by": "ben"
 }
