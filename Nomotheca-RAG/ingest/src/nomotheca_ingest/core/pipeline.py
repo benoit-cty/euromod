@@ -127,4 +127,5 @@ def _result_stats(result: PipelineResult, trigger: Trigger) -> dict[str, int | s
         "versions": sum(item.versions for item in result.loaded),
         "texts": sum(item.texts for item in result.loaded),
         "chunks": sum(item.chunks for item in result.loaded),
+        "retained_chunks": sum(item.retained_chunks for item in result.loaded),
     }

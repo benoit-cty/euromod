@@ -37,14 +37,42 @@ cd evaluation_pipeline
 uv run nomokrisis-eval init-db                                  # create eval schema (DB must be up)
 uv run nomokrisis-eval list-cases                               # inspect the golden set
 uv run nomokrisis-eval run --as-of 2025-06-01 --model mock/extractor    # offline smoke run
-uv run nomokrisis-eval run --as-of 2025-06-01 --model anthropic/claude-sonnet-5
-uv run nomokrisis-eval run --as-of 2025-06-01 --model openai/gpt-5 --language fr
+uv run nomokrisis-eval run --as-of 2025-06-01 --model azure_openai/gpt-5.6-luna --language fr
+uv run nomokrisis-eval list-runs                                # runs on disk + their progress
+uv run nomokrisis-eval resume                                   # continue the last unfinished run
 uv run nomokrisis-eval report                                   # KPI summary per (run, language)
 ```
 
 Every run writes a reproducibility manifest (`.eval_runs/<run_id>/manifest.json`) with
 pinned model, prompt/agent versions, dataset content-hash and git commit — the "run
 manifest" required by `04_activity4_validation.md`.
+
+### Progress and resuming
+
+A run prints one line per case as it goes — position, case id, routing outcome, the four
+scored KPIs (`✓` correct, `✗` wrong, `·` not exercised), the case latency and an ETA:
+
+```
+[  7/47] fr_tin_tinto_rate1_2025-06-01          extracted   routing✓ value✓ date✓ cite✗   12.4s  eta 8m21s
+```
+
+The workflow's own per-step chatter is silenced during an evaluation so those lines stay
+readable; pass `--verbose` to see every `frame → retrieve → propose → …` step as well.
+
+Runs are crash-safe. The manifest and the frozen case list are written before the first
+case, and each scored case is appended to `.eval_runs/<run_id>/results.jsonl` as it lands,
+so a Ctrl-C, a crash or an API outage costs at most the case in flight:
+
+```bash
+uv run nomokrisis-eval resume                     # the most recent unfinished run
+uv run nomokrisis-eval resume eval-2025…-abc123   # a specific one
+```
+
+`resume` replays the run's *frozen* case list — not whatever the dataset filters would
+select today — and reuses the original manifest, so a resumed run stays one comparable
+(model, prompt, agent, dataset) data point; it warns if the golden set changed meanwhile.
+Only unscored cases are re-run, and storing the run in Postgres is idempotent per
+`run_id`, so a resume whose final DB write failed can simply be resumed again.
 
 ## Golden dataset
 

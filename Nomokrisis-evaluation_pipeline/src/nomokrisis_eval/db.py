@@ -23,7 +23,11 @@ def apply_schema(conn: psycopg.Connection) -> None:
 
 
 def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[CaseResult]) -> int:
-    """Insert the run row and all case results in one transaction; returns runs.id."""
+    """Insert the run row and all case results in one transaction; returns runs.id.
+
+    Idempotent per run_id: storing a run twice (a resumed run whose first store
+    failed, say) replaces that run's rows rather than raising on the unique key.
+    """
     with conn.transaction():
         row = conn.execute(
             """
@@ -31,6 +35,18 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                                    prompt_version, agent_version, eval_version,
                                    dataset_version, git_commit, countries, notes)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (run_id) DO UPDATE SET
+                created_at = EXCLUDED.created_at,
+                as_of = EXCLUDED.as_of,
+                model_provider = EXCLUDED.model_provider,
+                model_name = EXCLUDED.model_name,
+                prompt_version = EXCLUDED.prompt_version,
+                agent_version = EXCLUDED.agent_version,
+                eval_version = EXCLUDED.eval_version,
+                dataset_version = EXCLUDED.dataset_version,
+                git_commit = EXCLUDED.git_commit,
+                countries = EXCLUDED.countries,
+                notes = EXCLUDED.notes
             RETURNING id
             """,
             (
@@ -49,6 +65,7 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
             ),
         ).fetchone()
         run_pk = row[0]
+        conn.execute("DELETE FROM eval.results WHERE run_pk = %s", (run_pk,))
         with conn.cursor() as cur:
             cur.executemany(
                 """

@@ -36,6 +36,14 @@ def progress(message: str) -> None:
         print(message, flush=True)
 
 
+def set_progress(enabled: bool) -> None:
+    """Toggle the console step mirror at runtime (the env var only reads once at
+    import, which is too late for a caller that imports this module first —
+    nomokrisis-eval, whose batch runs print one line per case instead)."""
+    global _PROGRESS
+    _PROGRESS = enabled
+
+
 def setup_tracing(cfg: WorkflowConfig) -> Tracer:
     """Register the Phoenix OTLP exporter once and return a tracer (no-op if disabled)."""
     global _INITIALISED

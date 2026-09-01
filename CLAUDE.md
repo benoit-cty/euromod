@@ -62,7 +62,8 @@ npm run tauri dev                                       # WSL: prefix LIBGL_ALWA
 uv run nomokrisis-eval init-db                             # create eval schema
 uv run nomokrisis-eval build-openfisca-dataset --year 2025  # draft golden cases from the OpenFisca corpus
 uv run nomokrisis-eval verify <case-id> --reviewer ben     # or the UI's "Golden set" tab
-uv run nomokrisis-eval run --as-of 2025-06-01 --model mock/extractor   # offline smoke run
+uv run nomokrisis-eval run --as-of 2025-06-01 --model mock/extractor   # offline smoke run (one progress line per case)
+uv run nomokrisis-eval resume                              # continue an interrupted run (list-runs shows them)
 uv run nomokrisis-eval report
 ```
 

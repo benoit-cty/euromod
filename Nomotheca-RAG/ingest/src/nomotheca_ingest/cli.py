@@ -464,12 +464,17 @@ def _print_result(result: PipelineResult) -> None:
         "texts": sum(item.texts for item in result.loaded),
         "chunks": sum(item.chunks for item in result.loaded),
     }
+    retained = sum(item.retained_chunks for item in result.loaded)
     typer.echo(f"fetch_run={result.run_id}")
     typer.echo(
         "loaded "
         f"instruments={totals['instruments']} units={totals['units']} "
         f"versions={totals['versions']} texts={totals['texts']} chunks={totals['chunks']}"
     )
+    if retained:
+        # Cited chunks past the end of a shrunken text: kept, so the citation
+        # still resolves, but no longer part of the current version's text.
+        typer.echo(f"retained cited chunks={retained}")
     typer.echo(f"queued={len(result.queued)}")
 
 

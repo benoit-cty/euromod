@@ -24,6 +24,7 @@ class LoadStats:
     versions: int = 0
     texts: int = 0
     chunks: int = 0
+    retained_chunks: int = 0   # cited chunks past the new end of a shrunken text
 
 
 class LegislationLoader:
@@ -48,7 +49,7 @@ class LegislationLoader:
                         for text in version.texts:
                             text_id = self._upsert_text(version_id, text)
                             stats.texts += 1
-                            stats.chunks += self._replace_chunks(text_id, instrument, unit, version, text)
+                            self._replace_chunks(text_id, instrument, unit, version, text, stats)
         return stats
 
     def _upsert_instrument(self, instrument: InstrumentIR) -> UUID:
@@ -280,12 +281,23 @@ class LegislationLoader:
         unit: UnitIR,
         version: VersionIR,
         text: TextIR,
-    ) -> int:
-        """Regenerate retrieval chunks for a loaded unit text."""
+        stats: LoadStats,
+    ) -> None:
+        """Regenerate retrieval chunks for a loaded unit text.
+
+        Chunks are upserted on (unit_text_id, seq) instead of dropped and
+        recreated, so re-ingesting a text keeps chunk ids stable. Two things
+        depend on that: citation_registry references chunks with a plain FK
+        (the retention rule — a cited chunk cannot be hard-deleted, and a
+        delete/insert re-ingest raised a ForeignKeyViolation that failed the
+        whole run), and embeddings hang off chunk ids, staleness being decided
+        by input_hash — so unchanged chunks keep the vectors they already have.
+        Chunks past the end of a now-shorter text are dropped unless cited;
+        a cited leftover is retained and counted rather than deleted.
+        """
         context_header = _context_header(instrument, unit, version, text.lang)
         chunks = chunk_text(text.content, context_header)
         with self.conn.cursor() as cur:
-            cur.execute("DELETE FROM chunks WHERE unit_text_id = %s", (text_id,))
             for chunk in chunks:
                 cur.execute(
                     """
@@ -297,6 +309,13 @@ class LegislationLoader:
                       (SELECT search_config FROM unit_texts WHERE id = %s),
                       %s
                     )
+                    ON CONFLICT (unit_text_id, seq) DO UPDATE
+                    SET char_start = EXCLUDED.char_start,
+                        char_end = EXCLUDED.char_end,
+                        content = EXCLUDED.content,
+                        context_header = EXCLUDED.context_header,
+                        search_config = EXCLUDED.search_config,
+                        token_count = EXCLUDED.token_count
                     """,
                     (
                         text_id,
@@ -309,7 +328,22 @@ class LegislationLoader:
                         _rough_token_count(chunk.content),
                     ),
                 )
-        return len(chunks)
+            cur.execute(
+                """
+                DELETE FROM chunks
+                WHERE unit_text_id = %s
+                  AND seq >= %s
+                  AND id NOT IN (SELECT cited_chunk_id FROM citation_registry
+                                 WHERE cited_chunk_id IS NOT NULL)
+                """,
+                (text_id, len(chunks)),
+            )
+            cur.execute(
+                "SELECT count(*) FROM chunks WHERE unit_text_id = %s AND seq >= %s",
+                (text_id, len(chunks)),
+            )
+            stats.retained_chunks += cur.fetchone()[0]
+        stats.chunks += len(chunks)
 
     def _jurisdiction_id(self, code: str) -> int:
         """Resolve a jurisdiction code to its database identity."""

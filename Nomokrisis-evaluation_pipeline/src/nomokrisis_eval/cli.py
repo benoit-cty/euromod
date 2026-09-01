@@ -4,23 +4,38 @@
   uv run nomokrisis-eval build-dataset docs/fr_country_report_excerpt.md --country FR --as-of 2025-06-01
   uv run nomokrisis-eval list-cases
   uv run nomokrisis-eval run --as-of 2025-06-01 --model anthropic/claude-sonnet-5
+  uv run nomokrisis-eval resume            # continue the last interrupted run
+  uv run nomokrisis-eval list-runs
   uv run nomokrisis-eval report
 """
 
 from __future__ import annotations
 
 import json
+import time
 from datetime import date
 from pathlib import Path
 
 import typer
+from nomoscope_workflow.tracing import set_progress
 
 from . import build_dataset as builder
 from . import db as evaldb
 from . import openfisca_golden
-from .config import load_eval_config
+from .config import EvalConfig, load_eval_config
 from .dataset import dataset_version, load_cases, load_embedding_cases, save_case
-from .runner import run_evaluation, summarize
+from .runner import (
+    RESULTS_FILENAME,
+    execute_run,
+    latest_incomplete_run,
+    list_runs,
+    load_partial_results,
+    resume_run,
+    run_directory,
+    start_run,
+    summarize,
+)
+from .schema import CaseResult, GoldenCase, RunManifest
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
@@ -179,8 +194,16 @@ def run(
     verified_only: bool = typer.Option(True, "--verified-only/--include-drafts", help="Evaluate only human-verified cases"),
     no_db: bool = typer.Option(False, "--no-db", help="Skip writing results to Postgres"),
     notes: str = typer.Option(None, "--notes"),
+    verbose: bool = typer.Option(
+        False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
+    ),
 ) -> None:
-    """Run the agentic workflow over the golden set, score it, store the results."""
+    """Run the agentic workflow over the golden set, score it, store the results.
+
+    Progress is printed case by case, and every scored case is written to the
+    run directory as it lands: a Ctrl-C (or a crash) is picked up again with
+    `nomokrisis-eval resume`.
+    """
     cfg = load_eval_config()
     cases = load_cases(
         cfg.dataset_dir, countries=country or None, languages=language or None, verified_only=verified_only
@@ -189,13 +212,149 @@ def run(
         typer.echo("No matching golden cases (try --include-drafts).")
         raise typer.Exit(1)
 
-    manifest, results = run_evaluation(cfg, cases, _parse_date(as_of), model, notes=notes)
+    manifest = start_run(cfg, cases, _parse_date(as_of), model, notes=notes)
+    typer.echo(
+        f"run {manifest.run_id}  model={manifest.model}  as_of={manifest.as_of}"
+        f"  dataset={manifest.dataset_version}  cases={len(cases)}"
+    )
+    _execute_and_report(cfg, manifest, cases, [], no_db=no_db, verbose=verbose)
+
+
+@app.command("list-runs")
+def list_runs_cmd(
+    limit: int = typer.Option(20, "--limit"),
+    incomplete_only: bool = typer.Option(False, "--incomplete-only", help="Only runs left unfinished"),
+) -> None:
+    """Evaluation runs on disk, newest first, with their progress."""
+    cfg = load_eval_config()
+    runs = [r for r in list_runs(cfg) if not incomplete_only or not r["complete"]][:limit]
+    if not runs:
+        typer.echo("No evaluation runs on disk yet.")
+        return
+    for entry in runs:
+        manifest: RunManifest = entry["manifest"]
+        state = "complete" if entry["complete"] else "incomplete"
+        total = entry["total"] or "?"
+        typer.echo(
+            f"{manifest.created_at:%Y-%m-%d %H:%M}  {manifest.model:<34}"
+            f"  {entry['done']}/{total:<5} {state:<10} {manifest.run_id}"
+        )
+
+
+@app.command()
+def resume(
+    run_id: str = typer.Argument(None, help="Run id to continue (default: the most recent unfinished run)"),
+    no_db: bool = typer.Option(False, "--no-db", help="Skip writing results to Postgres"),
+    verbose: bool = typer.Option(
+        False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
+    ),
+) -> None:
+    """Continue an interrupted evaluation run: same manifest, same case list,
+    only the cases that have not been scored yet."""
+    cfg = load_eval_config()
+    if run_id is None:
+        candidate = latest_incomplete_run(cfg)
+        if candidate is None:
+            typer.echo("No unfinished evaluation run in the runs directory.")
+            raise typer.Exit(1)
+        run_id = candidate["run_id"]
+    try:
+        manifest, cases, done = resume_run(cfg, run_id)
+    except (FileNotFoundError, ValueError) as exc:
+        typer.echo(f"cannot resume: {exc}")
+        raise typer.Exit(1) from exc
+
+    current = dataset_version(cfg.dataset_dir)
+    if current != manifest.dataset_version:
+        typer.echo(
+            f"! golden set changed since this run started "
+            f"({manifest.dataset_version} -> {current}); replaying the run's frozen case list"
+        )
+    typer.echo(
+        f"resuming {manifest.run_id}  model={manifest.model}  as_of={manifest.as_of}"
+        f"  {len(done)}/{len(cases)} already scored"
+    )
+    _execute_and_report(cfg, manifest, cases, done, no_db=no_db, verbose=verbose)
+
+
+_MARK = {True: "\u2713", False: "\u2717", None: "\u00b7"}
+
+
+def _fmt_duration(seconds: float) -> str:
+    minutes, secs = divmod(int(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours}h{minutes:02d}m" if hours else f"{minutes:d}m{secs:02d}s"
+
+
+def _result_line(result: CaseResult) -> str:
+    if result.error:
+        return f"ERROR       {result.error[:90]}"
+    marks = " ".join(
+        f"{label}{_MARK[value]}"
+        for label, value in (
+            ("routing", result.routing_correct),
+            ("value", result.value_correct),
+            ("date", result.date_correct),
+            ("cite", result.citation_correct),
+        )
+    )
+    flag = "  HALLUCINATION" if result.hallucination else ""
+    return f"{(result.routing_actual or '?'):<11} {marks}{flag}"
+
+
+def _progress_callbacks(verbose: bool):
+    """Print one line per case: `[ 7/42] <case id> routing... 4.1s eta 2m38s`.
+
+    Quiet (the default) writes the prefix before the case runs — so a long LLM
+    call shows what it is waiting on — and completes it in place once the case
+    is scored. Verbose lets the workflow mirror its own steps in between, so the
+    prefix and the outcome are printed as two separate lines.
+    """
+    state = {"start": time.perf_counter(), "completed": 0}
+
+    def on_case_start(index: int, total: int, case: GoldenCase) -> None:
+        typer.echo(f"[{index:>3}/{total}] {case.id:<46} ", nl=verbose)
+
+    def on_case_done(index: int, total: int, case: GoldenCase, result: CaseResult) -> None:
+        state["completed"] += 1
+        elapsed = time.perf_counter() - state["start"]
+        eta = elapsed / state["completed"] * (total - index)
+        prefix = f"[{index:>3}/{total}] {case.id:<46} " if verbose else ""
+        typer.echo(
+            f"{prefix}{_result_line(result)}  {(result.latency_ms or 0) / 1000:5.1f}s"
+            f"  eta {_fmt_duration(eta)}"
+        )
+
+    return on_case_start, on_case_done
+
+
+def _execute_and_report(
+    cfg: EvalConfig,
+    manifest: RunManifest,
+    cases: list[GoldenCase],
+    done: list[CaseResult],
+    no_db: bool,
+    verbose: bool = False,
+) -> None:
+    """Score the pending cases with live progress, then persist and summarize."""
+    set_progress(verbose)  # per-step workflow chatter would drown the per-case lines
+    run_dir = run_directory(cfg, manifest.run_id)
+    on_case_start, on_case_done = _progress_callbacks(verbose)
+    try:
+        results = execute_run(
+            cfg, manifest, cases, done,
+            on_case_start=on_case_start, on_case_done=on_case_done,
+        )
+    except KeyboardInterrupt:
+        scored = len(load_partial_results(run_dir))
+        typer.echo(
+            f"\ninterrupted after {scored}/{len(cases)} case(s) — nothing lost.\n"
+            f"  resume with: nomokrisis-eval resume {manifest.run_id}"
+        )
+        raise typer.Exit(130) from None
 
     # Run manifest + full results on disk (reproducibility, per 04_activity4_validation.md)
-    run_dir = cfg.runs_dir / manifest.run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / "manifest.json").write_text(manifest.model_dump_json(indent=2), encoding="utf-8")
-    (run_dir / "results.json").write_text(
+    (run_dir / RESULTS_FILENAME).write_text(
         json.dumps([r.model_dump(mode="json") for r in results], indent=2), encoding="utf-8"
     )
 
