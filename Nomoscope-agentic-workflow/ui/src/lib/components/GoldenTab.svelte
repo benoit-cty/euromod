@@ -1,12 +1,15 @@
 <script>
   // Golden set review: the human gate on drafted evaluation ground truth.
   //
-  // Cases are drafted from the OpenFisca corpus (`nomokrisis-eval
-  // build-openfisca-dataset`) with verified=false. OpenFisca is curated and
-  // occasionally wrong or lagging, so nothing here counts until a reviewer
-  // compares the drafted value against the parameter EUROMOD holds and accepts
-  // it. Accept sets verified=true; Reject records that a human said no, which
-  // is not the same as nobody having looked yet.
+  // Cases are drafted with verified=false, either from the OpenFisca corpus
+  // (`build-openfisca-dataset`, FR) or from a hand-curated selection read off
+  // the acts themselves (`build-curated-dataset`, IE/LT) — `drafted_by` says
+  // which. Neither source is the law: OpenFisca is curated and occasionally
+  // wrong or lagging, and a curated selection is one person's reading. So
+  // nothing here counts until a reviewer compares the drafted value against the
+  // parameter EUROMOD holds and accepts it. Accept sets verified=true; Reject
+  // records that a human said no, which is not the same as nobody having looked
+  // yet.
   import { api } from '../api.js';
 
   let { datasetDir = '', reviewer = 'reviewer' } = $props();
@@ -273,9 +276,15 @@
                 <td class="muted">from {selected._parameter?.current?.valid_from ?? '—'}</td>
               </tr>
               <tr>
-                <th>OpenFisca says</th>
+                <th>Ground truth</th>
                 <td class="num strong">{fmt(selected.expected?.value)}</td>
-                <td class="muted">from {selected.expected?.valid_from ?? '—'}</td>
+                <td class="muted">
+                  {#if selected.expected?.value == null}
+                    value leg not scored — routing only
+                  {:else}
+                    from {selected.expected?.valid_from ?? '—'}
+                  {/if}
+                </td>
               </tr>
               <tr>
                 <th>Routing</th>
