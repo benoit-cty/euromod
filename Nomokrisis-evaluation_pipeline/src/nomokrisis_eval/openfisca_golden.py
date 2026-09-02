@@ -54,7 +54,7 @@ from nomoscope_workflow import paramdb
 
 from .build_dataset import _current_value
 from .config import REPO_ROOT
-from .dataset import save_case
+from .dataset import save_drafted_case
 from .schema import Expected, GoldenCase
 from .scoring import normalise_value, values_equal
 
@@ -422,10 +422,16 @@ def draft_case(
     references = references_at(conn, external["id"], target_date)
     citations: list[str] = []
     unresolved: list[str] = []
+    # True once a reference resolves to a legal unit the corpus actually holds.
+    # A case where none does is unanswerable by any model — the text stating the
+    # value has not been ingested — so it must be scored as corpus coverage, not
+    # as model quality (`GoldenCase.corpus_available`).
+    in_corpus = False
     for reference in references:
         national_id = reference.get("national_id")
         resolved = resolve_citation(conn, national_id) if national_id else None
         if resolved:
+            in_corpus = True
             if resolved not in citations:
                 citations.append(resolved)
         elif national_id and national_id.startswith(("JORFTEXT", "LEGITEXT")):
@@ -478,6 +484,14 @@ def draft_case(
         )
         note_parts.append(lag)
         outcome.warnings.append(lag)
+    corpus_available = in_corpus if references else None
+    if corpus_available is False:
+        note_parts.append(
+            "corpus_available: false — not one of this parameter's OpenFisca references "
+            "resolves in the legislation corpus, so no retrieval can reach the text stating "
+            "the value. The case measures ingest coverage; it is excluded from the "
+            "'source in corpus' KPI slice until the act is ingested"
+        )
     if unresolved:
         note_parts.append("references not resolved in the legislation corpus: " + "; ".join(unresolved))
     if entry.get("note"):
@@ -499,6 +513,7 @@ def draft_case(
             valid_from=valid_from,
             citations=citations,
         ),
+        corpus_available=corpus_available,
         verified=False,
         drafted_by=f"openfisca@{(external['commit'] or 'unknown')[:7]}",
         notes=" | ".join(note_parts),
@@ -598,7 +613,12 @@ def build_dataset(
             outcome = draft_case(conn, entry, as_of, country, language, kind=kind, constants=constants)
             outcomes.append(outcome)
             if outcome.case is not None:
-                save_case(dataset_dir, outcome.case)
+                _, reset = save_drafted_case(dataset_dir, outcome.case)
+                if reset:
+                    outcome.warnings.append(
+                        "ground truth changed since it was reviewed — the case is back to "
+                        "verified:false and must be re-verified before it counts"
+                    )
                 written += 1
 
     drain(entries)

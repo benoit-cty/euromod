@@ -6,7 +6,7 @@
   "conventions": {
     "temporal_basis": "LT parameters are in_force (no income-year offset): tax and benefit values apply in the calendar year they are in force. The export carries uprating projections out to 2027, so drafting must read the value in force at as_of, not the last row.",
     "expected_value": "Hand-curated ground truth from the acts (the LAW's value). Percent-string values are kept in string form because normalise_value has no % branch yet (known scoring gap); null means the value leg is not scored.",
-    "routing": "Expected routing is the truthful ideal, not what today's pipeline emits — impossible-tier cases are expected to score 0 on routing until scout/ingest/derivation improvements land, so progress shows up as KPI deltas. Set explicitly wherever the stored value cannot be normalised (percent strings) or the value is derived rather than stated.",
+    "routing": "The routing a correct pipeline owes, which is the pipeline's own question: does the proposal differ from the value EUROMOD CURRENTLY HOLDS? It is not 'did the law change this year?'. The system-year N export already encodes the law of year N, so a parameter the legislature changed for N and that the export already carries routes `unchanged` — the pipeline's job there is to re-confirm it with a citation, and the difficulty of the case still lands on the value, citation and retrieval legs. Reserve `changed` for parameters where EUROMOD is genuinely stale relative to the law. Prefer leaving `routing:` out entirely and letting route_against_current decide; state it only where the stored value cannot be normalised (percent strings) or the case exists to pin a routing trap (derived, national_team_source). A stated routing that contradicts route_against_current SKIPS the entry — the drafter will not write ground truth it believes is wrong.",
     "source": "Every entry resolves through the parameter store: model_target for scalars, group_id for the PIT schedule assembled from the export's own groups block (LT is the new export schema, unlike IE). No entry reads a hand-authored parameter file. Run curate-params curation/LT.curation.yaml after ingest-params or the national_team case cannot route."
   },
   "entries": [
@@ -25,13 +25,13 @@
       "model_target": "euromod://LT/ConstDef_lt/def_const/$tinta_basic_WithdRate_Higher",
       "difficulty": "plain",
       "source_class": "codified_law",
-      "routing": "changed",
+      "routing": "unchanged",
       "expected_value": 0.49,
       "expected_valid_from": "2025-01-01",
       "citations": [
         "GPMĮ IX-1007, 20 straipsnis"
       ],
-      "note": "EASY — the NPD (basic allowance) withdrawal coefficient in the GPMI art. 20 formula, 0.5 -> 0.49 for 2025. A genuine numeric change stated verbatim in an ingested act: the LT happy path.",
+      "note": "EASY — the NPD (basic allowance) withdrawal coefficient in the GPMI art. 20 formula, 0.5 -> 0.49 for 2025. A genuine numeric change stated verbatim in an ingested act: the LT happy path. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
       "id": "tinta_basic_withdrate_higher"
     },
     {
@@ -87,35 +87,37 @@
       "model_target": "euromod://LT/ConstDef_lt/def_const/$MMS",
       "difficulty": "plain",
       "source_class": "gazette",
-      "routing": "changed",
+      "routing": "unchanged",
       "expected_value": "1038#m",
       "expected_valid_from": "2025-01-01",
       "citations": [],
-      "note": "HARD / not_found today — gross minimum monthly salary, 924 -> 1038 for 2025, set by annual Vyriausybes nutarimas (Government resolution), an instrument class not yet ingested (open point 5.2 of Lithuania_sources_analysis.md). LT IS in scout.COUNTRY_SOURCES with nutarimai in its act_kinds, so this case measures nutarimas discovery + ingest through the Spinta API. Citations empty until the nutarimas is ingested; expect routing misses (not_found) until then.",
-      "id": "mms"
+      "note": "HARD / not_found today — gross minimum monthly salary, 924 -> 1038 for 2025, set by annual Vyriausybes nutarimas (Government resolution), an instrument class not yet ingested (open point 5.2 of Lithuania_sources_analysis.md). LT IS in scout.COUNTRY_SOURCES with nutarimai in its act_kinds, so this case measures nutarimas discovery + ingest through the Spinta API. Citations empty until the nutarimas is ingested; expect routing misses (not_found) until then. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
+      "id": "mms",
+      "corpus_available": false
     },
     {
       "model_target": "euromod://LT/ConstDef_lt/def_const/$BasicPens",
       "difficulty": "combine",
       "source_class": "gazette",
-      "routing": "changed",
+      "routing": "unchanged",
       "expected_value": "298.45#m",
       "expected_valid_from": "2025-01-01",
       "citations": [],
-      "note": "IMPOSSIBLE today — basic social insurance pension, 269.77 -> 298.45 for 2025. The pensions law states the indexation FORMULA (wage-bill indexation); the resulting euro amount appears only in the annual indexation resolution. Pure extraction can never produce 298.45 from the ingested acts: the case marks the derivation/indexation capability gap, and scores 0 until either the indexation instruments are ingested or a compute-from-formula step exists.",
-      "id": "basicpens"
+      "note": "IMPOSSIBLE today — basic social insurance pension, 269.77 -> 298.45 for 2025. The pensions law states the indexation FORMULA (wage-bill indexation); the resulting euro amount appears only in the annual indexation resolution. Pure extraction can never produce 298.45 from the ingested acts: the case marks the derivation/indexation capability gap, and scores 0 until either the indexation instruments are ingested or a compute-from-formula step exists. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
+      "id": "basicpens",
+      "corpus_available": false
     },
     {
       "model_target": "euromod://LT/ConstDef_lt/def_const/$PensionAgeFemale",
       "difficulty": "combine",
       "source_class": "codified_law",
-      "routing": "changed",
+      "routing": "unchanged",
       "expected_value": 64.66,
       "expected_valid_from": "2025-01-01",
       "citations": [
         "Valstybinių socialinio draudimo pensijų įstatymas I-549"
       ],
-      "note": "IMPOSSIBLE today — official pension age for women in 2025: 64 years 8 months, i.e. 64.66 in EUROMOD's decimal convention. The statute states a STEP SCHEDULE (+4 months per year, reaching 65 in 2026), not the per-year value: the pipeline must derive the cohort value from the schedule and convert months to a decimal — derivation-not-extraction, plus a representation-convention trap (64.66 vs 64.67 vs 64+8/12). Pin the exact article/annex of the pension-age schedule when drafting.",
+      "note": "IMPOSSIBLE today — official pension age for women in 2025: 64 years 8 months, i.e. 64.66 in EUROMOD's decimal convention. The statute states a STEP SCHEDULE (+4 months per year, reaching 65 in 2026), not the per-year value: the pipeline must derive the cohort value from the schedule and convert months to a decimal — derivation-not-extraction, plus a representation-convention trap (64.66 vs 64.67 vs 64+8/12). Pin the exact article/annex of the pension-age schedule when drafting. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
       "id": "pensionagefemale"
     },
     {

@@ -10,10 +10,13 @@
     "routing": "unchanged",
     "value": 0.004,
     "valid_from": "2017-01-01",
-    "citations": []
+    "citations": [
+      "LEGITEXT000006073189, art. D242-4",
+      "JORFTEXT000029920824, art. 4"
+    ]
   },
-  "verified": true,
+  "corpus_available": true,
+  "verified": false,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prelevements_sociaux.cotisations_securite_sociale_regime_general.cnav.salarie.vieillesse_deplafonnee :: brackets[1].rate | openfisca value at 2025-06-01: 0.004 (change point 2017-01-01) | euromod value in force at 2025-06-01: 0.004 from 2017-01-01 | link: fingerprint score 0.80 | references not resolved in the legislation corpus: Article D242-4 du Code de la Sécurité sociale [LEGIARTI000029924557] not in the corpus (not scorable); Décret 2014-1531 du 17/12/2014, art. 4 [JORFARTI000029920866] not in the corpus (not scorable)",
-  "reviewed_by": "ben"
+  "notes": "openfisca: prelevements_sociaux.cotisations_securite_sociale_regime_general.cnav.salarie.vieillesse_deplafonnee :: brackets[1].rate | openfisca value at 2025-06-01: 0.004 (change point 2017-01-01) | euromod value in force at 2025-06-01: 0.004 from 2017-01-01 | link: fingerprint score 0.80"
 }

@@ -24,6 +24,12 @@ class EvalConfig:
     embedding_dataset_dir: Path = field(default_factory=lambda: EVAL_ROOT / "dataset_embedding")
     runs_dir: Path = field(default_factory=lambda: EVAL_ROOT / ".eval_runs")
     builder_model: str = ""
+    #: Model for the workflow's critique step during an evaluation run. Empty
+    #: means "the model under test grades itself", which is fine for tracking
+    #: one model over time but not for comparing models (Activity 5): a lenient
+    #: critic reports better supportedness for the same proposals. Pin a single
+    #: judge with EVAL_CRITIQUE_MODEL to make those columns comparable.
+    critique_model: str = ""
     phoenix_project: str = ""
 
 
@@ -42,5 +48,6 @@ def load_eval_config() -> EvalConfig:
         ),
         runs_dir=Path(_env("EVAL_RUNS_DIR", str(EVAL_ROOT / ".eval_runs"))),
         builder_model=_env("EVAL_BUILDER_MODEL", "claude-fable-5"),
+        critique_model=_env("EVAL_CRITIQUE_MODEL", ""),
         phoenix_project=_env("EVAL_PHOENIX_PROJECT", "nomokrisis-evaluation"),
     )

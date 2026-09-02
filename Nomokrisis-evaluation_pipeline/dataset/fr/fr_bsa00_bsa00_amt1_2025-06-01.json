@@ -14,8 +14,9 @@
       "JORFTEXT000051393086"
     ]
   },
+  "corpus_available": true,
   "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prestations_sociales.solidarite_insertion.minima_sociaux.rsa.rsa_m.montant_de_base_du_rsa | openfisca value at 2025-06-01: 646.52 (change point 2025-04-01) | euromod value in force at 2025-06-01: 646.52 from 2025-01-01 | link: fingerprint score 0.79 | references not resolved in the legislation corpus: Décret n° 2025-293 du 29 mars 2025, art. 1 [JORFTEXT000051393086] not in the corpus yet",
-  "reviewed_by": "ben"
+  "reviewed_by": "ben",
+  "notes": "openfisca: prestations_sociales.solidarite_insertion.minima_sociaux.rsa.rsa_m.montant_de_base_du_rsa | openfisca value at 2025-06-01: 646.52 (change point 2025-04-01) | euromod value in force at 2025-06-01: 646.52 from 2025-01-01 | link: fingerprint score 0.79"
 }

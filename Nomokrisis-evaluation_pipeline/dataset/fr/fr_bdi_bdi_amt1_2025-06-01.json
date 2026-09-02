@@ -14,8 +14,9 @@
       "JORFTEXT000051393142"
     ]
   },
+  "corpus_available": true,
   "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prestations_sociales.prestations_etat_de_sante.invalidite.aah.montant | openfisca value at 2025-06-01: 1033.32 (change point 2025-04-01) | euromod value in force at 2025-06-01: 1033.32 from 2025-01-01 | link: fingerprint score 0.72 | references not resolved in the legislation corpus: Décret n° 2025-297 du 29 mars 2025, art. 1 [JORFTEXT000051393142] not in the corpus yet",
-  "reviewed_by": "ben"
+  "reviewed_by": "ben",
+  "notes": "openfisca: prestations_sociales.prestations_etat_de_sante.invalidite.aah.montant | openfisca value at 2025-06-01: 1033.32 (change point 2025-04-01) | euromod value in force at 2025-06-01: 1033.32 from 2025-01-01 | link: fingerprint score 0.72"
 }

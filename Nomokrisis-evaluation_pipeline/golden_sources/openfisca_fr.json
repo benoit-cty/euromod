@@ -218,7 +218,7 @@
       "model_target": "euromod://FR/SetDefault_fr/def_const/$Minwage_hourly",
       "openfisca_path": "marche_travail.salaire_minimum.smic.smic_b_horaire",
       "source_class": "gazette",
-      "note": "SMIC, gross hourly — the value the décret actually states; the monthly figure is derived from it."
+      "note": "SMIC, gross hourly — the value the décret actually states; the monthly figure is derived from it. KNOWN INPUT DEFECT: the EUROMOD export gives this parameter unit 'currency/month' and stores it as '11.88#m', although 11.88 is the HOURLY rate. A correct pipeline run refuses here — it finds '11,88 euros par heure' in the décret and will not present an hourly figure as a monthly one — so the case scores not_found for a reason that is neither the model's nor the corpus's. Report to the EUROMOD economists team alongside the FR barème 1-€ erratum and IE's 27 382/27 383; the unit cannot be corrected here because extracted_parameters/enriched/FR.enriched.json is read-only and ingest-params overwrites `unit` on every re-ingest."
     },
     {
       "model_target": "euromod://FR/ConstDef_fr/def_const/$PSS",

@@ -40,6 +40,51 @@ def save_case(dataset_dir: Path, case: GoldenCase) -> Path:
     return path
 
 
+#: What a reviewer actually approved. Everything else a drafter writes (notes,
+#: drafted_by, corpus_available) is provenance that can be refreshed freely.
+def _ground_truth(case: GoldenCase) -> str:
+    return json.dumps(
+        {
+            "expected": case.expected.model_dump(mode="json"),
+            "parameter_file": case.parameter_file,
+            "as_of": case.as_of.isoformat(),
+        },
+        sort_keys=True,
+    )
+
+
+def save_drafted_case(dataset_dir: Path, case: GoldenCase) -> tuple[Path, bool]:
+    """Write a freshly drafted case, carrying the human verdict over when the
+    ground truth did not change.
+
+    Drafters always emit `verified: false`. Writing that blindly would discard
+    every review each time the set is rebuilt — and a golden set nobody dares
+    rebuild stops tracking the parameter store. Keeping the verdict blindly is
+    worse: a changed expectation would inherit approval of a different value.
+    So the verdict survives exactly when the ground truth (`expected`, the
+    parameter under test, `as_of`) is identical to what the reviewer approved,
+    and is dropped the moment any of it moves.
+
+    Returns (path, reset), reset=True when a previous verdict was dropped.
+    """
+    folder = dataset_dir / case.country.lower()
+    path = folder / f"{case.id}.json"
+    reset = False
+    if path.exists():
+        try:
+            previous = GoldenCase.model_validate_json(path.read_text(encoding="utf-8"))
+        except ValueError:
+            previous = None
+        if previous is not None and (previous.verified or previous.reviewed_by):
+            if _ground_truth(previous) == _ground_truth(case):
+                case.verified = previous.verified
+                case.reviewed_by = previous.reviewed_by
+                case.review_note = previous.review_note
+            else:
+                reset = True
+    return save_case(dataset_dir, case), reset
+
+
 def load_embedding_cases(
     dataset_dir: Path,
     countries: list[str] | None = None,

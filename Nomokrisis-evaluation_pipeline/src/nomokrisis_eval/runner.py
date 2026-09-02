@@ -138,7 +138,7 @@ def _append_result(run_dir: Path, result: CaseResult) -> None:
         handle.flush()
 
 
-def _rewrite_partial(run_dir: Path, results: list[CaseResult]) -> None:
+def rewrite_partial(run_dir: Path, results: list[CaseResult]) -> None:
     """Re-materialize results.jsonl (used after impact columns are backfilled)."""
     (run_dir / PARTIAL_FILENAME).write_text(
         "".join(r.model_dump_json() + "\n" for r in results), encoding="utf-8"
@@ -187,6 +187,12 @@ def latest_incomplete_run(cfg: EvalConfig) -> dict | None:
 # --------------------------------------------------------------------------- #
 
 
+def critique_model_for(cfg: EvalConfig, model: str) -> str:
+    """The model that will run the critique step: the pinned judge when
+    EVAL_CRITIQUE_MODEL is set, else the model under test grading itself."""
+    return cfg.critique_model or model
+
+
 def start_run(
     cfg: EvalConfig,
     cases: list[GoldenCase],
@@ -204,6 +210,7 @@ def start_run(
         model=model,
         model_provider=provider,
         model_name=model_name or provider,
+        critique_model=critique_model_for(cfg, model),
         prompt_version=PROMPT_VERSION,
         agent_version=AGENT_VERSION,
         eval_version=EVAL_VERSION,
@@ -239,7 +246,9 @@ def resume_run(cfg: EvalConfig, run_id: str) -> tuple[RunManifest, list[GoldenCa
 def _workflow_config(cfg: EvalConfig, manifest: RunManifest) -> WorkflowConfig:
     wf_cfg = load_workflow_config()
     wf_cfg.model = manifest.model
-    wf_cfg.critique_model = manifest.model
+    # Older manifests (before the judge could be pinned) have no critique_model;
+    # they graded themselves, so replaying them must keep doing that.
+    wf_cfg.critique_model = manifest.critique_model or manifest.model
     wf_cfg.phoenix_project = cfg.phoenix_project
     wf_cfg.data_dir = run_directory(cfg, manifest.run_id)  # scratch queue, not the review queue
     wf_cfg.data_dir.mkdir(parents=True, exist_ok=True)
@@ -287,6 +296,7 @@ def execute_run(
                 difficulty=case.difficulty,
                 source_class=case.source_class,
                 routing_expected=case.expected.routing.value,
+                corpus_available=case.corpus_available,
                 error=f"{exc.__class__.__name__}: {exc}",
             )
         result.latency_ms = int((time.perf_counter() - started) * 1000)
@@ -297,7 +307,7 @@ def execute_run(
 
     if not manifest.model.startswith("mock") and pending:
         if _attach_impact(results, wf_cfg):
-            _rewrite_partial(run_dir, results)
+            rewrite_partial(run_dir, results)
     return results
 
 
@@ -316,6 +326,50 @@ def run_evaluation(
         cfg, manifest, cases, on_case_start=on_case_start, on_case_done=on_case_done
     )
     return manifest, results
+
+
+def rescore_run(cfg: EvalConfig, run_id: str) -> tuple[RunManifest, list[CaseResult]]:
+    """Re-score a finished run from the ReviewItems it stored — no LLM, no DB.
+
+    A run directory keeps every queue item the pipeline produced, so a fix to
+    `scoring.py` can be re-applied to past runs instead of re-spending a full
+    run's tokens. Only the scoring moves: routing, values, citations and
+    retrieval traces stay exactly what the model produced at the time.
+
+    Expectations come from the run's frozen `cases.json`, never from today's
+    golden set — so a rescore isolates the effect of a scoring change from any
+    golden-set edit. To measure a golden-set change instead, start a new run.
+    Latency and impact columns are carried over from the previous results: they
+    are measurements, not scores, and cannot be recomputed offline.
+    """
+    from nomoscope_workflow.schema import ReviewItem
+
+    run_dir = run_directory(cfg, run_id)
+    manifest = load_manifest(run_dir)
+    cases = {case.id: case for case in load_run_cases(run_dir)}
+    previous = {r.case_id: r for r in load_partial_results(run_dir)}
+    constants = _scoring_constants(list(cases.values()), manifest.as_of)
+
+    rescored: list[CaseResult] = []
+    for case_id, case in cases.items():
+        before = previous.get(case_id)
+        if before is None:
+            continue
+        item_path = run_dir / "queue" / f"{before.item_id}.json" if before.item_id else None
+        if before.error or item_path is None or not item_path.exists():
+            # Nothing to re-score: an errored case has no ReviewItem, and a run
+            # whose queue was cleaned keeps only what it already recorded.
+            rescored.append(before)
+            continue
+        item = ReviewItem.model_validate_json(item_path.read_text(encoding="utf-8"))
+        result = score_item(case, item, constants.get(case.country))
+        for measured in (
+            "latency_ms", "phoenix_trace_id", "llm_calls", "tokens_prompt",
+            "tokens_completion", "energy_kwh", "gwp_kgco2eq", "impact_estimated",
+        ):
+            setattr(result, measured, getattr(before, measured))
+        rescored.append(result)
+    return manifest, rescored
 
 
 def _attach_impact(results: list[CaseResult], wf_cfg: WorkflowConfig) -> bool:
@@ -338,6 +392,7 @@ def _attach_impact(results: list[CaseResult], wf_cfg: WorkflowConfig) -> bool:
     filled = False
     # Cases restored from a previous attempt already carry their impact columns.
     pending = [r for r in results if r.phoenix_trace_id and r.llm_calls is None]
+    unestimated: set[str] = set()
     for attempt in range(2):
         if not pending:
             return filled
@@ -359,28 +414,71 @@ def _attach_impact(results: list[CaseResult], wf_cfg: WorkflowConfig) -> bool:
             result.llm_calls = usage["llm_calls"]
             result.tokens_prompt = usage["tokens_prompt"]
             result.tokens_completion = usage["tokens_completion"]
-            result.energy_kwh = usage["energy_kwh"]
-            result.gwp_kgco2eq = usage["gwp_kgco2eq"]
+            # EcoLogits returns 0.0 for a model missing from its registry, which
+            # is indistinguishable from a genuinely measured zero once stored.
+            # `not_estimated` names those models: when nothing could be
+            # estimated, leave energy/GWP NULL so a report says "unknown"
+            # instead of "this run cost 0 gCO2eq".
+            estimated = not usage.get("not_estimated")
+            result.impact_estimated = estimated
+            result.energy_kwh = usage["energy_kwh"] if estimated else None
+            result.gwp_kgco2eq = usage["gwp_kgco2eq"] if estimated else None
             filled = True
+            unestimated.update(usage.get("not_estimated") or ())
         pending = still_pending
+    if unestimated:
+        print(
+            "  impact: no EcoLogits registry entry for "
+            + ", ".join(sorted(unestimated))
+            + " — energy/GWP left unset for this run"
+        )
     return filled
 
 
+#: KPIs reported per language, in the order the console prints them.
+KPIS = [
+    "routing_correct", "value_correct", "date_correct", "citation_correct",
+    "extract_verbatim", "supportedness", "critique_pass", "hallucination",
+    "retrieval_hit",
+]
+
+
+def _rate(rows: list[CaseResult], kpi: str) -> str:
+    values = [getattr(r, kpi) for r in rows if getattr(r, kpi) is not None]
+    return f"{100 * sum(values) / len(values):.0f}%" if values else "-"
+
+
 def summarize(results: list[CaseResult]) -> dict[str, dict[str, str]]:
-    """Console summary: KPI rates per language (avg over non-None values)."""
-    kpis = [
-        "routing_correct", "value_correct", "date_correct", "citation_correct",
-        "supportedness", "hallucination", "retrieval_hit",
-    ]
+    """Console summary: KPI rates per language (avg over non-None values).
+
+    Every language also gets an `answerable` row holding the same KPIs over the
+    cases whose ground-truth source is actually in the legislation corpus
+    (`corpus_available is not False`). Without that split the headline mixes two
+    different measurements: how well the model reads the law, and how much law
+    has been ingested. A case whose source is not in the corpus cannot be
+    answered by any model, so it belongs in a coverage number, not a quality one.
+    """
     by_lang: dict[str, list[CaseResult]] = defaultdict(list)
     for r in results:
         by_lang[r.language].append(r)
 
     table: dict[str, dict[str, str]] = {}
     for lang, rows in sorted(by_lang.items()):
-        entry = {"cases": str(len(rows)), "errors": str(sum(1 for r in rows if r.error))}
-        for kpi in kpis:
-            values = [getattr(r, kpi) for r in rows if getattr(r, kpi) is not None]
-            entry[kpi] = f"{100 * sum(values) / len(values):.0f}%" if values else "-"
+        answerable = [r for r in rows if r.corpus_available is not False]
+        entry = {
+            "cases": str(len(rows)),
+            "errors": str(sum(1 for r in rows if r.error)),
+            # Refusals and corpus gaps, so the reader can see how much of a low
+            # score is "the model was wrong" versus "there was nothing to read".
+            "abstained": str(sum(1 for r in rows if r.abstained)),
+            "no_corpus": str(sum(1 for r in rows if r.corpus_available is False)),
+        }
+        for kpi in KPIS:
+            entry[kpi] = _rate(rows, kpi)
         table[lang] = entry
+        if len(answerable) != len(rows):
+            table[f"{lang} (source in corpus)"] = {
+                "cases": str(len(answerable)),
+                **{kpi: _rate(answerable, kpi) for kpi in KPIS},
+            }
     return table

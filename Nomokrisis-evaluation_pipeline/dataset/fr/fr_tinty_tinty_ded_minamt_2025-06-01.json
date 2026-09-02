@@ -12,8 +12,9 @@
     "valid_from": "2024-01-01",
     "citations": []
   },
+  "corpus_available": false,
   "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: impot_revenu.calcul_revenus_imposables.deductions.abatpro.min | openfisca value at 2024-01-01: 504.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 504.0 from 2025-01-01 | link: fingerprint score 0.88 | references not resolved in the legislation corpus: Article 83, 3. du Code général des impôts [LEGIARTI000032701943] not in the corpus (not scorable)",
-  "reviewed_by": "ben"
+  "reviewed_by": "ben",
+  "notes": "openfisca: impot_revenu.calcul_revenus_imposables.deductions.abatpro.min | openfisca value at 2024-01-01: 504.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 504.0 from 2025-01-01 | link: fingerprint score 0.88 | corpus_available: false — not one of this parameter's OpenFisca references resolves in the legislation corpus, so no retrieval can reach the text stating the value. The case measures ingest coverage; it is excluded from the 'source in corpus' KPI slice until the act is ingested | references not resolved in the legislation corpus: Article 83, 3. du Code général des impôts [LEGIARTI000032701943] not in the corpus (not scorable)"
 }
