@@ -146,6 +146,21 @@ A retrieval system searched a legislation database and could not find the legal 
 sets the value of a policy parameter. Identify the official publication(s) that fix this
 parameter's value (the specific {act_kinds} or equivalent — many values are set by
 annual implementing acts rather than by the statutes that define them).
+
+You may be given what the analyst who read the retrieved extracts said it was missing, and
+the citations retrieval already returned. Both matter:
+- The analyst's account is the strongest signal you have. It usually names the missing act
+  in the law's own words, or names the article a retrieved text cross-refers to. Hunt what
+  it asks for, not what the parameter label alone suggests.
+- The retrieved citations are context, NOT a list of what the database holds: retrieval
+  returns what it ranked highest, which is often a similarly-named or similarly-numbered
+  act rather than the one asked for. Never conclude from them that a document is already
+  present, and never skip searching on that basis — whether an id is already held is
+  checked against the database afterwards, and duplicates are dropped automatically.
+  Use them only to avoid spending your instrument_ids on an act plainly already there.
+- ALWAYS return search_queries when you have been told something is missing. An empty
+  answer ends the hunt for this parameter.
+
 Return:
 - search_queries: 1-3 short web-search queries in the law's language, phrased to find the
   act on the official legal portal (results are restricted to official domains).
@@ -210,10 +225,17 @@ class ScoutResult:
     ingested: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     reasoning: str | None = None
+    #: 1-based gap-fill round this result came from.
+    round: int = 1
+    #: What the analyst said it was missing, verbatim — the input that drove
+    #: this round. Kept so a reviewer can see WHY these acts were fetched.
+    needs: list[str] = field(default_factory=list)
 
     def summary(self) -> dict:
         return {
             "mode": self.mode,
+            "round": self.round,
+            "needs": self.needs,
             "queries": self.queries,
             "urls": self.urls,
             "candidate_ids": self.candidate_ids,
@@ -221,6 +243,23 @@ class ScoutResult:
             "errors": self.errors,
             "reasoning": self.reasoning,
         }
+
+
+def merge_results(results: list["ScoutResult"]) -> "ScoutResult":
+    """Fold every gap-fill round of one run into the single ScoutResult the
+    ReviewItem carries, keeping each round's fields in order."""
+    if not results:
+        return ScoutResult(mode="off")
+    merged = ScoutResult(mode=results[0].mode, round=len(results))
+    for r in results:
+        merged.needs += [n for n in r.needs if n not in merged.needs]
+        merged.queries += [q for q in r.queries if q not in merged.queries]
+        merged.urls += [u for u in r.urls if u not in merged.urls]
+        merged.candidate_ids += [c for c in r.candidate_ids if c not in merged.candidate_ids]
+        merged.ingested += [i for i in r.ingested if i not in merged.ingested]
+        merged.errors += r.errors
+    merged.reasoning = " | ".join(r.reasoning for r in results if r.reasoning) or None
+    return merged
 
 
 def _tavily_search(api_key: str, query: str, domains: list[str]) -> list[dict]:
@@ -388,10 +427,52 @@ def _embedding_model_args(directory: Path, *, cuda: bool) -> list[str]:
     return []
 
 
-def run(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> ScoutResult:
-    """Discover candidate instruments for a parameter and ingest the new ones."""
+#: Cap on how much of the analyst's account is quoted into the scout prompt.
+#: Its reasoning can run long; the useful part — the act it names — is at the front.
+_NEED_CHARS = 400
+
+
+def _evidence_block(needs: list[str], known_citations: list[str] | None) -> str:
+    """Render the failure evidence for the scout prompt.
+
+    Both halves earn their tokens: the needs tell it what to hunt, and the
+    citations already held stop it spending its ingest budget re-fetching them
+    (a second round would otherwise propose the same acts as the first).
+    """
+    parts = []
+    if needs:
+        listing = "\n".join(f"- {need[:_NEED_CHARS]}" for need in needs[:5])
+        parts.append(
+            "\n\nThe analyst who read the retrieved extracts reported these missing "
+            f"source(s):\n{listing}"
+        )
+    if known_citations:
+        held = ", ".join(dict.fromkeys(known_citations))[:800]
+        parts.append(f"\n\nAlready in the database (do NOT hunt these): {held}")
+    return "".join(parts)
+
+
+def run(
+    cfg: WorkflowConfig,
+    record: ParameterRecord,
+    as_of: date,
+    needs: list[str] | None = None,
+    known_citations: list[str] | None = None,
+    attempted: set[str] | None = None,
+    round_index: int = 1,
+) -> ScoutResult:
+    """Discover candidate instruments for a parameter and ingest the new ones.
+
+    `needs` is what the proposal step said it was missing (its `missing_sources`,
+    falling back to its prose reasoning) — the sharpest available description of
+    the gap, since the analyst has just read the retrieved text and named the act
+    it cross-refers to. `known_citations` are the citations retrieval already
+    returns, so the scout skips hunting what we hold. `attempted` accumulates ids
+    tried earlier in this run, so a second round never re-fetches a candidate
+    that already failed or was already ingested.
+    """
     info = record.information
-    result = ScoutResult(mode=cfg.scout)
+    result = ScoutResult(mode=cfg.scout, round=round_index, needs=list(needs or []))
     rules = COUNTRY_SOURCES.get(info.country)
     if rules is None:
         result.errors.append(f"no scout source rules for {info.country}")
@@ -410,6 +491,7 @@ def run(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> ScoutResul
                 f"Label: {(info.short_label or {}).get('en', '')} — {(info.label or {}).get('en', '')}\n"
                 f"Description: {(info.description or {}).get('en', '')}\n"
                 f"Reference date: {as_of.isoformat()} (find the act setting the value in force then)"
+                + _evidence_block(result.needs, known_citations)
             ),
             output_type=ScoutSuggestion,
         )
@@ -418,6 +500,14 @@ def run(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> ScoutResul
         return result
     result.reasoning = suggestion.reasoning
     result.queries = suggestion.search_queries[:3]
+    if not result.queries and not suggestion.instrument_ids and result.needs:
+        # The model answered with nothing at all — usually because it talked
+        # itself out of the hunt ("that act looks like one of the retrieved
+        # citations"). The needs are already phrased in the law's own language,
+        # which is exactly what an official-domain search wants, so fall back to
+        # searching for them verbatim rather than losing the round.
+        result.queries = [need[:_NEED_CHARS] for need in result.needs[:2]]
+        result.errors.append("scout proposed nothing; searching the stated needs verbatim")
 
     pattern: re.Pattern = rules["id_pattern"]
     ids = [m for text in suggestion.instrument_ids for m in pattern.findall(text)]
@@ -437,7 +527,7 @@ def run(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> ScoutResul
     result.candidate_ids = list(dict.fromkeys(ids))
     if len(result.candidate_ids) > 1 and titles:
         result.candidate_ids = _rank_candidates(cfg, info, result.candidate_ids, titles)
-    known = _known_instruments(cfg, result.candidate_ids, rules)
+    known = _known_instruments(cfg, result.candidate_ids, rules) | set(attempted or ())
     to_ingest = [i for i in result.candidate_ids if i not in known][: cfg.scout_max_ingest]
     if result.candidate_ids:
         progress(

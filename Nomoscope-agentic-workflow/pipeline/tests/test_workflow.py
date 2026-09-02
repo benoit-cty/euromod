@@ -7,10 +7,16 @@ from pathlib import Path
 
 from nomoscope_workflow import mock, queue_store
 from nomoscope_workflow.query_encoder import embedding_process
-from nomoscope_workflow.scout import _embedding_model_args
+from nomoscope_workflow.scout import (
+    ScoutResult,
+    _embedding_model_args,
+    _evidence_block,
+    merge_results,
+)
 from nomoscope_workflow.pipeline import (
     _current_value,
     _income_year_date_issues,
+    _needs_gap_fill,
     _retrieval_as_of,
     _unchanged_window,
     _values_equal,
@@ -18,10 +24,12 @@ from nomoscope_workflow.pipeline import (
 from nomoscope_workflow.retrieval import validity_start
 from nomoscope_workflow.schema import (
     Bracket,
+    CritiqueReport,
     ItemStatus,
     ParameterInformation,
     ParameterRecord,
     ParameterValue,
+    ProposalDraft,
     RetrievalHit,
     ReviewItem,
     Routing,
@@ -394,3 +402,80 @@ def test_embedding_model_args_never_send_the_openvino_export_to_the_gpu(tmp_path
     torch_model.mkdir()
     (torch_model / "config.json").write_text("{}")
     assert _embedding_model_args(directory, cuda=True) == ["--model-path", "models/bge-m3"]
+
+
+# ---------------------------------------------------------------------------
+# Gap-fill: when the agent should go and ingest more, and what drives it
+# ---------------------------------------------------------------------------
+
+
+def _report(**kwargs) -> CritiqueReport:
+    return CritiqueReport(**kwargs)
+
+
+def test_gap_fill_triggers_when_no_value_was_found():
+    assert _needs_gap_fill({}) is True
+    assert _needs_gap_fill({"draft": ProposalDraft(found=False)}) is True
+
+
+def test_gap_fill_stops_once_a_proposal_survives_the_critique():
+    state = {
+        "draft": ProposalDraft(found=True, value_scalar=0.11),
+        "critique": _report(verdict="pass"),
+    }
+    assert _needs_gap_fill(state) is False
+
+
+def test_gap_fill_ignores_a_critique_that_rejected_the_answer_itself():
+    """Fetching more law cannot fix a unit error — only a missing source."""
+    state = {
+        "draft": ProposalDraft(found=True, value_scalar=4.1),
+        "critique": _report(
+            verdict="fail",
+            issues=["values_sane: the parameter declares unit currency for a percentage rate"],
+        ),
+    }
+    assert _needs_gap_fill(state) is False
+
+
+def test_gap_fill_triggers_on_a_source_availability_failure():
+    """The proposal exists, but nothing in the corpus ties it to the income
+    year — the applicability clause is in an act we do not hold."""
+    state = {
+        "draft": ProposalDraft(found=True, value_scalar=0.11),
+        "critique": _report(
+            verdict="fail",
+            issues=["the cited article never names income year 2025, but art. 10 does"],
+        ),
+    }
+    assert _needs_gap_fill(state) is True
+
+    provisional = {
+        "draft": ProposalDraft(found=True, value_scalar=0.11),
+        "critique": _report(verdict="fail", provisional=True),
+    }
+    assert _needs_gap_fill(provisional) is True
+
+
+def test_scout_evidence_block_carries_needs_and_skips_what_we_hold():
+    block = _evidence_block(
+        ["l'arrêté fixant le plafond de la sécurité sociale pour 2025"],
+        ["CGI, art. 197", "CGI, art. 197"],
+    )
+    assert "plafond de la sécurité sociale pour 2025" in block
+    assert "do NOT hunt these" in block
+    assert block.count("CGI, art. 197") == 1  # de-duplicated
+
+
+def test_scout_rounds_merge_without_duplicates():
+    merged = merge_results([
+        ScoutResult(mode="tavily", round=1, ingested=["A"], candidate_ids=["A", "B"],
+                    needs=["the PSS arrêté"], reasoning="round one"),
+        ScoutResult(mode="tavily", round=2, ingested=["C"], candidate_ids=["B", "C"],
+                    needs=["the PSS arrêté", "art. L. 241-3"], reasoning="round two"),
+    ])
+    assert merged.round == 2
+    assert merged.ingested == ["A", "C"]
+    assert merged.candidate_ids == ["A", "B", "C"]
+    assert merged.needs == ["the PSS arrêté", "art. L. 241-3"]
+    assert merged.reasoning == "round one | round two"

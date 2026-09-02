@@ -84,6 +84,28 @@ Two more scoring rules worth knowing:
 
 ### b. Corpus gap — could any model have answered?
 
+First check whether it is really a gap. The gap-fill scout records what the
+proposal said it was missing and what it did about it, on every review item:
+
+```bash
+uv run python -c "
+import json,sys; d=json.load(open(sys.argv[1]))
+print(json.dumps(d.get('scout'), indent=2, ensure_ascii=False))" .eval_runs/<run-id>/queue/<item_id>.json
+```
+
+`needs` is the analyst's own account of the missing document, `ingested` is what
+the scout fetched. `needs` set but `ingested` empty means one of: the act is not
+findable on the country's official domains, the country has no
+`scout.COUNTRY_SOURCES` entry, or — check this one — **the act is in the corpus
+and retrieval simply did not surface it**, which is a retrieval problem wearing a
+corpus problem's clothes. Confirm against the DB before believing either:
+
+```bash
+docker exec nomotheca-legislation-db psql -U jrc -d legislation -c \
+  "SELECT national_id, left(title::text,80) FROM instruments WHERE title::text ILIKE '%<words from needs>%';"
+```
+
+
 If no ground-truth reference resolves in the legislation corpus, the text
 stating the value was never retrievable and the case measures ingest breadth.
 `GoldenCase.corpus_available` records this; the report prints the split.

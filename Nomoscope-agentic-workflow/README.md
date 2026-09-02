@@ -74,7 +74,7 @@ by an explicit control flow
 | **retrieve** | SQL | citation fast path (pg_trgm, similarity > 0.55) then hybrid FTS ∥ vector merged by RRF k=60 (vector top-3 guaranteed into the result: ts_rank_cd has no IDF, so common fiscal terms would otherwise crowd out the semantically-best chunk), all pre-filtered by `validity @> as_of`, jurisdiction, lang, and reduced to **one version per article** (`DISTINCT ON (instrument, citation)` keeping the latest `lower(validity)`: the same article can exist twice — a new consolidation per amendment, and a different structural path when fetched standalone — leaving two open-ended `in_force` versions where the superseded text can outrank its replacement). FTS ORs the query terms; vector = BGE-M3 via the ingest package's query encoder (`WORKFLOW_EMBEDDING_MODEL_ID=1`), FTS-only fallback when unavailable | no hits → skip straight to diff, routing `not_found` |
 | **propose** | **LLM** | record + retrieved chunks → `ProposalDraft` (structured output: value, valid_from, legal_status, chunk_id, verbatim extract, quote + translation, confidence) | model can return `found=false`; never guesses |
 | **critique** | code + **LLM** | mechanical checks: extract is a verbatim quote of the cited chunk (offsets computed against `unit_texts.content`), dates consistent, units/brackets sane, schema-valid — then an LLM pass for semantic issues | verdict `fail` → one LLM retry, then goes to the human with the failed critique attached |
-| **scout** | **LLM** + web + ingest | on `not_found` (`WORKFLOW_SCOUT=llm\|tavily`): the LLM names the official act that sets the value; Tavily searches official domains only and instrument ids are harvested from result URLs (per-country rules in `scout.COUNTRY_SOURCES` — FR: legifrance.gouv.fr / `JORFTEXT…`, LT: e-seimas.lrs.lt / `TAR.…`), LLM-ranked against the result titles, then **archive-first ingested** via `nomotheca_ingest` (+ incremental BGE-M3 embedding) before one retrieval retry | web text is never evidence — only discovery; quotes still verify against the DB. Ingested ids and queries are recorded on the review item. A country absent from `COUNTRY_SOURCES` cannot gap-fill at all |
+| **scout** (gap-fill) | **LLM** + web + ingest | when the corpus is missing the establishing text (`WORKFLOW_SCOUT=llm\|tavily`, see *Gap-fill* below): the LLM names the official act, **steered by what the proposal said it lacked** (`ProposalDraft.missing_sources`) and told which citations we already hold; Tavily searches official domains only and instrument ids are harvested from result URLs (per-country rules in `scout.COUNTRY_SOURCES` — FR: legifrance.gouv.fr / `JORFTEXT…`, LT: e-seimas.lrs.lt / `TAR.…`), LLM-ranked against the result titles, then **archive-first ingested** via `nomotheca_ingest` (+ incremental BGE-M3 embedding), then retrieval and the proposal run again. Repeats up to `WORKFLOW_SCOUT_MAX_ROUNDS` times | web text is never evidence — only discovery; quotes still verify against the DB. Every round's needs, queries and ingested ids are recorded on the review item. A country absent from `COUNTRY_SOURCES` cannot gap-fill at all |
 | **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| provisional \| national_team_source \| derived`. On `unchanged` the proposal keeps the validity window already in force: the citation re-confirms the value, it does not restart it, so no new `valid_from` is proposed. `provisional` (income-year params whose enacting act is missing) keeps the found value visible but no `proposed_record` — nothing acceptable to export | national-team-sourced values are never overwritten by the pipeline |
 | **enqueue** | code | full `ReviewItem` (side-by-side values, critique, retrieval trace incl. source texts, merged candidate record with `lineage`) → `data/queue/<country>_<target>_<system year>.json` | re-runs of the same system year overwrite that item; an already-reviewed one is never clobbered (unless `--force`) |
 
@@ -137,6 +137,63 @@ three behaviours:
 
 The one-year offset of EUROMOD *datasets* (FR_2024_b1 holds 2023 incomes) is an
 input-data/uprating concern and deliberately plays no role in parameter dating.
+
+### Gap-fill: ingesting more law when the corpus falls short
+
+The corpus is never complete, and pre-ingesting everything is not an option —
+so the agent fetches what it turns out to need, mid-run. This is the scout, and
+it is a loop, not a single shot:
+
+```
+retrieve → propose → critique
+     ↑                   │  still missing the establishing text?
+     │                   ↓
+     └──── ingest ← scout (LLM + official-domain web search)
+```
+
+**What starts a round** (`pipeline._needs_gap_fill`) — three situations, all
+meaning *fetch more law and try again*:
+
+- no proposal at all, or the analyst returned `found=false`;
+- the item routed `provisional` (the act for this income year has not reached
+  the corpus, so only last year's value was found);
+- a proposal exists but the critique failed **for a source-availability
+  reason** — the cited chunk was not among the hits, or nothing ties the cited
+  article to the income year.
+
+A proposal that survives the critique never starts a round, and neither does
+one the critique rejected on its own merits: fetching more law cannot fix a
+unit error, and spending an ingest on it would be waste.
+
+**What the scout hunts.** Not the parameter label — *what the analyst just said
+it was missing*. `ProposalDraft.missing_sources` is a structured list of the
+documents needed, named in the law's own words ("l'arrêté fixant le plafond
+annuel de la sécurité sociale pour 2025", "article L. 241-3 du code de la
+sécurité sociale"); the prose `reasoning` is the fallback, and the critique's
+own issues are the last resort. The scout is also given the citations already
+in the database, so it does not spend its ingest budget re-fetching them. The
+model routinely knows exactly which act it lacks — this is what makes that
+knowledge actionable rather than prose in a trace.
+
+**Why more than one round.** Values hide behind chains of cross-reference: the
+code article names an implementing order, which names another. Each round is
+driven by what the *previous* round's proposal still lacked, so the chain
+resolves one hop at a time instead of stopping after the first. The loop ends
+as soon as a proposal survives the critique, when a round ingests nothing new
+(another round would ask the same question), or at the round cap.
+
+**Budget.** `WORKFLOW_SCOUT_MAX_ROUNDS` (default 2) rounds, each ingesting at
+most `WORKFLOW_SCOUT_MAX_INGEST` (default 2) instruments. Ids already tried in
+this run — ingested or failed — are never retried in a later round. Each round
+costs an ingest plus an incremental embedding pass, which is why the defaults
+are low; raise them for a backfill, not for an interactive run.
+
+**What does not change.** Web search and the LLM only ever *discover* which
+official document to fetch. The text itself always enters through Nomotheca's
+archive-first ingest (fetch → snapshot → parse → chunk), and the proposal's
+`supporting_extract` is still verified character-for-character against the
+database. Nothing the scout reads on the web can become evidence, and
+`missing_sources` names documents, never values.
 
 ### Parameters no legislation states (`source_type: national_team`)
 
