@@ -7,20 +7,23 @@
     "temporal_basis": "Stated per parameter by the store, never re-derived here. The entries below are in_force parameters (CSG and social-contribution constants), NOT the income-year income-tax family: no FR-style Y-1 offset applies to them. An income_year entry added later must carry `expected_valid_from` at the income-year start, per schema.income_year_for.",
     "expected_value": "EUROMOD's own spelling of the value, formula included. That is the point of this file: '$PSS * 4' is the ground truth, not the 188 400 EUR it evaluates to. normalise_value resolves $-references through the constants map, so a proposal that inlines the euro amount still scores as equal on the value leg — the difference shows up on the citation and extract legs, where it belongs.",
     "routing": "Prefer omitting `routing:` and letting route_against_current decide. A stated routing that contradicts the store SKIPS the entry rather than writing ground truth the drafter believes is wrong.",
-    "source": "Every entry resolves through the parameter store by model_target; the parameter file under data/parameters/eval/ is materialized from it, never hand-authored."
+    "source": "Every entry resolves through the parameter store by model_target; the parameter file under data/parameters/eval/ is materialized from it, never hand-authored.",
+    "derive_candidates": "FR has no *scorable* derive case today and this is why. Formula-valued FR parameters split in two: $-referenced ones ($csg_red_thres = '$PSS * 4') short-circuit to routing `derived` before retrieval, so they test recognition rather than reading-and-computing; arithmetic-only ones are 24 bhotn_fr housing weighted averages ('(287.35*9+290.34*3)/12#m' — also the only real mid_year_change hazard in the set) plus sickcomp_fr's $bhl_std_rate2b = '2/3' and $bhl_std_rate5 = '12*3/730'. None of their stating acts is ingested: no APL/allocation-logement arrete is in the corpus, and only 4 Code du travail units are, not L1226-1. Ingest one of those and the first scorable FR derive case becomes a two-line entry here."
   },
   "entries": [
     {
       "model_target": "euromod://FR/tinty_fr/def_const/$csg_red_thres",
       "source_class": "codified_law",
-      "expected_value": "$PSS * 4",
+      "expected_value": null,
       "citations": [
         "LEGITEXT000006073189, art. L136-2",
         "CSS, art. L136-2"
       ],
-      "note": "DERIVE — the ceiling of the 1.75% professional-expenses abatement on the CSG base: below it the CSG is levied on 98.25% of gross earnings, above it on 100%. CSS art. L136-2 states the ceiling only by reference — 'Sur le montant brut inferieur a quatre fois la valeur du plafond mentionne a l'article L. 241-3' — so the value exists nowhere as a number: the article gives the multiplier, and the PSS it multiplies is fixed each year by a separate arrete. EUROMOD stores exactly that composition, '$PSS * 4', unchanged since 2006. A correct proposal reproduces the reference rather than the 188 400 EUR it evaluates to for 2025, which makes this the FR counterpart of LT's tinta_higher_thres and the natural sibling of the constdef_pss case already in the set. Both halves are in the corpus: art. L136-2 is ingested, and $PSS is itself a golden case.",
+      "note": "DERIVE — EUROMOD holds '$PSS * 4'. the ceiling of the 1.75% professional-expenses abatement on the CSG base: below it the CSG is levied on 98.25% of gross earnings, above it on 100%. CSS art. L136-2 states the ceiling only by reference — 'Sur le montant brut inferieur a quatre fois la valeur du plafond mentionne a l'article L. 241-3' — so the value exists nowhere as a number: the article gives the multiplier, and the PSS it multiplies is fixed each year by a separate arrete. EUROMOD stores exactly that composition, '$PSS * 4', unchanged since 2006. A correct proposal reproduces the reference rather than the 188 400 EUR it evaluates to for 2025, which makes this the FR counterpart of LT's tinta_higher_thres and the natural sibling of the constdef_pss case already in the set. Both halves are in the corpus: art. L136-2 is ingested, and $PSS is itself a golden case. ROUTING: `derived`, not `unchanged`. pipeline._derived_refs short-circuits any parameter whose stored value carries a $-reference straight to Routing.DERIVED, before retrieval and before any LLM call — \"a value like `$PSS * 4` has no independent legislative existence: the anchor parameter is what legislation sets, so asking the corpus about the derived one is a guaranteed not_found\". The first run of this case expected `unchanged` and scored it a model failure; the model was right and the ground truth was wrong. `expected_value` is therefore null (the value leg is not scored): what this case tests is that the pipeline recognises the formula and routes to the anchor instead of hunting the corpus for a number that is not in it. It keeps difficulty `derive` because the rung describes the parameter, not which legs score.",
       "id": "tinty_csg_red_thres",
-      "corpus_available": true
+      "corpus_available": true,
+      "routing": "derived",
+      "difficulty": "derive"
     }
   ]
 }
