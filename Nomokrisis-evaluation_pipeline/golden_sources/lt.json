@@ -7,7 +7,8 @@
     "temporal_basis": "LT parameters are in_force (no income-year offset): tax and benefit values apply in the calendar year they are in force. The export carries uprating projections out to 2027, so drafting must read the value in force at as_of, not the last row.",
     "expected_value": "Hand-curated ground truth from the acts (the LAW's value). Percent-string values are kept in EUROMOD's own spelling ('8.72%'): normalise_value reads a percent literal as the rate it denotes (0.0872), so it compares correctly against the unit-/1 form used elsewhere in the store. null means the value leg is not scored.",
     "routing": "The routing a correct pipeline owes, which is the pipeline's own question: does the proposal differ from the value EUROMOD CURRENTLY HOLDS? It is not 'did the law change this year?'. The system-year N export already encodes the law of year N, so a parameter the legislature changed for N and that the export already carries routes `unchanged` — the pipeline's job there is to re-confirm it with a citation, and the difficulty of the case still lands on the value, citation and retrieval legs. Reserve `changed` for parameters where EUROMOD is genuinely stale relative to the law. Prefer leaving `routing:` out entirely and letting route_against_current decide; state it only where the stored value cannot be normalised (percent strings) or the case exists to pin a routing trap (derived, national_team_source). A stated routing that contradicts route_against_current SKIPS the entry — the drafter will not write ground truth it believes is wrong.",
-    "source": "Every entry resolves through the parameter store: model_target for scalars, group_id for the PIT schedule assembled from the export's own groups block (LT is the new export schema, unlike IE). No entry reads a hand-authored parameter file. Run curate-params curation/LT.curation.yaml after ingest-params or the national_team case cannot route."
+    "source": "Every entry resolves through the parameter store: model_target for scalars, group_id for the PIT schedule assembled from the export's own groups block (LT is the new export schema, unlike IE). No entry reads a hand-authored parameter file. Run curate-params curation/LT.curation.yaml after ingest-params or the national_team case cannot route.",
+    "citations": "Write a citation exactly as legal_units.citation spells it in the corpus — 'GPMĮ 20 straipsnis', not 'GPMĮ IX-1007, 20 straipsnis'. LT units are keyed by the act's Lithuanian abbreviation (GPMĮ, IVĮ, VSDĮ, PSPĮ, NSDĮ, LMSDĮ) except the pension law, which the corpus keys by its statute number (I-549 …). A correct pipeline cites what the corpus holds, and citation_matches is one-way containment, so a golden citation carrying the full act name plus the statute number can never match one: the first run of the new dataset scored LT citation 0% and recall 0% while the pipeline had in fact cited the right article in four of seven cases. Instrument-level expectations are legitimate (any article of that act counts) — write just the abbreviation. Put the act's full name in `note`, not in `citations`."
   },
   "entries": [
     {
@@ -16,7 +17,7 @@
       "source_class": "codified_law",
       "routing": "unchanged",
       "citations": [
-        "GPMĮ IX-1007, 6 straipsnis"
+        "GPMĮ 6 straipsnis"
       ],
       "note": "EASY content, table difficulty — the PIT rate schedule (LT's answer to the FR bareme): 20% standard, 32% above the 60-VDU threshold, unchanged for 2025 (the 25% middle band only enters with the 2026 reform — $tin_HigherRate's first value row is 2026-01-01, so the assembled 2025 schedule has two live bands). Caveats to check when drafting: the group is rates-only (thresholds default to 0.0 in load_group_record output) and the component rates are percent strings.",
       "id": "tin_schedule"
@@ -28,7 +29,7 @@
       "expected_value": 0.49,
       "expected_valid_from": "2025-01-01",
       "citations": [
-        "GPMĮ IX-1007, 20 straipsnis"
+        "GPMĮ 20 straipsnis"
       ],
       "note": "EASY — the NPD (basic allowance) withdrawal coefficient in the GPMI art. 20 formula, 0.5 -> 0.49 for 2025. A genuine numeric change stated verbatim in an ingested act: the LT happy path. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
       "id": "tinta_basic_withdrate_higher"
@@ -39,7 +40,7 @@
       "routing": "unchanged",
       "expected_value": "747#m",
       "citations": [
-        "GPMĮ IX-1007, 20 straipsnis"
+        "GPMĮ 20 straipsnis"
       ],
       "note": "MEDIUM — maximum NPD: EUROMOD stores 8964#y (the 2024 row, no 2025 change point), the law states 747/month; expected value 747#m so the case exercises the y<->m cross-period comparison. This is the lag-warning scenario: an annually-indexed-by-habit parameter where 'unchanged' happens to be genuinely correct for 2025 — only the act proves it, so the pipeline must cite the absence of an amendment rather than pattern-match the yearly-uprate habit.",
       "id": "tinta_max_amt"
@@ -50,7 +51,7 @@
       "routing": "unchanged",
       "expected_value": "8.72%",
       "citations": [
-        "VSDĮ I-1336"
+        "VSDĮ"
       ],
       "note": "MEDIUM — employee pension social-insurance contribution, 8.72% since the 2019 tax reform. Unchanged trap plus the percent-string scoring gap (expected kept in string form until normalise_value grows a % branch). Pin the exact VSDI article (rates are approved via the annual SSI fund budget indicators law — decide which citation is canonical) when drafting.",
       "id": "tsceepi_rate"
@@ -61,7 +62,7 @@
       "routing": "unchanged",
       "expected_value": 1.75,
       "citations": [
-        "Išmokų vaikams įstatymas I-621, 6 straipsnis"
+        "IVĮ 6 straipsnis"
       ],
       "note": "MEDIUM-HARD — universal child benefit coefficient, 1.75 since 2021. The law states benefit sizes as COEFFICIENTS of the basic social allowance (bazine socialine ismoka), not euros: tests that the pipeline extracts the legislated coefficient rather than the computed euro amount (1.75 x BSA), and that it does not 'update' the coefficient when only the BSA changes.",
       "id": "bchnm_coef"
@@ -73,8 +74,8 @@
       "routing": "unchanged",
       "expected_value": 60,
       "citations": [
-        "GPMĮ IX-1007, 6 straipsnis",
-        "VSDĮ I-1336"
+        "GPMĮ 6 straipsnis",
+        "VSDĮ"
       ],
       "note": "HARD — the PIT/SIC ceiling coefficient: the law says '60 vidutiniu darbo uzmokesciu' (60 average wages, since 2021, after the 120 -> 84 -> 60 phase-in), EUROMOD stores the bare coefficient 60 while the euro cap is computed as $AMS x 60 / 12. Reconstruction case: the pipeline must recognise which quantity is legislated (the multiple) and which is EUROMOD arithmetic — the LT counterpart of FR's PSS x3/x4/x8 combine cases.",
       "id": "tin_maxlimit_coef3"
@@ -110,7 +111,7 @@
       "expected_value": 64.66,
       "expected_valid_from": "2025-01-01",
       "citations": [
-        "Valstybinių socialinio draudimo pensijų įstatymas I-549"
+        "I-549 57 straipsnis"
       ],
       "note": "IMPOSSIBLE today — official pension age for women in 2025: 64 years 8 months, i.e. 64.66 in EUROMOD's decimal convention. The statute states a STEP SCHEDULE (+4 months per year, reaching 65 in 2026), not the per-year value: the pipeline must derive the cohort value from the schedule and convert months to a decimal — derivation-not-extraction, plus a representation-convention trap (64.66 vs 64.67 vs 64+8/12). Pin the exact article/annex of the pension-age schedule when drafting. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
       "id": "pensionagefemale"
@@ -127,14 +128,15 @@
     {
       "model_target": "euromod://LT/ConstDef_lt/def_const/$tinta_higher_thres",
       "source_class": "codified_law",
-      "expected_value": "100%*$MMS",
+      "expected_value": null,
       "citations": [
-        "GPMĮ IX-1007, 20 straipsnis",
         "GPMĮ 20 straipsnis"
       ],
-      "note": "DERIVE — the income point at which the higher basic PIT allowance starts being withdrawn. GPMĮ art. 20(1) sets it by reference, not by amount: the maximum annual NPD applies while annual income does not exceed 'minimaliosios menesines algos, galiojusios einamuju kalendoriniu metu sausio 1 diena, dvylikos dydziu suma' — twelve times the minimum monthly wage in force on 1 January. EUROMOD stores the monthly form of that same quantity, '100%*$MMS'. Two things have to go right: read a threshold the article never states as a number, and express it against $MMS rather than resolving it to euros. cross_instrument is real here — the MMA itself is fixed by a Government nutarimas that is NOT ingested (see the mms entry) — so a proposal that keeps the reference is correct while one that inlines 1038 is not.",
+      "note": "DERIVE — EUROMOD holds '100%*$MMS'. the income point at which the higher basic PIT allowance starts being withdrawn. GPMĮ art. 20(1) sets it by reference, not by amount: the maximum annual NPD applies while annual income does not exceed 'minimaliosios menesines algos, galiojusios einamuju kalendoriniu metu sausio 1 diena, dvylikos dydziu suma' — twelve times the minimum monthly wage in force on 1 January. EUROMOD stores the monthly form of that same quantity, '100%*$MMS'. Two things have to go right: read a threshold the article never states as a number, and express it against $MMS rather than resolving it to euros. cross_instrument is real here — the MMA itself is fixed by a Government nutarimas that is NOT ingested (see the mms entry) — so a proposal that keeps the reference is correct while one that inlines 1038 is not. ROUTING: `derived`, not `unchanged`. pipeline._derived_refs short-circuits any parameter whose stored value carries a $-reference straight to Routing.DERIVED, before retrieval and before any LLM call — \"a value like `$PSS * 4` has no independent legislative existence: the anchor parameter is what legislation sets, so asking the corpus about the derived one is a guaranteed not_found\". The first run of this case expected `unchanged` and scored it a model failure; the model was right and the ground truth was wrong. `expected_value` is therefore null (the value leg is not scored): what this case tests is that the pipeline recognises the formula and routes to the anchor instead of hunting the corpus for a number that is not in it. It keeps difficulty `derive` because the rung describes the parameter, not which legs score.",
       "id": "tinta_higher_thres",
-      "corpus_available": true
+      "corpus_available": true,
+      "routing": "derived",
+      "difficulty": "derive"
     }
   ]
 }
