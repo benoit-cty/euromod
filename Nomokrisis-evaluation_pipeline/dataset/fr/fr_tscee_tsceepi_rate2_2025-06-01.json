@@ -16,7 +16,8 @@
     ]
   },
   "corpus_available": true,
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prelevements_sociaux.cotisations_securite_sociale_regime_general.cnav.salarie.vieillesse_deplafonnee :: brackets[1].rate | openfisca value at 2025-06-01: 0.004 (change point 2017-01-01) | euromod value in force at 2025-06-01: 0.004 from 2017-01-01 | link: fingerprint score 0.80"
+  "notes": "openfisca: prelevements_sociaux.cotisations_securite_sociale_regime_general.cnav.salarie.vieillesse_deplafonnee :: brackets[1].rate | openfisca value at 2025-06-01: 0.004 (change point 2017-01-01) | euromod value in force at 2025-06-01: 0.004 from 2017-01-01 | link: fingerprint score 0.80",
+  "reviewed_by": "ben"
 }

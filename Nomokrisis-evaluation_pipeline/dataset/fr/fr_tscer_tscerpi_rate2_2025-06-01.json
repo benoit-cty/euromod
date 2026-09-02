@@ -15,7 +15,8 @@
     ]
   },
   "corpus_available": true,
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prelevements_sociaux.cotisations_securite_sociale_regime_general.cnav.employeur.vieillesse_deplafonnee :: brackets[1].rate | openfisca value at 2025-06-01: 0.0202 (change point 2024-01-01) | euromod value in force at 2025-06-01: 0.0202 from 2024-01-01 | link: fingerprint score 0.80 | references not resolved in the legislation corpus: Décret 2023-1329 du 29/12/2023, art. 1 [JORFARTI000048727897] not in the corpus (not scorable)"
+  "notes": "openfisca: prelevements_sociaux.cotisations_securite_sociale_regime_general.cnav.employeur.vieillesse_deplafonnee :: brackets[1].rate | openfisca value at 2025-06-01: 0.0202 (change point 2024-01-01) | euromod value in force at 2025-06-01: 0.0202 from 2024-01-01 | link: fingerprint score 0.80 | references not resolved in the legislation corpus: Décret 2023-1329 du 29/12/2023, art. 1 [JORFARTI000048727897] not in the corpus (not scorable)",
+  "reviewed_by": "ben"
 }

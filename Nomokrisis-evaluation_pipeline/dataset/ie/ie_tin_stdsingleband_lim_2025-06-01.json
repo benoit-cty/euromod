@@ -15,7 +15,8 @@
       "TCA 1997, s. 15"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "human",
-  "notes": "curated: ie.json#tin_stdsingleband_lim | euromod value in force at 2025-06-01: 44000.0 from 2025-01-01 | EASY — the income-tax bracket case. Standard rate band, single person: 42,000 -> 44,000 for 2025, stated verbatim in Finance Act 2024 s. 3 (ingested, English, one section carries the whole PIT parameter set). The pipeline's happy path. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test."
+  "notes": "curated: ie.json#tin_stdsingleband_lim | euromod value in force at 2025-06-01: 44000.0 from 2025-01-01 | EASY — the income-tax bracket case. Standard rate band, single person: 42,000 -> 44,000 for 2025, stated verbatim in Finance Act 2024 s. 3 (ingested, English, one section carries the whole PIT parameter set). The pipeline's happy path. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
+  "reviewed_by": "ben"
 }

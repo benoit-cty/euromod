@@ -15,7 +15,8 @@
       "TCA 1997, s. 531AN"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "human",
-  "notes": "curated: ie.json#txcin_rate3 | euromod value in force at 2025-06-01: 0.03 from 2025-01-01 | MEDIUM — USC middle rate cut 4% -> 3% (Budget 2025). Stored numerically (0.03) so it scores cleanly, unlike the percent-string rates. USC lives in TCA Part 18D, amended by FA 2024 s. 2 — a different section than the PIT family. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test."
+  "notes": "curated: ie.json#txcin_rate3 | euromod value in force at 2025-06-01: 0.03 from 2025-01-01 | MEDIUM — USC middle rate cut 4% -> 3% (Budget 2025). Stored numerically (0.03) so it scores cleanly, unlike the percent-string rates. USC lives in TCA Part 18D, amended by FA 2024 s. 2 — a different section than the PIT family. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
+  "reviewed_by": "ben"
 }
