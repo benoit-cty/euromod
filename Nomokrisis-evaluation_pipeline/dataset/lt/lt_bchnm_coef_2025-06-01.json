@@ -1,0 +1,22 @@
+{
+  "id": "lt_bchnm_coef_2025-06-01",
+  "country": "LT",
+  "language": "lt",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_lt_constdef_lt_def_const_bchnm_coef.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 1.75,
+    "citations": [
+      "Išmokų vaikams įstatymas I-621, 6 straipsnis"
+    ]
+  },
+  "verified": true,
+  "drafted_by": "human",
+  "reviewed_by": "ben",
+  "notes": "curated: lt.json#bchnm_coef | euromod value in force at 2025-06-01: 1.75 from 2021-01-01 | MEDIUM-HARD — universal child benefit coefficient, 1.75 since 2021. The law states benefit sizes as COEFFICIENTS of the basic social allowance (bazine socialine ismoka), not euros: tests that the pipeline extracts the legislated coefficient rather than the computed euro amount (1.75 x BSA), and that it does not 'update' the coefficient when only the BSA changes."
+}

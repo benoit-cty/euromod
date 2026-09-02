@@ -31,7 +31,7 @@ Rationale: T2 keeps rigor where it matters (nothing enters the model unvalidated
 
 Core tables (detailed in `08_schema-proposal-for-validation.md`):
 
-- `parameters` — identity & addressing: country, model target (EUROMOD system/policy/function/parameter path), labels, unit, value type (scalar / bracket_schedule / boolean / formula).
+- `parameters` — identity & addressing: country, model target (EUROMOD system/policy/function/parameter path), labels, unit, value type (scalar / bracket_schedule / boolean / formula), and `temporal_basis` (`in_force` default | `income_year`). `temporal_basis = income_year` marks parameters where the EUROMOD system year is the *income* year while the enacting act is published the following year (FR income-tax family: the barème for 2025 income sits in the finance act consolidated in early 2026). Value rows stay back-dated to the income-year start (`valid_from = Y-01-01`, the OpenFisca convention, which coincides with EUROMOD's system-year-equals-income-year rule); the workflow uses the flag to shift *retrieval* to versions in force mid-year Y+1 and to check the cited version against the budget-act window. Curated knowledge — never derivable from the EUROMOD export, never overwritten by re-ingest.
 - `parameter_values` — one row per (parameter, `valid_from`): typed value, `valid_to` (nullable = still valid), `legal_status`, `source_type`, dates (effective / publication / signature, all distinct), confidence.
 - `value_references` — 0..n per value row: instrument title, pinpoint (article), URL/ELI, `supporting_extract` (verbatim original-language sentence), optional FK + offsets into the RAG's `legal_units` chunks (enables automated supportedness checks).
 - `extraction_runs` — lineage: run id, model, prompt version, retrieval trace; FK from value rows proposed by the pipeline.
@@ -55,7 +55,6 @@ Core tables (detailed in `08_schema-proposal-for-validation.md`):
 
 ## 6. Validation process before implementation
 
-- Circulate doc 08 + question list (`09_schema-validation-questions.md`) to Hannes, Luis, Kosta, Hugo ahead of kick-off; walk through the worked examples live; capture decisions in `07_risks-and-decisions.md` decision log.
 - Acceptance = JRC sign-off on doc 08's decision points; then freeze schema v1.0.
 
 ## 7. Inputs still needed from JRC

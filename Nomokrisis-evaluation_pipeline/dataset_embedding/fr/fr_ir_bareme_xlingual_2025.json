@@ -1,0 +1,12 @@
+{
+  "id": "fr_ir_bareme_xlingual_2025",
+  "country": "FR",
+  "language": "en",
+  "corpus_lang": "fr",
+  "as_of": "2025-06-01",
+  "query": "French personal income tax schedule: bracket thresholds and marginal rates applied to each share of taxable income",
+  "expected_citations": ["CGI, art. 197"],
+  "verified": false,
+  "drafted_by": "claude-fable-5",
+  "notes": "Cross-lingual case (en query over the fr corpus) — exercises BGE-M3's multilingual embedding space; FTS is expected to miss, the vector leg to hit."
+}

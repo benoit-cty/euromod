@@ -1,0 +1,22 @@
+{
+  "id": "fr_tinty_tscxc_thres5_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinty_fr_def_const_tscxc_thres5.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 26004.0,
+    "valid_from": "2025-01-01",
+    "citations": []
+  },
+  "corpus_available": false,
+  "verified": true,
+  "drafted_by": "openfisca@a7038ee",
+  "reviewed_by": "ben",
+  "notes": "openfisca: prelevements_sociaux.contributions_sociales.csg.remplacement.seuils.seuil_rfr3.seuil_rfr3 | openfisca value at 2025-06-01: 26004.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 26004.0 from 2025-01-01 | link: fingerprint score 0.86 | corpus_available: false — not one of this parameter's OpenFisca references resolves in the legislation corpus, so no retrieval can reach the text stating the value. The case measures ingest coverage; it is excluded from the 'source in corpus' KPI slice until the act is ingested | references not resolved in the legislation corpus: Article L136-8 du Code de la sécurité sociale (seuils avant revalorisation) [LEGIARTI000042683546] not in the corpus (not scorable); Lettre ministérielle D-24-019252 du 4/12/2024 (no Legifrance id)"
+}

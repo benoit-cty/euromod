@@ -1,0 +1,72 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tin_fr/def_const/$tinto_rate1",
+    "spine_order": "31",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Rate 1 for exceptional contributions"
+    },
+    "short_label": {
+      "en": "$tinto_rate1"
+    },
+    "description": {
+      "en": "Marginal rate of 3% applied to the reference tax income (RFR) band above the first threshold under the CEHR exceptional contribution on high incomes. In tin_fr's SchedCalc function it is used as the Band_Rate for the exceptional-contribution schedule, applying to income between EUR 250,000 and EUR 500,000 for singles (and, per the same rate table, between EUR 500,000 and EUR 1,000,000 for couples). Despite the JSON 'currency' unit tag, the value (0.03) is a percentage rate, consistent with Table 2.82 of the country report showing CEHR rates for 2022-2025."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Parameters for exceptional contributions on high income"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "income_year"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": "2012-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.03,
+      "valid_from": "2013-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.03",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

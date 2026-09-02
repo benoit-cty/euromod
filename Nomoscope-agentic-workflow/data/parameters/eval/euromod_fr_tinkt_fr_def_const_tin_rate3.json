@@ -1,0 +1,72 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tinkt_fr/def_const/$tin_rate3",
+    "spine_order": "28",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Rate in band 3"
+    },
+    "short_label": {
+      "en": "$tin_rate3"
+    },
+    "description": {
+      "en": "Marginal tax rate for the third band of the progressive personal income tax schedule, currently 11% (0.11), applied to taxable income between $tin_upthres1 and $tin_upthres3 (roughly 11 497 to 29 314 EUR in 2025, Table 2.77). It is used as the Band_Rate parameter in the tin_fr SchedCalc \"Gross income tax (before any IMAX corrections)\" and in tinkt_fr's \"Imax: New gross tax using new QF\" recalculation."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Paramteres of the income tax"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "income_year"
+  },
+  "values": [
+    {
+      "value": 0.14,
+      "valid_from": "2006-01-01",
+      "valid_to": "2019-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.14",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.11,
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "0.11",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

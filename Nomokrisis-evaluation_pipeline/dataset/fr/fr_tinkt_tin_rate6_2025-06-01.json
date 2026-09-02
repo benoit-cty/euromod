@@ -1,0 +1,28 @@
+{
+  "id": "fr_tinkt_tin_rate6_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinkt_fr_def_const_tin_rate6.json",
+  "as_of": "2025-06-01",
+  "difficulty": "combine",
+  "hazards": [
+    "income_year",
+    "cross_instrument"
+  ],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 0.45,
+    "valid_from": "2024-01-01",
+    "citations": [
+      "JORFTEXT000051168007, art. 2",
+      "CGI, art. 197"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "openfisca@a7038ee",
+  "reviewed_by": "ben",
+  "notes": "openfisca: impot_revenu.bareme_ir_depuis_1945.bareme :: brackets[5].rate | openfisca value at 2024-01-01: 0.45 (change point 2014-01-01) | euromod value in force at 2025-06-01: 0.45 from 2012-01-01 | link: manual | references not resolved in the legislation corpus: Article 197, I.1. du Code général des impôts [LEGIARTI000046860759] not in the corpus (not scorable) | Barème IR top rate (45%)."
+}

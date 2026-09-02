@@ -1,0 +1,26 @@
+{
+  "id": "ie_bunct_rate1_2025-06-01",
+  "country": "IE",
+  "language": "en",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_bunct_ie_def_const_bunct_rate1.json",
+  "as_of": "2025-06-01",
+  "difficulty": "combine",
+  "hazards": [
+    "cross_instrument"
+  ],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "109.50#w",
+    "valid_from": "2025-01-01",
+    "citations": [
+      "Social Welfare Act 2024",
+      "Social Welfare Consolidation Act 2005, Sch. 2"
+    ]
+  },
+  "verified": true,
+  "drafted_by": "human",
+  "reviewed_by": "ben",
+  "notes": "curated: ie.json#bunct_rate1 | euromod value in force at 2025-06-01: 109.5 from 2025-01-01 | MEDIUM-HARD — Jobseeker's Benefit graduated personal rate (earnings band 1), 109.50/week for 2025. The value sits in a rates SCHEDULE (table retrieval, not prose) of the annual Social Welfare Act amending SWCA 2005 Sch. 2, and the weekly basis (#w) exercises the x4.34 cross-period conversion the FR set barely touches. Pin the exact amending section when drafting. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test."
+}

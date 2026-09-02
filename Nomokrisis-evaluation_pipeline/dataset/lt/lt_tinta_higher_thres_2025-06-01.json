@@ -1,0 +1,26 @@
+{
+  "id": "lt_tinta_higher_thres_2025-06-01",
+  "country": "LT",
+  "language": "lt",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_lt_constdef_lt_def_const_tinta_higher_thres.json",
+  "as_of": "2025-06-01",
+  "difficulty": "derive",
+  "hazards": [
+    "cross_instrument"
+  ],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "100%*$MMS",
+    "citations": [
+      "GPMĮ IX-1007, 20 straipsnis",
+      "GPMĮ 20 straipsnis"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: lt.json#tinta_higher_thres | euromod value in force at 2025-06-01: '100%*$MMS' from 2016-01-01 | DERIVE — the income point at which the higher basic PIT allowance starts being withdrawn. GPMĮ art. 20(1) sets it by reference, not by amount: the maximum annual NPD applies while annual income does not exceed 'minimaliosios menesines algos, galiojusios einamuju kalendoriniu metu sausio 1 diena, dvylikos dydziu suma' — twelve times the minimum monthly wage in force on 1 January. EUROMOD stores the monthly form of that same quantity, '100%*$MMS'. Two things have to go right: read a threshold the article never states as a number, and express it against $MMS rather than resolving it to euros. cross_instrument is real here — the MMA itself is fixed by a Government nutarimas that is NOT ingested (see the mms entry) — so a proposal that keeps the reference is correct while one that inlines 1038 is not.",
+  "reviewed_by": "ben"
+}

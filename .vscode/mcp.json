@@ -1,13 +1,13 @@
 {
   "servers": {
-    "euromod-legislation": {
+    "nomotheca-legislation": {
       "type": "stdio",
       "command": "uv",
       "args": [
         "--directory",
         "${workspaceFolder}/mcp-server",
         "run",
-        "euromod-legislation-mcp"
+        "nomotheca-legislation-mcp"
       ]
     }
   }

@@ -1,0 +1,72 @@
+{
+  "information": {
+    "country": "IE",
+    "model_target": "euromod://IE/tco_ie/def_const/$tco_t_01131",
+    "spine_order": "59",
+    "value_type": "scalar",
+    "unit": "/1",
+    "threshold_unit": null,
+    "label": {
+      "en": "01131 : 01 Food and nonalcoholic beverages  - 1 Food  - 3 Fish  - 1 Fresh, chilled or frozen fish"
+    },
+    "short_label": {
+      "en": "$tco_t_01131"
+    },
+    "description": {
+      "en": "VAT rate for COICOP category 01131 — Fresh, chilled or frozen fish (01 Food and nonalcoholic beverages > 1 Food > 3 Fish > 1 Fresh, chilled or frozen fish). The Consumption-Tax add-on (CT_XBASE) reads this parameter through its LIST_ct income-list (RegExp_Def '$tco_t_[0-9]+', 'vat rates') to build consumer prices and the implicit consumption-tax rate applied to household expenditure in this COICOP category (excise goods are handled in a second price step); the matching $tco_base_* value supplies the no-reform baseline used to isolate the tax effect."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Parameters: vat rates (all goods)"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": "n/a",
+      "valid_from": "2006-01-01",
+      "valid_to": "2009-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": "n/a",
+      "valid_from": "2011-01-01",
+      "valid_to": "2018-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

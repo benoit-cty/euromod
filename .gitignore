@@ -1,5 +1,7 @@
 **/__pycache__/
-RAG/ingest/.venv-linux/
-RAG/ingest/logs/
-RAG/ingest/models/*
+Nomotheca-RAG/ingest/.venv-linux/
+Nomotheca-RAG/ingest/logs/
+Nomotheca-RAG/ingest/models/*
 .env
+**/.quarto/
+Nomoscope-agentic-workflow/data/parameters/db/*.json

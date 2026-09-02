@@ -1,0 +1,11 @@
+{
+  "id": "es_irpf_escala_2025",
+  "country": "ES",
+  "language": "es",
+  "as_of": "2025-06-01",
+  "query": "escala general aplicable a la base liquidable del impuesto sobre la renta, tipos por tramos",
+  "expected_citations": ["Ley 35/2006, artículo 63"],
+  "verified": false,
+  "drafted_by": "claude-fable-5",
+  "notes": "Smoke case: single-chunk ES corpus for now."
+}

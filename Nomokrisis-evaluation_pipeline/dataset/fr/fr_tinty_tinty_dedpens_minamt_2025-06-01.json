@@ -1,0 +1,24 @@
+{
+  "id": "fr_tinty_tinty_dedpens_minamt_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinty_fr_def_const_tinty_dedpens_minamt.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [
+    "income_year"
+  ],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 450.0,
+    "valid_from": "2024-01-01",
+    "citations": []
+  },
+  "corpus_available": false,
+  "verified": true,
+  "drafted_by": "openfisca@a7038ee",
+  "reviewed_by": "ben",
+  "notes": "openfisca: impot_revenu.calcul_revenus_imposables.deductions.abatpen.min | openfisca value at 2024-01-01: 450.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 450.0 from 2025-01-01 | link: fingerprint score 0.88 | corpus_available: false — not one of this parameter's OpenFisca references resolves in the legislation corpus, so no retrieval can reach the text stating the value. The case measures ingest coverage; it is excluded from the 'source in corpus' KPI slice until the act is ingested | references not resolved in the legislation corpus: Article 158, 5.a. du Code général des impôts [LEGIARTI000042909707] not in the corpus (not scorable)"
+}

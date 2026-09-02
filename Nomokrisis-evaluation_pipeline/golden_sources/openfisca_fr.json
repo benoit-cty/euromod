@@ -1,0 +1,268 @@
+{
+  "country": "FR",
+  "language": "fr",
+  "corpus": "openfisca",
+  "description": "Hand-curated core of the FR golden set: the parameter families the JRC asked for by name (barème IR, CDHR, CEHR, minimum wage, PSS), each pinned to its OpenFisca-France counterpart. build-openfisca-dataset drafts a case per entry and tops the set up from params.parameter_links. Every drafted case is verified:false until a human confirms it in the UI's Golden set tab.",
+  "conventions": {
+    "temporal_basis": "Taken from the parameter record, never from this file: income_year parameters expect the OpenFisca value keyed <year>-01-01 (income year), in_force ones the value in force at as_of.",
+    "factor": "euromod_value = factor * openfisca_value. EUROMOD stores several SIC ceilings as multiples of the monthly PSS.",
+    "component": "'value' for scalars, 'brackets[i].<field>' for one band of an OpenFisca scale, 'brackets' for the whole schedule.",
+    "source": "Every entry resolves through the parameter store: `model_target` for a single parameter in params.parameters, `group_id` for a bracket schedule assembled from params.parameter_groups (with `model_target` pinning the assembled record's established identity). No entry reads a hand-authored parameter file."
+  },
+  "entries": [
+    {
+      "group_id": "FR:tinkt_fr:tin_schedule",
+      "openfisca_path": "impot_revenu.bareme_ir_depuis_1945.bareme",
+      "component": "brackets",
+      "difficulty": "table",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Barème IR as one table case, assembled from params.parameter_groups FR:tinkt_fr:tin_schedule (bands 1/3/4/5/6 of the export's own schedule definition). EUROMOD's 2025 thresholds are one euro below CGI art. 197 — a known error on the EUROMOD side, to be corrected by the economists team, so the expected value is the law's.",
+      "id": "tinkt_tin_schedule"
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_upthres1",
+      "openfisca_path": "impot_revenu.bareme_ir_depuis_1945.bareme",
+      "component": "brackets[2].threshold",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Barème IR band 1 upper limit. EUROMOD holds the schedule applied in the system year (previous year's income); the income-year convention expects the following finance act's value. EUROMOD's 2025 value is one euro below the law (a known EUROMOD-side error, being corrected by the economists team); the expected value is the law's."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_upthres3",
+      "openfisca_path": "impot_revenu.bareme_ir_depuis_1945.bareme",
+      "component": "brackets[3].threshold",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Barème IR band 3 upper limit. EUROMOD's 2025 value is one euro below the law (a known EUROMOD-side error, being corrected by the economists team); the expected value is the law's."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_upthres4",
+      "openfisca_path": "impot_revenu.bareme_ir_depuis_1945.bareme",
+      "component": "brackets[4].threshold",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Barème IR band 4 upper limit. EUROMOD's 2025 value is one euro below the law (a known EUROMOD-side error, being corrected by the economists team); the expected value is the law's."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_upthres5",
+      "openfisca_path": "impot_revenu.bareme_ir_depuis_1945.bareme",
+      "component": "brackets[5].threshold",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Barème IR band 5 upper limit. EUROMOD's 2025 value is one euro below the law (a known EUROMOD-side error, being corrected by the economists team); the expected value is the law's."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_rate1",
+      "openfisca_path": "impot_revenu.bareme_ir_depuis_1945.bareme",
+      "component": "brackets[1].rate",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Barème IR rate of the exempt band (0). A rate that must NOT move — the revalorisation touches thresholds only."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_rate3",
+      "openfisca_path": "impot_revenu.bareme_ir_depuis_1945.bareme",
+      "component": "brackets[2].rate",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Barème IR rate of band 2 (11%). EUROMOD's band 2 slot ($tin_rate2) was abolished in 2015, so band numbering differs by one from OpenFisca's."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_rate4",
+      "openfisca_path": "impot_revenu.bareme_ir_depuis_1945.bareme",
+      "component": "brackets[3].rate",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Barème IR rate of band 3 (30%)."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_rate5",
+      "openfisca_path": "impot_revenu.bareme_ir_depuis_1945.bareme",
+      "component": "brackets[4].rate",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Barème IR rate of band 4 (41%)."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_rate6",
+      "openfisca_path": "impot_revenu.bareme_ir_depuis_1945.bareme",
+      "component": "brackets[5].rate",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Barème IR top rate (45%)."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_decote_amt",
+      "openfisca_path": "impot_revenu.calcul_impot_revenu.plaf_qf.decote.seuil_celib",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Décote ceiling, single taxpayer."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_decote_amt2",
+      "openfisca_path": "impot_revenu.calcul_impot_revenu.plaf_qf.decote.seuil_couple",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Décote ceiling, couple."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_imaxdep_lim1",
+      "openfisca_path": "impot_revenu.calcul_impot_revenu.plaf_qf.plafond_avantages_procures_par_demi_part.celib_enf",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Quotient familial ceiling, single parent."
+    },
+    {
+      "model_target": "euromod://FR/tinkt_fr/def_const/$tin_imaxdep_lim2",
+      "openfisca_path": "impot_revenu.calcul_impot_revenu.plaf_qf.plafond_avantages_procures_par_demi_part.general",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 197"
+      ],
+      "note": "Quotient familial ceiling, general half-share."
+    },
+    {
+      "model_target": "euromod://FR/tin_fr/def_const/$tinrt_cdhr",
+      "openfisca_path": "impot_revenu.contributions_exceptionnelles.contribution_differentielle_hauts_revenus.taux_cdhr",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 224"
+      ],
+      "note": "CDHR: instituted by LF 2025 (14 Feb 2025) FOR 2025 income — the case that exercises the income-year budget-act window and the year-naming extract exemption. Defined inside tinto01_fr, so it reaches params.parameters via extracted_parameters/curated/FR.in_function.json.",
+      "id": "tinrt_cdhr"
+    },
+    {
+      "model_target": "euromod://FR/tin_fr/def_const/$tinto_lim1",
+      "openfisca_path": "impot_revenu.contributions_exceptionnelles.contribution_exceptionnelle_hauts_revenus.celibataire_ou_assimile",
+      "component": "brackets[2].threshold",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 223 sexies"
+      ],
+      "note": "CEHR first threshold, single (250 000 €). Unchanged since 2011 — a no-change case on an income-year parameter."
+    },
+    {
+      "model_target": "euromod://FR/tin_fr/def_const/$tinto_lim2",
+      "openfisca_path": "impot_revenu.contributions_exceptionnelles.contribution_exceptionnelle_hauts_revenus.celibataire_ou_assimile",
+      "component": "brackets[3].threshold",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 223 sexies"
+      ],
+      "note": "CEHR second threshold single / first threshold couple (500 000 €)."
+    },
+    {
+      "model_target": "euromod://FR/tin_fr/def_const/$tinto_lim3",
+      "openfisca_path": "impot_revenu.contributions_exceptionnelles.contribution_exceptionnelle_hauts_revenus.maries_ou_pacses",
+      "component": "brackets[3].threshold",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 223 sexies"
+      ],
+      "note": "CEHR second threshold, couple (1 000 000 €)."
+    },
+    {
+      "model_target": "euromod://FR/tin_fr/def_const/$tinto_rate1",
+      "openfisca_path": "impot_revenu.contributions_exceptionnelles.contribution_exceptionnelle_hauts_revenus.celibataire_ou_assimile",
+      "component": "brackets[2].rate",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 223 sexies"
+      ],
+      "note": "CEHR first rate (3%)."
+    },
+    {
+      "model_target": "euromod://FR/tin_fr/def_const/$tinto_rate2",
+      "openfisca_path": "impot_revenu.contributions_exceptionnelles.contribution_exceptionnelle_hauts_revenus.celibataire_ou_assimile",
+      "component": "brackets[3].rate",
+      "source_class": "codified_law",
+      "citations": [
+        "CGI, art. 223 sexies"
+      ],
+      "note": "CEHR second rate (4%)."
+    },
+    {
+      "model_target": "euromod://FR/SetDefault_fr/def_const/$MinWage",
+      "openfisca_path": "marche_travail.salaire_minimum.smic.smic_b_mensuel",
+      "source_class": "gazette",
+      "note": "SMIC, gross monthly. Revalorised by décret, not by an annual act, and 2025 saw no January raise — the value in force comes from the November 2024 décret."
+    },
+    {
+      "model_target": "euromod://FR/SetDefault_fr/def_const/$Minwage_hourly",
+      "openfisca_path": "marche_travail.salaire_minimum.smic.smic_b_horaire",
+      "source_class": "gazette",
+      "note": "SMIC, gross hourly — the value the décret actually states; the monthly figure is derived from it. KNOWN INPUT DEFECT: the EUROMOD export gives this parameter unit 'currency/month' and stores it as '11.88#m', although 11.88 is the HOURLY rate. A correct pipeline run refuses here — it finds '11,88 euros par heure' in the décret and will not present an hourly figure as a monthly one — so the case scores not_found for a reason that is neither the model's nor the corpus's. Report to the EUROMOD economists team alongside the FR barème 1-€ erratum and IE's 27 382/27 383; the unit cannot be corrected here because extracted_parameters/enriched/FR.enriched.json is read-only and ingest-params overwrites `unit` on every re-ingest."
+    },
+    {
+      "model_target": "euromod://FR/ConstDef_fr/def_const/$PSS",
+      "openfisca_path": "prelevements_sociaux.pss.plafond_securite_sociale_annuel",
+      "source_class": "gazette",
+      "note": "Plafond annuel de la sécurité sociale, fixed each December by arrêté."
+    },
+    {
+      "model_target": "euromod://FR/ConstDef_fr/def_const/$tsc_group1_lim",
+      "openfisca_path": "prelevements_sociaux.pss.plafond_securite_sociale_mensuel",
+      "factor": 1,
+      "source_class": "gazette",
+      "note": "SIC income limit: 1x the monthly PSS."
+    },
+    {
+      "model_target": "euromod://FR/ConstDef_fr/def_const/$tsc_group2_lim",
+      "openfisca_path": "prelevements_sociaux.pss.plafond_securite_sociale_mensuel",
+      "factor": 3,
+      "difficulty": "combine",
+      "source_class": "gazette",
+      "note": "SIC income limit: 3x the monthly PSS. The arrêté states the ceiling once; the multiple is EUROMOD's — a derived-value case."
+    },
+    {
+      "model_target": "euromod://FR/ConstDef_fr/def_const/$tsc_groupA_lim",
+      "openfisca_path": "prelevements_sociaux.pss.plafond_securite_sociale_mensuel",
+      "factor": 1,
+      "source_class": "gazette",
+      "note": "Complementary-pension income limit: 1x the monthly PSS."
+    },
+    {
+      "model_target": "euromod://FR/ConstDef_fr/def_const/$tsc_groupB_lim",
+      "openfisca_path": "prelevements_sociaux.pss.plafond_securite_sociale_mensuel",
+      "factor": 4,
+      "difficulty": "combine",
+      "source_class": "gazette",
+      "note": "Complementary-pension income limit: 4x the monthly PSS."
+    },
+    {
+      "model_target": "euromod://FR/ConstDef_fr/def_const/$tsc_groupC_lim",
+      "openfisca_path": "prelevements_sociaux.pss.plafond_securite_sociale_mensuel",
+      "factor": 8,
+      "difficulty": "combine",
+      "source_class": "gazette",
+      "note": "Complementary-pension income limit: 8x the monthly PSS."
+    }
+  ]
+}

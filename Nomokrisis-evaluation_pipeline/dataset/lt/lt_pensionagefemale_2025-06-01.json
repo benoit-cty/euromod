@@ -1,0 +1,23 @@
+{
+  "id": "lt_pensionagefemale_2025-06-01",
+  "country": "LT",
+  "language": "lt",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_lt_constdef_lt_def_const_pensionagefemale.json",
+  "as_of": "2025-06-01",
+  "difficulty": "combine",
+  "hazards": [],
+  "labels_drafted": false,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 64.66,
+    "valid_from": "2025-01-01",
+    "citations": [
+      "Valstybinių socialinio draudimo pensijų įstatymas I-549"
+    ]
+  },
+  "verified": true,
+  "drafted_by": "human",
+  "reviewed_by": "ben",
+  "notes": "curated: lt.json#pensionagefemale | euromod value in force at 2025-06-01: 64.66 from 2025-01-01 | IMPOSSIBLE today — official pension age for women in 2025: 64 years 8 months, i.e. 64.66 in EUROMOD's decimal convention. The statute states a STEP SCHEDULE (+4 months per year, reaching 65 in 2026), not the per-year value: the pipeline must derive the cohort value from the schedule and convert months to a decimal — derivation-not-extraction, plus a representation-convention trap (64.66 vs 64.67 vs 64+8/12). Pin the exact article/annex of the pension-age schedule when drafting. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test."
+}

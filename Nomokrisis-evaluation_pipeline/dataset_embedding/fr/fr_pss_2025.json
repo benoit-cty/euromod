@@ -1,0 +1,11 @@
+{
+  "id": "fr_pss_2025",
+  "country": "FR",
+  "language": "fr",
+  "as_of": "2025-06-01",
+  "query": "montant du plafond mensuel de la sécurité sociale fixé pour l'année 2025",
+  "expected_citations": ["JORFTEXT000050854392, art. 1"],
+  "verified": false,
+  "drafted_by": "claude-fable-5",
+  "notes": "PSS 2025 (arrêté du 19 décembre 2024). Distractors: the corpus also holds the PSS 2026 arrêté and many other social-security arrêtés. Target confirmed in force at as_of (version [2024-12-29,))."
+}

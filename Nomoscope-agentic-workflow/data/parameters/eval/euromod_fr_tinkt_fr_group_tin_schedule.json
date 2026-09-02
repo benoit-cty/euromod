@@ -1,0 +1,645 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tinkt_fr/group/tin_schedule",
+    "spine_order": null,
+    "value_type": "bracket_schedule",
+    "unit": "/1",
+    "threshold_unit": null,
+    "label": null,
+    "short_label": {
+      "en": "FR:tinkt_fr:tin_schedule"
+    },
+    "description": null,
+    "explanation": {
+      "en": "Assembled from params.parameter_groups FR:tinkt_fr:tin_schedule (band 1 rate=euromod://FR/tinkt_fr/def_const/$tin_rate1, band 1 upper_threshold=euromod://FR/tinkt_fr/def_const/$tin_upthres1, band 3 rate=euromod://FR/tinkt_fr/def_const/$tin_rate3, band 3 upper_threshold=euromod://FR/tinkt_fr/def_const/$tin_upthres3, band 4 rate=euromod://FR/tinkt_fr/def_const/$tin_rate4, band 4 upper_threshold=euromod://FR/tinkt_fr/def_const/$tin_upthres4, band 5 rate=euromod://FR/tinkt_fr/def_const/$tin_rate5, band 5 upper_threshold=euromod://FR/tinkt_fr/def_const/$tin_upthres5, band 6 rate=euromod://FR/tinkt_fr/def_const/$tin_rate6). EUROMOD's role is upper_threshold; brackets carry the band's lower bound."
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "income_year"
+  },
+  "values": [
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 5614.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 24872.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 66679.0,
+          "rate": 0.4,
+          "amount": null
+        }
+      ],
+      "valid_from": "2006-01-01",
+      "valid_to": "2006-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 5687.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 25195.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 67546.0,
+          "rate": 0.4,
+          "amount": null
+        }
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": "2007-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 5852.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 25926.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 69505.0,
+          "rate": 0.4,
+          "amount": null
+        }
+      ],
+      "valid_from": "2008-01-01",
+      "valid_to": "2008-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 5875.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 26030.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 69783.0,
+          "rate": 0.4,
+          "amount": null
+        }
+      ],
+      "valid_from": "2009-01-01",
+      "valid_to": "2009-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 5963.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 26420.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 70830.0,
+          "rate": 0.41,
+          "amount": null
+        }
+      ],
+      "valid_from": "2010-01-01",
+      "valid_to": "2011-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 5963.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 26420.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 70830.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 150000.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2012-01-01",
+      "valid_to": "2013-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 6011.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 26631.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 71397.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 151200.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2014-01-01",
+      "valid_to": "2014-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 9690.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 26764.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 71754.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 151956.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2015-01-01",
+      "valid_to": "2015-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 9700.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 26791.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 71826.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 152108.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2016-01-01",
+      "valid_to": "2016-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 9710.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 26818.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 71898.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 152260.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2017-01-01",
+      "valid_to": "2017-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 9807.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 27086.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 72617.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 153783.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2018-01-01",
+      "valid_to": "2018-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 10064.0,
+          "rate": 0.14,
+          "amount": null
+        },
+        {
+          "threshold": 27794.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 74517.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 157806.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2019-01-01",
+      "valid_to": "2019-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 10064.0,
+          "rate": 0.11,
+          "amount": null
+        },
+        {
+          "threshold": 25659.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 73369.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 157806.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2020-01-01",
+      "valid_to": "2020-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 10084.0,
+          "rate": 0.11,
+          "amount": null
+        },
+        {
+          "threshold": 25710.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 73516.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 158122.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2021-01-01",
+      "valid_to": "2021-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 10225.0,
+          "rate": 0.11,
+          "amount": null
+        },
+        {
+          "threshold": 26070.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 74545.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 160336.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2022-01-01",
+      "valid_to": "2022-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 10777.0,
+          "rate": 0.11,
+          "amount": null
+        },
+        {
+          "threshold": 27478.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 78570.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 168994.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2023-01-01",
+      "valid_to": "2023-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 11294.0,
+          "rate": 0.11,
+          "amount": null
+        },
+        {
+          "threshold": 28797.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 82341.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 177106.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2024-01-01",
+      "valid_to": "2024-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 11496.0,
+          "rate": 0.11,
+          "amount": null
+        },
+        {
+          "threshold": 29314.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 83822.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 180293.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2025-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    }
+  ]
+}

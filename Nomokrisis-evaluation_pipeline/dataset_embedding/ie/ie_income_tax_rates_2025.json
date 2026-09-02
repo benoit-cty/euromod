@@ -1,0 +1,11 @@
+{
+  "id": "ie_income_tax_rates_2025",
+  "country": "IE",
+  "language": "en",
+  "as_of": "2025-06-01",
+  "query": "standard and higher rates of income tax charged for a year of assessment",
+  "expected_citations": ["TCA 1997, s. 15"],
+  "verified": false,
+  "drafted_by": "claude-fable-5",
+  "notes": "Smoke case: single-chunk IE corpus for now."
+}

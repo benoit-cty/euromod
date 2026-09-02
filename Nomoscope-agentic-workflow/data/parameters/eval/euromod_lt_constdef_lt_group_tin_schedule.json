@@ -1,0 +1,21 @@
+{
+  "information": {
+    "country": "LT",
+    "model_target": "euromod://LT/ConstDef_lt/group/tin_schedule",
+    "spine_order": null,
+    "value_type": "bracket_schedule",
+    "unit": "/1",
+    "threshold_unit": null,
+    "label": null,
+    "short_label": {
+      "en": "LT:ConstDef_lt:tin_schedule"
+    },
+    "description": null,
+    "explanation": {
+      "en": "Assembled from params.parameter_groups LT:ConstDef_lt:tin_schedule (band 1 rate=euromod://LT/ConstDef_lt/def_const/$tin_StdRate, band 2 rate=euromod://LT/ConstDef_lt/def_const/$tin_HigherRate, band 3 rate=euromod://LT/ConstDef_lt/def_const/$tin_HighestRate). EUROMOD's role is upper_threshold; brackets carry the band's lower bound."
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": []
+}

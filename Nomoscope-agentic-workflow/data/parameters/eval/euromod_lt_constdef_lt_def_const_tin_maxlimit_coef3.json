@@ -1,0 +1,118 @@
+{
+  "information": {
+    "country": "LT",
+    "model_target": "euromod://LT/ConstDef_lt/def_const/$tin_MaxLimit_coef3",
+    "spine_order": "3",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "cap for PIT & SICER/SICEE. Cap= $AMS*$tin_MaxLimit_coef3/12"
+    },
+    "short_label": {
+      "en": "$tin_MaxLimit_coef3"
+    },
+    "description": {
+      "en": "A widely-used coefficient (value 60, from 2005-01-01) that defines a common income cap for both PIT and social insurance contributions (SICER/SICEE) via Cap = $AMS * $tin_MaxLimit_coef3 / 12, i.e. five times the average monthly salary (AMS). It appears at 6 distinct usage sites including tin_admn_lt (higher-rate PIT band), tin_lt (SchedCalc Band_UpLim, the PIT schedule's top band boundary), tpcpi_lt (temporary contribution-ceiling variables), and as the UpLim in the pension (tscee_lt) and employment-injury (tscer_lt) social insurance contribution calculations, reflecting Lithuania's shared SODRA contribution ceiling. Not directly covered by the benefits theme document; description derived from the constant's label and its multiple spine usage comments."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: personal income tax (PIT): general parameters"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2005-01-01",
+      "valid_to": "2018-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 120.0,
+      "valid_from": "2019-01-01",
+      "valid_to": "2019-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "120",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 84.0,
+      "valid_from": "2020-01-01",
+      "valid_to": "2020-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "84",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 60.0,
+      "valid_from": "2021-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "60",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+# Curated parameter knowledge for FR — NOT part of the EUROMOD export.
+#
+# extracted_parameters/enriched/FR.enriched.json is delivered by the EUROMOD
+# team and is READ-ONLY: never edit it. Anything we know that the export does
+# not carry lives here instead, and is applied on top of the ingested rows by
+#
+#     uv run nomoscope-workflow curate-params curation/FR.curation.yaml
+#
+# run after `ingest-params`. The ingest upsert deliberately never touches these
+# columns, so a re-ingest of a new export preserves them; this file exists so
+# the knowledge also survives `docker compose down -v`, is reviewable in git,
+# and can say *why* each parameter is flagged.
+
+country: FR
+
+temporal_basis:
+  - basis: income_year
+    note: >-
+      French income tax is assessed in year Y on the income of year Y-1
+      («impôt 2025 sur les revenus 2024»), and its schedule is enacted by the
+      finance act voted at the end of the income year (the barème for income
+      2024 sits in LOI 2025-127 du 14 février 2025). So an `income_year`
+      parameter under EUROMOD system year Y states the value for income year
+      Y-1, and retrieval, the expected `valid_from` and the critique's
+      budget-act window all shift with it — the mapping itself lives in
+      `schema.income_year_for`, not here. Deliberately NOT set on CSG/CRDS,
+      which are withheld at source and follow `in_force`.
+    targets:
+      # Barème: marginal rates and band boundaries (CGI art. 197, I-1)
+      - euromod://FR/tinkt_fr/def_const/$tin_rate1
+      - euromod://FR/tinkt_fr/def_const/$tin_rate2
+      - euromod://FR/tinkt_fr/def_const/$tin_rate3
+      - euromod://FR/tinkt_fr/def_const/$tin_rate4
+      - euromod://FR/tinkt_fr/def_const/$tin_rate5
+      - euromod://FR/tinkt_fr/def_const/$tin_rate6
+      - euromod://FR/tinkt_fr/def_const/$tin_upthres1
+      - euromod://FR/tinkt_fr/def_const/$tin_upthres2
+      - euromod://FR/tinkt_fr/def_const/$tin_upthres3
+      - euromod://FR/tinkt_fr/def_const/$tin_upthres4
+      - euromod://FR/tinkt_fr/def_const/$tin_upthres5
+      # Décote (CGI art. 197, I-4)
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_amt
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_amt2
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_lim1
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_lim2
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_rate
+      # CDHR (CGI art. 224): instituted by LF 2025 FOR 2025 income. Defined
+      # inside tinto01_fr rather than as a def_const, so it reaches the DB from
+      # extracted_parameters/curated/FR.in_function.json, not from the export.
+      - euromod://FR/tin_fr/def_const/$tinrt_cdhr
+      # Plafonnement du quotient familial
+      - euromod://FR/tin_fr/def_const/$tinto_lim1
+      - euromod://FR/tin_fr/def_const/$tinto_lim2
+      - euromod://FR/tin_fr/def_const/$tinto_lim3
+      - euromod://FR/tin_fr/def_const/$tinto_rate1
+      - euromod://FR/tin_fr/def_const/$tinto_rate2
+
+  - basis: income_year
+    note: >-
+      Same finance-act indexation article as the barème above, so the same
+      dating applies — these were missed when the family was first flagged.
+      Evidence is empirical, not just doctrinal: for each target and for every
+      system year 2022-2025, the EUROMOD value equals the OpenFisca value keyed
+      (system year - 1)-01-01 exactly, e.g. $tinty_ded_maxamt 2022..2025 =
+      12 829 / 13 522 / 14 171 / 14 426 = OpenFisca income years 2021..2024.
+      Left as `in_force`, retrieval would look for what is in force at the
+      as_of date, find the previous finance act, and confirm the lagged value
+      as `unchanged`. The $tscxc_* and $tsc_group* constants in the same
+      policies are NOT here: they track the in-force value, as the same test
+      shows.
+    targets:
+      # Plafonds du QF pour situations particulières (CGI art. 197, I-2)
+      - euromod://FR/tinkt_fr/def_const/$tin_imaxdep_lim1
+      - euromod://FR/tinkt_fr/def_const/$tin_imaxdep_lim2
+      - euromod://FR/tinkt_fr/def_const/$tin_imaxdis_amt
+      - euromod://FR/tinkt_fr/def_const/$tin_imaxwd_amt
+      # Abattement 10 % frais professionnels (CGI art. 83, 3°)
+      - euromod://FR/tinty_fr/def_const/$tinty_ded_maxamt
+      - euromod://FR/tinty_fr/def_const/$tinty_ded_minamt
+      # Same ceiling applied to unemployment benefits — no numeric history to
+      # test against (EUROMOD holds a formula), flagged by legal provision.
+      - euromod://FR/tinty_fr/def_const/$tinty_dedub_uplim
+      # Abattement 10 % pensions (CGI art. 158, 5 a)
+      - euromod://FR/tinty_fr/def_const/$tinty_dedpens_maxamt
+      - euromod://FR/tinty_fr/def_const/$tinty_dedpens_minamt
+      # Abattement personnes âgées / invalides (CGI art. 157 bis)
+      - euromod://FR/tinty_fr/def_const/$tintadp_amt

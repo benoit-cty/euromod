@@ -1,0 +1,24 @@
+{
+  "id": "fr_bdi_bdi_amt1_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_bdi_fr_def_const_bdi_amt1.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 1033.32,
+    "valid_from": "2025-04-01",
+    "citations": [
+      "JORFTEXT000051393142"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "openfisca@a7038ee",
+  "reviewed_by": "ben",
+  "notes": "openfisca: prestations_sociales.prestations_etat_de_sante.invalidite.aah.montant | openfisca value at 2025-06-01: 1033.32 (change point 2025-04-01) | euromod value in force at 2025-06-01: 1033.32 from 2025-01-01 | link: fingerprint score 0.72"
+}

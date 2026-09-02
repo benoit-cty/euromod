@@ -1,0 +1,26 @@
+{
+  "id": "ie_txcin_upthres2_2025-06-01",
+  "country": "IE",
+  "language": "en",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_constdef_ie_def_const_txcin_upthres2.json",
+  "as_of": "2025-06-01",
+  "difficulty": "combine",
+  "hazards": [
+    "cross_instrument"
+  ],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "changed",
+    "value": "27382#y",
+    "valid_from": "2025-01-01",
+    "citations": [
+      "Finance Act 2024, s. 2",
+      "TCA 1997, s. 531AN"
+    ]
+  },
+  "verified": true,
+  "drafted_by": "human",
+  "reviewed_by": "ben",
+  "notes": "curated: ie.json#txcin_upthres2 | euromod value in force at 2025-06-01: 27383.0 from 2025-01-01 | MEDIUM — USC 2% band ceiling. The law says 27,382 (12,012 + 15,370); EUROMOD stores 27,383 — a EUROMOD-side off-by-one, mirroring the FR bareme 1-euro erratum, to be reported to the economists team. Per the FR precedent the expected value is the LAW's (27,382), and the 1e-6 scoring tolerance keeps the difference visible."
+}

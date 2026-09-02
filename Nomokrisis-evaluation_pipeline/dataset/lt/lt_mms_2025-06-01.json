@@ -1,0 +1,22 @@
+{
+  "id": "lt_mms_2025-06-01",
+  "country": "LT",
+  "language": "lt",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_lt_constdef_lt_def_const_mms.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "gazette",
+  "expected": {
+    "routing": "unchanged",
+    "value": "1038#m",
+    "valid_from": "2025-01-01",
+    "citations": []
+  },
+  "corpus_available": false,
+  "verified": true,
+  "drafted_by": "human",
+  "reviewed_by": "ben",
+  "notes": "curated: lt.json#mms | euromod value in force at 2025-06-01: 1038.0 from 2025-01-01 | HARD / not_found today — gross minimum monthly salary, 924 -> 1038 for 2025, set by annual Vyriausybes nutarimas (Government resolution), an instrument class not yet ingested (open point 5.2 of Lithuania_sources_analysis.md). LT IS in scout.COUNTRY_SOURCES with nutarimai in its act_kinds, so this case measures nutarimas discovery + ingest through the Spinta API. Citations empty until the nutarimas is ingested; expect routing misses (not_found) until then. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test. | drafting warning: no citations: the citation leg is unscored until the source act is ingested | corpus_available: false — the act stating this value is not ingested yet, so no retrieval can reach it. The case measures ingest coverage and is excluded from the 'source in corpus' KPI slice"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "ie_tscee_prsia_rate2_2025-06-01",
+  "country": "IE",
+  "language": "en",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_tscee_ie_def_const_tscee_prsia_rate2.json",
+  "as_of": "2025-06-01",
+  "difficulty": "derive",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "1/6",
+    "citations": []
+  },
+  "corpus_available": false,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: ie.json#tscee_prsia_rate2 | euromod value in force at 2025-06-01: '1/6' from 2023-01-01 | DERIVE, and the only one Ireland has — the taper rate of the PRSI Class A credit. The law states the reduction in words, 'one-sixth of the amount by which weekly earnings exceed the threshold', and EUROMOD stores the arithmetic '1/6'; a correct proposal has to turn the words into the fraction, which is the whole point of the rung. corpus_available: false — the tapered credit was introduced in 2016 and lives in an amendment to SWCA 2005 s.13, while the ingested consolidation carries only the original version (validity ends 2022-01-01, no mention of a credit or of the EUR 352.01 threshold). Ingesting the amending Social Welfare Act is what turns this case from a coverage measure into a quality one; until then it belongs in the no_corpus slice. | drafting warning: no citations: the citation leg is unscored until the source act is ingested | corpus_available: false — the act stating this value is not ingested yet, so no retrieval can reach it. The case measures ingest coverage and is excluded from the 'source in corpus' KPI slice",
+  "reviewed_by": "ben"
+}

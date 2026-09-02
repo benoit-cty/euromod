@@ -1,0 +1,26 @@
+{
+  "id": "ie_txcin_rate3_2025-06-01",
+  "country": "IE",
+  "language": "en",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_txcin_ie_def_const_txcin_rate3.json",
+  "as_of": "2025-06-01",
+  "difficulty": "combine",
+  "hazards": [
+    "cross_instrument"
+  ],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 0.03,
+    "valid_from": "2025-01-01",
+    "citations": [
+      "Finance Act 2024, s. 2",
+      "TCA 1997, s. 531AN"
+    ]
+  },
+  "verified": true,
+  "drafted_by": "human",
+  "reviewed_by": "ben",
+  "notes": "curated: ie.json#txcin_rate3 | euromod value in force at 2025-06-01: 0.03 from 2025-01-01 | MEDIUM — USC middle rate cut 4% -> 3% (Budget 2025). Stored numerically (0.03) so it scores cleanly, unlike the percent-string rates. USC lives in TCA Part 18D, amended by FA 2024 s. 2 — a different section than the PIT family. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test."
+}

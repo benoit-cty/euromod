@@ -1,0 +1,72 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tin_fr/def_const/$tinto_lim2",
+    "spine_order": "31",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Second income limit for singles and first income limit for couples"
+    },
+    "short_label": {
+      "en": "$tinto_lim2"
+    },
+    "description": {
+      "en": "Income threshold of EUR 500,000 that serves as the second band limit for single taxpayers and the first band limit for couples under the CEHR exceptional contribution on high incomes. In tin_fr's SchedCalc it is used as a Band_UpLim in the schedule computing the exceptional contribution (comment: 'Exceptional contributions on high income earners: singles'), marking where the 3% rate ends and the 4% rate begins for singles (and where the 3% rate for couples begins). It is also used in tinto01_fr's Elig function, both as part of the singles band structure and as the eligibility threshold for couples under the CDHR differential contribution, which also applies above EUR 500,000 RFR for couples."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Parameters for exceptional contributions on high income"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "income_year"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": "2012-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 500000.0,
+      "valid_from": "2013-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "500000#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

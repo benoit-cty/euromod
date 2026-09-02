@@ -1,0 +1,22 @@
+{
+  "id": "ie_tin_high_rate_2025-06-01",
+  "country": "IE",
+  "language": "en",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_constdef_ie_def_const_tin_high_rate.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 0.4,
+    "citations": [
+      "TCA 1997, s. 15"
+    ]
+  },
+  "verified": true,
+  "drafted_by": "human",
+  "reviewed_by": "ben",
+  "notes": "curated: ie.json#tin_high_rate | euromod value in force at 2025-06-01: 0.4 from 2015-01-01 | EASY — no-change trap. Higher rate 40%, unchanged since 2015: Budget coverage revalorises the bands around it every year, so the pipeline must resist proposing a change it cannot cite."
+}

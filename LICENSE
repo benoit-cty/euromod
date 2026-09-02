@@ -1,0 +1,190 @@
+EUROPEAN UNION PUBLIC LICENCE v. 1.2
+EUPL © 2007 European Community
+
+This European Union Public Licence (the "Licence") applies to the work (as defined below)
+provided under the terms of this Licence. Any use of the work, other than as authorised
+under this Licence is prohibited (to the extent such use is covered by a right of the
+copyright holder of the work).
+
+The work is provided under the terms of this Licence when the Licensor (as defined below)
+has placed the following notice immediately following the copyright notice for the work:
+
+Licensed under the EUPL
+
+or has expressed it in any other manner such as a software package name, version number,
+or under a running software notice or "About" box.
+
+1. Definitions
+
+In this Licence, the following terms have the following meaning:
+
+- "The Licence": this licence.
+
+- "The Original Work": the work or software distributed or communicated by the Licensor
+  under this Licence, available as source code and also as executable code as the case may be.
+
+- "Derivative Works": any work or software that could be created by the Licensee on the basis
+  of the Original Work or modifications thereof. This Licence does not define the extent of
+  modification or dependence on the Original Work required to classify a work as a Derivative Work;
+  this extent is determined by copyright law applicable in the country mentioned in Article 15.
+
+- "The Work": the Original Work or any Derivative Works.
+
+- "The Licensor": the natural or legal person, public authority, agency, or any other entity
+  that distributes or communicates the Work under the Licence.
+
+- "Licensee" or "You": any natural or legal person who makes any usage of the Work under the
+  terms of the Licence.
+
+- "Distribution" or "Communication": any act of selling, giving, lending, renting, transmitting,
+  or otherwise making available, on-line or off-line, copies of the Work or providing access
+  to its essential functionalities at the disposal of any other natural or legal person.
+
+2. Scope of the rights granted by the Licence
+
+The Licensor hereby grants You a world-wide, royalty-free, non-exclusive, sublicensable licence
+to do the following, for the duration of copyright vested in the Original Work:
+
+- use the Work in any circumstance and for all usage,
+- reproduce the Work,
+- modify the Original Work, and make Derivative Works based upon the Work,
+- communicate to the public, including the right to make available or display the Work or copies
+  thereof to the public and perform publicly, as the case may be, the Work,
+- distribute the Work or copies thereof,
+- lend and rent the Work or copies thereof,
+- sublicense rights in the Work or Derivative Works.
+
+These rights can be exercised on any media, supports and formats, whether now known or later
+invented, as far as the applicable law permits so.
+
+The above rights include the right to make such modifications necessary to exercise the
+aforementioned rights, subject to Article 4.
+
+3. Communication of the Source Code
+
+The Licensor may provide the Work either in its source code form, or as executable code.
+If the Work is provided as executable code, the Licensor provides in addition a machine-readable
+copy of the source code of the Work along with each copy of the Work that the Licensor distributes
+or indicates, in a notice following the copyright notice attached to the Work, a repository where
+the source code is easily and freely accessible for as long as the Licensor continues to distribute
+or communicate the Work.
+
+4. Limitations on copyright
+
+Nothing in this Licence is intended to deprive the Licensee of the benefits from any exception
+or limitation to the exclusive rights of the rights owners in the Original Work or Derivative Works,
+nor does it constitute a waiver of such rights.
+
+5. Obligations of the Licensee
+
+The grant of the rights mentioned above is subject to some restrictions and obligations imposed
+on the Licensee. Those obligations are the following:
+
+Disclosure obligation: The Licensee shall keep intact all copyright, patent or trademarks notices
+and all notices that refer to the Licence and to the disclaimer of warranties. The Licensee must
+include a copy of such notices and of the Licence with every copy of the Work he/she distributes
+or communicates. The Licensee must cause any Derivative Work to carry prominent notices stating
+that the Work has been modified and the date of modification.
+
+Copyleft clause: If the Licensee distributes or communicates copies of the Original Works or
+Derivative Works, this Distribution or Communication will be done under the terms of this Licence
+or of a later version of this Licence unless the Original Work is expressly distributed only under
+this version of the Licence — for example with the communication of "EUPL v. 1.2 only". The Licensee
+(becoming Licensor) cannot offer or impose any additional terms or conditions on the Work or
+Derivative Work that alter or restrict the terms of the Licence.
+
+Compatibility clause: If the Licensee Distributes or Communicates Derivative Works or copies thereof
+based upon both the Original Work and another work licensed under a Compatible Licence, this
+Distribution or Communication can be done under the terms of this Compatible Licence. For the sake
+of this clause, "Compatible Licence" refers to the licences listed in the appendix attached to this
+Licence. Should the obligations of the Licensee under the Compatible Licence conflict with his/her
+obligations under this Licence, the obligations of the Compatible Licence shall prevail.
+
+Provision of Source Code: When distributing or communicating copies of the Work, the Licensee will
+provide a machine-readable copy of the source code or indicate a repository where this source will
+be easily and freely accessible for as long as the Licensee continues to distribute or communicate
+the Work.
+
+6. Disclaimer of warranty
+
+The Work is a work in progress, being continuously developed by numerous contributors. It is not a
+finished work and may therefore contain defects or "bugs" inherent to this type of development.
+
+For the above reason, the Work is provided under the Licence on an "as is" basis and without warranties
+of any kind concerning the Work, including without limitation merchantability, fitness for a particular
+purpose, absence of defects or errors, accuracy, non-infringement of intellectual property rights other
+than copyright as stated in Article 4.
+
+This disclaimer of warranty is an essential part of the Licence and a condition for the grant of any rights
+to the Work.
+
+7. Limitation of liability
+
+Except in the cases of wilful misconduct or damages directly caused to natural persons, the Licensor will in
+no event be liable for any direct or indirect, material or moral, damages of any kind, arising out of the Licence
+or of the use of the Work, including without limitation, damages for loss of goodwill, work stoppage, computer
+failure or malfunction, loss of data or any commercial damage, even if the Licensor has been advised of the
+possibility of such damage.
+
+However, the Licensor will be liable under statutory product liability laws as far such laws apply to the Work.
+
+8. Additional obligations
+
+While distributing the Work, the Licensee may choose to offer, and charge a fee for, acceptance of support, warranty,
+indemnity, or other liability obligations and/or services consistent with this Licence. However, in accepting such
+obligations, the Licensee may act only on his own behalf and on his sole responsibility, not on behalf of any other
+Licensee, and only if he/she agrees to indemnify, defend, and hold harmless each Licensor from and against any
+liability incurred by, or claims asserted against such Licensor by reason of the Licensee's acceptance of any such
+warranty or additional liability.
+
+9. Acceptance of the Licence
+
+The provisions of this Licence can be accepted by clicking on an "I agree" button at the bottom of a window displaying
+the text of this Licence or by any other manner which results in such a clear affirmative action, indicating acceptance
+of this Licence, that is consistent with the practice in use for the conclusion of contracts binding in that jurisdiction.
+Clicking on that button indicates your clear and unambiguous acceptance of this Licence and all of its terms and conditions.
+
+Similarly, you may not exercise any of the rights granted to You by Article 2 of this Licence unless or until You accept
+the terms and conditions of this Licence.
+
+The Licensor shall not be bound by any of the Licensee's supplementary obligations, which any Licensee may propose at any
+time. This Licence is the sole agreement between the Licensor and the Licensee relating to the Work.
+
+10. Miscellaneous
+
+(a) If any provision of this Licence is invalid or unenforceable under applicable law, this shall not affect the validity
+or enforceability of the Licence as a whole. Such provision shall be interpreted or reformed so as to make it valid and
+enforceable. The European Commission may publicise new versions of this Licence or new versions of the Appendix, so far this
+is required to reflect scientific and technical progress, without reducing the scope of the rights granted by the Licence.
+Every new version of the Licence will be given a distinguishing version number.
+
+(b) Any Licensee who wishes to communicate to the public any information about the Work shall do so under the terms and
+conditions of this Licence, providing information on how it can access a copy of the Licence. The Licensor requests that
+any such communication clearly advises third parties of his/her status as Licensor and how they may access, use and ultimately
+distribute the Work both in its original and any modified form.
+
+(c) The Work shall be governed by Belgian law, without prejudice to the international choice-of-law rules of the private
+international law applicable ratione loci.
+
+(d) The place of jurisdiction shall be the Court of first instance of Brussels.
+
+11. Applicable Law
+
+Without prejudice to specific agreement between parties,
+
+- this Licence shall be governed by the law of the European Union member state in which the Licensor resides,
+- this licence shall be governed by Belgian law, if the Licensor resides outside any European Union member state.
+
+
+APPENDIX
+
+"Compatible Licences" according to Article 5 EUPL:
+
+- GNU General Public Licence (GPL) v. 2, v. 3
+- GNU Affero General Public Licence (AGPL) v. 3
+- Open Software Licence (OSL) v. 2.1, v. 3.0
+- Eclipse Public Licence (EPL) v. 1.0
+- CeCILL v. 2.0, v. 2.1
+- Mozilla Public Licence (MPL) v. 2
+- GNU Lesser General Public Licence (LGPL) v. 2.1, v. 3
+- Creative Commons Attribution-ShareAlike 3.0 Unported (note: this is not a software licence but a content licence)

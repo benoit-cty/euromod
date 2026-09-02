@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nomokrisis-evaluation"
+version = "0.1.0"
+description = "Activity 4 evaluation pipeline: golden dataset + KPI runs over the agentic workflow, results in Postgres."
+readme = "README.md"
+license = {text = "EUPL-1.2"}
+requires-python = ">=3.12"
+dependencies = [
+  "anthropic>=0.116",
+  "nomoscope-agentic-workflow",
+  "psycopg[binary]>=3.2",
+  "pydantic>=2.8",
+  "python-dotenv>=1.0",
+  "typer>=0.12",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+nomokrisis-eval = "nomokrisis_eval.cli:app"
+
+[tool.uv.sources]
+nomoscope-agentic-workflow = { path = "../Nomoscope-agentic-workflow/pipeline", editable = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nomokrisis_eval"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

@@ -1,0 +1,11 @@
+{
+  "id": "lt_gpm_tarifas_2025",
+  "country": "LT",
+  "language": "lt",
+  "as_of": "2025-06-01",
+  "query": "gyventojų pajamų mokesčio tarifai, taikomi metinėms pajamoms",
+  "expected_citations": ["GPMĮ 6 straipsnis"],
+  "verified": false,
+  "drafted_by": "claude-fable-5",
+  "notes": "Smoke case: single-chunk LT corpus for now."
+}

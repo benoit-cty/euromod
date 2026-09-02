@@ -1,0 +1,53 @@
+{
+  "schema_version": "0.2.0",
+  "country": "FR",
+  "source": "curated (not part of the EUROMOD export)",
+  "note": "Parameters EUROMOD defines inside functions rather than as named constants, so extracted_parameters/enriched/FR.enriched.json cannot carry them. Ingest with `nomoscope-workflow ingest-params extracted_parameters/curated/FR.in_function.json`; temporal_basis comes from curation/FR.curation.yaml as for every other parameter.",
+  "parameters": [
+    {
+      "information": {
+        "country": "FR",
+        "model_target": "euromod://FR/tin_fr/def_const/$tinrt_cdhr",
+        "spine_order": "4.5",
+        "value_type": "scalar",
+        "unit": "/1",
+        "short_label": {
+          "fr": "Taux de la CDHR",
+          "en": "CDHR rate"
+        },
+        "description": {
+          "fr": "Taux de la contribution différentielle sur les hauts revenus.",
+          "en": "Rate of the differential contribution on high incomes."
+        },
+        "last_confirmed_valid_on": "2025-02-23",
+        "temporal_basis": "income_year",
+        "explanation": {
+          "en": "Defined inside EUROMOD's tinto01_fr Elig function, not as a def_const, so the connector cannot export it; the model_target is the identifier this project has used for it since the first FR runs. Curated here so the parameter store stays the single source — no runtime input is read from a loose file."
+        }
+      },
+      "values": [
+        {
+          "value": 0.2,
+          "valid_from": "2025-01-01",
+          "valid_to": null,
+          "legal_status": "enacted_in_force",
+          "source_type": "legislation",
+          "official_journal_date": "2025-02-15",
+          "references": [
+            {
+              "title": "CGI, art. 224",
+              "href": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051200465/2025-02-16",
+              "legal_unit_ref": "LEGIARTI000051200465"
+            }
+          ],
+          "lineage": {
+            "proposed_by": "curated",
+            "model": "curation:FR.in_function",
+            "review_status": "pending"
+          }
+        }
+      ]
+    }
+  ],
+  "groups": []
+}

@@ -1,0 +1,28 @@
+{
+  "id": "fr_tinkt_tin_upthres5_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinkt_fr_def_const_tin_upthres5.json",
+  "as_of": "2025-06-01",
+  "difficulty": "combine",
+  "hazards": [
+    "income_year",
+    "cross_instrument"
+  ],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "changed",
+    "value": 180294.0,
+    "valid_from": "2024-01-01",
+    "citations": [
+      "JORFTEXT000051168007, art. 2",
+      "CGI, art. 197"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "openfisca@a7038ee",
+  "reviewed_by": "ben",
+  "notes": "openfisca: impot_revenu.bareme_ir_depuis_1945.bareme :: brackets[5].threshold | openfisca value at 2024-01-01: 180294.0 (change point 2024-01-01) | euromod value in force at 2025-06-01: 180293.0 from 2025-01-01 | link: manual | references not resolved in the legislation corpus: Article 197, I.1. du Code général des impôts [LEGIARTI000046860759] not in the corpus (not scorable) | Barème IR band 5 upper limit. EUROMOD's 2025 value is one euro below the law (a known EUROMOD-side error, being corrected by the economists team); the expected value is the law's."
+}

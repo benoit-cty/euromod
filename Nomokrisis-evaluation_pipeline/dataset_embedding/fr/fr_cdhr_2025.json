@@ -1,0 +1,11 @@
+{
+  "id": "fr_cdhr_2025",
+  "country": "FR",
+  "language": "fr",
+  "as_of": "2025-06-01",
+  "query": "contribution différentielle sur les hauts revenus assurant une imposition minimale des contribuables les plus aisés",
+  "expected_citations": ["CGI, art. 224"],
+  "verified": false,
+  "drafted_by": "claude-fable-5",
+  "notes": "CDHR (2025 minimum tax on high incomes) — the parameter class the LF2025 corpus was ingested for. Target confirmed in force at as_of (version [2025-02-16,))."
+}

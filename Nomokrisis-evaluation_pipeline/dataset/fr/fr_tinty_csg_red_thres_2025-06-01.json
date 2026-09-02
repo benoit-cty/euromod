@@ -1,0 +1,26 @@
+{
+  "id": "fr_tinty_csg_red_thres_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinty_fr_def_const_csg_red_thres.json",
+  "as_of": "2025-06-01",
+  "difficulty": "derive",
+  "hazards": [
+    "cross_instrument"
+  ],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "$PSS * 4",
+    "citations": [
+      "LEGITEXT000006073189, art. L136-2",
+      "CSS, art. L136-2"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: fr.json#tinty_csg_red_thres | euromod value in force at 2025-06-01: '$PSS * 4' from 2006-01-01 | DERIVE — the ceiling of the 1.75% professional-expenses abatement on the CSG base: below it the CSG is levied on 98.25% of gross earnings, above it on 100%. CSS art. L136-2 states the ceiling only by reference — 'Sur le montant brut inferieur a quatre fois la valeur du plafond mentionne a l'article L. 241-3' — so the value exists nowhere as a number: the article gives the multiplier, and the PSS it multiplies is fixed each year by a separate arrete. EUROMOD stores exactly that composition, '$PSS * 4', unchanged since 2006. A correct proposal reproduces the reference rather than the 188 400 EUR it evaluates to for 2025, which makes this the FR counterpart of LT's tinta_higher_thres and the natural sibling of the constdef_pss case already in the set. Both halves are in the corpus: art. L136-2 is ingested, and $PSS is itself a golden case.",
+  "reviewed_by": "ben"
+}
