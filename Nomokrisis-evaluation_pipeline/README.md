@@ -264,6 +264,7 @@ pool the production pipeline uses (Country Reports excluded):
 - `hybrid` — the production RRF fusion (what the workflow actually retrieves with)
 
 ```bash
+cd Nomokrisis-evaluation_pipeline/src
 uv run nomokrisis-eval list-embedding-cases
 uv run nomokrisis-eval run-embeddings                           # BGE-M3 (model_id 1); spawns the ingest query encoder
 uv run nomokrisis-eval run-embeddings --embedding-model-id 99   # in-SQL placeholder embedder, no encoder needed
