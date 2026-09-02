@@ -1,0 +1,49 @@
+{
+  "information": {
+    "country": "FR",
+    "model_target": "euromod://FR/tinty_fr/def_const/$csg_red_thres",
+    "spine_order": "26",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "CSG reduction threshold"
+    },
+    "short_label": {
+      "en": "$csg_red_thres"
+    },
+    "description": {
+      "en": "This is the annual earnings threshold, computed as four times the PSS (Plafond de la Sécurité Sociale, the French social-security earnings ceiling), above which the 1.75% professional-expenses reduction no longer applies to the CSG (Contribution Sociale Généralisée) base — above this level the CSG is calculated on 100% of gross earnings instead of 98.25%. It is used in policy tinty_fr (personal income tax module) in the ArithOp computing the 'Amount of CSG - earnings' and the BenCalc computing 'Amount of CSG - unemployment benefits', and equivalently in the CSG policy tscxc_fr for the same two computations, always as a formula input alongside $csg_redrate. Per the taxes documentation, CSG is levied on 98.25% of current gross earnings until this four-times-PSS threshold, and on 100% above it."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Parameters for determining net taxable income (RNI)"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "$PSS * 4",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

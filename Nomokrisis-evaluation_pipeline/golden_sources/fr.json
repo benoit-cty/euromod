@@ -1,0 +1,26 @@
+{
+  "country": "FR",
+  "language": "fr",
+  "corpus": "curated",
+  "description": "Hand-curated complement to openfisca_fr.json, for FR parameters whose ground truth OpenFisca cannot supply. OpenFisca stores resolved numbers, so a parameter EUROMOD holds as a formula ('$PSS * 4') can only be drafted here: the openfisca drafter would write the euro amount and turn a `derive` case into a `verbatim` one. Everything else about FR ground truth still comes from openfisca_fr.json — this file is for the formula-valued minority, which is where the FR set was blind.",
+  "conventions": {
+    "temporal_basis": "Stated per parameter by the store, never re-derived here. The entries below are in_force parameters (CSG and social-contribution constants), NOT the income-year income-tax family: no FR-style Y-1 offset applies to them. An income_year entry added later must carry `expected_valid_from` at the income-year start, per schema.income_year_for.",
+    "expected_value": "EUROMOD's own spelling of the value, formula included. That is the point of this file: '$PSS * 4' is the ground truth, not the 188 400 EUR it evaluates to. normalise_value resolves $-references through the constants map, so a proposal that inlines the euro amount still scores as equal on the value leg — the difference shows up on the citation and extract legs, where it belongs.",
+    "routing": "Prefer omitting `routing:` and letting route_against_current decide. A stated routing that contradicts the store SKIPS the entry rather than writing ground truth the drafter believes is wrong.",
+    "source": "Every entry resolves through the parameter store by model_target; the parameter file under data/parameters/eval/ is materialized from it, never hand-authored."
+  },
+  "entries": [
+    {
+      "model_target": "euromod://FR/tinty_fr/def_const/$csg_red_thres",
+      "source_class": "codified_law",
+      "expected_value": "$PSS * 4",
+      "citations": [
+        "LEGITEXT000006073189, art. L136-2",
+        "CSS, art. L136-2"
+      ],
+      "note": "DERIVE — the ceiling of the 1.75% professional-expenses abatement on the CSG base: below it the CSG is levied on 98.25% of gross earnings, above it on 100%. CSS art. L136-2 states the ceiling only by reference — 'Sur le montant brut inferieur a quatre fois la valeur du plafond mentionne a l'article L. 241-3' — so the value exists nowhere as a number: the article gives the multiplier, and the PSS it multiplies is fixed each year by a separate arrete. EUROMOD stores exactly that composition, '$PSS * 4', unchanged since 2006. A correct proposal reproduces the reference rather than the 188 400 EUR it evaluates to for 2025, which makes this the FR counterpart of LT's tinta_higher_thres and the natural sibling of the constdef_pss case already in the set. Both halves are in the corpus: art. L136-2 is ingested, and $PSS is itself a golden case.",
+      "id": "tinty_csg_red_thres",
+      "corpus_available": true
+    }
+  ]
+}

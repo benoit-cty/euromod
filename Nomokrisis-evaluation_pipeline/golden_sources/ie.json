@@ -129,6 +129,15 @@
       "citations": [],
       "note": "IMPOSSIBLE forever — an implicit consumption-tax rate derived from Household Budget Survey statistics, with no legislative source at all (stands for the whole 268-parameter tco_ie family). The correct behaviour is a national_team_source refusal, which requires creating curation/IE.curation.yaml (none exists yet) with a source_type: national_team block, mirroring LT's xcc_lt precedent. The FR set has zero such traps; this one tests that the pipeline routes around non-legislative parameters instead of reporting not_found every run.",
       "id": "tco_t_01131"
+    },
+    {
+      "model_target": "euromod://IE/tscee_ie/def_const/$tscee_prsiA_rate2",
+      "source_class": "codified_law",
+      "expected_value": "1/6",
+      "corpus_available": false,
+      "citations": [],
+      "note": "DERIVE, and the only one Ireland has — the taper rate of the PRSI Class A credit. The law states the reduction in words, 'one-sixth of the amount by which weekly earnings exceed the threshold', and EUROMOD stores the arithmetic '1/6'; a correct proposal has to turn the words into the fraction, which is the whole point of the rung. corpus_available: false — the tapered credit was introduced in 2016 and lives in an amendment to SWCA 2005 s.13, while the ingested consolidation carries only the original version (validity ends 2022-01-01, no mention of a credit or of the EUR 352.01 threshold). Ingesting the amending Social Welfare Act is what turns this case from a coverage measure into a quality one; until then it belongs in the no_corpus slice.",
+      "id": "tscee_prsia_rate2"
     }
   ]
 }
