@@ -278,6 +278,56 @@ def test_cross_article_year_proof():
     assert not _cross_article_year_proof("no article here", lf_text, 2025)
 
 
+def test_cross_article_year_proof_reads_a_terminal_applicability_clause():
+    """How finance acts are actually drafted: the amendment at the top, the
+    clause that dates it at the bottom. In LF 2025 art. 2 those are 5 166
+    characters apart, so a proximity window can never connect them — and every
+    FR barème case refused because of it."""
+    from nomoscope_workflow.pipeline import _cross_article_year_proof
+
+    lf_art2 = (
+        "I. - Le code général des impôts est ainsi modifié : B. - Le I de l'article 197 "
+        "est ainsi modifié : a) le montant « 11 294 € » est remplacé par « 11 497 € » ; "
+        + "b) " + "x" * 5000 + " ; "
+        "II. - Les A et B du I s'appliquent à l'impôt sur le revenu dû au titre de "
+        "l'année 2024 et des années suivantes."
+    )
+    assert _cross_article_year_proof("CGI, art. 197", lf_art2, 2024)
+    # the clause dates the whole article, but only for articles it actually
+    # names: an article the text never mentions is still not proven
+    assert not _cross_article_year_proof("CGI, art. 196 B", lf_art2, 2024)
+    # and it proves only the year it names
+    assert not _cross_article_year_proof("CGI, art. 197", lf_art2, 2023)
+    # a bare year with no applicability clause in front of it is not a proof
+    bare = "Le I de l'article 197 est ainsi modifié. " + "x" * 5000 + " Rapport 2024."
+    assert not _cross_article_year_proof("CGI, art. 197", bare, 2024)
+
+
+def test_income_year_prompt_states_the_income_year_not_the_system_year():
+    """The prompt and the mechanical date check must agree on the year, or the
+    model is asked to prove something the act does not say and refuses. They
+    disagreed: the prompt demanded valid_from 2025-01-01 for system year 2025
+    while _income_year_date_issues demanded 2024-01-01."""
+    from nomoscope_workflow.prompts import _parameter_block
+
+    record = ParameterRecord.model_validate(
+        {
+            "information": {
+                "country": "FR",
+                "model_target": "euromod://FR/tinkt_fr/def_const/$tin_rate1",
+                "value_type": "scalar",
+                "unit": "rate",
+                "temporal_basis": "income_year",
+            },
+            "values": [],
+        }
+    )
+    block = _parameter_block(record, date(2025, 6, 1))
+    assert "income year 2024" in block
+    assert "valid_from must be 2024-01-01" in block
+    assert "2025-01-01" not in block
+
+
 def test_year_anchor_and_cli_mapping():
     from nomoscope_workflow.cli import _anchor_date
 

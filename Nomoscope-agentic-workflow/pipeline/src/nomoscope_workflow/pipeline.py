@@ -229,6 +229,16 @@ def _unchanged_window(proposed: ParameterValue, current: ParameterValue) -> Para
 
 _ARTICLE_NUM = re.compile(r"art(?:icle|\.)\s*([0-9]+(?:\s+[A-Za-z]+)*)", re.IGNORECASE)
 
+#: Stock openings of a French applicability clause. A finance-act article ends
+#: with one — "II. - Les A et B du I s'appliquent à l'impôt sur le revenu dû au
+#: titre de l'année 2024 et des années suivantes" — and it governs everything
+#: above it, however far away that is.
+_APPLICABILITY = re.compile(
+    r"(s'appliquent?|applicables?|à compter de|au titre de|pour l'imposition|"
+    r"aux revenus (?:perçus|réalisés))",
+    re.IGNORECASE,
+)
+
 
 def _cross_article_year_proof(cited_citation: str | None, text: str, income_year: int) -> bool:
     """True when `text` ties the CITED article to the income year.
@@ -246,9 +256,23 @@ def _cross_article_year_proof(cited_citation: str | None, text: str, income_year
     if not match:
         return False
     number = match.group(1).strip()
-    for hit in re.finditer(rf"article\s+{re.escape(number)}\b", text, re.IGNORECASE):
+    mentions = list(re.finditer(rf"article\s+{re.escape(number)}\b", text, re.IGNORECASE))
+    if not mentions:
+        return False
+    for hit in mentions:
         window = text[max(0, hit.start() - 400) : hit.end() + 400]
         if re.search(rf"\b{income_year}\b", window):
+            return True
+    # Proximity is the strong signal but it is not how finance acts are drafted.
+    # `text` is ONE article (pulled whole via retrieval.unit_chunks), and its
+    # closing applicability clause governs every amendment above it: LF 2025
+    # art. 2 rewrites the barème in CGI art. 197 at offset 199 and only says
+    # "dû au titre de l'année 2024" at offset 5365 — 5 166 characters later, so
+    # the window could never see it and every FR barème case refused. Inside a
+    # single article, "this article mentions the cited article" plus "this
+    # article carries an applicability clause for the income year" is the proof.
+    for hit in re.finditer(rf"\b{income_year}\b", text):
+        if _APPLICABILITY.search(text[max(0, hit.start() - 200) : hit.start()]):
             return True
     return False
 
@@ -435,8 +459,14 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                         except Exception:
                             siblings = []  # DB hiccup: fall back to the retrieved chunk
                     version_start = retrieval.validity_start(cited.validity) if cited else None
+                    # The income year, not the system year — everything below
+                    # must agree with _income_year_date_issues, which is the
+                    # mechanical authority. The cross-reference proof used to
+                    # take as_of.year here while the check above took the income
+                    # year, so the proof hunted for a year the act never names.
+                    income_year = income_year_for(as_of.year)
                     date_issues, provisional = _income_year_date_issues(
-                        draft.valid_from, version_start, income_year_for(as_of.year), article_text
+                        draft.valid_from, version_start, income_year, article_text
                     )
                     if provisional:
                         # Provisional means CORPUS GAP. If a different article's
@@ -450,7 +480,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                                 h
                                 for h in hits
                                 if h.citation != cited_citation
-                                and re.search(rf"\b{as_of.year}\b", h.content or "")
+                                and re.search(rf"\b{income_year}\b", h.content or "")
                             ),
                             None,
                         )
@@ -468,26 +498,26 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                             known = {h.chunk_id for h in hits}
                             extra_hits = [h for h in alt_siblings if h.chunk_id not in known]
                             alt_text = " ".join(h.content for h in alt_siblings)
-                            if _cross_article_year_proof(cited_citation, alt_text, as_of.year):
+                            if _cross_article_year_proof(cited_citation, alt_text, income_year):
                                 # The year-naming act explicitly references the
                                 # cited article for this income year: vintage
                                 # proven, whatever chunk the model cited.
                                 date_issues.pop()
                                 mech_notes.append(
                                     f"applicability of the cited article to income year "
-                                    f"{as_of.year} is established by the cross-reference in "
+                                    f"{income_year} is established by the cross-reference in "
                                     f"({alt.citation}); its early in-force date is NOT an "
                                     f"inconsistency"
                                 )
                                 report.issues.append(
-                                    f"note: applicability to income year {as_of.year} "
+                                    f"note: applicability to income year {income_year} "
                                     f"established by cross-reference in ({alt.citation})"
                                 )
                             else:
                                 date_issues[-1] = (
-                                    f"the cited article never names income year {as_of.year}, "
+                                    f"the cited article never names income year {income_year}, "
                                     f"but ({alt.citation}) does — cite the value from the "
-                                    f"article whose text names income year {as_of.year} (the "
+                                    f"article whose text names income year {income_year} (the "
                                     f"value extract and the year clause may be different "
                                     f"portions of that article)"
                                 )
@@ -501,7 +531,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                     income_year_dates_proven = not date_issues
                     if income_year_dates_proven and version_start is not None:
                         mech_notes.append(
-                            f"the income-year vintage ({as_of.year}) of the cited article was "
+                            f"the income-year vintage ({income_year}) of the cited article was "
                             f"verified deterministically against the full corpus text; do not "
                             f"fail dates_consistent for the in-force date "
                             f"({version_start.isoformat()}) or for the year clause sitting in "

@@ -216,6 +216,19 @@ PY
 A `verified: true` case carrying a drafting warning is the dangerous
 combination: the drafter doubted it and a human waved it through anyway.
 
+**Income-year cases: check the year the prompt states before blaming the model.**
+`schema.income_year_for` is the single place the system-year → income-year
+mapping is decided (offset −1), and CLAUDE.md forbids re-deriving `as_of.year ± 1`
+at a call site. Two call sites did it anyway — `prompts._parameter_block` and the
+cross-article proof — so the model was told the 2025 barème governs 2025 income
+and asked to find a year the act never names, while the mechanical check next
+door demanded the 2024 date off the correct mapping. Sixteen FR refusals in one
+run, six of them with the right article retrieved. Grep before you conclude:
+
+```bash
+grep -rn "as_of.year" src/nomoscope_workflow/   # every hit outside item_id/system_year is suspect
+```
+
 ### d. Input defect — is the parameter under test itself sound?
 
 `$Minwage_hourly` carries unit `currency/month` and the raw value `11.88#m`
