@@ -223,6 +223,14 @@ class ProposalDraft(BaseModel):
     english_translation: str | None = None
     confidence: float = 0.0
     reasoning: str | None = None
+    #: When no extract states the value (or the extracts only point at another
+    #: text), the documents that would be needed — named in the law's own words
+    #: and terms, e.g. "l'arrêté fixant le plafond annuel de la sécurité sociale
+    #: pour 2025" or "article L. 241-3 du code de la sécurité sociale". This is
+    #: what drives the gap-fill scout: the model routinely knows exactly which
+    #: act it lacks and says so in prose, and this makes that machine-readable.
+    #: It names DOCUMENTS to fetch, never values — nothing here is ever evidence.
+    missing_sources: list[str] = Field(default_factory=list)
 
 
 class CritiqueFindings(BaseModel):

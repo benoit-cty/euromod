@@ -37,6 +37,13 @@ class WorkflowConfig:
     scout: str = "off"  # off | llm | tavily — gap-fill source discovery on not_found
     tavily_api_key: str = ""
     scout_max_ingest: int = 2
+    #: How many gap-fill rounds one parameter may run. Each round is
+    #: scout -> ingest -> re-retrieve -> re-propose, and each is driven by what
+    #: the previous round's proposal said it still lacked — so >1 lets the agent
+    #: follow a chain of cross-references (the code article names an implementing
+    #: order, which names another) instead of giving up after one hop. Each round
+    #: costs an ingest + an embedding pass, hence the low default.
+    scout_max_rounds: int = 2
 
 
 def load_config() -> WorkflowConfig:
@@ -63,4 +70,5 @@ def load_config() -> WorkflowConfig:
         scout=_env("WORKFLOW_SCOUT", "off").lower(),
         tavily_api_key=_env("TAVILY_API_KEY", ""),
         scout_max_ingest=int(_env("WORKFLOW_SCOUT_MAX_INGEST", "2")),
+        scout_max_rounds=max(1, int(_env("WORKFLOW_SCOUT_MAX_ROUNDS", "2"))),
     )

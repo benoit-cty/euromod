@@ -7,7 +7,7 @@ from datetime import date
 
 from .schema import ParameterRecord, ProposalDraft, RetrievalHit
 
-PROMPT_VERSION = "0.4.0"
+PROMPT_VERSION = "0.5.0"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -48,6 +48,14 @@ Rules:
   merely because it matches the current value — detecting a change IS the job.
 - Return found=false ONLY when no extract states a value for the described concept in force on the
   reference date. Never guess a value that is not present in the extracts.
+- missing_sources: whenever you return found=false, OR the extracts only refer to a value fixed
+  elsewhere ("dans la limite du plafond mentionné à l'article L. 241-3", "as prescribed by order"),
+  name the document(s) that would state it — in the language and citation style of the law
+  ("l'arrêté du 19 décembre 2024 fixant le plafond de la sécurité sociale pour 2025",
+  "article L. 241-3 du code de la sécurité sociale"). Be specific about the KIND of act and the
+  year. These are fetched and ingested, then the search is retried, so a precise name is worth
+  far more than a vague one. Never put a VALUE here — you are naming documents to look up, and
+  nothing you name becomes evidence: only text retrieved from the database can be quoted.
 - original_language_quote is the supporting extract in the source language; english_translation is
   your faithful translation of it.
 - confidence in [0,1]: 0.9+ only when the extract states the value explicitly and unambiguously.

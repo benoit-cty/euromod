@@ -64,7 +64,13 @@ class WorkflowState(TypedDict, total=False):
     item: ReviewItem
     enqueued: bool
     derived_from: list[str]
+    #: Merged view of every gap-fill round, carried on the ReviewItem.
     scout: scout.ScoutResult
+    #: One entry per gap-fill round, in order.
+    scout_rounds: list[scout.ScoutResult]
+    #: Candidate ids already fetched (or already failed) this run, so a later
+    #: round never spends its ingest budget on them again.
+    scout_attempted: set[str]
 
 
 def _values_equal(a, b) -> bool:
@@ -163,6 +169,48 @@ def _income_year_date_issues(
             f"{income_year} income may not be in the corpus yet (treat as provisional)"
         )
     return issues, provisional
+
+
+#: Critique issues that mean "the establishing text is not in the corpus"
+#: rather than "the model reasoned badly". Only these justify spending another
+#: gap-fill round on a proposal that WAS produced: a unit-sanity or
+#: value-support complaint is about the answer, and fetching more law cannot
+#: fix it.
+_SOURCE_GAP_ISSUES = (
+    "citation_chunk_id missing",
+    "predates the budget-act window",
+    "never names income year",
+)
+
+
+def _needs_gap_fill(state: WorkflowState) -> bool:
+    """Whether the corpus still looks like it is missing the establishing text.
+
+    Three cases, all meaning "fetch more law and try again":
+      * no proposal at all, or the analyst returned found=false;
+      * the critique routed the item provisional (the act for this income year
+        has not reached the corpus, so only last year's value was found);
+      * the proposal exists but the critique failed for a source-availability
+        reason — the cited chunk was not among the hits, or nothing ties the
+        cited article to the income year.
+
+    A proposal that survived the critique never triggers a round, and neither
+    does one the critique rejected on its own merits.
+    """
+    draft = state.get("draft")
+    if draft is None or not draft.found:
+        return True
+    report = state.get("critique")
+    if report is None:
+        return False
+    # Provisional is checked before the verdict: it means the act for this
+    # income year is not in the corpus, which is a source gap however the rest
+    # of the critique came out.
+    if report.provisional:
+        return True
+    if report.verdict == "pass":
+        return False
+    return any(marker in issue for issue in report.issues for marker in _SOURCE_GAP_ISSUES)
 
 
 def _unchanged_window(proposed: ParameterValue, current: ParameterValue) -> ParameterValue:
@@ -588,19 +636,56 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
             and not is_mock  # the mock extractor is deterministic; retrying can't help
         )
 
-    def scout_step(state: WorkflowState) -> dict:
+    def _scout_needs(state: WorkflowState) -> list[str]:
+        """What the last proposal said it lacked, best first.
+
+        `missing_sources` is the structured channel; the prose `reasoning` is the
+        fallback for a model that left it empty, and it usually names the act
+        anyway ("the extract only states the limit of four times the annual
+        Social Security ceiling"). The critique's own issues come last: when the
+        proposal looked fine but the critique could not tie it to the income
+        year, the missing document is the applicability clause.
+        """
+        draft = state.get("draft")
+        report = state.get("critique")
+        needs: list[str] = []
+        if draft is not None:
+            needs += [s for s in draft.missing_sources if s.strip()]
+            if not needs and draft.reasoning:
+                needs.append(draft.reasoning)
+        if not needs and report is not None:
+            needs += [i for i in report.issues if not i.startswith("model:")][:2]
+        return needs
+
+    def scout_step(state: WorkflowState, round_index: int) -> dict:
         record, as_of = state["record"], state["as_of"]
+        needs = _scout_needs(state)
         with step_span(
             tracer,
             "scout",
             kind="TOOL",
-            input_value={"mode": cfg.scout, "model_target": record.information.model_target},
+            input_value={
+                "mode": cfg.scout,
+                "model_target": record.information.model_target,
+                "round": round_index,
+                "needs": needs,
+            },
         ) as span:
             # Scout hunts the ENACTING act: for income_year parameters that act
             # lives around the shifted retrieval date, not around as_of.
-            result = scout.run(cfg, record, state.get("retrieval_as_of", as_of))
+            result = scout.run(
+                cfg,
+                record,
+                state.get("retrieval_as_of", as_of),
+                needs=needs,
+                known_citations=[h.citation for h in state.get("hits", []) if h.citation],
+                attempted=state.setdefault("scout_attempted", set()),
+                round_index=round_index,
+            )
             set_output(span, result.summary())
-        return {"scout": result}
+        state["scout_attempted"].update(result.candidate_ids)
+        rounds = [*state.get("scout_rounds", []), result]
+        return {"scout_rounds": rounds, "scout": scout.merge_results(rounds)}
 
     def _propose_and_critique(state: WorkflowState) -> None:
         while True:
@@ -647,16 +732,21 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
         if state["hits"]:
             _propose_and_critique(state)
 
-        # Gap-fill: nothing usable retrieved — or only the previous year's value
-        # (provisional) — -> discover + archive-first ingest the missing
-        # instrument, then retry retrieval once. Mock runs skip it to stay
-        # deterministic and offline.
-        draft = state.get("draft")
-        critique_report = state.get("critique")
-        provisional = critique_report is not None and critique_report.provisional
-        if cfg.scout != "off" and not is_mock and (draft is None or not draft.found or provisional):
-            state.update(scout_step(state))
-            if state["scout"].ingested:
+        # Gap-fill: the corpus is missing the text that sets the value -> discover
+        # + archive-first ingest it, re-retrieve, re-propose. Each round is driven
+        # by what the LAST proposal said it still lacked, so a chain of
+        # cross-references resolves one hop per round (the code article names an
+        # implementing order, which names another) instead of stopping after one.
+        # It stops as soon as a proposal survives the critique, when a round
+        # ingests nothing new, or at scout_max_rounds. Mock runs skip it entirely
+        # to stay deterministic and offline.
+        if cfg.scout != "off" and not is_mock:
+            for round_index in range(1, cfg.scout_max_rounds + 1):
+                if not _needs_gap_fill(state):
+                    break
+                state.update(scout_step(state, round_index))
+                if not state["scout_rounds"][-1].ingested:
+                    break  # nothing new arrived; another round would ask the same question
                 state.update(retrieve(state))
                 if state["hits"]:
                     _propose_and_critique(state)
