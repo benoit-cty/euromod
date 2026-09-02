@@ -15,7 +15,8 @@
       "IVĮ 6 straipsnis"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "human",
-  "notes": "curated: lt.json#bchnm_coef | euromod value in force at 2025-06-01: 1.75 from 2021-01-01 | MEDIUM-HARD — universal child benefit coefficient, 1.75 since 2021. The law states benefit sizes as COEFFICIENTS of the basic social allowance (bazine socialine ismoka), not euros: tests that the pipeline extracts the legislated coefficient rather than the computed euro amount (1.75 x BSA), and that it does not 'update' the coefficient when only the BSA changes."
+  "notes": "curated: lt.json#bchnm_coef | euromod value in force at 2025-06-01: 1.75 from 2021-01-01 | MEDIUM-HARD — universal child benefit coefficient, 1.75 since 2021. The law states benefit sizes as COEFFICIENTS of the basic social allowance (bazine socialine ismoka), not euros: tests that the pipeline extracts the legislated coefficient rather than the computed euro amount (1.75 x BSA), and that it does not 'update' the coefficient when only the BSA changes.",
+  "reviewed_by": "ben"
 }
