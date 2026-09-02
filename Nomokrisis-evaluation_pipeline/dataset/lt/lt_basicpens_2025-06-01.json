@@ -5,6 +5,8 @@
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_lt_constdef_lt_def_const_basicpens.json",
   "as_of": "2025-06-01",
   "difficulty": "combine",
+  "hazards": [],
+  "labels_drafted": false,
   "source_class": "gazette",
   "expected": {
     "routing": "unchanged",

@@ -270,6 +270,7 @@ def score_item(
         language=case.language,
         model_target=item.model_target,
         difficulty=case.difficulty,
+        hazards=list(case.hazards),
         source_class=case.source_class,
         routing_expected=expected.routing.value,
         routing_actual=item.routing.value,
@@ -282,6 +283,7 @@ def score_item(
         expected_value=_dump(expected.value),
         proposed_value=_dump(proposed.value) if proposed is not None else None,
         corpus_available=case.corpus_available,
+        readiness=case.readiness,
     )
 
     if expected.value is not None:

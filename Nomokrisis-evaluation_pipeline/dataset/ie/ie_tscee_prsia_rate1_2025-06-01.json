@@ -5,6 +5,8 @@
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_tscee_ie_def_const_tscee_prsia_rate1.json",
   "as_of": "2025-06-01",
   "difficulty": "combine",
+  "hazards": [],
+  "labels_drafted": false,
   "source_class": "codified_law",
   "expected": {
     "routing": "unchanged",

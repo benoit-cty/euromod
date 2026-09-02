@@ -4,7 +4,11 @@
   "language": "en",
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_constdef_ie_def_const_tin_stdsingleband_lim.json",
   "as_of": "2025-06-01",
-  "difficulty": "plain",
+  "difficulty": "combine",
+  "hazards": [
+    "cross_instrument"
+  ],
+  "labels_drafted": true,
   "source_class": "codified_law",
   "expected": {
     "routing": "unchanged",

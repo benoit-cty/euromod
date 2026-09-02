@@ -327,11 +327,27 @@ cases are single-chunk smoke tests until those corpora are ingested for real.
 | `hallucination_pct` | value proposed whose extract is **not** verbatim in the cited chunk (lower is better) |
 | `retrieval_recall_pct` | ground-truth citation present in the retrieval trace (recall@k — the most diagnostic number) |
 | `abstentions` | cases where the pipeline refused rather than guessed, on a case that has a ground-truth value |
-| `cases_no_corpus`, `routing_pct_in_corpus`, `value_pct_in_corpus` | the corpus split — see below |
+| `cases_no_corpus`, `cases_undocumented`, `routing_pct_ready`, `value_pct_ready`, `citation_pct_ready` | the readiness split — see below |
 | `avg_latency_ms` | wall-clock per parameter |
 
 KPIs a case doesn't exercise are stored as `NULL` and excluded from the rate (e.g. no
 `citation_pct` contribution from a case with no accepted citations).
+
+### Difficulty and hazards
+
+`eval.run_difficulty` and `eval.run_hazards` break the **ready** cases down two ways, both
+assigned from the ground truth and never from a run's outcome:
+
+- `difficulty`, ordered by the work demanded — `verbatim` · `combine` · `derive` · `table`
+- `hazards`, orthogonal flags that compose — `income_year` · `mid_year_change` ·
+  `budget_act_window` · `cross_instrument` · `unit_conversion`
+
+`nomokrisis-eval label-cases` drafts both from the expected value, the citations and the
+parameter's `temporal_basis`, printing its reasoning; `--apply` writes them. Three hazards
+are invisible to it and stay with a human, and it will not touch a label set by hand in
+`golden_sources/` (`labels_drafted: false`). The predecessor field was assigned as
+`"table" if brackets else "plain"` and put 58 of 67 cases in one bucket — if every bucket
+scores alike, suspect the labels before the axis.
 
 ### Three things the raw rates do not say
 
@@ -339,11 +355,17 @@ Reviewing the first real run (`azure_openai/Mistral-Large-3`, 67 cases) showed a
 54% routing / 52% value / 27% date headline that was mostly artifact. The
 `/review-eval` skill is the full procedure; the three structural points:
 
-**1. Model quality and corpus coverage are different measurements.** A case whose
-ground-truth act is not ingested cannot be answered by any model. `GoldenCase.corpus_available`
-marks those, and the report prints the split. On that run: **73% routing / 73% value over
-the 45 cases whose source was in the corpus, 11% / 11% over the 18 where it was not.**
-Quote both numbers or neither.
+**1. Model quality and golden-set readiness are different measurements.** Two states say a
+case cannot measure a model at all: `no_corpus` (`corpus_available: false` — the act is not
+ingested, so no model could answer) and `undocumented` (no ground-truth citation was ever
+recorded, so `retrieval_hit` is unscorable and nobody established where the answer lives).
+`GoldenCase.readiness` derives both; every rate is recomputed over the `ready` cases alone.
+On that run: **73% routing / 73% value over the 45 cases whose source was in the corpus,
+11% / 11% over the 18 where it was not.** Quote both numbers or neither.
+
+Readiness was also, empirically, the *only* axis with real explanatory power on that run —
+citation count and corpus availability were the same population, and split 14% / 65% / 80%
+routing at zero / one / two citations, while every candidate difficulty axis was flat.
 
 **2. The date leg is meaningless on an `unchanged` verdict.** `pipeline._unchanged_window`
 deliberately keeps the validity window EUROMOD already holds — the citation re-confirms

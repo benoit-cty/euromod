@@ -21,6 +21,7 @@ from nomoscope_workflow.queue_store import load_record
 from nomoscope_workflow.schema import Bracket, ParameterRecord, ParameterValue, Routing
 
 from .config import REPO_ROOT
+from .labels import draft_labels
 from .schema import Expected, GoldenCase
 from .scoring import values_equal
 
@@ -155,13 +156,20 @@ def to_golden_case(
 
     case_id = f"{info.country.lower()}_{parameter_file.stem}_{as_of.isoformat()}"
     notes = " | ".join(filter(None, [draft.notes, f"quote: {draft.quote}" if draft.quote else None]))
+    drafted = draft_labels(
+        value=value,
+        citations=draft.citations,
+        temporal_basis=info.temporal_basis,
+        is_bracket_table=bool(draft.value_brackets),
+    )
     return GoldenCase(
         id=case_id,
         country=info.country,
         language=language,
         parameter_file=parameter_file.relative_to(REPO_ROOT).as_posix(),
         as_of=as_of,
-        difficulty="table" if draft.value_brackets else "plain",
+        difficulty=drafted.difficulty,
+        hazards=drafted.hazards,
         source_class="codified_law",
         expected=Expected(
             routing=routing,

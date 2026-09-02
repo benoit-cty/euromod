@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from nomoscope_workflow.schema import Bracket, LegalStatus, Routing
 
@@ -29,6 +29,40 @@ class Expected(BaseModel):
     )
 
 
+#: How much work it takes to get from the legal text to the stored value.
+#: A property of the parameter, assigned from the ground truth — never derived
+#: from a run's outcome, which would make the ladder unfalsifiable.
+#:   verbatim  the value appears literally in one provision
+#:   combine   it takes two or more provisions read together
+#:   derive    it takes arithmetic: a formula, a $-constant, a weighted average
+#:             for a mid-year change, a period conversion
+#:   table     a full bracket schedule — every bracket must be right
+Difficulty = Literal["verbatim", "combine", "derive", "table"]
+
+#: Known failure modes, orthogonal to the ladder: a `verbatim` case can still be
+#: an income-year case. Kept as flags rather than ladder rungs because they
+#: compose, and because each one names a specific mechanism we can go and fix.
+#:   income_year      FR back-dating (system year Y states income year Y-1)
+#:   mid_year_change  EUROMOD stores the weighted average of two in-year values
+#:   budget_act_window  the value is only final once the budget act passes;
+#:                    earlier evidence routes `provisional`
+#:   cross_instrument the value is fixed by an act a second act merely points to
+#:                    (a code article referring to an arrêté)
+#:   unit_conversion  the law states one period, EUROMOD stores another
+Hazard = Literal[
+    "income_year", "mid_year_change", "budget_act_window", "cross_instrument", "unit_conversion"
+]
+
+#: Whether a case can be scored as model quality at all. Readiness is a property
+#: of the GOLDEN SET, not of the model, and the two states below are the reasons
+#: a case cannot answer "how good is the model":
+#:   no_corpus     the source act is not ingested — no model could answer it
+#:   undocumented  no ground-truth citation was ever recorded, so retrieval is
+#:                 unscorable and nobody established where the answer lives
+#: Only `ready` cases belong in a quality headline.
+Readiness = Literal["ready", "no_corpus", "undocumented"]
+
+
 class GoldenCase(BaseModel):
     """One validation case: run the workflow on parameter_file at as_of, compare to expected."""
 
@@ -39,7 +73,18 @@ class GoldenCase(BaseModel):
     language: str = Field(description="Language of the source legislation, e.g. 'fr'")
     parameter_file: str = Field(description="Activity 1 parameter JSON, path relative to the repo root")
     as_of: date
-    difficulty: Literal["plain", "combine", "table"] | None = None
+    difficulty: Difficulty | None = None
+    hazards: list[Hazard] = Field(
+        default_factory=list,
+        description="Known failure modes this case exercises; orthogonal to `difficulty`",
+    )
+    labels_drafted: bool = Field(
+        default=True,
+        description="False when a human set difficulty/hazards in the selection file. "
+        "`label-cases --apply` refuses to touch those: the drafter sees less than a "
+        "reviewer does (it cannot tell a bracket group from a scalar once the case is "
+        "materialized), so it must never overwrite a judgement it could not have made.",
+    )
     source_class: Literal["codified_law", "gazette", "national_team"] | None = None
     expected: Expected
     corpus_available: bool | None = Field(
@@ -59,6 +104,29 @@ class GoldenCase(BaseModel):
     reviewed_by: str | None = None
     review_note: str | None = None
     notes: str | None = None
+
+    @field_validator("difficulty", mode="before")
+    @classmethod
+    def _legacy_plain(cls, value: object) -> object:
+        """`plain` was the pre-ladder label, assigned mechanically as "not a
+        bracket table". It means the same thing the ladder calls `verbatim`, and
+        frozen `cases.json` files from earlier runs still carry it — `rescore`
+        must keep loading them."""
+        return "verbatim" if value == "plain" else value
+
+    @property
+    def readiness(self) -> Readiness:
+        """Why this case can or cannot be read as a measure of model quality.
+
+        Checked corpus-first: `no_corpus` is the stronger, positively
+        established fact (we looked the act up and it is not there), while
+        `undocumented` only says nobody ever recorded where the answer lives.
+        """
+        if self.corpus_available is False:
+            return "no_corpus"
+        if not self.expected.citations:
+            return "undocumented"
+        return "ready"
 
 
 class EmbeddingCase(BaseModel):
@@ -124,6 +192,7 @@ class CaseResult(BaseModel):
     language: str
     model_target: str | None = None
     difficulty: str | None = None
+    hazards: list[str] = Field(default_factory=list)
     source_class: str | None = None
 
     routing_expected: str
@@ -156,6 +225,10 @@ class CaseResult(BaseModel):
     # Copied from the case so a report can separate model quality from corpus
     # coverage without re-reading the golden set.
     corpus_available: bool | None = None
+    # GoldenCase.readiness at scoring time: 'ready', or the reason this case
+    # measures the golden set rather than the model. Denormalised for the same
+    # reason as corpus_available — reports and SQL should not need the dataset.
+    readiness: str | None = None
 
     confidence: float | None = None
     latency_ms: int | None = None

@@ -4,7 +4,9 @@
   "language": "fr",
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tscse_fr_def_const_tscsepi_uplim.json",
   "as_of": "2025-06-01",
-  "difficulty": "plain",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
   "source_class": "codified_law",
   "expected": {
     "routing": "changed",

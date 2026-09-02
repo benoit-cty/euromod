@@ -72,12 +72,12 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
             cur.executemany(
                 """
                 INSERT INTO eval.results (run_pk, case_id, country, language, model_target,
-                                          difficulty, source_class, routing_expected,
+                                          difficulty, hazards, source_class, routing_expected,
                                           routing_actual, routing_correct, value_correct,
                                           date_correct, citation_correct, extract_verbatim,
                                           supportedness, critique_pass,
                                           hallucination, retrieval_hit, abstained,
-                                          corpus_available, confidence,
+                                          corpus_available, readiness, confidence,
                                           latency_ms, error, details,
                                           phoenix_trace_id, llm_calls, tokens_prompt,
                                           tokens_completion, energy_kwh, gwp_kgco2eq,
@@ -85,7 +85,7 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s)
+                        %s, %s, %s)
                 """,
                 [
                     (
@@ -95,6 +95,7 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                         r.language,
                         r.model_target,
                         r.difficulty,
+                        r.hazards,
                         r.source_class,
                         r.routing_expected,
                         r.routing_actual,
@@ -109,6 +110,7 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                         r.retrieval_hit,
                         r.abstained,
                         r.corpus_available,
+                        r.readiness,
                         r.confidence,
                         r.latency_ms,
                         r.error,
@@ -125,6 +127,30 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                 ],
             )
     return run_pk
+
+
+def fetch_difficulty(conn: psycopg.Connection, run_pks: list[int]) -> list[dict]:
+    """Rows from eval.run_difficulty for the given runs (ready cases only)."""
+    if not run_pks:
+        return []
+    with conn.cursor(row_factory=dict_row) as cur:
+        return cur.execute(
+            "SELECT * FROM eval.run_difficulty WHERE run_pk = ANY(%s) "
+            "ORDER BY run_pk, language, difficulty",
+            (run_pks,),
+        ).fetchall()
+
+
+def fetch_hazards(conn: psycopg.Connection, run_pks: list[int]) -> list[dict]:
+    """Rows from eval.run_hazards for the given runs (ready cases only)."""
+    if not run_pks:
+        return []
+    with conn.cursor(row_factory=dict_row) as cur:
+        return cur.execute(
+            "SELECT * FROM eval.run_hazards WHERE run_pk = ANY(%s) "
+            "ORDER BY run_pk, language, hazard",
+            (run_pks,),
+        ).fetchall()
 
 
 def fetch_summary(conn: psycopg.Connection, run_id: str | None = None, limit: int = 20) -> list[dict]:

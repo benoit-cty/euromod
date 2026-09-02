@@ -5,6 +5,8 @@
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_constdef_fr_def_const_tsc_groupc_lim.json",
   "as_of": "2025-06-01",
   "difficulty": "combine",
+  "hazards": [],
+  "labels_drafted": false,
   "source_class": "gazette",
   "expected": {
     "routing": "unchanged",

@@ -5,6 +5,8 @@
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_lt_constdef_lt_group_tin_schedule.json",
   "as_of": "2025-06-01",
   "difficulty": "table",
+  "hazards": [],
+  "labels_drafted": false,
   "source_class": "codified_law",
   "expected": {
     "routing": "unchanged",
