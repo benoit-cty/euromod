@@ -5,6 +5,8 @@
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_bch_ie_def_const_bch_amt1.json",
   "as_of": "2025-06-01",
   "difficulty": "combine",
+  "hazards": [],
+  "labels_drafted": false,
   "source_class": "codified_law",
   "expected": {
     "routing": "derived",

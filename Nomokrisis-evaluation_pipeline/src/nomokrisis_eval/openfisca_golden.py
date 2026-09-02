@@ -55,6 +55,7 @@ from nomoscope_workflow import paramdb
 from .build_dataset import _current_value
 from .config import REPO_ROOT
 from .dataset import save_drafted_case
+from .labels import draft_labels
 from .schema import Expected, GoldenCase
 from .scoring import normalise_value, values_equal
 
@@ -498,6 +499,12 @@ def draft_case(
         note_parts.append(entry["note"])
     outcome.warnings.extend(unresolved)
 
+    drafted = draft_labels(
+        value=expected_value,
+        citations=citations,
+        temporal_basis=record.information.temporal_basis,
+        is_bracket_table=component == "brackets",
+    )
     slug = entry.get("id") or _case_slug(record.information.model_target, country)
     case = GoldenCase(
         id=f"{country.lower()}_{slug}_{as_of.isoformat()}",
@@ -505,7 +512,9 @@ def draft_case(
         language=language,
         parameter_file=param_path.relative_to(REPO_ROOT).as_posix(),
         as_of=as_of,
-        difficulty=entry.get("difficulty") or ("table" if component == "brackets" else "plain"),
+        difficulty=entry.get("difficulty") or drafted.difficulty,
+        hazards=entry.get("hazards", drafted.hazards),
+        labels_drafted="difficulty" not in entry and "hazards" not in entry,
         source_class=entry.get("source_class", "codified_law"),
         expected=Expected(
             routing=routing,

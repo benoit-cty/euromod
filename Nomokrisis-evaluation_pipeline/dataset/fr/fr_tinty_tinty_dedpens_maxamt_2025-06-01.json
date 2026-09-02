@@ -4,7 +4,11 @@
   "language": "fr",
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinty_fr_def_const_tinty_dedpens_maxamt.json",
   "as_of": "2025-06-01",
-  "difficulty": "plain",
+  "difficulty": "verbatim",
+  "hazards": [
+    "income_year"
+  ],
+  "labels_drafted": true,
   "source_class": "codified_law",
   "expected": {
     "routing": "unchanged",

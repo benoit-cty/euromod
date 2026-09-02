@@ -48,6 +48,7 @@ from nomoscope_workflow.schema import Bracket, Routing, SourceType, TemporalBasi
 from .build_dataset import _current_value
 from .config import REPO_ROOT
 from .dataset import save_drafted_case
+from .labels import draft_labels
 from .openfisca_golden import (
     DraftOutcome,
     _case_slug,
@@ -218,13 +219,24 @@ def draft_case(
             "no retrieval can reach it. The case measures ingest coverage and is excluded "
             "from the 'source in corpus' KPI slice"
         )
+    # Labels are drafted from the ground truth and overridable per entry: a
+    # reviewer who disagrees writes `difficulty`/`hazards` into the selection
+    # file, and the draft never overwrites it.
+    drafted = draft_labels(
+        value=expected_value if scored else None,
+        citations=list(entry.get("citations", [])),
+        temporal_basis=record.information.temporal_basis,
+        is_bracket_table=bool(entry.get("group_id")),
+    )
     outcome.case = GoldenCase(
         id=f"{country.lower()}_{slug}_{as_of.isoformat()}",
         country=country.upper(),
         language=language,
         parameter_file=param_path.relative_to(REPO_ROOT).as_posix(),
         as_of=as_of,
-        difficulty=entry.get("difficulty") or ("table" if entry.get("group_id") else "plain"),
+        difficulty=entry.get("difficulty") or drafted.difficulty,
+        hazards=entry.get("hazards", drafted.hazards),
+        labels_drafted="difficulty" not in entry and "hazards" not in entry,
         source_class=entry.get("source_class", "codified_law"),
         expected=Expected(
             routing=routing,

@@ -4,7 +4,12 @@
   "language": "fr",
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinkt_fr_def_const_tin_decote_amt2.json",
   "as_of": "2025-06-01",
-  "difficulty": "plain",
+  "difficulty": "combine",
+  "hazards": [
+    "income_year",
+    "cross_instrument"
+  ],
+  "labels_drafted": true,
   "source_class": "codified_law",
   "expected": {
     "routing": "unchanged",

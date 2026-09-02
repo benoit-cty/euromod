@@ -12,7 +12,6 @@
   "entries": [
     {
       "model_target": "euromod://IE/ConstDef_ie/def_const/$tin_StdSingleband_lim",
-      "difficulty": "plain",
       "source_class": "codified_law",
       "routing": "unchanged",
       "expected_value": "44000#y",
@@ -26,7 +25,6 @@
     },
     {
       "model_target": "euromod://IE/ConstDef_ie/def_const/$tin_high_rate",
-      "difficulty": "plain",
       "source_class": "codified_law",
       "routing": "unchanged",
       "expected_value": 0.4,
@@ -38,7 +36,6 @@
     },
     {
       "model_target": "euromod://IE/ConstDef_ie/def_const/$tin_PersTC_amt",
-      "difficulty": "plain",
       "source_class": "codified_law",
       "routing": "unchanged",
       "expected_value": "2000#y",
@@ -52,7 +49,6 @@
     },
     {
       "model_target": "euromod://IE/txcin_ie/def_const/$txcin_rate3",
-      "difficulty": "plain",
       "source_class": "codified_law",
       "routing": "unchanged",
       "expected_value": 0.03,
@@ -66,7 +62,6 @@
     },
     {
       "model_target": "euromod://IE/ConstDef_ie/def_const/$txcin_upthres2",
-      "difficulty": "plain",
       "source_class": "codified_law",
       "routing": "changed",
       "expected_value": "27382#y",
@@ -80,7 +75,6 @@
     },
     {
       "model_target": "euromod://IE/bunct_ie/def_const/$bunct_Rate1",
-      "difficulty": "plain",
       "source_class": "codified_law",
       "routing": "unchanged",
       "expected_value": "109.50#w",
@@ -106,7 +100,6 @@
     },
     {
       "model_target": "euromod://IE/benergy_cred_ie/def_const/$benergy_amt",
-      "difficulty": "plain",
       "source_class": "gazette",
       "routing": "unchanged",
       "expected_value": "125#y",
@@ -130,7 +123,6 @@
     },
     {
       "model_target": "euromod://IE/tco_ie/def_const/$tco_t_01131",
-      "difficulty": "plain",
       "source_class": "national_team",
       "routing": "national_team_source",
       "expected_value": null,

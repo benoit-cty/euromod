@@ -5,6 +5,11 @@
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinkt_fr_group_tin_schedule.json",
   "as_of": "2025-06-01",
   "difficulty": "table",
+  "hazards": [
+    "income_year",
+    "cross_instrument"
+  ],
+  "labels_drafted": false,
   "source_class": "codified_law",
   "expected": {
     "routing": "changed",

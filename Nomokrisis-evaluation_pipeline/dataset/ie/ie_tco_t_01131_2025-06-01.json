@@ -4,7 +4,9 @@
   "language": "en",
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_ie_tco_ie_def_const_tco_t_01131.json",
   "as_of": "2025-06-01",
-  "difficulty": "plain",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
   "source_class": "national_team",
   "expected": {
     "routing": "national_team_source",

@@ -4,7 +4,9 @@
   "language": "fr",
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tscer_fr_def_const_tscerpi_rate2.json",
   "as_of": "2025-06-01",
-  "difficulty": "plain",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
   "source_class": "codified_law",
   "expected": {
     "routing": "unchanged",
@@ -17,6 +19,6 @@
   "corpus_available": true,
   "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prelevements_sociaux.cotisations_securite_sociale_regime_general.cnav.employeur.vieillesse_deplafonnee :: brackets[1].rate | openfisca value at 2025-06-01: 0.0202 (change point 2024-01-01) | euromod value in force at 2025-06-01: 0.0202 from 2024-01-01 | link: fingerprint score 0.80 | references not resolved in the legislation corpus: Décret 2023-1329 du 29/12/2023, art. 1 [JORFARTI000048727897] not in the corpus (not scorable)",
-  "reviewed_by": "ben"
+  "reviewed_by": "ben",
+  "notes": "openfisca: prelevements_sociaux.cotisations_securite_sociale_regime_general.cnav.employeur.vieillesse_deplafonnee :: brackets[1].rate | openfisca value at 2025-06-01: 0.0202 (change point 2024-01-01) | euromod value in force at 2025-06-01: 0.0202 from 2024-01-01 | link: fingerprint score 0.80 | references not resolved in the legislation corpus: Décret 2023-1329 du 29/12/2023, art. 1 [JORFARTI000048727897] not in the corpus (not scorable)"
 }

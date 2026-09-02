@@ -13,18 +13,21 @@ from __future__ import annotations
 
 import json
 import time
+from collections import Counter
 from datetime import date
 from pathlib import Path
 
 import typer
+from nomoscope_workflow.queue_store import load_record
 from nomoscope_workflow.tracing import set_progress
 
 from . import build_dataset as builder
 from . import curated_golden
 from . import db as evaldb
 from . import openfisca_golden
-from .config import EvalConfig, load_eval_config
+from .config import REPO_ROOT, EvalConfig, load_eval_config
 from .dataset import dataset_version, load_cases, load_embedding_cases, save_case
+from .labels import DraftedLabels, draft_labels
 from .runner import (
     RESULTS_FILENAME,
     execute_run,
@@ -560,6 +563,96 @@ def rescore(
     typer.echo(f"rescored results written to {run_dir}")
 
 
+@app.command("label-cases")
+def label_cases(
+    country: list[str] = typer.Option(None, "--country"),
+    apply: bool = typer.Option(False, "--apply", help="Write the proposals into the case files"),
+) -> None:
+    """Draft a difficulty rung + hazard flags for each golden case, for review.
+
+    Prints one line per case with the proposal and the reason for it, then a
+    per-bucket count. Nothing is written without --apply, and even then only
+    `difficulty`/`hazards` change: labels are metadata about a case, not ground
+    truth about its value, so a human `verified` flag survives untouched.
+
+    A label you disagree with belongs in the selection file
+    (golden_sources/<cc>.json), as `difficulty` / `hazards` on the entry — the
+    builders prefer an explicit entry value over anything drafted here, so a
+    rebuild will not undo your correction.
+    """
+    cfg = load_eval_config()
+    cases = load_cases(cfg.dataset_dir, countries=country or None)
+    if not cases:
+        typer.echo("No golden cases found.")
+        return
+
+    changed: list[tuple[GoldenCase, DraftedLabels]] = []
+    locked: list[GoldenCase] = []
+    buckets: Counter[str] = Counter()
+    hazard_counts: Counter[str] = Counter()
+    for case in sorted(cases, key=lambda c: c.id):
+        # temporal_basis lives on the parameter record, not on the case.
+        try:
+            record = load_record(REPO_ROOT / case.parameter_file)
+            basis = record.information.temporal_basis
+        except (OSError, ValueError):
+            basis = None
+        drafted = draft_labels(
+            value=case.expected.value,
+            citations=case.expected.citations,
+            temporal_basis=basis,
+            is_bracket_table=isinstance(case.expected.value, list),
+        )
+        buckets[drafted.difficulty] += 1
+        for hazard in drafted.hazards:
+            hazard_counts[hazard] += 1
+        if not case.labels_drafted:
+            mark = "="  # a human set this in the selection file; the draft is FYI only
+        elif (case.difficulty, case.hazards) == (drafted.difficulty, drafted.hazards):
+            mark = " "
+        else:
+            mark = "*"
+        flags = f" +{','.join(drafted.hazards)}" if drafted.hazards else ""
+        typer.echo(
+            f"{mark} {case.id:<52} {case.difficulty or '-':<9} -> {drafted.difficulty:<9}{flags}"
+        )
+        for reason in drafted.reasons:
+            typer.echo(f"      · {reason}")
+        if mark == "*":
+            changed.append((case, drafted))
+        elif mark == "=" and (case.difficulty, case.hazards) != (drafted.difficulty, drafted.hazards):
+            locked.append(case)
+
+    typer.echo(
+        "\ndifficulty: " + "  ".join(f"{k}={v}" for k, v in sorted(buckets.items()))
+        + "\nhazards:    " + ("  ".join(f"{k}={v}" for k, v in sorted(hazard_counts.items())) or "none")
+    )
+    # The drafter can see three hazards and is blind to three others; say so,
+    # so a reviewer knows the flag list is a floor rather than a verdict.
+    typer.echo(
+        "not drafted (a human has to add these): mid_year_change, unit_conversion, "
+        "budget_act_window"
+    )
+
+    if locked:
+        typer.echo(
+            f"\n{len(locked)} case(s) marked '=' keep a label set by hand in "
+            "golden_sources/ and are left alone: "
+            + ", ".join(c.id for c in locked)
+        )
+    if not changed:
+        typer.echo("\nevery case already carries its drafted label.")
+        return
+    if not apply:
+        typer.echo(f"\n{len(changed)} case(s) would change (*). Re-run with --apply to write them.")
+        return
+    for case, drafted in changed:
+        case.difficulty = drafted.difficulty
+        case.hazards = list(drafted.hazards)
+        save_case(cfg.dataset_dir, case)
+    typer.echo(f"\nwrote {len(changed)} case file(s); `verified` untouched.")
+
+
 @app.command()
 def report(
     run_id: str = typer.Option(None, "--run-id", help="Restrict to one run"),
@@ -569,6 +662,9 @@ def report(
     cfg = load_eval_config()
     with evaldb.connect(cfg.database_url) as conn:
         rows = evaldb.fetch_summary(conn, run_id=run_id, limit=limit)
+        run_pks = sorted({r["run_pk"] for r in rows})
+        by_difficulty = evaldb.fetch_difficulty(conn, run_pks)
+        by_hazard = evaldb.fetch_hazards(conn, run_pks)
     if not rows:
         typer.echo("No evaluation runs stored yet.")
         return
@@ -583,16 +679,42 @@ def report(
             f"  co2={row['gwp_kgco2eq'] * 1000:.1f}g"
         )
 
-    def coverage(row) -> str:
-        """The corpus caveat, printed only when it actually applies: how many
-        cases no model could answer, and what the KPIs look like without them."""
-        missing = row.get("cases_no_corpus") or 0
-        if not missing:
+    def readiness(row) -> str:
+        """The golden-set caveat, printed only when it applies: how many cases
+        cannot measure a model at all, and what the KPIs look like without them.
+
+        Two distinct gaps, because they take different work to close — ingest
+        the act, versus record where the answer lives."""
+        no_corpus = row.get("cases_no_corpus") or 0
+        undocumented = row.get("cases_undocumented") or 0
+        if not (no_corpus + undocumented):
             return ""
+        reasons = []
+        if no_corpus:
+            reasons.append(f"{no_corpus} source not in corpus")
+        if undocumented:
+            reasons.append(f"{undocumented} no ground-truth citation")
         return (
-            f"\n      source not in corpus: {missing} case(s) — over the rest:"
-            f"  routing={pct(row['routing_pct_in_corpus'])}"
-            f"  value={pct(row['value_pct_in_corpus'])}"
+            f"\n      not ready ({', '.join(reasons)}) — over the ready cases:"
+            f"  routing={pct(row['routing_pct_ready'])}"
+            f"  value={pct(row['value_pct_ready'])}"
+            f"  citation={pct(row['citation_pct_ready'])}"
+        )
+
+    def breakdown(row, label: str, source: list[dict], key: str) -> str:
+        """One indented line per bucket, ready cases only. Silent when a single
+        bucket holds everything — a lone rung compares with nothing."""
+        buckets = [
+            b for b in source
+            if b["run_pk"] == row["run_pk"] and b["language"] == row["language"]
+        ]
+        if len(buckets) < 2 and label == "difficulty":
+            return ""
+        return "".join(
+            f"\n      {label + ' ' + b[key]:<27} n={b['cases']:<3}"
+            f"  routing={pct(b['routing_pct'])}  value={pct(b['value_pct'])}"
+            f"  recall={pct(b['retrieval_recall_pct'])}"
+            for b in buckets
         )
 
     for row in rows:
@@ -607,7 +729,9 @@ def report(
             f"  abstained={abstentions}"
             f"{impact(row)}"
             f"  {row['run_id']}"
-            f"{coverage(row)}"
+            f"{readiness(row)}"
+            f"{breakdown(row, 'difficulty', by_difficulty, 'difficulty')}"
+            f"{breakdown(row, 'hazard', by_hazard, 'hazard')}"
         )
 
 

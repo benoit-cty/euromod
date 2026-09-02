@@ -4,7 +4,9 @@
   "language": "fr",
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinty_fr_def_const_tscxc_thres5.json",
   "as_of": "2025-06-01",
-  "difficulty": "plain",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
   "source_class": "codified_law",
   "expected": {
     "routing": "unchanged",

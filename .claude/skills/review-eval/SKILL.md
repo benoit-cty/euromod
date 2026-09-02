@@ -108,15 +108,64 @@ docker exec nomotheca-legislation-db psql -U jrc -d legislation -c \
 
 If no ground-truth reference resolves in the legislation corpus, the text
 stating the value was never retrievable and the case measures ingest breadth.
-`GoldenCase.corpus_available` records this; the report prints the split.
+
+This is one of two **readiness** states — reasons a case cannot measure a model
+at all, both properties of the golden set rather than of the model:
+
+| `GoldenCase.readiness` | meaning | how you close it |
+|---|---|---|
+| `no_corpus` | `corpus_available: false` — the act is not ingested | ingest the act |
+| `undocumented` | no ground-truth citation was ever recorded, so `retrieval_hit` is unscorable and nobody established where the answer lives | find the provision, add the citation |
+| `ready` | neither | — |
+
+`report` and the console summary both print the split, and every rate is
+recomputed over the ready cases alone:
 
 ```bash
-uv run nomokrisis-eval report --run-id <run-id>     # prints "source not in corpus: N case(s)"
+uv run nomokrisis-eval report --run-id <run-id>   # "not ready (N source not in corpus, M no ground-truth citation)"
 ```
 
 The first run reviewed this way split hard: **73% routing / 73% value on the 45
 cases whose act was ingested, 11% / 11% on the 18 where it was not** — against a
 54%/52% headline. Report both numbers or neither.
+
+Measured on that run, citation count and corpus availability turned out to be
+the *same* population (18/18 and 34/34), and it was by far the strongest signal
+in the data — 14% routing at zero citations, 65% at one, 80% at two. Before
+concluding anything about a model, check that you are not looking at this.
+
+#### Difficulty and hazards: the breakdown that explains a headline
+
+Once the unready cases are out, `report` splits the rest two ways. Both are
+assigned from the ground truth, **never** from a run's outcome — a ladder fitted
+to outcomes reports that the hard cases are the ones we got wrong.
+
+`difficulty`, ordered by the work the parameter demands (highest applicable wins):
+`verbatim` (the value is literally in one provision) · `combine` (two or more
+provisions) · `derive` (arithmetic: a formula, a `$`-constant, a weighted
+average, a period conversion) · `table` (a full bracket schedule).
+
+`hazards`, orthogonal flags that compose — a `verbatim` case can still be an
+income-year case: `income_year` · `mid_year_change` · `budget_act_window` ·
+`cross_instrument` · `unit_conversion`.
+
+```bash
+uv run nomokrisis-eval label-cases              # proposals + reasons, writes nothing
+uv run nomokrisis-eval label-cases --apply      # writes difficulty/hazards only
+```
+
+`label-cases` drafts from the expected value, the citations and the parameter's
+`temporal_basis`. It is blind to `mid_year_change`, `unit_conversion` and
+`budget_act_window` — those need a human. It also refuses to touch a case whose
+label a human set in `golden_sources/` (`labels_drafted: false`), because the
+drafter sees less than a reviewer does: once a case is materialized it cannot
+tell a bracket group from a scalar.
+
+Beware the trap the old field fell into. `difficulty` used to be assigned as
+`"table" if brackets else "plain"` in three builders, which measured "is this a
+bracket schedule" — 58 of 67 cases in one bucket, separating nothing (plain 53%
+vs combine 50%). If a breakdown shows every bucket scoring alike, suspect the
+labels before you conclude the axis does not matter.
 
 ### c. Mislabelled ground truth — is `expected` what a correct pipeline owes?
 
@@ -242,6 +291,15 @@ unverified cases from the next run.
 - **Say why in `note:`.** It lands in the case's `notes` and is what a reviewer
   reads at the verification gate. Difficulty tiers ("EASY / HARD / IMPOSSIBLE
   today") are how the IE and LT sets make future improvements legible.
+- **Correct a difficulty label in the selection file, not the case file.** Set
+  `difficulty` / `hazards` on the `golden_sources/<cc>.json` entry: the builders
+  prefer an explicit entry value over anything drafted, mark the case
+  `labels_drafted: false`, and a rebuild will not undo you. Editing the
+  materialized case in `dataset/` loses the change on the next build.
+- **Aim for spread across the ladder.** A set that is all `verbatim` cannot show
+  whether the pipeline can combine provisions; the current 70 cases hold zero
+  `derive` cases, so nothing measures formula-valued parameters — which is ~75%
+  of the FR set in EUROMOD.
 - **Balance the set.** 47 of the first 67 cases expected `unchanged`, so
   routing accuracy was largely a measure of resisting change. Get `changed`
   cases from parameters where EUROMOD is genuinely stale — not by relabelling
