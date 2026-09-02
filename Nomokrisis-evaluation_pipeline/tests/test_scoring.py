@@ -212,6 +212,40 @@ def test_percent_literals_read_as_rates():
     assert normalise_value("%") is None
 
 
+def test_percent_of_another_parameter():
+    """LT writes a threshold as a percentage OF another parameter
+    ('$tinta_higher_thres' = '100%*$MMS'). The percent is not trailing, so it
+    has to be read inside the expression, and the reference resolved."""
+    constants = {"mms": "1038#m"}
+    assert normalise_value("100%*$MMS", constants).magnitude == pytest.approx(1038)
+    assert values_equal("100%*$MMS", 1038, constants)
+    assert values_equal("100%*$MMS", "1038#m", constants)
+    assert not values_equal("100%*$MMS", 747, constants)
+
+
+def test_period_marker_inside_an_expression_refuses_rather_than_truncates():
+    """IE stores weekly rates as '242#w*$sw_weeks'. '#' opens a comment in
+    Python's grammar, so evaluating the substituted text would silently return
+    242 — the weekly amount presented as the annual one, a wrong number where an
+    abstention belongs. ($sw_weeks is a EUROMOD system constant and is not in
+    the parameter store at all, so it never resolves in practice either.)"""
+    assert normalise_value("242#w*$sw_weeks", {"sw_weeks": 52}) is None
+    assert normalise_value("242#w*52") is None
+    # A trailing suffix is still a suffix, not an expression marker.
+    assert normalise_value("109.50#w").magnitude == pytest.approx(109.5)
+
+
+def test_derive_values_score_in_every_spelling():
+    """The `derive` rung's point: EUROMOD holds the composition, the law states
+    the reference. A proposal is right whether it keeps the formula or resolves
+    it, and the difference shows up on the citation leg instead."""
+    constants = {"pss": 47100}
+    assert values_equal("$PSS * 4", 188400, constants)
+    assert values_equal("$PSS * 4", "$PSS * 4", constants)
+    assert not values_equal("$PSS * 4", 47100, constants)
+    assert values_equal("1/6", 1 / 6)
+
+
 def test_period_suffix_is_parsed_not_string_matched():
     assert values_equal(11496.0, "11496#y")
     assert values_equal("0.45", 0.45)

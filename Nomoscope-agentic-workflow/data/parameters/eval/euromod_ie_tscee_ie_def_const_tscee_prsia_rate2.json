@@ -1,0 +1,93 @@
+{
+  "information": {
+    "country": "IE",
+    "model_target": "euromod://IE/tscee_ie/def_const/$tscee_prsiA_rate2",
+    "spine_order": "19",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "Employee PRSI Class A- Rate 2"
+    },
+    "short_label": {
+      "en": "$tscee_prsiA_rate2"
+    },
+    "description": {
+      "en": "This constant is the withdrawal (taper) rate of one-sixth applied to the PRSI Class A credit as earnings rise above the credit's starting threshold. It is used as the Withdraw_Rate parameter of the BenCalc function in tscee_ie labelled 'PRSI Class A: credit (per month in work)', reducing the €12 maximum credit (tscee_prsiA_amt) by one-sixth of the amount by which weekly earnings exceed the threshold (tscee_prsiA_thres1). This directly matches the country report's description of the tapered PRSI credit introduced in 2016, which equals €12 less one-sixth of weekly earnings above €352.01."
+    },
+    "explanation": {},
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": "n/a",
+      "valid_from": "2006-01-01",
+      "valid_to": "2015-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": "1 / 6",
+      "valid_from": "2016-01-01",
+      "valid_to": "2022-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "1 / 6",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": "1/6",
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model_answer": "1/6",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

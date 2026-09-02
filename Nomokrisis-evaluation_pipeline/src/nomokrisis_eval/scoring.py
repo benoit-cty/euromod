@@ -117,6 +117,9 @@ PERIOD_TO_MONTHLY: dict[str, float] = {
 }
 
 _SUFFIX_RE = re.compile(r"\s*#\s*([myqwdlsc])\s*$")
+#: A percent literal anywhere in the expression ('4.1%', '100%*$MMS'). Rewritten
+#: to a division so the arithmetic below sees a plain number.
+_PERCENT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*%")
 _CONST_RE = re.compile(r"\$([A-Za-z_]\w*)")
 _ALLOWED_BINOPS = (ast.Add, ast.Sub, ast.Mult, ast.Div)
 _ALLOWED_UNARY = (ast.UAdd, ast.USub)
@@ -166,13 +169,15 @@ def normalise_value(
 
     Accepts plain numbers and raw EUROMOD strings: an optional trailing period
     suffix ('#m', '#y', …) over an arithmetic expression that may reference
-    other parameters ('$PSS * 4'), optionally written as a percent literal
-    ('4.1%' -> 0.041). References resolve through `constants`
+    other parameters ('$PSS * 4'), with percent literals read as the rate they
+    denote ('4.1%' -> 0.041, '100%*$MMS' -> the value of $MMS). References
+    resolve through `constants`
     (casefolded name without '$' -> number or raw string, resolved recursively
     with a cycle guard); a reference's own period suffix is dropped — EUROMOD
     formulas operate on the stored magnitude. Returns None for 'n/a', unknown
-    constants, multiplicative unit suffixes ('×1000') or anything else that is
-    not a scalar — callers then fall back to strict equality.
+    constants, multiplicative unit suffixes ('×1000'), a period marker inside an
+    expression ('242#w*$sw_weeks') or anything else that is not a scalar —
+    callers then fall back to strict equality.
     """
     if isinstance(value, bool) or value is None:
         return None
@@ -188,17 +193,22 @@ def normalise_value(
         text = text[: m.start()].strip()
     if not text or text.casefold() in ("n/a", "na"):
         return None
+    # A '#' that survived the suffix strip is a period marker inside the
+    # expression ('242#w*$sw_weeks'). It is NOT arithmetic this function can
+    # read, and leaving it in is actively dangerous: '#' opens a comment in
+    # Python's grammar, so ast.parse would silently evaluate the prefix and
+    # return 242 for a value that means 242 a week. Refuse instead, and let the
+    # caller fall back to strict equality.
+    if "#" in text:
+        return None
     # EUROMOD stores some rates as percent literals ('4.1%', '8.72%') where
-    # OpenFisca and the rest of the store use the unit-/1 form (0.041). Both
-    # spellings denote the same rate, so read the percent and divide: without
-    # this the two sides fall back to string equality and a correct value
-    # scores as a difference. Trailing '%' only — it qualifies the whole
-    # magnitude, and no EUROMOD value mixes it into an expression.
-    percent = text.endswith("%")
-    if percent:
-        text = text[:-1].strip()
-        if not text:
-            return None
+    # OpenFisca and the rest of the store use the unit-/1 form (0.041), and
+    # writes some values as a percentage OF another parameter ('100%*$MMS').
+    # Both spellings denote the same quantity, so rewrite every percent literal
+    # to a division and let the expression evaluator do the rest: without this
+    # the two sides fall back to string equality and a correct value scores as
+    # a difference.
+    text = _PERCENT_RE.sub(r"((\1)/100)", text)
 
     def substitute(match: re.Match[str]) -> str:
         name = match.group(1).casefold()
@@ -217,7 +227,7 @@ def normalise_value(
         magnitude = _eval_expr(ast.parse(text, mode="eval"))
     except (ValueError, SyntaxError, ZeroDivisionError):
         return None
-    return NormalisedValue(magnitude / 100 if percent else magnitude, period)
+    return NormalisedValue(magnitude, period)
 
 
 def _num_equal(x: float | None, y: float | None) -> bool:
