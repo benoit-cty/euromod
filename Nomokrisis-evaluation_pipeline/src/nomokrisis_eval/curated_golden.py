@@ -15,8 +15,17 @@ NOT be typed by hand:
 - the value EUROMOD holds at `as_of` is read back into the case notes, which is
   what a reviewer needs in front of them at the verification gate;
 - the selection's explicit `routing:` is cross-checked against the deterministic
-  routing (`route_against_current`) and any disagreement is reported, so a typo
-  in the selection file surfaces as a warning instead of as silent ground truth.
+  routing (`route_against_current`), and a disagreement SKIPS the entry rather
+  than writing ground truth the drafter believes is wrong.
+
+The routing a selection file must state is the pipeline's question — "does the
+proposal differ from the value EUROMOD currently holds?" — not "did the law
+change this year?". EUROMOD's system-year N database already encodes the law of
+year N, so a parameter the legislature changed for N and that the export already
+carries is `unchanged`: the pipeline's job there is to re-confirm it with a
+citation. Use `changed` only where EUROMOD is genuinely stale relative to the
+law. The `changed`/`unchanged` distinction stays exercised either way — through
+parameters the export has not caught up with, not by mislabelling ones it has.
 
 Ground truth is never invented here: a case with no `expected_value` in the
 selection leaves the value leg unscored rather than freezing EUROMOD's own value
@@ -38,7 +47,7 @@ from nomoscope_workflow.schema import Bracket, Routing, SourceType, TemporalBasi
 
 from .build_dataset import _current_value
 from .config import REPO_ROOT
-from .dataset import save_case
+from .dataset import save_drafted_case
 from .openfisca_golden import (
     DraftOutcome,
     _case_slug,
@@ -136,10 +145,23 @@ def draft_case(
     if explicit:
         routing = Routing(explicit)
         if computed is not None and computed != routing:
-            outcome.warnings.append(
-                f"selection says routing '{routing}' but the store routes '{computed}' "
-                f"(EUROMOD holds {comparable!r} at {as_of}) — one of the two is wrong"
+            # Refuse, do not warn. A warning is only as good as the reviewer who
+            # reads it: nine contested entries were verified straight through
+            # because "the law changed for 2025" (what the selection meant) and
+            # "differs from the value EUROMOD holds" (what the pipeline routes)
+            # are different questions, and EUROMOD's 2025 database already
+            # carries the 2025 law. Ground truth the drafter believes is wrong
+            # must never reach a run.
+            outcome.skipped = (
+                f"contested routing: the selection says '{routing.value}' but the store "
+                f"routes '{computed.value}' (EUROMOD holds {comparable!r} at {as_of}). "
+                f"Pipeline routing compares the proposal against the value EUROMOD "
+                f"currently holds — not against last year's law — so a value the export "
+                f"already carries is 'unchanged' however recently the legislature changed "
+                f"it. Fix `routing:` in the selection, or drop it and let "
+                f"route_against_current decide"
             )
+            return outcome
     elif computed is not None:
         routing = computed
     else:
@@ -189,6 +211,13 @@ def draft_case(
         if target.startswith("euromod://")
         else slugify(target)
     )
+    corpus_available = entry.get("corpus_available")
+    if corpus_available is False:
+        note_parts.append(
+            "corpus_available: false — the act stating this value is not ingested yet, so "
+            "no retrieval can reach it. The case measures ingest coverage and is excluded "
+            "from the 'source in corpus' KPI slice"
+        )
     outcome.case = GoldenCase(
         id=f"{country.lower()}_{slug}_{as_of.isoformat()}",
         country=country.upper(),
@@ -203,6 +232,7 @@ def draft_case(
             valid_from=valid_from,
             citations=list(entry.get("citations", [])),
         ),
+        corpus_available=corpus_available,
         verified=False,
         drafted_by="human",
         notes=" | ".join(note_parts),
@@ -233,7 +263,12 @@ def build_dataset(
         )
         outcomes.append(outcome)
         if outcome.case is not None:
-            save_case(dataset_dir, outcome.case)
+            _, reset = save_drafted_case(dataset_dir, outcome.case)
+            if reset:
+                outcome.warnings.append(
+                    "ground truth changed since it was reviewed — the case is back to "
+                    "verified:false and must be re-verified before it counts"
+                )
     _retire_skipped(dataset_dir, outcomes, as_of, country)
     return outcomes
 

@@ -5,11 +5,23 @@ Pure functions only — no LLM judge in v1. KPI semantics follow
 
   routing_correct   changed / unchanged / new / not_found / national_team_source
   value_correct     normalised match (scalars, see below) or structure+cell match (brackets)
-  date_correct      proposed valid_from == expected valid_from
+  date_correct      proposed valid_from == expected valid_from. NOT scored when both
+                    sides route `unchanged`: there the pipeline keeps EUROMOD's own
+                    validity window by design, which is a different quantity from the
+                    date the law made the value effective.
   citation_correct  pinpoint citation matches one of the accepted citations
-  supportedness     the cited text verbatim-contains the extract (mechanical check
-                    already done by the workflow critique: citation_verified)
-  hallucination     a value was proposed but its citation does not support it
+  extract_verbatim  the cited chunk contains the supporting_extract character-for-
+                    character. Purely mechanical — no LLM has a say in it.
+  supportedness     extract_verbatim AND the critique model's judgement that the
+                    extract supports the value. LLM-assisted: only comparable across
+                    models when the run pinned a fixed critique model.
+  critique_pass     the critique's overall verdict (dates, units, sanity).
+  hallucination     a value was proposed whose extract is not verbatim in the cited
+                    chunk — the mechanical leg alone, so a critique that failed on
+                    dates or units is not reported as a hallucination.
+  abstained         no proposal on a case that has a ground-truth value: the pipeline
+                    refused rather than guessed. Still scores False on value/date/
+                    citation, but the flag keeps refusals distinguishable.
   retrieval_hit     the ground-truth citation appears in the retrieval trace (recall@k)
 
 Value comparison never string-matches raw EUROMOD strings. Either side may be a
@@ -30,7 +42,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from math import isclose
 
-from nomoscope_workflow.schema import Bracket, ReviewItem
+from nomoscope_workflow.schema import Bracket, ReviewItem, Routing
 
 from .schema import CaseResult, GoldenCase
 
@@ -42,10 +54,37 @@ def _norm(text: str) -> str:
 
 
 def citation_matches(expected: str, candidate: str | None) -> bool:
+    """True when `candidate` cites at least what `expected` names.
+
+    Containment in ONE direction only: the expected citation must appear inside
+    the candidate, never the reverse. An instrument-level expectation is meant
+    to be satisfied by a pinpoint ("JORFTEXT000051393142" by
+    "JORFTEXT000051393142, art. 1"), but the reverse — accepting "CGI, art. 19"
+    for an expected "CGI, art. 197" — would credit a citation of a different
+    article.
+
+    The match is also anchored on digits: a run of digits may not be cut in
+    half, so "CGI, art. 197" does not claim "CGI, art. 1975" and "art. 197"
+    does not claim "art. 1197". Everything else stays loose on purpose —
+    punctuation, case and separators are normalised away first, so
+    "CGI, art. 197" matches "cgi art 197" and matches inside a retrieval
+    context header.
+    """
     if not candidate:
         return False
     a, b = _norm(expected), _norm(candidate)
-    return bool(a) and (a in b or b in a)
+    if not a:
+        return False
+    start = b.find(a)
+    while start != -1:
+        before = b[start - 1] if start else ""
+        after = b[start + len(a)] if start + len(a) < len(b) else ""
+        if not (before.isdigit() and a[0].isdigit()) and not (
+            after.isdigit() and a[-1].isdigit()
+        ):
+            return True
+        start = b.find(a, start + 1)
+    return False
 
 
 def citation_equal(expected: str, candidate: str | None) -> bool:
@@ -228,6 +267,7 @@ def score_item(
         ),
         expected_value=_dump(expected.value),
         proposed_value=_dump(proposed.value) if proposed is not None else None,
+        corpus_available=case.corpus_available,
     )
 
     if expected.value is not None:
@@ -235,7 +275,16 @@ def score_item(
             proposed.value, expected.value, constants
         )
 
-    if expected.valid_from is not None:
+    # The date leg is only meaningful when the pipeline is dating a change.
+    # On an `unchanged` verdict `pipeline._unchanged_window` deliberately keeps
+    # the validity window EUROMOD already holds — the citation re-confirms the
+    # value, it does not restart it — while the golden `valid_from` is the date
+    # the LAW made that value effective. EUROMOD's windows are system-year rows
+    # (2025-01-01, or an untouched 2013-01-01), so the two agree only by
+    # coincidence: comparing them scored a correct no-change verdict as a date
+    # error. Both sides routing `unchanged` therefore leaves the leg unscored.
+    both_unchanged = expected.routing == Routing.UNCHANGED == item.routing
+    if expected.valid_from is not None and not both_unchanged:
         result.date_correct = proposed is not None and proposed.valid_from == expected.valid_from
 
     if expected.citations:
@@ -251,9 +300,22 @@ def score_item(
         )
 
     if proposed is not None:
-        supported = bool(item.critique and item.critique.citation_verified)
-        result.supportedness = supported
-        result.hallucination = not supported
+        critique = item.critique
+        # Mechanical only: `extract_offsets` is set by the verbatim check in
+        # pipeline.critique and is never touched by the LLM leg, whereas
+        # `citation_verified` is that check ANDed with the critique model's
+        # `citation_supports_value`. Hallucination — a value presented with an
+        # extract that is not in the cited text — is the mechanical one.
+        verbatim = bool(critique and critique.extract_offsets is not None)
+        result.extract_verbatim = verbatim
+        result.hallucination = not verbatim
+        result.supportedness = bool(critique and critique.citation_verified)
+        result.critique_pass = critique.verdict == "pass" if critique else None
+    elif expected.value is not None:
+        # No proposal where ground truth has a value: an abstention, not a
+        # wrong answer. It still scores False on value/date/citation, so keep
+        # the flag to tell "refused to guess" apart from "guessed wrong".
+        result.abstained = item.routing == Routing.NOT_FOUND
 
     return result
 

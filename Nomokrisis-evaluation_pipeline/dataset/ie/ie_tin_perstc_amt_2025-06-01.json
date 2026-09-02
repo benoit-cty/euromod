@@ -7,7 +7,7 @@
   "difficulty": "plain",
   "source_class": "codified_law",
   "expected": {
-    "routing": "changed",
+    "routing": "unchanged",
     "value": "2000#y",
     "valid_from": "2025-01-01",
     "citations": [
@@ -15,8 +15,7 @@
       "TCA 1997, s. 461"
     ]
   },
-  "verified": true,
+  "verified": false,
   "drafted_by": "human",
-  "notes": "curated: ie.json#tin_perstc_amt | euromod value in force at 2025-06-01: 2000.0 from 2025-01-01 | EASY-MEDIUM — personal tax credit 1,875 -> 2,000 for 2025, in the same Finance Act section as the band: tests extracting several distinct parameters from one dense amending section without cross-contamination. | drafting warning: selection says routing 'changed' but the store routes 'unchanged' (EUROMOD holds 2000.0 at 2025-06-01) — one of the two is wrong",
-  "reviewed_by": "ben"
+  "notes": "curated: ie.json#tin_perstc_amt | euromod value in force at 2025-06-01: 2000.0 from 2025-01-01 | EASY-MEDIUM — personal tax credit 1,875 -> 2,000 for 2025, in the same Finance Act section as the band: tests extracting several distinct parameters from one dense amending section without cross-contamination. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test."
 }

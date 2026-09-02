@@ -41,6 +41,8 @@ def make_item(
     valid_from: date = date(2025, 1, 1),
     citation: str | None = "CGI, art. 197",
     citation_verified: bool = True,
+    extract_offsets: tuple[int, int] | None = (0, 10),
+    verdict: str = "pass",
     with_proposal: bool = True,
     trace_citation: str | None = "CGI, art. 197",
 ) -> ReviewItem:
@@ -62,7 +64,11 @@ def make_item(
         unit="/1",
         routing=routing,
         proposed_value=proposed,
-        critique=CritiqueReport(citation_verified=citation_verified),
+        critique=CritiqueReport(
+            citation_verified=citation_verified,
+            extract_offsets=extract_offsets,
+            verdict=verdict,
+        ),
         retrieval_trace=(
             [RetrievalHit(chunk_id="c1", citation=trace_citation)] if trace_citation else []
         ),
@@ -70,12 +76,59 @@ def make_item(
 
 
 def test_all_correct_scalar():
-    case = make_case(routing=Routing.UNCHANGED, value=0.45, valid_from=date(2025, 1, 1),
+    case = make_case(routing=Routing.CHANGED, value=0.45, valid_from=date(2025, 1, 1),
                      citations=["CGI, art. 197"])
-    r = score_item(case, make_item())
+    r = score_item(case, make_item(routing=Routing.CHANGED))
     assert r.routing_correct and r.value_correct and r.date_correct
     assert r.citation_correct and r.supportedness and r.retrieval_hit
-    assert not r.hallucination
+    assert r.extract_verbatim and r.critique_pass
+    assert not r.hallucination and not r.abstained
+
+
+def test_date_leg_unscored_when_both_sides_route_unchanged():
+    """`pipeline._unchanged_window` keeps EUROMOD's own validity window on an
+    `unchanged` verdict, so it is never the legal effective date the golden set
+    records. Scoring the two against each other turned a correct no-change
+    verdict into a date error on 22 of 26 FR cases."""
+    case = make_case(routing=Routing.UNCHANGED, value=0.45, valid_from=date(2025, 4, 1))
+    r = score_item(case, make_item(routing=Routing.UNCHANGED, valid_from=date(2025, 1, 1)))
+    assert r.routing_correct and r.value_correct
+    assert r.date_correct is None
+
+    # …but a date the pipeline actually proposes is still scored.
+    case = make_case(routing=Routing.CHANGED, value=0.45, valid_from=date(2025, 4, 1))
+    r = score_item(case, make_item(routing=Routing.CHANGED, valid_from=date(2025, 1, 1)))
+    assert r.date_correct is False
+
+
+def test_hallucination_is_the_mechanical_leg_only():
+    """A critique that failed on dates or units is not a hallucination: the
+    extract was really in the cited chunk. Only the verbatim check decides."""
+    case = make_case(routing=Routing.CHANGED, value=0.45)
+    r = score_item(
+        case,
+        make_item(routing=Routing.CHANGED, citation_verified=False,
+                  extract_offsets=(0, 10), verdict="fail"),
+    )
+    assert r.extract_verbatim is True
+    assert r.hallucination is False       # the quote is real…
+    assert r.supportedness is False       # …but the critique rejected it
+    assert r.critique_pass is False
+
+
+def test_abstention_is_flagged_apart_from_a_wrong_answer():
+    case = make_case(routing=Routing.CHANGED, value=0.45, citations=["CGI, art. 197"])
+    r = score_item(case, make_item(routing=Routing.NOT_FOUND, with_proposal=False))
+    assert r.abstained is True
+    assert r.value_correct is False       # still counted against the value KPI
+    assert r.hallucination is False
+
+
+def test_corpus_availability_travels_to_the_result():
+    case = make_case(routing=Routing.CHANGED, value=0.45)
+    case.corpus_available = False
+    r = score_item(case, make_item(routing=Routing.NOT_FOUND, with_proposal=False))
+    assert r.corpus_available is False
 
 
 def test_wrong_value_and_routing():
@@ -106,8 +159,9 @@ def test_unscored_kpis_are_none():
 
 def test_hallucination_flag():
     case = make_case(routing=Routing.UNCHANGED, value=0.45)
-    r = score_item(case, make_item(citation_verified=False))
+    r = score_item(case, make_item(citation_verified=False, extract_offsets=None))
     assert r.hallucination is True
+    assert r.extract_verbatim is False
     assert r.supportedness is False
 
 
@@ -125,6 +179,16 @@ def test_citation_normalisation():
     assert citation_matches("CGI, art. 197", "Code général des impôts > CGI, art. 197 (vig. 2025)")
     assert not citation_matches("CGI, art. 197", "CGI, art. 200")
     assert not citation_matches("CGI, art. 197", None)
+
+
+def test_citation_containment_is_one_way_and_digit_anchored():
+    # An instrument-level expectation is satisfied by a pinpoint of that act…
+    assert citation_matches("JORFTEXT000051393142", "JORFTEXT000051393142, art. 1")
+    # …but never the reverse: a narrower citation must not claim a wider one.
+    assert not citation_matches("CGI, art. 197", "CGI, art. 19")
+    # A digit run may not be cut in half in either direction.
+    assert not citation_matches("CGI, art. 197", "CGI, art. 1975")
+    assert not citation_matches("art. 197", "art. 1197")
 
 
 # ---------------------------------------------------------------------------

@@ -99,6 +99,11 @@ uv run nomokrisis-eval build-dataset docs/fr_country_report_2025.md --country FR
   file's recorded value — the model never decides routing.
 - Drafts are saved with `"verified": false`. A human flips `verified` to `true` after
   checking; `run` evaluates verified cases only (default) — that's the freeze.
+- **Rebuilding preserves the human verdict** when the ground truth is unchanged, and
+  resets it to `verified: false` the moment `expected`, the parameter file or `as_of`
+  moves (`dataset.save_drafted_case`) — a review approved a specific value, not a
+  case id. The reset is printed; act on it, or `--verified-only` silently drops the
+  case from the next run.
 - Model: `claude-fable-5` (override with `--model` / `EVAL_BUILDER_MODEL`). Server-side
   refusal fallback to `claude-opus-4-8` is enabled, so a classifier false-positive
   degrades gracefully instead of failing the batch. Needs `ANTHROPIC_API_KEY` (loaded
@@ -205,11 +210,23 @@ the case notes so the reviewer sees it at the gate. What differs:
   are routing-only cases today.
 - **Routing comes from the selection** — these sets exist to pin traps the
   deterministic drafter refuses to guess (percent strings, mid-year steps,
-  derived values). It is still cross-checked against `route_against_current`,
-  and a disagreement is reported and written into the notes. A `changed` that
-  the store routes `unchanged` usually means the entry states the year-over-year
-  change rather than "EUROMOD differs from the law", which is what the routing
-  vocabulary means.
+  derived values). It is cross-checked against `route_against_current`, and a
+  disagreement now **skips the entry** rather than warning: ground truth the
+  drafter believes is wrong must never reach a run. (It used to warn, and nine
+  contested entries were verified straight through.)
+
+  The routing to state is the pipeline's question — *does the proposal differ
+  from the value EUROMOD currently holds?* — not *did the law change this year?*
+  The system-year N export already encodes the law of year N, so a parameter the
+  legislature changed for N and that EUROMOD already carries is `unchanged`: the
+  pipeline's job there is to re-confirm it with a citation, and the difficulty of
+  the case still lands on the value, citation and retrieval legs. Reserve
+  `changed` for parameters where EUROMOD is genuinely stale. Best of all, omit
+  `routing:` and let `route_against_current` decide.
+- **`corpus_available: false`** marks an entry whose stating act is not ingested
+  (IE's electricity credit, LT's `mms` and `basicpens`). The case still runs —
+  that is how ingest progress becomes a KPI delta — but it is excluded from the
+  "source in corpus" KPI slice instead of being counted as a model failure.
 - **A period difference is not a disagreement**: EUROMOD's stored scalar is a
   bare magnitude (the `#y` of `8964#y` lives in the unit), so `8964` against a
   curated `747#m` suppresses the cross-check with a warning instead of raising
@@ -301,16 +318,58 @@ cases are single-chunk smoke tests until those corpora are ingested for real.
 | KPI | Meaning |
 |---|---|
 | `routing_pct` | changed / unchanged / new / not_found / national_team_source classified correctly |
-| `value_pct` | exact scalar match (1e-9 tolerance) or bracket structure+cell match |
-| `date_pct` | proposed `valid_from` equals the expected effective date |
+| `value_pct` | normalised scalar match (rel. 1e-6) or bracket structure+cell match |
+| `date_pct` | proposed `valid_from` equals the expected effective date. **Not scored when both sides route `unchanged`** — see below |
 | `citation_pct` | pinpoint citation (instrument + article) matches an accepted one |
-| `supportedness_pct` | cited text verbatim-contains the supporting extract (workflow's mechanical check) |
-| `hallucination_pct` | value proposed whose citation does **not** support it (lower is better) |
+| `extract_verbatim_pct` | the cited chunk contains the supporting extract character-for-character. Purely mechanical |
+| `supportedness_pct` | `extract_verbatim` **and** the critique model's judgement that the extract supports the value |
+| `critique_pass_pct` | the critique's overall verdict (dates, units, sanity) |
+| `hallucination_pct` | value proposed whose extract is **not** verbatim in the cited chunk (lower is better) |
 | `retrieval_recall_pct` | ground-truth citation present in the retrieval trace (recall@k — the most diagnostic number) |
+| `abstentions` | cases where the pipeline refused rather than guessed, on a case that has a ground-truth value |
+| `cases_no_corpus`, `routing_pct_in_corpus`, `value_pct_in_corpus` | the corpus split — see below |
 | `avg_latency_ms` | wall-clock per parameter |
 
 KPIs a case doesn't exercise are stored as `NULL` and excluded from the rate (e.g. no
-`value_pct` contribution from a `not_found` case).
+`citation_pct` contribution from a case with no accepted citations).
+
+### Three things the raw rates do not say
+
+Reviewing the first real run (`azure_openai/Mistral-Large-3`, 67 cases) showed a
+54% routing / 52% value / 27% date headline that was mostly artifact. The
+`/review-eval` skill is the full procedure; the three structural points:
+
+**1. Model quality and corpus coverage are different measurements.** A case whose
+ground-truth act is not ingested cannot be answered by any model. `GoldenCase.corpus_available`
+marks those, and the report prints the split. On that run: **73% routing / 73% value over
+the 45 cases whose source was in the corpus, 11% / 11% over the 18 where it was not.**
+Quote both numbers or neither.
+
+**2. The date leg is meaningless on an `unchanged` verdict.** `pipeline._unchanged_window`
+deliberately keeps the validity window EUROMOD already holds — the citation re-confirms
+the value, it does not restart it — while the golden `valid_from` is the date the law
+made the value effective. EUROMOD's windows are system-year rows, so the two agree only
+by coincidence (4 of 26 cases). `score_item` now leaves the leg unscored there.
+
+**3. `supportedness` and `critique_pass` are LLM-assisted.** `citation_verified` is the
+mechanical verbatim check ANDed with the critique model's `citation_supports_value`, and
+by default the critique model *is* the model under test — it grades itself. Only
+`extract_verbatim` and `hallucination` are pure code. For cross-model comparison
+(Activity 5) pin one judge with `EVAL_CRITIQUE_MODEL`; the manifest records which model
+critiqued so old runs stay interpretable.
+
+### Re-scoring past runs
+
+A run directory keeps every `ReviewItem` the pipeline produced, so a fix to `scoring.py`
+can be applied to finished runs without re-spending their tokens:
+
+```bash
+uv run nomokrisis-eval rescore <run-id>          # dry run: prints the KPI delta
+uv run nomokrisis-eval rescore <run-id> --write  # persist to results.json + Postgres
+```
+
+It replays against the run's **frozen** `cases.json`, so the delta is the effect of the
+scoring change alone. To measure a golden-set change, start a new run.
 
 ## Does Phoenix help?
 
@@ -347,6 +406,7 @@ expandable per-case list with a failures-only filter. Exercised by the
 | `EVAL_EMBEDDING_DATASET_DIR` | `Nomokrisis-evaluation_pipeline/dataset_embedding` | embedding/retrieval case location |
 | `EVAL_RUNS_DIR` | `Nomokrisis-evaluation_pipeline/.eval_runs` | scratch + manifests |
 | `EVAL_BUILDER_MODEL` | `claude-fable-5` | dataset drafting model |
+| `EVAL_CRITIQUE_MODEL` | _(empty — the model under test critiques itself)_ | pin one judge so `supportedness`/`critique_pass` are comparable across models |
 | `EVAL_PHOENIX_PROJECT` | `nomokrisis-evaluation` | Phoenix project for eval traces |
 
 ## Tests

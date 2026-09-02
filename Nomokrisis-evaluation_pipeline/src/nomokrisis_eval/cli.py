@@ -31,8 +31,10 @@ from .runner import (
     latest_incomplete_run,
     list_runs,
     load_partial_results,
+    rescore_run,
     resume_run,
     run_directory,
+    rewrite_partial,
     start_run,
     summarize,
 )
@@ -513,6 +515,52 @@ def run_embeddings(
 
 
 @app.command()
+def rescore(
+    run_id: str = typer.Argument(..., help="Run id to re-score under the current scoring rules"),
+    write: bool = typer.Option(
+        False, "--write", help="Persist the new scores (results.json/.jsonl, and Postgres)"
+    ),
+    no_db: bool = typer.Option(False, "--no-db", help="With --write, skip Postgres"),
+) -> None:
+    """Re-apply today's scoring to a finished run's stored ReviewItems.
+
+    Costs nothing — no LLM calls, no retrieval — so a scoring fix can be checked
+    against past runs. Expectations come from the run's frozen case list, so
+    what you see is the effect of the SCORING change alone; to measure a
+    golden-set change, start a new run. Dry-run by default.
+    """
+    cfg = load_eval_config()
+    manifest, results = rescore_run(cfg, run_id)
+    run_dir = run_directory(cfg, run_id)
+    before = summarize(load_partial_results(run_dir))
+    after = summarize(results)
+
+    typer.echo(f"run {manifest.run_id}  model={manifest.model}  cases={len(results)}")
+    for key in sorted(set(before) | set(after)):
+        old_kpis, new_kpis = before.get(key, {}), after.get(key, {})
+        changes = [
+            f"{k}: {old_kpis.get(k, '-')} -> {v}"
+            for k, v in new_kpis.items()
+            if old_kpis.get(k) != v
+        ]
+        typer.echo(f"  [{key}] " + ("  ".join(changes) if changes else "unchanged"))
+
+    if not write:
+        typer.echo("\ndry run — pass --write to persist")
+        return
+    (run_dir / RESULTS_FILENAME).write_text(
+        json.dumps([r.model_dump(mode="json") for r in results], indent=2), encoding="utf-8"
+    )
+    rewrite_partial(run_dir, results)
+    if not no_db:
+        with evaldb.connect(cfg.database_url) as conn:
+            evaldb.apply_schema(conn)
+            evaldb.insert_run(conn, manifest, results)
+        typer.echo(f"stored in Postgres: run_id={manifest.run_id}")
+    typer.echo(f"rescored results written to {run_dir}")
+
+
+@app.command()
 def report(
     run_id: str = typer.Option(None, "--run-id", help="Restrict to one run"),
     limit: int = typer.Option(20, "--limit"),
@@ -529,21 +577,37 @@ def report(
 
     def impact(row) -> str:
         if row.get("energy_kwh") is None:
-            return ""
+            return "  energy=n/a"  # model absent from the EcoLogits registry
         return (
             f"  energy={row['energy_kwh'] * 1000:.1f}Wh"
             f"  co2={row['gwp_kgco2eq'] * 1000:.1f}g"
         )
 
+    def coverage(row) -> str:
+        """The corpus caveat, printed only when it actually applies: how many
+        cases no model could answer, and what the KPIs look like without them."""
+        missing = row.get("cases_no_corpus") or 0
+        if not missing:
+            return ""
+        return (
+            f"\n      source not in corpus: {missing} case(s) — over the rest:"
+            f"  routing={pct(row['routing_pct_in_corpus'])}"
+            f"  value={pct(row['value_pct_in_corpus'])}"
+        )
+
     for row in rows:
+        abstentions = row.get("abstentions") or 0
         typer.echo(
             f"{row['created_at']:%Y-%m-%d %H:%M}  {row['model_provider']}/{row['model_name']}"
             f"  [{row['language']}/{row['country']}]  cases={row['cases']}"
             f"  routing={pct(row['routing_pct'])}  value={pct(row['value_pct'])}  date={pct(row['date_pct'])}"
-            f"  citation={pct(row['citation_pct'])}  supported={pct(row['supportedness_pct'])}"
+            f"  citation={pct(row['citation_pct'])}  verbatim={pct(row['extract_verbatim_pct'])}"
+            f"  supported={pct(row['supportedness_pct'])}  critique={pct(row['critique_pass_pct'])}"
             f"  halluc={pct(row['hallucination_pct'])}  recall={pct(row['retrieval_recall_pct'])}"
+            f"  abstained={abstentions}"
             f"{impact(row)}"
             f"  {row['run_id']}"
+            f"{coverage(row)}"
         )
 
 

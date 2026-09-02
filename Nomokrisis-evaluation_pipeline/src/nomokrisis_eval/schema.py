@@ -42,6 +42,13 @@ class GoldenCase(BaseModel):
     difficulty: Literal["plain", "combine", "table"] | None = None
     source_class: Literal["codified_law", "gazette", "national_team"] | None = None
     expected: Expected
+    corpus_available: bool | None = Field(
+        default=None,
+        description="True when at least one of the case's ground-truth references resolves to "
+        "a legal unit already in the legislation corpus. False marks a case whose source is not "
+        "ingested yet: it measures corpus coverage, not model quality, and KPI reports slice it "
+        "out. None = never established (no reference to check).",
+    )
     verified: bool = Field(default=False, description="True once a human confirmed the ground truth")
     drafted_by: str | None = Field(
         default=None, description="'human', the drafting model name, or 'openfisca@<commit>'"
@@ -125,9 +132,30 @@ class CaseResult(BaseModel):
     value_correct: bool | None = None
     date_correct: bool | None = None
     citation_correct: bool | None = None
+    # The three evidence legs, deliberately separate because they are not
+    # equally trustworthy:
+    #   extract_verbatim  purely mechanical — the cited chunk contains the
+    #                     supporting_extract character-for-character. This is
+    #                     the anti-hallucination guarantee, and the only one no
+    #                     LLM has a say in.
+    #   supportedness     extract_verbatim AND the critique model's judgement
+    #                     that the extract actually supports the value. LLM-
+    #                     assisted, so never compare it across models unless
+    #                     the run pinned a fixed critique model.
+    #   critique_pass     the critique's overall verdict (dates, units, sanity).
+    extract_verbatim: bool | None = None
     supportedness: bool | None = None
+    critique_pass: bool | None = None
     hallucination: bool = False
     retrieval_hit: bool | None = None
+    # A refusal on a case that has a ground-truth value: the pipeline said
+    # not_found rather than proposing something it could not cite. Scored
+    # separately because it is the *correct* behaviour when the source is
+    # missing from the corpus, yet it costs the value/date/citation legs.
+    abstained: bool = False
+    # Copied from the case so a report can separate model quality from corpus
+    # coverage without re-reading the golden set.
+    corpus_available: bool | None = None
 
     confidence: float | None = None
     latency_ms: int | None = None
@@ -144,6 +172,9 @@ class CaseResult(BaseModel):
     tokens_completion: int | None = None
     energy_kwh: float | None = None
     gwp_kgco2eq: float | None = None
+    # False when EcoLogits has no registry entry for the model: the energy/GWP
+    # columns are then left None rather than reported as a measured 0.0.
+    impact_estimated: bool | None = None
 
 
 class RunManifest(BaseModel):
@@ -157,6 +188,11 @@ class RunManifest(BaseModel):
     model: str
     model_provider: str
     model_name: str
+    #: The model that ran the critique step. Equal to `model` (the model under
+    #: test grading itself) unless EVAL_CRITIQUE_MODEL pinned a fixed judge —
+    #: which is what cross-model comparison needs, since supportedness and
+    #: critique_pass depend on it.
+    critique_model: str | None = None
     prompt_version: str
     agent_version: str
     eval_version: str

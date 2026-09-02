@@ -14,8 +14,9 @@
       "JORFTEXT000050854392"
     ]
   },
+  "corpus_available": true,
   "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prelevements_sociaux.pss.plafond_securite_sociale_mensuel | openfisca value at 2025-06-01: 3925.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 3925.0 from 2025-01-01 | link: manual | SIC income limit: 1x the monthly PSS.",
-  "reviewed_by": "ben"
+  "reviewed_by": "ben",
+  "notes": "openfisca: prelevements_sociaux.pss.plafond_securite_sociale_mensuel | openfisca value at 2025-06-01: 3925.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 3925.0 from 2025-01-01 | link: manual | SIC income limit: 1x the monthly PSS."
 }

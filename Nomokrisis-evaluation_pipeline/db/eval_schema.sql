@@ -36,9 +36,13 @@ CREATE TABLE IF NOT EXISTS eval.results (
     value_correct    boolean,                -- NULL = KPI not exercised by this case
     date_correct     boolean,
     citation_correct boolean,
-    supportedness    boolean,
+    extract_verbatim boolean,               -- mechanical verbatim-quote check alone
+    supportedness    boolean,               -- verbatim check AND the critique model's judgement
+    critique_pass    boolean,
     hallucination    boolean NOT NULL DEFAULT false,
     retrieval_hit    boolean,
+    abstained        boolean NOT NULL DEFAULT false,  -- refused rather than guessed
+    corpus_available boolean,               -- false: the source act is not ingested yet
     confidence       real,
     latency_ms       integer,
     error            text,
@@ -49,6 +53,7 @@ CREATE TABLE IF NOT EXISTS eval.results (
     tokens_completion integer,
     energy_kwh        double precision,      -- EcoLogits midpoint estimates (see impact.py)
     gwp_kgco2eq       double precision,
+    impact_estimated  boolean,               -- false: model absent from the EcoLogits registry
     UNIQUE (run_pk, case_id)
 );
 
@@ -60,14 +65,29 @@ ALTER TABLE eval.results
     ADD COLUMN IF NOT EXISTS tokens_prompt     integer,
     ADD COLUMN IF NOT EXISTS tokens_completion integer,
     ADD COLUMN IF NOT EXISTS energy_kwh        double precision,
-    ADD COLUMN IF NOT EXISTS gwp_kgco2eq       double precision;
+    ADD COLUMN IF NOT EXISTS gwp_kgco2eq       double precision,
+    ADD COLUMN IF NOT EXISTS extract_verbatim  boolean,
+    ADD COLUMN IF NOT EXISTS critique_pass     boolean,
+    ADD COLUMN IF NOT EXISTS abstained         boolean NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS corpus_available  boolean,
+    ADD COLUMN IF NOT EXISTS impact_estimated  boolean;
+
+ALTER TABLE eval.runs
+    ADD COLUMN IF NOT EXISTS critique_model    text;
 
 CREATE INDEX IF NOT EXISTS eval_results_run_idx ON eval.results (run_pk);
 CREATE INDEX IF NOT EXISTS eval_results_lang_idx ON eval.results (language, country);
 
 -- KPI rates per (run, language): the read surface for the Tauri UI and the KPI report.
 -- avg() ignores NULLs, so each rate is computed only over the cases that exercise it.
-CREATE OR REPLACE VIEW eval.run_summary AS
+--
+-- Dropped and recreated rather than CREATE OR REPLACE'd: replace refuses to
+-- rename or reorder existing columns, which forced every new KPI to be appended
+-- at the end regardless of where it belongs. Nothing depends on this view but
+-- read queries (the UI and `nomokrisis-eval report`, both by column name), so
+-- rebuilding it costs nothing and keeps the column list readable.
+DROP VIEW IF EXISTS eval.run_summary;
+CREATE VIEW eval.run_summary AS
 SELECT
     r.id            AS run_pk,
     r.run_id,
@@ -78,6 +98,7 @@ SELECT
     r.prompt_version,
     r.agent_version,
     r.dataset_version,
+    r.critique_model,
     res.language,
     res.country,
     count(*)                                              AS cases,
@@ -89,6 +110,22 @@ SELECT
     round(100 * avg(res.supportedness::int), 1)           AS supportedness_pct,
     round(100 * avg(res.hallucination::int), 1)           AS hallucination_pct,
     round(100 * avg(res.retrieval_hit::int), 1)           AS retrieval_recall_pct,
+    -- Evidence legs kept apart: extract_verbatim is the mechanical verbatim
+    -- check alone (no LLM), supportedness folds in the critique model's
+    -- judgement, critique_pass is its overall verdict. Only extract_verbatim is
+    -- comparable across models when the run let the model grade itself.
+    round(100 * avg(res.extract_verbatim::int), 1)        AS extract_verbatim_pct,
+    round(100 * avg(res.critique_pass::int), 1)           AS critique_pass_pct,
+    -- Model quality, separated from corpus coverage: the same rates over the
+    -- cases whose ground-truth source is actually ingested. A case with
+    -- corpus_available = false cannot be answered by ANY model, so folding it
+    -- into the headline reports ingest breadth as if it were LLM accuracy.
+    count(*) FILTER (WHERE res.corpus_available IS FALSE) AS cases_no_corpus,
+    count(*) FILTER (WHERE res.abstained)                 AS abstentions,
+    round(100 * avg(res.routing_correct::int)
+          FILTER (WHERE res.corpus_available IS NOT FALSE), 1) AS routing_pct_in_corpus,
+    round(100 * avg(res.value_correct::int)
+          FILTER (WHERE res.corpus_available IS NOT FALSE), 1) AS value_pct_in_corpus,
     round(avg(res.latency_ms))                            AS avg_latency_ms,
     -- Environmental impact (EcoLogits over Phoenix token counts): sums ignore
     -- NULLs and are NULL for pure-mock runs. New columns are appended at the

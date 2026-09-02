@@ -32,14 +32,15 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
         row = conn.execute(
             """
             INSERT INTO eval.runs (run_id, created_at, as_of, model_provider, model_name,
-                                   prompt_version, agent_version, eval_version,
+                                   critique_model, prompt_version, agent_version, eval_version,
                                    dataset_version, git_commit, countries, notes)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (run_id) DO UPDATE SET
                 created_at = EXCLUDED.created_at,
                 as_of = EXCLUDED.as_of,
                 model_provider = EXCLUDED.model_provider,
                 model_name = EXCLUDED.model_name,
+                critique_model = EXCLUDED.critique_model,
                 prompt_version = EXCLUDED.prompt_version,
                 agent_version = EXCLUDED.agent_version,
                 eval_version = EXCLUDED.eval_version,
@@ -55,6 +56,7 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                 manifest.as_of,
                 manifest.model_provider,
                 manifest.model_name,
+                manifest.critique_model,
                 manifest.prompt_version,
                 manifest.agent_version,
                 manifest.eval_version,
@@ -72,14 +74,18 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                 INSERT INTO eval.results (run_pk, case_id, country, language, model_target,
                                           difficulty, source_class, routing_expected,
                                           routing_actual, routing_correct, value_correct,
-                                          date_correct, citation_correct, supportedness,
-                                          hallucination, retrieval_hit, confidence,
+                                          date_correct, citation_correct, extract_verbatim,
+                                          supportedness, critique_pass,
+                                          hallucination, retrieval_hit, abstained,
+                                          corpus_available, confidence,
                                           latency_ms, error, details,
                                           phoenix_trace_id, llm_calls, tokens_prompt,
-                                          tokens_completion, energy_kwh, gwp_kgco2eq)
+                                          tokens_completion, energy_kwh, gwp_kgco2eq,
+                                          impact_estimated)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s)
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s)
                 """,
                 [
                     (
@@ -96,9 +102,13 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                         r.value_correct,
                         r.date_correct,
                         r.citation_correct,
+                        r.extract_verbatim,
                         r.supportedness,
+                        r.critique_pass,
                         r.hallucination,
                         r.retrieval_hit,
+                        r.abstained,
+                        r.corpus_available,
                         r.confidence,
                         r.latency_ms,
                         r.error,
@@ -109,6 +119,7 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                         r.tokens_completion,
                         r.energy_kwh,
                         r.gwp_kgco2eq,
+                        r.impact_estimated,
                     )
                     for r in results
                 ],

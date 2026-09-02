@@ -14,8 +14,9 @@
       "JORFTEXT000050392683"
     ]
   },
+  "corpus_available": true,
   "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: marche_travail.salaire_minimum.smic.smic_b_horaire | openfisca value at 2025-06-01: 11.88 (change point 2024-11-01) | euromod value in force at 2025-06-01: 11.88 from 2025-01-01 | link: manual | references not resolved in the legislation corpus: Décret n° 2024-951 23/10/2024 [JORFTEXT000050392683] not in the corpus yet | SMIC, gross hourly — the value the décret actually states; the monthly figure is derived from it.",
-  "reviewed_by": "ben"
+  "reviewed_by": "ben",
+  "notes": "openfisca: marche_travail.salaire_minimum.smic.smic_b_horaire | openfisca value at 2025-06-01: 11.88 (change point 2024-11-01) | euromod value in force at 2025-06-01: 11.88 from 2025-01-01 | link: manual | SMIC, gross hourly — the value the décret actually states; the monthly figure is derived from it. KNOWN INPUT DEFECT: the EUROMOD export gives this parameter unit 'currency/month' and stores it as '11.88#m', although 11.88 is the HOURLY rate. A correct pipeline run refuses here — it finds '11,88 euros par heure' in the décret and will not present an hourly figure as a monthly one — so the case scores not_found for a reason that is neither the model's nor the corpus's. Report to the EUROMOD economists team alongside the FR barème 1-€ erratum and IE's 27 382/27 383; the unit cannot be corrected here because extracted_parameters/enriched/FR.enriched.json is read-only and ingest-params overwrites `unit` on every re-ingest."
 }
