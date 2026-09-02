@@ -27,7 +27,9 @@ Pure functions only — no LLM judge in v1. KPI semantics follow
 Value comparison never string-matches raw EUROMOD strings. Either side may be a
 raw value ("11496#y", the FYA average "(1766.92*10+1801.80*2)/12#m", the
 cross-reference "$PSS * 4"); both sides are normalised first — arithmetic
-evaluated, $constants resolved against a caller-supplied map, the period suffix
+evaluated, percent literals divided ('4.1%' is the same rate as 0.041 — EUROMOD
+spells some rates that way, OpenFisca never does), $constants resolved against a
+caller-supplied map, the period suffix
 converted to the monthly basis when the two sides state different periods. The
 tolerance is relative 1e-6: wide enough for float noise and period conversion,
 tight enough that a 1 € discrepancy on a 11 496 € threshold (the FR 2025 barème
@@ -164,7 +166,8 @@ def normalise_value(
 
     Accepts plain numbers and raw EUROMOD strings: an optional trailing period
     suffix ('#m', '#y', …) over an arithmetic expression that may reference
-    other parameters ('$PSS * 4'). References resolve through `constants`
+    other parameters ('$PSS * 4'), optionally written as a percent literal
+    ('4.1%' -> 0.041). References resolve through `constants`
     (casefolded name without '$' -> number or raw string, resolved recursively
     with a cycle guard); a reference's own period suffix is dropped — EUROMOD
     formulas operate on the stored magnitude. Returns None for 'n/a', unknown
@@ -185,6 +188,17 @@ def normalise_value(
         text = text[: m.start()].strip()
     if not text or text.casefold() in ("n/a", "na"):
         return None
+    # EUROMOD stores some rates as percent literals ('4.1%', '8.72%') where
+    # OpenFisca and the rest of the store use the unit-/1 form (0.041). Both
+    # spellings denote the same rate, so read the percent and divide: without
+    # this the two sides fall back to string equality and a correct value
+    # scores as a difference. Trailing '%' only — it qualifies the whole
+    # magnitude, and no EUROMOD value mixes it into an expression.
+    percent = text.endswith("%")
+    if percent:
+        text = text[:-1].strip()
+        if not text:
+            return None
 
     def substitute(match: re.Match[str]) -> str:
         name = match.group(1).casefold()
@@ -203,7 +217,7 @@ def normalise_value(
         magnitude = _eval_expr(ast.parse(text, mode="eval"))
     except (ValueError, SyntaxError, ZeroDivisionError):
         return None
-    return NormalisedValue(magnitude, period)
+    return NormalisedValue(magnitude / 100 if percent else magnitude, period)
 
 
 def _num_equal(x: float | None, y: float | None) -> bool:

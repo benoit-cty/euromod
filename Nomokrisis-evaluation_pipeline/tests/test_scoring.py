@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 
+import pytest
+
 from nomoscope_workflow.schema import (
     Bracket,
     CritiqueReport,
@@ -194,6 +196,20 @@ def test_citation_containment_is_one_way_and_digit_anchored():
 # ---------------------------------------------------------------------------
 # Raw EUROMOD value normalisation (FR_parameter_matching.md §1.1–1.2)
 # ---------------------------------------------------------------------------
+
+
+def test_percent_literals_read_as_rates():
+    """EUROMOD spells some rates as percent literals; OpenFisca and the rest of
+    the store use the unit-/1 form. They denote the same rate."""
+    # 4.1/100 is 0.040999999999999995 in binary floating point — which is why
+    # every comparison goes through values_equal's tolerance, never ==.
+    assert normalise_value("4.1%").magnitude == pytest.approx(0.041)
+    assert values_equal("4.1%", 0.041)
+    assert values_equal("8.72%", "8.72%")
+    assert values_equal(0.03, "3%")
+    assert not values_equal("4.1%", 4.1)      # a bare 4.1 is not the same rate
+    assert not values_equal("4.1%", "4.2%")
+    assert normalise_value("%") is None
 
 
 def test_period_suffix_is_parsed_not_string_matched():

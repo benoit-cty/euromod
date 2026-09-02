@@ -210,10 +210,13 @@ unverified cases from the next run.
   manufactures a permanent miss. `openfisca_golden` keeps `JORFTEXT`/`LEGITEXT`
   ids (a correct pipeline citation contains them) and drops article-level ids of
   acts we lack.
-- **Prefer values that normalise.** `normalise_value` reads `11496#y`,
-  `$PSS * 4`, `(1766.92*10+1801.80*2)/12#m` — but has **no `%` branch**, so
-  `'4.1%'` falls back to string equality. Known open gap; either store the
-  numeric form or accept that the value leg is not really tested.
+- **Keep the value in EUROMOD's own spelling.** `normalise_value` reads
+  `11496#y`, `$PSS * 4`, `(1766.92*10+1801.80*2)/12#m` and percent literals
+  (`'4.1%'` -> 0.041, so it compares against the unit-/1 form OpenFisca uses).
+  What it still refuses: multiplicative unit suffixes (`×1000`) and anything
+  else that is not a scalar — those fall back to strict equality, which silently
+  turns the value leg into a string comparison. Check a new spelling against
+  `normalise_value` before relying on it.
 - **Say why in `note:`.** It lands in the case's `notes` and is what a reviewer
   reads at the verification gate. Difficulty tiers ("EASY / HARD / IMPOSSIBLE
   today") are how the IE and LT sets make future improvements legible.
