@@ -312,3 +312,55 @@ def test_a_stated_link_becomes_one_implements_relation() -> None:
 def test_no_link_writes_no_relation() -> None:
     """'None' is a valid answer: a missing statute never blocks the upload."""
     assert _parse(MARKDOWN, "text/markdown").relations == []
+
+
+# --- regression: real portal shapes ---------------------------------------
+
+#: BOFiP's actual shape: the application shell is the <main> (search box,
+#: theme switcher, publication metadata), the doctrine is an <article> inside
+#: it, and the article closes with in-page navigation links and a permalink
+#: form field. Taking <main> dragged all of that into the preamble unit.
+BOFIP_SHAPED_PAGE = b"""<html><head><title>BOFiP - BIC - Credit d'impot</title></head><body>
+<main>
+  <div class="fr-search-bar">Formulaire de recherche</div>
+  <div>Recherche avancee Systeme Theme Sombre Theme Clair</div>
+  <div>Date de debut de publication du BOI : 06/05/2026</div>
+  <section>
+    <article>
+      <h1>BIC - Credit d'impot pour depenses de formation des dirigeants</h1>
+      <p>Le 16 du I de l'article 17 de la loi de finances pour 2026 a supprime le credit d'impot.</p>
+      <div class="content-permalien">
+        <label for="zonePermalien">Permalien du document :</label>
+        <input id="zonePermalien" value="https://bofip.impots.gouv.fr/bofip/2035-PGP.html"/>
+      </div>
+      <div><a id="precedent">Document precedent</a></div>
+      <div><a id="suivant">Document suivant</a></div>
+    </article>
+  </section>
+</main>
+</body></html>"""
+
+
+def test_a_portal_shell_around_the_document_is_not_the_document() -> None:
+    """The largest <article> wins over a <main> that wraps the whole app."""
+    doc = _parse(BOFIP_SHAPED_PAGE, "text/html", kind="doctrine", url="https://bofip.impots.gouv.fr/x.html")
+    body = " ".join(
+        text.content for unit in doc.instruments[0].units for version in unit.versions for text in version.texts
+    )
+
+    assert "credit d'impot" in body
+    assert "Formulaire de recherche" not in body
+    assert "Theme Sombre" not in body
+    assert "Date de debut de publication" not in body
+
+
+def test_in_page_navigation_inside_the_article_is_dropped_too() -> None:
+    """No tag-based rule removes these: they are bare links inside the content."""
+    doc = _parse(BOFIP_SHAPED_PAGE, "text/html", kind="doctrine", url="https://bofip.impots.gouv.fr/x.html")
+    body = " ".join(
+        text.content for unit in doc.instruments[0].units for version in unit.versions for text in version.texts
+    )
+
+    assert "Document precedent" not in body
+    assert "Document suivant" not in body
+    assert "Permalien du document" not in body

@@ -103,3 +103,39 @@ def test_the_version_key_is_what_re_ingestion_deduplicates_on() -> None:
 
     keys = {v.source_version_id for u in ir.units for v in u.versions}
     assert keys == {"file:abc123@deadbeef"}
+
+
+def test_a_heading_with_nothing_under_it_is_not_a_unit() -> None:
+    """Portal widgets mint <h2>-shaped chrome; an empty heading is not a unit.
+
+    Regression: the Unédic circular page wraps a search widget and a share
+    widget inside its <main>, and their titles became legal units with no
+    text, no chunk and a citation string nobody could ever cite.
+    """
+    page = (
+        "<h1>Circulaire n. 2023-05</h1>\n"
+        "Transmission des taux de conversion pour le 3e trimestre 2023.\n"
+        "<h2>Moteur de recherche</h2>\n"
+        "<h3>Recherches populaires</h3>\n"
+        "<h2>Partager cette page</h2>\n"
+    )
+
+    ir = _build(page, "html")
+
+    assert [u.path for u in ir.units] == ["circulaire_n_2023_05"]
+
+
+def test_an_empty_heading_keeps_its_place_when_it_has_text_below_it() -> None:
+    """Pruning is about text, not about a section having a body of its own."""
+    page = (
+        "<h1>Circulaire</h1>\n"
+        "<h2>Chapitre I</h2>\n"
+        "<h3>Article 1</h3>\n"
+        "Le montant est de 31,97 EUR.\n"
+    )
+
+    ir = _build(page, "html")
+    by_path = {u.path: u for u in ir.units}
+
+    assert set(by_path) == {"circulaire", "circulaire.chapitre_i", "circulaire.chapitre_i.article_1"}
+    assert by_path["circulaire.chapitre_i"].is_container

@@ -89,7 +89,9 @@ def resolve_from_database(url: str, database_url: str | None) -> EliResolution |
             SELECT national_id FROM instruments
             WHERE national_id IS NOT NULL
               AND (eli = %(eli)s OR eli = %(eli)s || '/' OR eli = %(url)s
-                   OR (%(nor)s IS NOT NULL AND metadata ->> 'nor' = %(nor)s))
+                   -- NULL when the URL carries no NOR, so the row simply does
+                   -- not match; the cast is what tells Postgres the type.
+                   OR metadata ->> 'nor' = %(nor)s::text)
             LIMIT 1
             """,
             {

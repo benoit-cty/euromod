@@ -328,6 +328,36 @@ schema can evolve pipeline-side without lockstep releases.
   decision fails with an explanatory error and the item stays pending, rather
   than looking accepted in a log that never received it. `nomoscope-workflow
   sync-decisions` replays the local copy (idempotently) if the two ever drift.
+- **Contributed documents** (Ingest tab) — a reviewer pastes a URL or picks a
+  file (PDF, HTML, Markdown, text) and states the jurisdiction, the language
+  (constrained to the languages the store indexes), the title, the document's
+  kind and the date it is in force from; the run streams and cancels like an
+  instrument run, and on success chains an embeddings build so the document is
+  retrievable by the time they are back at the queue. On entering an input the
+  tab calls the ingester's `route` mode and reacts to what comes back:
+  *contributed* prefills the title and date from the document itself;
+  *adapter* announces "recognised as &lt;source&gt;, switching to the
+  legislation ingester", hides the contributed fields and ingests the act by
+  national id (Légifrance ELI URLs are resolved to their `JORFTEXT` id first);
+  *refused* shows the hint — a whole Légifrance code is not one document. Run
+  stays disabled until the required fields are set, and a missing validity date
+  is refused rather than invented. The **kind** is stated in the country's own
+  words (loi, décret, arrêté, circulaire, doctrine, other for FR) and the
+  **source-trust class follows from it mechanically** — nobody states a trust
+  level, and `other` is never evidence (ADR 0001). Optionally the reviewer
+  searches the instruments already ingested and picks the one this document
+  implements; "none" is a valid answer, and the statute can be ingested from
+  the same tab. Fields, routing outcomes and the class table:
+  [Nomotheca-RAG/ingest/README.md](../Nomotheca-RAG/ingest/README.md).
+- **Guidance on proposals** — when every citation on a proposal comes from a
+  `guidance` instrument (a circular, a doctrine page) the critique records an
+  informational "supported by guidance only" finding, the detail panel shows a
+  **guidance only** badge on the item and the class on each citation, and
+  **Accept stays available**: for a circular-governed scheme the circular *is*
+  the operative text. The finding never changes the verdict or the routing, and
+  guidance ranks equal to legislation in retrieval — the evaluation counts
+  guidance-only cases per language and model so that choice can be revisited on
+  data (ADR 0001).
 - **Audit log** — `params.review_decisions` rendered as a table, falling back to
   the local mirror (flagged in the header) when the DB is unreachable.
 - **Golden set** — the human gate on drafted *evaluation* ground truth

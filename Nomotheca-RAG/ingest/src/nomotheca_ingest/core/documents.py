@@ -127,6 +127,25 @@ def slugify(text: str) -> str:
     return slug or "sec"
 
 
+def _prune_textless(units: list[UnitIR]) -> list[UnitIR]:
+    """Drop units that carry no text anywhere below them.
+
+    A heading with no body and no text-bearing children is not a legal unit:
+    it produces no chunk and can never be cited, but it does put a row in the
+    store with a citation string. HTML portals mint these by the handful — a
+    page's <main> often wraps a search widget and a share widget whose <h2>
+    titles look exactly like section headings. Iterative, so a widget's whole
+    subtree goes together.
+    """
+    kept = list(units)
+    while True:
+        parents = {unit.parent_path for unit in kept if unit.parent_path}
+        survivors = [unit for unit in kept if unit.versions or unit.path in parents]
+        if len(survivors) == len(kept):
+            return kept
+        kept = survivors
+
+
 def build_document(
     *,
     text: str,
@@ -198,7 +217,6 @@ def build_document(
     used_paths: set[str] = set()
     stack: list[tuple[int, str]] = []          # (level, path) ancestor stack
     child_counts: dict[str | None, int] = {}
-    has_children: set[str] = set()
 
     first_section = next((h for h in headings if h.level >= section_level), None)
     cutoff = first_section.line_idx if first_section else len(lines)
@@ -231,8 +249,6 @@ def build_document(
 
         ordinal = child_counts.get(parent_path, 0)
         child_counts[parent_path] = ordinal + 1
-        if parent_path:
-            has_children.add(parent_path)
 
         content = "\n".join(lines[heading.content_start : heading.content_end]).strip()
         units.append(
@@ -260,8 +276,10 @@ def build_document(
             )
         )
 
+    units = _prune_textless(units)
+    surviving_parents = {unit.parent_path for unit in units if unit.parent_path}
     for unit in units:
-        if unit.path in has_children:
+        if unit.path in surviving_parents:
             unit.is_container = True
 
     if content_html is not None:

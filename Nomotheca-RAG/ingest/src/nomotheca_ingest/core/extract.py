@@ -33,7 +33,13 @@ CONTENT_TYPE_BY_SUFFIX = {
 
 #: Page furniture: never part of the document, whatever the page looks like.
 CHROME_TAGS = frozenset(
-    {"script", "style", "noscript", "nav", "header", "footer", "aside", "form", "svg", "template"}
+    {
+        "script", "style", "noscript", "nav", "header", "footer", "aside", "form",
+        "svg", "template",
+        # A <label> captions a form control ("Permalien du document :"), never
+        # document prose — BOFiP puts its permalink field inside the article.
+        "label", "button", "select", "textarea",
+    }
 )
 
 #: Tags that end a line of text when the tree is flattened.
@@ -293,16 +299,23 @@ def _node_text(node: _Node) -> str:
 
 
 def main_block(root: _Node) -> _Node:
-    """The document's own content: <main>/<article>, else the largest block.
+    """The document's own content: the largest <article>, else <main>, else the
+    largest text block.
 
-    "Largest block" is resolved by descending from the root into whichever
-    child still holds nearly all of the text — the classic readability walk.
-    Page furniture has already been dropped by the parser, so what is left is
-    the doctrine and not the portal chrome.
+    ``<article>`` is checked first, and before ``<main>``, because it is the
+    more specific claim — "a self-contained composition" — and portals use the
+    two very differently. BOFiP wraps its whole application shell in ``<main>``
+    (search box, theme switcher, share buttons, publication metadata) and puts
+    the doctrine in an ``<article>`` inside it: taking ``<main>`` there dragged
+    the toolbar into the document's preamble unit.
+
+    With neither tag, "largest block" is resolved by descending from the body
+    into whichever child still holds nearly all of the text — the classic
+    readability walk. Page furniture has already been dropped by the parser.
     """
-    for tag in ("main", "article"):
-        found = _find_tag(root, tag)
-        if found is not None and _node_text(found):
+    for tag in ("article", "main"):
+        found = _largest_tag(root, tag)
+        if found is not None:
             return found
     node = _find_tag(root, "body") or root
     while True:
@@ -327,6 +340,19 @@ def _find_tag(node: _Node, tag: str) -> _Node | None:
     return None
 
 
+def _largest_tag(node: _Node, tag: str) -> _Node | None:
+    """The element with that tag holding the most text, if any holds any."""
+    found: list[_Node] = []
+    stack = [node]
+    while stack:
+        current = stack.pop()
+        if current.tag == tag:
+            found.append(current)
+        stack.extend(child for child in current.children if isinstance(child, _Node))
+    best = max(found, key=lambda element: len(_node_text(element)), default=None)
+    return best if best is not None and _node_text(best) else None
+
+
 def _flatten(node: _Node, lines: list[str]) -> None:
     """Render an element tree as lines, headings kept as <hN> markers."""
     if node.tag in _HEADING_TAGS:
@@ -345,12 +371,43 @@ def _flatten(node: _Node, lines: list[str]) -> None:
     for child in node.children:
         if isinstance(child, str):
             buffer.append(child)
-        elif child.tag in BLOCK_TAGS or child.tag in _HEADING_TAGS:
+        elif child.tag in _HEADING_TAGS:
             flush()
             _flatten(child, lines)
+        elif child.tag in BLOCK_TAGS:
+            flush()
+            if not _is_bare_link_block(child):
+                _flatten(child, lines)
         else:
             buffer.append(_node_text(child))
     flush()
+
+
+def _is_bare_link_block(node: _Node) -> bool:
+    """True for a block whose whole text is link labels — in-page navigation.
+
+    BOFiP closes its article with "Document precedent" / "Document suivant"
+    links; they sit inside the article, so no tag-based rule removes them.
+    Requiring the block to be *entirely* link text and to carry no sentence
+    punctuation keeps legal prose (which always ends a sentence, and which
+    the country adapters never read from HTML anyway) out of scope.
+    """
+    text = _node_text(node)
+    if not text or len(text) > 120 or any(mark in text for mark in ".;:!?"):
+        return False
+    links = " ".join(
+        _node_text(link) for link in _descendants(node) if link.tag == "a"
+    )
+    return bool(links) and re.sub(r"\s+", "", links) == re.sub(r"\s+", "", text)
+
+
+def _descendants(node: _Node):
+    """Every element below one node."""
+    stack = [child for child in node.children if isinstance(child, _Node)]
+    while stack:
+        current = stack.pop()
+        yield current
+        stack.extend(child for child in current.children if isinstance(child, _Node))
 
 
 def _from_html(html: str) -> ExtractedText:
