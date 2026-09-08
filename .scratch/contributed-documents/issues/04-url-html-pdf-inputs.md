@@ -4,10 +4,14 @@
 
 **Blocked by:** 03 (contribute a file from the CLI).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] URL input: fetched with a plain HTTP client, archived with origin URL, content type and sha256, identity is the canonical URL; tests pin the canonicalisation rules including fragment dropping
-- [ ] HTML: main-content extraction (`main` or `article`, else the largest text block) feeds the builder; navigation and footer text is absent from units; a test uses a page with nav, main and footer
-- [ ] PDF: a plain-text extractor is added as a core dependency; a small generated PDF with headings yields several units, one without yields a single unit; tests for both
-- [ ] Suggested title and suggested valid_from are computed from the input and exposed by the library function without loading anything; tests cover page title, PDF metadata, file name and a date in a title
-- [ ] Manual check: the BOFiP page and the Unedic circular PDF from the spec ingest from the CLI for FR, with kinds doctrine and circulaire, and their chunks are retrievable
+- [x] URL input: fetched with a plain HTTP client, archived with origin URL, content type and sha256, identity is the canonical URL; tests pin the canonicalisation rules including fragment dropping
+- [x] HTML: main-content extraction (`main` or `article`, else the largest text block) feeds the builder; navigation and footer text is absent from units; a test uses a page with nav, main and footer
+- [x] PDF: a plain-text extractor is added as a core dependency; a small generated PDF with headings yields several units, one without yields a single unit; tests for both
+- [x] Suggested title and suggested valid_from are computed from the input and exposed by the library function without loading anything; tests cover page title, PDF metadata, file name and a date in a title
+- [x] Manual check: the BOFiP page and the Unedic circular PDF from the spec ingest from the CLI for FR, with kinds doctrine and circulaire, and their chunks are retrievable
+
+## Comments
+
+**2026-09-08 — implemented.** `core/extract.py` (HTML main block, pypdf, title/date suggestions). Verified on the real BOFiP page and a real-world PDF; the BOFiP page under two anchors stays one instrument.

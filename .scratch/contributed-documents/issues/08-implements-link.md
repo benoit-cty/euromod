@@ -4,10 +4,14 @@
 
 **Blocked by:** 07 (contributed document section in the Ingest tab).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The library function and the `document` subcommand accept an optional implemented-instrument id and write an `implements` instrument relation after loading; a test on the IR pins the relation
-- [ ] A read-only Tauri query returns instruments matching a title or national id fragment for a jurisdiction, excluding `context` class instruments
-- [ ] The Svelte section has a search box with results, a "none" default and the ingest hint
-- [ ] Re-running the same document with a different link updates the relation rather than duplicating it
-- [ ] Manual check: link the Unedic circular to an ingested Code du travail instrument and see the relation in the Database tab
+- [x] The library function and the `document` subcommand accept an optional implemented-instrument id and write an `implements` instrument relation after loading; a test on the IR pins the relation
+- [x] A read-only Tauri query returns instruments matching a title or national id fragment for a jurisdiction, excluding `context` class instruments
+- [x] The Svelte section has a search box with results, a "none" default and the ingest hint
+- [x] Re-running the same document with a different link updates the relation rather than duplicating it
+- [x] Manual check: link the Unedic circular to an ingested Code du travail instrument and see the relation in the Database tab
+
+## Comments
+
+**2026-09-08 — implemented.** `--implements` writes one `implements` relation (the loader now loads `doc.relations`); `search_instruments` backs the search box and excludes `context`. Verified live in the DB.

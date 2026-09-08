@@ -177,3 +177,45 @@ def test_a_pasted_dila_id_needs_no_network_at_all() -> None:
     )
 
     assert resolved.national_id == "JORFTEXT000051168007"
+
+
+def test_the_browser_tier_runs_only_on_a_datadome_block(monkeypatch) -> None:
+    """ADR 0002 scopes Chromium to the 403 — nothing else may start it."""
+    from nomotheca_ingest.countries.fr import resolver
+
+    started: list[str] = []
+    monkeypatch.setattr(resolver, "browser_available", lambda: True)
+    monkeypatch.setattr(
+        resolver,
+        "resolve_in_browser",
+        lambda url: started.append(url)
+        or EliResolution(national_id="JORFTEXT000042753489", tier="browser"),
+    )
+    monkeypatch.setattr(resolver, "resolve_from_database", lambda url, db: None)
+
+    # A page that answered but carried no id: unresolvable, no browser.
+    monkeypatch.setattr(resolver, "http_attempt", lambda url, timeout=20.0: (None, 200))
+    assert resolver.resolve_legifrance_url(ELI_URL) is None
+    assert started == []
+
+    # A request that never connected: still no browser.
+    monkeypatch.setattr(resolver, "http_attempt", lambda url, timeout=20.0: (None, None))
+    assert resolver.resolve_legifrance_url(ELI_URL) is None
+    assert started == []
+
+    # DataDome: this is the one case the browser exists for.
+    monkeypatch.setattr(resolver, "http_attempt", lambda url, timeout=20.0: (None, 403))
+    assert resolver.resolve_legifrance_url(ELI_URL).tier == "browser"
+    assert started == [ELI_URL]
+
+
+def test_a_missing_browser_extra_skips_the_tier_even_on_a_403(monkeypatch) -> None:
+    """Without Chromium the outcome is the refusal hint, not a crash."""
+    from nomotheca_ingest.countries.fr import resolver
+
+    monkeypatch.setattr(resolver, "browser_available", lambda: False)
+    monkeypatch.setattr(resolver, "resolve_from_database", lambda url, db: None)
+    monkeypatch.setattr(resolver, "http_attempt", lambda url, timeout=20.0: (None, 403))
+
+    assert resolver.resolve_legifrance_url(ELI_URL) is None
+    assert route_url(ELI_URL, resolve_legifrance=resolver.resolve_legifrance_url).hint == ELI_HINT

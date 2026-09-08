@@ -105,12 +105,14 @@ def resolve_from_database(url: str, database_url: str | None) -> EliResolution |
     return None
 
 
-def resolve_over_http(url: str, timeout: float = 20.0) -> EliResolution | None:
+def http_attempt(url: str, timeout: float = 20.0) -> tuple[EliResolution | None, int | None]:
     """Tier 2: follow the redirect with browser-like headers, read the final URL.
 
-    Returns None on a DataDome 403 so the caller can try a real browser; other
-    failures are also None — an unresolvable URL is refused with a hint, never
-    guessed at.
+    Returns the resolution (or None) *and* the status code, because the status
+    is what decides whether tier 3 runs at all: ADR 0002 scopes the headless
+    browser to the DataDome 403 and to nothing else. A transport error or a
+    page that simply carries no id is None with no status — unresolvable, and
+    refused with a hint rather than guessed at.
     """
     import httpx
 
@@ -118,11 +120,11 @@ def resolve_over_http(url: str, timeout: float = 20.0) -> EliResolution | None:
         with httpx.Client(timeout=timeout, follow_redirects=True, headers=BROWSER_HEADERS) as client:
             response = client.get(url)
     except Exception:
-        return None
+        return None, None
     match = DILA_ID.search(str(response.url))
     if match:
-        return EliResolution(national_id=match.group(0), tier="http")
-    return None
+        return EliResolution(national_id=match.group(0), tier="http"), response.status_code
+    return None, response.status_code
 
 
 def browser_available() -> bool:
@@ -181,11 +183,7 @@ def resolve_legifrance_url(
         # Nothing to resolve: the id is right there in what was pasted.
         return EliResolution(national_id=already.group(0), tier="database")
     if tiers is None:
-        tiers = [
-            lambda target: resolve_from_database(target, database_url),
-            resolve_over_http,
-            resolve_in_browser if browser_available() else None,
-        ]
+        tiers = default_tiers(database_url)
     for tier in tiers:
         if tier is None:
             continue
@@ -193,6 +191,32 @@ def resolve_legifrance_url(
         if resolution is not None:
             return resolution
     return None
+
+
+def default_tiers(database_url: str | None = None) -> list:
+    """The three tiers, in order, with the browser scoped to a DataDome block.
+
+    The browser tier is a closure over what the HTTP tier saw, because ADR 0002
+    limits it to the 403 case: a page that answered 200 without an id, or a
+    request that never connected, is not a reason to start Chromium.
+    """
+    blocked_by_datadome = False
+
+    def database_tier(target: str) -> EliResolution | None:
+        return resolve_from_database(target, database_url)
+
+    def http_tier(target: str) -> EliResolution | None:
+        nonlocal blocked_by_datadome
+        resolution, status = http_attempt(target)
+        blocked_by_datadome = status == 403
+        return resolution
+
+    def browser_tier(target: str) -> EliResolution | None:
+        if not blocked_by_datadome or not browser_available():
+            return None
+        return resolve_in_browser(target)
+
+    return [database_tier, http_tier, browser_tier]
 
 
 class FrResolver:

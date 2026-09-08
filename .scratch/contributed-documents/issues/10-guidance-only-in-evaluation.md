@@ -6,9 +6,13 @@ Decision record: docs/adr/0001.
 
 **Blocked by:** 09 (guidance visible on proposals).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The per-case eval record gains a guidance-only field read from the review item's flag; scoring is unchanged
-- [ ] The per-language, per-model comparison view exposes the guidance-only count and share
-- [ ] The eval tests cover a case with the flag set and one without; the mock offline run still completes
-- [ ] The report command prints the guidance-only share per run
+- [x] The per-case eval record gains a guidance-only field read from the review item's flag; scoring is unchanged
+- [x] The per-language, per-model comparison view exposes the guidance-only count and share
+- [x] The eval tests cover a case with the flag set and one without; the mock offline run still completes
+- [x] The report command prints the guidance-only share per run
+
+## Comments
+
+**2026-09-08 — implemented.** `CaseResult.guidance_only`, the eval.results column and the run_summary count/share, printed by `report`. The mock offline run still completes (verified against the live eval schema).

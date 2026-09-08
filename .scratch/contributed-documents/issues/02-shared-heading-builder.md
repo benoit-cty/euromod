@@ -4,9 +4,13 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] A core builder produces the same units, paths, unit types and version keys the Country Report parser produced, driven by a heading pattern rather than Markdown specifically
-- [ ] The Country Report parser is a thin caller of the builder; its existing tests pass unchanged
-- [ ] Heading detection is pluggable: Markdown `#` headings and HTML `h1`–`h6` (already stripped to text) are both expressible as patterns, with a test for each
-- [ ] A text with no detected headings yields a single unit holding the whole text, with a test
+- [x] A core builder produces the same units, paths, unit types and version keys the Country Report parser produced, driven by a heading pattern rather than Markdown specifically
+- [x] The Country Report parser is a thin caller of the builder; its existing tests pass unchanged
+- [x] Heading detection is pluggable: Markdown `#` headings and HTML `h1`–`h6` (already stripped to text) are both expressible as patterns, with a test for each
+- [x] A text with no detected headings yields a single unit holding the whole text, with a test
+
+## Comments
+
+**2026-09-08 — implemented.** `core/documents.py::build_document`, driven by `HEADING_PATTERNS` (markdown / html / numbered). The Country Report parser is a thin caller and its tests pass unchanged.

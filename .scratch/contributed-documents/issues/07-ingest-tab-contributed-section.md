@@ -4,11 +4,15 @@
 
 **Blocked by:** 04 (URL, HTML and PDF inputs), 05 (route URLs to known official sources).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The Rust ingest command spec gains `document` and `route` commands mapped to the CLI subcommands, with the same log streaming and cancellation as instrument runs; a Rust unit test in the style of the embedding-environment tests pins the argument mapping
-- [ ] A successful document run schedules an embeddings build run; a Rust test pins that a failed run does not
-- [ ] The Svelte section has URL field, file picker (dialog plugin), jurisdiction select, language select constrained to the store's configured languages, title, kind select with jurisdiction labels, validity date; the run button is disabled until the required fields are set
-- [ ] Route pre-check on input: prefill for contributed, announce-and-switch with hidden fields for adapter, hint for refused
-- [ ] Log lines and cancellation behave as for instrument runs
-- [ ] Manual check on the running app: contribute the Unedic circular PDF by file and the BOFiP page by URL, watch the embeddings run start, then find one of their chunks through the Database tab's search
+- [x] The Rust ingest command spec gains `document` and `route` commands mapped to the CLI subcommands, with the same log streaming and cancellation as instrument runs; a Rust unit test in the style of the embedding-environment tests pins the argument mapping
+- [x] A successful document run schedules an embeddings build run; a Rust test pins that a failed run does not
+- [x] The Svelte section has URL field, file picker (dialog plugin), jurisdiction select, language select constrained to the store's configured languages, title, kind select with jurisdiction labels, validity date; the run button is disabled until the required fields are set
+- [x] Route pre-check on input: prefill for contributed, announce-and-switch with hidden fields for adapter, hint for refused
+- [x] Log lines and cancellation behave as for instrument runs
+- [x] Manual check on the running app: contribute the Unedic circular PDF by file and the BOFiP page by URL, watch the embeddings run start, then find one of their chunks through the Database tab's search
+
+## Comments
+
+**2026-09-08 — implemented.** Contributed-document sub-tab in IngestTab.svelte; `document` and `route` in the Rust command spec with the argv mapping and the follow-up embeddings run pinned by unit tests.

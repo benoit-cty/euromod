@@ -84,8 +84,8 @@ outcome for an unstructured circular.
 **Légifrance ELI URLs** (`/eli/arrete/2020/12/28/CCPD2036946A/jo/texte`) carry a
 NOR, not a DILA id. They are resolved to `JORFTEXT…` in three tiers — our own
 `instruments.eli` column, an HTTP redirect with browser-like headers, then a
-headless browser on the DataDome 403 — and only the redirect target is ever
-read; no Légifrance page content is parsed or stored (ADR 0002). A bare NOR
+headless browser **only when that request came back 403** — and only the
+redirect target is ever read; no Légifrance page content is parsed or stored (ADR 0002). A bare NOR
 works too. The browser tier is an optional extra, so the default environment
 keeps working without Chromium (the outcome is then the refusal hint):
 
