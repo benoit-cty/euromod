@@ -18,6 +18,6 @@
   "corpus_available": true,
   "verified": true,
   "drafted_by": "human",
-  "notes": "curated: es.json#tin_rg11_rate1 | euromod value in force at 2025-06-01: 0.09 from 2022-01-01 | REGIONAL / EASY — the first-bracket rate of Galicia's escala autonómica, '0,00 | 0,00 | 12.985,35 | 9,00 %' in DL 1/2011 Galicia art. 4 (BOE-A-2011-18161, version [2023-01-01,), in force through 2025). The regional happy path and the proof of the scoping model: the decree is filed under ES-GA and reaches this run only because the parameter's name carries NUTS-2 code 11. Before ADR 0003 this same article ranked in the FTS top-10 for the NATIONAL personal minimum — the latent false positive the child jurisdictions remove. ROUTING: EUROMOD holds 0.09 -> `unchanged`; scores value, citation and retrieval.",
-  "reviewed_by": "ben"
+  "reviewed_by": "ben",
+  "notes": "curated: es.json#tin_rg11_rate1 | euromod value in force at 2025-06-01: 0.09 from 2022-01-01 | REGIONAL / EASY — the first-bracket rate of Galicia's escala autonómica, '0,00 | 0,00 | 12.985,35 | 9,00 %' in DL 1/2011 Galicia art. 4 (BOE-A-2011-18161, version [2023-01-01,), in force through 2025). The regional happy path and the proof of the scoping model: the decree is filed under ES-GA and reaches this run only because the parameter's name carries NUTS-2 code 11. Before ADR 0003 this same article ranked in the FTS top-10 for the NATIONAL personal minimum — the latent false positive the child jurisdictions remove. ROUTING: EUROMOD holds 0.09 -> `unchanged`; scores value, citation and retrieval."
 }

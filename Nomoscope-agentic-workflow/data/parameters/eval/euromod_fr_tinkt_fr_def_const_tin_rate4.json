@@ -13,7 +13,7 @@
       "en": "$tin_rate4"
     },
     "description": {
-      "en": "Marginal tax rate for the fourth band of the progressive income tax schedule, currently 30% (0.30), applied to taxable income between $tin_upthres3 and $tin_upthres4 (roughly 29 315 to 83 822 EUR in 2025, Table 2.77). It is used as the Band_Rate parameter in the tin_fr SchedCalc computing gross income tax and in tinkt_fr's Imax recalculation of gross tax with the adjusted family quotient."
+      "en": "The 30% marginal income-tax rate applied to income between the $tin_upthres3 and $tin_upthres4 thresholds, used as Band_Rate in the same tin_fr and tinkt_fr SchedCalc functions as the other rate bands (gross-tax computation and Imax recomputation respectively). Matches the 30% bracket documented in both the taxes theme doc and the country report's Table 2.77."
     },
     "explanation": {
       "en": "EUROMOD function group: Paramteres of the income tax"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.3",
         "reviewed_by": null,
         "review_status": "pending",

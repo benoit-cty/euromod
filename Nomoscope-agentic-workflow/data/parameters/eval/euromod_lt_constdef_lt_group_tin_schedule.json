@@ -6,16 +6,153 @@
     "value_type": "bracket_schedule",
     "unit": "/1",
     "threshold_unit": null,
-    "label": null,
+    "label": {
+      "en": "standard PIT rate schedule (tin_schedule)"
+    },
     "short_label": {
       "en": "LT:ConstDef_lt:tin_schedule"
     },
-    "description": null,
+    "description": {
+      "en": "standard PIT rate higher PIT tax rate highest PIT tax rate  Sets the standard/base personal-income-tax rate (20%), applied to employment income and most other income types up to the relevant annual threshold (60 AMS pre-2026; 36 AMS from 2026), per the LT tax summary and country-report Table 2.17. It is used extensively across both the withholding policy (tin_admn_lt/ArithOp, BenCalc) and the final-tax-liability policy (tin_lt/ArithOp, BenCalc, SchedCalc's 'PIT SCHEDULE - FINAL'), and is also referenced in the self-employed social-insurance-contribution policy tscse_lt/BenCalc as part of the contribution-base calculation. Sets a 25% personal-income-tax rate, the new intermediate band introduced under the LT PIT reform effective 2026: for most income types, 20% applies up to 36 average monthly salaries (AMS) per year, 25% between 36 and 60 AMS, and 32% above 60 AMS, per the LT 2025-2026 tax summary. It is used in tin_admn_lt/ArithOp's Formula ('PIT taxed at 25 percent') and as a Band_Rate in tin_lt/SchedCalc's final PIT schedule. Sets the top marginal personal-income-tax rate (32%), applied to income above 60 average monthly salaries (AMS) per year under both the pre-2026 and 2026 rate structures described in the LT tax summary and the country report's Table 2.17. It is used in tin_admn_lt/ArithOp's Formula (flagged not applicable from 2026) and as a Band_Rate in tin_lt/SchedCalc's final PIT schedule."
+    },
     "explanation": {
       "en": "Assembled from params.parameter_groups LT:ConstDef_lt:tin_schedule (band 1 rate=euromod://LT/ConstDef_lt/def_const/$tin_StdRate, band 2 rate=euromod://LT/ConstDef_lt/def_const/$tin_HigherRate, band 3 rate=euromod://LT/ConstDef_lt/def_const/$tin_HighestRate). EUROMOD's role is upper_threshold; brackets carry the band's lower bound."
     },
     "last_confirmed_valid_on": null,
     "temporal_basis": "in_force"
   },
-  "values": []
+  "values": [
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.33,
+          "amount": null
+        }
+      ],
+      "valid_from": "2005-01-01",
+      "valid_to": "2006-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.27,
+          "amount": null
+        }
+      ],
+      "valid_from": "2007-01-01",
+      "valid_to": "2007-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.24,
+          "amount": null
+        }
+      ],
+      "valid_from": "2008-01-01",
+      "valid_to": "2008-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.15,
+          "amount": null
+        }
+      ],
+      "valid_from": "2009-01-01",
+      "valid_to": "2018-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.2,
+          "amount": null
+        },
+        {
+          "threshold": 0.0,
+          "rate": 0.27,
+          "amount": null
+        }
+      ],
+      "valid_from": "2019-01-01",
+      "valid_to": "2019-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.2,
+          "amount": null
+        },
+        {
+          "threshold": 0.0,
+          "rate": 0.32,
+          "amount": null
+        }
+      ],
+      "valid_from": "2020-01-01",
+      "valid_to": "2025-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.2,
+          "amount": null
+        },
+        {
+          "threshold": 0.0,
+          "rate": 0.25,
+          "amount": null
+        },
+        {
+          "threshold": 0.0,
+          "rate": 0.32,
+          "amount": null
+        }
+      ],
+      "valid_from": "2026-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    }
+  ]
 }

@@ -4,7 +4,7 @@
     "model_target": "euromod://LT/ConstDef_lt/def_const/$tinta_max_amt",
     "spine_order": "3",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "currency/year",
     "threshold_unit": null,
     "label": {
       "en": "basic allowance: the higher level of basic allowance"
@@ -13,7 +13,7 @@
       "en": "$tinta_max_amt"
     },
     "description": {
-      "en": "The higher (maximum) level of the basic PIT allowance, 8,964 EUR/year (since 2005-01-01, with 4 historical values), granted to lower-income taxpayers before any income-based withdrawal applies, per its label. It is used in tin_admn_lt (BenCalc, parameter comp_perTU, post-2022 formula) and in tin_lt (BenCalc, parameter comp_perTU, 'Since 2009: basic allowance for the final tax liability'), representing the maximum annual tax-free amount under Lithuania's basic allowance regime. Not covered by the benefits theme document; description based on the constant's label and its two usage-site comments."
+      "en": "Sets the maximum (pre-withdrawal) annual level of the general basic personal-income-tax allowance under the formula in force since 2022 — 8,964 EUR/year (747 EUR/month for 2024-2025), matching the 'General' row of Table 2.16 in the country report and the LT tax summary's statement of a 747 EUR/month basic allowance for residents with income at or below the minimum monthly salary. It is used as the Comp_perTU parameter of the BenCalc components computing the basic allowance in tin_admn_lt ('post 2022 formula') and tin_lt (final tax liability, since 2009); above the income threshold $tinta_higher_thres the allowance is progressively withdrawn at the rate $tinta_basic_WithdRate_Higher."
     },
     "explanation": {
       "en": "EUROMOD function group: personal income tax (PIT): general parameters"

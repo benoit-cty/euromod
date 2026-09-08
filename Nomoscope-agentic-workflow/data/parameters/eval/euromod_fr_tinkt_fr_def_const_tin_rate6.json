@@ -13,7 +13,7 @@
       "en": "$tin_rate6"
     },
     "description": {
-      "en": "Marginal tax rate for the sixth and top band of the progressive income tax schedule, currently 45% (0.45), applied to taxable income above $tin_upthres5 (above roughly 180 294 EUR in 2025, Table 2.77). It is used as the Band_Rate (band_rate) parameter in the tin_fr SchedCalc computing gross income tax before IMAX corrections, and in tinkt_fr's Imax recalculation of gross tax using the adjusted family quotient."
+      "en": "The top 45% marginal income-tax rate applied to income above the $tin_upthres5 ceiling (unbounded top band), used as Band_Rate/band_rate in tin_fr's and tinkt_fr's SchedCalc for the top band of the gross-tax computation and the Imax recomputation. Matches the top 45% bracket in both the taxes theme doc and the country report's IRPP rate table (Table 2.77)."
     },
     "explanation": {
       "en": "EUROMOD function group: Paramteres of the income tax"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "n/a",
         "reviewed_by": null,
         "review_status": "pending",
@@ -58,7 +58,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.45",
         "reviewed_by": null,
         "review_status": "pending",

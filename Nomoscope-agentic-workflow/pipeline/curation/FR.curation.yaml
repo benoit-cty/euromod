@@ -268,3 +268,14 @@ unit:
       - euromod://FR/xcc_fr/def_const/$xcc_rate3
       - euromod://FR/xcc_fr/def_const/$xcc_rate4
       - euromod://FR/xcc_fr/def_const/$xcc_rate5
+  - unit: "currency/hour"
+    note: >-
+      `$Minwage_hourly` is the hourly SMIC (11.88 for 2025 — the décret states
+      "11,88 euros par heure") but the export labels it `currency/month`. Under
+      that unit a correct proposal cannot be made: the 2026-09-08 Luna run found
+      the arrêté, read the hourly amount and refused to present it as monthly.
+      Curated to `currency/hour` (a unit the export does not use; accepted by
+      KNOWN_UNITS for this purpose) and reported to the economists team with
+      the other export defects.
+    targets:
+      - euromod://FR/SetDefault_fr/def_const/$Minwage_hourly

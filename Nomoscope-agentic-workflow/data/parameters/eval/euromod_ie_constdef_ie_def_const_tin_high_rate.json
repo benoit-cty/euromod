@@ -13,7 +13,7 @@
       "en": "$tin_high_rate"
     },
     "description": {
-      "en": "This is the higher rate of Irish income tax, currently 40% (0.4), matching the taxes theme doc's statement 'Higher rate: 40%'. It is used in tin_ie in ArithOp formulas applying the higher rate to income above the standard-rate band, in BenCalc's comp_perTU parameter for the low-income exemption/marginal relief adjustment ('without increased std rate band: low income exemption: adjusted tax liability'), and as the Band_Rate in the SchedCalc implementing the tax schedule for the web interface."
+      "en": "Represents the higher rate of Irish income tax, 40%, applied to income above the standard-rate band. It is used in tin_ie's ArithOp for income taxed at the higher rate, in the SchedCalc tax schedule exposed on the web interface (Band_Rate), and -- serving a second purpose -- as the Marginal Relief rate in the BenCalc computing adjusted tax liability under the low-income exemption for those aged 65+. The Country Report confirms the higher rate stayed at 40% through 2022-2025 (Table 15) and that the Marginal Relief rate is likewise 40% (Table 11), consistent with a single constant serving both roles."
     },
     "explanation": {
       "en": "EUROMOD function group: SICs and tax constants"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.42",
         "reviewed_by": null,
         "review_status": "pending",
@@ -58,7 +58,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.41",
         "reviewed_by": null,
         "review_status": "pending",
@@ -81,7 +81,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.4",
         "reviewed_by": null,
         "review_status": "pending",

@@ -21,6 +21,6 @@
   "corpus_available": true,
   "verified": true,
   "drafted_by": "human",
-  "notes": "curated: es.json#tin_capinc_ratrate5 | euromod value in force at 2025-06-01: 0.3 from 2025-01-01 | MEDIUM-HARD / combine — the TOTAL savings rate above 300.000 euros. No article states 30 % for residents: art. 66.1 gives the state scale (15 % top band) and art. 76 the autonomous-community scale (another 15 %), and the total is their sum — the Country Report's '30 %'. The only place 30 appears in art. 66 is paragraph 2, the scale for taxpayers resident abroad, which is the near-miss citation a retrieval-first pipeline will land on. Difficulty is set explicitly: both provisions are in the same instrument, so the drafter would call it verbatim. ROUTING: EUROMOD carries 0.30 from 2025-01-01 -> `unchanged`.",
-  "reviewed_by": "ben"
+  "reviewed_by": "ben",
+  "notes": "curated: es.json#tin_capinc_ratrate5 | euromod value in force at 2025-06-01: 0.3 from 2025-01-01 | MEDIUM-HARD / combine — the TOTAL savings rate above 300.000 euros. No article states 30 % for residents: art. 66.1 gives the state scale (15 % top band) and art. 76 the autonomous-community scale (another 15 %), and the total is their sum — the Country Report's '30 %'. The only place 30 appears in art. 66 is paragraph 2, the scale for taxpayers resident abroad, which is the near-miss citation a retrieval-first pipeline will land on. Difficulty is set explicitly: both provisions are in the same instrument, so the drafter would call it verbatim. ROUTING: EUROMOD carries 0.30 from 2025-01-01 -> `unchanged`."
 }

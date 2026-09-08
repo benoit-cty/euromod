@@ -4,7 +4,7 @@
     "model_target": "euromod://NL/bfa_nl/def_const/$bfa_mult2",
     "spine_order": "14",
     "value_type": "scalar",
-    "unit": "/1",
+    "unit": "ratio",
     "threshold_unit": null,
     "label": {
       "en": "multiplier choild 6-11"

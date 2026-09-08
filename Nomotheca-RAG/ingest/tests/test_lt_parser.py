@@ -200,3 +200,37 @@ def test_resolver_maps_known_citations_to_consolidation_index():
 def test_canary_asserts_2025_consolidation():
     facts = LtAdapter().canary_facts()
     assert facts[0].assert_latest_start_gte == date(2025, 1, 2)
+
+
+def test_an_act_without_consolidations_falls_back_to_its_own_text():
+    # TAR only consolidates amended acts: an annual law has an empty index and
+    # its text on the Dokumentas row. The index then points at `<id>/orig`, and
+    # that row parses like a consolidation dated by isigalioja/negalioja.
+    from nomotheca_ingest.countries.lt.fetcher import url_for_ref
+
+    index_ref = _ref("abc/asr", "consolidation_index")
+    index = parse_tar_json(json.dumps({"_data": []}).encode(), index_ref, None)
+    assert index.metadata["child_refs"] == [
+        {"source_id": "abc/orig", "source_type": "consolidation", "title": "pradinė redakcija (nekonsoliduotas aktas)"}
+    ]
+    orig_ref = _ref("abc/orig", "consolidation")
+    assert 'dokumento_id="abc"' in url_for_ref(orig_ref).replace("%22", '"')
+    row = {
+        "dokumento_id": "abc",
+        "atv_dok_nr": "XV-46",
+        "isigalioja": "2025-01-01",
+        "negalioja": None,
+        "tekstas_lt": (
+            "LIETUVOS RESPUBLIKOS\nVALSTYBĖS SOCIALINIŲ FONDŲ BIUDŽETŲ 2025 METŲ RODIKLIŲ PATVIRTINIMO\nĮSTATYMAS\n"
+            "2024 m. gruodžio 10 d. Nr. XV-46\nVilnius\n"
+            "1 straipsnis. Įstatymo paskirtis\nŠis įstatymas patvirtina rodiklius.\n"
+            "2 straipsnis. Įmokų tarifai\nPensijų socialinio draudimo įmokos tarifas – 8,72 procento.\n"
+        ),
+    }
+    snapshot = _snapshot(orig_ref)
+    doc = parse_tar_json(json.dumps({"_data": [row]}).encode(), orig_ref, snapshot)
+    (instrument,) = doc.instruments
+    assert instrument.national_id == "XV-46"
+    assert [u.citation for u in instrument.units] == ["XV-46 1 straipsnis", "XV-46 2 straipsnis"]
+    assert instrument.units[1].versions[0].valid_from == date(2025, 1, 1)
+    assert instrument.units[1].versions[0].valid_to is None

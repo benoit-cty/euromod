@@ -4,7 +4,7 @@
     "model_target": "euromod://LT/ConstDef_lt/def_const/$bchnm_coef",
     "spine_order": "3",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "Universal child benefit coefficient"
@@ -13,7 +13,7 @@
       "en": "$bchnm_coef"
     },
     "description": {
-      "en": "Coefficient (1.75) that multiplies the Basic Social Amount (BSA) to derive the monthly amount of the universal child benefit (išmoka vaikui) paid per dependent child. It is used in bchnm_lt/BenCalc (Comp_perElig, comment 'universal child benefit') to compute the per-child payment. Per the benefits documentation, this is a non-contributory monthly cash benefit of 1.75 BSA paid for each dependent child up to age 18 (or 23 if in full-time education), with no income test, indexed annually via the BSA uprating rule."
+      "en": "This is the coefficient (a multiplier of the Basic Social Allowance, BSA) that sets the monthly amount of Lithuania's Universal child benefit (bchnm_s, 'išmoka vaikui'), a non-contributory, non-means-tested cash benefit paid to every family or care institution with one or more dependent children up to age 18 (or up to 23 if in full-time general or vocational education, including while on sick, pregnancy or childbirth-related leave). It is defined in ConstDef_lt and used in the bchnm_lt policy's BenCalc function as the Comp_perElig parameter, i.e. the per-eligible-child compensation multiplied by BSA to produce the benefit amount. Per the Country Report and the LT benefits description, the benefit has been set at 1.75 BSA per child per month since 1 January 2021 (122.5 EUR in 2025), is not subject to an income test, and is not taxable."
     },
     "explanation": {
       "en": "EUROMOD function group: constants for child benefits"

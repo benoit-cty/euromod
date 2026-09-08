@@ -13,7 +13,7 @@
       "en": "$tscerpi_rate2"
     },
     "description": {
-      "en": "This is the employer old-age (pension) insurance contribution rate of 2.02% (2025 value; scheduled to rise to 2.11% under the 2026 rules), applied to the employee's whole gross income, in addition to the 8.55% rate charged on Income Group A only ($tscerpi_rate1). It is used in tscer_fr's BenCalc function (Comp_perTU parameter, 'Old-age insurance contributions-main') to compute the whole-income component of the employer's basic pension contribution, which is subject to the general reduction on employer contributions."
+      "en": "$tscerpi_rate2 is the employer basic old-age insurance contribution rate applied to whole gross income (the uncapped tranche, on top of the Income-Group-A rate). Its value (2.11%) matches contributions.md's 2026 'Change' figure for the 'Employer Old Age' whole-income rate, up from 2.02% in 2024-2025 and 1.90% in 2022-2023. It is used in tscer_fr/BenCalc as part of the main old-age insurance contribution calculation, alongside $tscerpi_rate1."
     },
     "explanation": {
       "en": "EUROMOD function group: Reduction coefficient"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.016",
         "reviewed_by": null,
         "review_status": "pending",
@@ -58,7 +58,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.0175",
         "reviewed_by": null,
         "review_status": "pending",
@@ -81,7 +81,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.018",
         "reviewed_by": null,
         "review_status": "pending",
@@ -104,7 +104,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.019",
         "reviewed_by": null,
         "review_status": "pending",
@@ -117,6 +117,29 @@
     {
       "value": 0.0202,
       "valid_from": "2024-01-01",
+      "valid_to": "2025-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "0.0202",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.0211,
+      "valid_from": "2026-01-01",
       "valid_to": null,
       "legal_status": null,
       "source_type": null,
@@ -127,8 +150,8 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
-        "model_answer": "0.0202",
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "0.0211",
         "reviewed_by": null,
         "review_status": "pending",
         "reviewed_at": null,

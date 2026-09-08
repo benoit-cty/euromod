@@ -4,7 +4,7 @@
     "model_target": "euromod://LT/ConstDef_lt/def_const/$PensionAgeFemale",
     "spine_order": "3",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "age_years",
     "threshold_unit": null,
     "label": {
       "en": "Official pension age (females): TUDef, bunct and bsa00"
@@ -13,7 +13,7 @@
       "en": "$PensionAgeFemale"
     },
     "description": {
-      "en": "Statutory (official) pension age for women, currently 65, used in eligibility and timing calculations across social assistance (bsa00_lt/bsa_FYA_lt Elig_Cond), unemployment benefit duration ('time left until retirement age' in bunct_lt/bunct_FYA_lt BenCalc), second-pillar pension contribution rules (tpcpi_lt/Elig) and state-insured status (tscse_admin_lt/BenCalc). The benefits document notes that reaching the statutory retirement age is an eligibility route for the single-person benefit, consistent with this constant's role."
+      "en": "$PensionAgeFemale is Lithuania's official statutory retirement (pension) age for women, used as an age threshold across several spine policies. It is one of the alternative eligibility routes into the social assistance benefit (bsa00_lt/Elig and its forward-year variant bsa_FYA_lt/Elig) — per the Country Report, an adult who has reached pension age qualifies without also needing to be working, studying, or registered unemployed — and it defines 'time left until retirement age' in the unemployment insurance benefit's BenCalc (bunct_lt, bunct_FYA_lt), which per the Country Report extends benefit duration by 2 months for claimants with 5 years or less left before pension age. It also sets age boundaries for second-pillar pension contribution eligibility (tpcpi_lt/Elig), state-insured status (tscse_admin_lt/BenCalc), and the random second-pillar-pension participation routine for those aged 51+ (random_lt/BenCalc). The female pension age has been raised in gradual annual steps (17 recorded values since 2005) as Lithuania converges it with the male age, both currently set at 65 in the model."
     },
     "explanation": {
       "en": "EUROMOD function group: Pension age, MMS, AMS, AMSp,  BSA, SSI, CYI, CBN, basic/asistance pensions bases, RP"

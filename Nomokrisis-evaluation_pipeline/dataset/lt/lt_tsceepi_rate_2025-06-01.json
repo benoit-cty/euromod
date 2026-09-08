@@ -4,19 +4,22 @@
   "language": "lt",
   "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_lt_constdef_lt_def_const_tsceepi_rate.json",
   "as_of": "2025-06-01",
-  "difficulty": "verbatim",
-  "hazards": [],
+  "difficulty": "combine",
+  "hazards": [
+    "cross_instrument"
+  ],
   "labels_drafted": true,
   "source_class": "codified_law",
   "expected": {
     "routing": "unchanged",
     "value": "8.72%",
     "citations": [
+      "XV-46 3 straipsnis",
       "VSDĮ"
     ]
   },
   "verified": true,
   "drafted_by": "human",
-  "reviewed_by": "ben",
-  "notes": "curated: lt.json#tsceepi_rate | euromod value in force at 2025-06-01: '8.72%' from 2019-01-01 | MEDIUM — employee pension social-insurance contribution, 8.72% since the 2019 tax reform. Unchanged trap plus the percent-string scoring gap (expected kept in string form until normalise_value grows a % branch). Pin the exact VSDI article (rates are approved via the annual SSI fund budget indicators law — decide which citation is canonical) when drafting."
+  "notes": "curated: lt.json#tsceepi_rate | euromod value in force at 2025-06-01: '8.72%' from 2019-01-01 | MEDIUM — employee pension social-insurance contribution, 8.72% since the 2019 tax reform. VSDĮ only says the tariffs are approved by the annual law on the state social funds' budget indicators; the number itself is in that law: for 2025 the Valstybės socialinių fondų biudžetų 2025 metų rodiklių patvirtinimo įstatymas XV-46 (TAR 2024-22173), art. 3 ('pensijų socialinio draudimo įmokos tarifą – 8,72 procento'), ingested 2026-09-08 through the LT adapter's never-consolidated-act fallback (<id>/orig). Unchanged trap plus the percent-string spelling (normalise_value reads '8.72%' as 0.0872). ACCEPTED CITATIONS: XV-46 art. 3 (the value) or any VSDĮ article (the delegation).",
+  "reviewed_by": "ben"
 }

@@ -13,7 +13,7 @@ import re
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from nomotheca_ingest.countries.lt.fetcher import CONSOLIDATION_INDEX_SUFFIX
+from nomotheca_ingest.countries.lt.fetcher import CONSOLIDATION_INDEX_SUFFIX, ORIGINAL_TEXT_SUFFIX
 from nomotheca_ingest.core.ir import InstrumentIR, ParsedDoc, Snapshot, SourceRef, TextIR, UnitIR, VersionIR
 
 
@@ -46,6 +46,8 @@ def parse_tar_json(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> Parsed
     if ref.source_id.endswith(CONSOLIDATION_INDEX_SUFFIX):
         return _parse_consolidation_index(rows, ref)
     if "/" in ref.source_id:
+        # A Suvestinė row, or — ``/orig`` — the Dokumentas row of a never-amended
+        # act standing in for its single version (same columns for the text).
         return _parse_consolidation(rows, ref, snapshot)
     return _parse_document(rows, ref)
 
@@ -88,6 +90,16 @@ def _parse_consolidation_index(rows: list[dict[str, Any]], ref: SourceRef) -> Pa
     dokumento_id = ref.source_id.removesuffix(CONSOLIDATION_INDEX_SUFFIX)
     child_refs: list[dict[str, str]] = []
     skipped = 0
+    if not rows:
+        # Never amended, never consolidated: the act's text is on its own
+        # Dokumentas row, in force from `isigalioja`.
+        child_refs.append(
+            {
+                "source_id": f"{dokumento_id}{ORIGINAL_TEXT_SUFFIX}",
+                "source_type": "consolidation",
+                "title": "pradinė redakcija (nekonsoliduotas aktas)",
+            }
+        )
     for row in rows:
         suvestines_id = row.get("suvestines_id")
         if not suvestines_id:
@@ -117,8 +129,10 @@ def _parse_consolidation(rows: list[dict[str, Any]], ref: SourceRef, snapshot: S
     row = rows[0]
     dokumento_id = row.get("dokumento_id") or ref.source_id.split("/", 1)[0]
     text = row.get("tekstas_lt") or ""
-    valid_from = _parse_date(row.get("galioja_nuo")) or date.min
-    valid_to_inclusive = _parse_date(row.get("galioja_iki"))
+    # Suvestinė rows date themselves with galioja_nuo/galioja_iki; a Dokumentas
+    # row standing in for a never-consolidated act with isigalioja/negalioja.
+    valid_from = _parse_date(row.get("galioja_nuo") or row.get("isigalioja")) or date.min
+    valid_to_inclusive = _parse_date(row.get("galioja_iki") or row.get("negalioja"))
     # TAR's galioja_iki is the last day in force; the DB validity range is
     # half-open, so the exclusive end is the following day.
     valid_to = valid_to_inclusive + timedelta(days=1) if valid_to_inclusive else None

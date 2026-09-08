@@ -16,9 +16,9 @@
       "LEGITEXT000006073189, art. L136-8"
     ]
   },
-  "corpus_available": true,
+  "corpus_available": false,
   "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prelevements_sociaux.contributions_sociales.csg.remplacement.seuils.seuil_rfr3.demi_part_suppl_rfr3 | openfisca value at 2025-06-01: 6941.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 6941.0 from 2025-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Lettre ministérielle D-24-019252 du 4/12/2024 (no Legifrance id)",
-  "reviewed_by": "ben"
+  "reviewed_by": "ben",
+  "notes": "openfisca: prelevements_sociaux.contributions_sociales.csg.remplacement.seuils.seuil_rfr3.demi_part_suppl_rfr3 | openfisca value at 2025-06-01: 6941.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 6941.0 from 2025-01-01 | link: fingerprint score 1.00 | corpus_available: false — not one of this parameter's OpenFisca references resolves in the legislation corpus, so no retrieval can reach the text stating the value. The case measures ingest coverage; it is excluded from the 'source in corpus' KPI slice until the act is ingested | references not resolved in the legislation corpus: Lettre ministérielle D-24-019252 du 4/12/2024 (no Legifrance id)"
 }

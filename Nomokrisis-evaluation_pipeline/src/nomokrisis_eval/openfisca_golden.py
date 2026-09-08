@@ -221,6 +221,14 @@ def references_at(
     ]
 
 
+_PRE_INDEXATION = re.compile(r"avant\s+(?:revalorisation|indexation)", re.IGNORECASE)
+
+
+def _is_pre_indexation_reference(reference: dict) -> bool:
+    """Does OpenFisca label this reference as the text BEFORE annual indexation?"""
+    return bool(_PRE_INDEXATION.search(reference.get("title") or ""))
+
+
 def resolve_citation(conn: psycopg.Connection, national_id: str) -> str | None:
     """The legislation DB's own citation string for a national id, if ingested.
 
@@ -432,7 +440,14 @@ def draft_case(
         national_id = reference.get("national_id")
         resolved = resolve_citation(conn, national_id) if national_id else None
         if resolved:
-            in_corpus = True
+            # A reference OpenFisca itself marks as the pre-indexation text
+            # ("Article L136-8 … (seuils avant revalorisation)") is the base
+            # article, not the text stating this year's amount: that lives in
+            # the companion reference (a ministerial letter with no id). It is
+            # still a citation a correct pipeline produces, but it cannot make
+            # the case answerable.
+            if not _is_pre_indexation_reference(reference):
+                in_corpus = True
             if resolved not in citations:
                 citations.append(resolved)
         elif national_id and national_id.startswith(("JORFTEXT", "LEGITEXT")):
@@ -486,6 +501,10 @@ def draft_case(
         note_parts.append(lag)
         outcome.warnings.append(lag)
     corpus_available = in_corpus if references else None
+    if "corpus_available" in entry:
+        # The selection file knows more than the reference list: an explicit
+        # value on the entry wins (the curated builder has always allowed it).
+        corpus_available = entry["corpus_available"]
     if corpus_available is False:
         note_parts.append(
             "corpus_available: false — not one of this parameter's OpenFisca references "

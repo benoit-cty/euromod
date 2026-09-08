@@ -4,7 +4,7 @@
     "model_target": "euromod://LT/xcc_lt/def_const/$xcc_amt1",
     "spine_order": "67",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "currency/day",
     "threshold_unit": null,
     "label": {
       "en": "Childcare cost amounts for meals (daily amounts for a five-day week)"
@@ -13,7 +13,7 @@
       "en": "$xcc_amt1"
     },
     "description": {
-      "en": "This constant sets the daily gross childcare fee (in EUR) charged for a younger age group of children in formal, centre-based childcare, based on a five-day working week. It is used in the xcc_lt policy's ArithOp function (comment 'Childcare cost for children younger than 3') to compute the gross childcare cost input before any discounts are applied. According to the LT childcarecost theme description, municipal childcare fees are fixed daily amounts that vary by child age; the value of 2.9 EUR corresponds to the daily fee (meal fee per day, three meals) for children aged 1-2 years under the updated 2026 fee schedule, up from 2.6 EUR previously."
+      "en": "$xcc_amt1 is the gross daily childcare fee (for a five-day week) charged to parents in Lithuania for children younger than 3 (broadly ages 1-2) attending formal, centre-based (municipal) childcare, covering the compulsory meal fee. It feeds the xcc_lt policy's ArithOp function (comment \"Childcare cost for children younger than 3\"), which computes the gross childcare cost for this younger age band before any discounts are subtracted. Per the Lithuania Net Childcare Costs description, the daily fee for this age group is a fixed amount that is not income-tested and rose from EUR 2.6 in 2025 to EUR 2.9 in 2026 (the current value held by the constant), consistent with municipal fee-setting decisions such as City of Vilnius decision 1-1711/1-305."
     },
     "explanation": {},
     "last_confirmed_valid_on": null,

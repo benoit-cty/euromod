@@ -4,7 +4,7 @@
     "model_target": "euromod://FR/tin_fr/def_const/$tinto_lim3",
     "spine_order": "31",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "currency/year",
     "threshold_unit": null,
     "label": {
       "en": "Second income limit fo couples"
@@ -13,7 +13,7 @@
       "en": "$tinto_lim3"
     },
     "description": {
-      "en": "Income threshold of EUR 1,000,000 that marks the top band limit for couples under the CEHR exceptional contribution on high incomes. In tin_fr's SchedCalc function it is used as the Band_UpLim of the couples' schedule (comment: 'Exceptional contributions on high income earners: couples'), the point above which the top 4% rate applies to a couple's reference tax income (RFR), following the 0% band up to EUR 500,000 and the 3% band between EUR 500,000 and EUR 1,000,000."
+      "en": "Sets the €1,000,000 upper band edge for couples in the CEHR schedule, used as Band_UpLim in tin_fr's SchedCalc (\"Exceptional contributions on high income earners: couples\"), above which the top CEHR rate applies to couples' reference income. Unlike the other two CEHR limits, it is used only within this schedule and not as a CDHR eligibility cut-off. The country report's Table 2.82 confirms the >€1,000,000 reference-income band for couples in the CEHR rate schedule."
     },
     "explanation": {
       "en": "EUROMOD function group: Parameters for exceptional contributions on high income"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "n/a",
         "reviewed_by": null,
         "review_status": "pending",
@@ -58,7 +58,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "1000000#y",
         "reviewed_by": null,
         "review_status": "pending",

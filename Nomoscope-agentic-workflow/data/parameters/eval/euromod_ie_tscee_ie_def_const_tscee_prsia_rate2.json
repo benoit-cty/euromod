@@ -13,7 +13,7 @@
       "en": "$tscee_prsiA_rate2"
     },
     "description": {
-      "en": "This constant is the withdrawal (taper) rate of one-sixth applied to the PRSI Class A credit as earnings rise above the credit's starting threshold. It is used as the Withdraw_Rate parameter of the BenCalc function in tscee_ie labelled 'PRSI Class A: credit (per month in work)', reducing the €12 maximum credit (tscee_prsiA_amt) by one-sixth of the amount by which weekly earnings exceed the threshold (tscee_prsiA_thres1). This directly matches the country report's description of the tapered PRSI credit introduced in 2016, which equals €12 less one-sixth of weekly earnings above €352.01."
+      "en": "The taper (withdrawal) rate applied to the PRSI Class A employee credit, used as the Withdraw_Rate parameter in tscee_ie's BenCalc function for the 'PRSI Class A: credit (per month in work)'. Its value of 1/6 matches the Country Report's description of the credit as '€12 less one-sixth of weekly earnings above €352.01', i.e. the credit is reduced by one-sixth of every euro of weekly earnings above the threshold until it is fully withdrawn."
     },
     "explanation": {},
     "last_confirmed_valid_on": null,
@@ -21,7 +21,7 @@
   },
   "values": [
     {
-      "value": "n/a",
+      "value": null,
       "valid_from": "2006-01-01",
       "valid_to": "2015-12-31",
       "legal_status": null,
@@ -33,7 +33,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "n/a",
         "reviewed_by": null,
         "review_status": "pending",
@@ -44,7 +44,7 @@
       }
     },
     {
-      "value": "1 / 6",
+      "value": null,
       "valid_from": "2016-01-01",
       "valid_to": "2022-12-31",
       "legal_status": null,
@@ -56,7 +56,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "1 / 6",
         "reviewed_by": null,
         "review_status": "pending",
@@ -67,7 +67,7 @@
       }
     },
     {
-      "value": "1/6",
+      "value": null,
       "valid_from": "2023-01-01",
       "valid_to": null,
       "legal_status": null,
@@ -79,7 +79,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "1/6",
         "reviewed_by": null,
         "review_status": "pending",

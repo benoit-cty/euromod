@@ -13,7 +13,7 @@
       "en": "$tinto_rate2"
     },
     "description": {
-      "en": "Marginal rate of 4% applied to the top band of reference tax income (RFR) under the CEHR exceptional contribution on high incomes. In tin_fr's SchedCalc function it is used as the Band_Rate for the top part of the exceptional-contribution schedule, applying to income above EUR 500,000 for singles and above EUR 1,000,000 for couples (also the rate applied to singles between EUR 500,000 and EUR 1,000,000 per Table 2.82). Despite the JSON 'currency' unit tag, the value (0.04) is a percentage rate."
+      "en": "The 4% marginal CEHR rate, applied as Band_Rate in tin_fr's SchedCalc for the top band(s) of the exceptional contribution on high incomes: reference income above €500,000 for singles or above €1,000,000 for couples, per Table 2.82 of the country report. Together with the 3% rate ($tinto_rate1), it completes the two-rate CEHR schedule."
     },
     "explanation": {
       "en": "EUROMOD function group: Parameters for exceptional contributions on high income"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "n/a",
         "reviewed_by": null,
         "review_status": "pending",
@@ -58,7 +58,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.04",
         "reviewed_by": null,
         "review_status": "pending",

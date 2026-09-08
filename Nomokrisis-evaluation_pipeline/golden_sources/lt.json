@@ -51,9 +51,10 @@
       "routing": "unchanged",
       "expected_value": "8.72%",
       "citations": [
+        "XV-46 3 straipsnis",
         "VSDĮ"
       ],
-      "note": "MEDIUM — employee pension social-insurance contribution, 8.72% since the 2019 tax reform. Unchanged trap plus the percent-string scoring gap (expected kept in string form until normalise_value grows a % branch). Pin the exact VSDI article (rates are approved via the annual SSI fund budget indicators law — decide which citation is canonical) when drafting.",
+      "note": "MEDIUM — employee pension social-insurance contribution, 8.72% since the 2019 tax reform. VSDĮ only says the tariffs are approved by the annual law on the state social funds' budget indicators; the number itself is in that law: for 2025 the Valstybės socialinių fondų biudžetų 2025 metų rodiklių patvirtinimo įstatymas XV-46 (TAR 2024-22173), art. 3 ('pensijų socialinio draudimo įmokos tarifą – 8,72 procento'), ingested 2026-09-08 through the LT adapter's never-consolidated-act fallback (<id>/orig). Unchanged trap plus the percent-string spelling (normalise_value reads '8.72%' as 0.0872). ACCEPTED CITATIONS: XV-46 art. 3 (the value) or any VSDĮ article (the delegation).",
       "id": "tsceepi_rate"
     },
     {
@@ -105,15 +106,15 @@
     },
     {
       "model_target": "euromod://LT/ConstDef_lt/def_const/$PensionAgeFemale",
-      "difficulty": "combine",
+      "difficulty": "derive",
       "source_class": "codified_law",
-      "routing": "unchanged",
-      "expected_value": 64.66,
+      "routing": "changed",
+      "expected_value": 64.6667,
       "expected_valid_from": "2025-01-01",
       "citations": [
         "I-549 57 straipsnis"
       ],
-      "note": "IMPOSSIBLE today — official pension age for women in 2025: 64 years 8 months, i.e. 64.66 in EUROMOD's decimal convention. The statute states a STEP SCHEDULE (+4 months per year, reaching 65 in 2026), not the per-year value: the pipeline must derive the cohort value from the schedule and convert months to a decimal — derivation-not-extraction, plus a representation-convention trap (64.66 vs 64.67 vs 64+8/12). Pin the exact article/annex of the pension-age schedule when drafting. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
+      "note": "HARD / derive — official pension age for women in 2025: 64 years 8 months, stated by I-549 art. 57 as a STEP SCHEDULE (+4 months per year, reaching 65 in 2026), never as a decimal: the pipeline must pick the 2025 row and convert months to a decimal. VALUE: the law's 64 + 8/12 = 64.6667 (four decimals; the 1e-6 relative tolerance accepts the exact quotient 64.6666…). EUROMOD stores 64.66 — a truncation, not a rounding, 0.0067 years (2.4 days) short of the statute: kept as a real difference on the IE 27 382/27 383 precedent and reported to the economists team, not absorbed. ROUTING: the law's value differs from the stored 64.66 -> `changed` (route_against_current agrees). The 2026-09-08 Luna run derived 64.6667 correctly and was rejected only because the store carried unit `currency` for an age (the export says `age_years`; the store was ingested from the August export) — re-ingest fixed the unit.",
       "id": "pensionagefemale"
     },
     {

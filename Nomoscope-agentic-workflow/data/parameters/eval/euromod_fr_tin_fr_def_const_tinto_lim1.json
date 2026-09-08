@@ -4,7 +4,7 @@
     "model_target": "euromod://FR/tin_fr/def_const/$tinto_lim1",
     "spine_order": "31",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "currency/year",
     "threshold_unit": null,
     "label": {
       "en": "First income limit for singles"
@@ -13,7 +13,7 @@
       "en": "$tinto_lim1"
     },
     "description": {
-      "en": "Income threshold of EUR 250,000 marking the start of the taxable band for single taxpayers under the Contribution Exceptionnelle sur les Hauts Revenus (CEHR), France's exceptional tax on high earners in place since 2013. In tin_fr's SchedCalc function it is used as the Band_UpLim of the first tax band (comment: 'Exceptional contributions on high income earners: singles'), i.e. the upper limit of the band taxed at 0% and the point above which the 3% rate starts to apply on the reference tax income (RFR, personal income tax base plus taxable capital income). It is also used in tinto01_fr's Elig function as the eligibility condition for single taxpayers under the related Contribution Différentielle sur les Hauts Revenus (CDHR), a 2025 one-year (subsequently renewed) top-up levy that also applies from EUR 250,000 RFR for singles."
+      "en": "Defines the €250,000 reference-income threshold above which a single taxpayer becomes liable for France's exceptional contribution on high incomes (Contribution Exceptionnelle sur les Hauts Revenus, CEHR). It sets a Band_UpLim edge in tin_fr's SchedCalc that computes the CEHR (\"Exceptional contributions on high income earners: singles\"), and the same value is reused as the Elig_Cond eligibility threshold for singles in tinto01_fr, which screens taxpayers into the related Contribution Différentielle sur les Hauts Revenus (CDHR). The country report confirms both the CEHR and the CDHR apply above this €250,000 (singles) / €500,000 (couples) reference-income threshold."
     },
     "explanation": {
       "en": "EUROMOD function group: Parameters for exceptional contributions on high income"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "n/a",
         "reviewed_by": null,
         "review_status": "pending",
@@ -58,7 +58,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "250000#y",
         "reviewed_by": null,
         "review_status": "pending",

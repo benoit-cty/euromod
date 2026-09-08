@@ -235,10 +235,11 @@ def citation_fast_path(
     hits: dict[str, RetrievalHit] = {}
     jurisdictions = scope_codes(country)
     for cit in citations:
-        rows = conn.execute(
-            _CITATION_SQL,
-            {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of, "cit": cit, "k": k},
-        ).fetchall()
+        with conn.cursor(row_factory=dict_row) as cur:
+            rows = cur.execute(
+                _CITATION_SQL,
+                {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of, "cit": cit, "k": k},
+            ).fetchall()
         for row in rows:
             hits.setdefault(row["chunk_id"], RetrievalHit(method="citation", **row))
     return list(hits.values())
@@ -281,7 +282,10 @@ def hybrid_search(
         "k": k,
         "model_id": model_id,
     }
-    rows = conn.execute(sql, params).fetchall()
+    # Rows are unpacked by name: bind the row factory here rather than relying on
+    # the caller's connection (a plain `psycopg.connect` yields tuples).
+    with conn.cursor(row_factory=dict_row) as cur:
+        rows = cur.execute(sql, params).fetchall()
     return [RetrievalHit(method="hybrid", **row) for row in rows]
 
 

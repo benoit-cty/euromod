@@ -13,7 +13,7 @@
       "en": "$tsceepi_rate2"
     },
     "description": {
-      "en": "This is the 0.40% rate applied to employee old-age insurance contributions on the whole (uncapped) income, used as the Band_Rate parameter of the 'Old Age insurance contributions' SchedCalc in policy tscee_fr for the income band above income group A's ceiling, where only this whole-income component continues to be levied (the group-A specific 6.90% component no longer applies). The Contributions theme note lists 'Old age' employee contribution rates of 6.90% on income group A and 0.40% on whole income, and this constant corresponds to the latter."
+      "en": "$tsceepi_rate2 (0.40%) is the employee old-age insurance contribution rate applied to the whole (uncapped) gross income, in addition to the rate applied on the capped portion up to the monthly PSS ($tsceepi_rate1). It is used as a Band_Rate in tscee_fr/SchedCalc ('Old Age insurance contributions'). The FR country report (Table 2.57) documents exactly this 0.40% rate for the 'whole income' old-age contribution, matching the constant's current value."
     },
     "explanation": {
       "en": "EUROMOD function group: Parameters for employee social insurance contributions"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.001",
         "reviewed_by": null,
         "review_status": "pending",
@@ -58,7 +58,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.0025",
         "reviewed_by": null,
         "review_status": "pending",
@@ -81,7 +81,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.0030",
         "reviewed_by": null,
         "review_status": "pending",
@@ -104,7 +104,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.0035",
         "reviewed_by": null,
         "review_status": "pending",
@@ -127,7 +127,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.004",
         "reviewed_by": null,
         "review_status": "pending",

@@ -13,7 +13,7 @@
       "en": "$tin_rate1"
     },
     "description": {
-      "en": "Marginal tax rate for the first (lowest) band of the progressive French personal income tax schedule (Table 2.77), currently 0%, applied to taxable income up to $tin_upthres1 (11 496 EUR in 2025). It is used as the Band_Rate parameter in the SchedCalc \"Gross income tax (before any IMAX corrections)\" function of tin_fr and again in tinkt_fr's SchedCalc \"Imax: New gross tax using new QF\" (which recomputes gross tax using an adjusted family quotient for the Plafonnement du quotient familial correction)."
+      "en": "The 0% marginal rate on the lowest band of France's progressive personal income tax (Impôt sur le Revenu, IRPP). Used as Band_Rate both in tin_fr's SchedCalc to compute the \"Gross income tax (before any IMAX corrections)\" and again in tinkt_fr's SchedCalc to recompute tax under the reduced/floor quotient familial as part of the family-ratio-capping (Imax) mechanism. Matches the 0% bracket up to the $tin_upthres1 ceiling shown in the theme doc's and country report's IRPP rate tables."
     },
     "explanation": {
       "en": "EUROMOD function group: Paramteres of the income tax"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0",
         "reviewed_by": null,
         "review_status": "pending",

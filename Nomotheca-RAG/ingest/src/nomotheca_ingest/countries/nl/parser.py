@@ -311,6 +311,15 @@ def _blocks(node: ET.Element) -> list[str]:
                 blocks.append(text)
         elif tag == "table":
             blocks.extend(_table_rows(child))
+        elif tag == "plaatje":
+            # A statutory formula published as a picture (Participatiewet
+            # art. 22a's kostendelersnorm is a PNG, `<illustratie type="tekst">`).
+            # The text cannot be recovered from the XML; say so in the rendered
+            # article rather than silently dropping the clause, so a reader (or
+            # the proposer) sees that a formula stands here and where it is.
+            for picture in child.iter("illustratie"):
+                name = picture.get("naam") or picture.get("id") or "afbeelding"
+                blocks.append(f"[formule als afbeelding: {name}]")
         elif tag in {"lid", "li"}:
             # Keep the number attached to the first line of its own body, so a
             # quoted extract carries the paragraph number with the sentence.

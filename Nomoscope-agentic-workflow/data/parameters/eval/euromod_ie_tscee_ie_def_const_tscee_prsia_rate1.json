@@ -13,7 +13,7 @@
       "en": "$tscee_prsiA_rate1"
     },
     "description": {
-      "en": "This is the employee PRSI Class A contribution rate (4.1% in the latest system) applied to gross employee earnings above the €38/week exemption threshold. It is used as the 'formula' parameter of the ArithOp function in tscee_ie commented 'PRSI Class A: pre-credit contribution (per month in work)', multiplying eligible earnings to produce the pre-credit contribution before the tapered PRSI credit is netted off. Both sources confirm this rate: the country report's Table 10 shows the Class A employee rate at 4% for 2022-2024 rising to 4.1% for 2025, and the theme document confirms 4.1% for 2025 (rising further to 4.2% in 2026, a change not yet reflected in this constant's latest value)."
+      "en": "The PRSI Class A employee contribution rate applied to earnings above the lower earnings threshold, used as the Formula parameter of tscee_ie's ArithOp computing the 'pre-credit contribution' each pay period. Its value of 4.2% matches the contributions description's 2026 rate ('4.2% on earnings exceeding €352.01'), up from 4.1% in 2025 per the same source, and is consistent with the Country Report's Table 10 employee rate (rate 2/3)."
     },
     "explanation": {},
     "last_confirmed_valid_on": null,
@@ -21,7 +21,7 @@
   },
   "values": [
     {
-      "value": "4%",
+      "value": null,
       "valid_from": "2006-01-01",
       "valid_to": "2023-12-31",
       "legal_status": null,
@@ -33,7 +33,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "4%",
         "reviewed_by": null,
         "review_status": "pending",
@@ -44,8 +44,31 @@
       }
     },
     {
-      "value": "4.1%",
+      "value": null,
       "valid_from": "2024-01-01",
+      "valid_to": "2025-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "4.1%",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": null,
+      "valid_from": "2026-01-01",
       "valid_to": null,
       "legal_status": null,
       "source_type": null,
@@ -56,8 +79,8 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
-        "model_answer": "4.1%",
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "4.2%",
         "reviewed_by": null,
         "review_status": "pending",
         "reviewed_at": null,

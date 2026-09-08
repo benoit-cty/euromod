@@ -13,7 +13,7 @@
       "en": "$tsceepi_rate6"
     },
     "description": {
-      "en": "This is the complementary old-age (pension) contribution rate (8.64%) charged to white-collar employees on income group B (the middle income tranche above the basic social security ceiling). It is used as the Band_Rate parameter of the 'Complementary insurance for white collar' SchedCalc in policy tscee_fr. The Contributions theme note ('White Collar Pension') lists an 8.64% rate for income group B, matching this constant."
+      "en": "$tsceepi_rate6 (8.64%) is the complementary-pension (AGIRC-ARRCO) contribution rate for white-collar employees on the second income band (Income group B, between 1x and 4x the monthly PSS, bounded by $tsc_groupB_lim). It is used as a Band_Rate in tscee_fr/SchedCalc ('Complementary insurance for white collar'). The FR country report (Table 2.57) confirms 8.64% for the complementary pension on income group B."
     },
     "explanation": {
       "en": "EUROMOD function group: Parameters for employee social insurance contributions"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.077",
         "reviewed_by": null,
         "review_status": "pending",
@@ -58,7 +58,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.0775",
         "reviewed_by": null,
         "review_status": "pending",
@@ -81,7 +81,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.0780",
         "reviewed_by": null,
         "review_status": "pending",
@@ -104,7 +104,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.0864",
         "reviewed_by": null,
         "review_status": "pending",

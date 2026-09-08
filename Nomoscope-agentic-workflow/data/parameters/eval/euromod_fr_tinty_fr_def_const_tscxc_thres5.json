@@ -4,7 +4,7 @@
     "model_target": "euromod://FR/tinty_fr/def_const/$tscxc_thres5",
     "spine_order": "26",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "currency/year",
     "threshold_unit": null,
     "label": {
       "en": "1 share higher threshold for median rate"
@@ -13,7 +13,7 @@
       "en": "$tscxc_thres5"
     },
     "description": {
-      "en": "This is the RFR (reference tax income) threshold — 26,004 EUR for 2025 — for a single-share tax unit, above which pension income moves from the reduced CSG rate to the median CSG rate (below the full standard rate of 8.3%), part of the graduated CSG-on-pensions schedule. It is used in policy tinty_fr in the ArithOp that 'calculates the applicable threshold for median rate for pensions', paired with $tscxc_thres6 (the per-additional-half-share increment)."
+      "en": "Represents the RFR (revenu fiscal de référence) threshold for one fiscal share separating the median ('taux médian') CSG band from the top rate on pension income; latest value €26,472/year. Its time series holds only 9 recorded values (versus 20 for the exemption threshold and 13 for the reduced-rate threshold), suggesting this median-rate band was introduced later than the others. It is used in tinty_fr's ArithOp (Formula) commented 'Calculate applicable threshold for median rate for pensions', paired with $tscxc_thres6 for the per-half-share increment, consistent with the theme documentation's description of an income-varying CSG rate on pensions (Table 2.65)."
     },
     "explanation": {
       "en": "EUROMOD function group: Parameters for determining net taxable income (RNI)"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "n/a",
         "reviewed_by": null,
         "review_status": "pending",
@@ -58,7 +58,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "22580#y",
         "reviewed_by": null,
         "review_status": "pending",
@@ -81,7 +81,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "22941#y",
         "reviewed_by": null,
         "review_status": "pending",
@@ -104,7 +104,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "23146#y",
         "reviewed_by": null,
         "review_status": "pending",
@@ -127,7 +127,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "23193#y",
         "reviewed_by": null,
         "review_status": "pending",
@@ -150,7 +150,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "23564#y",
         "reviewed_by": null,
         "review_status": "pending",
@@ -173,7 +173,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "24813#y",
         "reviewed_by": null,
         "review_status": "pending",
@@ -186,6 +186,29 @@
     {
       "value": 26004.0,
       "valid_from": "2025-01-01",
+      "valid_to": "2025-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "26004#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 26472.0,
+      "valid_from": "2026-01-01",
       "valid_to": null,
       "legal_status": null,
       "source_type": null,
@@ -196,8 +219,8 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
-        "model_answer": "26004#y",
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "26472#y",
         "reviewed_by": null,
         "review_status": "pending",
         "reviewed_at": null,

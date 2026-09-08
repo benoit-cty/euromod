@@ -13,7 +13,7 @@
       "en": "$tin_rate3"
     },
     "description": {
-      "en": "Marginal tax rate for the third band of the progressive personal income tax schedule, currently 11% (0.11), applied to taxable income between $tin_upthres1 and $tin_upthres3 (roughly 11 497 to 29 314 EUR in 2025, Table 2.77). It is used as the Band_Rate parameter in the tin_fr SchedCalc \"Gross income tax (before any IMAX corrections)\" and in tinkt_fr's \"Imax: New gross tax using new QF\" recalculation."
+      "en": "The 11% marginal income-tax rate — the second active bracket of the progressive IRPP schedule, applying to income between the $tin_upthres1 and $tin_upthres3 thresholds. Used as Band_Rate in tin_fr's SchedCalc for the \"Gross income tax\" and again in tinkt_fr's SchedCalc for the Imax recomputation using the reduced quotient familial. Matches the 11% bracket in both the taxes theme doc and the country report's Table 2.77."
     },
     "explanation": {
       "en": "EUROMOD function group: Paramteres of the income tax"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.14",
         "reviewed_by": null,
         "review_status": "pending",
@@ -58,7 +58,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "0.11",
         "reviewed_by": null,
         "review_status": "pending",

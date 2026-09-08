@@ -13,7 +13,7 @@
       "en": "$tsceepi_rate"
     },
     "description": {
-      "en": "This is the general statutory pension (old-age) social insurance contribution rate (latest 8.72%) within Lithuania's SODRA system, one of the most widely used constants in the spine. It underlies the aggregate self-employed rate ($tscse_TotRate in ConstDef_lt), the contribution ceiling formula in tscct_lt, the employee contribution cap (UpLim) in tscee_lt ('Pension'), employer pension contributions in tscer_lt/BenCalc, and self-employed/administrative pension insurance calculations in tscse_lt and tscse_admin_lt. It represents the employee-borne share of the state pension insurance contribution used across employed, employer, and self-employed contribution modules."
+      "en": "The employee's pension-insurance contribution rate (per 100), currently 8.72% of gross wages, the largest of the four employee contribution components in the Employee's Social Insurance Contributions table (pension 8.72%, sickness 1.99%, maternity 1.81%, health 6.98%, total 19.5%). It is combined with the (currently inapplicable) employer pension rate $tscerpi_rate to define the self-employed total pension rate $tscse_TotRate in ConstDef_lt, and is used directly in the tscct_lt ArithOp 'Pension contributions' formula, the tscee_lt UpLim parameter for the 'Pension' contribution ceiling, the tscer_lt BenCalc 'Pension' component, and both the tscse_admin_lt and tscse_lt self-employed pension-insurance formulas/components."
     },
     "explanation": {
       "en": "EUROMOD function group: employee SIC and credited contributions"

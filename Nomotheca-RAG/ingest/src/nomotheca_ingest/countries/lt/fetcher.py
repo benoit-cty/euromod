@@ -28,6 +28,12 @@ SPINTA_BASE = "https://get.data.gov.lt/datasets/gov/lrsk/teises_aktai"
 _SAFE = "()=&.,!*"
 
 CONSOLIDATION_INDEX_SUFFIX = "/asr"
+#: ``<dokumento_id>/orig``: the act's own text (Dokumentas.tekstas_lt) as the
+#: one dated version of an act that has no Suvestinė — TAR only consolidates
+#: acts that were amended, so an annual law (the 2025 social-fund budget
+#: indicators law, XV-46) has an empty consolidation index and its text lives
+#: on the document row alone.
+ORIGINAL_TEXT_SUFFIX = "/orig"
 
 
 def _escape(value: str) -> str:
@@ -66,6 +72,10 @@ def url_for_ref(ref: SourceRef) -> str:
     source_id = ref.source_id
     if source_id.endswith(CONSOLIDATION_INDEX_SUFFIX):
         return consolidation_index_url(source_id.removesuffix(CONSOLIDATION_INDEX_SUFFIX))
+    if source_id.endswith(ORIGINAL_TEXT_SUFFIX):
+        # An act TAR never consolidated (never amended) has its text only on
+        # the Dokumentas row itself.
+        return document_url(source_id.removesuffix(ORIGINAL_TEXT_SUFFIX))
     if "/" in source_id:
         dokumento_id, suvestines_id = source_id.split("/", 1)
         return consolidation_url(dokumento_id, suvestines_id)

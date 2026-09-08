@@ -29,9 +29,9 @@
       "routing": "unchanged",
       "expected_value": 0.4,
       "citations": [
-        "TCA 1997, s. 15"
+        "Finance Act 2024, s. 3"
       ],
-      "note": "EASY — no-change trap. Higher rate 40%, unchanged since 2015: Budget coverage revalorises the bands around it every year, so the pipeline must resist proposing a change it cannot cite.",
+      "note": "EASY — no-change trap. Higher rate 40%, unchanged since 2015: Budget coverage revalorises the bands around it every year, so the pipeline must resist proposing a change it cannot cite. The provision is TCA 1997 s. 15 (not ingested — an instrument-level id of an act the corpus lacks is provenance, not ground truth); the citation is the ingested Finance Act 2024 s. 3, whose substituted Table restates 'The remainder | 40 per cent | the higher rate' for 2025.",
       "id": "tin_high_rate"
     },
     {

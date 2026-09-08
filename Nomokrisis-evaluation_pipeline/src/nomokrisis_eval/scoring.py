@@ -301,7 +301,7 @@ def score_item(
 
     if expected.value is not None:
         result.value_correct = proposed is not None and values_equal(
-            proposed.value, expected.value, constants
+            _on_parameter_basis(proposed.value, item), expected.value, constants
         )
 
     # The date leg is only meaningful when the pipeline is dating a change.
@@ -371,6 +371,31 @@ def score_item(
         result.abstained = item.routing == Routing.NOT_FOUND
 
     return result
+
+
+_EUROMOD_PERIOD = re.compile(r"#([a-z])$")
+
+
+def _on_parameter_basis(value, item: ReviewItem):
+    """Restate a bare proposed scalar on the period basis EUROMOD holds it in.
+
+    A proposal is a float in the parameter's own basis — the pipeline never
+    writes a `#m`/`#y` suffix — while the ground truth may state the law's
+    period (`747#m` for an allowance EUROMOD stores as `8964#y`). With no
+    period on the proposal, `values_equal` could not convert and the correct
+    8964 scored as a miss. The basis the proposal is on is the one the stored
+    value declares, i.e. the raw EUROMOD suffix of the value in force, so a
+    bare number is completed with that suffix before comparison; anything that
+    is not a bare number (a bracket list, a formula string) is left alone.
+    """
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return value
+    current = item.current_value
+    raw = current.lineage.model_answer if current is not None and current.lineage else None
+    match = _EUROMOD_PERIOD.search(raw or "")
+    if not match:
+        return value
+    return f"{value!r}#{match.group(1)}"
 
 
 def _dump(value):

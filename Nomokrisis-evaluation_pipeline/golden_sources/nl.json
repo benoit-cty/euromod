@@ -63,10 +63,11 @@
       "source_class": "codified_law",
       "expected_value": "1330000#c",
       "citations": [
-        "Wet IB 2001, artikel 3.112"
+        "Wet IB 2001, artikel 3.112",
+        "Wet IB 2001, artikel 3.19"
       ],
       "corpus_available": true,
-      "note": "MEDIUM — the top WOZ-value threshold of the eigenwoningforfait ('villa threshold'), € 1.330.000 for 2025 (1.310.000 in 2024), the last row of the six-row table in Wet IB 2001 art. 3.112(1): '| € 1.330.000 | | € 4.655 vermeerderd met 2,35% …'. Table reading with a twist: the amount appears twice in the same row (as the lower bound of the open band and inside the formula), the other five rows carry thresholds that have not moved since 2018, and the value is spelled with two thousands separators. EUROMOD stores it with a '#c' (capital) suffix. ROUTING: the 2025 export carries 1330000#c -> `unchanged`."
+      "note": "MEDIUM — the top WOZ-value threshold of the eigenwoningforfait ('villa threshold'), € 1.330.000 for 2025 (1.310.000 in 2024), the last row of the six-row table in Wet IB 2001 art. 3.112(1): '| € 1.330.000 | | € 4.655 vermeerderd met 2,35% …'. Table reading with a twist: the amount appears twice in the same row (as the lower bound of the open band and inside the formula), the other five rows carry thresholds that have not moved since 2018, and the value is spelled with two thousands separators. EUROMOD stores it with a '#c' (capital) suffix. ROUTING: the 2025 export carries 1330000#c -> `unchanged`. ACCEPTED CITATIONS: art. 3.112 (eigenwoningforfait) and art. 3.19 (privé-gebruik woning of an entrepreneur) carry the same six-row table with the same € 1.330.000 threshold — a pipeline citing either has read the legislated amount; citation_correct accepts any listed citation."
     },
     {
       "model_target": "euromod://NL/bfa_nl/def_const/$bfa_bchqtr_amt",
@@ -140,8 +141,8 @@
         "Participatiewet, artikel 21",
         "Participatiewet, artikel 22a"
       ],
-      "corpus_available": true,
-      "note": "IMPOSSIBLE today / combine — the norm EUROMOD applies to a single person, € 961,04, labelled by the modeller '50% of standard amount'. It is the kostendelersnorm of Participatiewet art. 22a for A = 2 sharers: ((40% + A x 30%) / A) x B with B the couple norm of art. 21(b), i.e. 0.5 x 1.922,07 = 961,04. Both provisions are in the corpus — but the formula is not: art. 22a's text reads 'is de norm per kalendermaand voor de belanghebbende: Hierbij staat: • A voor …' because the statutory formula is a <formule>/MathML element the NL parser does not render (the CALS tables are rendered, the formula element is dropped). No extraction can produce 961,04 from the text as chunked. What flips it: the parser renders formula elements (then `reparse NL --url-like BWBR0015703` replays the stored snapshot) — an ingest finding, so this case is the metric for it. Difficulty is set explicitly (two pinpoints, one instrument, the drafter would say verbatim); hazard mid_year_change as for art. 21. ROUTING: EUROMOD holds 961.04#m -> `unchanged`."
+      "corpus_available": false,
+      "note": "IMPOSSIBLE today / combine — the norm EUROMOD applies to a single person, € 961,04, labelled by the modeller '50% of standard amount'. It is the kostendelersnorm of Participatiewet art. 22a for A = 2 sharers: ((40% + A x 30%) / A) x B with B the couple norm of art. 21(b), i.e. 0.5 x 1.922,07 = 961,04. Both provisions are in the corpus — but the formula is not: in the BWB XML art. 22a(1) publishes the formula as a PICTURE (<plaatje><illustratie naam=\"256403.png\" type=\"tekst\">), not as text or MathML, so no parser can recover it; since 2026-09-08 the NL parser renders '[formule als afbeelding: 256403.png]' in its place so a reader sees that a formula stands there. corpus_available: false — the text stating the value is not retrievable until the formula is transcribed (OCR or a curated alt text). Difficulty is set explicitly (two pinpoints, one instrument); hazard mid_year_change as for art. 21. ROUTING: EUROMOD holds 961.04#m -> `unchanged`."
     },
     {
       "model_target": "euromod://NL/constdef_nl/def_const/$PenAge",

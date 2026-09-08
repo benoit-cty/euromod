@@ -154,6 +154,18 @@ _QUERY_NOISE = (
     re.compile(r"\([^()]*\)"),
     re.compile(r"«[^»]*»"),
     re.compile(r"\$?\b\w*_\w*\b"),
+    # EUROMOD modelling vocabulary and Country Report pointers: the enrichment
+    # says where a constant is USED ("the 'formula' parameter of the ArithOp
+    # function", "Table 2.79 confirms", "the taxes theme doc's credit list",
+    # "per direct inspection of the ES policy spine"), none of which a statute
+    # contains. Measured over the 9 retrieval misses of the 2026-09-08 review.
+    re.compile(
+        r"\b(?:SchedCalc|BenCalc|ArithOp|DefConst|DefVar|Elig|Loop|Uprate|SetDefault|"
+        r"ILDef|ILArithOp|DefIL|Allocate|UnitCalc|Store|Totals|EUROMOD|OpenFisca)\b"
+    ),
+    re.compile(r"\b(?:Country Report|CR)(?:['’]s)?\b(?:\s+Table\s+[\d.]+)?", re.IGNORECASE),
+    re.compile(r"\bTable\s+\d+(?:\.\d+)*\b"),
+    re.compile(r"\b(?:policy|theme)\s+(?:spine|doc(?:ument)?)\b", re.IGNORECASE),
 )
 
 
@@ -537,6 +549,15 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                     report.issues.append(f"model: {draft.reasoning}")
             else:
                 hit_ids = {h.chunk_id for h in hits}
+                if draft.citation_chunk_id not in hit_ids and draft.supporting_extract:
+                    resolved = _resolve_chunk_by_extract(hits, draft.supporting_extract)
+                    if resolved is not None:
+                        mech_notes.append(
+                            f"citation_chunk_id {draft.citation_chunk_id!r} is not a retrieved "
+                            f"chunk; resolved to {resolved} — the only retrieved chunk that "
+                            "contains the supporting_extract verbatim"
+                        )
+                        draft.citation_chunk_id = resolved
                 if draft.citation_chunk_id in hit_ids and draft.supporting_extract:
                     with retrieval.connect(cfg) as conn:
                         offsets = retrieval.verify_extract(
@@ -931,6 +952,25 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
         return state
 
     return invoke
+
+
+def _resolve_chunk_by_extract(hits: list[RetrievalHit], extract: str) -> str | None:
+    """The one retrieved chunk that contains `extract` verbatim, else None.
+
+    The proposer transcribes a 36-character chunk id into its answer, and one
+    hex digit off (`4a56d7eb…` for the retrieved `4a56d5eb…`) failed a correct
+    27 382 on both attempts; another run put the citation string in the id
+    field. The extract is the evidence the anti-hallucination check verifies,
+    so when it sits character-for-character in exactly ONE retrieved chunk that
+    chunk is the citation and the id was a typo. Two or more candidates (the
+    same sentence in two versions of an article) keep the failure: guessing
+    between them would cite a version the model never read.
+    """
+    needle = extract.strip()
+    if not needle:
+        return None
+    matches = [h.chunk_id for h in hits if h.content and needle in h.content]
+    return matches[0] if len(matches) == 1 else None
 
 
 def _values_sane(unit: str, draft: ProposalDraft) -> bool:

@@ -416,3 +416,13 @@ unit:
       - euromod://NL/tintc_nl/def_const/$tin_wtc_pred_spa  # n/a,3.257%,3.25% — $tin_wtc_pred_spa
       - euromod://NL/tpcpe_nl/def_const/$tpcpe_ee_avgRate  # 5.99%,5.91%,6.6%,7.44%,7.64%,8.10%,6.13%,6.19% — $tpcpe_ee_avgRate
       - euromod://NL/tschl_nl/def_const/$tschl_rate_se  # 6.5%,7.2%,6.9%,7.05%,7.75%,7.1%,5.65%,5.4%,4.85%,5.5%,5.4%,5.65%,5.7%,5.45%,5.75%,5.5%,5.43%,5.32%,5.26%,4.85% — id, self-employed and orther categories with lower rate (bijdrage zvw)
+  - unit: "ratio"
+    note: >-
+      The kinderbijslag age-band multipliers are dimensionless ratios above 1
+      (`$bfa_mult2` 1.2143 = 347,83 / 286,45, `$bfa_mult3` 1.4286 = 409,21 /
+      286,45) delivered as `/1`; the critique's "/1" range check (rates in
+      [0,1]) rejected the correct 1.2143 on 2026-09-08. `ratio` carries no range
+      check and tells the proposer the quantity is a multiplier, not a rate.
+    targets:
+      - euromod://NL/bfa_nl/def_const/$bfa_mult2
+      - euromod://NL/bfa_nl/def_const/$bfa_mult3

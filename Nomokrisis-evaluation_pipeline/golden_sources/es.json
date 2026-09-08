@@ -71,13 +71,14 @@
       "expected_value": "7905.80#y",
       "expected_valid_from": "2025-01-01",
       "citations": [
-        "Ley IMV Artículo 13"
+        "Ley IMV Artículo 13",
+        "1/2025 Artículo 65"
       ],
       "hazards": [
         "cross_instrument"
       ],
       "corpus_available": true,
-      "note": "HARD / combine + cross_instrument — the Ingreso Mínimo Vital guaranteed income for a one-person household. Ley 19/2021 art. 13.2 a) (BOE-A-2021-21007) fixes it BY REFERENCE: 'la cuantía mensual de renta garantizada ascenderá al 100 por ciento del importe anual de las pensiones no contributivas fijadas anualmente en la Ley de Presupuestos Generales del Estado, dividido por doce'. The euro amount lives in a second instrument — the 2025 pension revalorisation (non-contributory pensions +9 %, to 7.905,80 euros/year, which is also EUROMOD's own $poanc_amt) — that is NOT ingested, so the pipeline must read the coefficient in the corpus and resolve the base outside it, exactly the FR '$PSS * 4' shape without the $-reference. VALUE: the law's 7905.80#y. EUROMOD stores 7905.72 (= 658.81 x 12, a monthly figure truncated to the cent then annualised), 8 cents below the law: kept as a real difference on the IE 27 382/27 383 precedent (the 1e-6 tolerance sees it), reported to the economists team, not absorbed. ROUTING: computed -> `changed`. Flip to green: ingest the 2025 revalorisation instrument (RDL 1/2025 of 28 January, to be confirmed at verification), after which the case is combine over two ingested acts."
+      "note": "HARD / combine + cross_instrument — the Ingreso Mínimo Vital guaranteed income for a one-person household. Ley 19/2021 art. 13.2 a) (BOE-A-2021-21007) fixes it BY REFERENCE: 'la cuantía mensual de renta garantizada ascenderá al 100 por ciento del importe anual de las pensiones no contributivas fijadas anualmente en la Ley de Presupuestos Generales del Estado, dividido por doce'. The euro amount lives in a second instrument — the 2025 pension revalorisation (non-contributory pensions +9 %, to 7.905,80 euros/year, which is also EUROMOD's own $poanc_amt) — that is NOT ingested, so the pipeline must read the coefficient in the corpus and resolve the base outside it, exactly the FR '$PSS * 4' shape without the $-reference. VALUE: the law's 7905.80#y. EUROMOD stores 7905.72 (= 658.81 x 12, a monthly figure truncated to the cent then annualised), 8 cents below the law: kept as a real difference on the IE 27 382/27 383 precedent (the 1e-6 tolerance sees it), reported to the economists team, not absorbed. ROUTING: computed -> `changed`. Flip to green: ingest the 2025 revalorisation instrument (RDL 1/2025 of 28 January, to be confirmed at verification), after which the case is combine over two ingested acts. ACCEPTED CITATIONS (2026-09-08): RDL 1/2025 art. 65 (BOE-A-2025-1560, ingested) is the revalorisation act that states the 2025 non-contributory pension amount the IMV is 100 % of; a pipeline citing it has read the legislated euro amount, so it is accepted alongside Ley IMV art. 13 (the by-reference rule). citation_correct accepts any listed citation."
     },
     {
       "model_target": "euromod://ES/ConstDef_es/def_const/$tscft_ee_rate5",
@@ -87,13 +88,14 @@
       "expected_value": 0.0015,
       "citations": [
         "LGSS Artículo 19 bis",
-        "LGSS Disposición transitoria cuadragésima segunda"
+        "LGSS Disposición transitoria cuadragésima segunda",
+        "PJC/178/2025 Artículo 4"
       ],
       "hazards": [
         "cross_instrument"
       ],
       "corpus_available": true,
-      "note": "HARD / derive — the worker's share of the new additional solidarity contribution (cotización adicional de solidaridad), first band, 2025. The first scorable derive case in any country: nothing in the corpus states 0.15 %. LGSS art. 19 bis (in force 2025-01-01) creates the contribution and says its employer/worker split 'mantendrá la misma proporción que la distribución del tipo de cotización por contingencias comunes'; DT 42.ª gives the 2025 total for the first band, 0,92 %. The worker's share is therefore 0.92 x 4.70 / 28.30 = 0.1528 % — and the value the Tesorería publishes and EUROMOD holds is the rounded 0,15 % (employer 0,77 %). Three things to get right: two provisions, an arithmetic derivation, and the contingencias-comunes split (23,60 / 4,70), which is fixed each year by the Orden de cotización (not ingested) — hence cross_instrument, although EUROMOD's own $tscft_ee_rate1 / $tscft_er_rate1 carry the same split. ROUTING: EUROMOD carries 0.0015 from 2025-01-01 -> `unchanged`. Flip: ingesting the Orden de cotización 2025 (Orden PJC/178/2025) turns this into a verbatim case — that is fine, the derive rung then needs a new occupant. A proposal of 0.001528 is the honest unrounded derivation and scores as a value miss: if that happens, the finding is about the scorer's rounding convention, not the model."
+      "note": "HARD / derive — the worker's share of the new additional solidarity contribution (cotización adicional de solidaridad), first band, 2025. The first scorable derive case in any country: nothing in the corpus states 0.15 %. LGSS art. 19 bis (in force 2025-01-01) creates the contribution and says its employer/worker split 'mantendrá la misma proporción que la distribución del tipo de cotización por contingencias comunes'; DT 42.ª gives the 2025 total for the first band, 0,92 %. The worker's share is therefore 0.92 x 4.70 / 28.30 = 0.1528 % — and the value the Tesorería publishes and EUROMOD holds is the rounded 0,15 % (employer 0,77 %). Three things to get right: two provisions, an arithmetic derivation, and the contingencias-comunes split (23,60 / 4,70), which is fixed each year by the Orden de cotización (not ingested) — hence cross_instrument, although EUROMOD's own $tscft_ee_rate1 / $tscft_er_rate1 carry the same split. ROUTING: EUROMOD carries 0.0015 from 2025-01-01 -> `unchanged`. Flip: ingesting the Orden de cotización 2025 (Orden PJC/178/2025) turns this into a verbatim case — that is fine, the derive rung then needs a new occupant. A proposal of 0.001528 is the honest unrounded derivation and scores as a value miss: if that happens, the finding is about the scorer's rounding convention, not the model. UPDATE 2026-09-08: Orden PJC/178/2025 (BOE-A-2025-3780) is now ingested; its art. 4 states the contingencias comunes split (23,60 empresa / 4,70 trabajador), so the derivation is fully in the corpus and 'PJC/178/2025 Artículo 4' is an accepted citation. The rung stays derive: the worker's share still has to be computed (0,92 x 4,70 / 28,30), no text states 0,15."
     },
     {
       "model_target": "euromod://ES/ConstDef_es/def_const/$tscag_ee_rate5",

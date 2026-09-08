@@ -92,8 +92,36 @@ def normalise_value(value) -> tuple[float | None, str]:
         try:
             return float(value), "numeric"
         except ValueError:
-            return None, "expression"
+            pass
+        percent = percent_literal(value)
+        if percent is not None:
+            return percent, "numeric"
+        return None, "expression"
     return None, "expression"
+
+
+_PERCENT_LITERAL = re.compile(r"^\s*([-+]?\d+(?:[.,]\d+)?)\s*%\s*$")
+
+
+def percent_literal(value: str | None) -> float | None:
+    """`8.17%` -> 0.0817: EUROMOD's own spelling for a rate, read as a fraction.
+
+    The NL and LT exports state every rate as a percent literal and the IE export
+    a few (`4.1%`); `normalized.value` is null for all of them, so without this
+    the store held no scalar, `_current_value` had nothing to route against and
+    a correct 0.495 proposal came back `changed`. The fraction is the "/1" form
+    the rest of the store uses (and that the curation overlays give these
+    parameters), the same reading `nomokrisis_eval.scoring.normalise_value`
+    applies on the golden side.
+    """
+    if not isinstance(value, str):
+        return None
+    match = _PERCENT_LITERAL.match(value)
+    if not match:
+        return None
+    # Round away the binary noise of the division (8.17 / 100 is not 0.0817 in
+    # floating point); 12 significant digits is far below any EUROMOD precision.
+    return float(f"{float(match.group(1).replace(',', '.')) / 100.0:.12g}")
 
 
 def derive_system_year(valid_from: str, valid_to: str | None) -> int | None:
@@ -211,8 +239,22 @@ _UNIT_SQL = (
 )
 
 #: The unit vocabulary the export uses; a curated unit outside it is a typo.
+#: Two units the export never ships are accepted on purpose: `currency/hour`
+#: (the FR SMIC is legislated per hour and the export labels `$Minwage_hourly`
+#: per month) and `ratio` (a dimensionless multiplier such as NL's
+#: `$bfa_mult2` = 1.2143, which is not a fraction and fails the "/1" range
+#: check the critique applies).
 KNOWN_UNITS = frozenset(
-    {"/1", "currency", "currency/day", "currency/week", "currency/month", "currency/year"}
+    {
+        "/1",
+        "currency",
+        "currency/hour",
+        "currency/day",
+        "currency/week",
+        "currency/month",
+        "currency/year",
+        "ratio",
+    }
 )
 
 
@@ -220,6 +262,8 @@ def _curated_unit_structured(unit: str) -> dict | None:
     """The structured view of a curated unit, matching what the export ships."""
     if unit == "/1":
         return {"quantity": "rate", "scale": "/1"}
+    if unit == "ratio":
+        return {"quantity": "ratio"}
     return structured_unit(unit, None)
 
 
@@ -290,6 +334,12 @@ def apply_curation(conn: psycopg.Connection, path: Path) -> dict:
 
 
 def _upsert_parameter(conn: psycopg.Connection, info: dict, source_file: str) -> int:
+    # An earlier FR export shipped a handful of targets with a trailing newline;
+    # the upsert keys on model_target, so the untrimmed row and the clean one
+    # collided on the parameter_key unique index instead of updating in place.
+    info = {**info, "model_target": str(info["model_target"]).strip()}
+    if info.get("parameter_id"):
+        info["parameter_id"] = str(info["parameter_id"]).strip()
     address = info.get("model_address") or parse_model_target(info["model_target"])
     row = conn.execute(
         """
@@ -390,6 +440,12 @@ def _replace_values(
             # 0.2.0 normalizes upstream: value is the scalar or null, and only
             # raw_euromod_value distinguishes an 'n/a' from an expression.
             numeric = normalized["value"]
+            if numeric is None:
+                # The upstream normaliser leaves percent literals (`8.17%`)
+                # unread; they are scalars in EUROMOD's own spelling.
+                numeric = percent_literal(raw_euromod) if raw_euromod else None
+                if numeric is None:
+                    numeric = percent_literal(value["value"])
             if numeric is not None:
                 kind = "numeric"
             elif raw_euromod and raw_euromod.strip().lower() == "n/a":
@@ -688,12 +744,15 @@ def load_group_record(conn: psycopg.Connection, group_id: str) -> ParameterRecor
         f"band {band_index} {role}={bands[band_index][role][0]}"
         for band_index in ordered for role in sorted(bands[band_index])
     )
+    label, description = _group_texts(conn, bands, ordered, group_id)
     information = ParameterInformation(
         country=country,
         model_target=f"euromod://{country}/{policy}/group/{group_id.rsplit(':', 1)[-1]}",
         value_type="bracket_schedule",
         unit="/1",
+        label=label,
         short_label={"en": group_id},
+        description=description,
         explanation={
             "en": f"Assembled from params.parameter_groups {group_id} ({members}). "
             "EUROMOD's role is upper_threshold; brackets carry the band's lower bound."
@@ -701,6 +760,45 @@ def load_group_record(conn: psycopg.Connection, group_id: str) -> ParameterRecor
         temporal_basis=_group_temporal_basis(conn, bands),
     )
     return ParameterRecord(information=information, values=values)
+
+
+def _group_texts(
+    conn: psycopg.Connection, bands: dict, ordered: list[int], group_id: str
+) -> tuple[dict[str, str] | None, dict[str, str] | None]:
+    """A label and description for the assembled schedule, from its members.
+
+    A group has no text of its own in the export, and the frame step builds
+    the retrieval query from label + description: with both empty the ES
+    savings scale ran with the query `ES Tax schedule` and the LT PIT schedule
+    with `LT`, and neither could be answered. The members' labels are what
+    the enrichment wrote for the bands ("Capital income taxation: national
+    rate 1"), so the schedule's label is the first band's label with its
+    ordinal stripped, and the description lists every band's label and
+    description once — the same words a human would search for.
+    """
+    labels: list[str] = []
+    descriptions: list[str] = []
+    for band_index in ordered:
+        for role in ("rate", "upper_threshold"):
+            if role not in bands[band_index]:
+                continue
+            row = conn.execute(
+                "SELECT label, description FROM params.parameters WHERE model_target = %s",
+                (bands[band_index][role][0],),
+            ).fetchone()
+            if row is None:
+                continue
+            for source, sink in ((row[0], labels), (row[1], descriptions)):
+                text = (source or {}).get("en") if isinstance(source, dict) else None
+                if text and text not in sink:
+                    sink.append(text)
+    if not labels:
+        return None, None
+    # "Capital income taxation: national rate 1" -> "Capital income taxation: national rate"
+    head = re.sub(r"\s*\d+\s*$", "", labels[0]).strip(" :-") or labels[0]
+    label = {"en": f"{head} schedule ({group_id.rsplit(':', 1)[-1]})"}
+    description = {"en": " ".join([*labels, *descriptions])} if labels or descriptions else None
+    return label, description
 
 
 def _group_temporal_basis(conn: psycopg.Connection, bands: dict) -> TemporalBasis:

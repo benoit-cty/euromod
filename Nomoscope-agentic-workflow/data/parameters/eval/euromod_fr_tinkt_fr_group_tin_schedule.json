@@ -6,11 +6,15 @@
     "value_type": "bracket_schedule",
     "unit": "/1",
     "threshold_unit": null,
-    "label": null,
+    "label": {
+      "en": "Rate in band schedule (tin_schedule)"
+    },
     "short_label": {
       "en": "FR:tinkt_fr:tin_schedule"
     },
-    "description": null,
+    "description": {
+      "en": "Rate in band1 Upper limit for band1 Rate in band 3 Upper limit for band 3 Rate in band 4 Upper limit for band 4 Rate in band 5 Upper limit for band 5 Rate in band 6 The 0% marginal rate on the lowest band of France's progressive personal income tax (Impôt sur le Revenu, IRPP). Used as Band_Rate both in tin_fr's SchedCalc to compute the \"Gross income tax (before any IMAX corrections)\" and again in tinkt_fr's SchedCalc to recompute tax under the reduced/floor quotient familial as part of the family-ratio-capping (Imax) mechanism. Matches the 0% bracket up to the $tin_upthres1 ceiling shown in the theme doc's and country report's IRPP rate tables. The upper income ceiling of the 0% (first) income-tax band, i.e. the tax-free threshold of the progressive IRPP schedule. Used as Band_UpLim in tin_fr's SchedCalc (gross-tax computation) and tinkt_fr's SchedCalc (Imax recomputation). Matches the \"up to €11,600\" ceiling shown for the latest year in the taxes theme doc and in Table 2.77 of the country report. The 11% marginal income-tax rate — the second active bracket of the progressive IRPP schedule, applying to income between the $tin_upthres1 and $tin_upthres3 thresholds. Used as Band_Rate in tin_fr's SchedCalc for the \"Gross income tax\" and again in tinkt_fr's SchedCalc for the Imax recomputation using the reduced quotient familial. Matches the 11% bracket in both the taxes theme doc and the country report's Table 2.77. The upper income ceiling of the 11% bracket (the boundary between the 11% and 30% bands) in the progressive IRPP schedule, despite being labelled \"band 3\" in the model's internal numbering (band 2 being an unused historical slot, see $tin_upthres2). Used as Band_UpLim in tin_fr's and tinkt_fr's SchedCalc for the gross-tax and Imax computations, and matches the €29,579 ceiling shown for the 11% band in the taxes theme doc and the country report's Table 2.77. The 30% marginal income-tax rate applied to income between the $tin_upthres3 and $tin_upthres4 thresholds, used as Band_Rate in the same tin_fr and tinkt_fr SchedCalc functions as the other rate bands (gross-tax computation and Imax recomputation respectively). Matches the 30% bracket documented in both the taxes theme doc and the country report's Table 2.77. The upper income ceiling of the 30% bracket (the boundary with the 41% band) in the progressive IRPP schedule, used as Band_UpLim in tin_fr's and tinkt_fr's SchedCalc for the gross-tax and Imax recomputations. Matches the €84,577 ceiling shown for the 30% band in the taxes theme doc and the country report's Table 2.77. The 41% marginal income-tax rate applied to income between the $tin_upthres4 and $tin_upthres5 thresholds, used as Band_Rate in tin_fr's and tinkt_fr's SchedCalc for the gross-tax and Imax computations respectively. Matches the 41% bracket documented in the taxes theme doc and the country report's Table 2.77. The upper income ceiling of the 41% bracket (the boundary with the top 45% band) in the progressive IRPP schedule, used as Band_UpLim/band_uplim in tin_fr's and tinkt_fr's SchedCalc for the gross-tax and Imax recomputations. Matches the €181,917 ceiling shown for the 41% band in the taxes theme doc and the country report's Table 2.77. The top 45% marginal income-tax rate applied to income above the $tin_upthres5 ceiling (unbounded top band), used as Band_Rate/band_rate in tin_fr's and tinkt_fr's SchedCalc for the top band of the gross-tax computation and the Imax recomputation. Matches the top 45% bracket in both the taxes theme doc and the country report's IRPP rate table (Table 2.77)."
+    },
     "explanation": {
       "en": "Assembled from params.parameter_groups FR:tinkt_fr:tin_schedule (band 1 rate=euromod://FR/tinkt_fr/def_const/$tin_rate1, band 1 upper_threshold=euromod://FR/tinkt_fr/def_const/$tin_upthres1, band 3 rate=euromod://FR/tinkt_fr/def_const/$tin_rate3, band 3 upper_threshold=euromod://FR/tinkt_fr/def_const/$tin_upthres3, band 4 rate=euromod://FR/tinkt_fr/def_const/$tin_rate4, band 4 upper_threshold=euromod://FR/tinkt_fr/def_const/$tin_upthres4, band 5 rate=euromod://FR/tinkt_fr/def_const/$tin_rate5, band 5 upper_threshold=euromod://FR/tinkt_fr/def_const/$tin_upthres5, band 6 rate=euromod://FR/tinkt_fr/def_const/$tin_rate6). EUROMOD's role is upper_threshold; brackets carry the band's lower bound."
     },
@@ -634,6 +638,42 @@
         }
       ],
       "valid_from": "2025-01-01",
+      "valid_to": "2025-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": null
+    },
+    {
+      "value": [
+        {
+          "threshold": 0.0,
+          "rate": 0.0,
+          "amount": null
+        },
+        {
+          "threshold": 11600.0,
+          "rate": 0.11,
+          "amount": null
+        },
+        {
+          "threshold": 29579.0,
+          "rate": 0.3,
+          "amount": null
+        },
+        {
+          "threshold": 84577.0,
+          "rate": 0.41,
+          "amount": null
+        },
+        {
+          "threshold": 181917.0,
+          "rate": 0.45,
+          "amount": null
+        }
+      ],
+      "valid_from": "2026-01-01",
       "valid_to": null,
       "legal_status": null,
       "source_type": null,

@@ -13,7 +13,7 @@
       "en": "$BasicPens"
     },
     "description": {
-      "en": "Basic (flat-rate) social insurance pension amount, currently EUR 355.81/month, used in tscse_lt and boa00_lt to compute pension-insurance-related tax/benefit adjustments, e.g. the 'pension insurance' formula in tscse_lt/ArithOp and the 'recalculate bdict' step in boa00_lt/BenCalc. The benefits theme document covers non-pension cash benefits and does not describe pension parameters, so this description is derived mainly from the constant's name, label and usage sites."
+      "en": "$BasicPens (355.81 EUR/month in the latest system year, updated across 18 dated values since 2005) is Lithuania's 'basic pension' reference amount within the state social-insurance pension system. It feeds boa00_lt's BenCalc function (Comp_perTU, 'recalculate bdict' step) — a policy whose name suggests it computes a basic/state old-age pension component — and also tscse_lt's ArithOp and BenCalc functions ('1a) pension insurance' and '1b) those with self-employment income and operating under business certificate: pension insurance'), where the label indicates it underlies the flat pension-insurance contribution owed by self-employed persons and business-certificate holders, who in Lithuania pay pension-insurance contributions calculated from a reference amount rather than from actual income. No theme-doc or country-report source for pensions was available for this batch, so the description relies on the constant's label and its citing functions."
     },
     "explanation": {
       "en": "EUROMOD function group: Pension age, MMS, AMS, AMSp,  BSA, SSI, CYI, CBN, basic/asistance pensions bases, RP"

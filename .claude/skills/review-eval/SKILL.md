@@ -139,6 +139,28 @@ golden-citation recall at k=15 from 31 to 34 with no case lost. The Phoenix `fra
 the query a run used; re-run `retrieval.retrieve` with it at a larger k to see
 where the golden article ranks before concluding it is missing.
 
+**Third instance: a bare proposal against a golden value with a period.**
+Proposals are floats on the parameter's own basis; the golden `747#m` for a
+parameter EUROMOD holds as `8964#y` could never compare until `score_item`
+started completing the proposal with the stored value's suffix. If a value leg
+fails on a `#m`/`#y` golden spelling, check the stored raw value's suffix first.
+
+**Readiness lies when the resolving citation is not the value-bearing one.**
+The four CSG threshold cases resolved CSS art. L136-8 (OpenFisca's own title:
+«seuils avant revalorisation») and scored as model failures for a year whose
+amounts live in a ministerial letter with no Legifrance id. `readiness` is
+derived from the reference list: a reference OpenFisca marks as pre-indexation
+no longer counts, and a selection entry can set `corpus_available` explicitly.
+Before blaming a model for a value, ask whether ANY ingested text states it.
+
+**A version gap is a corpus gap the readiness flag cannot see.** An article can
+be ingested and still absent at the as-of date — CSS D242-4 had versions to
+2023-12-31 and from 2026-01-01, nothing in between, so the as-of filter could
+never return it; SWCA 2005 s. 13 stops in 2022 (enacted text only); LIRPF DA 61
+starts after the as-of date. Check `legal_unit_versions.validity` around the
+as-of date, and the stored DILA JSON's `VERSIONS` block lists the sibling
+LEGIARTI ids to ingest.
+
 ### b. Corpus gap — could any model have answered?
 
 First check whether it is really a gap. The gap-fill scout records what the
@@ -324,6 +346,20 @@ attempts — and came out ahead of a model that had refused instead. The console
 summary prints `rejected=N` next to `abstained`; a large N with a high routing
 rate on the *other* model is that artifact.
 
+**The store, not the export, is what the run saw.** Compare
+`params.parameters.ingested_at` with the export's commit date before reading a
+unit defect into a run: FR/IE/LT ran for a month on the August export after the
+September one changed `$PensionAgeFemale` to `age_years`. Percent literals
+(`8.17%`) are scalars in the store since 8 Sep 2026; a `null` current value on a
+rate parameter means an older ingest. A bracket-schedule group runs with a
+composed label — a frame query of `LT` or `ES Tax schedule` means it did not.
+
+**A rejected proposal with the right value is worth a look.** `citation_chunk_id
+missing or not among retrieved chunks` twice on the same case was a one-hex-digit
+transcription of the retrieved id; the critique now resolves the id from the
+extract when exactly one retrieved chunk contains it. If you still see it, the
+extract was in no retrieved chunk at all — a real failure.
+
 ### e. Model failure — what is left
 
 Only now read the proposals. For refusals, the reason is in the critique:
@@ -398,6 +434,12 @@ unverified cases from the next run.
   manufactures a permanent miss. `openfisca_golden` keeps `JORFTEXT`/`LEGITEXT`
   ids (a correct pipeline citation contains them) and drops article-level ids of
   acts we lack.
+- **List every citation a correct pipeline may produce.** `citation_correct`
+  and `retrieval_hit` accept ANY listed citation, so a golden set that names
+  only the finance act scores the consolidated code article as a miss (and vice
+  versa); name both, and the act stating the amount next to the by-reference
+  rule (`Ley IMV art. 13` + `RDL 1/2025 art. 65`). Say in `note` why each is
+  acceptable.
 - **Write the citation exactly as `legal_units.citation` spells it.**
   `citation_matches` is one-way containment, so a golden citation carrying more
   than the corpus does can never match. LT scored **citation 0% and recall 0%**

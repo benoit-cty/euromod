@@ -4,7 +4,7 @@
     "model_target": "euromod://LT/ConstDef_lt/def_const/$tinta_higher_thres",
     "spine_order": "3",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "",
     "threshold_unit": null,
     "label": {
       "en": "basic allowance: the income from which higher basic allowance is withdrawn"
@@ -13,7 +13,7 @@
       "en": "$tinta_higher_thres"
     },
     "description": {
-      "en": "The income threshold, equal to 100% of the minimum monthly wage ($MMS), from which the higher basic PIT allowance starts being withdrawn, per its label and the raw formula '100%*$MMS'. It is used in tin_admn_lt (BenCalc, parameter withdraw_start, post-2022 formula) and in tin_lt (BenCalc, parameter withdraw_start, for the final tax liability calculation since 2009), setting the income point at which allowance taper begins. Not covered by the benefits theme document; description based on the constant's own formula-stating label and usage comments."
+      "en": "Defines the monthly income threshold, set equal to 100% of the minimum monthly salary ($MMS), at which the basic personal-income-tax allowance starts being withdrawn under the formula in force since 2022. It corresponds to the first threshold in the country report's Equation 1 (e.g. 1,038 EUR/month for 2025, the minimum monthly salary): below it the allowance stays at its maximum level ($tinta_max_amt), above it the allowance declines with income. It is used as the Withdraw_Start parameter of the BenCalc components computing the basic allowance in tin_admn_lt (post-2022 formula) and tin_lt (final tax liability, since 2009)."
     },
     "explanation": {
       "en": "EUROMOD function group: personal income tax (PIT): general parameters"
