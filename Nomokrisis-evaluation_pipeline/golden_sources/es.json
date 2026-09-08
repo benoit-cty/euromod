@@ -2,7 +2,7 @@
   "country": "ES",
   "language": "es",
   "corpus": "curated",
-  "description": "Hand-curated core of the ES golden set: 12 parameters in increasing pipeline difficulty, from the personal minimum (the happy path) to cases the current pipeline cannot solve by design (a deliberately frozen constant, statistics-based parameters), so that future improvements show up as KPI deltas. Spain has no OpenFisca corpus in the store, so like IE and LT there is no corpus drafter: expected values are hand-curated here from the six ingested acts (LIRPF, RIRPF, LGSS, Ley IMV, RD 87/2025, DL 1/2011 Galicia), every one located in the corpus at as_of 2025-06-01 before being written down, and every drafted case stays verified:false until a human confirms it. See golden_set_ES.md for the rationale per entry.",
+  "description": "Hand-curated core of the ES golden set: 12 national parameters in increasing pipeline difficulty plus a regional tier of 5 (ADR 0003), from the personal minimum (the happy path) to cases the current pipeline cannot solve by design (a deliberately frozen constant, statistics-based parameters), so that future improvements show up as KPI deltas. Spain has no OpenFisca corpus in the store, so like IE and LT there is no corpus drafter: expected values are hand-curated here from the six ingested acts (LIRPF, RIRPF, LGSS, Ley IMV, RD 87/2025, DL 1/2011 Galicia), every one located in the corpus at as_of 2025-06-01 before being written down, and every drafted case stays verified:false until a human confirms it. See golden_set_ES.md for the rationale per entry.",
   "conventions": {
     "temporal_basis": "All ES parameters are in_force: the IRPF período impositivo is the calendar year, so EUROMOD system year Y states the law of year Y — no FR-style income-year offset. Recorded in curation/ES.curation.yaml rather than derived.",
     "effect_date": "expected_valid_from is the fiscal effect date, not BOE's fecha_vigencia. The savings scale's current version starts 2024-12-22 (Ley 7/2024 entered into force) but applies 'con efectos desde el 1 de enero de 2025'; the 2025 work credit's version starts 2025-07-26 (Ley 5/2025) with effect from 1 January 2025. The effect date is stated in prose in BOE's amendment trail at the end of each version's text.",
@@ -10,7 +10,8 @@
     "expected_value": "Hand-curated ground truth from the acts (the LAW's value, located in the corpus), in EUROMOD's own spelling ('5550#y', 0.0013). Where it deliberately differs from EUROMOD's stored value the note says why and the difference is reported to the economists team, never absorbed. null means the value leg is not scored for this case.",
     "routing": "The routing a correct pipeline owes, which is the pipeline's own question: does the proposal differ from the value EUROMOD CURRENTLY HOLDS? It is not 'did the law change this year?'. The system-year 2025 export already encodes the 2025 law (the new 15 % savings band, the 0.13-point MEI, the 340 EUR work credit), so those route `unchanged` — the pipeline's job there is to re-confirm them with a citation. Reserve `changed` for parameters where EUROMOD is genuinely stale relative to the law. Prefer leaving `routing:` out and letting route_against_current decide; state it only to pin a routing trap (derived, national_team_source). A stated routing that contradicts route_against_current SKIPS the entry.",
     "source": "Every entry resolves through the parameter store: `model_target` for a single parameter in params.parameters, `group_id` for a bracket schedule assembled from params.parameter_groups. No entry reads a hand-authored parameter file.",
-    "citations": "Spelled exactly as legal_units.citation stores them, bytes included: the Ley IMV units carry a NON-BREAKING SPACE between 'Artículo' and the number ('Ley IMV Artículo\\u00a013'), the LIRPF and LGSS units a plain space. citation_matches is one-way containment, so a plain-space spelling of the IMV citation can never match. Check a new citation with `SELECT encode(convert_to(citation,'UTF8'),'hex') FROM legal_units WHERE …` before relying on it."
+    "citations": "Spelled exactly as legal_units.citation stores them, bytes included: the Ley IMV units carry a NON-BREAKING SPACE between 'Artículo' and the number ('Ley IMV Artículo\\u00a013'), the LIRPF and LGSS units a plain space. citation_matches is one-way containment, so a plain-space spelling of the IMV citation can never match. Check a new citation with `SELECT encode(convert_to(citation,'UTF8'),'hex') FROM legal_units WHERE …` before relying on it.",
+    "regional_scope": "Regional parameters ($bsarg_rgNN_*, $bchrg_regNN_*, $tin_…rgNN_*) run over the jurisdiction scope [ES, ES-<region>] (ADR 0003): state law plus that community's own acts, never a sibling community's. Their citations are region-qualified as legal_units.citation stores them ('DL 1/2011 Galicia Artículo 4', 'Ley 3/2021 Asturias Artículo\\u00a014' — BOE unit titles carry a NON-BREAKING SPACE before the number, the Galicia decree's do not). A not_found regional case states expected_value null and routing not_found on purpose: a proposal off a neighbouring region's decree must score as a routing failure, not as a near-miss on the value — the run is expected to abstain."
   },
   "entries": [
     {
@@ -182,6 +183,66 @@
       "routing": "national_team_source",
       "citations": [],
       "note": "IMPOSSIBLE by design — the school dining fee (comedor) used as the childcare cost, 96 euros/month. No national act sets it: fees and the means-tested 'becas comedor' discounts are fixed by each autonomous community's (often each municipality's) annual call, and the EUROMOD values are the national team's assumption over those schedules. Confirmed against the corpus: 'comedor' appears only in LIRPF art. 42 (in-kind income). curation/ES.curation.yaml routes the whole xcc_es family national_team, together with the $tco_t_* implicit consumption-tax rates (HBS statistics, IE's tco_ie precedent). Correct behaviour is `national_team_source`; the LT counterpart is xcc_amt1."
+    },
+    {
+      "model_target": "euromod://ES/tin_cons_es/def_const/$tin_rg11_rate1",
+      "id": "tin_rg11_rate1",
+      "source_class": "codified_law",
+      "expected_value": 0.09,
+      "citations": [
+        "DL 1/2011 Galicia Artículo 4"
+      ],
+      "corpus_available": true,
+      "note": "REGIONAL / EASY — the first-bracket rate of Galicia's escala autonómica, '0,00 | 0,00 | 12.985,35 | 9,00 %' in DL 1/2011 Galicia art. 4 (BOE-A-2011-18161, version [2023-01-01,), in force through 2025). The regional happy path and the proof of the scoping model: the decree is filed under ES-GA and reaches this run only because the parameter's name carries NUTS-2 code 11. Before ADR 0003 this same article ranked in the FTS top-10 for the NATIONAL personal minimum — the latent false positive the child jurisdictions remove. ROUTING: EUROMOD holds 0.09 -> `unchanged`; scores value, citation and retrieval."
+    },
+    {
+      "model_target": "euromod://ES/bsarg_es/def_const/$bsarg_rg24_basic_amt",
+      "id": "bsarg_rg24_basic_amt",
+      "source_class": "gazette",
+      "expected_value": null,
+      "routing": "not_found",
+      "hazards": [
+        "sibling_region"
+      ],
+      "citations": [],
+      "corpus_available": false,
+      "note": "REGIONAL / IMPOSSIBLE today, with TWO traps in the corpus — Aragón's Prestación Aragonesa Complementaria del IMV, 802 EUR/month in EUROMOD. The 2025 amount is set by Decreto-ley 1/2025 del Gobierno de Aragón (BOE-A-2025-12536), which BOE publishes but does NOT consolidate, so the legislacion-consolidada adapter cannot ingest it (issue 06). Trap 1, outside the scope: the sibling communities' laws (Asturias Ley 3/2021, Canarias Ley 5/2022, Balears Ley 4/2023) are in the corpus under ES-AS / ES-CN / ES-IB and unreachable from this run's scope [ES, ES-AR] — a proposal quoting any of them is the confidently-wrong case the extract check cannot catch. Trap 2, INSIDE the scope: Aragón's own framework law, Ley 3/2021 Aragón art. 4, still reads 'la cuantía mensual de la Prestación Aragonesa Complementaria se fija en 522 euros' — the 2021 amount, never touched in the consolidated text because the yearly updates arrive by budget law. The first real run (gpt-5.6-luna, 2026-09-08) fell into trap 2: it proposed 522 (rendered 6264/year) citing Aragón art. 4 with a valid extract, routing `changed`. Correct behaviour is to abstain: a 2021 amount is not the 2025 value, and nothing in scope states 2025. Re-run after issue 06: expected becomes 802 citing 'DL 1/2025 Aragón'."
+    },
+    {
+      "model_target": "euromod://ES/bsarg_es/def_const/$bsarg_rg63_basic_amt",
+      "id": "bsarg_rg63_basic_amt",
+      "source_class": "gazette",
+      "expected_value": null,
+      "routing": "not_found",
+      "citations": [],
+      "corpus_available": false,
+      "note": "REGIONAL / IMPOSSIBLE by source — Ceuta's Ingreso Mínimo de Inserción Social, 600 EUR/month in EUROMOD. The city legislates by reglamento in the BOCCE (Disposición 2.627 of 21-11-2008, amended 2-11-2010); no BOE form of any kind exists (issue 01), so no ingestion path through the ES adapter can ever reach it — a regional gazette would be a new source. The scope is [ES, ES-CE] with nothing under ES-CE; the run must abstain and must never borrow Melilla's or any peninsular community's figure. This is the regional analogue of the IPREM case: it measures coverage, not the model."
+    },
+    {
+      "model_target": "euromod://ES/bsarg_es/def_const/$bsarg_rg53_amt1",
+      "id": "bsarg_rg53_amt1",
+      "source_class": "gazette",
+      "expected_value": null,
+      "routing": "not_found",
+      "hazards": [
+        "sibling_region"
+      ],
+      "citations": [],
+      "corpus_available": false,
+      "note": "REGIONAL / ADVERSARIAL PAIR (1 of 2) — Illes Balears' renta social garantizada, one-person amount, 733,60 EUR/month in EUROMOD — the SAME figure as Canarias's $bsarg_rg70_amt1 (both schedules run 733,60 / 953,68 / 1.173,76 / 1.393,84 / 1.613,92). Balears' framework laws are in the corpus under ES-IB (Ley 4/2023, DL 10/2020, Ley 5/2016 — the last states the 2016 amounts, 429,20) but the 2025 amount is fixed by the annual budget law / resolution, not consolidated by BOE. Expected: abstain. The pair exists so that, once issue 06 lands the amounts, each of the two cases must cite ITS OWN act — an identical value with the neighbour's citation is a failure, not a pass."
+    },
+    {
+      "model_target": "euromod://ES/bsarg_es/def_const/$bsarg_rg70_amt1",
+      "id": "bsarg_rg70_amt1",
+      "source_class": "gazette",
+      "expected_value": null,
+      "routing": "not_found",
+      "hazards": [
+        "sibling_region"
+      ],
+      "citations": [],
+      "corpus_available": false,
+      "note": "REGIONAL / ADVERSARIAL PAIR (2 of 2) — Canarias's Renta Canaria de Ciudadanía, one-person amount, 733,60 EUR/month in EUROMOD, identical to Balears' $bsarg_rg53_amt1. Canarias's framework laws are in the corpus under ES-CN (Ley 5/2022 RCC, Ley 1/2007 PCI, DL 3/2021) and none states the 2025 amount (Ley 5/2022 defers it; Ley 1/2007 states a 130,41 floor). Expected: abstain. Scope [ES, ES-CN]: Balears' Ley 5/2016 with its 2016 schedule must not be reachable, and after issue 06 the answer must cite a Canarian act, never the Balearic one."
     }
   ]
 }

@@ -1,0 +1,22 @@
+{
+  "id": "es_bsarg_rg70_amt1_2025-06-01",
+  "country": "ES",
+  "language": "es",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_es_bsarg_es_def_const_bsarg_rg70_amt1.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [
+    "sibling_region"
+  ],
+  "labels_drafted": false,
+  "source_class": "gazette",
+  "expected": {
+    "routing": "not_found",
+    "citations": []
+  },
+  "corpus_available": false,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: es.json#bsarg_rg70_amt1 | euromod value in force at 2025-06-01: 658.81 from 2025-01-01 | value leg not scored: the selection states no expected_value (the law's value is not established for this case yet) | REGIONAL / ADVERSARIAL PAIR (2 of 2) — Canarias's Renta Canaria de Ciudadanía, one-person amount, 733,60 EUR/month in EUROMOD, identical to Balears' $bsarg_rg53_amt1. Canarias's framework laws are in the corpus under ES-CN (Ley 5/2022 RCC, Ley 1/2007 PCI, DL 3/2021) and none states the 2025 amount (Ley 5/2022 defers it; Ley 1/2007 states a 130,41 floor). Expected: abstain. Scope [ES, ES-CN]: Balears' Ley 5/2016 with its 2016 schedule must not be reachable, and after issue 06 the answer must cite a Canarian act, never the Balearic one. | drafting warning: value leg not scored (no expected_value in the selection) | drafting warning: no citations: the citation leg is unscored until the source act is ingested | corpus_available: false — the act stating this value is not ingested yet, so no retrieval can reach it. The case measures ingest coverage and is excluded from the 'source in corpus' KPI slice",
+  "reviewed_by": "ben"
+}

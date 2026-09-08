@@ -1,0 +1,22 @@
+{
+  "id": "es_bsarg_rg24_basic_amt_2025-06-01",
+  "country": "ES",
+  "language": "es",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_es_bsarg_es_def_const_bsarg_rg24_basic_amt.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [
+    "sibling_region"
+  ],
+  "labels_drafted": false,
+  "source_class": "gazette",
+  "expected": {
+    "routing": "not_found",
+    "citations": []
+  },
+  "corpus_available": false,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: es.json#bsarg_rg24_basic_amt | euromod value in force at 2025-06-01: 700.0 from 2025-01-01 | value leg not scored: the selection states no expected_value (the law's value is not established for this case yet) | REGIONAL / IMPOSSIBLE today, with TWO traps in the corpus — Aragón's Prestación Aragonesa Complementaria del IMV, 802 EUR/month in EUROMOD. The 2025 amount is set by Decreto-ley 1/2025 del Gobierno de Aragón (BOE-A-2025-12536), which BOE publishes but does NOT consolidate, so the legislacion-consolidada adapter cannot ingest it (issue 06). Trap 1, outside the scope: the sibling communities' laws (Asturias Ley 3/2021, Canarias Ley 5/2022, Balears Ley 4/2023) are in the corpus under ES-AS / ES-CN / ES-IB and unreachable from this run's scope [ES, ES-AR] — a proposal quoting any of them is the confidently-wrong case the extract check cannot catch. Trap 2, INSIDE the scope: Aragón's own framework law, Ley 3/2021 Aragón art. 4, still reads 'la cuantía mensual de la Prestación Aragonesa Complementaria se fija en 522 euros' — the 2021 amount, never touched in the consolidated text because the yearly updates arrive by budget law. The first real run (gpt-5.6-luna, 2026-09-08) fell into trap 2: it proposed 522 (rendered 6264/year) citing Aragón art. 4 with a valid extract, routing `changed`. Correct behaviour is to abstain: a 2021 amount is not the 2025 value, and nothing in scope states 2025. Re-run after issue 06: expected becomes 802 citing 'DL 1/2025 Aragón'. | drafting warning: value leg not scored (no expected_value in the selection) | drafting warning: no citations: the citation leg is unscored until the source act is ingested | corpus_available: false — the act stating this value is not ingested yet, so no retrieval can reach it. The case measures ingest coverage and is excluded from the 'source in corpus' KPI slice",
+  "reviewed_by": "ben"
+}

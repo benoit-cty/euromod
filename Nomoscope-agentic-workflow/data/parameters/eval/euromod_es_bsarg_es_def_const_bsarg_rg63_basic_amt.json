@@ -1,0 +1,70 @@
+{
+  "information": {
+    "country": "ES",
+    "model_target": "euromod://ES/bsarg_es/def_const/$bsarg_rg63_basic_amt",
+    "spine_order": "50",
+    "value_type": "scalar",
+    "unit": "currency/month",
+    "threshold_unit": null,
+    "label": {
+      "en": "Ceuta: GMI basic amount"
+    },
+    "short_label": {
+      "en": "$bsarg_rg63_basic_amt"
+    },
+    "description": {
+      "en": "This is labelled as the monthly basic amount of the Ciudad de Ceuta minimum-income scheme (Ingreso Mínimo de Inserción Social en Ceuta) (600 EUR at the latest of 2 recorded values since 2016-01-01). It is used once in bsarg_es's BenCalc as the comp_perTU parameter for '63 - Ceuta: GMI amount'. The country report instead states the scheme's minimum benefit is 300 EUR and it increases 10% per additional member up to a maximum of 420 EUR (for five-plus-member households) — figures roughly half this constant's value — so the current parameter may reflect an uprating adopted after the period covered by the country report's 2022-2025 table; confidence is lowered accordingly."
+    },
+    "explanation": {},
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": 300.0,
+      "valid_from": "2016-01-01",
+      "valid_to": "2022-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "300#m",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 600.0,
+      "valid_from": "2023-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "600#m",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}
