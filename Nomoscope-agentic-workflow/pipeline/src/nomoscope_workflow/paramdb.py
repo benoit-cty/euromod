@@ -196,11 +196,47 @@ _SOURCE_TYPE_SQL = (
 )
 
 
+# The export's `unit` is what the proposal prompt normalises against ("11 % ->
+# 0.11 for unit /1") and what the critique's `values_sane` range-checks, so a
+# rate delivered as `currency` is a wrong hint on every LLM call: the proposer
+# is told to keep a currency amount, the critique either refuses the fraction
+# (unit implausible) or never checks its range. The FR export labels 146 rates
+# that way while using "/1" for 215 others — an enrichment slip, reported to
+# the economists team — and until a corrected export lands the fix is curated
+# here. `unit_structured` follows, in the export's own shape for "/1".
+_UNIT_SQL = (
+    "UPDATE params.parameters SET unit = %s, unit_structured = %s "
+    "WHERE model_target = %s AND unit IS DISTINCT FROM %s "
+    "RETURNING model_target"
+)
+
+#: The unit vocabulary the export uses; a curated unit outside it is a typo.
+KNOWN_UNITS = frozenset(
+    {"/1", "currency", "currency/day", "currency/week", "currency/month", "currency/year"}
+)
+
+
+def _curated_unit_structured(unit: str) -> dict | None:
+    """The structured view of a curated unit, matching what the export ships."""
+    if unit == "/1":
+        return {"quantity": "rate", "scale": "/1"}
+    return structured_unit(unit, None)
+
+
 def _apply_curation_rule(
-    conn: psycopg.Connection, stats: dict, sql: str, target: str, value: str
+    conn: psycopg.Connection,
+    stats: dict,
+    sql: str,
+    target: str,
+    value: str,
+    extra: tuple = (),
 ) -> None:
-    """Run one curation UPDATE, classifying the target as updated/unchanged/missing."""
-    if conn.execute(sql, (value, target, value)).fetchone() is not None:
+    """Run one curation UPDATE, classifying the target as updated/unchanged/missing.
+
+    `sql` binds (value, *extra, target, value): the value to set, any further
+    SET columns, then the WHERE clause's target and "IS DISTINCT FROM" guard.
+    """
+    if conn.execute(sql, (value, *extra, target, value)).fetchone() is not None:
         stats["updated"] += 1
         return
     exists = conn.execute(
@@ -215,9 +251,10 @@ def _apply_curation_rule(
 def apply_curation(conn: psycopg.Connection, path: Path) -> dict:
     """Apply a curation overlay (curation/<CC>.curation.yaml) onto ingested rows.
 
-    The EUROMOD export carries no `temporal_basis`, and its `source_type` is
-    empty even where we know a value is not legislation-derivable: that is
-    knowledge we hold, not theirs, and the enriched JSON is read-only. Before
+    The EUROMOD export carries no `temporal_basis`, its `source_type` is
+    empty even where we know a value is not legislation-derivable, and its
+    `unit` is wrong on every FR rate: that is knowledge we hold, not theirs,
+    and the enriched JSON is read-only. Before
     this, the flag was a hand-run UPDATE recorded nowhere — lost on
     `docker compose down -v` and invisible to review. The overlay is the
     versioned source of truth; applying it is idempotent, so it is safe to
@@ -240,6 +277,13 @@ def apply_curation(conn: psycopg.Connection, path: Path) -> dict:
             source_type = SourceType(rule["type"]).value
             for target in rule.get("targets") or []:
                 _apply_curation_rule(conn, stats, _SOURCE_TYPE_SQL, target, source_type)
+        for rule in doc.get("unit") or []:
+            unit = str(rule["unit"])
+            if unit not in KNOWN_UNITS:  # loud on a typo'd overlay
+                raise ValueError(f"unknown unit {unit!r} in {path.name}; known: {sorted(KNOWN_UNITS)}")
+            structured = _jsonb(_curated_unit_structured(unit))
+            for target in rule.get("targets") or []:
+                _apply_curation_rule(conn, stats, _UNIT_SQL, target, unit, (structured,))
     if country:
         stats["country"] = country
     return stats

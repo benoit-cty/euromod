@@ -118,6 +118,33 @@ def test_hallucination_is_the_mechanical_leg_only():
     assert r.critique_pass is False
 
 
+def test_rejected_proposal_is_never_routing_or_value_correct():
+    """`pipeline.diff` routes on the value even when the critique failed the
+    proposal, so a model that re-proposes the value EUROMOD already holds with
+    a citation the critique refused would score a correct `unchanged`. Eight
+    such verdicts separated two models on one run. The pipeline does not stand
+    behind a rejected proposal, so neither does the score."""
+    case = make_case(routing=Routing.UNCHANGED, value=0.45, citations=["CGI, art. 197"])
+    r = score_item(case, make_item(routing=Routing.UNCHANGED, verdict="fail",
+                                   citation_verified=False))
+    assert r.rejected is True
+    assert r.routing_correct is False
+    assert r.value_correct is False
+    assert r.routing_actual == "unchanged"     # what the pipeline emitted is kept
+    assert r.critique_pass is False
+    assert r.extract_verbatim is True          # the evidence legs still describe it
+    assert r.abstained is False
+
+    # A dated change the critique rejected loses the date leg too.
+    case = make_case(routing=Routing.CHANGED, value=0.45, valid_from=date(2025, 1, 1))
+    r = score_item(case, make_item(routing=Routing.CHANGED, verdict="fail"))
+    assert r.rejected and r.date_correct is False
+
+    # …while a proposal the critique passed is untouched.
+    r = score_item(case, make_item(routing=Routing.CHANGED, verdict="pass"))
+    assert r.rejected is False and r.routing_correct and r.value_correct and r.date_correct
+
+
 def test_abstention_is_flagged_apart_from_a_wrong_answer():
     case = make_case(routing=Routing.CHANGED, value=0.45, citations=["CGI, art. 197"])
     r = score_item(case, make_item(routing=Routing.NOT_FOUND, with_proposal=False))

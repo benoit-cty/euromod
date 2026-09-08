@@ -223,6 +223,32 @@ routes `national_team_source`: the value stays visible in the queue and is never
 overwritten. Re-run `curate-params` after every `ingest-params`, which replaces
 the country's `model_values` rows.
 
+### Units the export gets wrong (`unit: "/1"`)
+
+The FR export delivers every parameter named `*rate*` — 146 of them, all
+holding fractions — with unit `currency`, while using `"/1"` for 215 other
+rate-like parameters. The unit is a hint on every LLM call: the proposal prompt
+normalises "11 %" to 0.11 only for `"/1"`, and the critique's `values_sane`
+range-checks only a `"/1"`. Under `currency` one model refused the barème's 0 %
+band as "a currency amount" and another had every rate it proposed rejected as
+implausible. The export is read-only and `ingest-params` rewrites `unit`, so the
+correction is a third overlay rule, in the same file and applied by the same
+command ([`pipeline/curation/FR.curation.yaml`](pipeline/curation/FR.curation.yaml)):
+
+```yaml
+unit:
+  - unit: "/1"
+    note: why the export's unit is wrong, and how membership was decided
+    targets: [euromod://FR/tinkt_fr/def_const/$tin_rate3, …]
+```
+
+The unit must be one the export itself uses (`/1`, `currency`,
+`currency/{day,week,month,year}`); anything else is rejected as a typo.
+Materialized parameter files carry the unit, so rebuild them after curating
+(`run-targets` for `data/parameters/db/`, `nomokrisis-eval build-*-dataset`
+for the golden set). The defect itself is reported to the economists team — the
+overlay is a bridge until a corrected export lands, not a replacement for one.
+
 ## 2. Orchestrator: plain Python + PydanticAI (thin)
 
 - The step sequence (retry loop, not-found short-circuit) is explicit Python

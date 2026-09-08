@@ -719,6 +719,7 @@ def report(
 
     for row in rows:
         abstentions = row.get("abstentions") or 0
+        rejections = row.get("rejections") or 0
         typer.echo(
             f"{row['created_at']:%Y-%m-%d %H:%M}  {row['model_provider']}/{row['model_name']}"
             f"  [{row['language']}/{row['country']}]  cases={row['cases']}"
@@ -726,7 +727,7 @@ def report(
             f"  citation={pct(row['citation_pct'])}  verbatim={pct(row['extract_verbatim_pct'])}"
             f"  supported={pct(row['supportedness_pct'])}  critique={pct(row['critique_pass_pct'])}"
             f"  halluc={pct(row['hallucination_pct'])}  recall={pct(row['retrieval_recall_pct'])}"
-            f"  abstained={abstentions}"
+            f"  abstained={abstentions}  rejected={rejections}"
             f"{impact(row)}"
             f"  {row['run_id']}"
             f"{readiness(row)}"

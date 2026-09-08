@@ -4,7 +4,7 @@
     "model_target": "euromod://FR/tscse_fr/def_const/$tscsepi_rate5",
     "spine_order": "22",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "Second rate of pension insurance contributions-I&T"

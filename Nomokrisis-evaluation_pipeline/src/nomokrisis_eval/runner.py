@@ -491,6 +491,7 @@ def summarize(results: list[CaseResult]) -> dict[str, dict[str, str]]:
             # much of a low score is "the model was wrong" versus "there was
             # nothing to read" versus "we never said what the answer was".
             "abstained": str(sum(1 for r in rows if r.abstained)),
+            "rejected": str(sum(1 for r in rows if r.rejected)),
             "no_corpus": str(sum(1 for r in rows if readiness_of(r) == "no_corpus")),
             "undocumented": str(sum(1 for r in rows if readiness_of(r) == "undocumented")),
         }

@@ -4,7 +4,7 @@
     "model_target": "euromod://FR/tin_fr/def_const/$tinto_rate1",
     "spine_order": "31",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "Rate 1 for exceptional contributions"

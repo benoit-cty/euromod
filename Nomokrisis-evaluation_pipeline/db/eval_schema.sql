@@ -97,7 +97,11 @@ SELECT
     coalesce(
         res.readiness,
         CASE WHEN res.corpus_available IS FALSE THEN 'no_corpus' ELSE 'ready' END
-    ) AS readiness_eff
+    ) AS readiness_eff,
+    -- A proposal the pipeline's own critique rejected; routing/value/date are
+    -- already scored False for it (scoring.score_item), this only counts them.
+    -- Read from the JSON dump so the column needs no table migration.
+    coalesce((res.details ->> 'rejected')::boolean, false) AS rejected
 FROM eval.results res;
 
 -- KPI rates per (run, language): the read surface for the Tauri UI and the KPI report.
@@ -146,6 +150,7 @@ SELECT
     count(*) FILTER (WHERE res.readiness_eff = 'no_corpus')    AS cases_no_corpus,
     count(*) FILTER (WHERE res.readiness_eff = 'undocumented') AS cases_undocumented,
     count(*) FILTER (WHERE res.abstained)                 AS abstentions,
+    count(*) FILTER (WHERE res.rejected)                  AS rejections,
     round(100 * avg(res.routing_correct::int)
           FILTER (WHERE res.readiness_eff = 'ready'), 1)  AS routing_pct_ready,
     round(100 * avg(res.value_correct::int)

@@ -16,6 +16,8 @@ Pure functions only — no LLM judge in v1. KPI semantics follow
                     extract supports the value. LLM-assisted: only comparable across
                     models when the run pinned a fixed critique model.
   critique_pass     the critique's overall verdict (dates, units, sanity).
+  rejected          a value was proposed and the critique failed it: routing/value/
+                    date are then scored False whatever the routing says.
   hallucination     a value was proposed whose extract is not verbatim in the cited
                     chunk — the mechanical leg alone, so a critique that failed on
                     dates or units is not reported as a hallucination.
@@ -348,6 +350,19 @@ def score_item(
         result.hallucination = not verbatim
         result.supportedness = bool(critique and critique.citation_verified)
         result.critique_pass = critique.verdict == "pass" if critique else None
+        # The pipeline routes on the value even when its critique rejected the
+        # proposal (see CaseResult.rejected): a stale value re-proposed with a
+        # citation the critique refused would otherwise score a correct
+        # `unchanged`. What the pipeline does not stand behind cannot be
+        # credited on routing, value or date; the evidence legs above keep
+        # scoring, since they describe the rejected proposal itself.
+        if critique is not None and critique.verdict == "fail":
+            result.rejected = True
+            result.routing_correct = False
+            if result.value_correct is not None:
+                result.value_correct = False
+            if result.date_correct is not None:
+                result.date_correct = False
     elif expected.value is not None:
         # No proposal where ground truth has a value: an abstention, not a
         # wrong answer. It still scores False on value/date/citation, so keep

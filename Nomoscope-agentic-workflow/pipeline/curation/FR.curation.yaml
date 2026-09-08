@@ -85,3 +85,186 @@ temporal_basis:
       - euromod://FR/tinty_fr/def_const/$tinty_dedpens_minamt
       # Abattement personnes âgées / invalides (CGI art. 157 bis)
       - euromod://FR/tinty_fr/def_const/$tintadp_amt
+
+unit:
+  - unit: "/1"
+    note: >-
+      Every FR parameter named *rate* — 146 of them — is delivered with unit
+      `currency`, although each holds a fraction (all values 0..1, or a
+      percent/fraction literal such as `50%`, `2/3`), and the same export uses
+      "/1" for 215 other rate-like parameters (`$UB_rate1`, …). An enrichment
+      slip, then, and reported to the economists team on 2026-09-08; corrected
+      here until a fixed export lands, because the unit is a hint on every LLM
+      call: the proposal prompt normalises "11 %" to 0.11 only for "/1", and the
+      critique's `values_sane` only range-checks a "/1" — under `currency` one
+      model refused the barème's 0 % band as "a currency amount", another had
+      every rate it proposed rejected as implausible. `$bho_Tf_rate8` is left
+      out on purpose: it is a per-dependent decrement (-0.0006) and the "/1"
+      range check would reject the legitimate negative value. Membership was
+      decided by name AND value (no numeric value above 1 in any system year),
+      not by name alone.
+    targets:
+      # bhotn_fr: Housing benefit (APL): participation and rent-loss rates
+      - euromod://FR/bhotn_fr/def_const/$bho_rl_minrate1
+      - euromod://FR/bhotn_fr/def_const/$bho_rl_minrate2
+      - euromod://FR/bhotn_fr/def_const/$bho_rl_minrate3
+      - euromod://FR/bhotn_fr/def_const/$bho_rl_rate1
+      - euromod://FR/bhotn_fr/def_const/$bho_rl_rate2
+      - euromod://FR/bhotn_fr/def_const/$bho_rl_rate3
+      - euromod://FR/bhotn_fr/def_const/$bho_Tf_rate1
+      - euromod://FR/bhotn_fr/def_const/$bho_Tf_rate2
+      - euromod://FR/bhotn_fr/def_const/$bho_Tf_rate3
+      - euromod://FR/bhotn_fr/def_const/$bho_Tf_rate4
+      - euromod://FR/bhotn_fr/def_const/$bho_Tf_rate5
+      - euromod://FR/bhotn_fr/def_const/$bho_Tf_rate6
+      - euromod://FR/bhotn_fr/def_const/$bho_Tf_rate7
+      # euromod://FR/bhotn_fr/def_const/$bho_Tf_rate8  — negative decrement, see note
+      # bsawk_fr: Prime d'activité: bonus and income-assessment rates
+      - euromod://FR/bsawk_fr/def_const/$bsawk_bonus_rate
+      - euromod://FR/bsawk_fr/def_const/$bsawk_income_rate
+      # ConstDef_fr: FYA replacement rate (formula-valued in some years)
+      - euromod://FR/ConstDef_fr/def_const/$mc_yem_rrate
+      # sickcomp_fr: Sick pay replacement rates (2/3 and 12*3/730 are fractions)
+      - euromod://FR/sickcomp_fr/def_const/$bhl_std_rate1
+      - euromod://FR/sickcomp_fr/def_const/$bhl_std_rate2a
+      - euromod://FR/sickcomp_fr/def_const/$bhl_std_rate2b
+      - euromod://FR/sickcomp_fr/def_const/$bhl_std_rate5
+      # tin_fr: CEHR rates (CGI art. 223 sexies)
+      - euromod://FR/tin_fr/def_const/$tinto_rate1
+      - euromod://FR/tin_fr/def_const/$tinto_rate2
+      # tinkt_fr: Barème IR marginal rates, décote rate, PL rate (CGI art. 197, 200 A)
+      - euromod://FR/tinkt_fr/def_const/$tin_decote_rate
+      - euromod://FR/tinkt_fr/def_const/$tinkt_rate
+      - euromod://FR/tinkt_fr/def_const/$tin_rate1
+      - euromod://FR/tinkt_fr/def_const/$tin_rate2
+      - euromod://FR/tinkt_fr/def_const/$tin_rate3
+      - euromod://FR/tinkt_fr/def_const/$tin_rate4
+      - euromod://FR/tinkt_fr/def_const/$tin_rate5
+      - euromod://FR/tinkt_fr/def_const/$tin_rate6
+      # tintcot_fr: Tax credit rates
+      - euromod://FR/tintcot_fr/def_const/$tintcmi_rate1
+      - euromod://FR/tintcot_fr/def_const/$tintcmi_rate2
+      - euromod://FR/tintcot_fr/def_const/$tintcmi_rate3
+      # tinty_fr: Deductible-CSG and allowance rates
+      - euromod://FR/tinty_fr/def_const/$csg_redrate
+      - euromod://FR/tinty_fr/def_const/$tintace_rate
+      - euromod://FR/tinty_fr/def_const/$tintadt_dedyiy_rate
+      - euromod://FR/tinty_fr/def_const/$tscxcktrd_dedkt_rate
+      - euromod://FR/tinty_fr/def_const/$tscxcnkrd_dedbhl_rate
+      - euromod://FR/tinty_fr/def_const/$tscxcnkrd_dedbun_rate
+      - euromod://FR/tinty_fr/def_const/$tscxcnkrd_dedpens_rate1
+      - euromod://FR/tinty_fr/def_const/$tscxcnkrd_dedpens_rate2
+      - euromod://FR/tinty_fr/def_const/$tscxcnkrd_dedpens_rate3
+      - euromod://FR/tinty_fr/def_const/$tscxcnkrd_dedyem_rate
+      # tpr_fr: Property tax rates
+      - euromod://FR/tpr_fr/def_const/$tpr_rate_baties
+      - euromod://FR/tpr_fr/def_const/$tpr_rate_nonbaties
+      # trewl_fr: Wealth tax (ISF/IFI) marginal rates
+      - euromod://FR/trewl_fr/def_const/$trewl_rate1
+      - euromod://FR/trewl_fr/def_const/$trewl_rate2
+      - euromod://FR/trewl_fr/def_const/$trewl_rate3
+      - euromod://FR/trewl_fr/def_const/$trewl_rate4
+      - euromod://FR/trewl_fr/def_const/$trewl_rate5
+      # tscdf_fr: Solidarity contribution rate
+      - euromod://FR/tscdf_fr/def_const/$tscdf_fullrate
+      # tscee_fr: Employee social contribution rates
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate1
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate10
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate11
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate2
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate3
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate4
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate5
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate6
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate7
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate8
+      - euromod://FR/tscee_fr/def_const/$tsceepi_rate9
+      - euromod://FR/tscee_fr/def_const/$tsceesi_rate
+      - euromod://FR/tscee_fr/def_const/$tsceeui_rate1
+      - euromod://FR/tscee_fr/def_const/$tsceeui_rate2
+      - euromod://FR/tscee_fr/def_const/$tscee_yemxp_rate
+      # tscer_fr: Employer social contribution rates
+      - euromod://FR/tscer_fr/def_const/$tscerap_rate
+      - euromod://FR/tscer_fr/def_const/$tscerfa_rate
+      - euromod://FR/tscer_fr/def_const/$tscerfa_rate2
+      - euromod://FR/tscer_fr/def_const/$tscerho_rate1
+      - euromod://FR/tscer_fr/def_const/$tscerho_rate2
+      - euromod://FR/tscer_fr/def_const/$tscerir_rate1
+      - euromod://FR/tscer_fr/def_const/$tscerir_rate2
+      - euromod://FR/tscer_fr/def_const/$tscerir_rate3
+      - euromod://FR/tscer_fr/def_const/$tscerir_rate4
+      - euromod://FR/tscer_fr/def_const/$tscerot_rate
+      - euromod://FR/tscer_fr/def_const/$tscerpi_rate1
+      - euromod://FR/tscer_fr/def_const/$tscerpi_rate10
+      - euromod://FR/tscer_fr/def_const/$tscerpi_rate2
+      - euromod://FR/tscer_fr/def_const/$tscerpi_rate3
+      - euromod://FR/tscer_fr/def_const/$tscerpi_rate4
+      - euromod://FR/tscer_fr/def_const/$tscerpi_rate5
+      - euromod://FR/tscer_fr/def_const/$tscerpi_rate6
+      - euromod://FR/tscer_fr/def_const/$tscerpi_rate7
+      - euromod://FR/tscer_fr/def_const/$tscerpi_rate8
+      - euromod://FR/tscer_fr/def_const/$tscerpi_rate9
+      - euromod://FR/tscer_fr/def_const/$tscersi_rate
+      - euromod://FR/tscer_fr/def_const/$tscersi_rate2
+      - euromod://FR/tscer_fr/def_const/$tsceruf_rate
+      - euromod://FR/tscer_fr/def_const/$tscerui_rate1
+      - euromod://FR/tscer_fr/def_const/$tscerui_rate2
+      - euromod://FR/tscer_fr/def_const/$tscerwgf_rate
+      # tsckt_fr: Social levies on capital income
+      - euromod://FR/tsckt_fr/def_const/$tsckt_addrate
+      - euromod://FR/tsckt_fr/def_const/$tsckt_social_rate
+      - euromod://FR/tsckt_fr/def_const/$tsckt_solidaritylevy_rate
+      - euromod://FR/tsckt_fr/def_const/$tsckt_solidarity_rate
+      # tscse_fr: Self-employed contribution rates
+      - euromod://FR/tscse_fr/def_const/$tscerfa_artisans_rate1
+      - euromod://FR/tscse_fr/def_const/$tscerfa_artisans_rate2
+      - euromod://FR/tscse_fr/def_const/$tscerfa_rate3
+      - euromod://FR/tscse_fr/def_const/$tscsedi_artisans_rate
+      - euromod://FR/tscse_fr/def_const/$tscsedi_farmers_rate
+      - euromod://FR/tscse_fr/def_const/$tscsedi_industry_rate
+      - euromod://FR/tscse_fr/def_const/$tscsedi_minrate
+      - euromod://FR/tscse_fr/def_const/$tscseir_artisans_rate
+      - euromod://FR/tscse_fr/def_const/$tscseir_industry_rate
+      - euromod://FR/tscse_fr/def_const/$tscsepi_farmers_rate3
+      - euromod://FR/tscse_fr/def_const/$tscsepi_industry_rate8
+      - euromod://FR/tscse_fr/def_const/$tscsepi_rate1
+      - euromod://FR/tscse_fr/def_const/$tscsepi_rate2
+      - euromod://FR/tscse_fr/def_const/$tscsepi_rate4
+      - euromod://FR/tscse_fr/def_const/$tscsepi_rate5
+      - euromod://FR/tscse_fr/def_const/$tscsepi_rate6
+      - euromod://FR/tscse_fr/def_const/$tscsepi_rate7
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate1
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate10
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate11
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate2
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate3
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate4
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate5
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate6
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate7
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate8
+      - euromod://FR/tscse_fr/def_const/$tscsesi_rate9
+      # tscxc_fr: CSG / CASA rates
+      - euromod://FR/tscxc_fr/def_const/$casa_rate
+      - euromod://FR/tscxc_fr/def_const/$tscxc_rate1
+      - euromod://FR/tscxc_fr/def_const/$tscxc_rate2
+      - euromod://FR/tscxc_fr/def_const/$tscxc_rate3
+      - euromod://FR/tscxc_fr/def_const/$tscxc_rate4
+      - euromod://FR/tscxc_fr/def_const/$tscxc_rate5
+      - euromod://FR/tscxc_fr/def_const/$tscxc_rate6
+      - euromod://FR/tscxc_fr/def_const/$tscxc_rate7
+      # twl_fr: Wealth tax rates
+      - euromod://FR/twl_fr/def_const/$twl_rate1
+      - euromod://FR/twl_fr/def_const/$twl_rate2
+      - euromod://FR/twl_fr/def_const/$twl_rate3
+      - euromod://FR/twl_fr/def_const/$twl_rate4
+      - euromod://FR/twl_fr/def_const/$twl_rate5
+      - euromod://FR/twl_fr/def_const/$twl_rate6
+      - euromod://FR/twl_fr/def_const/$twl_smoothing_rate
+      # xcc_fr: Childcare: tax-credit rate and CAF hourly-contribution rates (percent literals)
+      - euromod://FR/xcc_fr/def_const/$tintcch_rate
+      - euromod://FR/xcc_fr/def_const/$xcc_rate1
+      - euromod://FR/xcc_fr/def_const/$xcc_rate2
+      - euromod://FR/xcc_fr/def_const/$xcc_rate3
+      - euromod://FR/xcc_fr/def_const/$xcc_rate4
+      - euromod://FR/xcc_fr/def_const/$xcc_rate5

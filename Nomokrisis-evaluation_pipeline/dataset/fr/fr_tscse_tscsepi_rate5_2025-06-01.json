@@ -12,12 +12,12 @@
     "routing": "changed",
     "value": 0.0072,
     "valid_from": "2025-01-01",
-    "citations": []
+    "citations": [
+      "LEGITEXT000006073189, art. D633-3"
+    ]
   },
-  "corpus_available": false,
-  "verified": true,
+  "corpus_available": true,
+  "verified": false,
   "drafted_by": "openfisca@a7038ee",
-  "reviewed_by": "ben",
-  "review_note": "Valeur changée en 2025.",
-  "notes": "openfisca: prelevements_sociaux.cotisations_taxes_independants_artisans_commercants.ret_ac.tous_independants.tout_salaire | openfisca value at 2025-06-01: 0.0072 (change point 2025-01-01) | euromod value in force at 2025-06-01: 0.006 from 2017-01-01 | link: fingerprint score 1.00 | corpus_available: false — not one of this parameter's OpenFisca references resolves in the legislation corpus, so no retrieval can reach the text stating the value. The case measures ingest coverage; it is excluded from the 'source in corpus' KPI slice until the act is ingested | references not resolved in the legislation corpus: Article D633-3 du Code de la sécurité sociale [LEGIARTI000031799496] not in the corpus (not scorable); Décret n° 2024-688 du 5 juillet 2024, art. 3 [LEGIARTI000049896846] not in the corpus (not scorable)"
+  "notes": "openfisca: prelevements_sociaux.cotisations_taxes_independants_artisans_commercants.ret_ac.tous_independants.tout_salaire | openfisca value at 2025-06-01: 0.0072 (change point 2025-01-01) | euromod value in force at 2025-06-01: 0.006 from 2017-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Décret n° 2024-688 du 5 juillet 2024, art. 3 [LEGIARTI000049896846] not in the corpus (not scorable)"
 }

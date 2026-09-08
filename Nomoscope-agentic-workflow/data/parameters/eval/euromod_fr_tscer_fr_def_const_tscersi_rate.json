@@ -4,7 +4,7 @@
     "model_target": "euromod://FR/tscer_fr/def_const/$tscersi_rate",
     "spine_order": "21",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "Employer sickness insurance contributions rate (from 2019: income > 2.5 SMIC )"

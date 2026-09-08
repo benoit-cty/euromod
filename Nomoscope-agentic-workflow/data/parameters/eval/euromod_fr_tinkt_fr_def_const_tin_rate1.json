@@ -4,7 +4,7 @@
     "model_target": "euromod://FR/tinkt_fr/def_const/$tin_rate1",
     "spine_order": "28",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "Rate in band1"

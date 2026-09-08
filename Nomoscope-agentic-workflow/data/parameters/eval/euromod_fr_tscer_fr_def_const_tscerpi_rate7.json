@@ -4,7 +4,7 @@
     "model_target": "euromod://FR/tscer_fr/def_const/$tscerpi_rate7",
     "spine_order": "21",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "White-collar complementary old-age insurance contribution rate-Income Group B/C"

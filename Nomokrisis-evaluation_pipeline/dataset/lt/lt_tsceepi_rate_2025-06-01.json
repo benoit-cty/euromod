@@ -15,7 +15,8 @@
       "VSDĮ"
     ]
   },
-  "verified": false,
+  "verified": true,
   "drafted_by": "human",
-  "notes": "curated: lt.json#tsceepi_rate | euromod value in force at 2025-06-01: '8.72%' from 2019-01-01 | MEDIUM — employee pension social-insurance contribution, 8.72% since the 2019 tax reform. Unchanged trap plus the percent-string scoring gap (expected kept in string form until normalise_value grows a % branch). Pin the exact VSDI article (rates are approved via the annual SSI fund budget indicators law — decide which citation is canonical) when drafting."
+  "notes": "curated: lt.json#tsceepi_rate | euromod value in force at 2025-06-01: '8.72%' from 2019-01-01 | MEDIUM — employee pension social-insurance contribution, 8.72% since the 2019 tax reform. Unchanged trap plus the percent-string scoring gap (expected kept in string form until normalise_value grows a % branch). Pin the exact VSDI article (rates are approved via the annual SSI fund budget indicators law — decide which citation is canonical) when drafting.",
+  "reviewed_by": "ben"
 }

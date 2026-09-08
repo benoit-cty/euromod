@@ -4,7 +4,7 @@
     "model_target": "euromod://FR/tscer_fr/def_const/$tscerpi_rate1",
     "spine_order": "21",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "Employer old-age insurance contributions-Income group A"

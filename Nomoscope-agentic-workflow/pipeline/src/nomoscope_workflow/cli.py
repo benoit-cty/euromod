@@ -339,9 +339,11 @@ def ingest_params(
 def curate_params(
     files: list[Path] = typer.Argument(..., help="Curation overlay(s), e.g. curation/FR.curation.yaml"),
 ) -> None:
-    """Apply curated fields (temporal_basis) the EUROMOD export does not carry.
+    """Apply curated fields (temporal_basis, source_type, unit) the EUROMOD
+    export does not carry or gets wrong.
 
-    Run after ingest-params. Idempotent — re-run it whenever a new export lands.
+    Run after ingest-params, which overwrites all three from the export.
+    Idempotent — re-run it whenever a new export lands.
     """
     cfg = load_config()
     exit_code = 0

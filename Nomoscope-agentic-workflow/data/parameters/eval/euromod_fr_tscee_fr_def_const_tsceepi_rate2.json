@@ -4,7 +4,7 @@
     "model_target": "euromod://FR/tscee_fr/def_const/$tsceepi_rate2",
     "spine_order": "20",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "Rate for employee old-age insurance contributions (whole income)"

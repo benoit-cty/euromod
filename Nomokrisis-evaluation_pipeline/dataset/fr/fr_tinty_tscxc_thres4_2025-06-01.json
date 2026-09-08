@@ -12,11 +12,13 @@
     "routing": "unchanged",
     "value": 4474.0,
     "valid_from": "2025-01-01",
-    "citations": []
+    "citations": [
+      "LEGITEXT000006073189, art. L136-8"
+    ]
   },
-  "corpus_available": false,
+  "corpus_available": true,
   "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "reviewed_by": "ben",
-  "notes": "openfisca: prelevements_sociaux.contributions_sociales.csg.remplacement.seuils.seuil_rfr2.demi_part_suppl_rfr2 | openfisca value at 2025-06-01: 4474.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 4474.0 from 2025-01-01 | link: fingerprint score 1.00 | corpus_available: false — not one of this parameter's OpenFisca references resolves in the legislation corpus, so no retrieval can reach the text stating the value. The case measures ingest coverage; it is excluded from the 'source in corpus' KPI slice until the act is ingested | references not resolved in the legislation corpus: Article L136-8 du Code de la sécurité sociale (seuils avant revalorisation) [LEGIARTI000042683546] not in the corpus (not scorable); Lettre ministérielle D-24-019252 du 4/12/2024 (no Legifrance id)"
+  "notes": "openfisca: prelevements_sociaux.contributions_sociales.csg.remplacement.seuils.seuil_rfr2.demi_part_suppl_rfr2 | openfisca value at 2025-06-01: 4474.0 (change point 2025-01-01) | euromod value in force at 2025-06-01: 4474.0 from 2025-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Lettre ministérielle D-24-019252 du 4/12/2024 (no Legifrance id)",
+  "reviewed_by": "ben"
 }

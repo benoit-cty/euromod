@@ -222,6 +222,16 @@ class CaseResult(BaseModel):
     # separately because it is the *correct* behaviour when the source is
     # missing from the corpus, yet it costs the value/date/citation legs.
     abstained: bool = False
+    # A value was proposed and the pipeline's own critique rejected it (verdict
+    # "fail": not verbatim, wrong vintage, unit implausible…). The diff step
+    # still routes such an item on its value — `unchanged` when it merely
+    # echoes what EUROMOD holds — so scoring the routing and value legs from
+    # the routing alone credited proposals the pipeline itself had thrown out:
+    # one model gained eight "correct" verdicts that way on a 66-case run, four
+    # of them with the barème's stale value and a citation the critique had
+    # refused. A rejected proposal is therefore never routing- or value-correct;
+    # `routing_actual` still records what the pipeline emitted.
+    rejected: bool = False
     # Copied from the case so a report can separate model quality from corpus
     # coverage without re-reading the golden set.
     corpus_available: bool | None = None
