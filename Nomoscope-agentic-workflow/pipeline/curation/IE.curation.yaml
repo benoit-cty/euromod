@@ -1,0 +1,100 @@
+# Curated parameter knowledge for IE — NOT part of the EUROMOD export.
+#
+# extracted_parameters/enriched/IE.enriched.json is delivered by the EUROMOD
+# team and is READ-ONLY: never edit it. Anything we know that the export does
+# not carry — or gets wrong — lives here instead, and is applied on top of the
+# ingested rows by
+#
+#     uv run nomoscope-workflow curate-params curation/IE.curation.yaml
+#
+# run after `ingest-params` (ingesting a country file replaces its rows, so the
+# overlay has to follow it). This file exists so the knowledge also survives
+# `docker compose down -v`, is reviewable in git, and can say *why* each
+# parameter is flagged.
+
+country: IE
+
+unit:
+  - unit: "/1"
+    note: >-
+      Every IE parameter listed here is delivered with unit `currency` although
+      it holds a fraction: the income-tax rates (`$tin_Std_rate` 0.2,
+      `$tin_high_rate` 0.4), the USC rates (`$txcin_rate1..4`, `$txcin_sur_rate`),
+      the PRSI class rates (`$tscee_prsiA/B/J_*`, `$tscer_prsi*`, `$tsce_prsiS_*`,
+      `$tscee_prsiA_rate2` is the 1/6 credit taper), the pension-relief and
+      LPT rates, the replacement rates and means-test shares of the benefit
+      policies, and three percent literals named `*_amt` (`60%`). Membership is
+      by value, not by name: every value of every year is a fraction in [0,1],
+      a `N%` literal or a fraction literal. Reported to the economists team on
+      2026-09-08; corrected here until a fixed export lands, because the unit
+      is a hint on every LLM call — under `currency` one model proposed the 40 %
+      higher rate as the scalar 40.0 and had the 3 % USC rate rejected as "not a
+      plausible currency amount". Left out on purpose: `$tin_age1`, `$mc_my`
+      (an age and a duration whose value happens to be 0) and the weekly
+      benefit amounts that are named `*_rate` (`$bunct_Rate1..4`, `$BenCT*`,
+      `$bma_rate_*`) — those really are currency.
+    targets:
+      # bdict_hhot_ie
+      - euromod://IE/bdict_hhot_ie/def_const/$bdict_std_rate  # 0.7 — Employer replacement rate
+      # bhap_ie
+      - euromod://IE/bhap_ie/def_const/$bhap_rate_1  # 0.15,n/a — Contribution Rate
+      # bhors_ie
+      - euromod://IE/bhors_ie/def_const/$bhors_wth_rate  # 0.75,n/a
+      # bunct_ie
+      - euromod://IE/bunct_ie/def_const/$bunct_qaired_rate  # 0.37,0.38,0.4,0.41,0.43
+      # bunnc_ie
+      - euromod://IE/bunnc_ie/def_const/$bunnc_dis_amt2  # 60%
+      # bwkmt_ie
+      - euromod://IE/bwkmt_ie/def_const/$bwkmt_means_amt  # 60%
+      - euromod://IE/bwkmt_ie/def_const/$bwkmt_tu_rate  # 0.33
+      # ConstDef_ie
+      - euromod://IE/ConstDef_ie/def_const/$ben_dis_rate  # 0.5 — for bfalp and bfalpt
+      - euromod://IE/ConstDef_ie/def_const/$ben_par_amt  # 60%,n/a — 60%
+      - euromod://IE/ConstDef_ie/def_const/$tin_high_rate  # 0.4,0.41,0.42 — Income tax: higher tax rate
+      - euromod://IE/ConstDef_ie/def_const/$tin_Std_rate  # 0.2 — Income tax: standard tax rate
+      # pdi_ie
+      - euromod://IE/pdi_ie/def_const/$pdi_qai_rate  # 0.63,0.65,0.68,0.71,0.76
+      # poact_ie
+      - euromod://IE/poact_ie/def_const/$poact_qai1_rate  # 0.7,0.73,0.83
+      - euromod://IE/poact_ie/def_const/$poact_qai2_rate  # 0.91,0.94,0.95,0.98
+      # tin_ie
+      - euromod://IE/tin_ie/def_const/$tin_health_rate  # 20%,n/a — Health related tax credit
+      - euromod://IE/tin_ie/def_const/$tin_home_rate  # 0.5 — Home Carer Tax Credit
+      - euromod://IE/tin_ie/def_const/$tin_mortg_rate  # 15%,20% — Mortgage Interest Relief:  % of mortgage interests
+      - euromod://IE/tin_ie/def_const/$tin_pen_rate1  # 0.15 — Tax relief of pension contributions: rate
+      - euromod://IE/tin_ie/def_const/$tin_pen_rate2  # 0.2 — Tax relief of pension contributions: rate
+      - euromod://IE/tin_ie/def_const/$tin_pen_rate3  # 0.25 — Tax relief of pension contributions: rate
+      - euromod://IE/tin_ie/def_const/$tin_pen_rate4  # 0.3 — Tax relief of pension contributions: rate
+      - euromod://IE/tin_ie/def_const/$tin_pen_rate5  # 0.35 — Tax relief of pension contributions: rate
+      - euromod://IE/tin_ie/def_const/$tin_pen_rate6  # 0.4 — Tax relief of pension contributions: rate
+      # tpr_ie
+      - euromod://IE/tpr_ie/def_const/$tpr_LPT_rate_1  # 0.0018,n/a
+      - euromod://IE/tpr_ie/def_const/$tpr_LPT_rate_2  # 0.0025,n/a
+      # tscee_ie
+      - euromod://IE/tscee_ie/def_const/$tscee_prsiA_rate1  # 4%,4.1% — Employee PRSI Class A- Rate 1
+      - euromod://IE/tscee_ie/def_const/$tscee_prsiA_rate2  # 1 / 6,1/6,n/a — Employee PRSI Class A- Rate 2
+      - euromod://IE/tscee_ie/def_const/$tscee_prsiB_rate1  # 0 — Employee PRSI Class B- Rate 1
+      - euromod://IE/tscee_ie/def_const/$tscee_prsiB_rate2  # 0.009 — Employee PRSI Class B- Rate 2
+      - euromod://IE/tscee_ie/def_const/$tscee_prsiB_rate3  # 0.029 — Employee PRSI Class B- Rate 3
+      - euromod://IE/tscee_ie/def_const/$tscee_prsiB_rate4  # 0 — Employee PRSI Class B- Rate 4
+      - euromod://IE/tscee_ie/def_const/$tscee_prsiJ_rate1  # 0,n/a
+      # tsceepb_ie
+      - euromod://IE/tsceepb_ie/def_const/$tsceepb_rate1  # 0,n/a — Addional Supperannuation Contribution - Rate 1
+      - euromod://IE/tsceepb_ie/def_const/$tsceepb_rate2  # 0.025,0.05,0.1,n/a — Addional Supperannuation Contribution - Rate 2
+      - euromod://IE/tsceepb_ie/def_const/$tsceepb_rate3  # 0.1,0.105,n/a — Addional Supperannuation Contribution - Rate 3
+      - euromod://IE/tsceepb_ie/def_const/$tsceepb_rate4  # 0.105,n/a — Addional Supperannuation Contribution - Rate 4
+      # tscer_ie
+      - euromod://IE/tscer_ie/def_const/$tscer_prsiA_rate1  # 0.0425,0.085,0.086,0.087,0.088,0.089 — Employer PRSI Class A- Rate 1
+      - euromod://IE/tscer_ie/def_const/$tscer_prsiA_rate2  # 0.1075,0.1085,0.1105,0.1115 — Employer PRSI Class A- Rate 2
+      - euromod://IE/tscer_ie/def_const/$tscer_prsiB_rate  # 2.01% — Employer PRSI Class B- Rate
+      - euromod://IE/tscer_ie/def_const/$tscer_prsiJ9_rate  # 0.005,n/a
+      - euromod://IE/tscer_ie/def_const/$tscer_prsiJ_rate  # 0.005,0.006 — Employer PRSI Class J- Rate
+      # tscse_ie
+      - euromod://IE/tscse_ie/def_const/$tsce_prsiS_rate1  # 3%,4%,4.1%
+      - euromod://IE/tscse_ie/def_const/$tsce_prsiS_rate2  # 3%,4%,4.1%
+      # txcin_ie
+      - euromod://IE/txcin_ie/def_const/$txcin_rate1  # 0.005,0.01,0.015,0.02,n/a
+      - euromod://IE/txcin_ie/def_const/$txcin_rate2  # 0.02,0.025,0.03,0.035,0.04,n/a
+      - euromod://IE/txcin_ie/def_const/$txcin_rate3  # 0.03,0.04,0.045,0.0475,0.05,0.055,0.07,n/a
+      - euromod://IE/txcin_ie/def_const/$txcin_rate4  # 0.08,n/a
+      - euromod://IE/txcin_ie/def_const/$txcin_sur_rate  # 3%,n/a

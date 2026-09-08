@@ -2,17 +2,17 @@
 #
 # extracted_parameters/enriched/LT.enriched.json is delivered by the EUROMOD
 # team and is READ-ONLY: never edit it. Anything we know that the export does
-# not carry lives here instead, and is applied on top of the ingested rows by
+# not carry — or gets wrong — lives here instead, and is applied on top of the
+# ingested rows by
 #
 #     uv run nomoscope-workflow curate-params curation/LT.curation.yaml
 #
-# run after `ingest-params` (ingesting a country file replaces its model_values
-# rows, so the overlay has to follow it). This file exists so the knowledge also
-# survives `docker compose down -v`, is reviewable in git, and can say *why*
-# each parameter is flagged.
+# run after `ingest-params` (ingesting a country file replaces its rows, so the
+# overlay has to follow it). This file exists so the knowledge also survives
+# `docker compose down -v`, is reviewable in git, and can say *why* each
+# parameter is flagged.
 
 country: LT
-
 source_type:
   - type: national_team
     note: >-
@@ -35,3 +35,83 @@ source_type:
       # Discount rates on that fee (partial / full exemption categories)
       - euromod://LT/xcc_lt/def_const/$xcc_ded_rate1
       - euromod://LT/xcc_lt/def_const/$xcc_ded_rate2
+
+unit:
+  - unit: "/1"
+    note: >-
+      Every LT parameter listed here is delivered with unit `currency` although
+      it holds a fraction: the PIT rates (`$tin_StdRate` 15%…, `$tin_HigherRate`,
+      `$IT_LowestRate`), the withdrawal rates of the basic allowance
+      (`$tinta_basic_WithdRate*`), every social-insurance contribution rate
+      (`$tscee*_rate`, `$tscer*_rate`, `$tscsesi_rate` — a formula over two of
+      them), the unemployment-benefit replacement rates, the maternity/paternity
+      replacement rates, the state-paid shares of sickness benefit (`$mc_share*`),
+      the social-assistance income disregards and equivalence-scale coefficients
+      (`$bsa00_scale_coef1..3`, all ≤ 1), and the childcare discount rates.
+      Membership is by value: every value of every year is a fraction in [0,1]
+      or a `N%` literal. Reported to the economists team on 2026-09-08 and
+      corrected here until a fixed export lands, because the unit is a hint on
+      every LLM call — under `currency` the critique rejected the correct 0.49
+      withdrawal rate as "a dimensionless rate declared in currency". Left out
+      on purpose: the benefit multipliers above 1 (`$bch00_coef*`,
+      `$bunct01_*Contr_coef`, `$tin_MaxLimit_coef*` — 60 average wages —,
+      `$xhcht_*_coef`) and the durations/volumes (`$bplct_duration_m`,
+      `$xhcht_*_m3`): they are not fractions, and no export unit fits them
+      today — that is a separate item for the economists.
+    targets:
+      # ConstDef_lt
+      - euromod://LT/ConstDef_lt/def_const/$bmact_FirstYear_rate  # 100%,45%,54.31%,70%,90%,n/a — Option I: first 12 months replacement rate
+      - euromod://LT/ConstDef_lt/def_const/$bmact_Full_Rate  # 100%,60%,77.58%,n/a — Option II: 12 months with full replacement; since 2023 - 18 months
+      - euromod://LT/ConstDef_lt/def_const/$bmact_NonTransf_rate  # 78%,n/a — since 2023 compensation rate during non-tranferable months (2+2 months for each parent)
+      - euromod://LT/ConstDef_lt/def_const/$bmact_SecondYear_rate  # 30%,31.03%,40%,75%,85%,n/a — Opton I: second 12 months replacement rate
+      - euromod://LT/ConstDef_lt/def_const/$bmaprct_rate  # 100%,77.58% — Maternity, paternity benefit replacement rate
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_IncDisreg_rate1  # 15%,20%,n/a — disregarding income: families with no children / single persons
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_IncDisreg_rate2  # 20%,25%,n/a — disregarding income: couples with 1-2 children
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_IncDisreg_rate3  # 25%,30%,n/a — disregarding income: couples with 3+ children
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_IncDisreg_rate4  # 30%,35%,n/a — disregarding income: single with 1-2 children
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_IncDisreg_rate5  # 35%,40%,n/a — disregarding income: single with 3+ children
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_scale_coef1  # 1,n/a — Equivalence scale: first
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_scale_coef2  # 0.8,0.9,n/a — Equivalence scale: second
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_scale_coef3  # 0.7,n/a — Equivalence scale: subsequent
+      - euromod://LT/ConstDef_lt/def_const/$bunct_const_rate  # 15%,23.27%,30%,n/a — unemployment benefit: constant part
+      - euromod://LT/ConstDef_lt/def_const/$bunct_rate1  # 38.79%,45%,50%,n/a — unemployment benefit rate: for 1-3 months 
+      - euromod://LT/ConstDef_lt/def_const/$bunct_rate2  # 31.03%,35%,40%,n/a — unemployment benefit rate: for 4-6 months 
+      - euromod://LT/ConstDef_lt/def_const/$bunct_rate3  # 23.27%,25%,30%,n/a — unemployment benefit rate: for 7-9 months 
+      - euromod://LT/ConstDef_lt/def_const/$bunct_UpLim_rate  # 58.18%,70%,75%,n/a — Unemployment benefit: uplim
+      - euromod://LT/ConstDef_lt/def_const/$IT_LowestRate  # 5%,n/a — PIT rate for metal scraps
+      - euromod://LT/ConstDef_lt/def_const/$mc_rate_sick  # 65.94%,n/a — Replacement rate applied to the salary - sickness/childcare
+      - euromod://LT/ConstDef_lt/def_const/$mc_share  # 0.7,n/a — Share paid by the state up to 1.5 MMS
+      - euromod://LT/ConstDef_lt/def_const/$mc_share_12  # 1,n/a — Share paid by the state - 1-2 months
+      - euromod://LT/ConstDef_lt/def_const/$mc_share_34  # 0.5,n/a — Share paid by the state - 3-4 months
+      - euromod://LT/ConstDef_lt/def_const/$mc_share_56  # 0.3,n/a — Share paid by the state - 5-6 months
+      - euromod://LT/ConstDef_lt/def_const/$mc_share_60  # 1,n/a — Share paid by the state up to MMS for worker >=60 years old
+      - euromod://LT/ConstDef_lt/def_const/$mc_share_mms  # 0.9,1,n/a — Share paid by the state up to MMS
+      - euromod://LT/ConstDef_lt/def_const/$SIC_LimRate  # 0%,n/a — SIC rate for those with income higher than $tin_MaxLimit_coef3
+      - euromod://LT/ConstDef_lt/def_const/$TC_se_rate  # 0.1,0.15,n/a — Income tax credit for the self-employed: rate
+      - euromod://LT/ConstDef_lt/def_const/$t_dedexp  # .25 — Max deductable expenditures as share of 15, 20, 32 taxable income
+      - euromod://LT/ConstDef_lt/def_const/$tin_HigherRate  # 25%,n/a — higher PIT tax rate
+      - euromod://LT/ConstDef_lt/def_const/$tin_HighestRate  # 27%,32%,n/a — highest PIT tax rate 
+      - euromod://LT/ConstDef_lt/def_const/$tin_LowRate  # 5%,n/a
+      - euromod://LT/ConstDef_lt/def_const/$tin_MinRate  # 15%,5% — reduced PIT rate (since 2019 5% only applied on income from scrap)
+      - euromod://LT/ConstDef_lt/def_const/$tin_StdRate  # 15%,20%,24%,27%,33% — standard PIT rate
+      - euromod://LT/ConstDef_lt/def_const/$tinta_basic_WithdRate  # 0.15,0.18,0.2,0.26,0.34,0.5,n/a — basic allowance: the withdraw rate of basic allowance for people with income above $tinta_basic_thres
+      - euromod://LT/ConstDef_lt/def_const/$tinta_basic_WithdRate_Higher  # 0.34,0.42,0.49,0.5,n/a — basic allowance: the withdraw rate of basic allowance for people with income below $tinta_basic_thres
+      - euromod://LT/ConstDef_lt/def_const/$tsceehi_rate  # 6%,6.98%,n/a — rate for health contributions
+      - euromod://LT/ConstDef_lt/def_const/$tsceehi_rate_sf  # 2.33%,n/a — rate for health contributions for small farmers (admin)
+      - euromod://LT/ConstDef_lt/def_const/$tsceemi_rate  # 1.71%,1.81%,n/a — rate for maternity contributions 
+      - euromod://LT/ConstDef_lt/def_const/$tsceepi_private_rate1  # 1.8%,2.1%,2.4%,2.7%,3%,n/a — 1st rate (1.8%) for 2nd pillar pension contributions
+      - euromod://LT/ConstDef_lt/def_const/$tsceepi_private_rate2  # 3%,n/a — 2nd rate (3%) for 2nd pillar pension contributions
+      - euromod://LT/ConstDef_lt/def_const/$tsceepi_rate  # 2.5%,3%,8.72% — rate for pension contributions
+      - euromod://LT/ConstDef_lt/def_const/$tsceesi_rate  # 0.005,1.99%,2.09%,n/a — rate for sickness contributions
+      - euromod://LT/ConstDef_lt/def_const/$tscerai_rate  # 0.14%,0.2%,0.3% — rate for employment injuries and occupational diseases 
+      - euromod://LT/ConstDef_lt/def_const/$tscergf_rate  # 0.1%,0.16%,0.2% — rate for payments to the Guarantee Fund
+      - euromod://LT/ConstDef_lt/def_const/$tscerhi_rate  # 3%,n/a — rate for health contributions
+      - euromod://LT/ConstDef_lt/def_const/$tscerlwf_rate  # 0.16%,0.5%,n/a — rate for long-term work benefit fund (since July 2017)
+      - euromod://LT/ConstDef_lt/def_const/$tscerpi_rate  # 22.3%,23.3%,23.5%,23.6%,23.7%,23.85%,n/a — rate for pension contributions
+      - euromod://LT/ConstDef_lt/def_const/$tscersi_rate  # 2.8%,2.9%,3.4%,3.6%,n/a — rate for sickness and maternity contributions
+      - euromod://LT/ConstDef_lt/def_const/$tscerui_rate  # 0.95%,1%,1.1%,1.2%,1.3%,1.31%,1.4% — rate for unemployment contributions
+      - euromod://LT/ConstDef_lt/def_const/$tscerui_rateF  # 2.03%,2.8%,n/a — rate for unemployment contributions if on fixed contract
+      - euromod://LT/ConstDef_lt/def_const/$tscsesi_rate  # $tsceesi_rate + $tsceemi_rate ,$tscersi_rate,2.2%,n/a — rate for sickness and maternity  contributions
+      # xcc_lt
+      - euromod://LT/xcc_lt/def_const/$xcc_ded_rate1  # 0.5 — Childcare cost discount rates
+      - euromod://LT/xcc_lt/def_const/$xcc_ded_rate2  # 1

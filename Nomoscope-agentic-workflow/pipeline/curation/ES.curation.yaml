@@ -17,6 +17,22 @@
 # Do not add one to compensate for BOE's `fecha_vigencia` (the legal
 # entry-into-force date, e.g. 2024-12-22 for a measure "con efectos desde el
 # 1 de enero de 2025"): that is a valid_from question, not a basis question.
+#
+# Deliberately NOT flagged, and this is the load-bearing judgement in the file:
+# the regional families. bsarg_es (32 constants, the Rentas Mínimas de
+# Inserción) and bchrg_es (49 constants, regional child benefits) hold amounts
+# each autonomous community fixes in its own decree — Asturias's Salario Social
+# Básico, the Basque RGI, Canarias's Renta Canaria de Ciudadanía. Those are
+# legislation, not assumptions; the ingested ES corpus simply does not carry
+# regional bulletins yet (7 instruments: LIRPF, RIRPF, LGSS, Ley 19/2021 IMV,
+# RD 87/2025 SMI, one Galicia decreto legislativo, and the Country Report).
+# So the correct routing for them today is `not_found` — a visible corpus gap
+# that a later ingestion closes. Flagging them `national_team` would convert
+# that gap into a permanent "no law exists" claim and silence the very signal
+# that says which regional sources to ingest next. Same reasoning for the
+# legislated consumption-tax inputs $tco_v_* (Ley 37/1992 VAT rates) and
+# $tco_a_* (Ley 38/1992 excise amounts), which sit beside the flagged implicit
+# $tco_t_* rates and stay citable.
 
 country: ES
 
@@ -42,8 +58,12 @@ source_type:
       each municipality's) own annual call, so there is no national act for
       the pipeline to cite. The EUROMOD values are the national team's
       assumption over those regional schedules, documented in the Country
-      Report's childcare theme. Confirmed against the corpus: `comedor`
-      appears only in LIRPF art. 42 (in-kind income), never in a fee schedule.
+      Report's childcare theme. Checked against the ingested ES corpus (6
+      state-level acts as of 2026-09-08): `comedor` occurs only in LIRPF
+      art. 42 and RIRPF art. 45, both on *comedores de empresa* — the
+      in-kind-income exemption for company canteens — never in a fee
+      schedule. A wider corpus would not change this: the fee is set by
+      regional and municipal calls that the state bulletin never carries.
     targets:
       - euromod://ES/xcc_es/def_const/$xcc_amt
       - euromod://ES/xcc_es/def_const/$xccdc_amt1
@@ -52,6 +72,26 @@ source_type:
       - euromod://ES/xcc_es/def_const/$xccdc_lim1
       - euromod://ES/xcc_es/def_const/$xccdc_lim2
       - euromod://ES/xcc_es/def_const/$xccdc_lim3
+
+  - type: national_team
+    note: >-
+      Technical modelling constants, set by the national team and stated by no
+      act. $bsa00_BCA_rate is the initialisation value of the Benefit
+      Calibration Adjustment rate for the Ingreso Mínimo Vital — fixed at 1 and
+      marked "DO NOT CHANGE" in the modeller comment, with the operative rate
+      computed by the BCA extension from the External Statistics table, not
+      from Ley 19/2021. $ImputedWage is a binary switch (0 = inverted wages,
+      1 = imputed wages) selecting how EUROMOD reconstructs a claimant's prior
+      contribution base for bunct_es, a data-imputation choice forced by
+      EU-SILC. Both are 100% modelling; left unflagged, every run would hunt
+      the BOE for a "rate" and a "wage" that no legislator ever wrote.
+      The extensions' sibling constants named in the Country Report
+      ($bsa00_BTA_rate, $bsarg_BTA_rate, $bsarg_BCA_rate, $bwrls_BTA_rate)
+      live in the extension files and are absent from the export, so they
+      cannot be listed here — re-check after any new export.
+    targets:
+      - euromod://ES/ConstDef_es/def_const/$bsa00_BCA_rate
+      - euromod://ES/ConstDef_es/def_const/$ImputedWage
 
   - type: national_team
     note: >-
@@ -260,3 +300,22 @@ source_type:
       - euromod://ES/tco_es/def_const/$tco_t_red3
       - euromod://ES/tco_es/def_const/$tco_t_std
       - euromod://ES/tco_es/def_const/$tco_t_zero
+
+unit:
+  - unit: "/1"
+    note: >-
+      $bsa00_BCA_rate is delivered with unit `months`, an enrichment slip: it is
+      a calibration *rate* (value 1, combined by a minimum operation with
+      $bsa00_BTA_rate), not a duration. The unit is a hint on every LLM call —
+      the proposal prompt normalises percentages against it and the critique
+      range-checks with it — so `months` would invite a proposal in months for
+      a dimensionless quantity. Otherwise the ES export's units are sound:
+      unlike FR, IE and LT it already ships every rate-like constant as `/1`
+      (checked 2026-09-08 — the only ES parameter matching *rate|share|coef*
+      and delivered as currency is $uprate_bands_2013_lim, which really is
+      1000 EUR/month). Left out on purpose: $ImputedWage, a 0/1 switch
+      delivered as `currency/month`. It is not a fraction either, and no unit
+      in the export's vocabulary fits a boolean — a separate item for the
+      economists, like the LT multipliers and durations.
+    targets:
+      - euromod://ES/ConstDef_es/def_const/$bsa00_BCA_rate
