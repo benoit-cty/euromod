@@ -4,7 +4,7 @@
     "model_target": "euromod://IE/txcin_ie/def_const/$txcin_rate3",
     "spine_order": "24",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {},
     "short_label": {

@@ -4,7 +4,7 @@
     "model_target": "euromod://IE/ConstDef_ie/def_const/$tin_high_rate",
     "spine_order": "3",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "Income tax: higher tax rate"

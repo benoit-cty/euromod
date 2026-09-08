@@ -4,7 +4,7 @@
     "model_target": "euromod://LT/ConstDef_lt/def_const/$tinta_basic_WithdRate_Higher",
     "spine_order": "3",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "basic allowance: the withdraw rate of basic allowance for people with income below $tinta_basic_thres"

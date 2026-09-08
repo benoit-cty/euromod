@@ -4,7 +4,7 @@
     "model_target": "euromod://IE/tscee_ie/def_const/$tscee_prsiA_rate1",
     "spine_order": "19",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "Employee PRSI Class A- Rate 1"

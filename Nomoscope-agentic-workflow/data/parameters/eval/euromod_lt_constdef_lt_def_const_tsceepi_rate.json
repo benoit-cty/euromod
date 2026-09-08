@@ -4,7 +4,7 @@
     "model_target": "euromod://LT/ConstDef_lt/def_const/$tsceepi_rate",
     "spine_order": "3",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "/1",
     "threshold_unit": null,
     "label": {
       "en": "rate for pension contributions"
