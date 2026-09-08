@@ -162,6 +162,69 @@
           </tbody>
         </table>
       </div>
+      <div class="wide">
+        <h3>Model inputs</h3>
+        <p class="muted note">
+          The two non-legislative inputs each country needs: its EUROMOD Country Report
+          (context for framing and display, never cited as evidence) and the enriched
+          parameter store loaded by <code>ingest-params</code>.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Country Report</th><th>CR chunks</th><th>CR embedded</th><th>CR loaded</th>
+              <th>Enriched parameters</th><th>Values</th><th>Income-year</th><th>Params loaded</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each stats.model_inputs.by_country as row}
+              {@const cr = row.country_report}
+              {@const p = row.parameters}
+              <tr>
+                <td><strong>{row.code}</strong></td>
+                <td>
+                  {#if cr && cr.reports > 0}
+                    <span class="badge pass" title={cr.ids ?? ''}>{cr.ids ?? 'loaded'}</span>
+                  {:else}
+                    <span class="badge pending">missing</span>
+                  {/if}
+                </td>
+                <td>{cr?.chunks ?? 0}</td>
+                <td>
+                  {#if !cr || cr.chunks === 0}
+                    <span class="muted">—</span>
+                  {:else if cr.embedded_chunks === 0}
+                    <span class="badge pending">none</span>
+                  {:else}
+                    {@const pct = Math.round((cr.embedded_chunks / cr.chunks) * 100)}
+                    <span class="badge pass" class:pending={pct < 100}>{cr.embedded_chunks} ({pct}%)</span>
+                  {/if}
+                </td>
+                <td class="muted">{cr?.ingested_on ?? '—'}</td>
+                <td>
+                  {#if p}
+                    <span class="badge pass" title={p.source_files ?? ''}>{p.parameters}</span>
+                  {:else if !stats.model_inputs.params_schema}
+                    <span class="badge pending">no params schema</span>
+                  {:else}
+                    <span class="badge pending">missing</span>
+                  {/if}
+                </td>
+                <td>{p?.model_values ?? '—'}</td>
+                <td>{p ? p.income_year : '—'}</td>
+                <td class="muted">{p?.ingested_on ?? '—'}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+        {#if !stats.model_inputs.params_schema}
+          <p class="muted note">
+            The <code>params</code> schema does not exist in this database — run
+            <code>nomoscope-workflow init-param-db</code>, then <code>ingest-params</code>.
+          </p>
+        {/if}
+      </div>
       <div>
         <h3>Embedding models</h3>
         <table>
@@ -297,6 +360,8 @@
   }
   .num { font-size: 1.4rem; font-weight: 700; }
   .tables { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+  .tables .wide { grid-column: 1 / -1; }
+  .note { margin: 0 0 0.4rem; font-size: 0.82rem; }
   .search-form { display: flex; flex-direction: column; gap: 0.65rem; }
   .search-query input { min-height: 2.35rem; }
   .search-options { display: flex; gap: 0.75rem; align-items: end; flex-wrap: wrap; }

@@ -9,7 +9,9 @@ fn connect(db_url: &str) -> Result<Client, String> {
     Client::connect(db_url, NoTls).map_err(|e| format!("DB connection failed: {e}"))
 }
 
-/// Corpus totals, per-jurisdiction breakdown and embedding coverage.
+/// Corpus totals, per-jurisdiction breakdown, embedding coverage and the
+/// per-country readiness of the two non-legislative inputs (Country Report,
+/// enriched parameter store).
 pub fn stats(db_url: &str) -> Result<Value, String> {
     let mut client = connect(db_url)?;
 
@@ -68,6 +70,111 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
         )
         .map_err(|e| e.to_string())?;
 
+    // Non-legislative inputs the pipeline needs beside the law corpus: the
+    // EUROMOD Country Report (instrument_type = 'country_report', a separate
+    // corpus class excluded from evidence retrieval) and the enriched
+    // parameter store loaded by `ingest-params`. Shown per country so a
+    // missing one is visible before a run silently under-performs.
+    let country_reports = client
+        .query(
+            "SELECT j.code,
+                    count(DISTINCT i.id)::bigint       AS reports,
+                    count(DISTINCT c.id)::bigint       AS chunks,
+                    count(DISTINCT e.chunk_id)::bigint AS embedded_chunks,
+                    max(i.created_at)::date::text      AS ingested_on,
+                    string_agg(DISTINCT i.national_id, ', ') AS ids
+             FROM jurisdictions j
+             LEFT JOIN instruments i         ON i.jurisdiction_id = j.id
+                                            AND i.instrument_type = 'country_report'
+             LEFT JOIN legal_units u         ON u.instrument_id = i.id
+             LEFT JOIN legal_unit_versions v ON v.legal_unit_id = u.id
+             LEFT JOIN unit_texts t          ON t.version_id = v.id
+             LEFT JOIN chunks c              ON c.unit_text_id = t.id
+             LEFT JOIN embeddings e          ON e.chunk_id = c.id
+             GROUP BY j.code ORDER BY j.code",
+            &[],
+        )
+        .map_err(|e| e.to_string())?;
+
+    // The params schema lives in this same DB but is created by
+    // `nomoscope-workflow init-param-db`; absent it, report "not initialised"
+    // rather than failing the whole stats call.
+    let params_schema: bool = client
+        .query_one("SELECT to_regclass('params.parameters') IS NOT NULL", &[])
+        .map_err(|e| e.to_string())?
+        .get(0);
+
+    let params_by_country = if params_schema {
+        client
+            .query(
+                "SELECT p.country,
+                        count(DISTINCT p.id)::bigint AS parameters,
+                        count(v.id)::bigint          AS model_values,
+                        count(DISTINCT p.id) FILTER (WHERE p.temporal_basis = 'income_year')::bigint
+                                                     AS income_year,
+                        max(p.ingested_at)::date::text AS ingested_on,
+                        string_agg(DISTINCT p.source_file, ', ') AS source_files
+                 FROM params.parameters p
+                 LEFT JOIN params.model_values v ON v.parameter_id = p.id
+                 GROUP BY p.country ORDER BY p.country",
+                &[],
+            )
+            .map_err(|e| e.to_string())?
+    } else {
+        Vec::new()
+    };
+
+    // Merge on country code, keyed off the jurisdictions list so a country
+    // with neither input still shows a row.
+    let mut inputs: Vec<Value> = country_reports
+        .iter()
+        .map(|r| {
+            let code = r.get::<_, String>("code");
+            let p = params_by_country
+                .iter()
+                .find(|pr| pr.get::<_, String>("country") == code);
+            json!({
+                "code": code,
+                "country_report": {
+                    "reports": r.get::<_, i64>("reports"),
+                    "chunks": r.get::<_, i64>("chunks"),
+                    "embedded_chunks": r.get::<_, i64>("embedded_chunks"),
+                    "ingested_on": r.get::<_, Option<String>>("ingested_on"),
+                    "ids": r.get::<_, Option<String>>("ids"),
+                },
+                "parameters": p.map(|pr| json!({
+                    "parameters": pr.get::<_, i64>("parameters"),
+                    "model_values": pr.get::<_, i64>("model_values"),
+                    "income_year": pr.get::<_, i64>("income_year"),
+                    "ingested_on": pr.get::<_, Option<String>>("ingested_on"),
+                    "source_files": pr.get::<_, Option<String>>("source_files"),
+                })),
+            })
+        })
+        .collect();
+
+    // Parameters ingested for a country that has no jurisdictions row yet.
+    let known: Vec<String> = country_reports
+        .iter()
+        .map(|r| r.get::<_, String>("code"))
+        .collect();
+    for pr in params_by_country
+        .iter()
+        .filter(|pr| !known.contains(&pr.get::<_, String>("country")))
+    {
+        inputs.push(json!({
+            "code": pr.get::<_, String>("country"),
+            "country_report": null,
+            "parameters": {
+                "parameters": pr.get::<_, i64>("parameters"),
+                "model_values": pr.get::<_, i64>("model_values"),
+                "income_year": pr.get::<_, i64>("income_year"),
+                "ingested_on": pr.get::<_, Option<String>>("ingested_on"),
+                "source_files": pr.get::<_, Option<String>>("source_files"),
+            },
+        }));
+    }
+
     Ok(json!({
         "totals": {
             "jurisdictions": totals.get::<_, i64>("jurisdictions"),
@@ -104,6 +211,10 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
             "is_default": r.get::<_, bool>("is_default"),
             "embedded_chunks": r.get::<_, i64>("embedded_chunks"),
         })).collect::<Vec<_>>(),
+        "model_inputs": {
+            "params_schema": params_schema,
+            "by_country": inputs,
+        },
     }))
 }
 
