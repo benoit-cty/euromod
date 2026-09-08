@@ -26,6 +26,11 @@ class UrlSource:
     what its ids look like and which URLs are not one document are adapter
     facts. `core/routing.py` reads these and knows no country: adding a sixth
     member state stays an adapter, not an edit to the router.
+
+    The Nomoscope gap-fill scout (`nomoscope_workflow.scout.COUNTRY_SOURCES`)
+    keeps its own copy of `domains` and `id_pattern` — it cannot import them,
+    since that package must not depend on this one — so changing either here
+    means changing it there. `tests/test_routing.py` fails when they diverge.
     """
 
     #: What to call the source when telling the reviewer we recognised it.

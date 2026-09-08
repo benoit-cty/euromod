@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import ast
 from datetime import date
 from pathlib import Path
+
+import pytest
 
 from nomoscope_workflow import mock, queue_store
 from nomoscope_workflow.query_encoder import embedding_process
@@ -401,6 +404,62 @@ def test_scout_fr_ids_still_exclude_whole_codes():
         "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051521140"
     ) == ["LEGIARTI000051521140"]
     assert pattern.findall("https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006069577") == []
+
+
+def _adapter_url_source(adapter: Path) -> tuple[tuple[str, ...], str]:
+    """The (domains, id_pattern source) one ingest adapter declares.
+
+    Read out of the adapter's syntax tree rather than imported: `nomoscope_workflow`
+    must not depend on `nomotheca_ingest` (see the test below), so the package is
+    not installed in this environment — only its source tree is on disk.
+    """
+    tree = ast.parse(adapter.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        call = getattr(node, "value", None)
+        if isinstance(call, ast.Call) and getattr(call.func, "id", "") == "UrlSource":
+            fields = {kw.arg: kw.value for kw in call.keywords}
+            # id_pattern is always `re.compile(r"...")`; take the raw source so
+            # the comparison is on the pattern text, not on a compiled object.
+            return tuple(ast.literal_eval(fields["domains"])), fields["id_pattern"].args[0].value
+    raise AssertionError(f"{adapter} declares no UrlSource")
+
+
+def test_scout_portal_facts_still_match_the_adapters_that_own_them():
+    """`domains` and `id_pattern` are copied from the ingester — check the copy.
+
+    Which domains a member state publishes on and what its national ids look
+    like are adapter facts: the ingester declares them as a
+    `countries.base.UrlSource` and routes pasted URLs with them. The scout needs
+    the same two facts one step earlier (restrict the web search to official
+    domains, harvest ids out of the result URLs), and cannot share the
+    declaration: the dependency between the two packages runs one way only —
+    `nomotheca-ingest` may import `nomoscope-agentic-workflow` (its optional
+    `translate` extra), never the reverse — and the scout reaches the ingester
+    by subprocess precisely to keep it that way.
+
+    So the table is duplicated on purpose, and this is what makes the two
+    disagree loudly instead of silently. It reads the adapter's source text, so
+    it runs in the default environment with the ingest package uninstalled; the
+    mirror image lives in the ingest suite (`tests/test_routing.py`), because
+    each suite has to catch the edit made on its own side.
+    """
+    from nomoscope_workflow.query_encoder import ingest_dir
+    from nomoscope_workflow.scout import COUNTRY_SOURCES
+
+    directory = ingest_dir()
+    if directory is None:
+        # No ingest checkout, so no adapters to disagree with — and a scout with
+        # nothing to ingest into cannot gap-fill at all.
+        pytest.skip("no Nomotheca-RAG/ingest checkout next to this package")
+
+    for country, rules in COUNTRY_SOURCES.items():
+        adapter = directory / "src" / "nomotheca_ingest" / "countries" / country.lower() / "adapter.py"
+        assert adapter.is_file(), f"{country} is in COUNTRY_SOURCES but has no adapter to ingest it"
+        domains, id_pattern = _adapter_url_source(adapter)
+        assert tuple(rules["domains"]) == domains, f"{country}: scout domains differ from {adapter}"
+        assert rules["id_pattern"].pattern == id_pattern, (
+            f"{country}: scout id_pattern differs from {adapter}"
+        )
 
 
 def _ingest_package(tmp_path: Path, *, cuda: bool) -> Path:

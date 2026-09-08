@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import ast
 import re
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
@@ -187,6 +189,81 @@ def test_a_portal_declared_by_an_adapter_is_all_the_router_needs() -> None:
         "XX",
         "XX-2025-17",
     )
+
+
+def _scout_module() -> Path | None:
+    """Locate the Nomoscope scout's source file, if that package is checked out."""
+    for ancestor in Path(__file__).resolve().parents:
+        candidate = (
+            ancestor
+            / "Nomoscope-agentic-workflow"
+            / "pipeline"
+            / "src"
+            / "nomoscope_workflow"
+            / "scout.py"
+        )
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _scout_portals(scout: Path) -> dict[str, tuple[tuple[str, ...], str]]:
+    """`scout.COUNTRY_SOURCES`, reduced to the two facts the adapters also state.
+
+    Read out of the syntax tree, not imported: `nomoscope_workflow` is only
+    installed here under the optional `translate` extra, and a check that runs
+    solely in an environment nobody syncs by default is no check at all.
+    """
+    tree = ast.parse(scout.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        target = getattr(node, "target", None)
+        if getattr(target, "id", "") == "COUNTRY_SOURCES":
+            table = node.value
+            break
+    else:
+        raise AssertionError(f"{scout} declares no COUNTRY_SOURCES")
+    portals = {}
+    for country, rules in zip(table.keys, table.values):
+        by_key = {key.value: value for key, value in zip(rules.keys, rules.values)}
+        portals[country.value] = (
+            tuple(ast.literal_eval(by_key["domains"])),
+            # Always `re.compile(r"...")`; compare the pattern text.
+            by_key["id_pattern"].args[0].value,
+        )
+    return portals
+
+
+def test_the_nomoscope_scout_copies_these_portals_without_altering_them() -> None:
+    """The gap-fill scout keeps its own copy of `domains` and `id_pattern`.
+
+    It has to: the dependency between the two packages runs one way only —
+    `nomotheca-ingest` may import `nomoscope-agentic-workflow` (the optional
+    `translate` extra), never the reverse — and the workflow reaches this
+    package by subprocess to keep it that way. So the scout restricts its web
+    search and harvests instrument ids from result URLs using a hand-kept copy
+    of what the adapters declare here, and drift breaks it in the worst way: it
+    would harvest ids this package then refuses to fetch.
+
+    The adapter is the original — it is what actually fetches the act — so this
+    is the direction that matters when an adapter changes. The mirror image
+    lives in the workflow's own suite, which is what catches an edit made to
+    the scout; neither suite can see both files' edits on its own.
+    """
+    scout = _scout_module()
+    if scout is None:
+        pytest.skip("no Nomoscope-agentic-workflow checkout next to this package")
+
+    portals = _scout_portals(scout)
+    declared = url_sources()
+    for country, (domains, id_pattern) in portals.items():
+        assert country in declared, f"the scout hunts {country} ids that no adapter can fetch"
+        # A country here but not in the scout is fine and deliberate: it simply
+        # never gap-fills (`no scout source rules for <CC>`), which is a missing
+        # feature, not a contradiction.
+        assert declared[country].domains == domains, f"{country}: scout domains differ from {scout}"
+        assert declared[country].id_pattern.pattern == id_pattern, (
+            f"{country}: scout id_pattern differs from {scout}"
+        )
 
 
 def test_the_resolver_result_carries_an_id_and_a_tier_and_nothing_else() -> None:

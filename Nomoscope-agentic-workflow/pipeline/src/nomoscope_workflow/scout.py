@@ -46,9 +46,22 @@ EMBED_TIMEOUT = int(os.environ.get("WORKFLOW_SCOUT_EMBED_TIMEOUT", "1800"))
 # Per-country discovery rules: the official domains web search is restricted
 # to, and the id shapes the archive-first ingester can fetch directly.
 #
+# The first two are a DELIBERATE COPY of what each ingest adapter declares as
+# its `countries.base.UrlSource` — the same domains and the same id regex the
+# ingester's URL router uses. Nothing imports them across: the dependency
+# between the two packages runs one way only (nomotheca-ingest may import this
+# package, as its optional `translate` extra; never the reverse), which is why
+# the scout reaches the ingester by subprocess. A copy guarantees nothing on its
+# own, so two tests hold it in place — one per suite, because each catches the
+# edit made on its own side:
+#   tests/test_workflow.py::test_scout_portal_facts_still_match_the_adapters_that_own_them
+#   Nomotheca-RAG/ingest/tests/test_routing.py::test_the_nomoscope_scout_copies_these_portals_without_altering_them
+# Change a domain or an id shape here and you must change the adapter too.
+#
 # Keys:
-#   domains      — official domains the web search is restricted to
-#   id_pattern   — id shapes harvested from result URLs and from the LLM's answer
+#   domains      — official domains the web search is restricted to (adapter's)
+#   id_pattern   — id shapes harvested from result URLs and from the LLM's
+#                  answer (adapter's; it is also what `cli instrument` accepts)
 #   act_kinds    — the country's own words for the acts that fix values (prompt)
 #   ingest_suffix— appended to a bare id to make it what the ingester should fetch
 #   known_key    — instruments.metadata key holding this id, when national_id is
