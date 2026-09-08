@@ -277,59 +277,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nomotheca-legislation-ingest"
-version = "0.1.0"
-source = { editable = "../Nomotheca-RAG/ingest" }
-dependencies = [
-    { name = "httpx" },
-    { name = "psycopg", extra = ["binary"] },
-    { name = "pydantic" },
-    { name = "pytest" },
-    { name = "tenacity" },
-    { name = "textual" },
-    { name = "typer" },
-]
-
-[package.optional-dependencies]
-embeddings = [
-    { name = "sentence-transformers", extra = ["openvino"] },
-    { name = "torch", version = "2.13.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "nomoscope-agentic-workflow", marker = "extra == 'translate'", editable = "../Nomoscope-agentic-workflow/pipeline" },
-    { name = "httpx", specifier = ">=0.27" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
-    { name = "pydantic", specifier = ">=2.8" },
-    { name = "pytest", specifier = ">=9.1.1" },
-    { name = "sentence-transformers", extras = ["openvino"], marker = "extra == 'embeddings'", specifier = ">=3.0" },
-    { name = "tenacity", specifier = ">=8.5" },
-    { name = "textual", specifier = ">=0.86" },
-    { name = "torch", marker = "extra == 'embeddings'", specifier = ">=2.13.0", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "typer", specifier = ">=0.12" },
-]
-provides-extras = ["embeddings", "translate"]
-
-[[package]]
-name = "nomotheca-legislation-mcp"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "nomotheca-legislation-ingest", extra = ["embeddings"] },
-    { name = "mcp", extra = ["cli"] },
-    { name = "psycopg", extra = ["binary"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "nomotheca-legislation-ingest", extras = ["embeddings"], editable = "../Nomotheca-RAG/ingest" },
-    { name = "mcp", extras = ["cli"], specifier = ">=1.28,<2" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
-]
-
-[[package]]
 name = "filelock"
 version = "3.29.7"
 source = { registry = "https://pypi.org/simple" }
@@ -729,6 +676,61 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/af/8a/17121c8cfa07afb56461556501919d69bf4bf76ed1c34c4f90663414a923/nncf-3.2.0.tar.gz", hash = "sha256:5dd42d80d0dd8faa316cfb7773defc70f76d9be6e9829005904580391660f4db", size = 558933, upload-time = "2026-06-01T09:20:30.91Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a9/ff/7dc1fa2695317bc084886d166e4e5865537dc7fa5891cf069d0ace8e6a80/nncf-3.2.0-py3-none-any.whl", hash = "sha256:53a52cb2621ed1f786848046a1d9b7fe7ebc31bc927eeeb0ef599ab5fcc98632", size = 801078, upload-time = "2026-06-01T09:20:28.871Z" },
+]
+
+[[package]]
+name = "nomotheca-legislation-ingest"
+version = "0.1.0"
+source = { editable = "../Nomotheca-RAG/ingest" }
+dependencies = [
+    { name = "httpx" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "pydantic" },
+    { name = "pytest" },
+    { name = "tenacity" },
+    { name = "textual" },
+    { name = "typer" },
+]
+
+[package.optional-dependencies]
+embeddings = [
+    { name = "sentence-transformers", extra = ["openvino"] },
+    { name = "torch", version = "2.13.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "nomoscope-agentic-workflow", marker = "extra == 'translate'", editable = "../Nomoscope-agentic-workflow/pipeline" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
+    { name = "pydantic", specifier = ">=2.8" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "sentence-transformers", extras = ["openvino"], marker = "extra == 'embeddings'", specifier = ">=3.0" },
+    { name = "sentence-transformers", extras = ["openvino"], marker = "extra == 'embeddings-cuda'", specifier = ">=3.0" },
+    { name = "tenacity", specifier = ">=8.5" },
+    { name = "textual", specifier = ">=0.86" },
+    { name = "torch", marker = "extra == 'embeddings'", specifier = ">=2.13.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "nomotheca-legislation-ingest", extra = "embeddings" } },
+    { name = "torch", marker = "extra == 'embeddings-cuda'", specifier = ">=2.13.0", index = "https://download.pytorch.org/whl/cu126", conflict = { package = "nomotheca-legislation-ingest", extra = "embeddings-cuda" } },
+    { name = "typer", specifier = ">=0.12" },
+]
+provides-extras = ["embeddings", "embeddings-cuda", "translate"]
+
+[[package]]
+name = "nomotheca-legislation-mcp"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "mcp", extra = ["cli"] },
+    { name = "nomotheca-legislation-ingest", extra = ["embeddings"] },
+    { name = "psycopg", extra = ["binary"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "mcp", extras = ["cli"], specifier = ">=1.28,<2" },
+    { name = "nomotheca-legislation-ingest", extras = ["embeddings"], editable = "../Nomotheca-RAG/ingest" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
 ]
 
 [[package]]
