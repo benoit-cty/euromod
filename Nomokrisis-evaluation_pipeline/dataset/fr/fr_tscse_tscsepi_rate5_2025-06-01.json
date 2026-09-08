@@ -17,7 +17,8 @@
     ]
   },
   "corpus_available": true,
-  "verified": false,
+  "verified": true,
   "drafted_by": "openfisca@a7038ee",
-  "notes": "openfisca: prelevements_sociaux.cotisations_taxes_independants_artisans_commercants.ret_ac.tous_independants.tout_salaire | openfisca value at 2025-06-01: 0.0072 (change point 2025-01-01) | euromod value in force at 2025-06-01: 0.006 from 2017-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Décret n° 2024-688 du 5 juillet 2024, art. 3 [LEGIARTI000049896846] not in the corpus (not scorable)"
+  "notes": "openfisca: prelevements_sociaux.cotisations_taxes_independants_artisans_commercants.ret_ac.tous_independants.tout_salaire | openfisca value at 2025-06-01: 0.0072 (change point 2025-01-01) | euromod value in force at 2025-06-01: 0.006 from 2017-01-01 | link: fingerprint score 1.00 | references not resolved in the legislation corpus: Décret n° 2024-688 du 5 juillet 2024, art. 3 [LEGIARTI000049896846] not in the corpus (not scorable)",
+  "reviewed_by": "ben"
 }
