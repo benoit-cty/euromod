@@ -1,0 +1,25 @@
+{
+  "id": "es_tin_wkintc_amt_2025-06-01",
+  "country": "ES",
+  "language": "es",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_es_tin_cons_es_def_const_tin_wkintc_amt.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [
+    "budget_act_window"
+  ],
+  "labels_drafted": false,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "340#y",
+    "valid_from": "2025-01-01",
+    "citations": [
+      "LIRPF Disposición adicional sexagésima primera"
+    ]
+  },
+  "corpus_available": true,
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: es.json#tin_wkintc_amt | euromod value in force at 2025-06-01: 340.0 from 2025-01-01 | HARD / budget_act_window — the new 2025 deducción por obtención de rendimientos del trabajo: 340 euros anuales for earnings up to 16.576, tapering to zero at 18.276 (the Country Report's 'new base deduction'). Stated verbatim in LIRPF DA 61.ª — but that provision was ADDED by Ley 5/2025 of 24 July (BOE-A-2025-15424, DF 3) 'con efectos de 1 de enero de 2025': the corpus version starts 2025-07-26, so at as_of 2025-06-01 no version is in force and point-in-time retrieval cannot reach it. Today the honest outcome is not_found (or provisional), which is the hazard's definition: the value is only final once the enacting act passes. ROUTING once retrievable: EUROMOD carries 340 from 2025-01-01 -> `unchanged`. Flip: retrieval that admits a later-enacted version whose stated effect date covers as_of (BOE's amendment trail states it in prose), or an as_of after 26 July. Note the 2026 version (from 2026-02-20) raises it to 590,89 — a ready-made `changed` case for --year 2026 against the 2025 export."
+}

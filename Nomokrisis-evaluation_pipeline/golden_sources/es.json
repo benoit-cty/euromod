@@ -1,0 +1,187 @@
+{
+  "country": "ES",
+  "language": "es",
+  "corpus": "curated",
+  "description": "Hand-curated core of the ES golden set: 12 parameters in increasing pipeline difficulty, from the personal minimum (the happy path) to cases the current pipeline cannot solve by design (a deliberately frozen constant, statistics-based parameters), so that future improvements show up as KPI deltas. Spain has no OpenFisca corpus in the store, so like IE and LT there is no corpus drafter: expected values are hand-curated here from the six ingested acts (LIRPF, RIRPF, LGSS, Ley IMV, RD 87/2025, DL 1/2011 Galicia), every one located in the corpus at as_of 2025-06-01 before being written down, and every drafted case stays verified:false until a human confirms it. See golden_set_ES.md for the rationale per entry.",
+  "conventions": {
+    "temporal_basis": "All ES parameters are in_force: the IRPF período impositivo is the calendar year, so EUROMOD system year Y states the law of year Y — no FR-style income-year offset. Recorded in curation/ES.curation.yaml rather than derived.",
+    "effect_date": "expected_valid_from is the fiscal effect date, not BOE's fecha_vigencia. The savings scale's current version starts 2024-12-22 (Ley 7/2024 entered into force) but applies 'con efectos desde el 1 de enero de 2025'; the 2025 work credit's version starts 2025-07-26 (Ley 5/2025) with effect from 1 January 2025. The effect date is stated in prose in BOE's amendment trail at the end of each version's text.",
+    "state_vs_total": "LIRPF splits the PIT between a state scale and an autonomous-community scale. Art. 63/66 state the STATE half (top savings rate 15 %), art. 74/76 the regional half (another 15 %); the Country Report's '30 %' is the sum. EUROMOD's *_natrate* constants hold the state half and *_ratrate*/*_totrate* the sum. Every rate entry says which one it is.",
+    "expected_value": "Hand-curated ground truth from the acts (the LAW's value, located in the corpus), in EUROMOD's own spelling ('5550#y', 0.0013). Where it deliberately differs from EUROMOD's stored value the note says why and the difference is reported to the economists team, never absorbed. null means the value leg is not scored for this case.",
+    "routing": "The routing a correct pipeline owes, which is the pipeline's own question: does the proposal differ from the value EUROMOD CURRENTLY HOLDS? It is not 'did the law change this year?'. The system-year 2025 export already encodes the 2025 law (the new 15 % savings band, the 0.13-point MEI, the 340 EUR work credit), so those route `unchanged` — the pipeline's job there is to re-confirm them with a citation. Reserve `changed` for parameters where EUROMOD is genuinely stale relative to the law. Prefer leaving `routing:` out and letting route_against_current decide; state it only to pin a routing trap (derived, national_team_source). A stated routing that contradicts route_against_current SKIPS the entry.",
+    "source": "Every entry resolves through the parameter store: `model_target` for a single parameter in params.parameters, `group_id` for a bracket schedule assembled from params.parameter_groups. No entry reads a hand-authored parameter file.",
+    "citations": "Spelled exactly as legal_units.citation stores them, bytes included: the Ley IMV units carry a NON-BREAKING SPACE between 'Artículo' and the number ('Ley IMV Artículo\\u00a013'), the LIRPF and LGSS units a plain space. citation_matches is one-way containment, so a plain-space spelling of the IMV citation can never match. Check a new citation with `SELECT encode(convert_to(citation,'UTF8'),'hex') FROM legal_units WHERE …` before relying on it."
+  },
+  "entries": [
+    {
+      "model_target": "euromod://ES/tin_cons_es/def_const/$tin_perall_amt1",
+      "id": "tin_perall_amt1",
+      "source_class": "codified_law",
+      "expected_value": "5550#y",
+      "citations": [
+        "LIRPF Artículo 57"
+      ],
+      "corpus_available": true,
+      "note": "EASY — the personal minimum (mínimo del contribuyente), 5.550 euros anuales, stated verbatim in LIRPF art. 57.1 (Ley 35/2006, BOE-A-2006-20764), unchanged since the 2015 reform. The ES happy path: one ingested article, one literal amount, no regional layer (the regional minima are separate *rg* parameters). ROUTING: EUROMOD holds 5550 -> `unchanged`; the case scores value, citation and retrieval."
+    },
+    {
+      "model_target": "euromod://ES/tin_cons_es/def_const/$tin_capinc_natrate5",
+      "id": "tin_capinc_natrate5",
+      "source_class": "codified_law",
+      "expected_value": 0.15,
+      "citations": [
+        "LIRPF Artículo 66"
+      ],
+      "corpus_available": true,
+      "note": "EASY-MEDIUM — the STATE savings rate above 300.000 euros, 15 % in the art. 66.1 scale (version [2024-12-22,), Ley 7/2024, effects 1 January 2025). This is the state-vs-total trap: the same article's paragraph 2 (residents abroad) carries the full 30 % scale, art. 76 carries the regional 15 %, and the Country Report speaks of '28 % -> 30 %'. EUROMOD's natrate5 is the state half: a proposal of 0.30 here is a wrong value with a plausible citation. ROUTING: the 2025 export already carries 0.15 -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://ES/ConstDef_es/def_const/$tscft_ee_rate4",
+      "id": "constdef_tscft_ee_rate4",
+      "source_class": "codified_law",
+      "expected_value": 0.0013,
+      "citations": [
+        "LGSS Disposición transitoria cuadragésima tercera"
+      ],
+      "hazards": [
+        "unit_conversion"
+      ],
+      "corpus_available": true,
+      "note": "MEDIUM — the worker's share of the Intergenerational Equity Mechanism (MEI) for 2025. LGSS DT 43.ª (RDL 8/2015, BOE-A-2015-11724, as amended by RDL 2/2023) states a year-by-year schedule in PERCENTAGE POINTS: 'En el año 2025, será de 0,80 puntos porcentuales, de los que el 0,67 corresponderá a la empresa y el 0,13 al trabajador'. Two hazards in one provision: the pipeline must pick the 2025 row out of a 2023-2050 table, and read '0,13 puntos' as the fraction 0.0013 (unit /1) — hence hazard unit_conversion, which the label drafter cannot see. ROUTING: EUROMOD carries 0.0013 from 2025-01-01 -> `unchanged` (the 2024 value was 0.0012; a 'changed' verdict here is the last-year's-law mistake)."
+    },
+    {
+      "model_target": "euromod://ES/tin_cons_es/def_const/$tin_capinc_ratrate5",
+      "id": "tin_capinc_ratrate5",
+      "difficulty": "combine",
+      "source_class": "codified_law",
+      "expected_value": 0.3,
+      "citations": [
+        "LIRPF Artículo 66",
+        "LIRPF Artículo 76"
+      ],
+      "corpus_available": true,
+      "note": "MEDIUM-HARD / combine — the TOTAL savings rate above 300.000 euros. No article states 30 % for residents: art. 66.1 gives the state scale (15 % top band) and art. 76 the autonomous-community scale (another 15 %), and the total is their sum — the Country Report's '30 %'. The only place 30 appears in art. 66 is paragraph 2, the scale for taxpayers resident abroad, which is the near-miss citation a retrieval-first pipeline will land on. Difficulty is set explicitly: both provisions are in the same instrument, so the drafter would call it verbatim. ROUTING: EUROMOD carries 0.30 from 2025-01-01 -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://ES/bsa00_es/def_const/$bsa00_amt",
+      "id": "bsa00_amt",
+      "difficulty": "combine",
+      "source_class": "codified_law",
+      "expected_value": "7905.80#y",
+      "expected_valid_from": "2025-01-01",
+      "citations": [
+        "Ley IMV Artículo 13"
+      ],
+      "hazards": [
+        "cross_instrument"
+      ],
+      "corpus_available": true,
+      "note": "HARD / combine + cross_instrument — the Ingreso Mínimo Vital guaranteed income for a one-person household. Ley 19/2021 art. 13.2 a) (BOE-A-2021-21007) fixes it BY REFERENCE: 'la cuantía mensual de renta garantizada ascenderá al 100 por ciento del importe anual de las pensiones no contributivas fijadas anualmente en la Ley de Presupuestos Generales del Estado, dividido por doce'. The euro amount lives in a second instrument — the 2025 pension revalorisation (non-contributory pensions +9 %, to 7.905,80 euros/year, which is also EUROMOD's own $poanc_amt) — that is NOT ingested, so the pipeline must read the coefficient in the corpus and resolve the base outside it, exactly the FR '$PSS * 4' shape without the $-reference. VALUE: the law's 7905.80#y. EUROMOD stores 7905.72 (= 658.81 x 12, a monthly figure truncated to the cent then annualised), 8 cents below the law: kept as a real difference on the IE 27 382/27 383 precedent (the 1e-6 tolerance sees it), reported to the economists team, not absorbed. ROUTING: computed -> `changed`. Flip to green: ingest the 2025 revalorisation instrument (RDL 1/2025 of 28 January, to be confirmed at verification), after which the case is combine over two ingested acts."
+    },
+    {
+      "model_target": "euromod://ES/ConstDef_es/def_const/$tscft_ee_rate5",
+      "id": "constdef_tscft_ee_rate5",
+      "difficulty": "derive",
+      "source_class": "codified_law",
+      "expected_value": 0.0015,
+      "citations": [
+        "LGSS Artículo 19 bis",
+        "LGSS Disposición transitoria cuadragésima segunda"
+      ],
+      "hazards": [
+        "cross_instrument"
+      ],
+      "corpus_available": true,
+      "note": "HARD / derive — the worker's share of the new additional solidarity contribution (cotización adicional de solidaridad), first band, 2025. The first scorable derive case in any country: nothing in the corpus states 0.15 %. LGSS art. 19 bis (in force 2025-01-01) creates the contribution and says its employer/worker split 'mantendrá la misma proporción que la distribución del tipo de cotización por contingencias comunes'; DT 42.ª gives the 2025 total for the first band, 0,92 %. The worker's share is therefore 0.92 x 4.70 / 28.30 = 0.1528 % — and the value the Tesorería publishes and EUROMOD holds is the rounded 0,15 % (employer 0,77 %). Three things to get right: two provisions, an arithmetic derivation, and the contingencias-comunes split (23,60 / 4,70), which is fixed each year by the Orden de cotización (not ingested) — hence cross_instrument, although EUROMOD's own $tscft_ee_rate1 / $tscft_er_rate1 carry the same split. ROUTING: EUROMOD carries 0.0015 from 2025-01-01 -> `unchanged`. Flip: ingesting the Orden de cotización 2025 (Orden PJC/178/2025) turns this into a verbatim case — that is fine, the derive rung then needs a new occupant. A proposal of 0.001528 is the honest unrounded derivation and scores as a value miss: if that happens, the finding is about the scorer's rounding convention, not the model."
+    },
+    {
+      "model_target": "euromod://ES/ConstDef_es/def_const/$tscag_ee_rate5",
+      "id": "constdef_tscag_ee_rate5",
+      "difficulty": "derive",
+      "source_class": "codified_law",
+      "expected_value": null,
+      "routing": "derived",
+      "citations": [
+        "LGSS Artículo 19 bis"
+      ],
+      "corpus_available": true,
+      "note": "DERIVE — EUROMOD holds '$tscft_ee_rate5': the agricultural-regime copy of the solidarity contribution's first-band worker rate, defined by reference to the general-regime constant (ES has 21 such $-references in ConstDef_es). ROUTING: `derived`, not `unchanged` — pipeline._derived_refs short-circuits any parameter whose stored value carries a $-reference straight to Routing.DERIVED, before retrieval and before any LLM call, because the anchor parameter is what legislation sets. expected_value is null (the value leg is not scored): what the case tests is that the pipeline recognises the reference and routes to the anchor instead of hunting the corpus for a rate that is stated nowhere. The anchor is the previous entry, so the two cases together cover reading-and-computing and recognising."
+    },
+    {
+      "group_id": "ES:tin_cons_es:tin_capinc_schedule",
+      "id": "tin_capinc_schedule",
+      "difficulty": "table",
+      "source_class": "codified_law",
+      "expected_value": [
+        {
+          "threshold": 0,
+          "rate": 0.095
+        },
+        {
+          "threshold": 6000,
+          "rate": 0.105
+        },
+        {
+          "threshold": 50000,
+          "rate": 0.115
+        },
+        {
+          "threshold": 200000,
+          "rate": 0.135
+        },
+        {
+          "threshold": 300000,
+          "rate": 0.15
+        }
+      ],
+      "expected_valid_from": "2025-01-01",
+      "citations": [
+        "LIRPF Artículo 66"
+      ],
+      "corpus_available": true,
+      "note": "TABLE — the state savings scale (escala del ahorro, parte estatal) as one bracket-schedule case, assembled from params.parameter_groups ES:tin_cons_es:tin_capinc_schedule. The law (LIRPF art. 66.1, version [2024-12-22,), effects 1 January 2025) has FIVE bands: 9,5 / 10,5 / 11,5 / 13,5 / 15 % with thresholds 6.000 / 50.000 / 200.000 / 300.000. The export's groups block defines only four (natrate1-4, lim1-3) although the fifth band's scalars ($tin_capinc_natrate5 = 0.15 from 2025, $tin_capinc_lim4 = 300000 from 2023) exist in the same export — so the schedule EUROMOD presents as an object is stale by one band. ROUTING: computed -> `changed` (4 brackets against 5). That is a finding about the group definition (enrichment side), reported alongside the value defects; when the groups block is fixed the case flips to `unchanged` and keeps testing every-bracket-right. The general scale (tin_schedule) cannot be a case: its rate scalars are 'n/a' in the export."
+    },
+    {
+      "model_target": "euromod://ES/tin_cons_es/def_const/$tin_wkintc_amt",
+      "id": "tin_wkintc_amt",
+      "source_class": "codified_law",
+      "expected_value": "340#y",
+      "expected_valid_from": "2025-01-01",
+      "citations": [
+        "LIRPF Disposición adicional sexagésima primera"
+      ],
+      "hazards": [
+        "budget_act_window"
+      ],
+      "corpus_available": true,
+      "note": "HARD / budget_act_window — the new 2025 deducción por obtención de rendimientos del trabajo: 340 euros anuales for earnings up to 16.576, tapering to zero at 18.276 (the Country Report's 'new base deduction'). Stated verbatim in LIRPF DA 61.ª — but that provision was ADDED by Ley 5/2025 of 24 July (BOE-A-2025-15424, DF 3) 'con efectos de 1 de enero de 2025': the corpus version starts 2025-07-26, so at as_of 2025-06-01 no version is in force and point-in-time retrieval cannot reach it. Today the honest outcome is not_found (or provisional), which is the hazard's definition: the value is only final once the enacting act passes. ROUTING once retrievable: EUROMOD carries 340 from 2025-01-01 -> `unchanged`. Flip: retrieval that admits a later-enacted version whose stated effect date covers as_of (BOE's amendment trail states it in prose), or an as_of after 26 July. Note the 2026 version (from 2026-02-20) raises it to 590,89 — a ready-made `changed` case for --year 2026 against the 2025 export."
+    },
+    {
+      "model_target": "euromod://ES/ConstDef_es/def_const/$IPREM",
+      "id": "constdef_iprem",
+      "source_class": "gazette",
+      "expected_value": "600#m",
+      "citations": [],
+      "corpus_available": false,
+      "note": "IMPOSSIBLE today / not_found — the IPREM (indicador público de renta de efectos múltiples), 600 euros/month, the base of the unemployment subsidy and of every means test in the LGSS. It is fixed by the annual budget law: last set by Ley 31/2022 (LPGE 2023, disposición adicional 90.ª) and PROROGUED for 2024 and 2025 because no budget law was passed — the LPGE-prorogation trap named in Spain_sources_analysis.md §5.2. The LGSS refers to the IPREM (art. 278: percentages 'del indicador público de rentas de efectos múltiples') but never states its amount, and the LPGE is not among the six ingested acts, so no retrieval can reach the value. The scout is armed for ES (boe.es, BOE-A-YYYY-NNNNN ids, act_kinds including 'ley'); this case is the metric for ingesting the budget law. ROUTING: EUROMOD holds 600 -> computed `unchanged`; today the pipeline answers not_found and the case scores against ingest coverage, not the model."
+    },
+    {
+      "model_target": "euromod://ES/ConstDef_es/def_const/$SMI2",
+      "id": "constdef_smi2",
+      "source_class": "national_team",
+      "expected_value": null,
+      "routing": "national_team_source",
+      "citations": [],
+      "note": "IMPOSSIBLE by design — the refusal case with the law in the corpus. $SMI2 is 'the minimum wage' frozen at its 2018 level (735,90 euros/month) on purpose: it indexes regional minimum-income rules (Aragón's ceiling, the Basque lone-parent complement) that reference the SMI without following its later increases, a national-team modelling choice the parameter's own description records. RD 87/2025 art. 1 (BOE-A-2025-2576, in the corpus: '39,47 euros/día o 1184 euros/mes') is exactly what a pipeline reading 'minimum wage' will find, and 1184 against 735.90 is a confident `changed` — which would be wrong. curation/ES.curation.yaml flags the parameter source_type national_team; the golden case checks the pipeline honours it (`national_team_source`, never a not_found, never an overwrite proposal). Sharper than LT's xcc trap because here the corpus actively offers the wrong answer."
+    },
+    {
+      "model_target": "euromod://ES/xcc_es/def_const/$xcc_amt",
+      "id": "xcc_amt",
+      "source_class": "national_team",
+      "expected_value": null,
+      "routing": "national_team_source",
+      "citations": [],
+      "note": "IMPOSSIBLE by design — the school dining fee (comedor) used as the childcare cost, 96 euros/month. No national act sets it: fees and the means-tested 'becas comedor' discounts are fixed by each autonomous community's (often each municipality's) annual call, and the EUROMOD values are the national team's assumption over those schedules. Confirmed against the corpus: 'comedor' appears only in LIRPF art. 42 (in-kind income). curation/ES.curation.yaml routes the whole xcc_es family national_team, together with the $tco_t_* implicit consumption-tax rates (HBS statistics, IE's tco_ie precedent). Correct behaviour is `national_team_source`; the LT counterpart is xcc_amt1."
+    }
+  ]
+}

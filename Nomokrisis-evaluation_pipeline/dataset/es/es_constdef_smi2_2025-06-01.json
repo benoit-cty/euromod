@@ -1,0 +1,18 @@
+{
+  "id": "es_constdef_smi2_2025-06-01",
+  "country": "ES",
+  "language": "es",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_es_constdef_es_def_const_smi2.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "national_team",
+  "expected": {
+    "routing": "national_team_source",
+    "citations": []
+  },
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: es.json#constdef_smi2 | euromod value in force at 2025-06-01: 735.9 from 2018-01-01 | value leg not scored: the selection states no expected_value (the law's value is not established for this case yet) | IMPOSSIBLE by design — the refusal case with the law in the corpus. $SMI2 is 'the minimum wage' frozen at its 2018 level (735,90 euros/month) on purpose: it indexes regional minimum-income rules (Aragón's ceiling, the Basque lone-parent complement) that reference the SMI without following its later increases, a national-team modelling choice the parameter's own description records. RD 87/2025 art. 1 (BOE-A-2025-2576, in the corpus: '39,47 euros/día o 1184 euros/mes') is exactly what a pipeline reading 'minimum wage' will find, and 1184 against 735.90 is a confident `changed` — which would be wrong. curation/ES.curation.yaml flags the parameter source_type national_team; the golden case checks the pipeline honours it (`national_team_source`, never a not_found, never an overwrite proposal). Sharper than LT's xcc trap because here the corpus actively offers the wrong answer. | drafting warning: value leg not scored (no expected_value in the selection) | drafting warning: no citations: the citation leg is unscored until the source act is ingested"
+}

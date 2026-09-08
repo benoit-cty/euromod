@@ -1,0 +1,95 @@
+{
+  "information": {
+    "country": "ES",
+    "model_target": "euromod://ES/tin_cons_es/def_const/$tin_capinc_natrate5",
+    "spine_order": "38",
+    "value_type": "scalar",
+    "unit": "/1",
+    "threshold_unit": null,
+    "label": {
+      "en": "Capital income taxation: national rate 5"
+    },
+    "short_label": {
+      "en": "$tin_capinc_natrate5"
+    },
+    "description": {
+      "en": "National (state-scale) share of the marginal rate, 15%, that would apply to the top bracket of Spain's savings/capital-income tax scale, above the $tin_capinc_lim4 threshold. Combined with its regional counterpart $tin_capinc_regrate5 (also 15%), it would sum to the 30% total rate stored in $tin_capinc_ratrate5. Defined in tin_cons_es, but — per direct inspection of the ES policy spine — not referenced by the active 'National tax schedule on capital income' SchedCalc in tinit_es/tinjt_es, which currently stops at the fourth bracket ($tin_capinc_natrate4); this matches its 'unused' status in the extracted usage data."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Capital income taxation (Gravamen de la base liquidable del ahorro)"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2005-01-01",
+      "valid_to": "2022-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.14,
+      "valid_from": "2023-01-01",
+      "valid_to": "2024-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "0.14",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 0.15,
+      "valid_from": "2025-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "0.15",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

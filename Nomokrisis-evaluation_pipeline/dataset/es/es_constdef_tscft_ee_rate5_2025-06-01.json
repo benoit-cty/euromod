@@ -1,0 +1,25 @@
+{
+  "id": "es_constdef_tscft_ee_rate5_2025-06-01",
+  "country": "ES",
+  "language": "es",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_es_constdef_es_def_const_tscft_ee_rate5.json",
+  "as_of": "2025-06-01",
+  "difficulty": "derive",
+  "hazards": [
+    "cross_instrument"
+  ],
+  "labels_drafted": false,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 0.0015,
+    "citations": [
+      "LGSS Artículo 19 bis",
+      "LGSS Disposición transitoria cuadragésima segunda"
+    ]
+  },
+  "corpus_available": true,
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: es.json#constdef_tscft_ee_rate5 | euromod value in force at 2025-06-01: 0.0015 from 2025-01-01 | HARD / derive — the worker's share of the new additional solidarity contribution (cotización adicional de solidaridad), first band, 2025. The first scorable derive case in any country: nothing in the corpus states 0.15 %. LGSS art. 19 bis (in force 2025-01-01) creates the contribution and says its employer/worker split 'mantendrá la misma proporción que la distribución del tipo de cotización por contingencias comunes'; DT 42.ª gives the 2025 total for the first band, 0,92 %. The worker's share is therefore 0.92 x 4.70 / 28.30 = 0.1528 % — and the value the Tesorería publishes and EUROMOD holds is the rounded 0,15 % (employer 0,77 %). Three things to get right: two provisions, an arithmetic derivation, and the contingencias-comunes split (23,60 / 4,70), which is fixed each year by the Orden de cotización (not ingested) — hence cross_instrument, although EUROMOD's own $tscft_ee_rate1 / $tscft_er_rate1 carry the same split. ROUTING: EUROMOD carries 0.0015 from 2025-01-01 -> `unchanged`. Flip: ingesting the Orden de cotización 2025 (Orden PJC/178/2025) turns this into a verbatim case — that is fine, the derive rung then needs a new occupant. A proposal of 0.001528 is the honest unrounded derivation and scores as a value miss: if that happens, the finding is about the scorer's rounding convention, not the model."
+}

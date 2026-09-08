@@ -1,0 +1,22 @@
+{
+  "id": "es_tin_capinc_natrate5_2025-06-01",
+  "country": "ES",
+  "language": "es",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_es_tin_cons_es_def_const_tin_capinc_natrate5.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 0.15,
+    "citations": [
+      "LIRPF Artículo 66"
+    ]
+  },
+  "corpus_available": true,
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: es.json#tin_capinc_natrate5 | euromod value in force at 2025-06-01: 0.15 from 2025-01-01 | EASY-MEDIUM — the STATE savings rate above 300.000 euros, 15 % in the art. 66.1 scale (version [2024-12-22,), Ley 7/2024, effects 1 January 2025). This is the state-vs-total trap: the same article's paragraph 2 (residents abroad) carries the full 30 % scale, art. 76 carries the regional 15 %, and the Country Report speaks of '28 % -> 30 %'. EUROMOD's natrate5 is the state half: a proposal of 0.30 here is a wrong value with a plausible citation. ROUTING: the 2025 export already carries 0.15 -> `unchanged`."
+}

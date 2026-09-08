@@ -1,0 +1,118 @@
+{
+  "information": {
+    "country": "ES",
+    "model_target": "euromod://ES/tin_cons_es/def_const/$tin_perall_amt1",
+    "spine_order": "38",
+    "value_type": "scalar",
+    "unit": "currency/year",
+    "threshold_unit": null,
+    "label": {
+      "en": "Personal Tax Allowance (Minimo Personal)"
+    },
+    "short_label": {
+      "en": "$tin_perall_amt1"
+    },
+    "description": {
+      "en": "Amount of Spain's basic Personal Tax Allowance ('Minimo Personal', the state 'Minimo por contribuyente'/individual component of the IRPF's tax-free minimum), currently 5,550 euro/year. Used as the comp_perElig parameter of BenCalc in tinit_es ('National Personal Tax Allowance') and the comp_perTU parameter in tinjt_es, it forms the base personal amount effectively taxed at 0% before the tax schedule is applied. The Country Report's Table 2.79 confirms the State 'Individual tax credit (Minimo por contribuyente)' at 5,550 euro/year, unchanged from 2022 to 2025 (with additional age-related top-ups for taxpayers over 65/75 not captured by this constant)."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Tax allowances - national & regional"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": 3400.0,
+      "valid_from": "2005-01-01",
+      "valid_to": "2006-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "3400#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 5050.0,
+      "valid_from": "2007-01-01",
+      "valid_to": "2007-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "5050#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 5151.0,
+      "valid_from": "2008-01-01",
+      "valid_to": "2014-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "5151#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 5550.0,
+      "valid_from": "2015-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "5550#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

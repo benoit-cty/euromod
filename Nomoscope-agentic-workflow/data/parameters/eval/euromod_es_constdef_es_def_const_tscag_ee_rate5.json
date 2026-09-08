@@ -1,0 +1,72 @@
+{
+  "information": {
+    "country": "ES",
+    "model_target": "euromod://ES/ConstDef_es/def_const/$tscag_ee_rate5",
+    "spine_order": "7",
+    "value_type": "scalar",
+    "unit": "/1",
+    "threshold_unit": null,
+    "label": {
+      "en": "Employee Contribution rate1:  additional solidarity contribution"
+    },
+    "short_label": {
+      "en": "$tscag_ee_rate5"
+    },
+    "description": {
+      "en": "Employee-side rate for one of the three progressive earnings bands of the additional solidarity contribution ('cuota de solidaridad') in the Agrarian Special System, defined by formula as equal to the General Regime's corresponding rate ($tscft_ee_rate5), so the Agrarian regime simply mirrors the General Regime's solidarity rate. Per the Country Report, this contribution applies from 1 January 2025 to earnings above the standard maximum contribution base, with progressive rates split between employer and employee (employee tiers of 0.15%/0.17%/0.19% in Table 2.52). Used in tscag_es/BenCalc (Comp_perTU, 'Employee Contribution: Additional solidarity contribution')."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Policy parameters agrarian special system (min and max bases; SICs rates) - tscag_es"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2005-01-01",
+      "valid_to": "2024-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": null,
+      "valid_from": "2025-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "$tscft_ee_rate5",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

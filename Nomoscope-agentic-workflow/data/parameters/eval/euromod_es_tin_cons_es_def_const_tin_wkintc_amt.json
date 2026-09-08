@@ -1,0 +1,95 @@
+{
+  "information": {
+    "country": "ES",
+    "model_target": "euromod://ES/tin_cons_es/def_const/$tin_wkintc_amt",
+    "spine_order": "38",
+    "value_type": "scalar",
+    "unit": "currency/year",
+    "threshold_unit": null,
+    "label": {
+      "en": "Tax credit for working income (since 2025): amount"
+    },
+    "short_label": {
+      "en": "$tin_wkintc_amt"
+    },
+    "description": {
+      "en": "Maximum annual amount of a tax credit for low earned income introduced in Spain's IRPF since 2025, the 'Deduccion por obtencion de rendimientos del trabajo' - a deduction from the general tax base for taxpayers with modest wage income. Used as the Comp_perTU parameter of BenCalc in tinit_es and tinjt_es. The Country Report describes this measure as a deduction of up to 340 euro/year for annual work income at or below its first limit ($tin_wkintc_lim1), tapering to zero by the second limit ($tin_wkintc_lim2) at a 20% withdrawal rate; the modelled maximum amount (590.89 euro) is higher than the Country Report's stated 340 euro figure, likely reflecting a later legislative revision of the measure not captured in the report's narrative text."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Tax Credits - national"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2005-01-01",
+      "valid_to": "2024-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 340.0,
+      "valid_from": "2025-01-01",
+      "valid_to": "2025-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "340#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 590.89,
+      "valid_from": "2026-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "590.89#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

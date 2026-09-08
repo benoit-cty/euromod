@@ -1,0 +1,21 @@
+{
+  "id": "es_constdef_tscag_ee_rate5_2025-06-01",
+  "country": "ES",
+  "language": "es",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_es_constdef_es_def_const_tscag_ee_rate5.json",
+  "as_of": "2025-06-01",
+  "difficulty": "derive",
+  "hazards": [],
+  "labels_drafted": false,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "derived",
+    "citations": [
+      "LGSS Artículo 19 bis"
+    ]
+  },
+  "corpus_available": true,
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: es.json#constdef_tscag_ee_rate5 | euromod value in force at 2025-06-01: '$tscft_ee_rate5' from 2025-01-01 | value leg not scored: the selection states no expected_value (the law's value is not established for this case yet) | DERIVE — EUROMOD holds '$tscft_ee_rate5': the agricultural-regime copy of the solidarity contribution's first-band worker rate, defined by reference to the general-regime constant (ES has 21 such $-references in ConstDef_es). ROUTING: `derived`, not `unchanged` — pipeline._derived_refs short-circuits any parameter whose stored value carries a $-reference straight to Routing.DERIVED, before retrieval and before any LLM call, because the anchor parameter is what legislation sets. expected_value is null (the value leg is not scored): what the case tests is that the pipeline recognises the reference and routes to the anchor instead of hunting the corpus for a rate that is stated nowhere. The anchor is the previous entry, so the two cases together cover reading-and-computing and recognising. | drafting warning: value leg not scored (no expected_value in the selection)"
+}

@@ -1,0 +1,44 @@
+{
+  "id": "es_tin_capinc_schedule_2025-06-01",
+  "country": "ES",
+  "language": "es",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_es_tin_cons_es_group_tin_capinc_schedule.json",
+  "as_of": "2025-06-01",
+  "difficulty": "table",
+  "hazards": [],
+  "labels_drafted": false,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "changed",
+    "value": [
+      {
+        "threshold": 0.0,
+        "rate": 0.095
+      },
+      {
+        "threshold": 6000.0,
+        "rate": 0.105
+      },
+      {
+        "threshold": 50000.0,
+        "rate": 0.115
+      },
+      {
+        "threshold": 200000.0,
+        "rate": 0.135
+      },
+      {
+        "threshold": 300000.0,
+        "rate": 0.15
+      }
+    ],
+    "valid_from": "2025-01-01",
+    "citations": [
+      "LIRPF Artículo 66"
+    ]
+  },
+  "corpus_available": true,
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: es.json#tin_capinc_schedule | euromod value in force at 2025-06-01: [Bracket(threshold=0.0, rate=0.095, amount=None), Bracket(threshold=6000.0, rate=0.105, amount=None), Bracket(threshold=50000.0, rate=0.115, amount=None), Bracket(threshold=200000.0, rate=0.135, amount=None)] from 2023-01-01 | TABLE — the state savings scale (escala del ahorro, parte estatal) as one bracket-schedule case, assembled from params.parameter_groups ES:tin_cons_es:tin_capinc_schedule. The law (LIRPF art. 66.1, version [2024-12-22,), effects 1 January 2025) has FIVE bands: 9,5 / 10,5 / 11,5 / 13,5 / 15 % with thresholds 6.000 / 50.000 / 200.000 / 300.000. The export's groups block defines only four (natrate1-4, lim1-3) although the fifth band's scalars ($tin_capinc_natrate5 = 0.15 from 2025, $tin_capinc_lim4 = 300000 from 2023) exist in the same export — so the schedule EUROMOD presents as an object is stale by one band. ROUTING: computed -> `changed` (4 brackets against 5). That is a finding about the group definition (enrichment side), reported alongside the value defects; when the groups block is fixed the case flips to `unchanged` and keeps testing every-bracket-right. The general scale (tin_schedule) cannot be a case: its rate scalars are 'n/a' in the export."
+}

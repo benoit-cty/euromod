@@ -1,0 +1,24 @@
+{
+  "id": "es_constdef_tscft_ee_rate4_2025-06-01",
+  "country": "ES",
+  "language": "es",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_es_constdef_es_def_const_tscft_ee_rate4.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [
+    "unit_conversion"
+  ],
+  "labels_drafted": false,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 0.0013,
+    "citations": [
+      "LGSS Disposición transitoria cuadragésima tercera"
+    ]
+  },
+  "corpus_available": true,
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: es.json#constdef_tscft_ee_rate4 | euromod value in force at 2025-06-01: 0.0013 from 2025-01-01 | MEDIUM — the worker's share of the Intergenerational Equity Mechanism (MEI) for 2025. LGSS DT 43.ª (RDL 8/2015, BOE-A-2015-11724, as amended by RDL 2/2023) states a year-by-year schedule in PERCENTAGE POINTS: 'En el año 2025, será de 0,80 puntos porcentuales, de los que el 0,67 corresponderá a la empresa y el 0,13 al trabajador'. Two hazards in one provision: the pipeline must pick the 2025 row out of a 2023-2050 table, and read '0,13 puntos' as the fraction 0.0013 (unit /1) — hence hazard unit_conversion, which the label drafter cannot see. ROUTING: EUROMOD carries 0.0013 from 2025-01-01 -> `unchanged` (the 2024 value was 0.0012; a 'changed' verdict here is the last-year's-law mistake)."
+}

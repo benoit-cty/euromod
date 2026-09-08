@@ -1,0 +1,47 @@
+{
+  "information": {
+    "country": "ES",
+    "model_target": "euromod://ES/xcc_es/def_const/$xcc_amt",
+    "spine_order": "57",
+    "value_type": "scalar",
+    "unit": "currency/month",
+    "threshold_unit": null,
+    "label": {
+      "en": "Childcare cost (Dining Fee Amount)"
+    },
+    "short_label": {
+      "en": "$xcc_amt"
+    },
+    "description": {
+      "en": "Represents the standard monthly fee for the childcare 'dining service' (comedor) modelled by Spain's childcare-cost policy xcc_es. In xcc_es/BenCalc's 'Costs - Dining Fee' component (Comp_perElig, condition commented 'standard dining fee from 0 to 2'), it is added once for every household member aged 0-2 recorded as being in formal (paid) childcare (input flag dccfc=1), building the gross output variable xcc_s, i.e. the pre-discount childcare/dining cost. Fixed at EUR 96/month since the policy was introduced into the model in 2024, it is the base amount the means-tested 'Becas Comedor' discounts ($xccdc_amt1-3) are set against in the companion 'Deductions' component of the same policy."
+    },
+    "explanation": {},
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": 96.0,
+      "valid_from": "2024-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": "national_team",
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "96#m",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

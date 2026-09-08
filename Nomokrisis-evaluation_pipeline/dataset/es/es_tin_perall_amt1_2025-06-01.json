@@ -1,0 +1,22 @@
+{
+  "id": "es_tin_perall_amt1_2025-06-01",
+  "country": "ES",
+  "language": "es",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_es_tin_cons_es_def_const_tin_perall_amt1.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "5550#y",
+    "citations": [
+      "LIRPF Artículo 57"
+    ]
+  },
+  "corpus_available": true,
+  "verified": false,
+  "drafted_by": "human",
+  "notes": "curated: es.json#tin_perall_amt1 | euromod value in force at 2025-06-01: 5550.0 from 2015-01-01 | EASY — the personal minimum (mínimo del contribuyente), 5.550 euros anuales, stated verbatim in LIRPF art. 57.1 (Ley 35/2006, BOE-A-2006-20764), unchanged since the 2015 reform. The ES happy path: one ingested article, one literal amount, no regional layer (the regional minima are separate *rg* parameters). ROUTING: EUROMOD holds 5550 -> `unchanged`; the case scores value, citation and retrieval."
+}
