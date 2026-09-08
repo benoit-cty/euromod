@@ -179,7 +179,8 @@ Inherited from the Triangulator prototype's rule *"Legislation is King"*:
 |---|---|
 | National legislation | **Evidence.** The only thing `propose` / `critique` may cite. |
 | Country Report (EUROMOD) | **Context, never evidence.** Ingested as `instrument_type='country_report'`, excluded from evidence retrieval SQL; readable only through `retrieval.country_report_search()` (query framing, UI display). Citing it would be circular — the CR describes the model, not the law. |
-| Administrative guidance, statistics, press | Not ingested as evidence in the pilot; may become a `source_type` on a value. |
+| Administrative guidance (circulars, BOFiP doctrine) | **Evidence, labelled.** Added by a reviewer as a *contributed document*; the instrument carries `source_trust_class='guidance'`, each citation carries the class, and the critique records a "supported by guidance only" finding. Ranked equal to legislation in retrieval. See [ADR-0001](docs/adr/0001-guidance-is-citable-evidence-with-a-visible-class.md). |
+| Statistics, press | Not ingested. |
 | Web search results | Never evidence — discovery only (§3). |
 
 ---
@@ -236,7 +237,7 @@ euromod://FR/tinkt_fr/def_const/$tin_upthres1
 
 | Term | What it is |
 |---|---|
-| **Légifrance** | The official French legal portal (legifrance.gouv.fr) — the canonical *human* URL for a citation. Protected by DataDome anti-bot; scraping it is inappropriate and fragile, so it is used as the citation URL and for manual spot-checks, not as a fetch source. |
+| **Légifrance** | The official French legal portal (legifrance.gouv.fr) — the canonical *human* URL for a citation. Protected by DataDome anti-bot; scraping it is inappropriate and fragile, so it is used as the citation URL and for manual spot-checks, not as a fetch source. The one exception is *resolution*: an ELI-form URL is followed to its `/jorf/id/JORFTEXT…` redirect (headless browser as fallback) to obtain the DILA id, and nothing else is read. See [ADR-0002](docs/adr/0002-legifrance-eli-urls-resolve-through-a-browser-fallback.md). |
 | **DILA** | *Direction de l'information légale et administrative* — the public body that publishes Légifrance and, crucially, the **open-data dumps** (`echanges.dila.gouv.fr`): full + daily incremental `tar.gz` of the LEGI and JORF XML. Authoritative, no auth, but consuming it means rebuilding a stock+delta pipeline. |
 | **JORF** | *Journal officiel de la République française* — the *fonds* of acts **as published** (authentic, frozen). Ids `JORFTEXT…`. |
 | **LEGI** | The *fonds* of **consolidated, dated** versions of codes and articles. Ids `LEGITEXT…` (code), `LEGIARTI…` (article version). This is where point-in-time retrieval lands. |

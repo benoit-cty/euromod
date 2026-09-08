@@ -235,10 +235,28 @@ grep -rn "as_of.year" src/nomoscope_workflow/   # every hit outside item_id/syst
 although 11.88 is the *hourly* SMIC. A correct model finds "11,88 euros par
 heure" and refuses to present it as monthly — scoring `not_found` for a reason
 that is neither the model's nor the corpus's. `unit` comes from the read-only
-EUROMOD export and `ingest-params` overwrites it, so these cannot be curated
-away: record them in the selection file's `note` and report them to the
-economists team, as the set already does for the FR barème 1-€ erratum and IE's
-27 382/27 383.
+EUROMOD export, but the curation overlay can override it
+(`curation/<CC>.curation.yaml`, `unit:` rules, re-applied after every
+`ingest-params`): the FR export labelled all 146 `*rate*` parameters
+`currency`, and under that unit the proposal prompt never normalises "11 %" to
+0.11 and the critique's `values_sane` either refuses the fraction or skips its
+range check — one model refused the barème's 0 % band as "a currency amount",
+another had every rate it proposed rejected. Curate the unit, rebuild the
+dataset so the materialized parameter files pick it up (the human verdicts
+survive: the rebuild compares the file *path*), and still report the defect to
+the economists team, as the set already does for `$Minwage_hourly`, the FR
+barème 1-€ erratum and IE's 27 382/27 383. What cannot be curated (a wrong
+value, a mislabelled period) goes in the selection file's `note`.
+
+**The critique verdict gates routing and value.** `pipeline.diff` routes on the
+value alone, so a proposal the critique rejected still lands as `unchanged` when
+it echoes the stored value; `score_item` marks such a case `rejected` and scores
+routing/value/date False. Before that rule one model gained eight "correct"
+verdicts on a 66-case run — four of them the barème's stale value with a
+citation the critique had refused, one with a mistyped chunk id on all four
+attempts — and came out ahead of a model that had refused instead. The console
+summary prints `rejected=N` next to `abstained`; a large N with a high routing
+rate on the *other* model is that artifact.
 
 ### e. Model failure — what is left
 
