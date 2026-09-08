@@ -232,6 +232,11 @@ class CaseResult(BaseModel):
     # refused. A rejected proposal is therefore never routing- or value-correct;
     # `routing_actual` still records what the pipeline emitted.
     rejected: bool = False
+    # Every citation on the proposal came from administrative guidance rather
+    # than legislation (ADR 0001). Not a KPI and not scored: it is the data on
+    # which "guidance ranks equal to legislation in retrieval" is to be
+    # revisited, grouped by the same per-language, per-model views.
+    guidance_only: bool = False
     # Copied from the case so a report can separate model quality from corpus
     # coverage without re-reading the golden set.
     corpus_available: bool | None = None

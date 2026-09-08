@@ -2,19 +2,32 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from nomotheca_ingest.countries.nl.fetcher import fetch_bwb
 from nomotheca_ingest.countries.nl.parser import parse_bwb_xml
 from nomotheca_ingest.countries.nl.resolver import NlResolver, canary_facts
+from nomotheca_ingest.countries.base import UrlSource
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
 from nomotheca_ingest.core.snapshots import SnapshotClient
+
+
+NL_URL_SOURCE = UrlSource(
+    name="wetten.overheid.nl",
+    domains=("wetten.overheid.nl",),
+    # The BWB regulation id, in the plain path (/BWBR0011353/2025-01-01) and in
+    # the Juriconnect form (/jci1.3:c:BWBR0011353&artikel=2.10). BWBV... ids are
+    # treaties, deliberately excluded.
+    id_pattern=re.compile(r"\bBWBR\d{7}\b"),
+)
 
 
 class NlAdapter:
     """Netherlands implementation of the country adapter protocol."""
 
     jurisdiction = "NL"
+    url_source = NL_URL_SOURCE
     default_source_code = "NL-BWB"
 
     def __init__(self, resolver: NlResolver | None = None) -> None:

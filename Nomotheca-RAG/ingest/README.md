@@ -6,6 +6,115 @@ Initial Python implementation of the archive-first ingestion architecture descri
 The package is library-first: CLI commands call the same `ingest_citation` and
 `ingest_instrument` functions that an agentic cache-miss workflow can call in-process.
 
+## Contributed documents
+
+Country adapters can only ingest what a national portal keys by a national id.
+Much of what actually fixes a EUROMOD value is not there: a Unédic circular, a
+BOFiP doctrine page, a ministerial arrêté a reviewer saved as PDF. The
+`document` subcommand is the path for those, and the same library function
+(`core.contributed.ingest_document`) is what the TUI and the validation UI call.
+
+```bash
+# a file the reviewer saved (PDF, HTML, Markdown, plain text)
+uv run python -m nomotheca_ingest.cli document ./circulaire-2025-01.pdf \
+    -j fr --lang fr --title "Circulaire Unédic n° 2025-01" \
+    --kind circulaire --valid-from 2025-04-01 -d $EUROMOD_DATABASE_URL
+
+# a URL — fetched in Python, never in the UI
+uv run python -m nomotheca_ingest.cli document \
+    "https://bofip.impots.gouv.fr/bofip/2035-PGP.html" \
+    -j fr --lang fr --title "BOFiP — BIC" --kind doctrine --valid-from 2026-05-06 \
+    -d $EUROMOD_DATABASE_URL
+
+# what would happen, as one JSON line (what the UI's pre-check calls)
+uv run python -m nomotheca_ingest.cli route "<url or path>" -d $EUROMOD_DATABASE_URL
+```
+
+The two halves of a contributed document are two values in the code: what the
+reviewer states (`ContributedFields` — the jurisdiction, language, title, kind,
+validity start and optional link, which only mean anything together) and what
+was read (`SourceDocument` — the bytes, their content type, where they came
+from, the identity derived from them, and the snapshot proving they were
+archived). `parse_document(document, fields)` is the whole parse seam.
+
+**Fields.** `--jurisdiction` (retrievability and language configuration —
+French in France is not French in Belgium), `--lang` (declared, never
+detected), `--title` (suggested from the page title, the PDF metadata or the
+file name), `--kind`, `--valid-from` (suggested from a date in the title or the
+URL; **a missing one is refused**, never invented), and optionally
+`--implements`, the national id of the ingested instrument this document
+implements — written as one `implements` instrument relation, for provenance.
+
+**Routing.** A URL is classified before anything is fetched, and again when the
+run starts, so the library never trusts the caller. Which domains a member
+state publishes on, what its ids look like, which URLs are not one document and
+how to recover an id that is not in the path are declared by each adapter as a
+`countries.base.UrlSource` — `core/routing.py` names no country, so a sixth
+member state is an adapter and not an edit to the router:
+
+| outcome | what happens |
+| --- | --- |
+| `contributed` | fetched, archived, parsed, loaded as the reviewer's document |
+| `adapter` | handed to that country's adapter by national id — ES `BOE-A-…`, NL `BWBR…`, IE `<year>/act/<n>`, LT `TAR.…`/32-hex, FR `JORFTEXT…`/`LEGIARTI…` |
+| `refused` | a hint saying what to do instead — a whole Légifrance code (`LEGITEXT…`) or an unresolvable official URL |
+
+**Kinds and the source-trust class.** The reviewer states the kind in their own
+country's words; the class follows mechanically and is never stated (ADR 0001).
+`other` is deliberately guidance, so an unnamed document can never be granted
+statute-level trust by accident.
+
+| hierarchy of norms | FR label | class |
+| --- | --- | --- |
+| statute | `loi` | `evidence` |
+| government regulation | `decret` | `evidence` |
+| ministerial order | `arrete` | `evidence` |
+| administrative guidance | `circulaire`, `doctrine` | `guidance` |
+| other | `other` | `guidance` |
+
+The whole table lives in `core/contributed.py::KINDS_BY_JURISDICTION` (FR, ES,
+NL, IE, LT, plus a country-neutral default) and is what the UI's kind select
+renders — nothing keeps a second copy. Country Reports are `context`: still
+searchable for query framing, never citable evidence.
+
+**Identity and re-adding.** A URL keys the instrument on its canonical form
+(scheme and host lowercased, fragment dropped, trailing slash normalised), so
+the same BOFiP page linked with two anchors is one instrument; an upload keys
+on `file:<sha256>`. The version key is the content hash, so re-adding an
+unchanged document is a no-op reported as "already present", and a page updated
+in place becomes a new version that closes the previous one.
+
+**Structure.** HTML is reduced to its main content block — the largest
+`<article>`, else `<main>`, else the largest text block — with navigation,
+footers, form labels and bare-link blocks dropped; the page as fetched is kept
+in the snapshot and once in the first unit's `content_html`. PDFs are extracted
+to plain text with `pypdf` (no layout-aware tooling). Headings become one legal
+unit each (`#` markers, `<hN>` tags or decimal numbering, whichever the text
+uses); a document with no detectable structure is one unit, which is the honest
+outcome for an unstructured circular.
+
+**Légifrance ELI URLs** (`/eli/arrete/2020/12/28/CCPD2036946A/jo/texte`) carry a
+NOR, not a DILA id. They are resolved to `JORFTEXT…` in three tiers — our own
+`instruments.eli` column, an HTTP redirect with browser-like headers, then a
+headless browser **only when that request came back 403** — and only the
+redirect target is ever read; no Légifrance page content is parsed or stored (ADR 0002). A bare NOR
+works too. The browser tier is an optional extra, so the default environment
+keeps working without Chromium (the outcome is then the refusal hint):
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-legifrance uv sync --extra legifrance
+UV_PROJECT_ENVIRONMENT=.venv-legifrance uv run playwright install chromium
+```
+
+**Existing databases** need the source-trust class column once:
+
+```bash
+docker exec -i nomotheca-legislation-db psql -U jrc -d legislation \
+  < Nomotheca-RAG/db/migrations/0001_instrument_source_trust_class.sql
+```
+
+It is idempotent, and backfills `context` for Country Reports and `evidence`
+for everything else. Fresh volumes get the column from `schema.sql`.
+
 ## Translate unit texts to English
 
 `unit_texts` rows arrive in the source language ('fr', 'nl', ...). The batch

@@ -12,6 +12,10 @@ import httpx
 from nomotheca_ingest.core.ir import Snapshot, SourceRef
 
 
+#: Default User-Agent for every archive-first fetch, wherever it starts.
+USER_AGENT = "nomotheca-legislation-ingest/0.1"
+
+
 class SnapshotStore(Protocol):
     """Persistence boundary for archived source responses."""
 
@@ -32,7 +36,7 @@ class SnapshotClient:
     """Small HTTP client that archives bytes before returning them to parsers."""
 
     store: SnapshotStore
-    user_agent: str = "nomotheca-legislation-ingest/0.1"
+    user_agent: str = USER_AGENT
     timeout_seconds: float = 30.0
 
     def get(self, ref: SourceRef, url: str, headers: dict[str, str] | None = None) -> Snapshot:

@@ -120,6 +120,143 @@ def country_report(
     )
 
 
+#: Ordered phases of a `document` run, for the UI's progress bar.
+DOCUMENT_PHASES = ("route", "fetch", "archive", "parse", "load", "done")
+
+
+def _document_source(source: str) -> tuple[str | None, str | None]:
+    """Split one positional into (url, file path) — whichever it is."""
+    return (source, None) if source.startswith(("http://", "https://")) else (None, source)
+
+
+@app.command()
+def document(
+    source: Annotated[str, typer.Argument(help="URL, or path to a PDF/HTML/Markdown/text file.")],
+    database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
+    jurisdiction: Annotated[
+        str | None, typer.Option("--jurisdiction", "-j", help="Country the document belongs to.")
+    ] = None,
+    lang: Annotated[str, typer.Option("--lang", help="Language of the document, as declared.")] = "fr",
+    title: Annotated[str | None, typer.Option("--title", help="Document title.")] = None,
+    kind: Annotated[
+        str | None,
+        typer.Option("--kind", help="Kind in the country's own words: loi, decret, arrete, circulaire, doctrine, other."),
+    ] = None,
+    valid_from: Annotated[
+        str | None, typer.Option("--valid-from", help="Date the document is in force from (required).")
+    ] = None,
+    implements: Annotated[
+        str | None,
+        typer.Option("--implements", help="national_id of the ingested instrument this document implements."),
+    ] = None,
+    progress_json: Annotated[
+        bool, typer.Option("--progress-json", help="Emit '@progress {json}' lines for wrapping UIs.")
+    ] = False,
+) -> None:
+    """Ingest a document a reviewer found: a URL, a PDF, an HTML page, Markdown or text.
+
+    A URL on a known official portal is routed to that country's adapter
+    instead, so official acts are ingested cleanly by national id; the
+    contributed fields are then unused.
+    """
+    from nomotheca_ingest.core.contributed import ingest_document
+
+    url, file_path = _document_source(source)
+    try:
+        result = ingest_document(
+            database_url=database_url,
+            jurisdiction=jurisdiction,
+            lang=lang,
+            title=title,
+            kind=kind,
+            valid_from=date.fromisoformat(valid_from) if valid_from else None,
+            url=url,
+            file_path=file_path,
+            implements=implements,
+            progress=_document_progress(progress_json),
+        )
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(
+        json.dumps(
+            {
+                "routed_to": result.routed_to,
+                "already_present": result.already_present,
+                "jurisdiction": result.jurisdiction,
+                "source_code": result.source_code,
+                "national_id": result.national_id,
+                "kind": result.kind,
+                "source_trust_class": (
+                    result.source_trust_class.value if result.source_trust_class else None
+                ),
+                "implements": result.implements,
+                "units": result.units,
+                "versions": result.versions,
+                "texts": result.texts,
+                "chunks": result.chunks,
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
+
+
+@app.command()
+def route(
+    source: Annotated[
+        str, typer.Argument(help="URL, or path to a file, to classify. Omit for the kinds table only.")
+    ] = "",
+    database_url: Annotated[
+        str | None, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")
+    ] = None,
+) -> None:
+    """Print, as one JSON line, whether a URL is a contributed document or an official act.
+
+    The validation UI calls this before starting a run, so it can announce a
+    switch to the legislation ingester, prefill the title and validity date,
+    or show a refusal hint. With no source it answers with the kinds table
+    alone — what the contributed-document form needs to render itself.
+    """
+    from nomotheca_ingest.core.contributed import KINDS_BY_JURISDICTION, TRUST_CLASS_BY_LEVEL
+    from nomotheca_ingest.core.contributed import route as route_source
+    from nomotheca_ingest.core.contributed import suggest
+    from nomotheca_ingest.core.routing import RouteOutcome
+
+    url, file_path = _document_source(source)
+    outcome = RouteOutcome(kind="contributed", url=source)
+    if source:
+        if url:
+            outcome = route_source(url, database_url)
+        if outcome.kind == "contributed":
+            try:
+                outcome.suggestions = suggest(url=url, file_path=file_path)
+            except Exception as exc:
+                # A prefill is a convenience: an unreachable page must not stop
+                # the reviewer from filling the fields themselves.
+                outcome.suggestions = {"error": str(exc)}
+    payload = outcome.as_json()
+    if not source:
+        payload["outcome"] = None
+    # Everything the contributed-document form needs to render, from the one
+    # call it already makes: the kinds a reviewer may state, in each
+    # jurisdiction's own words, so the UI never keeps its own copy of the table.
+    # Each kind carries its level AND the class derived from it, so the UI can
+    # show what a kind means without re-implementing the mapping.
+    payload["kinds"] = {
+        jurisdiction: {
+            label: {
+                "norm_level": level.value,
+                "source_trust_class": TRUST_CLASS_BY_LEVEL[level].value,
+            }
+            for label, level in table
+        }
+        for jurisdiction, table in KINDS_BY_JURISDICTION.items()
+    }
+    typer.echo(json.dumps(payload, ensure_ascii=False))
+
+
 @app.command()
 def tui() -> None:
     """Launch the interactive terminal UI for staged ingestion runs."""
@@ -282,6 +419,32 @@ def run_translations(
     )
     if stats.failed:
         raise typer.Exit(code=1)
+
+
+def _document_progress(progress_json: bool):
+    """Progress callback for a contributed-document run.
+
+    Phases are a fixed, short list, so a wrapping UI gets a real bar out of a
+    run whose total work is not countable in advance.
+    """
+
+    def update(event: dict) -> None:
+        phase = str(event["phase"])
+        detail = str(event.get("detail", ""))
+        typer.echo(f"{phase}: {detail}" if detail else phase, err=True)
+        if progress_json:
+            done = DOCUMENT_PHASES.index(phase) + 1 if phase in DOCUMENT_PHASES else 0
+            _emit_json_progress(
+                {
+                    "task": "document",
+                    "phase": phase,
+                    "done": done,
+                    "total": len(DOCUMENT_PHASES),
+                    "detail": detail,
+                }
+            )
+
+    return update
 
 
 def _emit_json_progress(payload: dict[str, object]) -> None:

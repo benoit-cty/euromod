@@ -6,6 +6,7 @@ from datetime import date
 from uuid import uuid4
 
 from nomotheca_ingest.core.country_reports import parse_country_report, source_code_for
+from nomotheca_ingest.core.ir import SourceTrustClass
 
 SAMPLE = """\
 # EUROMOD Country Report — France Y16
@@ -56,6 +57,11 @@ def test_instrument_identity_and_type() -> None:
     assert ir.national_id == "CR-FR-Y16"
     assert ir.source_code == "FR-EUROMOD-CR"
     assert ir.title["en"].startswith("EUROMOD Country Report")
+
+
+def test_country_reports_are_context_never_evidence() -> None:
+    """The CR corpus describes the model: evidence retrieval excludes it by class."""
+    assert _parse().source_trust_class == SourceTrustClass.CONTEXT
 
 
 def test_hierarchy_follows_markdown_levels() -> None:

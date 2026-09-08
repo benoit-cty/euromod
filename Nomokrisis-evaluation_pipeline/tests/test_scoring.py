@@ -405,3 +405,23 @@ def test_score_item_uses_constants():
     assert r.value_correct is True
     r = score_item(case, make_item(value=188400.0))
     assert r.value_correct is False  # no constants map -> no fabricated match
+
+
+def test_a_guidance_only_proposal_is_recorded_as_such() -> None:
+    """Not scored, but countable per language and model (ADR 0001)."""
+    case = make_case(routing=Routing.UNCHANGED, value=0.45)
+    item = make_item()
+    item.guidance_only = True
+
+    result = score_item(case, item)
+
+    assert result.guidance_only is True
+    # It is not a defect: the KPIs are untouched by the flag.
+    assert result.routing_correct is True
+    assert result.value_correct is True
+
+
+def test_a_proposal_backed_by_legislation_carries_no_guidance_flag() -> None:
+    result = score_item(make_case(routing=Routing.UNCHANGED, value=0.45), make_item())
+
+    assert result.guidance_only is False

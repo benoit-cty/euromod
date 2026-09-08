@@ -296,6 +296,7 @@ def score_item(
         proposed_value=_dump(proposed.value) if proposed is not None else None,
         corpus_available=case.corpus_available,
         readiness=case.readiness,
+        guidance_only=item.guidance_only,
     )
 
     if expected.value is not None:

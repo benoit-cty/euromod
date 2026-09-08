@@ -28,6 +28,23 @@ class Authenticity(StrEnum):
     MACHINE_TRANSLATION = "machine_translation"
 
 
+class SourceTrustClass(StrEnum):
+    """What an instrument's text may be used for (ADR 0001).
+
+    evidence: national legislation and the administrative acts that carry
+      statute-level authority — the default for adapter-ingested instruments.
+    guidance: circulars and administrative doctrine. Citable, and ranked equal
+      to evidence in retrieval, but a proposal supported only by guidance is
+      labelled as such for the reviewer.
+    context: retrievable for query framing, never citable evidence (EUROMOD
+      Country Reports describe the model, so citing one is circular).
+    """
+
+    EVIDENCE = "evidence"
+    GUIDANCE = "guidance"
+    CONTEXT = "context"
+
+
 class VersionStatus(StrEnum):
     """Database-compatible status values for a legal unit version."""
 
@@ -139,6 +156,7 @@ class InstrumentIR(BaseModel):
     jurisdiction: str
     source_code: str
     instrument_type: str
+    source_trust_class: SourceTrustClass = SourceTrustClass.EVIDENCE
     title: dict[str, str]
     national_id: str | None = None
     eli: str | None = None

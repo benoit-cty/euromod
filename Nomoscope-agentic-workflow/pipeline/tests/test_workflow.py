@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import ast
 from datetime import date
 from pathlib import Path
+
+import pytest
 
 from nomoscope_workflow import mock, queue_store
 from nomoscope_workflow.query_encoder import embedding_process
@@ -14,6 +17,9 @@ from nomoscope_workflow.scout import (
     merge_results,
 )
 from nomoscope_workflow.pipeline import (
+    GUIDANCE_ONLY_ISSUE,
+    cited_classes,
+    guidance_only,
     _current_value,
     _income_year_date_issues,
     _needs_gap_fill,
@@ -30,9 +36,11 @@ from nomoscope_workflow.schema import (
     ParameterRecord,
     ParameterValue,
     ProposalDraft,
+    Reference,
     RetrievalHit,
     ReviewItem,
     Routing,
+    SourceTrustClass,
     TemporalBasis,
     income_year_for,
 )
@@ -398,6 +406,62 @@ def test_scout_fr_ids_still_exclude_whole_codes():
     assert pattern.findall("https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006069577") == []
 
 
+def _adapter_url_source(adapter: Path) -> tuple[tuple[str, ...], str]:
+    """The (domains, id_pattern source) one ingest adapter declares.
+
+    Read out of the adapter's syntax tree rather than imported: `nomoscope_workflow`
+    must not depend on `nomotheca_ingest` (see the test below), so the package is
+    not installed in this environment — only its source tree is on disk.
+    """
+    tree = ast.parse(adapter.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        call = getattr(node, "value", None)
+        if isinstance(call, ast.Call) and getattr(call.func, "id", "") == "UrlSource":
+            fields = {kw.arg: kw.value for kw in call.keywords}
+            # id_pattern is always `re.compile(r"...")`; take the raw source so
+            # the comparison is on the pattern text, not on a compiled object.
+            return tuple(ast.literal_eval(fields["domains"])), fields["id_pattern"].args[0].value
+    raise AssertionError(f"{adapter} declares no UrlSource")
+
+
+def test_scout_portal_facts_still_match_the_adapters_that_own_them():
+    """`domains` and `id_pattern` are copied from the ingester — check the copy.
+
+    Which domains a member state publishes on and what its national ids look
+    like are adapter facts: the ingester declares them as a
+    `countries.base.UrlSource` and routes pasted URLs with them. The scout needs
+    the same two facts one step earlier (restrict the web search to official
+    domains, harvest ids out of the result URLs), and cannot share the
+    declaration: the dependency between the two packages runs one way only —
+    `nomotheca-ingest` may import `nomoscope-agentic-workflow` (its optional
+    `translate` extra), never the reverse — and the scout reaches the ingester
+    by subprocess precisely to keep it that way.
+
+    So the table is duplicated on purpose, and this is what makes the two
+    disagree loudly instead of silently. It reads the adapter's source text, so
+    it runs in the default environment with the ingest package uninstalled; the
+    mirror image lives in the ingest suite (`tests/test_routing.py`), because
+    each suite has to catch the edit made on its own side.
+    """
+    from nomoscope_workflow.query_encoder import ingest_dir
+    from nomoscope_workflow.scout import COUNTRY_SOURCES
+
+    directory = ingest_dir()
+    if directory is None:
+        # No ingest checkout, so no adapters to disagree with — and a scout with
+        # nothing to ingest into cannot gap-fill at all.
+        pytest.skip("no Nomotheca-RAG/ingest checkout next to this package")
+
+    for country, rules in COUNTRY_SOURCES.items():
+        adapter = directory / "src" / "nomotheca_ingest" / "countries" / country.lower() / "adapter.py"
+        assert adapter.is_file(), f"{country} is in COUNTRY_SOURCES but has no adapter to ingest it"
+        domains, id_pattern = _adapter_url_source(adapter)
+        assert tuple(rules["domains"]) == domains, f"{country}: scout domains differ from {adapter}"
+        assert rules["id_pattern"].pattern == id_pattern, (
+            f"{country}: scout id_pattern differs from {adapter}"
+        )
+
+
 def _ingest_package(tmp_path: Path, *, cuda: bool) -> Path:
     """Build a minimal ingest package layout, optionally with the GPU environment."""
     directory = tmp_path / "ingest"
@@ -529,3 +593,102 @@ def test_scout_rounds_merge_without_duplicates():
     assert merged.candidate_ids == ["A", "B", "C"]
     assert merged.needs == ["the PSS arrêté", "art. L. 241-3"]
     assert merged.reasoning == "round one | round two"
+
+
+def test_retrieval_hits_and_mock_proposals_default_to_evidence():
+    """Nothing that predates the class column silently becomes guidance."""
+    record = _record("bracket_schedule", "/1", [Bracket(threshold=0, rate=0.0)])
+    hit = _hit()
+
+    assert hit.source_trust_class == SourceTrustClass.EVIDENCE
+    draft = mock.propose_with_mock(record, date(2025, 6, 1), [hit])
+    assert draft.found
+    assert not guidance_only([hit.source_trust_class])
+
+
+def test_guidance_only_needs_every_citation_to_be_guidance():
+    """The informational finding fires on guidance alone, never on a mix."""
+    guidance = SourceTrustClass.GUIDANCE
+    evidence = SourceTrustClass.EVIDENCE
+
+    assert guidance_only([guidance])
+    assert guidance_only([guidance, guidance])
+    assert not guidance_only([guidance, evidence])
+    assert not guidance_only([evidence])
+    # No citation at all is not "guidance-only": there is nothing to label.
+    assert not guidance_only([])
+
+
+def test_guidance_only_finding_leaves_the_verdict_alone():
+    """The finding is appended to issues; the four verdict booleans are untouched."""
+    report = CritiqueReport(
+        schema_valid=True,
+        citation_verified=True,
+        dates_consistent=True,
+        values_sane=True,
+        verdict="pass",
+    )
+
+    report.issues.append(GUIDANCE_ONLY_ISSUE)
+
+    assert report.verdict == "pass"
+    assert GUIDANCE_ONLY_ISSUE in report.issues
+
+
+def test_guidance_only_flag_survives_the_queue_roundtrip(tmp_path: Path):
+    """A reviewer reopening the queue still sees what the value rested on."""
+    item = ReviewItem(
+        id="fr_guidance_2025",
+        run_id="run-g",
+        created_at="2026-07-09T00:00:00Z",
+        country="FR",
+        model_target="euromod://FR/test",
+        as_of=date(2025, 6, 1),
+        system_year=2025,
+        value_type="scalar",
+        unit="/1",
+        routing=Routing.CHANGED,
+        guidance_only=True,
+        proposed_value=ParameterValue(
+            value=0.45,
+            valid_from=date(2025, 1, 1),
+            references=[
+                Reference(
+                    title="Circulaire Unedic n. 2025-01",
+                    source_trust_class=SourceTrustClass.GUIDANCE,
+                )
+            ],
+        ),
+    )
+
+    assert queue_store.write_item(item, tmp_path)
+    loaded = queue_store.load_items(tmp_path)[0]
+
+    assert loaded.guidance_only
+    assert loaded.proposed_value.references[0].source_trust_class == SourceTrustClass.GUIDANCE
+
+
+def _draft_citing(chunk_id: str) -> ProposalDraft:
+    return ProposalDraft(found=True, value_scalar=0.45, citation_chunk_id=chunk_id)
+
+
+def test_the_finding_reads_the_class_of_the_chunk_the_draft_cites():
+    """The wiring itself: only the CITED hit decides, not whatever was retrieved.
+
+    A guidance document answering the question sits next to evidence chunks in
+    every real run — reading the whole hit list instead of the cited chunk
+    would label almost nothing.
+    """
+    guidance = _hit(chunk_id="c-guidance", source_trust_class=SourceTrustClass.GUIDANCE)
+    evidence = _hit(chunk_id="c-evidence", source_trust_class=SourceTrustClass.EVIDENCE)
+    hits = [evidence, guidance]
+
+    assert guidance_only(cited_classes(_draft_citing("c-guidance"), hits))
+    assert not guidance_only(cited_classes(_draft_citing("c-evidence"), hits))
+    # A citation that is not among the retrieved chunks labels nothing: the
+    # critique has already failed it on the citation leg.
+    assert cited_classes(_draft_citing("c-unknown"), hits) == []
+    assert not guidance_only(cited_classes(_draft_citing("c-unknown"), hits))
+    # No proposal at all, and no citation on one, are both "nothing to label".
+    assert cited_classes(None, hits) == []
+    assert cited_classes(ProposalDraft(found=False), hits) == []

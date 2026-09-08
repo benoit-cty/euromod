@@ -2,19 +2,50 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
+from nomotheca_ingest.countries.base import UrlSource
 from nomotheca_ingest.countries.fr.fetcher import fetch_direct_id
 from nomotheca_ingest.countries.fr.parser import parse_dila_json
-from nomotheca_ingest.countries.fr.resolver import FrResolver, canary_facts
+from nomotheca_ingest.countries.fr.resolver import (
+    FrResolver,
+    canary_facts,
+    resolve_legifrance_url,
+)
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
 from nomotheca_ingest.core.snapshots import SnapshotClient
+
+WHOLE_CODE_HINT = (
+    "that is a whole Legifrance code (LEGITEXT), not one document — paste the "
+    "article URL (LEGIARTI...) or the JORF text (JORFTEXT...) instead"
+)
+
+ELI_HINT = (
+    "this Legifrance ELI URL carries a NOR, not a DILA id, and could not be "
+    "resolved — paste the JORFTEXT id or upload the saved file"
+)
+
+FR_URL_SOURCE = UrlSource(
+    name="Legifrance",
+    domains=("legifrance.gouv.fr",),
+    # JORF texts and single consolidated code articles (LEGIARTI — where most
+    # rates live once codified).
+    id_pattern=re.compile(r"\b(?:JORFTEXT|LEGIARTI)\d{12}\b"),
+    # A whole code is two thousand articles, not a document. Same exclusion the
+    # scout applies when harvesting ids.
+    refusals=((re.compile(r"\bLEGITEXT\d{12}\b"), WHOLE_CODE_HINT),),
+    no_id_hint=ELI_HINT,
+    # ELI URLs carry a NOR, not a DILA id (ADR 0002).
+    resolve=resolve_legifrance_url,
+)
 
 
 class FrAdapter:
     """France implementation of the country adapter protocol."""
 
     jurisdiction = "FR"
+    url_source = FR_URL_SOURCE
     default_source_code = "FR-LEGI"
 
     def __init__(self, resolver: FrResolver | None = None) -> None:

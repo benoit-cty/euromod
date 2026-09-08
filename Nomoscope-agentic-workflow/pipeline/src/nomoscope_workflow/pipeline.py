@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import date, datetime, timedelta, timezone
+from collections.abc import Iterable
 from pathlib import Path
 from typing import TypedDict
 
@@ -36,12 +37,37 @@ from .schema import (
     ReviewItem,
     Routing,
     SourceType,
+    SourceTrustClass,
     TemporalBasis,
     income_year_for,
 )
 from .tracing import progress, set_output, step_span
 
 MAX_PROPOSAL_ATTEMPTS = 2
+
+#: Informational critique finding (ADR 0001). "Legislation is King" stays
+#: visible in every decision record without blocking circular-governed schemes:
+#: it never changes the verdict, the routing, or the reviewer's ability to
+#: Accept — it only says what the value rests on.
+GUIDANCE_ONLY_ISSUE = "supported by guidance only: no legislation among the cited sources"
+
+
+def cited_classes(
+    draft: ProposalDraft | None, hits: list[RetrievalHit]
+) -> list[SourceTrustClass]:
+    """Source-trust class of every retrieved chunk the draft actually cites."""
+    if draft is None or not draft.citation_chunk_id:
+        return []
+    return [hit.source_trust_class for hit in hits if hit.chunk_id == draft.citation_chunk_id]
+
+
+def guidance_only(classes: Iterable[SourceTrustClass | None]) -> bool:
+    """True when a proposal cites something and every citation is guidance.
+
+    An empty citation list is not guidance-only: there is nothing to label.
+    """
+    values = list(classes)
+    return bool(values) and all(value == SourceTrustClass.GUIDANCE for value in values)
 
 
 class WorkflowState(TypedDict, total=False):
@@ -550,6 +576,11 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 if not report.values_sane:
                     report.issues.append("values fail sanity checks (unit range or bracket order)")
 
+                # Informational only: appended to issues, never folded into the
+                # four booleans the verdict is computed from.
+                if guidance_only(cited_classes(draft, hits)):
+                    report.issues.append(GUIDANCE_ONLY_ISSUE)
+
                 # The LLM critique must see the sibling chunks too — the
                 # applicability clause they carry is exactly what it needs to
                 # judge dates_consistent.
@@ -631,6 +662,10 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 current_value=current,
                 proposed_value=proposed_value,
                 critique=report,
+                guidance_only=guidance_only(
+                    reference.source_trust_class
+                    for reference in (proposed_value.references if proposed_value else [])
+                ),
                 retrieval_trace=[
                     h.model_copy(update={"content": ""}) for h in state.get("hits", [])
                 ],
@@ -816,6 +851,7 @@ def _build_proposed_value(state: WorkflowState, cfg: WorkflowConfig) -> Paramete
                 supporting_extract=draft.supporting_extract,
                 extract_offsets=report.extract_offsets if report else None,
                 jrc_database_id=cited.chunk_id,
+                source_trust_class=cited.source_trust_class,
             )
         )
     return ParameterValue(

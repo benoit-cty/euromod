@@ -35,6 +35,7 @@ Load-bearing details that are easy to get wrong (the **code** is authoritative; 
 - `parse(snapshot_bytes, ref, snapshot)` takes **three** args — `snapshot.id` must land in every `VersionIR.fetch_snapshot_id`.
 - **Adapters must construct with zero args** (`registry.get_adapter` calls `adapter_type()`).
 - `pipeline.ingest_instrument` defaults `source_code` to `f"{CC}-LEGI"` unless the adapter defines `default_source_code`. Set `default_source_code = "<your sources.code>"` on the adapter class — the Nomoscope scout invokes the CLI without `--source-code`, so a wrong default fails with `Unknown source code`.
+- Declare `url_source = <CC>_URL_SOURCE` (a `countries/base.py::UrlSource`) on the adapter class: the portal's `domains` and the `id_pattern` its URLs carry, plus optional `refusals` (URLs that are recognisably the portal's but are not one document — FR refuses a whole `LEGITEXT` code) and a `resolve` callable for portals that keep the id out of the URL (FR ELI). Without it a reviewer pasting an official act's URL gets it ingested as a *contributed document* — the portal chrome stored as if it were the law. `core/routing.py` reads these and names no country; keep it that way (§7).
 - `UnitIR.path` must be **ltree-safe** (letters/digits/underscore only — sanitize `6-1` → `6_1`); the loader casts it with `::ltree`.
 - Emit a stable `national_id` and/or `citation` per unit — the loader reconciles re-ingested units by `national_id` OR `citation` (falling back to `(instrument_id, path)`); without one, the same article ingested via two routes duplicates.
 - `InstrumentIR.jurisdiction` / `source_code`: take them from `ref`, don't hardcode (a copy-paste hazard from the FR parser).
@@ -72,6 +73,14 @@ every corpus hole stays a `not_found` forever. Add an entry plus an `ID_HINTS` l
   `cli instrument <cc> <id>` can fetch. Both must hold: a portal id the ingester cannot
   resolve is a guaranteed failed ingest. Include every id generation still in use (LT has
   two: `TAR.` + 12 hex and a 32-hex registration id).
+
+**Copy these two verbatim from the adapter's `UrlSource`** (Step 2) — same domains, same
+regex. They are the same fact stated twice, because `nomoscope_workflow` may not import
+`nomotheca_ingest` (the dependency runs the other way, via the optional `translate`
+extra). A test in each suite fails when the two disagree, so a mismatch shows up as a
+red `test_the_nomoscope_scout_copies_these_portals_without_altering_them` (ingest) or
+`test_scout_portal_facts_still_match_the_adapters_that_own_them` (workflow) rather than
+as a gap-fill that harvests ids the ingester then refuses.
 - `act_kinds` — the country's own words for the acts that fix values (`loi, décret or
   arrêté`; `įstatymas, Vyriausybės nutarimas or ministro įsakymas`), interpolated into the
   scout prompt.

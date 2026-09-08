@@ -65,6 +65,20 @@ class SourceType(StrEnum):
     OTHER = "other"
 
 
+class SourceTrustClass(StrEnum):
+    """What the instrument behind a chunk may be used for (ADR 0001).
+
+    Mirrors `instruments.source_trust_class` in the legislation DB. Retrieval
+    ranks `evidence` and `guidance` equally and never returns `context`; the
+    class travels with every hit and every citation so a reviewer can see
+    whether a value rests on legislation or on administrative guidance.
+    """
+
+    EVIDENCE = "evidence"
+    GUIDANCE = "guidance"
+    CONTEXT = "context"
+
+
 class ReviewStatus(StrEnum):
     PENDING = "pending"
     ACCEPTED = "accepted"
@@ -118,6 +132,9 @@ class Reference(BaseModel):
     extract_offsets: tuple[int, int] | None = None
     legal_unit_ref: str | None = None
     jrc_database_id: str | None = None
+    #: Source-trust class of the instrument this reference points at, so a
+    #: stored decision still says what the value rested on.
+    source_trust_class: SourceTrustClass | None = None
     reviewer_note: str | None = None
 
 
@@ -132,6 +149,9 @@ class RetrievalHit(BaseModel):
     # "sibling": not retrieved by search — another chunk of an already-retrieved
     # article, pulled in so the whole article is visible (income-year checks).
     method: Literal["citation", "fts", "vector", "hybrid", "country_report", "sibling"] = "hybrid"
+    #: Read from the instrument the chunk belongs to. Defaults to evidence so
+    #: hand-built and mock hits behave exactly as before this column existed.
+    source_trust_class: SourceTrustClass = SourceTrustClass.EVIDENCE
     score: float | None = None
     validity: str | None = None
     version_status: str | None = None
@@ -301,6 +321,10 @@ class ReviewItem(BaseModel):
     current_value: ParameterValue | None = None
     proposed_value: ParameterValue | None = None
     critique: CritiqueReport | None = None
+    #: True when the proposal has citations and every one of them is guidance
+    #: (ADR 0001). Informational: Accept stays available — for a circular-
+    #: governed scheme the circular IS the operative text.
+    guidance_only: bool = False
     retrieval_trace: list[RetrievalHit] = Field(default_factory=list)
     proposed_record: ParameterRecord | None = None
     parameter_file: str | None = None

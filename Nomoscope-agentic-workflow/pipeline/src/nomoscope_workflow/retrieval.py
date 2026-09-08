@@ -52,17 +52,21 @@ live_version AS (
   JOIN instruments i         ON i.id = u.instrument_id
   JOIN jurisdictions j       ON j.id = i.jurisdiction_id
   WHERE v.validity @> %(as_of)s::date AND j.code = %(country)s
-    -- Country Reports describe the model, not the law: never citable evidence.
-    AND i.instrument_type <> 'country_report'
+    -- Class rule, not a type string (ADR 0001): a 'context' corpus describes
+    -- the model rather than the law and is never citable evidence. Country
+    -- Reports are the only one today; a future one is excluded by the same
+    -- predicate without touching this SQL.
+    AND i.source_trust_class <> 'context'
   ORDER BY i.id, coalesce(u.citation, u.id::text), lower(v.validity) DESC
 )"""
 
 _CITATION_SQL = f"""
 WITH {_LIVE_VERSION_CTE}
 SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status,
+       v.validity::text AS validity, v.version_status, i.source_trust_class,
        similarity(u.citation, %(cit)s)::float8 AS score
 FROM legal_units u
+JOIN instruments i         ON i.id = u.instrument_id
 JOIN legal_unit_versions v ON v.legal_unit_id = u.id
 JOIN live_version lv       ON lv.version_id = v.id
 JOIN unit_texts t          ON t.version_id = v.id
@@ -95,13 +99,14 @@ fts AS (
   LIMIT 50
 ){{vec_cte}}
 SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status,
+       v.validity::text AS validity, v.version_status, i.source_trust_class,
        {{score_expr}} AS score
 FROM {{joined}}
 JOIN chunks ch             ON ch.id = chunk_id
 JOIN unit_texts t          ON t.id = ch.unit_text_id
 JOIN legal_unit_versions v ON v.id = t.version_id
 JOIN legal_units u         ON u.id = v.legal_unit_id
+JOIN instruments i         ON i.id = u.instrument_id
 ORDER BY score DESC
 LIMIT %(k)s
 """
@@ -219,7 +224,7 @@ def retrieve(
 
 _CR_SEARCH_SQL = """
 SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status,
+       v.validity::text AS validity, v.version_status, i.source_trust_class,
        ts_rank_cd(ch.tsv, websearch_to_tsquery(ch.search_config, %(fts_q)s), 1|32)::float8 AS score
 FROM chunks ch
 JOIN unit_texts t          ON t.id = ch.unit_text_id
@@ -227,7 +232,7 @@ JOIN legal_unit_versions v ON v.id = t.version_id
 JOIN legal_units u         ON u.id = v.legal_unit_id
 JOIN instruments i         ON i.id = u.instrument_id
 JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-WHERE i.instrument_type = 'country_report'
+WHERE i.source_trust_class = 'context'
   AND j.code = %(country)s
   AND v.validity @> %(as_of)s::date
   AND ch.tsv @@ websearch_to_tsquery(ch.search_config, %(fts_q)s)
@@ -323,11 +328,13 @@ def unit_chunks(conn: psycopg.Connection, chunk_id: str) -> list[RetrievalHit]:
     rows = conn.execute(
         """
         SELECT c2.id::text AS chunk_id, u.citation, c2.context_header, c2.content,
-               t.lang, v.validity::text AS validity, v.version_status
+               t.lang, v.validity::text AS validity, v.version_status,
+               i.source_trust_class
         FROM chunks c1
         JOIN unit_texts t ON t.id = c1.unit_text_id
         JOIN legal_unit_versions v ON v.id = t.version_id
         JOIN legal_units u ON u.id = v.legal_unit_id
+        JOIN instruments i ON i.id = u.instrument_id
         JOIN chunks c2 ON c2.unit_text_id = t.id
         WHERE c1.id = %(chunk_id)s::uuid
         ORDER BY c2.seq

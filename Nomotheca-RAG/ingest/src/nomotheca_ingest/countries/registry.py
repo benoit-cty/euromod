@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from nomotheca_ingest.countries.base import CountryAdapter
+from nomotheca_ingest.countries.base import CountryAdapter, UrlSource
 from nomotheca_ingest.countries.es.adapter import EsAdapter
 from nomotheca_ingest.countries.fr.adapter import FrAdapter
 from nomotheca_ingest.countries.ie.adapter import IeAdapter
@@ -17,6 +17,19 @@ _ADAPTERS: dict[str, type[CountryAdapter]] = {
     "LT": LtAdapter,
     "NL": NlAdapter,
 }
+
+
+def url_sources() -> dict[str, UrlSource]:
+    """Every registered adapter's official-portal descriptor, by jurisdiction.
+
+    What the contributed-document router reads to recognise a URL. An adapter
+    with no `url_source` simply never claims one.
+    """
+    return {
+        code: adapter_type.url_source
+        for code, adapter_type in _ADAPTERS.items()
+        if getattr(adapter_type, "url_source", None) is not None
+    }
 
 
 def get_adapter(jurisdiction: str) -> CountryAdapter:
