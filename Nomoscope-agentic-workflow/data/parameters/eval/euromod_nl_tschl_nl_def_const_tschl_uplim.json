@@ -1,0 +1,49 @@
+{
+  "information": {
+    "country": "NL",
+    "model_target": "euromod://NL/tschl_nl/def_const/$tschl_uplim",
+    "spine_order": "21",
+    "value_type": "scalar",
+    "unit": "currency",
+    "threshold_unit": null,
+    "label": {
+      "en": "upper income limit"
+    },
+    "short_label": {
+      "en": "$tschl_uplim"
+    },
+    "description": {
+      "en": "$tschl_uplim is the upper income limit (maximum contribution base) applied to the earnings-related component of the health insurance (ZVW) contribution; rather than holding its own amount it is currently defined as a formula equal to $EI_Maxpremwag, the maximum premium-wage constant. It is used in tschl_nl/SchedCalc as band_uplim for 'Earnings-related health insurance contribution - part 1' and in tschl_nl/BenCalc as comp_perTU for 'part 2', capping the income on which the employee and self-employed/pension ZVW rates ($tschl_rate_emp, $tschl_rate_se) are charged. Per the Country Report, from 2012 this ceiling was harmonized with (raised to) the maximum base used for the employee unemployment/disability insurance contributions — explaining the reference to $EI_Maxpremwag — and this combined maximum base reached €75,860 per year by 2025."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Contribution health insurance, CR T2.24"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "$EI_Maxpremwag",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

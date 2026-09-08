@@ -1,0 +1,23 @@
+{
+  "id": "nl_bfa_mult2_2025-06-01",
+  "country": "NL",
+  "language": "nl",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_nl_bfa_nl_def_const_bfa_mult2.json",
+  "as_of": "2025-06-01",
+  "difficulty": "derive",
+  "hazards": [],
+  "labels_drafted": false,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 1.2143,
+    "citations": [
+      "AKW, artikel 12"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: nl.json#bfa_mult2 | euromod value in force at 2025-06-01: 1.2143 from 2012-01-01 | HARD / derive — the age-band multiplier for children 6-11, 1.2143. The law never states a multiplier: AKW art. 12(3) states the three quarterly amounts (€ 286,45 / € 347,83 / € 409,21) and EUROMOD stores the middle one as a RATIO to the youngest, 347,83 / 286,45 = 1.21428…, rounded to four decimals. The first scorable derive case in NL (stating act ingested, arithmetic checkable against the text): the pipeline has to recognise which quantity is legislated (three amounts) and which is EUROMOD arithmetic (the ratio), then compute. Known scoring gap, recorded in golden_set_NL.md: the exact quotient 1.214278 fails the 1e-6 relative tolerance against the stored 1.2143 — what flips the value leg is a rounding-aware comparison for derived ratios (or the pipeline rounding to EUROMOD's four decimals), not a corpus change. ROUTING: EUROMOD holds 1.2143 since 2012 -> `unchanged`.",
+  "reviewed_by": "ben"
+}

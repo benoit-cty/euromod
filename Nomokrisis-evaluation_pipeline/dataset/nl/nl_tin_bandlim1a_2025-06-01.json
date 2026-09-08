@@ -1,0 +1,23 @@
+{
+  "id": "nl_tin_bandlim1a_2025-06-01",
+  "country": "NL",
+  "language": "nl",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_nl_constdef_nl_def_const_tin_bandlim1a.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "40502#y",
+    "citations": [
+      "Wet IB 2001, artikel 2.10a"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: nl.json#tin_bandlim1a | euromod value in force at 2025-06-01: 40502.0 from 2025-01-01 | MEDIUM — the elevated first-band limit for taxpayers born before 1 January 1946, € 40.502, in art. 2.10a's own tariff table (mirrored by Wet LB 1964 art. 20b). The near-miss article: art. 2.10 sits next to it with the same layout and € 38.441 in the same cell, and a retrieval that lands on the general table proposes 38.441 with a confident citation. The pipeline has to read the parameter's meaning ('elevated, alternative upper limit') and pick the derogating article. ROUTING: EUROMOD holds 40502#y from 2025-01-01 -> `unchanged`.",
+  "reviewed_by": "ben"
+}

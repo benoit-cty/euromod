@@ -1,0 +1,23 @@
+{
+  "id": "nl_penage_2025-06-01",
+  "country": "NL",
+  "language": "nl",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_nl_constdef_nl_def_const_penage.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": 67.0,
+    "citations": [
+      "AOW, artikel 7a"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: nl.json#penage | euromod value in force at 2025-06-01: 67.0 from 2024-01-01 | EASY-MEDIUM — the state pension age in 2025, 67, from the year table of AOW art. 7a(1): '… n. in 2025: 67 jaar, respectievelijk 17 jaar; o. in 2026 en de kalenderjaren daarna: …' (Algemene Ouderdomswet, BWBR0002221, version [2020-12-10,)). The LT PensionAgeFemale counterpart with the derivation done by the legislature: the pipeline has to pick the 2025 row out of a fifteen-row table that also carries the aanvangsleeftijd (17) in every row, and read a whole number of years (no months-to-decimal conversion this year; 2028 is '67 jaar en drie maanden'). Unit age_years, value 67. ROUTING: EUROMOD holds 67 from 2024-01-01 -> `unchanged`.",
+  "reviewed_by": "ben"
+}

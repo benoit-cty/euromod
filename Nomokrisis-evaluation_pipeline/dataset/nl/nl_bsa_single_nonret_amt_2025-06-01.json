@@ -1,0 +1,26 @@
+{
+  "id": "nl_bsa_single_nonret_amt_2025-06-01",
+  "country": "NL",
+  "language": "nl",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_nl_bsanet_nl_def_const_bsa_single_nonret_amt.json",
+  "as_of": "2025-06-01",
+  "difficulty": "combine",
+  "hazards": [
+    "mid_year_change"
+  ],
+  "labels_drafted": false,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "961.04#m",
+    "citations": [
+      "Participatiewet, artikel 21",
+      "Participatiewet, artikel 22a"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: nl.json#bsa_single_nonret_amt | euromod value in force at 2025-06-01: 961.04 from 2025-01-01 | IMPOSSIBLE today / combine — the norm EUROMOD applies to a single person, € 961,04, labelled by the modeller '50% of standard amount'. It is the kostendelersnorm of Participatiewet art. 22a for A = 2 sharers: ((40% + A x 30%) / A) x B with B the couple norm of art. 21(b), i.e. 0.5 x 1.922,07 = 961,04. Both provisions are in the corpus — but the formula is not: art. 22a's text reads 'is de norm per kalendermaand voor de belanghebbende: Hierbij staat: • A voor …' because the statutory formula is a <formule>/MathML element the NL parser does not render (the CALS tables are rendered, the formula element is dropped). No extraction can produce 961,04 from the text as chunked. What flips it: the parser renders formula elements (then `reparse NL --url-like BWBR0015703` replays the stored snapshot) — an ingest finding, so this case is the metric for it. Difficulty is set explicitly (two pinpoints, one instrument, the drafter would say verbatim); hazard mid_year_change as for art. 21. ROUTING: EUROMOD holds 961.04#m -> `unchanged`.",
+  "reviewed_by": "ben"
+}

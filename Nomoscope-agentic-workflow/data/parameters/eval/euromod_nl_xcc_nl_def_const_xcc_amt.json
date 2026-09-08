@@ -1,0 +1,45 @@
+{
+  "information": {
+    "country": "NL",
+    "model_target": "euromod://NL/xcc_nl/def_const/$xcc_amt",
+    "spine_order": "38",
+    "value_type": "scalar",
+    "unit": "currency/week",
+    "threshold_unit": null,
+    "label": {},
+    "short_label": {
+      "en": "$xcc_amt"
+    },
+    "description": {
+      "en": "Assumed standard weekly cost of formal childcare per eligible child (EUR 400/week, unchanged since 2024). It is used in xcc_nl's first BenCalc component (function comment 'Costs') as the Comp_perElig amount added once for every eligible child meeting the condition 'dag 0-4 & dccfc=1' (aged 0 to 4 and recorded/flagged as using formal daycare); an inline parameter comment in the model notes the figure assumes a standard 40-hour working week of care. This produces the output variable xcc_s, the imputed weekly childcare cost per child, which the policy's second BenCalc component ('Childcare benefit') then multiplies by income- and child-rank-tested compensation rates (built from the $bccfc_* family of constants, e.g. $bccfc_child2_thres1/thres2 for the second and later children) to compute the modelled childcare-fee compensation (bccfc_s) - EUROMOD's approximation of the Dutch childcare allowance (kinderopvangtoeslag)."
+    },
+    "explanation": {},
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": 400.0,
+      "valid_from": "2024-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": "national_team",
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "400#w",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

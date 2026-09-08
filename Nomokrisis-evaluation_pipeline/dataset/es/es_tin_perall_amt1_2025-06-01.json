@@ -16,7 +16,8 @@
     ]
   },
   "corpus_available": true,
-  "verified": false,
+  "verified": true,
   "drafted_by": "human",
-  "notes": "curated: es.json#tin_perall_amt1 | euromod value in force at 2025-06-01: 5550.0 from 2015-01-01 | EASY — the personal minimum (mínimo del contribuyente), 5.550 euros anuales, stated verbatim in LIRPF art. 57.1 (Ley 35/2006, BOE-A-2006-20764), unchanged since the 2015 reform. The ES happy path: one ingested article, one literal amount, no regional layer (the regional minima are separate *rg* parameters). ROUTING: EUROMOD holds 5550 -> `unchanged`; the case scores value, citation and retrieval."
+  "notes": "curated: es.json#tin_perall_amt1 | euromod value in force at 2025-06-01: 5550.0 from 2015-01-01 | EASY — the personal minimum (mínimo del contribuyente), 5.550 euros anuales, stated verbatim in LIRPF art. 57.1 (Ley 35/2006, BOE-A-2006-20764), unchanged since the 2015 reform. The ES happy path: one ingested article, one literal amount, no regional layer (the regional minima are separate *rg* parameters). ROUTING: EUROMOD holds 5550 -> `unchanged`; the case scores value, citation and retrieval.",
+  "reviewed_by": "ben"
 }

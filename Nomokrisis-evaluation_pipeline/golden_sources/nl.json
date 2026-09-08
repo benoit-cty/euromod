@@ -1,0 +1,205 @@
+{
+  "country": "NL",
+  "language": "nl",
+  "corpus": "curated",
+  "description": "Hand-curated core of the NL golden set: 15 parameters in increasing pipeline difficulty, from the second Box 1 threshold (the happy path) to cases the current pipeline cannot solve — a value whose base is the minimum wage in an act not ingested, a cost-sharing norm whose statutory formula the parser dropped, the minimum wage and the AOW premium rate themselves (stated by instruments outside the corpus), a $-reference and a national-team assumption. The Netherlands has no OpenFisca corpus in the store, so like IE, LT and ES there is no corpus drafter: expected values are hand-curated here from the fourteen ingested acts (Wet IB 2001, Wet LB 1964, AKW, WKB, Participatiewet, AOW, Wfsv, Wet op de zorgtoeslag …), every one located in the corpus at as_of 2025-06-01 before being written down, and every drafted case stays verified:false until a human confirms it. See golden_set_NL.md for the rationale per entry.",
+  "conventions": {
+    "temporal_basis": "All NL parameters are in_force: income tax is assessed on the calendar year and the Belastingplan / December bijstellingsregeling rewrite the amounts in the acts with effect from 1 January of the system year, so EUROMOD system year Y states the law of year Y — no FR-style income-year offset. Recorded in curation/NL.curation.yaml rather than derived.",
+    "tax_rate_basis": "Wet IB 2001 art. 2.10 states the TAX component of the first Box 1 band (8,17 % in 2025); the Country Report's 35.82 % is tax plus premies volksverzekeringen, which EUROMOD models separately in peoplesic_nl. $tin_br1 holds the tax component, exactly as the statute. Bands 2 and 3 carry no premiums, so 37,48 % and 49,50 % are the same number on both bases.",
+    "mid_year_indexation": "The WML, AKW, Participatiewet, AOW and Anw amounts are re-indexed every 1 January and 1 July. EUROMOD holds the 1 January value for system year 2025, and the corpus holds ONE toestand per policy date (1 January), so the 1 July 2025 versions of those articles are not in the corpus at all (validity [2025-01-01,2026-01-01) on AKW art. 12 and Participatiewet art. 21). A case on such a parameter carries hazard mid_year_change; the drafter cannot see it.",
+    "expected_value": "Hand-curated ground truth from the acts (the LAW's value, located in the corpus), in EUROMOD's own spelling ('76817#y', '286.45#q', '8.17%', 1.2143). normalise_value reads a percent literal as the fraction it denotes (0.0817) and a '#q' suffix as a quarterly period. Where the ground truth deliberately differs from EUROMOD's stored value the note says why and the difference is reported to the economists team, never absorbed. null means the value leg is not scored for this case.",
+    "routing": "The routing a correct pipeline owes, which is the pipeline's own question: does the proposal differ from the value EUROMOD CURRENTLY HOLDS? It is not 'did the law change this year?'. The system-year 2025 export already encodes the 2025 law (the new three-band schedule, the 2.470 zelfstandigenaftrek, the 1.330.000 villa threshold), so those route `unchanged` — the pipeline's job there is to re-confirm them with a citation. Reserve `changed` for parameters where EUROMOD is genuinely stale relative to the law; none was found in the corpus-verifiable 2025 values (see golden_set_NL.md). Prefer leaving `routing:` out and letting route_against_current decide; state it only to pin a routing trap (derived, national_team_source). A stated routing that contradicts route_against_current SKIPS the entry.",
+    "source": "Every entry resolves through the parameter store: `model_target` for a single parameter in params.parameters. No `group_id` entry: all eleven NL bracket_schedule groups assemble with rate=None for 2025 (their rates are percent literals the group loader does not read), so no table case is sound yet. No entry reads a hand-authored parameter file. Run curate-params curation/NL.curation.yaml after ingest-params or the national_team case cannot route and the /100 rates keep their export unit.",
+    "citations": "Spelled exactly as legal_units.citation stores them: '<citeertitel>, artikel <nr>' with a plain space ('Wet IB 2001, artikel 2.10', 'AKW, artikel 12', 'Participatiewet, artikel 21'); no non-breaking spaces in the NL corpus (checked byte-wise for every citation used here). citation_matches is one-way containment, so never write the BWB id or the full act name into citations — the act's name and BWB id go in note."
+  },
+  "entries": [
+    {
+      "model_target": "euromod://NL/constdef_nl/def_const/$tin_bandlim2",
+      "id": "tin_bandlim2",
+      "source_class": "codified_law",
+      "expected_value": "76817#y",
+      "citations": [
+        "Wet IB 2001, artikel 2.10"
+      ],
+      "corpus_available": true,
+      "note": "EASY — the upper limit of the second Box 1 band, € 76.817, stated in the four-column tariff table of Wet IB 2001 art. 2.10 (BWBR0011353, version [2025-01-01,2026-01-01), bron Stcrt.2024-38492 — the December bijstellingsregeling rewrote the amounts inside the article, so the consolidated article IS the operative source). The NL happy path: one ingested article, one literal amount, and the NL-specific parser risk in the open — the table is CALS XML rendered as pipe-delimited rows, so the supporting_extract has to be matched against '| € 38.441 | € 76.817 | € 3.140 | 37,48% |'. Wet LB 1964 art. 20a carries the same table for wage tax; either citation is correct. ROUTING: EUROMOD holds 76817#y from 2025-01-01 -> `unchanged`; the case scores value, citation and retrieval."
+    },
+    {
+      "model_target": "euromod://NL/tin_nl/def_const/$tin_br1",
+      "id": "tin_br1",
+      "source_class": "codified_law",
+      "expected_value": "8.17%",
+      "citations": [
+        "Wet IB 2001, artikel 2.10"
+      ],
+      "corpus_available": true,
+      "note": "EASY-MEDIUM — the first-band rate of the 2025 three-band schedule, 8,17 % in art. 2.10's table. This is the 8,17-vs-35,82 trap of Netherlands_sources_analysis.md §3: the statute states the TAX component only, the Country Report (§2.2.3, ingested as context) says '35.82 percent … (including contributions national insurances)', and both numbers are correct on their own basis. EUROMOD's $tin_br1 holds the tax component (2024: 0.0932 = the statutory 9,32 %), the premiums live in peoplesic_nl — so a proposal of 35.82 % here is a wrong value with a plausible source. The unit is /1 and the store spells the value '8.17%'. ROUTING: the 2025 export already carries 8.17% -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://NL/tin_nl/def_const/$tin_br3",
+      "id": "tin_br3",
+      "source_class": "codified_law",
+      "expected_value": "49.50%",
+      "citations": [
+        "Wet IB 2001, artikel 2.10"
+      ],
+      "corpus_available": true,
+      "note": "EASY — the top rate, 49,50 %, unchanged since 2020 while everything around it moved for 2025 (a new first band, 36,97 -> 37,48 in band 2, both thresholds re-indexed). The no-change trap: the pipeline must re-confirm 49,50 from the same table it reads the new bands from, not infer a change from the reform. Unit /100 in the export, curated to /1 in NL.curation.yaml (the value is a percent literal like its /1 sibling $tin_br1). ROUTING: `unchanged`."
+    },
+    {
+      "model_target": "euromod://NL/constdef_nl/def_const/$tin_bandlim1a",
+      "id": "tin_bandlim1a",
+      "source_class": "codified_law",
+      "expected_value": "40502#y",
+      "citations": [
+        "Wet IB 2001, artikel 2.10a"
+      ],
+      "corpus_available": true,
+      "note": "MEDIUM — the elevated first-band limit for taxpayers born before 1 January 1946, € 40.502, in art. 2.10a's own tariff table (mirrored by Wet LB 1964 art. 20b). The near-miss article: art. 2.10 sits next to it with the same layout and € 38.441 in the same cell, and a retrieval that lands on the general table proposes 38.441 with a confident citation. The pipeline has to read the parameter's meaning ('elevated, alternative upper limit') and pick the derogating article. ROUTING: EUROMOD holds 40502#y from 2025-01-01 -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://NL/tin_nl/def_const/$impr_band5",
+      "id": "impr_band5",
+      "source_class": "codified_law",
+      "expected_value": "1330000#c",
+      "citations": [
+        "Wet IB 2001, artikel 3.112"
+      ],
+      "corpus_available": true,
+      "note": "MEDIUM — the top WOZ-value threshold of the eigenwoningforfait ('villa threshold'), € 1.330.000 for 2025 (1.310.000 in 2024), the last row of the six-row table in Wet IB 2001 art. 3.112(1): '| € 1.330.000 | | € 4.655 vermeerderd met 2,35% …'. Table reading with a twist: the amount appears twice in the same row (as the lower bound of the open band and inside the formula), the other five rows carry thresholds that have not moved since 2018, and the value is spelled with two thousands separators. EUROMOD stores it with a '#c' (capital) suffix. ROUTING: the 2025 export carries 1330000#c -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://NL/bfa_nl/def_const/$bfa_bchqtr_amt",
+      "id": "bfa_bchqtr_amt",
+      "difficulty": "verbatim",
+      "hazards": [
+        "mid_year_change"
+      ],
+      "source_class": "codified_law",
+      "expected_value": "286.45#q",
+      "citations": [
+        "AKW, artikel 12"
+      ],
+      "corpus_available": true,
+      "note": "MEDIUM — the quarterly child benefit for a child under 6, € 286,45, AKW art. 12(3)(a) (Algemene Kinderbijslagwet, BWBR0002368, version [2025-01-01,2026-01-01)). The trap is in the same article: lid 1 says 'Het basiskinderbijslagbedrag over een kalenderkwartaal bedraagt € 409,21 per kind' — that is the 12-17 amount the law calls the BASE, while EUROMOD's 'base amount' is the 0-5 amount from which its age multipliers ($bfa_mult2/3) scale up. A pipeline that trusts the word 'basis' proposes 409,21. Period '#q' exercises the quarterly branch of normalise_value. HAZARD mid_year_change: the AKW amounts are re-indexed every 1 July; EUROMOD holds the 1 January value and the corpus holds only the 1 January toestand, so the July 2025 amount is invisible to retrieval by construction (Netherlands_sources_analysis.md §6.1). ROUTING: EUROMOD holds 286.45#q -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://NL/bfa_nl/def_const/$bfa_mult2",
+      "id": "bfa_mult2",
+      "difficulty": "derive",
+      "hazards": [],
+      "source_class": "codified_law",
+      "expected_value": 1.2143,
+      "citations": [
+        "AKW, artikel 12"
+      ],
+      "corpus_available": true,
+      "note": "HARD / derive — the age-band multiplier for children 6-11, 1.2143. The law never states a multiplier: AKW art. 12(3) states the three quarterly amounts (€ 286,45 / € 347,83 / € 409,21) and EUROMOD stores the middle one as a RATIO to the youngest, 347,83 / 286,45 = 1.21428…, rounded to four decimals. The first scorable derive case in NL (stating act ingested, arithmetic checkable against the text): the pipeline has to recognise which quantity is legislated (three amounts) and which is EUROMOD arithmetic (the ratio), then compute. Known scoring gap, recorded in golden_set_NL.md: the exact quotient 1.214278 fails the 1e-6 relative tolerance against the stored 1.2143 — what flips the value leg is a rounding-aware comparison for derived ratios (or the pipeline rounding to EUROMOD's four decimals), not a corpus change. ROUTING: EUROMOD holds 1.2143 since 2012 -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://NL/chall_nl/def_const/$chall_B2",
+      "id": "chall_b2",
+      "difficulty": "combine",
+      "hazards": [
+        "cross_instrument"
+      ],
+      "source_class": "codified_law",
+      "expected_value": "37545#y",
+      "citations": [
+        "WKB, artikel 2",
+        "WKB, artikel 1"
+      ],
+      "corpus_available": true,
+      "note": "HARD / combine + cross_instrument — the income threshold above which the kindgebonden budget of a couple is tapered, € 37.545. No article states it. Wet op het kindgebonden budget (BWBR0022751) art. 2(8) tapers 'bij een gezamenlijk toetsingsinkomen … van meer dan het met € 9.139,00 verhoogde drempelinkomen'; art. 1(1)(d) defines the drempelinkomen as '108% van het twaalfvoud van het voor de maand januari van het berekeningsjaar geldende in artikel 8, eerste lid, onderdeel b, van de Wet minimumloon en minimumvakantiebijslag bedoelde bedrag per maand'; the WML (BWBR0002638) is NOT ingested, and its January 2025 monthly amount is € 2.191,80 (EUROMOD's own $MinWage_m). 1.08 x 12 x 2191.80 + 9139 = 37 544.73 -> 37 545. Two provisions of one act give the coefficients, a third act gives the base — the ES bsa00_amt shape. Same chain, without the 9.139, gives $chall_B1 / $tin_gtc_inclim / $bhlmt_B_amt = 28 406 (Wet IB 2001 art. 8.10 states that one verbatim, which is the near-miss: 28.406 is in the corpus, 37.545 is not). Difficulty and hazard are set explicitly: both citations are pinpoints into one instrument, so the drafter would call it verbatim, and the cross-instrument leg is the one that is missing. ROUTING: EUROMOD holds 37545#y -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://NL/bsanet_nl/def_const/$bsa_couple_nonret_amt",
+      "id": "bsa_couple_nonret_amt",
+      "difficulty": "verbatim",
+      "hazards": [
+        "mid_year_change"
+      ],
+      "source_class": "codified_law",
+      "expected_value": "1922.07#m",
+      "citations": [
+        "Participatiewet, artikel 21"
+      ],
+      "corpus_available": true,
+      "note": "MEDIUM — the monthly social-assistance norm for a couple both under pension age without cost-sharing co-residents, € 1.922,07, Participatiewet (BWBR0015703) art. 21(b), version [2025-01-01,2026-01-01). Stated verbatim next to the single norm (a: € 1.345,45). HAZARD mid_year_change: bijstandsnormen are re-indexed every 1 July with the minimum wage; the corpus holds the 1 January toestand only, so the July 2025 norm cannot be evidenced. EUROMOD-side finding (reported, not absorbed): four sibling parameters of this policy are stored with a stray space inside the number — $bsa_single_lone_nonret_amt, $bsa_loneparent_nonret_amt, $bsa_loneparent_lone_nonret_amt '1345. 45#m', $bsa_couple_noch_youth1_amt '1293. 21#m' — which normalise_value cannot read; the law says € 1.345,45. ROUTING: EUROMOD holds 1922.07#m -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://NL/bsanet_nl/def_const/$bsa_single_nonret_amt",
+      "id": "bsa_single_nonret_amt",
+      "difficulty": "combine",
+      "hazards": [
+        "mid_year_change"
+      ],
+      "source_class": "codified_law",
+      "expected_value": "961.04#m",
+      "citations": [
+        "Participatiewet, artikel 21",
+        "Participatiewet, artikel 22a"
+      ],
+      "corpus_available": true,
+      "note": "IMPOSSIBLE today / combine — the norm EUROMOD applies to a single person, € 961,04, labelled by the modeller '50% of standard amount'. It is the kostendelersnorm of Participatiewet art. 22a for A = 2 sharers: ((40% + A x 30%) / A) x B with B the couple norm of art. 21(b), i.e. 0.5 x 1.922,07 = 961,04. Both provisions are in the corpus — but the formula is not: art. 22a's text reads 'is de norm per kalendermaand voor de belanghebbende: Hierbij staat: • A voor …' because the statutory formula is a <formule>/MathML element the NL parser does not render (the CALS tables are rendered, the formula element is dropped). No extraction can produce 961,04 from the text as chunked. What flips it: the parser renders formula elements (then `reparse NL --url-like BWBR0015703` replays the stored snapshot) — an ingest finding, so this case is the metric for it. Difficulty is set explicitly (two pinpoints, one instrument, the drafter would say verbatim); hazard mid_year_change as for art. 21. ROUTING: EUROMOD holds 961.04#m -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://NL/constdef_nl/def_const/$PenAge",
+      "id": "penage",
+      "source_class": "codified_law",
+      "expected_value": 67,
+      "citations": [
+        "AOW, artikel 7a"
+      ],
+      "corpus_available": true,
+      "note": "EASY-MEDIUM — the state pension age in 2025, 67, from the year table of AOW art. 7a(1): '… n. in 2025: 67 jaar, respectievelijk 17 jaar; o. in 2026 en de kalenderjaren daarna: …' (Algemene Ouderdomswet, BWBR0002221, version [2020-12-10,)). The LT PensionAgeFemale counterpart with the derivation done by the legislature: the pipeline has to pick the 2025 row out of a fifteen-row table that also carries the aanvangsleeftijd (17) in every row, and read a whole number of years (no months-to-decimal conversion this year; 2028 is '67 jaar en drie maanden'). Unit age_years, value 67. ROUTING: EUROMOD holds 67 from 2024-01-01 -> `unchanged`."
+    },
+    {
+      "model_target": "euromod://NL/constdef_nl/def_const/$MinWage_m",
+      "id": "minwage_m",
+      "difficulty": "verbatim",
+      "hazards": [
+        "mid_year_change"
+      ],
+      "source_class": "codified_law",
+      "expected_value": "2191.80#m",
+      "citations": [],
+      "corpus_available": false,
+      "note": "HARD / not_found today — the gross statutory minimum wage per month, € 2.191,80 on 1 January 2025. Since 2024 the Wet minimumloon en minimumvakantiebijslag (WML, BWBR0002638) fixes an HOURLY minimum wage (€ 14,06 from 1 January 2025, € 14,40 from 1 July) and keeps in art. 8(1)(b) the reference monthly amount that other acts index to — the drempelinkomen of WKB art. 1(1)(d) and Wet op de zorgtoeslag art. 1(1)(f) is 108 % of twelve times it, and 28.406 / 12 / 1.08 = 2.191,82 confirms the amount from inside the corpus. The WML is not among the fourteen ingested acts and its semi-annual Regeling is not either, so no retrieval can reach the value; the scout is armed for NL (wetten.overheid.nl, BWBR ids). What flips it: ingest BWBR0002638 (one `nomotheca_ingest.cli nl instrument BWBR0002638`) — then the case measures whether the pipeline reads the monthly reference and not the hourly rate, and whether it keeps the 1 January value (hazard mid_year_change: the 1 July amount is a different number, and EUROMOD holds January). ROUTING: EUROMOD already carries 2191.80#m -> `unchanged`; today expect not_found."
+    },
+    {
+      "model_target": "euromod://NL/peoplesic_nl/def_const/$peoplesic_aow_rate",
+      "id": "peoplesic_aow_rate",
+      "source_class": "gazette",
+      "expected_value": "17.9%",
+      "citations": [],
+      "corpus_available": false,
+      "note": "IMPOSSIBLE today / not_found — the AOW premium rate, 17,90 % (unchanged since 1998). Wfsv art. 11(1) (Wet financiering sociale verzekeringen, BWBR0017745, ingested) says only 'Het premiepercentage voor de algemene ouderdomsverzekering wordt bij regeling van Onze Minister vastgesteld. Het bedraagt ten hoogste 18,25.' — the rate itself is in the annual Regeling vaststelling premiepercentages (Staatscourant), an instrument class not ingested. The near-miss is in the ingested article: 18,25 is a ceiling, not the rate, and a pipeline that quotes it proposes a wrong value with a correct-looking citation. Citations empty until the regeling is ingested (an instrument-level Wfsv citation would manufacture a permanent match on a provision that does not state the value). Unit /100 in the export, curated to /1. ROUTING: EUROMOD holds 17.9% since 2006 -> `unchanged`; today expect not_found."
+    },
+    {
+      "model_target": "euromod://NL/tschl_nl/def_const/$tschl_uplim",
+      "id": "tschl_uplim",
+      "difficulty": "derive",
+      "hazards": [
+        "cross_instrument"
+      ],
+      "source_class": "codified_law",
+      "expected_value": null,
+      "routing": "derived",
+      "citations": [
+        "Wfsv, artikel 17"
+      ],
+      "corpus_available": true,
+      "note": "DERIVE — EUROMOD holds '$EI_Maxpremwag': the Zvw contribution ceiling defined by reference to the maximum premieloon constant (the same reference sits in ersic_NL/$ersic_uplim). Wfsv art. 17 is the rule — the ceiling is 'het door Onze Minister … met betrekking tot het kalenderjaar vastgestelde bedrag', with the dagloon cap derived from it over a 261-day year — and the amount (€ 75.864 for 2025 per the Regeling; EUROMOD's $EI_maxpremwag says 75860, an off-by-four for the economists to check) lives in the regeling, not the act. ROUTING: `derived`, not `unchanged` — pipeline._derived_refs short-circuits any parameter whose stored value carries a $-reference straight to Routing.DERIVED, before retrieval and before any LLM call, because the anchor parameter is what legislation sets. expected_value is null (the value leg is not scored): what the case tests is that the pipeline recognises the reference and routes to the anchor instead of hunting the corpus for a number that is not in it."
+    },
+    {
+      "model_target": "euromod://NL/xcc_nl/def_const/$xcc_amt",
+      "id": "xcc_amt",
+      "source_class": "national_team",
+      "expected_value": null,
+      "routing": "national_team_source",
+      "citations": [],
+      "note": "IMPOSSIBLE by design — the assumed standard weekly cost of formal childcare per child, € 400/week. No act sets it: the Wet kinderopvang (BWBR0017017, ingested) and its Besluit fix the maximum HOURLY price the kinderopvangtoeslag reimburses and the toeslag's income table, never a household's actual cost, and the EUROMOD value is the national team's assumption over observed daycare fees (Country Report, childcare theme). The toeslag's maximum hourly price is the plausible wrong value a pipeline would reach for. curation/NL.curation.yaml routes it national_team, together with the 296 $tco_t_* implicit consumption-tax rates (HBS statistics, the IE/ES precedent). Correct behaviour is `national_team_source`, never `not_found`, never a proposal; the LT counterpart is xcc_amt1, the ES one xcc_amt."
+    }
+  ]
+}

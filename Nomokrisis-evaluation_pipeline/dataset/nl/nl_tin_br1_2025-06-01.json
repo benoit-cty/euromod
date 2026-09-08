@@ -1,0 +1,23 @@
+{
+  "id": "nl_tin_br1_2025-06-01",
+  "country": "NL",
+  "language": "nl",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_nl_tin_nl_def_const_tin_br1.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "8.17%",
+    "citations": [
+      "Wet IB 2001, artikel 2.10"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: nl.json#tin_br1 | euromod value in force at 2025-06-01: '8.17%' from 2025-01-01 | EASY-MEDIUM — the first-band rate of the 2025 three-band schedule, 8,17 % in art. 2.10's table. This is the 8,17-vs-35,82 trap of Netherlands_sources_analysis.md §3: the statute states the TAX component only, the Country Report (§2.2.3, ingested as context) says '35.82 percent … (including contributions national insurances)', and both numbers are correct on their own basis. EUROMOD's $tin_br1 holds the tax component (2024: 0.0932 = the statutory 9,32 %), the premiums live in peoplesic_nl — so a proposal of 35.82 % here is a wrong value with a plausible source. The unit is /1 and the store spells the value '8.17%'. ROUTING: the 2025 export already carries 8.17% -> `unchanged`.",
+  "reviewed_by": "ben"
+}

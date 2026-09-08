@@ -1,0 +1,118 @@
+{
+  "information": {
+    "country": "NL",
+    "model_target": "euromod://NL/chall_nl/def_const/$chall_B2",
+    "spine_order": "26",
+    "value_type": "scalar",
+    "unit": "currency/year",
+    "threshold_unit": null,
+    "label": {
+      "en": "B - couples"
+    },
+    "short_label": {
+      "en": "$chall_B2"
+    },
+    "description": {
+      "en": "Income threshold B used in the child-related budget's taper formula 'C − D × max(0, income − B)', applied when the recipient tax unit is a couple with a fiscal partner, where 'income' is the combined taxable income of both partners in Box 1 and Box 3. It is consumed in chall_nl/BenCalc's comp_perTU parameter (alongside $chall_B1) when computing the income/age-related child allowance entitlement. Per the Country Report, since 2020 this couples' threshold has been set above the single-parent threshold; the table shows it fluctuating from €39,596 (2022) up to €43,397 (2023) then down to €35,849 (2024) and €37,545 (2025), with the model's latest value at €39,141/year."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: CT - table 2.18"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2008-01-01",
+      "valid_to": "2023-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 35849.0,
+      "valid_from": "2024-01-01",
+      "valid_to": "2024-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "35849#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 37545.0,
+      "valid_from": "2025-01-01",
+      "valid_to": "2025-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "37545#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 39141.0,
+      "valid_from": "2026-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "39141#y",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "information": {
+    "country": "NL",
+    "model_target": "euromod://NL/constdef_nl/def_const/$PenAge",
+    "spine_order": "3",
+    "value_type": "scalar",
+    "unit": "age_years",
+    "threshold_unit": null,
+    "label": {
+      "en": "Pension Age"
+    },
+    "short_label": {
+      "en": "$PenAge"
+    },
+    "description": {
+      "en": "$PenAge ('Pension Age', latest 67) is the statutory state pension age (AOW-leeftijd), one of the most widely reused constants in the Dutch model, defined centrally in constdef_nl and consumed at 61 sites across the spine. It sets the household-age-group boundaries (A/C/E/G) for rent-allowance eligibility and calculation in bho_nl (literally 'dag<$PenAge' / 'dag>=$PenAge' per bho.md), is the qualifying age for the flat-rate state pension described in poa.md ('all residents who have reached the state pension age'), delimits the age-dependent net-to-gross conversion factors for social assistance in bsagross_nl/bsasegross_nl (Table 2.10 in bsagross.md), sets the #_AgeMin/#_AgeMax age bounds for social-assistance benefit rates in bsanet_nl/bsasenet_nl, and is referenced directly in tin_nl to determine eligibility for the old-age tax credit ('taxpayers aged above the state pension age ($PenAge)'). It is also used in bhlmt_nl (sickness benefit) and TransLMA_nl (labour-market transition eligibility)."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Pension age"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": 65.0,
+      "valid_from": "2006-01-01",
+      "valid_to": "2016-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "65",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 66.0,
+      "valid_from": "2017-01-01",
+      "valid_to": "2023-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "66",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 67.0,
+      "valid_from": "2024-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "67",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

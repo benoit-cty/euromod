@@ -1,0 +1,49 @@
+{
+  "information": {
+    "country": "NL",
+    "model_target": "euromod://NL/peoplesic_nl/def_const/$peoplesic_aow_rate",
+    "spine_order": "24",
+    "value_type": "scalar",
+    "unit": "/1",
+    "threshold_unit": null,
+    "label": {
+      "en": "State pension contribution rate (CR Table 2.23)"
+    },
+    "short_label": {
+      "en": "$peoplesic_aow_rate"
+    },
+    "description": {
+      "en": "Contribution rate for the State Pension Insurance (Algemene Ouderdomswet, AOW), the largest of the three Dutch 'people's insurance' contributions levied on Box 1 taxable income (alongside ANW and AWBZ/WLZ). Like the other peoplesic rates it is applied as a band_rate in peoplesic_nl/SchedCalc, and reused in bsagross_nl for the revised-contribution ArithOp, the tax-credit apportionment BenCalc, and the $bsag_fact net-to-gross conversion-factor DefConst. Per the country report (Table 2.24 - the constant label's reference to 'Table 2.23' appears to be a cross-reference to a different table), the rate was 17.9% throughout 2022-2025 and is not charged to persons who have reached state pension age, since they no longer build up AOW entitlement."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: contribution rates and maximum base peoples' insurances"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "17.9%",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

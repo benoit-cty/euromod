@@ -1,0 +1,70 @@
+{
+  "information": {
+    "country": "NL",
+    "model_target": "euromod://NL/tin_nl/def_const/$tin_br3",
+    "spine_order": "22",
+    "value_type": "scalar",
+    "unit": "/1",
+    "threshold_unit": null,
+    "label": {},
+    "short_label": {
+      "en": "$tin_br3"
+    },
+    "description": {
+      "en": "$tin_br3 (49.50%) is the top-band rate of the Box 1 combined income tax and national-insurance schedule, matching the Country Report's Table 2.28 'tax_rate3' row, which is constant at 49.5% throughout the years shown (2022-2025). It is used as the band_rate for the highest band in tin_nl/SchedCalc's 'Tax schedule for income from Box 1'; its near-static history (only two recorded values since 2006) reflects that this top rate has rarely changed."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: tax rates - income tax"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": "2019-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": null,
+      "valid_from": "2020-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "49.50%",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

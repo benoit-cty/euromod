@@ -1,0 +1,23 @@
+{
+  "id": "nl_impr_band5_2025-06-01",
+  "country": "NL",
+  "language": "nl",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_nl_tin_nl_def_const_impr_band5.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "1330000#c",
+    "citations": [
+      "Wet IB 2001, artikel 3.112"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: nl.json#impr_band5 | euromod value in force at 2025-06-01: 1330000.0 from 2025-01-01 | MEDIUM — the top WOZ-value threshold of the eigenwoningforfait ('villa threshold'), € 1.330.000 for 2025 (1.310.000 in 2024), the last row of the six-row table in Wet IB 2001 art. 3.112(1): '| € 1.330.000 | | € 4.655 vermeerderd met 2,35% …'. Table reading with a twist: the amount appears twice in the same row (as the lower bound of the open band and inside the formula), the other five rows carry thresholds that have not moved since 2018, and the value is spelled with two thousands separators. EUROMOD stores it with a '#c' (capital) suffix. ROUTING: the 2025 export carries 1330000#c -> `unchanged`.",
+  "reviewed_by": "ben"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "nl_tin_br3_2025-06-01",
+  "country": "NL",
+  "language": "nl",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_nl_tin_nl_def_const_tin_br3.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "49.50%",
+    "citations": [
+      "Wet IB 2001, artikel 2.10"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: nl.json#tin_br3 | euromod value in force at 2025-06-01: '49.50%' from 2020-01-01 | EASY — the top rate, 49,50 %, unchanged since 2020 while everything around it moved for 2025 (a new first band, 36,97 -> 37,48 in band 2, both thresholds re-indexed). The no-change trap: the pipeline must re-confirm 49,50 from the same table it reads the new bands from, not infer a change from the reform. Unit /100 in the export, curated to /1 in NL.curation.yaml (the value is a percent literal like its /1 sibling $tin_br1). ROUTING: `unchanged`.",
+  "reviewed_by": "ben"
+}

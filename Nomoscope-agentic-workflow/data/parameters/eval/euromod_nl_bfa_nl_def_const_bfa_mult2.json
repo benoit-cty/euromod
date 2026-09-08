@@ -1,0 +1,72 @@
+{
+  "information": {
+    "country": "NL",
+    "model_target": "euromod://NL/bfa_nl/def_const/$bfa_mult2",
+    "spine_order": "14",
+    "value_type": "scalar",
+    "unit": "/1",
+    "threshold_unit": null,
+    "label": {
+      "en": "multiplier choild 6-11"
+    },
+    "short_label": {
+      "en": "$bfa_mult2"
+    },
+    "description": {
+      "en": "Age-band multiplier applied to the child-benefit base amount ($bfa_bchqtr_amt) for children aged 6 to 11, per Country Report Table 2.5. It is used in bfa_nl's BenCalc function as the comp_perElig value for this age band (func_comment 'Child benefit: multiplier'), scaling the quarterly base amount up by a factor of 1.2143 for each eligible child aged 6-11. This matches the CR's worked example, where a 10-year-old contributes 1.2143 times the base amount to the household's quarterly child benefit; the multiplier has applied since the constant was first modelled in 2006."
+    },
+    "explanation": {
+      "en": "EUROMOD function group: Constant"
+    },
+    "last_confirmed_valid_on": null,
+    "temporal_basis": "in_force"
+  },
+  "values": [
+    {
+      "value": null,
+      "valid_from": "2006-01-01",
+      "valid_to": "2011-12-31",
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "n/a",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    },
+    {
+      "value": 1.2143,
+      "valid_from": "2012-01-01",
+      "valid_to": null,
+      "legal_status": null,
+      "source_type": null,
+      "official_journal_date": null,
+      "references": [],
+      "lineage": {
+        "proposed_by": "pipeline",
+        "run_id": null,
+        "prompt_version": null,
+        "agent_version": null,
+        "model": "euromod-connector:euromod_master_version_j2.53",
+        "model_answer": "1.2143",
+        "reviewed_by": null,
+        "review_status": "pending",
+        "reviewed_at": null,
+        "review_note": null,
+        "confidence": null,
+        "retrieval_trace": null
+      }
+    }
+  ]
+}

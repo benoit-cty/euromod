@@ -1,0 +1,19 @@
+{
+  "id": "nl_xcc_amt_2025-06-01",
+  "country": "NL",
+  "language": "nl",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_nl_xcc_nl_def_const_xcc_amt.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [],
+  "labels_drafted": true,
+  "source_class": "national_team",
+  "expected": {
+    "routing": "national_team_source",
+    "citations": []
+  },
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: nl.json#xcc_amt | euromod value in force at 2025-06-01: 400.0 from 2024-01-01 | value leg not scored: the selection states no expected_value (the law's value is not established for this case yet) | IMPOSSIBLE by design — the assumed standard weekly cost of formal childcare per child, € 400/week. No act sets it: the Wet kinderopvang (BWBR0017017, ingested) and its Besluit fix the maximum HOURLY price the kinderopvangtoeslag reimburses and the toeslag's income table, never a household's actual cost, and the EUROMOD value is the national team's assumption over observed daycare fees (Country Report, childcare theme). The toeslag's maximum hourly price is the plausible wrong value a pipeline would reach for. curation/NL.curation.yaml routes it national_team, together with the 296 $tco_t_* implicit consumption-tax rates (HBS statistics, the IE/ES precedent). Correct behaviour is `national_team_source`, never `not_found`, never a proposal; the LT counterpart is xcc_amt1, the ES one xcc_amt. | drafting warning: value leg not scored (no expected_value in the selection) | drafting warning: no citations: the citation leg is unscored until the source act is ingested",
+  "reviewed_by": "ben"
+}

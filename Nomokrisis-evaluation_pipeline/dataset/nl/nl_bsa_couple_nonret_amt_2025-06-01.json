@@ -1,0 +1,25 @@
+{
+  "id": "nl_bsa_couple_nonret_amt_2025-06-01",
+  "country": "NL",
+  "language": "nl",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_nl_bsanet_nl_def_const_bsa_couple_nonret_amt.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [
+    "mid_year_change"
+  ],
+  "labels_drafted": false,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "unchanged",
+    "value": "1922.07#m",
+    "citations": [
+      "Participatiewet, artikel 21"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: nl.json#bsa_couple_nonret_amt | euromod value in force at 2025-06-01: 1922.07 from 2025-01-01 | MEDIUM — the monthly social-assistance norm for a couple both under pension age without cost-sharing co-residents, € 1.922,07, Participatiewet (BWBR0015703) art. 21(b), version [2025-01-01,2026-01-01). Stated verbatim next to the single norm (a: € 1.345,45). HAZARD mid_year_change: bijstandsnormen are re-indexed every 1 July with the minimum wage; the corpus holds the 1 January toestand only, so the July 2025 norm cannot be evidenced. EUROMOD-side finding (reported, not absorbed): four sibling parameters of this policy are stored with a stray space inside the number — $bsa_single_lone_nonret_amt, $bsa_loneparent_nonret_amt, $bsa_loneparent_lone_nonret_amt '1345. 45#m', $bsa_couple_noch_youth1_amt '1293. 21#m' — which normalise_value cannot read; the law says € 1.345,45. ROUTING: EUROMOD holds 1922.07#m -> `unchanged`.",
+  "reviewed_by": "ben"
+}

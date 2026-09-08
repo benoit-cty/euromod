@@ -1,0 +1,24 @@
+{
+  "id": "nl_tschl_uplim_2025-06-01",
+  "country": "NL",
+  "language": "nl",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_nl_tschl_nl_def_const_tschl_uplim.json",
+  "as_of": "2025-06-01",
+  "difficulty": "derive",
+  "hazards": [
+    "cross_instrument"
+  ],
+  "labels_drafted": false,
+  "source_class": "codified_law",
+  "expected": {
+    "routing": "derived",
+    "citations": [
+      "Wfsv, artikel 17"
+    ]
+  },
+  "corpus_available": true,
+  "verified": true,
+  "drafted_by": "human",
+  "notes": "curated: nl.json#tschl_uplim | euromod value in force at 2025-06-01: '$EI_Maxpremwag' from 2006-01-01 | value leg not scored: the selection states no expected_value (the law's value is not established for this case yet) | DERIVE — EUROMOD holds '$EI_Maxpremwag': the Zvw contribution ceiling defined by reference to the maximum premieloon constant (the same reference sits in ersic_NL/$ersic_uplim). Wfsv art. 17 is the rule — the ceiling is 'het door Onze Minister … met betrekking tot het kalenderjaar vastgestelde bedrag', with the dagloon cap derived from it over a 261-day year — and the amount (€ 75.864 for 2025 per the Regeling; EUROMOD's $EI_maxpremwag says 75860, an off-by-four for the economists to check) lives in the regeling, not the act. ROUTING: `derived`, not `unchanged` — pipeline._derived_refs short-circuits any parameter whose stored value carries a $-reference straight to Routing.DERIVED, before retrieval and before any LLM call, because the anchor parameter is what legislation sets. expected_value is null (the value leg is not scored): what the case tests is that the pipeline recognises the reference and routes to the anchor instead of hunting the corpus for a number that is not in it. | drafting warning: value leg not scored (no expected_value in the selection)",
+  "reviewed_by": "ben"
+}
