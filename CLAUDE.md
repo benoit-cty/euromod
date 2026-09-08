@@ -99,3 +99,17 @@ API keys come from `.env`. `load_config()` auto-loads `.env` only from the `euro
 - **`temporal_basis: income_year` parameters (FR income-tax family) are dated by income year, not system year.** France assesses in year Y the income of year Y−1 («impôt 2025 sur les revenus 2024»), so **EUROMOD system year Y states the value for income year Y−1** — the mapping lives in exactly one place, `schema.income_year_for` (offset `INCOME_YEAR_OFFSET = -1`), and four things derive from it: retrieval/scout target 1 July of the year *after* the income year, proposals back-date `valid_from` to the income-year start, the critique's budget-act window opens 1 December of the income year (older versions route `provisional` — Accept is blocked in the UI; distinct from `not_found`), and golden cases read the OpenFisca entry at `income_year_for(year)-01-01`. Never re-derive `as_of.year ± 1` at a call site. Note the FR Country Report's Table 2.77 heads its column "Taxation 2025 (income 2025)" — that label is wrong, its values are the income-year-2024 barème. The flag itself is curated (JSON `information` block + `params.parameters.temporal_basis`, preserved by re-ingest) — never derive it from the export, and don't let legal in-force dates in the legislation DB be rewritten to compensate.
 - **Value scoring must normalise, not string-match.** EUROMOD stores mid-year changes as weighted averages, ~75% of FR params as formula strings (`$PSS * 4`), and period suffixes (`#m #y …`) with fixed conversion factors. Implemented in `nomokrisis_eval.scoring.normalise_value` / `values_equal`: formulas evaluated, `$const` refs resolved via a constants map, cross-period comparison on the monthly basis, relative tolerance 1e-6 (tight enough that the FR barème 1-€ erratum still scores as a difference). See the detailed "what we can/cannot do" findings at the bottom of [Nomokrisis-evaluation_pipeline/README.md](Nomokrisis-evaluation_pipeline/README.md).
 - **Embeddings on the target workstation (Intel Ultra 7 265H) prefer OpenVINO over ONNX** on the local CPU path. On the NVIDIA box (GTX 1080 Ti) OpenVINO is not an option at all — its GPU plugin is Intel-only — so that machine runs `--backend torch` on CUDA from a separate environment (`UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda`, cu126 wheels because Pascal is sm_61, fp32 because Pascal fp16 is 1/64 rate). The default `.venv` stays CPU+OpenVINO so the UI and `scout.py` keep working. BGE-M3 with the `fix_mistral_regex` flag is a known breakage — leave it off (details in [Nomotheca-RAG/ingest/README.md](Nomotheca-RAG/ingest/README.md)).
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as local markdown files under `.scratch/<feature-slug>/` in this repo. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles use their default names (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded as a `Status:` line in each issue file. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
