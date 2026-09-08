@@ -11,6 +11,7 @@ pure functions. One Phoenix trace per parameter run.
 
 from __future__ import annotations
 
+import json
 import re
 import uuid
 from datetime import date, datetime, timedelta, timezone
@@ -20,7 +21,7 @@ from typing import TypedDict
 
 from opentelemetry.trace import Tracer
 
-from . import AGENT_VERSION, llm, mock, paramdb, queue_store, retrieval, scout, translate
+from . import AGENT_VERSION, llm, mock, paramdb, queue_store, regions, retrieval, scout, translate
 from .config import WorkflowConfig
 from .prompts import PROMPT_VERSION
 from .schema import (
@@ -82,6 +83,9 @@ class WorkflowState(TypedDict, total=False):
     force: bool
     query: str
     citations: list[str]
+    #: Jurisdiction codes retrieval drew on: the country, plus the region's
+    #: child jurisdiction for a regional parameter (ADR 0003).
+    jurisdictions: list[str]
     hits: list[RetrievalHit]
     draft: ProposalDraft | None
     critique: CritiqueReport | None
@@ -138,6 +142,28 @@ def _derived_refs(record: ParameterRecord, current: ParameterValue | None) -> li
     return [r for r in refs if r != own]
 
 
+#: What the enrichment wrote for EUROMOD readers, not for the law: CR table
+#: references and EUROMOD names in parentheses, quoted EUROMOD function titles,
+#: `policy_cc` / `$param` identifiers. In an OR-of-terms FTS leg every such
+#: token pulls unrelated chunks; measured offline over the 39 ready FR golden
+#: cases with a citation, stripping them raised golden-citation recall at k=15
+#: from 31 to 34 (the three barème thresholds: CGI art. 197 rose from rank 22).
+#: Numbers stay: the export's value is usually still the law's, and "11,88"
+#: is what finds the SMIC arrêté — dropping them lost that case.
+_QUERY_NOISE = (
+    re.compile(r"\([^()]*\)"),
+    re.compile(r"«[^»]*»"),
+    re.compile(r"\$?\b\w*_\w*\b"),
+)
+
+
+def _clean_query_text(text: str) -> str:
+    """Strip EUROMOD-side noise from a label/description before it becomes a query."""
+    for pattern in _QUERY_NOISE:
+        text = pattern.sub(" ", text)
+    return re.sub(r"\s+", " ", text).strip(" ,;:.-")
+
+
 def _retrieval_as_of(record: ParameterRecord, as_of: date) -> date:
     """The date used to select in-force legislation versions.
 
@@ -153,11 +179,51 @@ def _retrieval_as_of(record: ParameterRecord, as_of: date) -> date:
     return as_of
 
 
+def _consolidated_in_force(
+    provenance: dict | None, retrieval_as_of: date, income_year: int, article_text: str
+) -> bool:
+    """Is the cited text a consolidated code article in force on the retrieval date?
+
+    France assesses income year Y in Y+1, and the code article as consolidated
+    on 1 July Y+1 (`_retrieval_as_of`) is the text that assessment applies —
+    CGI art. 197 "en vigueur du 16 février 2025 au 21 février 2026" is the
+    barème for 2024 income. That holds however old the version is: art. 223
+    sexies has read the same since 2018 because the CEHR thresholds never
+    moved, and no finance act for Y restates it. The old rule treated every
+    version older than the budget-act window as "probably last year's value"
+    and demanded a finance-act clause naming Y, which rejected correct
+    unchanged proposals. Two guards keep the presumption honest:
+
+    * an open-ended version only proves "not amended" up to the day we
+      fetched it, so the snapshot must postdate the retrieval date;
+    * a text whose applicability clause names the NEXT income year (CDHR:
+      "applicables à l'imposition des revenus de l'année 2025", in force
+      Feb 2025) is for that year, not this one.
+    """
+    if not provenance or provenance.get("instrument_type") != "code":
+        return False
+    start = retrieval.validity_start(provenance.get("validity"))
+    end = retrieval.validity_end(provenance.get("validity"))
+    if start is None or start > retrieval_as_of or (end is not None and end <= retrieval_as_of):
+        return False
+    retrieved = provenance.get("retrieved_at")
+    if provenance.get("open_ended") and retrieved is not None:
+        retrieved_day = retrieved.date() if hasattr(retrieved, "date") else retrieved
+        if retrieved_day < retrieval_as_of:
+            return False
+    names_this = re.search(rf"\b{income_year}\b", article_text) is not None
+    for hit in re.finditer(rf"\b{income_year + 1}\b", article_text):
+        if _APPLICABILITY.search(article_text[max(0, hit.start() - 200) : hit.start()]) and not names_this:
+            return False
+    return True
+
+
 def _income_year_date_issues(
     valid_from: date | None,
     version_start: date | None,
     income_year: int,
     cited_text: str = "",
+    consolidated_in_force: bool = False,
 ) -> tuple[list[str], bool]:
     """Mechanical date checks for income_year parameters.
 
@@ -175,6 +241,12 @@ def _income_year_date_issues(
     2025 income. Consolidated code articles drop such clauses (CGI art. 224
     never says 2025), so the year-naming extract is the finance-act article;
     the propose prompt nudges the model towards it.
+
+    Second exemption, `consolidated_in_force` (decided by
+    `_consolidated_in_force` from the corpus): the cited text is the code
+    article as consolidated on the retrieval date, i.e. the text the income
+    year's assessment applies — an old version start means the value did not
+    change, not that the act is missing.
     """
     issues: list[str] = []
     provisional = False
@@ -186,7 +258,12 @@ def _income_year_date_issues(
         )
     window = date(income_year, 12, 1)
     names_year = re.search(rf"\b{income_year}\b", cited_text) is not None
-    if version_start is not None and version_start < window and not names_year:
+    if (
+        version_start is not None
+        and version_start < window
+        and not names_year
+        and not consolidated_in_force
+    ):
         provisional = True
         issues.append(
             f"cited version in force since {version_start.isoformat()} predates the "
@@ -340,8 +417,8 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
         # Native texts REPLACE the received ones in the query rather than being
         # appended: a mixed-language ~60-term query dilutes the BGE-M3 embedding
         # and turns the OR'd FTS leg into noise.
-        parts = native or [*labels.values(), *descriptions.values()]
-        query = " ".join(dict.fromkeys(parts)) or info.model_target
+        parts = [_clean_query_text(p) for p in (native or [*labels.values(), *descriptions.values()])]
+        query = " ".join(dict.fromkeys(p for p in parts if p)) or info.model_target
         # Country Report enrichment (acronym -> semantic): CR section headings
         # translate EUROMOD codes into official native benefit/tax names
         # ('tinto01_s' -> 'Contribution différentielle sur les hauts revenus').
@@ -399,15 +476,23 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
             },
         ) as span:
             with retrieval.connect(cfg) as conn:
-                hits = retrieval.retrieve(
-                    conn, cfg, info.country, retrieval_as_of, state["query"], state["citations"]
+                # Scope, not country: a regional parameter ($bsarg_rg24_*) may
+                # draw on state law and its own community's law, never on a
+                # sibling community's (ADR 0003). National parameters scope to
+                # the country alone, so regional acts stay out of their runs.
+                scope = retrieval.jurisdiction_scope(
+                    conn, info.country, regions.region_key(info.country, info.model_target)
                 )
+                hits = retrieval.retrieve(
+                    conn, cfg, scope, retrieval_as_of, state["query"], state["citations"]
+                )
+            span.set_attribute("retrieval.jurisdictions", json.dumps(scope))
             for i, hit in enumerate(hits):
                 span.set_attribute(f"retrieval.documents.{i}.document.id", hit.chunk_id)
                 span.set_attribute(f"retrieval.documents.{i}.document.score", hit.score or 0.0)
                 span.set_attribute(f"retrieval.documents.{i}.document.content", hit.content[:500])
             set_output(span, [h.model_dump(mode="json", exclude={"content"}) for h in hits])
-        return {"hits": hits}
+        return {"hits": hits, "jurisdictions": scope}
 
     def propose(state: WorkflowState) -> dict:
         record, as_of, hits = state["record"], state["as_of"], state["hits"]
@@ -485,15 +570,40 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                         except Exception:
                             siblings = []  # DB hiccup: fall back to the retrieved chunk
                     version_start = retrieval.validity_start(cited.validity) if cited else None
+                    provenance = None
+                    if cited is not None:
+                        try:
+                            with retrieval.connect(cfg) as conn:
+                                provenance = retrieval.version_provenance(conn, cited.chunk_id)
+                        except Exception:
+                            provenance = None
+                    retrieval_as_of = state.get("retrieval_as_of", as_of)
                     # The income year, not the system year — everything below
                     # must agree with _income_year_date_issues, which is the
                     # mechanical authority. The cross-reference proof used to
                     # take as_of.year here while the check above took the income
                     # year, so the proof hunted for a year the act never names.
                     income_year = income_year_for(as_of.year)
-                    date_issues, provisional = _income_year_date_issues(
-                        draft.valid_from, version_start, income_year, article_text
+                    consolidated = _consolidated_in_force(
+                        provenance, retrieval_as_of, income_year, article_text
                     )
+                    date_issues, provisional = _income_year_date_issues(
+                        draft.valid_from, version_start, income_year, article_text, consolidated
+                    )
+                    if consolidated and version_start is not None:
+                        mech_notes.append(
+                            f"the cited text is the consolidated code article in force on "
+                            f"{retrieval_as_of.isoformat()} (version {provenance.get('validity')}, "
+                            f"corpus snapshot {str(provenance.get('retrieved_at'))[:10]}): that is "
+                            f"the text the assessment of income year {income_year} applies, so its "
+                            f"in-force date of {version_start.isoformat()} is NOT an inconsistency "
+                            f"and no finance-act clause naming {income_year} is required (the value "
+                            f"simply did not change)"
+                        )
+                        report.issues.append(
+                            f"note: consolidated code article in force on "
+                            f"{retrieval_as_of.isoformat()} — applies to income year {income_year}"
+                        )
                     if provisional:
                         # Provisional means CORPUS GAP. If a different article's
                         # extract names the income year, the corpus is fine —

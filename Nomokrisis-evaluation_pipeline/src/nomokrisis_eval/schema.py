@@ -50,7 +50,11 @@ Difficulty = Literal["verbatim", "combine", "derive", "table"]
 #:                    (a code article referring to an arrêté)
 #:   unit_conversion  the law states one period, EUROMOD stores another
 Hazard = Literal[
-    "income_year", "mid_year_change", "budget_act_window", "cross_instrument", "unit_conversion"
+    "income_year", "mid_year_change", "budget_act_window", "cross_instrument", "unit_conversion",
+    # A sibling region's act is in the corpus and states a near-identical
+    # amount for ITS scheme: a proposal citing it passes the verbatim-extract
+    # check and is still wrong (ADR 0003). Regional parameters only.
+    "sibling_region",
 ]
 
 #: Whether a case can be scored as model quality at all. Readiness is a property
@@ -146,6 +150,12 @@ class EmbeddingCase(BaseModel):
     )
     as_of: date
     query: str
+    region: str | None = Field(
+        default=None,
+        description="NUTS-2 key of a regional parameter (e.g. 'ES24'). Scopes the search to the "
+        "country plus that region's child jurisdiction, exactly as the pipeline scopes a run "
+        "(ADR 0003); None searches the country's own acts only.",
+    )
     expected_citations: list[str] = Field(
         min_length=1,
         description="Relevant legal units, any-of; each must be the exact legal_units.citation "

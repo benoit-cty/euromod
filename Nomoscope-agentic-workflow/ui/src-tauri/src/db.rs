@@ -17,7 +17,7 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
 
     let totals = client
         .query_one(
-            "SELECT (SELECT count(*) FROM jurisdictions)        AS jurisdictions,
+            "SELECT (SELECT count(*) FROM jurisdictions WHERE parent_id IS NULL) AS jurisdictions,
                     (SELECT count(*) FROM instruments)          AS instruments,
                     (SELECT count(*) FROM legal_units)          AS legal_units,
                     (SELECT count(*) FROM legal_unit_versions)  AS versions,
@@ -33,7 +33,7 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
 
     let by_country = client
         .query(
-            "SELECT j.code, j.name,
+            "SELECT coalesce(p.code, j.code) AS code, coalesce(p.name, j.name) AS name,
                     count(DISTINCT i.id)::bigint  AS instruments,
                     count(DISTINCT u.id)::bigint  AS legal_units,
                     count(DISTINCT v.id)::bigint  AS versions,
@@ -47,13 +47,17 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
                     count(DISTINCT c.id)::bigint  AS chunks,
                     count(DISTINCT e.chunk_id)::bigint AS embedded_chunks
              FROM jurisdictions j
+             LEFT JOIN jurisdictions p       ON p.id = j.parent_id
              LEFT JOIN instruments i         ON i.jurisdiction_id = j.id
              LEFT JOIN legal_units u         ON u.instrument_id = i.id
              LEFT JOIN legal_unit_versions v ON v.legal_unit_id = u.id
              LEFT JOIN unit_texts t          ON t.version_id = v.id
              LEFT JOIN chunks c              ON c.unit_text_id = t.id
              LEFT JOIN embeddings e          ON e.chunk_id = c.id
-             GROUP BY j.code, j.name ORDER BY j.code",
+             -- Child jurisdictions (Spain's autonomous communities, ADR 0003)
+             -- roll up into their country: one row per country the UI and the
+             -- Ingest tab's jurisdiction picker know about.
+             GROUP BY 1, 2 ORDER BY 1",
             &[],
         )
         .map_err(|e| e.to_string())?;
@@ -84,13 +88,14 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
     // missing one is visible before a run silently under-performs.
     let country_reports = client
         .query(
-            "SELECT j.code,
+            "SELECT coalesce(p.code, j.code) AS code,
                     count(DISTINCT i.id)::bigint       AS reports,
                     count(DISTINCT c.id)::bigint       AS chunks,
                     count(DISTINCT e.chunk_id)::bigint AS embedded_chunks,
                     max(i.created_at)::date::text      AS ingested_on,
                     string_agg(DISTINCT i.national_id, ', ') AS ids
              FROM jurisdictions j
+             LEFT JOIN jurisdictions p       ON p.id = j.parent_id
              LEFT JOIN instruments i         ON i.jurisdiction_id = j.id
                                             AND i.instrument_type = 'country_report'
              LEFT JOIN legal_units u         ON u.instrument_id = i.id
@@ -98,7 +103,7 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
              LEFT JOIN unit_texts t          ON t.version_id = v.id
              LEFT JOIN chunks c              ON c.unit_text_id = t.id
              LEFT JOIN embeddings e          ON e.chunk_id = c.id
-             GROUP BY j.code ORDER BY j.code",
+             GROUP BY 1 ORDER BY 1",
             &[],
         )
         .map_err(|e| e.to_string())?;
@@ -387,7 +392,8 @@ pub fn search_instruments(
                     i.publication_date::text AS publication_date
              FROM instruments i
              JOIN jurisdictions j ON j.id = i.jurisdiction_id
-             WHERE j.code = upper($1)
+             WHERE (j.code = upper($1)
+                    OR j.parent_id = (SELECT id FROM jurisdictions WHERE code = upper($1)))
                AND i.source_trust_class <> 'context'
                AND i.national_id IS NOT NULL
                AND (i.title_search ILIKE $2 OR i.national_id ILIKE $2)
@@ -913,7 +919,8 @@ pub fn search_articles(
                 JOIN legal_units u         ON u.id = v.legal_unit_id
                 JOIN instruments i         ON i.id = u.instrument_id
                 JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-                WHERE ($2::text IS NULL OR j.code = upper($2))
+                WHERE ($2::text IS NULL OR j.code = upper($2)
+                       OR j.parent_id = (SELECT id FROM jurisdictions WHERE code = upper($2)))
                   AND ($3::text IS NULL OR v.validity @> ($3::text)::date)
                   AND ($4::text[] IS NULL OR t.lang = ANY($4::text[]))
              ),
@@ -966,6 +973,10 @@ pub fn search_articles(
                 FROM scored
              )
              SELECT d.chunk_id::text, d.citation, ch.context_header, ch.content,
+                    CASE WHEN $6 THEN ts_headline(ch.search_config, ch.content,
+                              websearch_to_tsquery(ch.search_config, $1),
+                              'StartSel=<<HL>>, StopSel=<</HL>>, HighlightAll=true')
+                    END AS headline,
                     d.lang, d.authenticity, d.validity::text, d.version_status,
                     d.country, d.instrument_title, d.score,
                     d.full_text_rank, d.full_text_score, d.full_text_contribution,
@@ -1009,6 +1020,9 @@ pub fn search_articles(
             "citation": r.get::<_, Option<String>>("citation"),
             "context_header": r.get::<_, String>("context_header"),
             "content": r.get::<_, String>("content"),
+            // `content` with every query lexeme wrapped in <<HL>>…<</HL>>
+            // (null in vector-only mode); the UI turns the markers into marks.
+            "headline": r.get::<_, Option<String>>("headline"),
             "lang": r.get::<_, String>("lang"),
             "authenticity": r.get::<_, String>("authenticity"),
             "validity": r.get::<_, String>("validity"),

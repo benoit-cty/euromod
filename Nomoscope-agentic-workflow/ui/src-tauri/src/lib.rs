@@ -83,6 +83,12 @@ struct SearchPayload {
     limit: Option<i64>,
 }
 
+#[derive(Deserialize)]
+struct SentenceScorePayload {
+    query: String,
+    sentences: Vec<String>,
+}
+
 /// Default data dir: $WORKFLOW_DATA_DIR, else the nearest `data/queue` or
 /// `Nomoscope-agentic-workflow/data` walking up from the current directory.
 fn default_data_dir() -> Option<PathBuf> {
@@ -275,6 +281,16 @@ async fn search_articles(
     .map_err(|e| e.to_string())?
 }
 
+/// Cosine of each sentence against the query, one BGE-M3 batch. The Database
+/// tab uses it to tint, inside a hit, the sentence that most likely answers.
+#[tauri::command]
+async fn score_sentences(
+    state: tauri::State<'_, EmbeddingState>,
+    payload: SentenceScorePayload,
+) -> Result<Vec<f64>, String> {
+    state.score_sentences(&payload.query, &payload.sentences).await
+}
+
 #[tauri::command]
 async fn search_instruments(payload: InstrumentSearchPayload) -> Result<Value, String> {
     tauri::async_runtime::spawn_blocking(move || {
@@ -340,6 +356,15 @@ async fn run_ingest(
     ingest::run(app, state, payload).await
 }
 
+/// Which BGE-M3 backend and model the Ingest tab should default to, given the
+/// environment `run_ingest` will pick for an embeddings run on this machine.
+#[tauri::command]
+fn embedding_defaults() -> Result<Value, String> {
+    let dir = ingest::ingest_dir()
+        .ok_or_else(|| "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)".to_string())?;
+    Ok(ingest::embedding_defaults(&dir))
+}
+
 #[tauri::command]
 fn stop_ingest(state: tauri::State<'_, IngestState>, run_id: String) -> Result<Value, String> {
     ingest::stop(state, run_id)
@@ -374,6 +399,7 @@ pub fn run() {
             pick_data_dir,
             db_stats,
             search_articles,
+            score_sentences,
             search_instruments,
             eval_runs,
             eval_run_detail,
@@ -381,6 +407,7 @@ pub fn run() {
             set_golden_verified,
             run_ingest,
             stop_ingest,
+            embedding_defaults,
             params_list,
             chunk_renderings,
             phoenix_projects,

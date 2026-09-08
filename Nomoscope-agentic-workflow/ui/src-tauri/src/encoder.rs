@@ -27,7 +27,27 @@ pub struct EmbeddingState {
 }
 
 impl EmbeddingState {
+    /// Encode a retrieval query as a pgvector `halfvec` literal.
     pub async fn encode(&self, query: &str) -> Result<String, String> {
+        let response = self.request(query, json!({ "query": query })).await?;
+        parse_halfvec(&response)
+    }
+
+    /// Cosine similarity of each sentence against the query, in order. One
+    /// encoder batch per call, so callers should group the sentences of
+    /// several hits into a single request.
+    pub async fn score_sentences(&self, query: &str, sentences: &[String]) -> Result<Vec<f64>, String> {
+        if sentences.is_empty() {
+            return Ok(Vec::new());
+        }
+        let response = self
+            .request(query, json!({ "query": query, "sentences": sentences }))
+            .await?;
+        parse_similarities(&response, sentences.len())
+    }
+
+    /// Send one JSON-lines request, restarting a dead encoder process once.
+    async fn request(&self, query: &str, request: Value) -> Result<Value, String> {
         if query.trim().is_empty() {
             return Err("query must not be empty".to_string());
         }
@@ -37,7 +57,7 @@ impl EmbeddingState {
             if process.is_none() {
                 *process = Some(spawn_encoder().await?);
             }
-            let result = encode_once(process.as_mut().expect("encoder initialized"), query).await;
+            let result = exchange(process.as_mut().expect("encoder initialized"), &request).await;
             if result.is_ok() || attempt == 1 {
                 return result;
             }
@@ -100,8 +120,8 @@ async fn spawn_encoder() -> Result<EncoderProcess, String> {
     })
 }
 
-async fn encode_once(process: &mut EncoderProcess, query: &str) -> Result<String, String> {
-    let request = serde_json::to_string(&json!({ "query": query })).map_err(|e| e.to_string())?;
+async fn exchange(process: &mut EncoderProcess, request: &Value) -> Result<Value, String> {
+    let request = serde_json::to_string(request).map_err(|e| e.to_string())?;
     process
         .stdin
         .write_all(format!("{request}\n").as_bytes())
@@ -116,17 +136,21 @@ async fn encode_once(process: &mut EncoderProcess, query: &str) -> Result<String
         .stdout
         .next_line()
         .await
-        .map_err(|error| format!("failed to read query embedding: {error}"))?
+        .map_err(|error| format!("failed to read query encoder response: {error}"))?
         .ok_or("query encoder exited unexpectedly")?;
     parse_response(&response)
 }
 
-fn parse_response(response: &str) -> Result<String, String> {
+fn parse_response(response: &str) -> Result<Value, String> {
     let message: Value = serde_json::from_str(response)
         .map_err(|error| format!("invalid query encoder response: {error}"))?;
     if let Some(error) = message.get("error").and_then(Value::as_str) {
         return Err(format!("query encoder error: {error}"));
     }
+    Ok(message)
+}
+
+fn parse_halfvec(message: &Value) -> Result<String, String> {
     let halfvec = message
         .get("halfvec")
         .and_then(Value::as_str)
@@ -137,16 +161,39 @@ fn parse_response(response: &str) -> Result<String, String> {
     Ok(halfvec.to_string())
 }
 
+fn parse_similarities(message: &Value, expected: usize) -> Result<Vec<f64>, String> {
+    let similarities = message
+        .get("similarities")
+        .and_then(Value::as_array)
+        .ok_or("query encoder response has no similarities")?;
+    if similarities.len() != expected {
+        return Err(format!(
+            "query encoder returned {} similarities for {expected} sentences",
+            similarities.len()
+        ));
+    }
+    similarities
+        .iter()
+        .map(|v| v.as_f64().ok_or_else(|| "query encoder returned a non-numeric similarity".to_string()))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::parse_response;
+    use super::{parse_halfvec, parse_response, parse_similarities};
 
     #[test]
     fn parses_halfvec_response() {
-        assert_eq!(
-            parse_response(r#"{"halfvec":"[0.1,-0.2]"}"#).unwrap(),
-            "[0.1,-0.2]"
-        );
+        let message = parse_response(r#"{"halfvec":"[0.1,-0.2]"}"#).unwrap();
+        assert_eq!(parse_halfvec(&message).unwrap(), "[0.1,-0.2]");
+    }
+
+    #[test]
+    fn parses_similarities_in_order() {
+        let message = parse_response(r#"{"similarities":[0.9,0.1,0.5]}"#).unwrap();
+        assert_eq!(parse_similarities(&message, 3).unwrap(), vec![0.9, 0.1, 0.5]);
+        let error = parse_similarities(&message, 2).unwrap_err();
+        assert!(error.contains("3 similarities for 2 sentences"));
     }
 
     #[test]

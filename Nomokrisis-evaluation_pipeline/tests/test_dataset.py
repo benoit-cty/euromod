@@ -12,9 +12,9 @@ DATASET_DIR = Path(__file__).resolve().parents[1] / "dataset"
 def test_committed_cases_parse():
     cases = load_cases(DATASET_DIR)
     assert len(cases) >= 2
-    # FR is drafted from the OpenFisca corpus, IE and LT from their curated
-    # selection files; each case sits in dataset/<country>/ (save_case).
-    assert {c.country for c in cases} <= {"FR", "IE", "LT"}
+    # FR is drafted from the OpenFisca corpus, IE, LT, ES and NL from their
+    # curated selection files; each case sits in dataset/<country>/ (save_case).
+    assert {c.country for c in cases} <= {"FR", "IE", "LT", "ES", "NL"}
     assert all(
         (DATASET_DIR / c.country.lower() / f"{c.id}.json").exists() for c in cases
     )

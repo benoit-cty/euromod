@@ -38,7 +38,13 @@ _FORMULA_RE = re.compile(r"[$*/+]|(?<=\d)\s*-\s*(?=\d)")
 #: "CGI, art. 197" -> "CGI". Citations are pinpoints into an instrument; two
 #: pinpoints into the SAME instrument is one document to read, so only distinct
 #: instruments make a case `combine`.
-_INSTRUMENT_RE = re.compile(r"^(.*?)(?:,\s*(?:art|article|§|sec|s)\b.*)?$", re.IGNORECASE)
+#: The pinpoint word is per corpus language: `art.`/`article` (FR, IE),
+#: `artikel` (NL), `artículo` (ES). Without the Dutch form "WKB, artikel 1" and
+#: "WKB, artikel 2" counted as two instruments and every two-pinpoint NL case
+#: drafted `combine` + `cross_instrument`.
+_INSTRUMENT_RE = re.compile(
+    r"^(.*?)(?:,\s*(?:art|article|artikel|art[ií]culo|§|sec|s)\b.*)?$", re.IGNORECASE
+)
 
 
 @dataclass

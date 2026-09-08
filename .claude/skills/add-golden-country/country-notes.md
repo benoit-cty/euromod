@@ -78,7 +78,10 @@ translated** (2 865 `nl` chunks, 1 `en`). Anchor ids in
 translation gap under *Prerequisites and gaps* — the English query leg has
 nothing to hit until `translate run` is done.
 
-**Store.** 528 parameters, 19 policies, 14 groups. No curation overlay yet.
+**Store.** 528 parameters, 19 policies, 14 groups. `NL.curation.yaml` exists
+since the set was built (2026-09-08): `$xcc_amt` + 296 `$tco_t_*` national_team,
+23 `/100` rates curated to `/1`, tax-rate basis decided (`$tin_br1` = statutory
+8,17 %). Set: `golden_sources/nl.json`, rationale `golden_set_NL.md`.
 
 - `tco_nl` is 373 of the 528 and has no numeric value — the
   `national_team_source` family.
@@ -116,6 +119,14 @@ nothing to hit until `translate run` is done.
 - **Sampling granularity.** One *toestand* per policy date was fetched, so a
   mid-year change may be invisible to the corpus (sources analysis §6.1) —
   a `mid_year_change` hazard the corpus cannot currently evidence.
+- **The drempelinkomen is the minimum wage.** WKB art. 1(1)(d) and Wet op de
+  zorgtoeslag art. 1(1)(f) define it as 108 % × 12 × the WML art. 8(1)(b) monthly
+  amount (`BWBR0002638`, NOT ingested): 28.406 = 1,08 × 12 × 2.191,80. Ingesting
+  the WML flips the minimum-wage case and gives the `$chall_B2` combine case its base.
+- **The parser drops `<formule>` elements** — Participatiewet art. 22a's
+  kostendelersnorm formula is missing from its chunk. Tables survive, formulas do not.
+- **Only 1 January toestanden are sampled**: one NL version in the whole corpus
+  starts 2025-07-01, so the semi-annual indexation (WML, AKW, Pw, AOW) is invisible.
 - Canary, verified: art. 2.10 at 2025-06-30 reads `– | € 38.441 | – | 8,17%`,
   `€ 38.441 | € 76.817 | € 3.140 | 37,48%`, `€ 76.817 | – | € 17.523 | 49,50%`;
   the 2024 text differs, so point-in-time retrieval discriminates. Amounts are

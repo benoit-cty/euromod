@@ -28,6 +28,7 @@ import xml.etree.ElementTree as ET
 from datetime import date, datetime
 from typing import Any
 
+from nomotheca_ingest.countries.es.regions import jurisdiction_for
 from nomotheca_ingest.core.ir import InstrumentIR, ParsedDoc, Snapshot, SourceRef, TextIR, UnitIR, VersionIR
 
 
@@ -40,7 +41,29 @@ KNOWN_ACTS: dict[str, str] = {
     "BOE-A-2015-11724": "LGSS",
     "BOE-A-2021-21007": "Ley IMV",
     "BOE-A-2025-2576": "RD SMI 2025",
+    # Autonomous-community acts, qualified by region: several communities
+    # share an official number (Asturias and Aragón both have a Ley 3/2021),
+    # and the citation is what the pipeline's golden cases and the resolver
+    # aliases key on, so the region is part of the name.
     "BOE-A-2011-18161": "DL 1/2011 Galicia",
+    "BOE-A-2011-13120": "Ley 3/2011 Galicia",
+    "BOE-A-2023-2940": "Ley 5/2022 Canarias",
+    "BOE-A-2007-4066": "Ley 1/2007 Canarias",
+    "BOE-A-2021-9007": "DL 3/2021 Canarias",
+    "BOE-A-2021-13685": "Ley 3/2021 Asturias",
+    "BOE-A-2023-1405": "Ley 14/2022 País Vasco",
+    "BOE-A-2011-15732": "Ley 18/2008 País Vasco",
+    "BOE-A-2016-11671": "Ley Foral 15/2016 Navarra",
+    "BOE-A-2021-10673": "Ley 3/2021 Aragón",
+    "BOE-A-2002-4378": "Ley 15/2001 Madrid",
+    "BOE-A-2017-9799": "Ley 14/2017 Cataluña",
+    "BOE-A-2023-13761": "Ley 4/2023 Illes Balears",
+    "BOE-A-2020-8013": "DL 10/2020 Illes Balears",
+    "BOE-A-2016-4178": "Ley 5/2016 Illes Balears",
+    "BOE-A-2007-8186": "Ley 2/2007 Cantabria",
+    "BOE-A-2019-3491": "Ley 5/2019 Extremadura",
+    "BOE-A-2017-5627": "Ley 4/2017 La Rioja",
+    "BOE-A-2008-12493": "Ley 3/2007 Murcia",
 }
 
 # ``encabezado`` blocks nest; rank orders the container stack.
@@ -91,8 +114,17 @@ def parse_boe_xml(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedD
         snapshot=snapshot,
     )
 
+    ambito = metadatos.find("ambito")
     instrument = InstrumentIR(
-        jurisdiction=ref.jurisdiction,
+        # An autonomous-community act files under its community (ES-GA, ES-CN,
+        # …), a child jurisdiction of the adapter's ES: see regions.py and
+        # ADR 0003. State acts keep the ref's jurisdiction.
+        jurisdiction=jurisdiction_for(
+            url_eli=url_eli,
+            departamento=metadatos.findtext("departamento"),
+            ambito_codigo=ambito.get("codigo") if ambito is not None else None,
+            default=ref.jurisdiction,
+        ),
         source_code=ref.source_code,
         instrument_type=_instrument_type(metadatos.findtext("rango")),
         national_id=boe_id,

@@ -1,0 +1,418 @@
+# Curated parameter knowledge for NL — NOT part of the EUROMOD export.
+#
+# extracted_parameters/enriched/NL.enriched.json is delivered by the EUROMOD
+# team and is READ-ONLY: never edit it. Anything we know that the export does
+# not carry — or gets wrong — lives here instead, and is applied on top of the
+# ingested rows by
+#
+#     uv run nomoscope-workflow curate-params curation/NL.curation.yaml
+#
+# run after `ingest-params` (ingesting a country file replaces its model_values
+# rows, so the overlay has to follow it). This file exists so the knowledge also
+# survives `docker compose down -v`, is reviewable in git, and can say *why*
+# each parameter is flagged.
+#
+# temporal_basis: deliberately no section. Every NL parameter is `in_force`:
+# Dutch income tax is assessed on the calendar year (Wet IB 2001 art. 2.3 /
+# art. 3.1: the belastbaar inkomen of a kalenderjaar), and the annual
+# Belastingplan and the December bijstellingsregeling rewrite the amounts in
+# the acts with effect from 1 January of the system year. EUROMOD system year Y
+# states the law of year Y — no FR-style income-year offset. Do not add one to
+# compensate for BWB's bitemporal `zicht` axis or for the 1 July semi-annual
+# indexation of the WML, AKW, Participatiewet and AOW amounts: those are
+# valid_from / mid-year questions, not basis questions.
+#
+# Tax-rate basis, decided here (Netherlands_sources_analysis.md §6.3): the
+# export's first-band rate `$tin_br1` holds the TAX component only (8.17 % in
+# 2025, exactly Wet IB 2001 art. 2.10) and the premies volksverzekeringen are
+# modelled separately in peoplesic_nl (`$peoplesic_aow_rate` 17.9 % …). No NL
+# parameter holds the Country Report's combined 35.82 %, so no combined-rate
+# constant needs a national_team flag. A proposal of 35.82 % for `$tin_br1`
+# is a wrong value with a plausible source (the CR, or the Belastingdienst
+# tables) — the golden case tin_br1 pins it.
+#
+# Not flagged, on purpose, and left for the economists to decide:
+#   - `$ersic_disab_r` / `$ersic_unemp_r` (average Aof / Awf employer
+#     premiums): averages over the legislated laag/hoog rates fixed in the
+#     annual Regeling (not ingested). The inputs are legislated, the average
+#     is modelling — the same shape as LT's `$tin_MaxLimit_coef*`.
+#   - `$tschl_prem_av` (average nominal Zvw premium): a VWS estimate, not a
+#     legislated amount; the legislated proxy is the standaardpremie of Wet op
+#     de zorgtoeslag art. 4, fixed by ministerial regeling and a different
+#     quantity (premium plus average eigen risico).
+#   - `$tco_t_std` / `$tco_t_red1` / `$tco_t_zero`: the statutory VAT rates
+#     (Wet OB 1968 art. 9, not ingested) — legislated, so not flagged; only
+#     the per-COICOP implicit rates below are.
+
+country: NL
+
+source_type:
+  - type: national_team
+    note: >-
+      The standard weekly cost of formal childcare is not set by any act. The
+      Wet kinderopvang (BWBR0017017, ingested) and its Besluit fix the
+      maximum HOURLY price the kinderopvangtoeslag reimburses and the income
+      table of the toeslag, never a household's actual cost: EUROMOD's
+      EUR 400/week is the national team's assumption over observed daycare
+      fees, documented in the Country Report's childcare theme, and changes
+      when the team revises that assumption, not when a law changes. Routing
+      it `national_team_source` stops the pipeline from reporting it as
+      `not_found` every run and protects it from being overwritten by the
+      toeslag's maximum hourly price (a plausible-looking wrong value that IS
+      in the corpus' orbit). Confirmed against the corpus: no NL chunk states
+      a weekly childcare cost. The income breakpoints of the same policy
+      (`$bccfc_child2_thres*`) come from the toeslag's Besluit and are NOT
+      flagged.
+    targets:
+      - euromod://NL/xcc_nl/def_const/$xcc_amt
+
+  - type: national_team
+    note: >-
+      The $tco_t_* constants are implicit consumption-tax rates per COICOP
+      category, derived by the national team from Household Budget Survey
+      statistics and the VAT/excise structure — the class IE's tco_ie and
+      ES's tco_es families belong to (every one holds `n/a` in the export).
+      No act states an implicit rate; the legislated inputs are the statutory
+      VAT rates (`$tco_t_std` / `$tco_t_red1` / `$tco_t_zero`, Wet OB 1968
+      art. 9) and the excise amounts (`$tco_a_*`, `$tco_b_*`, `$tco_v_*`,
+      Wet op de accijns), none of which is flagged here — their acts are
+      simply not ingested yet.
+    targets:
+      - euromod://NL/tco_nl/def_const/$tco_t_01111
+      - euromod://NL/tco_nl/def_const/$tco_t_01112
+      - euromod://NL/tco_nl/def_const/$tco_t_01113
+      - euromod://NL/tco_nl/def_const/$tco_t_01114
+      - euromod://NL/tco_nl/def_const/$tco_t_01115
+      - euromod://NL/tco_nl/def_const/$tco_t_01116
+      - euromod://NL/tco_nl/def_const/$tco_t_01117
+      - euromod://NL/tco_nl/def_const/$tco_t_01118
+      - euromod://NL/tco_nl/def_const/$tco_t_01121
+      - euromod://NL/tco_nl/def_const/$tco_t_01122
+      - euromod://NL/tco_nl/def_const/$tco_t_01123
+      - euromod://NL/tco_nl/def_const/$tco_t_01124
+      - euromod://NL/tco_nl/def_const/$tco_t_01125
+      - euromod://NL/tco_nl/def_const/$tco_t_01126
+      - euromod://NL/tco_nl/def_const/$tco_t_01127
+      - euromod://NL/tco_nl/def_const/$tco_t_01128
+      - euromod://NL/tco_nl/def_const/$tco_t_01131
+      - euromod://NL/tco_nl/def_const/$tco_t_01132
+      - euromod://NL/tco_nl/def_const/$tco_t_01133
+      - euromod://NL/tco_nl/def_const/$tco_t_01134
+      - euromod://NL/tco_nl/def_const/$tco_t_01135
+      - euromod://NL/tco_nl/def_const/$tco_t_01136
+      - euromod://NL/tco_nl/def_const/$tco_t_01141
+      - euromod://NL/tco_nl/def_const/$tco_t_01142
+      - euromod://NL/tco_nl/def_const/$tco_t_01143
+      - euromod://NL/tco_nl/def_const/$tco_t_01144
+      - euromod://NL/tco_nl/def_const/$tco_t_01145
+      - euromod://NL/tco_nl/def_const/$tco_t_01146
+      - euromod://NL/tco_nl/def_const/$tco_t_01147
+      - euromod://NL/tco_nl/def_const/$tco_t_01151
+      - euromod://NL/tco_nl/def_const/$tco_t_01152
+      - euromod://NL/tco_nl/def_const/$tco_t_01153
+      - euromod://NL/tco_nl/def_const/$tco_t_01154
+      - euromod://NL/tco_nl/def_const/$tco_t_01155
+      - euromod://NL/tco_nl/def_const/$tco_t_01161
+      - euromod://NL/tco_nl/def_const/$tco_t_01162
+      - euromod://NL/tco_nl/def_const/$tco_t_01163
+      - euromod://NL/tco_nl/def_const/$tco_t_01164
+      - euromod://NL/tco_nl/def_const/$tco_t_01171
+      - euromod://NL/tco_nl/def_const/$tco_t_01172
+      - euromod://NL/tco_nl/def_const/$tco_t_01173
+      - euromod://NL/tco_nl/def_const/$tco_t_01174
+      - euromod://NL/tco_nl/def_const/$tco_t_01175
+      - euromod://NL/tco_nl/def_const/$tco_t_01176
+      - euromod://NL/tco_nl/def_const/$tco_t_01181
+      - euromod://NL/tco_nl/def_const/$tco_t_01182
+      - euromod://NL/tco_nl/def_const/$tco_t_01183
+      - euromod://NL/tco_nl/def_const/$tco_t_01184
+      - euromod://NL/tco_nl/def_const/$tco_t_01185
+      - euromod://NL/tco_nl/def_const/$tco_t_01186
+      - euromod://NL/tco_nl/def_const/$tco_t_01191
+      - euromod://NL/tco_nl/def_const/$tco_t_01192
+      - euromod://NL/tco_nl/def_const/$tco_t_01193
+      - euromod://NL/tco_nl/def_const/$tco_t_01194
+      - euromod://NL/tco_nl/def_const/$tco_t_01199
+      - euromod://NL/tco_nl/def_const/$tco_t_01211
+      - euromod://NL/tco_nl/def_const/$tco_t_01212
+      - euromod://NL/tco_nl/def_const/$tco_t_01213
+      - euromod://NL/tco_nl/def_const/$tco_t_01221
+      - euromod://NL/tco_nl/def_const/$tco_t_01222
+      - euromod://NL/tco_nl/def_const/$tco_t_01223
+      - euromod://NL/tco_nl/def_const/$tco_t_02111
+      - euromod://NL/tco_nl/def_const/$tco_t_02112
+      - euromod://NL/tco_nl/def_const/$tco_t_02121
+      - euromod://NL/tco_nl/def_const/$tco_t_02122
+      - euromod://NL/tco_nl/def_const/$tco_t_02123
+      - euromod://NL/tco_nl/def_const/$tco_t_02124
+      - euromod://NL/tco_nl/def_const/$tco_t_02131
+      - euromod://NL/tco_nl/def_const/$tco_t_02132
+      - euromod://NL/tco_nl/def_const/$tco_t_02133
+      - euromod://NL/tco_nl/def_const/$tco_t_02134
+      - euromod://NL/tco_nl/def_const/$tco_t_02211
+      - euromod://NL/tco_nl/def_const/$tco_t_02212
+      - euromod://NL/tco_nl/def_const/$tco_t_02213
+      - euromod://NL/tco_nl/def_const/$tco_t_03111
+      - euromod://NL/tco_nl/def_const/$tco_t_03121
+      - euromod://NL/tco_nl/def_const/$tco_t_03122
+      - euromod://NL/tco_nl/def_const/$tco_t_03123
+      - euromod://NL/tco_nl/def_const/$tco_t_03131
+      - euromod://NL/tco_nl/def_const/$tco_t_03132
+      - euromod://NL/tco_nl/def_const/$tco_t_03141
+      - euromod://NL/tco_nl/def_const/$tco_t_03142
+      - euromod://NL/tco_nl/def_const/$tco_t_03211
+      - euromod://NL/tco_nl/def_const/$tco_t_03212
+      - euromod://NL/tco_nl/def_const/$tco_t_03213
+      - euromod://NL/tco_nl/def_const/$tco_t_03221
+      - euromod://NL/tco_nl/def_const/$tco_t_04111
+      - euromod://NL/tco_nl/def_const/$tco_t_04121
+      - euromod://NL/tco_nl/def_const/$tco_t_04122
+      - euromod://NL/tco_nl/def_const/$tco_t_04311
+      - euromod://NL/tco_nl/def_const/$tco_t_04321
+      - euromod://NL/tco_nl/def_const/$tco_t_04322
+      - euromod://NL/tco_nl/def_const/$tco_t_04323
+      - euromod://NL/tco_nl/def_const/$tco_t_04324
+      - euromod://NL/tco_nl/def_const/$tco_t_04325
+      - euromod://NL/tco_nl/def_const/$tco_t_04329
+      - euromod://NL/tco_nl/def_const/$tco_t_04411
+      - euromod://NL/tco_nl/def_const/$tco_t_04421
+      - euromod://NL/tco_nl/def_const/$tco_t_04431
+      - euromod://NL/tco_nl/def_const/$tco_t_04441
+      - euromod://NL/tco_nl/def_const/$tco_t_04442
+      - euromod://NL/tco_nl/def_const/$tco_t_04449
+      - euromod://NL/tco_nl/def_const/$tco_t_04511
+      - euromod://NL/tco_nl/def_const/$tco_t_04521
+      - euromod://NL/tco_nl/def_const/$tco_t_04522
+      - euromod://NL/tco_nl/def_const/$tco_t_04531
+      - euromod://NL/tco_nl/def_const/$tco_t_04541
+      - euromod://NL/tco_nl/def_const/$tco_t_04549
+      - euromod://NL/tco_nl/def_const/$tco_t_04551
+      - euromod://NL/tco_nl/def_const/$tco_t_05111
+      - euromod://NL/tco_nl/def_const/$tco_t_05112
+      - euromod://NL/tco_nl/def_const/$tco_t_05113
+      - euromod://NL/tco_nl/def_const/$tco_t_05119
+      - euromod://NL/tco_nl/def_const/$tco_t_05121
+      - euromod://NL/tco_nl/def_const/$tco_t_05122
+      - euromod://NL/tco_nl/def_const/$tco_t_05123
+      - euromod://NL/tco_nl/def_const/$tco_t_05131
+      - euromod://NL/tco_nl/def_const/$tco_t_05211
+      - euromod://NL/tco_nl/def_const/$tco_t_05212
+      - euromod://NL/tco_nl/def_const/$tco_t_05213
+      - euromod://NL/tco_nl/def_const/$tco_t_05214
+      - euromod://NL/tco_nl/def_const/$tco_t_05219
+      - euromod://NL/tco_nl/def_const/$tco_t_05311
+      - euromod://NL/tco_nl/def_const/$tco_t_05312
+      - euromod://NL/tco_nl/def_const/$tco_t_05313
+      - euromod://NL/tco_nl/def_const/$tco_t_05314
+      - euromod://NL/tco_nl/def_const/$tco_t_05315
+      - euromod://NL/tco_nl/def_const/$tco_t_05319
+      - euromod://NL/tco_nl/def_const/$tco_t_05321
+      - euromod://NL/tco_nl/def_const/$tco_t_05322
+      - euromod://NL/tco_nl/def_const/$tco_t_05323
+      - euromod://NL/tco_nl/def_const/$tco_t_05324
+      - euromod://NL/tco_nl/def_const/$tco_t_05329
+      - euromod://NL/tco_nl/def_const/$tco_t_05331
+      - euromod://NL/tco_nl/def_const/$tco_t_05411
+      - euromod://NL/tco_nl/def_const/$tco_t_05412
+      - euromod://NL/tco_nl/def_const/$tco_t_05413
+      - euromod://NL/tco_nl/def_const/$tco_t_05414
+      - euromod://NL/tco_nl/def_const/$tco_t_05511
+      - euromod://NL/tco_nl/def_const/$tco_t_05512
+      - euromod://NL/tco_nl/def_const/$tco_t_05521
+      - euromod://NL/tco_nl/def_const/$tco_t_05522
+      - euromod://NL/tco_nl/def_const/$tco_t_05523
+      - euromod://NL/tco_nl/def_const/$tco_t_05611
+      - euromod://NL/tco_nl/def_const/$tco_t_05612
+      - euromod://NL/tco_nl/def_const/$tco_t_05621
+      - euromod://NL/tco_nl/def_const/$tco_t_05622
+      - euromod://NL/tco_nl/def_const/$tco_t_05623
+      - euromod://NL/tco_nl/def_const/$tco_t_05629
+      - euromod://NL/tco_nl/def_const/$tco_t_06111
+      - euromod://NL/tco_nl/def_const/$tco_t_06121
+      - euromod://NL/tco_nl/def_const/$tco_t_06129
+      - euromod://NL/tco_nl/def_const/$tco_t_06131
+      - euromod://NL/tco_nl/def_const/$tco_t_06132
+      - euromod://NL/tco_nl/def_const/$tco_t_06133
+      - euromod://NL/tco_nl/def_const/$tco_t_06139
+      - euromod://NL/tco_nl/def_const/$tco_t_06211
+      - euromod://NL/tco_nl/def_const/$tco_t_06212
+      - euromod://NL/tco_nl/def_const/$tco_t_06221
+      - euromod://NL/tco_nl/def_const/$tco_t_06231
+      - euromod://NL/tco_nl/def_const/$tco_t_06232
+      - euromod://NL/tco_nl/def_const/$tco_t_06239
+      - euromod://NL/tco_nl/def_const/$tco_t_06311
+      - euromod://NL/tco_nl/def_const/$tco_t_07111
+      - euromod://NL/tco_nl/def_const/$tco_t_07112
+      - euromod://NL/tco_nl/def_const/$tco_t_07121
+      - euromod://NL/tco_nl/def_const/$tco_t_07131
+      - euromod://NL/tco_nl/def_const/$tco_t_07141
+      - euromod://NL/tco_nl/def_const/$tco_t_07211
+      - euromod://NL/tco_nl/def_const/$tco_t_07212
+      - euromod://NL/tco_nl/def_const/$tco_t_07213
+      - euromod://NL/tco_nl/def_const/$tco_t_07221
+      - euromod://NL/tco_nl/def_const/$tco_t_07222
+      - euromod://NL/tco_nl/def_const/$tco_t_07223
+      - euromod://NL/tco_nl/def_const/$tco_t_07224
+      - euromod://NL/tco_nl/def_const/$tco_t_07231
+      - euromod://NL/tco_nl/def_const/$tco_t_07241
+      - euromod://NL/tco_nl/def_const/$tco_t_07242
+      - euromod://NL/tco_nl/def_const/$tco_t_07243
+      - euromod://NL/tco_nl/def_const/$tco_t_07311
+      - euromod://NL/tco_nl/def_const/$tco_t_07312
+      - euromod://NL/tco_nl/def_const/$tco_t_07321
+      - euromod://NL/tco_nl/def_const/$tco_t_07322
+      - euromod://NL/tco_nl/def_const/$tco_t_07331
+      - euromod://NL/tco_nl/def_const/$tco_t_07332
+      - euromod://NL/tco_nl/def_const/$tco_t_07341
+      - euromod://NL/tco_nl/def_const/$tco_t_07342
+      - euromod://NL/tco_nl/def_const/$tco_t_07351
+      - euromod://NL/tco_nl/def_const/$tco_t_07361
+      - euromod://NL/tco_nl/def_const/$tco_t_07362
+      - euromod://NL/tco_nl/def_const/$tco_t_07369
+      - euromod://NL/tco_nl/def_const/$tco_t_08111
+      - euromod://NL/tco_nl/def_const/$tco_t_08119
+      - euromod://NL/tco_nl/def_const/$tco_t_08211
+      - euromod://NL/tco_nl/def_const/$tco_t_08212
+      - euromod://NL/tco_nl/def_const/$tco_t_08213
+      - euromod://NL/tco_nl/def_const/$tco_t_08214
+      - euromod://NL/tco_nl/def_const/$tco_t_08311
+      - euromod://NL/tco_nl/def_const/$tco_t_08312
+      - euromod://NL/tco_nl/def_const/$tco_t_08313
+      - euromod://NL/tco_nl/def_const/$tco_t_08314
+      - euromod://NL/tco_nl/def_const/$tco_t_08315
+      - euromod://NL/tco_nl/def_const/$tco_t_09111
+      - euromod://NL/tco_nl/def_const/$tco_t_09112
+      - euromod://NL/tco_nl/def_const/$tco_t_09113
+      - euromod://NL/tco_nl/def_const/$tco_t_09119
+      - euromod://NL/tco_nl/def_const/$tco_t_09121
+      - euromod://NL/tco_nl/def_const/$tco_t_09122
+      - euromod://NL/tco_nl/def_const/$tco_t_09123
+      - euromod://NL/tco_nl/def_const/$tco_t_09131
+      - euromod://NL/tco_nl/def_const/$tco_t_09132
+      - euromod://NL/tco_nl/def_const/$tco_t_09133
+      - euromod://NL/tco_nl/def_const/$tco_t_09134
+      - euromod://NL/tco_nl/def_const/$tco_t_09141
+      - euromod://NL/tco_nl/def_const/$tco_t_09142
+      - euromod://NL/tco_nl/def_const/$tco_t_09149
+      - euromod://NL/tco_nl/def_const/$tco_t_09151
+      - euromod://NL/tco_nl/def_const/$tco_t_09211
+      - euromod://NL/tco_nl/def_const/$tco_t_09212
+      - euromod://NL/tco_nl/def_const/$tco_t_09213
+      - euromod://NL/tco_nl/def_const/$tco_t_09214
+      - euromod://NL/tco_nl/def_const/$tco_t_09215
+      - euromod://NL/tco_nl/def_const/$tco_t_09221
+      - euromod://NL/tco_nl/def_const/$tco_t_09222
+      - euromod://NL/tco_nl/def_const/$tco_t_09231
+      - euromod://NL/tco_nl/def_const/$tco_t_09311
+      - euromod://NL/tco_nl/def_const/$tco_t_09312
+      - euromod://NL/tco_nl/def_const/$tco_t_09321
+      - euromod://NL/tco_nl/def_const/$tco_t_09322
+      - euromod://NL/tco_nl/def_const/$tco_t_09323
+      - euromod://NL/tco_nl/def_const/$tco_t_09331
+      - euromod://NL/tco_nl/def_const/$tco_t_09332
+      - euromod://NL/tco_nl/def_const/$tco_t_09341
+      - euromod://NL/tco_nl/def_const/$tco_t_09342
+      - euromod://NL/tco_nl/def_const/$tco_t_09351
+      - euromod://NL/tco_nl/def_const/$tco_t_09411
+      - euromod://NL/tco_nl/def_const/$tco_t_09412
+      - euromod://NL/tco_nl/def_const/$tco_t_09421
+      - euromod://NL/tco_nl/def_const/$tco_t_09422
+      - euromod://NL/tco_nl/def_const/$tco_t_09423
+      - euromod://NL/tco_nl/def_const/$tco_t_09424
+      - euromod://NL/tco_nl/def_const/$tco_t_09425
+      - euromod://NL/tco_nl/def_const/$tco_t_09429
+      - euromod://NL/tco_nl/def_const/$tco_t_09511
+      - euromod://NL/tco_nl/def_const/$tco_t_09512
+      - euromod://NL/tco_nl/def_const/$tco_t_09513
+      - euromod://NL/tco_nl/def_const/$tco_t_09514
+      - euromod://NL/tco_nl/def_const/$tco_t_09521
+      - euromod://NL/tco_nl/def_const/$tco_t_09522
+      - euromod://NL/tco_nl/def_const/$tco_t_09531
+      - euromod://NL/tco_nl/def_const/$tco_t_09541
+      - euromod://NL/tco_nl/def_const/$tco_t_09549
+      - euromod://NL/tco_nl/def_const/$tco_t_09611
+      - euromod://NL/tco_nl/def_const/$tco_t_09612
+      - euromod://NL/tco_nl/def_const/$tco_t_10111
+      - euromod://NL/tco_nl/def_const/$tco_t_10112
+      - euromod://NL/tco_nl/def_const/$tco_t_10211
+      - euromod://NL/tco_nl/def_const/$tco_t_10311
+      - euromod://NL/tco_nl/def_const/$tco_t_10411
+      - euromod://NL/tco_nl/def_const/$tco_t_10511
+      - euromod://NL/tco_nl/def_const/$tco_t_11111
+      - euromod://NL/tco_nl/def_const/$tco_t_11112
+      - euromod://NL/tco_nl/def_const/$tco_t_11121
+      - euromod://NL/tco_nl/def_const/$tco_t_11211
+      - euromod://NL/tco_nl/def_const/$tco_t_11212
+      - euromod://NL/tco_nl/def_const/$tco_t_11213
+      - euromod://NL/tco_nl/def_const/$tco_t_12111
+      - euromod://NL/tco_nl/def_const/$tco_t_12112
+      - euromod://NL/tco_nl/def_const/$tco_t_12113
+      - euromod://NL/tco_nl/def_const/$tco_t_12121
+      - euromod://NL/tco_nl/def_const/$tco_t_12122
+      - euromod://NL/tco_nl/def_const/$tco_t_12131
+      - euromod://NL/tco_nl/def_const/$tco_t_12132
+      - euromod://NL/tco_nl/def_const/$tco_t_12311
+      - euromod://NL/tco_nl/def_const/$tco_t_12312
+      - euromod://NL/tco_nl/def_const/$tco_t_12313
+      - euromod://NL/tco_nl/def_const/$tco_t_12321
+      - euromod://NL/tco_nl/def_const/$tco_t_12322
+      - euromod://NL/tco_nl/def_const/$tco_t_12323
+      - euromod://NL/tco_nl/def_const/$tco_t_12329
+      - euromod://NL/tco_nl/def_const/$tco_t_12411
+      - euromod://NL/tco_nl/def_const/$tco_t_12412
+      - euromod://NL/tco_nl/def_const/$tco_t_12413
+      - euromod://NL/tco_nl/def_const/$tco_t_12414
+      - euromod://NL/tco_nl/def_const/$tco_t_12521
+      - euromod://NL/tco_nl/def_const/$tco_t_12531
+      - euromod://NL/tco_nl/def_const/$tco_t_12532
+      - euromod://NL/tco_nl/def_const/$tco_t_12541
+      - euromod://NL/tco_nl/def_const/$tco_t_12542
+      - euromod://NL/tco_nl/def_const/$tco_t_12551
+      - euromod://NL/tco_nl/def_const/$tco_t_12621
+      - euromod://NL/tco_nl/def_const/$tco_t_12622
+      - euromod://NL/tco_nl/def_const/$tco_t_12711
+      - euromod://NL/tco_nl/def_const/$tco_t_12712
+      - euromod://NL/tco_nl/def_const/$tco_t_12713
+      - euromod://NL/tco_nl/def_const/$tco_t_12714
+
+unit:
+  - unit: "/1"
+    note: >-
+      Every NL parameter listed here is delivered with unit `/100` although
+      the export stores its value as a percent literal ('37.48%', '7.10%') —
+      the same spelling the sibling parameters delivered as `/1` use
+      (`$tin_br1` '8.17%' sits in the same tin_nl schedule as `$tin_br2`
+      '37.48%' `/100`). nomokrisis_eval.scoring.normalise_value reads a percent
+      literal as the fraction it denotes (0.3748), i.e. with `/1` semantics,
+      and the proposal prompt's percent normalisation ("11 % -> 0.11") and the
+      critique's range check (rates in [0,1]) both key on the unit being `/1`.
+      Left as `/100`, a proposal of 37.48 for `$tin_br2` is both what the
+      prompt invites and a value-leg miss against the '37.48%' the store
+      holds. Membership is by value: every value of every year is a `N%`
+      literal, or n/a. Reported to the economists team on 2026-09-08 as an
+      export inconsistency (23 rate parameters `/100`, 17 sibling rates `/1`,
+      identical spelling) and corrected here until a fixed export lands.
+    targets:
+      - euromod://NL/bho_nl/def_const/$bho_perc_red1  # n/a,27% — $bho_perc_red1
+      - euromod://NL/bho_nl/def_const/$bho_perc_red2  # n/a,22% — $bho_perc_red2
+      - euromod://NL/chall_nl/def_const/$chall_D  # n/a,6.75%,7.10%,7.6% — D
+      - euromod://NL/peoplesic_nl/def_const/$peoplesic_aow_rate  # 17.9% — State pension contribution rate (CR Table 2.23)
+      - euromod://NL/tin_nl/def_const/$impr_perc_1  # n/a,0% — $impr_perc_1
+      - euromod://NL/tin_nl/def_const/$impr_perc_2  # n/a,0.3%,0.25%,0.2%,0.15%,0.1% — $impr_perc_2
+      - euromod://NL/tin_nl/def_const/$impr_perc_3  # n/a,0.4%,0.35%,0.3%,0.25%,0.2% — $impr_perc_3
+      - euromod://NL/tin_nl/def_const/$impr_perc_4  # n/a,0.55%,0.5%,0.45%,0.4%,0.35%,0.25% — $impr_perc_4
+      - euromod://NL/tin_nl/def_const/$impr_perc_5  # n/a,0.7%,0.65%,0.6%,0.5%,0.45%,0.35% — $impr_perc_5
+      - euromod://NL/tin_nl/def_const/$impr_perc_6  # n/a,2.35% — $impr_perc_6
+      - euromod://NL/tin_nl/def_const/$impr_perc_y  # n/a,3.33%,6.667%,10%,13.33%,16.667%,20%,23.333%,28.133% — Percentage of amount between mortgage payment and imputed rent added to taxable income.
+      - euromod://NL/tin_nl/def_const/$tin_br2  # n/a,37.35%,37.1%,37.07%,36.93%,36.97%,37.48%,37.56% — $tin_br2
+      - euromod://NL/tin_nl/def_const/$tin_br3  # n/a,49.50% — $tin_br3
+      - euromod://NL/tin_nl/def_const/$tin_profexempt_se  # n/a,10.5%,12.0%,14.0%,12.7% — profit-exemption self-employed
+      - euromod://NL/tintc_nl/def_const/$tin_gtc_pred  # n/a,2%,2.32%,4.82%,4.787%,4.683%,5.147%,5.672%,5.977%,6.007%,6.095%,6.630%,6.337%,6.398% — $tin_gtc_pred
+      - euromod://NL/tintc_nl/def_const/$tin_gtc_pred_spa  # n/a,1.012%,1.182%,2.46%,2.443%,.2389%,2.633%,2.954%,3.093%,3.106%,3.141%,3.421%,3.170%,3.195% — $tin_gtc_pred_spa
+      - euromod://NL/tintc_nl/def_const/$tin_irc_perc  # n/a,11.45% — $tin_irc_perc
+      - euromod://NL/tintc_nl/def_const/$tin_irc_perc_spa  # n/a,5.73%,5.71% — $tin_irc_perc_spa
+      - euromod://NL/tintc_nl/def_const/$tin_oac_pred  # n/a,15% — $tin_oac_pred
+      - euromod://NL/tintc_nl/def_const/$tin_wtc_pred  # n/a,6.51% — $tin_wtc_pred
+      - euromod://NL/tintc_nl/def_const/$tin_wtc_pred_spa  # n/a,3.257%,3.25% — $tin_wtc_pred_spa
+      - euromod://NL/tpcpe_nl/def_const/$tpcpe_ee_avgRate  # 5.99%,5.91%,6.6%,7.44%,7.64%,8.10%,6.13%,6.19% — $tpcpe_ee_avgRate
+      - euromod://NL/tschl_nl/def_const/$tschl_rate_se  # 6.5%,7.2%,6.9%,7.05%,7.75%,7.1%,5.65%,5.4%,4.85%,5.5%,5.4%,5.65%,5.7%,5.45%,5.75%,5.5%,5.43%,5.32%,5.26%,4.85% — id, self-employed and orther categories with lower rate (bijdrage zvw)

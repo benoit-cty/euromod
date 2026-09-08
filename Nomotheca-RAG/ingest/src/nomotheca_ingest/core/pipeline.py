@@ -10,7 +10,7 @@ import psycopg
 
 from nomotheca_ingest.countries.registry import get_adapter
 from nomotheca_ingest.core.db import PostgresSnapshotStore, create_fetch_run, finish_fetch_run
-from nomotheca_ingest.core.ir import CitationRef, ParsedDoc, SourceRef, Trigger, WorkItem
+from nomotheca_ingest.core.ir import CitationRef, ParsedDoc, Snapshot, SourceRef, Trigger, WorkItem
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
@@ -94,6 +94,103 @@ def run_database_ingest(
             finish_fetch_run(conn, run_id, "failed", {"trigger": trigger.value, "error": str(exc)})
             raise
     return result
+
+
+@dataclass(slots=True)
+class ReparseStats:
+    """What a `reparse` pass did: archive rows seen, parsed, loaded, skipped."""
+
+    snapshots: int = 0
+    parsed: int = 0
+    loaded: int = 0
+    skipped: int = 0
+    texts_changed: int = 0
+
+
+def reparse_snapshots(
+    jurisdiction: str,
+    database_url: str,
+    *,
+    url_like: str = "%",
+    limit: int | None = None,
+    on_progress=None,
+) -> ReparseStats:
+    """Re-run the parser and loader over archived snapshots — no fetch.
+
+    Archive-first pays off here: a parser change (keeping Legifrance's NOTA,
+    say) reaches every document already ingested by replaying the stored
+    bytes, so the corpus never depends on the source still serving them. The
+    adapter rebuilds the SourceRef from the snapshot URL; snapshots it cannot
+    map are skipped and counted. Loading is the ordinary idempotent upsert:
+    unchanged texts keep their hash, changed ones get new chunks, and their
+    embeddings turn stale for `embeddings build` to refresh.
+    """
+    jurisdiction_code = jurisdiction.upper()
+    adapter = get_adapter(jurisdiction_code)
+    rebuild = getattr(adapter, "source_ref_from_url", None)
+    if rebuild is None:
+        raise ValueError(f"{jurisdiction_code} adapter cannot rebuild source refs from snapshot URLs")
+    stats = ReparseStats()
+    with psycopg.connect(database_url) as conn:
+        rows = conn.execute(
+            """
+            SELECT fs.id, fs.url, fs.http_status, fs.content_type, fs.content_hash, fs.raw_content,
+                   s.code AS source_code
+            FROM fetch_snapshots fs
+            JOIN sources s ON s.id = fs.source_id
+            JOIN jurisdictions j ON j.id = s.jurisdiction_id
+            WHERE j.code = %s AND fs.url LIKE %s AND fs.raw_content IS NOT NULL
+            ORDER BY fs.retrieved_at
+            """
+            + (" LIMIT %s" if limit else ""),
+            (jurisdiction_code, url_like, *([limit] if limit else [])),
+        ).fetchall()
+        loader = LegislationLoader(conn)
+        for row in rows:
+            snapshot_id, url, status, ctype, chash, raw, source_code = row
+            stats.snapshots += 1
+            ref = rebuild(url, source_code)
+            if ref is None:
+                stats.skipped += 1
+                continue
+            snapshot = Snapshot(
+                id=snapshot_id,
+                source_code=source_code,
+                url=url,
+                http_status=status,
+                content_type=ctype,
+                content_hash=chash,
+                raw_content=bytes(raw),
+            )
+            doc = adapter.parse(snapshot.raw_content, ref, snapshot)
+            stats.parsed += 1
+            if doc.instruments:
+                before = _text_hashes(conn, doc)
+                loader.load(doc)
+                stats.loaded += 1
+                stats.texts_changed += sum(1 for h in _text_hashes(conn, doc) if h not in before)
+            if on_progress is not None:
+                on_progress(stats)
+    return stats
+
+
+def _text_hashes(conn, doc: ParsedDoc) -> set[str]:
+    """Content hashes of the unit texts a parsed document maps to (change detection)."""
+    hashes: set[str] = set()
+    for instrument in doc.instruments:
+        for unit in instrument.units:
+            for version in unit.versions:
+                for row in conn.execute(
+                    """
+                    SELECT t.content_hash
+                    FROM unit_texts t
+                    JOIN legal_unit_versions v ON v.id = t.version_id
+                    WHERE v.source_version_id = %s AND v.fetch_snapshot_id = %s
+                    """,
+                    (version.source_version_id, version.fetch_snapshot_id),
+                ).fetchall():
+                    hashes.add(row[0])
+    return hashes
 
 
 def _ingest_refs(adapter, refs: list[SourceRef], http: SnapshotClient, max_items: int = 500) -> PipelineResult:

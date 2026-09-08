@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 from nomotheca_ingest.core.embeddings import (
@@ -49,14 +50,37 @@ def main() -> None:
 
     for line in sys.stdin:
         try:
-            request = json.loads(line)
-            query = request["query"].strip()
-            if not query:
-                raise ValueError("query must not be empty")
-            vector = backend.encode([query])[0]
-            print(json.dumps({"halfvec": halfvec_literal(vector)}, separators=(",", ":")), flush=True)
+            print(json.dumps(handle_request(backend, json.loads(line)), separators=(",", ":")), flush=True)
         except Exception as exc:
             print(json.dumps({"error": str(exc)}), flush=True)
+
+
+def handle_request(backend: SentenceTransformerBackend, request: dict) -> dict:
+    """Serve one JSON-lines request.
+
+    ``{"query": q}`` answers ``{"halfvec": ...}`` for retrieval;
+    ``{"query": q, "sentences": [...]}`` answers ``{"similarities": [...]}``, the
+    cosine of each sentence against the query, so the Database tab can tint the
+    sentence of a hit that most likely answers the question. One batch per
+    request: the encoder is the slow part, not the dot products.
+    """
+    query = str(request.get("query", "")).strip()
+    if not query:
+        raise ValueError("query must not be empty")
+    if "sentences" not in request:
+        return {"halfvec": halfvec_literal(backend.encode([query])[0])}
+    sentences = request["sentences"]
+    if not isinstance(sentences, list) or not all(isinstance(s, str) for s in sentences):
+        raise ValueError("sentences must be a list of strings")
+    if not sentences:
+        return {"similarities": []}
+    vectors = backend.encode([query] + sentences)
+    return {"similarities": [dot(vectors[0], v) for v in vectors[1:]]}
+
+
+def dot(a: Sequence[float], b: Sequence[float]) -> float:
+    """Cosine similarity of two already-normalized vectors."""
+    return float(sum(x * y for x, y in zip(a, b)))
 
 
 if __name__ == "__main__":

@@ -93,6 +93,8 @@ def test_dollar_reference_flags_cross_instrument():
 
 def test_instrument_of_strips_the_pinpoint():
     assert instrument_of("CGI, art. 197") == instrument_of("CGI, Article 197 bis") == "cgi"
+    assert instrument_of("WKB, artikel 2") == instrument_of("WKB, artikel 1") == "wkb"
+    assert instrument_of("Ley IMV, Artículo 13") == "ley imv"
 
 
 def test_is_formula_ignores_the_period_suffix():

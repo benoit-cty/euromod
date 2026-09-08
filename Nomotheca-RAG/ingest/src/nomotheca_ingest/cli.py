@@ -82,6 +82,39 @@ def citation(
     _print_result(result)
 
 
+@app.command()
+def reparse(
+    jurisdiction: str,
+    database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
+    url_like: Annotated[
+        str, typer.Option("--url-like", help="SQL LIKE filter on the snapshot URL, e.g. %LEGI/ARTI%.")
+    ] = "%",
+    limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
+) -> None:
+    """Replay the parser and loader over archived snapshots — no fetch.
+
+    Use after a parser change so the corpus reflects it everywhere: the
+    stored bytes are parsed again and loaded with the usual idempotent
+    upsert. Texts whose content changed get new chunks; run
+    `embeddings build` afterwards to refresh their (now stale) vectors.
+    """
+    from nomotheca_ingest.core.pipeline import reparse_snapshots
+
+    stats = reparse_snapshots(jurisdiction, database_url, url_like=url_like, limit=limit)
+    typer.echo(
+        json.dumps(
+            {
+                "snapshots": stats.snapshots,
+                "parsed": stats.parsed,
+                "loaded": stats.loaded,
+                "skipped": stats.skipped,
+                "texts_changed": stats.texts_changed,
+            },
+            indent=2,
+        )
+    )
+
+
 @app.command("country-report")
 def country_report(
     jurisdiction: str,

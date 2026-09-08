@@ -17,6 +17,8 @@
   --info: #4b3fae;
   --info-soft: #e9e5fb;
   --mark: #ffe58a;
+  --answer: #f6c1b5;        /* sentence most likely answering a search */
+  --answer-soft: #fbe3dc;   /* close runner-up */
 }
 
 body.dark {
@@ -37,6 +39,8 @@ body.dark {
   --info: #a89bf0;
   --info-soft: #2b2748;
   --mark: #6b5b16;
+  --answer: #7a3a2c;
+  --answer-soft: #4a2a22;
 }
 
 * { box-sizing: border-box; }

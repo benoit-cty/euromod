@@ -50,7 +50,7 @@ JOIN legal_units u         ON u.id = v.legal_unit_id
 JOIN instruments i         ON i.id = u.instrument_id
 JOIN jurisdictions j       ON j.id = i.jurisdiction_id
 WHERE e.model_id = %(model_id)s
-  AND j.code = %(country)s AND t.lang = %(lang)s
+  AND j.code = ANY(%(jurisdictions)s::text[]) AND t.lang = %(lang)s
   AND v.validity @> %(as_of)s::date
   AND i.instrument_type <> 'country_report'
 ORDER BY e.embedding <=> {qexpr}
@@ -66,7 +66,7 @@ JOIN legal_units u         ON u.id = v.legal_unit_id
 JOIN instruments i         ON i.id = u.instrument_id
 JOIN jurisdictions j       ON j.id = i.jurisdiction_id
 LEFT JOIN embeddings e     ON e.chunk_id = ch.id AND e.model_id = %(model_id)s
-WHERE j.code = %(country)s AND t.lang = %(lang)s
+WHERE j.code = ANY(%(jurisdictions)s::text[]) AND t.lang = %(lang)s
   AND v.validity @> %(as_of)s::date
   AND i.instrument_type <> 'country_report'
 """
@@ -76,7 +76,7 @@ METHODS = ("fts", "vector", "hybrid")
 
 def vector_search(
     conn: psycopg.Connection,
-    country: str,
+    country: retrieval.Scope,
     lang: str,
     as_of,
     query: str,
@@ -92,7 +92,7 @@ def vector_search(
     rows = conn.execute(
         sql,
         {
-            "country": country,
+            "jurisdictions": retrieval.scope_codes(country),
             "lang": lang,
             "as_of": as_of,
             "q": query,
@@ -163,12 +163,15 @@ def run_embedding_eval(
                 corpus_lang=corpus_lang,
                 k=k,
             )
-            common = (conn, case.country.upper(), corpus_lang, case.as_of, case.query)
             try:
+                # Same scope rule as the pipeline (ADR 0003): the country, plus
+                # the region's child jurisdiction when the case names a region.
+                scope = retrieval.jurisdiction_scope(conn, case.country.upper(), case.region)
+                common = (conn, scope, corpus_lang, case.as_of, case.query)
                 counts = conn.execute(
                     _CANDIDATES_SQL,
                     {
-                        "country": case.country.upper(),
+                        "jurisdictions": scope,
                         "lang": corpus_lang,
                         "as_of": case.as_of,
                         "model_id": embedding_model_id,

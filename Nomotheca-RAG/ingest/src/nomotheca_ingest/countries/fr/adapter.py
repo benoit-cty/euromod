@@ -16,6 +16,8 @@ from nomotheca_ingest.countries.fr.resolver import (
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
+DILA_ID = re.compile(r"\b(?:LEGI|JORF)(?:ARTI|TEXT|SCTA)\d{12}\b")
+
 WHOLE_CODE_HINT = (
     "that is a whole Legifrance code (LEGITEXT), not one document — paste the "
     "article URL (LEGIARTI...) or the JORF text (JORFTEXT...) instead"
@@ -81,6 +83,25 @@ class FrAdapter:
                 )
             )
         return work
+
+    def source_ref_from_url(self, url: str, source_code: str) -> SourceRef | None:
+        """Rebuild the SourceRef an archived DILA snapshot was fetched for.
+
+        Snapshots keep only the URL, and every DILA URL carries the id, so a
+        re-parse never needs the network: `reparse` replays the parser over
+        the archive after a parser change (the NOTA application notes, say).
+        """
+        match = DILA_ID.search(url)
+        if not match:
+            return None
+        source_id = match.group(0)
+        source_type = {"TEXT": "instrument", "SCTA": "section"}.get(source_id[4:8], "article")
+        return SourceRef(
+            jurisdiction=self.jurisdiction,
+            source_code=source_code,
+            source_id=source_id,
+            source_type=source_type,
+        )
 
     def canary_facts(self) -> list[CanaryFact]:
         """Return French freshness canaries for supported fiscal years."""

@@ -80,6 +80,19 @@ def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> 
     citation = _citation(code_cid, article_number)
     html = bloc.get("CONTENU") or ""
     content = strip_html(html)
+    # Legifrance's NOTA is the article's application note — for a code article
+    # it is where the income year lives ("Conformément au A du II de l'article 4
+    # de la loi n° 2026-103 …, ces dispositions s'appliquent à l'impôt sur le
+    # revenu dû au titre de l'année 2025"). The consolidated text itself never
+    # names the year, so without the NOTA the year-naming proof the workflow's
+    # critique looks for exists only in the amending finance act. 153 of 346
+    # archived DILA articles carry one. Kept as a labelled trailing paragraph so
+    # the extract check stays verbatim and a reader can tell note from norm.
+    nota_html = (data.get("NOTA") or {}).get("CONTENU") or ""
+    nota = strip_html(nota_html)
+    if nota:
+        content = f"{content}\n\nNOTA : {nota}"
+        html = f"{html}\n<p><strong>NOTA :</strong></p>\n{nota_html}"
     valid_from = _parse_date(meta_article.get("DATE_DEBUT")) or _parse_date(texte.get("@date_publi")) or date.min
     valid_to = _parse_date(meta_article.get("DATE_FIN"))
 

@@ -175,7 +175,22 @@ done
 4. **`fecha_vigencia` is the legal entry-into-force date, not the fiscal effect date.** The 2025 savings scale is a worked example: its version starts **2024-12-22** (when Ley 7/2024 entered into force) while the measure applies "con efectos desde el 1 de enero de 2025". LIRPF art. 63's LPGE-2008 version behaves the same way (starts 2008-01-16, applies to income year 2008). Retrieval at a mid-year `as_of` is unaffected — by 1 July the right version is in force either way — but a January `as_of`, or any attempt to read the effect date off `validity`, is not. The effect date is stated in prose in BOE's amendment trail, which is why that text is kept. Worth watching if ES parameters ever need a `temporal_basis: income_year` flag like the FR income-tax family.
 5. **Foral regimes (País Vasco, Navarra) are out of scope** per CR Y16 — their PIT laws are outside BOE and are deliberately not ingested.
 
-## 6. Status (2026-08-11)
+## 6. Status (2026-08-11; regional layer 2026-09-08)
+
+**Regional layer (2026-09-08, ADR 0003).** Autonomous-community acts are now filed under
+child jurisdictions (`ES-GA`, `ES-CN`, …; `countries/es/regions.py`, migration 0002) and
+evidence retrieval is scoped to state law plus the parameter's own community. Coverage of
+BOE consolidada, measured against every act the Country Report names for `bsarg_es` and
+`bchrg_es` (table in `.scratch/es-autonomous-communities/issues/01-*.md`): the **framework
+laws** of 12 of the 14 communities present in those families are consolidated and were
+ingested (Ceuta and Melilla legislate by city reglamento, BOCCE/BOME only); **no annual
+budget law is consolidated** — they are published in the daily gazette only
+(`diario_boe/xml.php?id=…`, `estado_consolidacion codigo="0"`), which is where the
+2025 amounts of Asturias, País Vasco, Madrid and Aragón live; and **no regional decreto or
+orden** is in BOE at all, which is all of `bchrg_es`. The ELI note below is now half
+true: `boe.es/eli/es-cn/l/2022/12/19/5/con` serves the consolidated act as HTML with the
+BOE id in `<title>`, and `EsResolver` reads it — the API still has no ELI key.
+
 
 All six anchor acts are ingested end-to-end through `countries/es/`, plus the ES Country Report (126 units, 224 chunks) as a separate corpus class:
 

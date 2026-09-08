@@ -64,8 +64,12 @@
   );
 
   // --- embeddings form ---
+  // Seeded at mount from the environment the run will actually use: a machine
+  // with the CUDA venv installed runs torch on the Hub model, and has no
+  // OpenVINO export to point `--model-path` at.
   let modelPath = $state('models/bge-m3-openvino');
   let backend = $state('openvino'); // torch | openvino
+  let gpuEmbeddings = $state(false);
   let device = $state('');
   let modelId = $state(1);
   let batchSize = $state(16);
@@ -138,6 +142,15 @@
 
   onMount(() => {
     loadKindTable().catch(() => {});
+    api
+      .embeddingDefaults()
+      .then((defaults) => {
+        if (!defaults) return;
+        gpuEmbeddings = Boolean(defaults.gpu);
+        backend = defaults.backend;
+        modelPath = defaults.model_path;
+      })
+      .catch(() => {});
     const unlistenP = api.onIngestLog((payload) => {
       if (payload.run_id !== runId) return; // only the active run
       if (payload.stream === 'stdout' && payload.line.startsWith(PROGRESS_PREFIX)) {
@@ -544,6 +557,13 @@
     {/if}
   {:else if sub === 'embeddings'}
     <p class="muted">Build local BGE-M3 vectors for chunks missing fresh embeddings.</p>
+    {#if gpuEmbeddings}
+      <p class="muted">
+        A CUDA environment (<span class="mono">.venv-cuda</span>) is installed, so this run uses the
+        GPU: keep the <span class="mono">torch</span> backend — OpenVINO cannot drive an NVIDIA card
+        and that environment carries no local export.
+      </p>
+    {/if}
     <div class="grid">
       <label class="grow">
         Model path

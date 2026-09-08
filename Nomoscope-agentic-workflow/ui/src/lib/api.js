@@ -13,6 +13,9 @@ export const api = {
   pickDataDir: () => invoke('pick_data_dir'),
   dbStats: (dbUrl) => invoke('db_stats', { payload: { db_url: dbUrl } }),
   searchArticles: (payload) => invoke('search_articles', { payload }),
+  // Cosine of each sentence against the query (one BGE-M3 batch), so the
+  // Database tab can tint the sentence of a hit that most likely answers.
+  scoreSentences: (query, sentences) => invoke('score_sentences', { payload: { query, sentences } }),
   // Contributed documents: the instruments a document can be said to implement
   // (title or national-id fragment, `context` instruments excluded).
   searchInstruments: (dbUrl, country, query, limit = 20) =>
@@ -31,6 +34,9 @@ export const api = {
   // once the process exits. Live output arrives via onIngestLog events.
   runIngest: (payload) => invoke('run_ingest', { payload }),
   stopIngest: (runId) => invoke('stop_ingest', { runId }),
+  // Backend/model the Ingest tab should default to: the CUDA venv, where an
+  // operator installed one, runs torch and has no OpenVINO export to point at.
+  embeddingDefaults: () => invoke('embedding_defaults'),
   // Subscribe to streamed log lines: handler({ run_id, stream, line }).
   // Returns a promise resolving to an unlisten function.
   onIngestLog: (handler) => listen('ingest-log', (event) => handler(event.payload)),

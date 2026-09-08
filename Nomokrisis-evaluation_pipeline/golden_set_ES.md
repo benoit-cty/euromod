@@ -1,6 +1,6 @@
 # ES golden set — selection and build guide
 
-Spain's golden set: 12 parameters in increasing pipeline difficulty, from the personal
+Spain's golden set: 12 national parameters in increasing pipeline difficulty, plus a regional tier of 5 (below), from the personal
 minimum (the happy path) up to cases the current pipeline cannot solve — a value fixed by
 reference to an act that is not ingested, a retroactive provision the corpus only holds from
 July, the budget-law value that no act in the corpus states, and two refusal cases, one of
@@ -151,6 +151,46 @@ the corpus and says 1 184 €/month, so a pipeline that ignores `source_type` wi
 propose "correcting" a constant that is frozen at 735,90 on purpose. The school dining fee
 has no national source at all (LT's `xcc_amt1` counterpart). Both are routed by the new
 overlay; correct behaviour is `national_team_source`, never `not_found`, never a proposal.
+
+## The regional tier (5 cases, added 2026-09-08 — ADR 0003)
+
+Spain's autonomous communities set the `bsarg_es` / `bchrg_es` / regional-IRPF amounts in
+their own law. Their acts are now ingested under **child jurisdictions** (`ES-GA`, `ES-CN`,
+… — `countries/es/regions.py`, migration 0002) and a regional parameter's run retrieves over
+the scope `[ES, ES-<region>]`, the region read off the NUTS-2 digits in the constant's name
+(`$bsarg_rg24_*` → `ES24` → `ES-AR`). These five cases exercise a difficulty no national case
+reaches: **correct-looking evidence exists in a sibling document that must not be cited**, and
+the verbatim-extract check cannot tell — the quote is real, only the region is wrong.
+
+What the corpus holds (issue 01 of `.scratch/es-autonomous-communities/`): BOE consolidates
+the communities' *framework* laws (15 ingested: Canarias ×3, Balears ×3, País Vasco ×2,
+Galicia ×2, Asturias, Navarra, Aragón, Madrid, Cataluña, Cantabria) but **none of the annual
+budget laws that carry the 2025 amounts** and no regional decreto — so four of the five
+cases are, today, refusal cases with the trap in the corpus, and only the regional IRPF one
+is a positive.
+
+| # | Case | Region / scope | Expected | Why |
+|---|---|---|---|---|
+| 13 | `tin_rg11_rate1` | Galicia `[ES, ES-GA]` | 0.09, cites `DL 1/2011 Galicia Artículo 4` | The regional happy path: '12.985,35 \| 9,00 %' in art. 4. Before ADR 0003 that article ranked in the FTS top-10 for the *national* personal minimum — the false positive the scoping removes. |
+| 14 | `bsarg_rg24_basic_amt` | Aragón `[ES, ES-AR]` | `not_found` | 802 €/month comes from DL 1/2025 (published, not consolidated). Trap outside the scope: Asturias/Canarias/Balears laws. Trap **inside** it: Aragón's own Ley 3/2021 art. 4 still says 522 € (2021) — the first real run proposed exactly that, with a valid extract. |
+| 15 | `bsarg_rg63_basic_amt` | Ceuta `[ES, ES-CE]` | `not_found` | 600 €/month by city reglamento (BOCCE); no BOE form of any kind. The regional IPREM: measures coverage, not the model. |
+| 16 | `bsarg_rg53_amt1` | Illes Balears `[ES, ES-IB]` | `not_found` | 733,60 €/month — the **same figure as Canarias**; Ley 5/2016 in scope states the 2016 amount (429,20). |
+| 17 | `bsarg_rg70_amt1` | Canarias `[ES, ES-CN]` | `not_found` | 733,60 €/month, identical to Balears; Ley 5/2022 defers the amount to the budget law, Ley 1/2007 states a 130,41 floor. |
+
+Conventions specific to this tier:
+
+- **`not_found` is stated with `expected_value: null`**, not with the EUROMOD value plus
+  `corpus_available: false` as the IPREM case does. A run that borrows a neighbour's (or a
+  stale own-law) amount must score as a *routing* failure, which it only can if the case
+  expects an abstention. The EUROMOD value is in the note for when issue 06 lands.
+- **Hazard `sibling_region`** marks the cases where a near-identical amount sits in another
+  community's act in the corpus (14, 16, 17). After issue 06 the pair 16/17 must each cite
+  *its own* act: an identical value with the neighbour's citation is a failure.
+- **Citations are region-qualified** as `legal_units.citation` stores them, and BOE unit titles
+  carry a non-breaking space before the number (`Ley 3/2021 Asturias Artículo\u00a014`); the
+  Galicia decree's do not (`DL 1/2011 Galicia Artículo 4`). Check bytes before relying on one.
+- The **positive case needs the regional chunks embedded**: 2 377 chunks arrived with the 15
+  acts; run `embeddings build` after any regional ingest, or the vector leg is blind to them.
 
 ## What this fixes in the existing sets' blind spots
 

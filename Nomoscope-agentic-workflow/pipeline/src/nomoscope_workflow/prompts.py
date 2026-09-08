@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 from datetime import date
 
+from .regions import region_key
 from .schema import ParameterRecord, ProposalDraft, RetrievalHit, income_year_for
 
-PROMPT_VERSION = "0.6.0"
+PROMPT_VERSION = "0.7.0"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -70,8 +71,12 @@ each producing one boolean (true = the check passes):
 2. dates_consistent — valid_from is compatible with the cited version's validity window
    and the reference date. When the parameter block declares "Temporal basis: INCOME YEAR",
    valid_from must instead be 1 January of the reference (income) year, and a version entering
-   into force AFTER the income year is correct, not an inconsistency — but a version consolidated
-   before December of the income year likely states the PREVIOUS year's value: fail the check,
+   into force AFTER the income year is correct, not an inconsistency. A CONSOLIDATED code article
+   (e.g. "CGI, art. 197") whose version is in force on 1 July of the year following the income year
+   is the text that income year's assessment applies, however old its version start — the value
+   simply did not change; the mechanical notes say when this was verified: do NOT fail the check
+   for it. An AMENDING finance-act article consolidated before December of the income year likely
+   states the PREVIOUS year's value: fail the check,
    UNLESS the income year is established by the extracts taken together: an applicability
    clause ("à compter de l'imposition des revenus de l'année N") in another extract of the
    same article, or a cross-reference in another retrieved extract that ties the cited article
@@ -132,9 +137,12 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
             f"This parameter governs income earned in {year}. The enacting budget/finance act is "
             f"normally published late {year} or in {year + 1} yet applies retroactively to {year} "
             f"income. valid_from must be {year}-01-01. Prefer the version enacted for income year "
-            f"{year}; a version in force since early {year} or before almost certainly states the "
+            f"{year}. A finance-act article in force since early {year} or before states the "
             f"schedule for {year - 1} income — if only that is available, the act for {year} income "
-            f"is not yet in the corpus. When several extracts state the same value, CITE one from "
+            f"is not yet in the corpus. A CONSOLIDATED code article (\"CGI, art. …\") in force on "
+            f"1 July {year + 1} is the text applied to {year} income even when its version started "
+            f"years earlier: the value did not change, cite it with valid_from {year}-01-01. When "
+            f"several extracts state the same value, CITE one from "
             f"the article whose text names income year {year} (typically the finance-act article: "
             f"its applicability clause, e.g. \"à compter de l'imposition des revenus de l'année "
             f"{year}\", may sit in a DIFFERENT extract than the value — that is fine: cite the "
@@ -143,8 +151,21 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
             f"year: one extract stating the value plus another extract of the same act naming "
             f"income year {year} is sufficient evidence to propose the value."
         )
+    # A regional (autonomous-community) parameter: retrieval is already scoped
+    # to state law plus that community's law (ADR 0003); the model is told so,
+    # because a sibling region's identical amount is the one wrong answer the
+    # verbatim-extract check cannot catch.
+    region = region_key(info.country, info.model_target)
+    region_note = (
+        f"\nRegion: {region} (NUTS-2) — a sub-national parameter. Only this community's own law "
+        f"or state law can state its value; an extract from another community's act is NOT "
+        f"evidence for it, however similar the amount. If no extract comes from this community "
+        f"or from a state act, answer found=false."
+        if region
+        else ""
+    )
     return (
-        f"Parameter: {info.model_target} (country {info.country})\n"
+        f"Parameter: {info.model_target} (country {info.country})" + region_note + "\n"
         f"Labels: {json.dumps(info.label or info.short_label or {}, ensure_ascii=False)}\n"
         f"Description: {json.dumps(info.description or {}, ensure_ascii=False)}\n"
         f"value_type: {info.value_type} | unit: {info.unit}"

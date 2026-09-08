@@ -1,5 +1,6 @@
 <script>
   import { api } from '../api.js';
+  import { renderView, splitSentences } from '../highlight.js';
 
   let { dbUrl = '' } = $props();
 
@@ -15,6 +16,12 @@
   let mode = $state('hybrid');
   let results = $state(null);
   let searching = $state(false);
+  // Sentence scoring per hit: chunk_id -> { status: 'loading'|'done'|'error', similarities, error }.
+  // The top EAGER_HITS are scored right after a search in one encoder batch;
+  // the rest when their <details> is expanded.
+  let sentenceScores = $state({});
+  let searchToken = 0;
+  const EAGER_HITS = 5;
 
   const modes = [
     { value: 'hybrid', label: 'Hybrid' },
@@ -57,6 +64,9 @@
         mode,
         limit: 25,
       });
+      sentenceScores = {};
+      searchToken += 1;
+      scoreHits(results.results.slice(0, EAGER_HITS), results.query, searchToken);
     } catch (e) {
       error = String(e);
       results = null;
@@ -64,6 +74,38 @@
       searching = false;
     }
   }
+
+  // One encoder round trip for several hits: their scorable sentences are
+  // flattened into a single batch and the similarities dealt back per hit.
+  async function scoreHits(hits, forQuery, token) {
+    const pending = hits.filter((hit) => !sentenceScores[hit.chunk_id]);
+    if (pending.length === 0) return;
+    const plan = pending.map((hit) => {
+      const sentences = splitSentences(hit.content);
+      return { hit, sentences, indices: sentences.map((s, i) => (s.scorable ? i : -1)).filter((i) => i >= 0) };
+    });
+    for (const { hit } of plan) sentenceScores[hit.chunk_id] = { status: 'loading' };
+    const batch = plan.flatMap(({ sentences, indices }) => indices.map((i) => sentences[i].text));
+    try {
+      const similarities = await api.scoreSentences(forQuery, batch);
+      if (token !== searchToken) return; // a newer search replaced these hits
+      let offset = 0;
+      for (const { hit, sentences, indices } of plan) {
+        const perSentence = sentences.map(() => null);
+        for (const i of indices) perSentence[i] = similarities[offset++];
+        sentenceScores[hit.chunk_id] = { status: 'done', similarities: perSentence };
+      }
+    } catch (e) {
+      if (token !== searchToken) return;
+      for (const { hit } of plan) sentenceScores[hit.chunk_id] = { status: 'error', error: String(e) };
+    }
+  }
+
+  function onToggle(event, hit) {
+    if (event.currentTarget.open) scoreHits([hit], results.query, searchToken);
+  }
+
+  const scoringCount = $derived(Object.values(sentenceScores).filter((s) => s.status === 'loading').length);
 
   $effect(() => {
     if (url && !stats && !loading && !error) loadStats();
@@ -304,9 +346,19 @@
         {results.filters.languages?.join(', ') ?? 'all languages'} ·
         {results.filters.as_of ?? 'all validities'}
       </span>
+      {#if scoringCount > 0}
+        <span class="scoring"><span class="spinner" aria-hidden="true"></span> Scoring sentences of {scoringCount} result(s)…</span>
+      {:else}
+        <span class="legend" aria-label="Highlight legend">
+          <span class="swatch best"></span> most likely answer
+          <span class="swatch near"></span> close
+          {#if results.mode !== 'vector'}<mark>word</mark> full-text match{/if}
+        </span>
+      {/if}
     </div>
     {#each results.results as hit (hit.chunk_id)}
-      <details>
+      {@const scoring = sentenceScores[hit.chunk_id]}
+      <details ontoggle={(event) => onToggle(event, hit)}>
         <summary>
           <strong>{hit.citation ?? hit.context_header}</strong>
           <span class="badge {hit.version_status === 'in_force' ? 'pass' : 'pending'}">{hit.version_status}</span>
@@ -334,7 +386,21 @@
           </div>
         </div>
         <p class="muted">{hit.context_header}</p>
-        <div class="law-text">{hit.content}</div>
+        {#if scoring?.status === 'loading'}
+          <p class="muted scoring"><span class="spinner" aria-hidden="true"></span> Scoring sentences against the query…</p>
+        {:else if scoring?.status === 'error'}
+          <p class="muted">Sentence highlighting unavailable: {scoring.error}</p>
+        {/if}
+        <div class="law-text">
+          {#each renderView(hit.content, hit.headline, scoring?.similarities) as sentence}
+            <span
+              class="sentence"
+              class:best={sentence.level === 'best'}
+              class:near={sentence.level === 'near'}
+              title={sentence.similarity != null ? `similarity ${formatScore(sentence.similarity, 3)}` : undefined}
+            >{#each sentence.parts as part}{#if part.mark}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</span>
+          {/each}
+        </div>
         <p class="muted mono">chunk {hit.chunk_id}</p>
       </details>
     {:else}
@@ -379,6 +445,20 @@
     color: var(--muted);
   }
   .retrieval-summary strong { color: var(--text); }
+  .legend { display: inline-flex; gap: 0.35rem; align-items: center; font-size: 0.82rem; }
+  .legend mark { margin-left: 0.4rem; }
+  .swatch { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 3px; }
+  .swatch.best, .sentence.best { background: var(--answer); }
+  .swatch.near, .sentence.near { background: var(--answer-soft); }
+  .swatch.near { border: 1px solid var(--border); }
+  .sentence.best, .sentence.near { border-radius: 3px; box-shadow: 0 0 0 1px var(--answer-soft); }
+  .scoring { display: inline-flex; gap: 0.4rem; align-items: center; font-size: 0.82rem; }
+  .spinner {
+    width: 0.8rem; height: 0.8rem; border-radius: 50%;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   details { border-top: 1px solid var(--border); padding: 0.5rem 0; }
   summary { cursor: pointer; display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
   .score-breakdown {

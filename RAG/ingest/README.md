@@ -43,20 +43,25 @@ text failed.
 ## Build embeddings
 
 Ingestion writes `chunks` synchronously. Vector embeddings are derived afterward with
-the local BGE-M3 worker command. On an Intel Core Ultra 7 265H, prefer OpenVINO
-over ONNX for this local CPU path: it is Intel's inference runtime, tends to have
-better CPU/iGPU optimization on this hardware, and is directly supported by
-`sentence-transformers`. ONNX Runtime is still useful for portability, but it is
-not the first choice for this Intel-only workstation setup.
+the local BGE-M3 worker command.
 
+To run on NVidia GPU:
 ```bash
 uv sync --extra embeddings
-uv run python -m euromod_ingest.cli embeddings build \
+UV_PROJECT_ENVIRONMENT=.venv-cuda uv run python -m euromod_ingest.cli embeddings build \
 	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
 	--model-path BAAI/bge-m3 \
 	--backend torch \
 	--batch-size 16
 ```
+
+
+Without GPU, on an Intel CPU like the Core Ultra 7 265H, prefer OpenVINO
+over ONNX for this local CPU path: it is Intel's inference runtime, tends to have
+better CPU/iGPU optimization on this hardware, and is directly supported by
+`sentence-transformers`. ONNX Runtime is still useful for portability, but it is
+not the first choice for this Intel-only workstation setup.
+
 
 Use `--model-path /path/to/local/bge-m3` to point at an already downloaded model.
 Use `--dry-run` to count chunks that need fresh embeddings without loading the model

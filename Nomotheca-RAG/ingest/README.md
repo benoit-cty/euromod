@@ -115,6 +115,27 @@ docker exec -i nomotheca-legislation-db psql -U jrc -d legislation \
 It is idempotent, and backfills `context` for Country Reports and `evidence`
 for everything else. Fresh volumes get the column from `schema.sql`.
 
+They also need Spain's autonomous communities as child jurisdictions once
+(ADR 0003), before any regional act is ingested — the ES parser files an
+*Autonómico* act under `ES-GA`, `ES-CN`, … and the loader refuses a code it
+cannot find:
+
+```bash
+docker exec -i nomotheca-legislation-db psql -U jrc -d legislation \
+  < Nomotheca-RAG/db/migrations/0002_es_autonomous_communities.sql
+```
+
+Idempotent as well; it re-homes regional acts already ingested under `ES` and
+fails loudly if one it cannot place remains. The rows are generated from
+`countries/es/regions.py`, and `tests/test_es_regions.py` keeps the two equal.
+A regional act resolves like a state one — by BOE id, by a region-qualified
+alias (`Ley 3/2021 Asturias`; Aragón has a Ley 3/2021 too, so the bare number
+is refused), or by its BOE ELI URL (`boe.es/eli/es-cn/l/2022/12/19/5`, the
+one programmatic lookup BOE still answers). BOE consolidates the communities'
+framework laws but **not** their annual budget laws: the plain ELI resolves,
+the `/con` form does not, and the consolidated API 404s on the id — the
+resolver says so rather than failing in the fetcher.
+
 ## Translate unit texts to English
 
 `unit_texts` rows arrive in the source language ('fr', 'nl', ...). The batch
@@ -148,6 +169,30 @@ and commits after every stored translation, so it can be interrupted and resumed
 Long texts are split into ~6k-character newline-aware segments per LLM call.
 A per-text failure is reported and skipped; the command exits non-zero if any
 text failed.
+
+## Re-parse the archive
+
+Archive-first means a parser change never needs the source again: `reparse`
+replays the stored snapshot bytes through the country parser and the ordinary
+idempotent loader.
+
+```bash
+uv run python -m nomotheca_ingest.cli reparse FR --url-like '%LEGI/ARTI%' \
+	--database-url postgresql://jrc:jrc@localhost:5434/legislation
+# {"snapshots": 346, "parsed": 346, "loaded": 346, "skipped": 0, "texts_changed": 101}
+```
+
+The adapter rebuilds the source reference from the snapshot URL (FR: the DILA
+id it carries), so only adapters that implement `source_ref_from_url` support
+it. Texts whose content changed get their chunks rewritten in place, which
+leaves their vectors stale — run `embeddings build` afterwards. The first use
+was Legifrance's **NOTA**: the application note under a consolidated article
+(«Conformément au A du II de l'article 4 de la loi n° 2026-103 …, ces
+dispositions s'appliquent à l'impôt sur le revenu dû au titre de l'année
+2025») is where a code article says which income year it governs, and the
+parser used to drop it; it is now a trailing `NOTA :` paragraph of the article
+text, so the workflow's income-year proof can read it and a reviewer can tell
+note from norm.
 
 ## Build embeddings
 

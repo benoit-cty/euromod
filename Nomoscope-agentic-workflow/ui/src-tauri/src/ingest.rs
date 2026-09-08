@@ -133,6 +133,26 @@ pub(crate) fn embedding_environment(dir: &Path) -> (&'static str, Option<PathBuf
     }
 }
 
+/// The embedding form defaults that match the environment [embedding_environment]
+/// will actually run in.
+///
+/// The GPU environment holds torch+CUDA only: OpenVINO's GPU plugin is
+/// Intel-only, and the local `models/bge-m3-openvino` export is not part of that
+/// install. A form still defaulting to the OpenVINO export therefore sends a
+/// path that does not exist to a Hub-aware loader, which reads it as a repo id
+/// and dies on a 401 from huggingface.co — so the defaults follow the venv.
+pub(crate) fn embedding_defaults(dir: &Path) -> Value {
+    let (extra, environment) = embedding_environment(dir);
+    let gpu = environment.is_some();
+    json!({
+        "gpu": gpu,
+        "extra": extra,
+        "environment": environment.map(|path| path.display().to_string()),
+        "backend": if gpu { "torch" } else { "openvino" },
+        "model_path": if gpu { "BAAI/bge-m3" } else { "models/bge-m3-openvino" },
+    })
+}
+
 fn emit_log(app: &AppHandle, run_id: &str, stream: &str, line: &str) {
     let _ = app.emit(
         "ingest-log",
@@ -259,7 +279,8 @@ pub fn stop(state: State<'_, IngestState>, run_id: String) -> Result<Value, Stri
 #[cfg(test)]
 mod tests {
     use super::{
-        build_argv, embedding_environment, follow_up_command, CUDA_EXTRA, EMBEDDING_EXTRA,
+        build_argv, embedding_defaults, embedding_environment, follow_up_command, CUDA_EXTRA,
+        EMBEDDING_EXTRA,
     };
 
     fn args(values: &[&str]) -> Vec<String> {
@@ -361,6 +382,25 @@ mod tests {
 
         assert_eq!(extra, EMBEDDING_EXTRA);
         assert!(environment.is_none());
+    }
+
+    #[test]
+    fn embedding_defaults_follow_the_environment_that_will_run() {
+        let dir = tempfile::tempdir().unwrap();
+
+        let cpu = embedding_defaults(dir.path());
+        assert_eq!(cpu["gpu"], false);
+        assert_eq!(cpu["backend"], "openvino");
+        assert_eq!(cpu["model_path"], "models/bge-m3-openvino");
+
+        let cuda = dir.path().join(".venv-cuda");
+        std::fs::create_dir(&cuda).unwrap();
+        std::fs::write(cuda.join("pyvenv.cfg"), "home = /usr/bin\n").unwrap();
+
+        let gpu = embedding_defaults(dir.path());
+        assert_eq!(gpu["gpu"], true);
+        assert_eq!(gpu["backend"], "torch");
+        assert_eq!(gpu["model_path"], "BAAI/bge-m3");
     }
 
     #[test]

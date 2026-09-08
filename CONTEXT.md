@@ -29,6 +29,18 @@ _Avoid_: CR corpus, report
 What a document is in the hierarchy of norms, stated by the reviewer for a contributed document: statute, government regulation, ministerial order, administrative guidance, or other. Each jurisdiction labels these in its own words (loi, décret, arrêté, circulaire, doctrine…).
 _Avoid_: type, nature, category
 
+**Child jurisdiction**:
+A sub-national jurisdiction filed under its country (`ES-AR` under `ES`, ISO 3166-2 code, `jurisdictions.parent_id`). Spain's autonomous communities are the first; a regional act is an instrument of its community, never of the country.
+_Avoid_: region (as a jurisdiction), regional tag, sub-country
+
+**Jurisdiction scope**:
+The list of jurisdiction codes one run may retrieve evidence from: the country alone for a national parameter, the country plus the parameter's own child jurisdiction for a regional one. Never the whole tree.
+_Avoid_: country filter, region filter
+
+**Region key**:
+The NUTS-2 code a regional EUROMOD parameter carries in its name (`$bsarg_rg24_*` → `ES24`), read off the name and mapped to the child jurisdiction through the database. Not curated: EUROMOD's naming convention already states it.
+_Avoid_: region code (ambiguous with ISO), rg token
+
 ### Trust
 
 **Source-trust class**:

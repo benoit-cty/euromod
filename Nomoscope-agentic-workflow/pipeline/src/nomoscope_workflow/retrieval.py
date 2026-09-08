@@ -17,6 +17,7 @@ to FTS-only when the encoder is unavailable. The demo placeholder embedder
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from datetime import date
 
 import psycopg
@@ -36,6 +37,41 @@ def validity_start(validity: str | None) -> date | None:
     match = _VALIDITY_START.match(validity or "")
     return date.fromisoformat(match.group(1)) if match else None
 
+
+_VALIDITY_END = re.compile(r",(\d{4}-\d{2}-\d{2})[\])]")
+
+
+def validity_end(validity: str | None) -> date | None:
+    """Exclusive upper bound of a rendered daterange; None when open-ended."""
+    match = _VALIDITY_END.search(validity or "")
+    return date.fromisoformat(match.group(1)) if match else None
+
+
+def version_provenance(conn: psycopg.Connection, chunk_id: str) -> dict | None:
+    """Where a chunk's text comes from: instrument type, version window, snapshot date.
+
+    The income-year critique needs to know whether a cited text is a
+    consolidated code article (Legifrance mints one version per amendment,
+    so the version in force on the retrieval date IS the text applied to that
+    assessment) and how fresh our copy is (an open-ended version only proves
+    "not amended" up to the day it was fetched).
+    """
+    row = conn.execute(
+        """
+        SELECT i.instrument_type, v.validity::text AS validity,
+               upper_inf(v.validity) AS open_ended, s.retrieved_at
+        FROM chunks c
+        JOIN unit_texts t          ON t.id = c.unit_text_id
+        JOIN legal_unit_versions v ON v.id = t.version_id
+        JOIN legal_units u         ON u.id = v.legal_unit_id
+        JOIN instruments i         ON i.id = u.instrument_id
+        JOIN fetch_snapshots s     ON s.id = v.fetch_snapshot_id
+        WHERE c.id = %(chunk_id)s::uuid
+        """,
+        {"chunk_id": chunk_id},
+    ).fetchone()
+    return dict(row) if row else None
+
 # One version per article, not per (legal_unit, version) row. `validity @> as_of`
 # alone stops discriminating whenever the same article exists twice: Legifrance
 # mints a new consolidated text per amendment, and an article fetched standalone
@@ -51,7 +87,11 @@ live_version AS (
   JOIN legal_units u         ON u.id = v.legal_unit_id
   JOIN instruments i         ON i.id = u.instrument_id
   JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-  WHERE v.validity @> %(as_of)s::date AND j.code = %(country)s
+  -- Jurisdiction SCOPE, not country (ADR 0003): the country's own code plus,
+  -- for a regional parameter, its region's child jurisdiction — see
+  -- jurisdiction_scope(). A national run therefore never sees regional acts,
+  -- and Aragón's run never sees Asturias's decree.
+  WHERE v.validity @> %(as_of)s::date AND j.code = ANY(%(jurisdictions)s::text[])
     -- Class rule, not a type string (ADR 0001): a 'context' corpus describes
     -- the model rather than the law and is never citable evidence. Country
     -- Reports are the only one today; a future one is excluded by the same
@@ -146,14 +186,58 @@ def connect(cfg: WorkflowConfig) -> psycopg.Connection:
     return psycopg.connect(cfg.database_url, row_factory=dict_row)
 
 
+Scope = str | Sequence[str]
+
+
+def scope_codes(scope: Scope) -> list[str]:
+    """Normalise a jurisdiction scope: a bare country code or a list of codes.
+
+    The first code is the country; the rest are its child jurisdictions the run
+    may also draw on. Every caller that used to pass ``country`` still can.
+    """
+    codes = [scope] if isinstance(scope, str) else list(scope)
+    if not codes:
+        msg = "empty jurisdiction scope"
+        raise ValueError(msg)
+    return codes
+
+
+_SCOPE_SQL = """
+SELECT j.code
+FROM jurisdictions j
+JOIN jurisdictions p ON p.id = j.parent_id
+WHERE p.code = %(country)s AND j.metadata->>'nuts2' = %(region)s
+"""
+
+
+def jurisdiction_scope(conn: psycopg.Connection, country: str, region: str | None) -> list[str]:
+    """Codes a run may retrieve from: the country, plus its region's child jurisdiction.
+
+    ``region`` is the parameter's NUTS-2 key (``regions.region_key``). A
+    national parameter scopes to ``[country]`` alone — regional acts are filed
+    under children and stay out of national runs. A regional parameter adds
+    the one child whose seeded ``nuts2`` matches; a region the database does
+    not know falls back to the country alone, which is the safe side (it can
+    only produce not_found, never a sibling region's value).
+    """
+    scope = [country]
+    if region:
+        row = conn.execute(_SCOPE_SQL, {"country": country, "region": region}).fetchone()
+        if row:
+            scope.append(row["code"])
+    return scope
+
+
 def citation_fast_path(
-    conn: psycopg.Connection, country: str, lang: str, as_of: date, citations: list[str], k: int
+    conn: psycopg.Connection, country: Scope, lang: str, as_of: date, citations: list[str], k: int
 ) -> list[RetrievalHit]:
     """Look up chunks by known citation strings / national ids, as-of filtered."""
     hits: dict[str, RetrievalHit] = {}
+    jurisdictions = scope_codes(country)
     for cit in citations:
         rows = conn.execute(
-            _CITATION_SQL, {"country": country, "lang": lang, "as_of": as_of, "cit": cit, "k": k}
+            _CITATION_SQL,
+            {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of, "cit": cit, "k": k},
         ).fetchall()
         for row in rows:
             hits.setdefault(row["chunk_id"], RetrievalHit(method="citation", **row))
@@ -162,7 +246,7 @@ def citation_fast_path(
 
 def hybrid_search(
     conn: psycopg.Connection,
-    country: str,
+    country: Scope,
     lang: str,
     as_of: date,
     query: str,
@@ -188,7 +272,7 @@ def hybrid_search(
         joined="fts FULL OUTER JOIN vec USING (chunk_id)" if use_vector else "fts",
     )
     params = {
-        "country": country,
+        "jurisdictions": scope_codes(country),
         "lang": lang,
         "as_of": as_of,
         "q": query,
@@ -204,13 +288,17 @@ def hybrid_search(
 def retrieve(
     conn: psycopg.Connection,
     cfg: WorkflowConfig,
-    country: str,
+    country: Scope,
     as_of: date,
     query: str,
     citations: list[str],
 ) -> list[RetrievalHit]:
-    """Citation fast path first, then hybrid; dedup by chunk_id, fast-path wins."""
-    lang = LANG_BY_COUNTRY.get(country, "en")
+    """Citation fast path first, then hybrid; dedup by chunk_id, fast-path wins.
+
+    ``country`` is a jurisdiction scope (see ``jurisdiction_scope``); the
+    law language is the country's, i.e. the scope's first code.
+    """
+    lang = LANG_BY_COUNTRY.get(scope_codes(country)[0], "en")
     merged: dict[str, RetrievalHit] = {}
     for hit in citation_fast_path(conn, country, lang, as_of, citations, cfg.retrieval_k):
         merged[hit.chunk_id] = hit

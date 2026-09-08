@@ -7,6 +7,8 @@ A daemon was implemented as part of the Database tab's semantic search. It's lif
 ### Python side
 query_embeddings.py is a long-lived JSON-lines worker: it loads BGE-M3 once, prints {"ready": true}, then reads one query per line from stdin and answers with a pgvector halfvec literal on stdout. Its default backend is auto: torch on CUDA when the machine has a usable GPU, otherwise the local OpenVINO export in Nomotheca-RAG/ingest/models/bge-m3-openvino. Diagnostics (the resolved device) go to stderr — stdout is the protocol.
 
+The same worker serves a second request, `{"query": q, "sentences": [...]}`, answered with `{"similarities": [...]}` — the cosine of every sentence against the query in one batch. The Database tab uses it to tint, inside each hit, the sentence most likely answering the question (`src/lib/highlight.js`: the top 5 hits are scored right after a search, the others when expanded). Query-term words are highlighted separately by Postgres `ts_headline` in the search SQL, so the lexical layer costs nothing and still shows in full-text mode.
+
 ### Rust side
 encoder.rs manages it as EmbeddingState: it spawns uv run --extra embeddings python -m nomotheca_ingest.query_embeddings inside the ingest package dir (located by walking up, or via EUROMOD_INGEST_DIR), waits for the ready handshake, and keeps the process behind a mutex. If an encode fails it kills and respawns once, transparently. The extra it passes is chosen by ingest.rs::embedding_environment, so the UI's semantic search runs on the GPU wherever .venv-cuda is installed.
 

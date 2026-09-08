@@ -47,7 +47,10 @@ candidate AS MATERIALIZED (
     JOIN legal_units u         ON u.id = v.legal_unit_id
     JOIN instruments i         ON i.id = u.instrument_id
     JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-    WHERE (%(country)s::text IS NULL OR j.code = upper(%(country)s))
+    -- A country's scope includes its child jurisdictions (Spain's autonomous
+    -- communities, ADR 0003); a child code narrows to that region alone.
+    WHERE (%(country)s::text IS NULL OR j.code = upper(%(country)s)
+           OR j.parent_id = (SELECT id FROM jurisdictions WHERE code = upper(%(country)s)))
       AND (%(as_of)s::date IS NULL OR v.validity @> %(as_of)s::date)
       AND (%(languages)s::text[] IS NULL OR t.lang = ANY(%(languages)s::text[]))
 ),
