@@ -13,11 +13,11 @@
     "value": 0.49,
     "valid_from": "2025-01-01",
     "citations": [
-      "GPMĮ IX-1007, 20 straipsnis"
+      "GPMĮ 20 straipsnis"
     ]
   },
   "verified": true,
   "drafted_by": "human",
-  "reviewed_by": "ben",
-  "notes": "curated: lt.json#tinta_basic_withdrate_higher | euromod value in force at 2025-06-01: 0.49 from 2025-01-01 | EASY — the NPD (basic allowance) withdrawal coefficient in the GPMI art. 20 formula, 0.5 -> 0.49 for 2025. A genuine numeric change stated verbatim in an ingested act: the LT happy path. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test."
+  "notes": "curated: lt.json#tinta_basic_withdrate_higher | euromod value in force at 2025-06-01: 0.49 from 2025-01-01 | EASY — the NPD (basic allowance) withdrawal coefficient in the GPMI art. 20 formula, 0.5 -> 0.49 for 2025. A genuine numeric change stated verbatim in an ingested act: the LT happy path. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
+  "reviewed_by": "ben"
 }

@@ -72,6 +72,16 @@ PY
 A single (expected, proposed) pair repeating across many cases is a systematic
 mismatch, not a model that is wrong the same way ten times.
 
+**The same trap, second instance: the evidence legs on a `derived` verdict.**
+`pipeline._derived_refs` short-circuits any parameter whose stored value carries
+a `$`-reference straight to `Routing.DERIVED`, *before* retrieval and before any
+LLM call — `$PSS * 4` has no independent legislative existence, so the anchor is
+what legislation sets. There is therefore deliberately no proposal, no citation
+and an empty retrieval trace, and scoring those as misses penalises the pipeline
+for behaving correctly. `score_item` leaves `citation_correct` and
+`retrieval_hit` unscored when both sides route `derived`; one side alone still
+scores them, because then the routing is in dispute and the evidence settles it.
+
 Two more scoring rules worth knowing:
 
 - **`hallucination` is the mechanical leg only** — the extract is not verbatim
@@ -180,6 +190,16 @@ other reading and scored as model failures.
 contradicts `route_against_current`, instead of warning. If you see that skip,
 the selection file is wrong — fix it there, never in `dataset/`.
 
+**A `$`-formula parameter owes `derived`, not `unchanged`.** The cross-check
+above cannot catch this: `route_against_current` only asks whether the proposal
+differs from the stored value, and knows nothing about the short-circuit. Two
+cases were written expecting `unchanged` for `$PSS * 4` and `100%*$MMS`, and the
+run scored a correct `derived` verdict as a model failure. If the stored value
+contains a `$`, the entry wants `routing: derived` and `expected_value: null` —
+the value leg is not scorable, and what the case tests is that the pipeline
+recognises the formula instead of hunting the corpus for a number that is not in
+it.
+
 Check the drafting warnings that did survive:
 
 ```bash
@@ -195,6 +215,19 @@ PY
 
 A `verified: true` case carrying a drafting warning is the dangerous
 combination: the drafter doubted it and a human waved it through anyway.
+
+**Income-year cases: check the year the prompt states before blaming the model.**
+`schema.income_year_for` is the single place the system-year → income-year
+mapping is decided (offset −1), and CLAUDE.md forbids re-deriving `as_of.year ± 1`
+at a call site. Two call sites did it anyway — `prompts._parameter_block` and the
+cross-article proof — so the model was told the 2025 barème governs 2025 income
+and asked to find a year the act never names, while the mechanical check next
+door demanded the 2024 date off the correct mapping. Sixteen FR refusals in one
+run, six of them with the right article retrieved. Grep before you conclude:
+
+```bash
+grep -rn "as_of.year" src/nomoscope_workflow/   # every hit outside item_id/system_year is suspect
+```
 
 ### d. Input defect — is the parameter under test itself sound?
 
@@ -281,6 +314,18 @@ unverified cases from the next run.
   manufactures a permanent miss. `openfisca_golden` keeps `JORFTEXT`/`LEGITEXT`
   ids (a correct pipeline citation contains them) and drops article-level ids of
   acts we lack.
+- **Write the citation exactly as `legal_units.citation` spells it.**
+  `citation_matches` is one-way containment, so a golden citation carrying more
+  than the corpus does can never match. LT scored **citation 0% and recall 0%**
+  on a whole run while the pipeline had cited the right article in four of seven
+  cases, purely because the selection file wrote `GPMĮ IX-1007, 20 straipsnis`
+  where the corpus — and so the pipeline — writes `GPMĮ 20 straipsnis`. Check a
+  new citation against the DB before relying on it:
+  ```bash
+  docker exec $(docker compose ps -q db) psql -U jrc -d legislation -t -A -c \
+    "SELECT citation FROM legal_units WHERE citation ILIKE '%<act>%' LIMIT 10;"
+  ```
+  The act's full name belongs in `note`, not in `citations`.
 - **Keep the value in EUROMOD's own spelling.** `normalise_value` reads
   `11496#y`, `$PSS * 4`, `(1766.92*10+1801.80*2)/12#m` and percent literals
   (`'4.1%'` -> 0.041, so it compares against the unit-/1 form OpenFisca uses).
@@ -297,9 +342,15 @@ unverified cases from the next run.
   `labels_drafted: false`, and a rebuild will not undo you. Editing the
   materialized case in `dataset/` loses the change on the next build.
 - **Aim for spread across the ladder.** A set that is all `verbatim` cannot show
-  whether the pipeline can combine provisions; the current 70 cases hold zero
-  `derive` cases, so nothing measures formula-valued parameters — which is ~75%
-  of the FR set in EUROMOD.
+  whether the pipeline can combine provisions. `derive` is the rung to watch:
+  every formula-valued parameter in the store is currently either `$`-referenced
+  (short-circuited to `derived`, so it never exercises reading-and-computing) or
+  arithmetic-only with its stating act **not ingested** — IE's PRSI credit taper
+  (`1/6`, a 2016 amendment to SWCA 2005 s.13), FR's housing weighted averages
+  (`bhotn_fr`, the APL arrêtés), FR's sick-pay `2/3` (Code du travail L1226-1,
+  of which 4 units are ingested). So a *ready* `derive` case does not exist in
+  FR, IE or LT today, and ingesting any one of those acts creates the first one.
+  That is a corpus finding, not a reason to invent a case.
 - **Balance the set.** 47 of the first 67 cases expected `unchanged`, so
   routing accuracy was largely a measure of resisting change. Get `changed`
   cases from parameters where EUROMOD is genuinely stale — not by relabelling

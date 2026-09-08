@@ -313,7 +313,18 @@ def score_item(
     if expected.valid_from is not None and not both_unchanged:
         result.date_correct = proposed is not None and proposed.valid_from == expected.valid_from
 
-    if expected.citations:
+    # The evidence legs are only meaningful when the pipeline is looking for
+    # evidence. On a `derived` verdict `pipeline._derived_refs` short-circuits to
+    # the anchor parameter BEFORE retrieval and before any LLM call — a value
+    # like "$PSS * 4" has no independent legislative existence, so there is
+    # deliberately no proposal, no citation and an empty retrieval trace. Scoring
+    # those as misses penalises the pipeline for doing exactly what it should,
+    # the same way comparing validity windows penalised a correct `unchanged`.
+    # Both sides routing `derived` therefore leaves citation and recall unscored;
+    # a case where only ONE side says `derived` still scores both, because then
+    # the routing itself is in dispute and the evidence is what settles it.
+    both_derived = expected.routing == Routing.DERIVED == item.routing
+    if expected.citations and not both_derived:
         result.citation_correct = proposed is not None and any(
             citation_matches(exp, ref.title)
             for exp in expected.citations

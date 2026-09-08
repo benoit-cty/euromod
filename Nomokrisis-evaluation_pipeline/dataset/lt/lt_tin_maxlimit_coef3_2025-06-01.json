@@ -14,12 +14,12 @@
     "routing": "unchanged",
     "value": 60.0,
     "citations": [
-      "GPMĮ IX-1007, 6 straipsnis",
-      "VSDĮ I-1336"
+      "GPMĮ 6 straipsnis",
+      "VSDĮ"
     ]
   },
   "verified": true,
   "drafted_by": "human",
-  "reviewed_by": "ben",
-  "notes": "curated: lt.json#tin_maxlimit_coef3 | euromod value in force at 2025-06-01: 60.0 from 2021-01-01 | HARD — the PIT/SIC ceiling coefficient: the law says '60 vidutiniu darbo uzmokesciu' (60 average wages, since 2021, after the 120 -> 84 -> 60 phase-in), EUROMOD stores the bare coefficient 60 while the euro cap is computed as $AMS x 60 / 12. Reconstruction case: the pipeline must recognise which quantity is legislated (the multiple) and which is EUROMOD arithmetic — the LT counterpart of FR's PSS x3/x4/x8 combine cases."
+  "notes": "curated: lt.json#tin_maxlimit_coef3 | euromod value in force at 2025-06-01: 60.0 from 2021-01-01 | HARD — the PIT/SIC ceiling coefficient: the law says '60 vidutiniu darbo uzmokesciu' (60 average wages, since 2021, after the 120 -> 84 -> 60 phase-in), EUROMOD stores the bare coefficient 60 while the euro cap is computed as $AMS x 60 / 12. Reconstruction case: the pipeline must recognise which quantity is legislated (the multiple) and which is EUROMOD arithmetic — the LT counterpart of FR's PSS x3/x4/x8 combine cases.",
+  "reviewed_by": "ben"
 }

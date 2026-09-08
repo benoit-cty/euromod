@@ -1,0 +1,23 @@
+{
+  "id": "fr_constdef_ub_dayminamt_2025-06-01",
+  "country": "FR",
+  "language": "fr",
+  "parameter_file": "Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_constdef_fr_def_const_ub_dayminamt.json",
+  "as_of": "2025-06-01",
+  "difficulty": "verbatim",
+  "hazards": [
+    "mid_year_change"
+  ],
+  "labels_drafted": false,
+  "source_class": "gazette",
+  "expected": {
+    "routing": "unchanged",
+    "value": 31.97,
+    "valid_from": "2024-07-01",
+    "citations": []
+  },
+  "corpus_available": false,
+  "verified": false,
+  "drafted_by": "openfisca@a7038ee",
+  "notes": "openfisca: chomage.allocations_assurance_chomage.alloc_base.montant_minimum.apres_1979.montant_minimum_hors_mayotte | openfisca value at 2025-06-01: 31.97 (change point 2024-07-01) | euromod value in force at 2025-06-01: 31.97 from 2025-01-01 | link: manual | corpus_available: false — not one of this parameter's OpenFisca references resolves in the legislation corpus, so no retrieval can reach the text stating the value. The case measures ingest coverage; it is excluded from the 'source in corpus' KPI slice until the act is ingested | references not resolved in the legislation corpus: Circulaire Unedic 2024-05 du 1 juillet 2024 (no Legifrance id) | HARD / not_found today — ARE minimum daily allowance (allocation minimale journalière), 31.59 -> 31.97 EUR/day on 1 July 2024. The number is NOT in the law: décret n° 2019-797 (JORFTEXT000038829574, art. 14, ingested) fixes the floor at 29,26 euros and defers to art. 20, under which the Unédic board (the social partners) revalues the allowances each 1 July by its own decision. The current amount exists only in the Unédic circular that publishes that decision — Circulaire Unédic n° 2024-05 du 1er juillet 2024 (the PDF OpenFisca cites at unedic.org/ged/documents/circulars/pdf/PRE-CIRC-Circulaire_n_2024-05_du_1er_juillet_2024.pdf answered 404 in September 2026; the press release of 27 June 2024 on unedic.org states the same table: allocation minimale 31,59 -> 31,97 EUR, partie fixe 12,95 -> 13,11 EUR, +1,2 %). A circulaire of a paritarian body has no Legifrance id, is not on any scout.COUNTRY_SOURCES domain for FR, and the ingester has no PDF path, so no retrieval can reach the text stating the value: corpus_available:false, and the case measures ingest breadth until Unédic circulars are ingested as an instrument class. TRAP: art. 14 IS retrievable and states a stale 29,26 — a pipeline that reads it literally proposes `changed` to a 2019 number; the honest verdict without the circular is `not_found`. MID-YEAR: revalued every 1 July, so EUROMOD's system-year value is the amount in force on 30 June (the label says so) — 31.97 for 2025, not the 32.13 the circular of 1 July 2025 sets. source_class `gazette` is the nearest of the three classes; the instrument is really an administrative circular. ROUTING: EUROMOD already carries 31.97 for 2025, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change."
+}

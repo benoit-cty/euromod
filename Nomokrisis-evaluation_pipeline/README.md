@@ -35,7 +35,7 @@ db/eval_schema.sql           tables + eval.run_summary view (the UI read surface
 ## Quick start
 
 ```bash
-cd evaluation_pipeline
+cd Nomokrisis-evaluation_pipeline
 uv run nomokrisis-eval init-db                                  # create eval schema (DB must be up)
 uv run nomokrisis-eval list-cases                               # inspect the golden set
 uv run nomokrisis-eval run --as-of 2025-06-01 --model mock/extractor    # offline smoke run

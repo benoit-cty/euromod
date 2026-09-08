@@ -246,6 +246,26 @@ def test_derive_values_score_in_every_spelling():
     assert values_equal("1/6", 1 / 6)
 
 
+def test_evidence_legs_unscored_when_both_sides_route_derived():
+    """`derived` short-circuits before retrieval by design, so there is no
+    citation and no trace to score. Only the routing leg is meaningful."""
+    case = make_case(routing=Routing.DERIVED, citations=["CSS, art. L136-2"])
+    item = make_item(routing=Routing.DERIVED, with_proposal=False)
+    r = score_item(case, item)
+    assert r.routing_correct is True
+    assert r.citation_correct is None
+    assert r.retrieval_hit is None
+
+
+def test_evidence_legs_still_score_when_only_one_side_says_derived():
+    """A disputed routing is exactly when the evidence matters."""
+    case = make_case(routing=Routing.UNCHANGED, citations=["CSS, art. L136-2"])
+    item = make_item(routing=Routing.DERIVED, with_proposal=False)
+    r = score_item(case, item)
+    assert r.routing_correct is False
+    assert r.citation_correct is False
+
+
 def test_period_suffix_is_parsed_not_string_matched():
     assert values_equal(11496.0, "11496#y")
     assert values_equal("0.45", 0.45)
