@@ -14,6 +14,8 @@ from nomoscope_workflow.scout import (
     merge_results,
 )
 from nomoscope_workflow.pipeline import (
+    GUIDANCE_ONLY_ISSUE,
+    guidance_only,
     _current_value,
     _income_year_date_issues,
     _needs_gap_fill,
@@ -30,9 +32,11 @@ from nomoscope_workflow.schema import (
     ParameterRecord,
     ParameterValue,
     ProposalDraft,
+    Reference,
     RetrievalHit,
     ReviewItem,
     Routing,
+    SourceTrustClass,
     TemporalBasis,
     income_year_for,
 )
@@ -529,3 +533,76 @@ def test_scout_rounds_merge_without_duplicates():
     assert merged.candidate_ids == ["A", "B", "C"]
     assert merged.needs == ["the PSS arrêté", "art. L. 241-3"]
     assert merged.reasoning == "round one | round two"
+
+
+def test_retrieval_hits_and_mock_proposals_default_to_evidence():
+    """Nothing that predates the class column silently becomes guidance."""
+    record = _record("bracket_schedule", "/1", [Bracket(threshold=0, rate=0.0)])
+    hit = _hit()
+
+    assert hit.source_trust_class == SourceTrustClass.EVIDENCE
+    draft = mock.propose_with_mock(record, date(2025, 6, 1), [hit])
+    assert draft.found
+    assert not guidance_only([hit.source_trust_class])
+
+
+def test_guidance_only_needs_every_citation_to_be_guidance():
+    """The informational finding fires on guidance alone, never on a mix."""
+    guidance = SourceTrustClass.GUIDANCE
+    evidence = SourceTrustClass.EVIDENCE
+
+    assert guidance_only([guidance])
+    assert guidance_only([guidance, guidance])
+    assert not guidance_only([guidance, evidence])
+    assert not guidance_only([evidence])
+    # No citation at all is not "guidance-only": there is nothing to label.
+    assert not guidance_only([])
+
+
+def test_guidance_only_finding_leaves_the_verdict_alone():
+    """The finding is appended to issues; the four verdict booleans are untouched."""
+    report = CritiqueReport(
+        schema_valid=True,
+        citation_verified=True,
+        dates_consistent=True,
+        values_sane=True,
+        verdict="pass",
+    )
+
+    report.issues.append(GUIDANCE_ONLY_ISSUE)
+
+    assert report.verdict == "pass"
+    assert GUIDANCE_ONLY_ISSUE in report.issues
+
+
+def test_guidance_only_flag_survives_the_queue_roundtrip(tmp_path: Path):
+    """A reviewer reopening the queue still sees what the value rested on."""
+    item = ReviewItem(
+        id="fr_guidance_2025",
+        run_id="run-g",
+        created_at="2026-07-09T00:00:00Z",
+        country="FR",
+        model_target="euromod://FR/test",
+        as_of=date(2025, 6, 1),
+        system_year=2025,
+        value_type="scalar",
+        unit="/1",
+        routing=Routing.CHANGED,
+        guidance_only=True,
+        proposed_value=ParameterValue(
+            value=0.45,
+            valid_from=date(2025, 1, 1),
+            references=[
+                Reference(
+                    title="Circulaire Unedic n. 2025-01",
+                    source_trust_class=SourceTrustClass.GUIDANCE,
+                )
+            ],
+        ),
+    )
+
+    assert queue_store.write_item(item, tmp_path)
+    loaded = queue_store.load_items(tmp_path)[0]
+
+    assert loaded.guidance_only
+    assert loaded.proposed_value.references[0].source_trust_class == SourceTrustClass.GUIDANCE

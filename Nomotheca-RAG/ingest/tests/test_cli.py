@@ -90,3 +90,81 @@ def test_embedding_progress_status_mentions_encoding_batch() -> None:
 
     assert "encoding batch=16" in status
     assert "embedded=16" in status
+
+def test_document_help_exposes_the_reviewer_fields() -> None:
+    """A reviewer at the command line has every field the UI form has."""
+    result = CliRunner().invoke(app, ["document", "--help"], env=WIDE)
+
+    assert result.exit_code == 0
+    for option in (
+        "--jurisdiction",
+        "--lang",
+        "--title",
+        "--kind",
+        "--valid-from",
+        "--implements",
+        "--database-url",
+        "--progress-json",
+    ):
+        assert option in result.output
+    assert "circulaire" in result.output
+
+
+def test_route_prints_exactly_one_json_line() -> None:
+    """The UI's pre-check parses one line and decides what to show."""
+    result = CliRunner().invoke(
+        app, ["route", "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051168007"]
+    )
+
+    assert result.exit_code == 0
+    lines = result.output.strip().splitlines()
+    assert len(lines) == 1
+    payload = json.loads(lines[0])
+    assert payload["outcome"] == "adapter"
+    assert payload["jurisdiction"] == "FR"
+    assert payload["national_id"] == "JORFTEXT000051168007"
+
+
+def test_route_carries_the_prefill_suggestions_for_a_contributed_document(tmp_path) -> None:
+    """Title and validity date are suggested so the reviewer corrects, not types."""
+    document = tmp_path / "circulaire-2025-04-01.md"
+    document.write_text("# Circulaire Unedic n. 2025-01\n\nTexte.\n", encoding="utf-8")
+
+    result = CliRunner().invoke(app, ["route", str(document)])
+
+    payload = json.loads(result.output.strip())
+    assert payload["outcome"] == "contributed"
+    assert payload["suggestions"]["title"] == "Circulaire Unedic n. 2025-01"
+    assert payload["suggestions"]["valid_from"] == "2025-01-01"
+
+
+def test_route_refuses_a_whole_legifrance_code_with_a_hint() -> None:
+    result = CliRunner().invoke(
+        app, ["route", "https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006069577"]
+    )
+
+    payload = json.loads(result.output.strip())
+    assert payload["outcome"] == "refused"
+    assert "LEGIARTI" in payload["hint"]
+
+
+def test_document_refuses_a_missing_validity_date_without_touching_the_database() -> None:
+    """A clear message, exit code 2, and no row written anywhere."""
+    result = CliRunner().invoke(
+        app,
+        [
+            "document",
+            "/nonexistent.md",
+            "--jurisdiction",
+            "fr",
+            "--title",
+            "Circulaire",
+            "--kind",
+            "circulaire",
+            "--database-url",
+            "postgresql://nobody@127.0.0.1:1/none",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "in force from" in result.output

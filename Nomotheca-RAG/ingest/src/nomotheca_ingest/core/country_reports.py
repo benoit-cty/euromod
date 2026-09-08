@@ -1,11 +1,11 @@
 """EUROMOD Country Report ingestion — a separate, non-legislative corpus class.
 
 Country Reports describe the EUROMOD model itself, so they must never become
-citable evidence for parameter proposals: everything loaded here is tagged
-``instrument_type='country_report'`` and the Nomoscope evidence retrieval
-excludes that type. The corpus exists so the frame/scout steps and the
-validation UI can search it (parameter acronym -> semantic description),
-with the same FTS/vector machinery as the legislation corpus.
+citable evidence for parameter proposals: everything loaded here carries the
+``context`` source-trust class and the Nomoscope evidence retrieval excludes
+that class. The corpus exists so the frame/scout steps and the validation UI
+can search it (parameter acronym -> semantic description), with the same
+FTS/vector machinery as the legislation corpus.
 
 File-based: the "fetch" is reading a Markdown file already converted from the
 official Word/PDF report, archived as a fetch_snapshot like any other source.
@@ -13,9 +13,6 @@ official Word/PDF report, archived as a fetch_snapshot like any other source.
 
 from __future__ import annotations
 
-import re
-import unicodedata
-from dataclasses import dataclass
 from datetime import date
 from hashlib import sha256
 from pathlib import Path
@@ -24,15 +21,13 @@ from uuid import UUID
 import psycopg
 
 from nomotheca_ingest.core.db import create_fetch_run, finish_fetch_run
+from nomotheca_ingest.core.documents import build_document
 from nomotheca_ingest.core.ir import (
-    Authenticity,
     InstrumentIR,
     ParsedDoc,
     SourceRef,
-    TextIR,
+    SourceTrustClass,
     Trigger,
-    UnitIR,
-    VersionIR,
 )
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 
@@ -40,60 +35,12 @@ INSTRUMENT_TYPE = "country_report"
 ID_SYSTEM = "euromod_cr"
 SKILL_VERSION = "cr-md-0.1"
 
-_HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
-_LEADING_NUM_RE = re.compile(r"^(\d+(?:\.\d+)*)\.?\s")
 _UNIT_TYPE_BY_DEPTH = {2: "section"}
-
-
-@dataclass(slots=True)
-class _Heading:
-    level: int
-    text: str
-    line_idx: int       # line index of the heading itself
-    content_start: int  # line index of first body line after the heading
-    content_end: int    # line index one past the last body line
 
 
 def source_code_for(jurisdiction: str) -> str:
     """Source registry code for a jurisdiction's Country Report corpus."""
     return f"{jurisdiction.upper()}-EUROMOD-CR"
-
-
-def _slugify(text: str) -> str:
-    """Fold a heading into an ltree-safe label."""
-    numbering = _LEADING_NUM_RE.match(text)
-    if numbering:
-        return "sec_" + numbering.group(1).replace(".", "_")
-    folded = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
-    words = re.sub(r"[^a-z0-9]+", "_", folded.lower()).strip("_").split("_")
-    slug = "_".join(words[:5])[:40].strip("_")
-    return slug or "sec"
-
-
-def _headings(lines: list[str]) -> list[_Heading]:
-    """Locate markdown headings outside fenced code blocks, with body spans."""
-    found: list[_Heading] = []
-    in_fence = False
-    for idx, line in enumerate(lines):
-        if line.lstrip().startswith("```"):
-            in_fence = not in_fence
-            continue
-        if in_fence:
-            continue
-        match = _HEADING_RE.match(line)
-        if match:
-            if found:
-                found[-1].content_end = idx
-            found.append(
-                _Heading(
-                    level=len(match.group(1)),
-                    text=match.group(2),
-                    line_idx=idx,
-                    content_start=idx + 1,
-                    content_end=len(lines),
-                )
-            )
-    return found
 
 
 def parse_country_report(
@@ -111,95 +58,29 @@ def parse_country_report(
     next heading (of any level) is that unit's own content. Hierarchy follows
     markdown levels only — the CRs' decimal numbering is not trusted (the FR
     report reuses '2.' for two different chapters).
+
+    The shape is the shared `documents.build_document`; what is said here is
+    only what a Country Report *is*: a context corpus, titled by its own h1,
+    cited as "CR <CC> <vintage>", and versioned once per vintage.
     """
     jurisdiction = jurisdiction.upper()
     national_id = f"CR-{jurisdiction}-{vintage}"
-    lines = markdown.splitlines()
-    headings = _headings(lines)
-
-    title_text = next(
-        (h.text for h in headings if h.level == 1),
-        f"EUROMOD Country Report {jurisdiction} {vintage}",
-    )
-
-    def make_version(content: str) -> list[VersionIR]:
-        if not content.strip():
-            return []
-        return [
-            VersionIR(
-                valid_from=valid_from,
-                source_version_id=f"{national_id}@{valid_from.isoformat()}",
-                fetch_snapshot_id=snapshot_id,
-                texts=[TextIR(lang=lang, authenticity=Authenticity.AUTHENTIC, content=content)],
-            )
-        ]
-
-    units: list[UnitIR] = []
-    used_paths: set[str] = set()
-    # (level, path) ancestor stack; preamble text (before any h2) gets its own unit.
-    stack: list[tuple[int, str]] = []
-    child_counts: dict[str | None, int] = {}
-    has_children: set[str] = set()
-
-    first_section = next((h for h in headings if h.level >= 2), None)
-    cutoff = first_section.line_idx if first_section else len(lines)
-    preamble = "\n".join(line for line in lines[:cutoff] if not _HEADING_RE.match(line)).strip()
-    if preamble:
-        units.append(
-            UnitIR(
-                unit_type="section",
-                path="preamble",
-                citation=f"CR {jurisdiction} {vintage}, preamble",
-                ordinal=0,
-                versions=make_version(preamble),
-            )
-        )
-        used_paths.add("preamble")
-
-    for h in headings:
-        if h.level < 2:
-            continue
-        while stack and stack[-1][0] >= h.level:
-            stack.pop()
-        parent_path = stack[-1][1] if stack else None
-        base = _slugify(h.text)
-        path = f"{parent_path}.{base}" if parent_path else base
-        bump = 2
-        while path in used_paths:
-            path = (f"{parent_path}.{base}" if parent_path else base) + f"_{bump}"
-            bump += 1
-        used_paths.add(path)
-
-        ordinal = child_counts.get(parent_path, 0)
-        child_counts[parent_path] = ordinal + 1
-        if parent_path:
-            has_children.add(parent_path)
-
-        content = "\n".join(lines[h.content_start : h.content_end]).strip()
-        units.append(
-            UnitIR(
-                unit_type=_UNIT_TYPE_BY_DEPTH.get(h.level, "subsection"),
-                path=path,
-                citation=f"CR {jurisdiction} {vintage}, §{h.text}"[:200],
-                ordinal=ordinal,
-                parent_path=parent_path,
-                versions=make_version(content),
-                metadata={"heading_level": h.level},
-            )
-        )
-        stack.append((h.level, path))
-
-    for unit in units:
-        if unit.path in has_children:
-            unit.is_container = True
-
-    return InstrumentIR(
+    return build_document(
+        text=markdown,
         jurisdiction=jurisdiction,
         source_code=source_code,
         instrument_type=INSTRUMENT_TYPE,
-        title={lang: title_text},
+        source_trust_class=SourceTrustClass.CONTEXT,
         national_id=national_id,
-        units=units,
+        title=f"EUROMOD Country Report {jurisdiction} {vintage}",
+        title_from_heading=True,
+        lang=lang,
+        valid_from=valid_from,
+        snapshot_id=snapshot_id,
+        citation_prefix=f"CR {jurisdiction} {vintage}",
+        pattern="markdown",
+        version_key=f"{national_id}@{valid_from.isoformat()}",
+        unit_type_by_depth=_UNIT_TYPE_BY_DEPTH,
         metadata={"vintage": vintage, "corpus_class": INSTRUMENT_TYPE},
     )
 

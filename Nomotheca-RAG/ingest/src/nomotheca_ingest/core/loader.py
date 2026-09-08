@@ -12,7 +12,14 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
 from nomotheca_ingest.core.chunker import chunk_text
-from nomotheca_ingest.core.ir import InstrumentIR, ParsedDoc, TextIR, UnitIR, VersionIR
+from nomotheca_ingest.core.ir import (
+    InstrumentIR,
+    InstrumentRelationIR,
+    ParsedDoc,
+    TextIR,
+    UnitIR,
+    VersionIR,
+)
 
 
 @dataclass(slots=True)
@@ -25,6 +32,7 @@ class LoadStats:
     texts: int = 0
     chunks: int = 0
     retained_chunks: int = 0   # cited chunks past the new end of a shrunken text
+    relations: int = 0
 
 
 class LegislationLoader:
@@ -37,10 +45,13 @@ class LegislationLoader:
     def load(self, doc: ParsedDoc) -> LoadStats:
         """Load all instruments in one parsed document inside a transaction."""
         stats = LoadStats()
+        loaded: dict[str, UUID] = {}
         with self.conn.transaction():
             for instrument in doc.instruments:
                 instrument_id = self._upsert_instrument(instrument)
                 stats.instruments += 1
+                if instrument.national_id:
+                    loaded[instrument.national_id] = instrument_id
                 unit_ids = self._upsert_units(instrument_id, instrument.units, stats)
                 for unit in instrument.units:
                     for version in unit.versions:
@@ -50,7 +61,74 @@ class LegislationLoader:
                             text_id = self._upsert_text(version_id, text)
                             stats.texts += 1
                             self._replace_chunks(text_id, instrument, unit, version, text, stats)
+            for relation in doc.relations:
+                self._upsert_relation(doc, relation, loaded, stats)
         return stats
+
+    def _upsert_relation(
+        self,
+        doc: ParsedDoc,
+        relation: InstrumentRelationIR,
+        loaded: dict[str, UUID],
+        stats: LoadStats,
+    ) -> None:
+        """Record one provenance edge between instruments.
+
+        Restated rather than accumulated: re-running a document with a
+        different link replaces the edge of that type instead of leaving both
+        behind. A target that is not in the corpus yet is kept as free text,
+        so the reviewer's statement survives until the statute is ingested.
+        """
+        from_id = loaded.get(relation.from_ref)
+        if from_id is None:
+            from_id = self._instrument_id_by_national_id(doc.ref.jurisdiction, relation.from_ref)
+        if from_id is None:
+            return
+        to_id = (
+            self._instrument_id_by_national_id(doc.ref.jurisdiction, relation.to_ref)
+            if relation.to_ref
+            else None
+        )
+        if to_id is None and not relation.to_ref:
+            return
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM instrument_relations "
+                "WHERE from_instrument_id = %s AND relation_type = %s",
+                (from_id, relation.relation_type),
+            )
+            cur.execute(
+                """
+                INSERT INTO instrument_relations
+                  (from_instrument_id, to_instrument_id, to_ref_text, relation_type, metadata)
+                VALUES (%s, %s, %s, %s, %s::jsonb)
+                """,
+                (
+                    from_id,
+                    to_id,
+                    None if to_id else relation.to_ref,
+                    relation.relation_type,
+                    Jsonb(relation.metadata),
+                ),
+            )
+        stats.relations += 1
+
+    def _instrument_id_by_national_id(self, jurisdiction: str, national_id: str | None) -> UUID | None:
+        """Find an instrument in a jurisdiction by the id its portal knows it by."""
+        if not national_id:
+            return None
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT i.id FROM instruments i
+                JOIN jurisdictions j ON j.id = i.jurisdiction_id
+                WHERE j.code = %s AND i.national_id = %s
+                LIMIT 1
+                """,
+                (jurisdiction.upper(), national_id),
+            )
+            row = cur.fetchone()
+        return row[0] if row else None
 
     def _upsert_instrument(self, instrument: InstrumentIR) -> UUID:
         """Insert or update an instrument using the schema natural key."""
@@ -60,12 +138,13 @@ class LegislationLoader:
             cur.execute(
                 """
                 INSERT INTO instruments
-                  (jurisdiction_id, source_id, instrument_type, eli, national_id, title,
-                   adoption_date, publication_date, metadata)
-                VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s::jsonb)
+                  (jurisdiction_id, source_id, instrument_type, source_trust_class, eli,
+                   national_id, title, adoption_date, publication_date, metadata)
+                VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s::jsonb)
                 ON CONFLICT (source_id, national_id) DO UPDATE
                 SET title = EXCLUDED.title,
                     eli = COALESCE(instruments.eli, EXCLUDED.eli),
+                    source_trust_class = EXCLUDED.source_trust_class,
                     metadata = instruments.metadata || EXCLUDED.metadata
                 RETURNING id
                 """,
@@ -73,6 +152,7 @@ class LegislationLoader:
                     jurisdiction_id,
                     source_id,
                     instrument.instrument_type,
+                    instrument.source_trust_class.value,
                     instrument.eli,
                     instrument.national_id,
                     Jsonb(instrument.title),

@@ -144,6 +144,14 @@ CREATE TABLE instruments (
                                               -- 'ley','istatymas','royal_decree',... per-country vocab
     eli              text,                    -- ELI URI when the source mints one
     national_id      text,                    -- LEGITEXT..., BWBR..., TAR reg no, BOE-A-..., numac, act no/year
+    -- What this instrument's text may be used for (ADR 0001). 'evidence' is
+    -- national legislation and the administrative acts that carry statute-level
+    -- authority; 'guidance' is circulars and doctrine — citable, but shown as
+    -- guidance on every proposal; 'context' is never citable evidence (Country
+    -- Reports describe the EUROMOD model, not the law). Evidence retrieval
+    -- excludes 'context' by this column, never by instrument_type.
+    source_trust_class text NOT NULL DEFAULT 'evidence'
+                     CHECK (source_trust_class IN ('evidence','guidance','context')),
     title            jsonb NOT NULL,          -- language-keyed: BE carries two authentic titles
     title_search     text GENERATED ALWAYS AS (jsonb_text_values(title)) STORED,
     adoption_date    date,
