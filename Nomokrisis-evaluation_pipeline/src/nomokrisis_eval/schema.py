@@ -276,6 +276,11 @@ class RunManifest(BaseModel):
     #: which is what cross-model comparison needs, since supportedness and
     #: critique_pass depend on it.
     critique_model: str | None = None
+    #: What the provider layer resolved `model` / `critique_model` to (the
+    #: PydanticAI model_name — for azure_openai/ the deployment). Recorded so a
+    #: comparison can prove it ran two different models; None for mock/.
+    resolved_model: str | None = None
+    resolved_critique_model: str | None = None
     prompt_version: str
     agent_version: str
     eval_version: str

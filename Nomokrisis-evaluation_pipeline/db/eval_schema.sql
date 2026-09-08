@@ -77,7 +77,10 @@ ALTER TABLE eval.results
     ADD COLUMN IF NOT EXISTS impact_estimated  boolean;
 
 ALTER TABLE eval.runs
-    ADD COLUMN IF NOT EXISTS critique_model    text;
+    ADD COLUMN IF NOT EXISTS critique_model    text,
+    -- what the provider layer actually called (azure_openai/: the deployment)
+    ADD COLUMN IF NOT EXISTS resolved_model    text,
+    ADD COLUMN IF NOT EXISTS resolved_critique_model text;
 
 CREATE INDEX IF NOT EXISTS eval_results_run_idx ON eval.results (run_pk);
 CREATE INDEX IF NOT EXISTS eval_results_lang_idx ON eval.results (language, country);
@@ -124,6 +127,8 @@ SELECT
     r.agent_version,
     r.dataset_version,
     r.critique_model,
+    r.resolved_model,
+    r.resolved_critique_model,
     res.language,
     res.country,
     count(*)                                              AS cases,

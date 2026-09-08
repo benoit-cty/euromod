@@ -37,10 +37,20 @@ def get_model(model: str):
         from pydantic_ai.providers.azure import AzureProvider
 
         # AzureProvider reads AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY and
-        # OPENAI_API_VERSION from the environment.
-        return OpenAIChatModel(
-            os.environ.get("AZURE_OPENAI_DEPLOYMENT", name), provider=AzureProvider()
-        )
+        # OPENAI_API_VERSION from the environment. The name after the slash IS
+        # the deployment ("azure_openai/gpt-5.6-sol" -> deployment gpt-5.6-sol);
+        # AZURE_OPENAI_DEPLOYMENT only fills in a bare "azure_openai". It must
+        # never override an explicit name: when it did, every azure_openai/*
+        # model — the model under test *and* the pinned judge — silently ran on
+        # the one deployment in .env, and a Sol-vs-Luna eval compared Luna with
+        # itself.
+        deployment = name or os.environ.get("AZURE_OPENAI_DEPLOYMENT", "")
+        if not deployment:
+            raise ValueError(
+                "azure_openai/ needs a deployment name after the slash "
+                "(or AZURE_OPENAI_DEPLOYMENT as a default)"
+            )
+        return OpenAIChatModel(deployment, provider=AzureProvider())
     if provider == "openrouter":
         from pydantic_ai.models.openai import OpenAIChatModel
         from pydantic_ai.providers.openrouter import OpenRouterProvider

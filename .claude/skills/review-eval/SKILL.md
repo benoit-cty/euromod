@@ -27,13 +27,45 @@ A run directory is self-contained and is the thing to read:
 
 | file | what it is |
 |---|---|
-| `manifest.json` | model, **critique_model**, prompt/agent/eval versions, dataset hash, `as_of` |
+| `manifest.json` | model, **critique_model**, **resolved_model / resolved_critique_model** (what the provider layer actually called), prompt/agent/eval versions, dataset hash, `as_of` |
 | `cases.json` | the golden cases **frozen at run start** — the expectations actually used |
 | `results.json` | one scored `CaseResult` per case |
 | `queue/<item_id>.json` | the full `ReviewItem`: proposal, references, critique, retrieval trace |
 
 `results.json` alone cannot tell you *why* anything scored as it did. The
 answer is nearly always in the matching `queue/` item — read it.
+
+### Before comparing two runs: prove they ran two models
+
+A comparison is only about the models if the two runs reached two models.
+`manifest.model` is what was *asked for*; Phoenix records what was *called*.
+For `azure_openai/<name>` the name is the deployment, and until 8 Sep 2026
+`AZURE_OPENAI_DEPLOYMENT` in `.env` overrode it — so a "Sol vs Luna" pair,
+judge included, was Luna vs Luna, and every `azure_openai/*` run since
+5 Aug 2026 (terra, nano-2, Mistral-Large-3, DeepSeek-V4-Flash, sol) is the
+same. The differences between such runs are sampling noise at temperature
+0.2, and reading behaviour into them ("Sol refuses more") is exactly the
+mistake that was made. Check both runs before anything else:
+
+```bash
+uv run python - <<'PY'
+import json
+for R in (".eval_runs/<run-a>", ".eval_runs/<run-b>"):
+    m = json.load(open(R + "/manifest.json"))
+    print(m["model"], "->", m.get("resolved_model"), "| judge", m.get("critique_model"), "->", m.get("resolved_critique_model"))
+PY
+```
+
+Then confirm against the traces — every queue item carries `phoenix_trace_id`:
+
+```bash
+docker exec $(docker compose ps -q db) psql -U jrc -d phoenix -A -c "
+SELECT s.attributes->'llm'->>'model_name', count(*) FROM spans s JOIN traces t ON t.id=s.trace_rowid
+WHERE s.span_kind='LLM' AND t.trace_id IN ('<trace ids from queue/*.json>') GROUP BY 1;"
+```
+
+One model name across both runs means there is nothing to compare. Older
+manifests have no `resolved_*` fields; for those only Phoenix can tell.
 
 ## 1. The five explanations, in the order that costs least to check
 

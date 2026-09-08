@@ -191,7 +191,7 @@ uv run python -m nomotheca_ingest.cli country-report ie "../../08 - EUROMOD Tria
 uv run --extra embeddings python -m nomotheca_ingest.cli embeddings build \
   --model-path models/bge-m3-openvino --backend openvino --model-id 1 --batch-size 16
 
-# Country report
+# Euromod Params
 uv  run  nomoscope-workflow  ingest-params  ../../extracted_parameters/enriched/IE.enriched.json
 ```
 

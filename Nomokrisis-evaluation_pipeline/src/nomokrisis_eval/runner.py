@@ -187,6 +187,22 @@ def latest_incomplete_run(cfg: EvalConfig) -> dict | None:
 # --------------------------------------------------------------------------- #
 
 
+def _resolved_model_name(model: str) -> str | None:
+    """The model name the provider layer will actually call (None for mock/).
+
+    For azure_openai/ this is the deployment. It is what Phoenix records on the
+    LLM spans, so the manifest can be checked against the traces — and against
+    the other run's manifest — before two runs are compared as two models."""
+    if model.partition("/")[0] == "mock":
+        return None
+    try:
+        from nomoscope_workflow.llm import get_model
+
+        return str(get_model(model).model_name)
+    except Exception as exc:  # missing key/endpoint: the run itself will fail loudly
+        return f"unresolved: {type(exc).__name__}"
+
+
 def critique_model_for(cfg: EvalConfig, model: str) -> str:
     """The model that will run the critique step: the pinned judge when
     EVAL_CRITIQUE_MODEL is set, else the model under test grading itself."""
@@ -211,6 +227,8 @@ def start_run(
         model_provider=provider,
         model_name=model_name or provider,
         critique_model=critique_model_for(cfg, model),
+        resolved_model=_resolved_model_name(model),
+        resolved_critique_model=_resolved_model_name(critique_model_for(cfg, model)),
         prompt_version=PROMPT_VERSION,
         agent_version=AGENT_VERSION,
         eval_version=EVAL_VERSION,

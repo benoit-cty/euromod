@@ -32,15 +32,18 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
         row = conn.execute(
             """
             INSERT INTO eval.runs (run_id, created_at, as_of, model_provider, model_name,
-                                   critique_model, prompt_version, agent_version, eval_version,
+                                   critique_model, resolved_model, resolved_critique_model,
+                                   prompt_version, agent_version, eval_version,
                                    dataset_version, git_commit, countries, notes)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (run_id) DO UPDATE SET
                 created_at = EXCLUDED.created_at,
                 as_of = EXCLUDED.as_of,
                 model_provider = EXCLUDED.model_provider,
                 model_name = EXCLUDED.model_name,
                 critique_model = EXCLUDED.critique_model,
+                resolved_model = EXCLUDED.resolved_model,
+                resolved_critique_model = EXCLUDED.resolved_critique_model,
                 prompt_version = EXCLUDED.prompt_version,
                 agent_version = EXCLUDED.agent_version,
                 eval_version = EXCLUDED.eval_version,
@@ -57,6 +60,8 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                 manifest.model_provider,
                 manifest.model_name,
                 manifest.critique_model,
+                manifest.resolved_model,
+                manifest.resolved_critique_model,
                 manifest.prompt_version,
                 manifest.agent_version,
                 manifest.eval_version,
