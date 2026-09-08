@@ -1,0 +1,262 @@
+# Curated parameter knowledge for ES — NOT part of the EUROMOD export.
+#
+# extracted_parameters/enriched/ES.enriched.json is delivered by the EUROMOD
+# team and is READ-ONLY: never edit it. Anything we know that the export does
+# not carry lives here instead, and is applied on top of the ingested rows by
+#
+#     uv run nomoscope-workflow curate-params curation/ES.curation.yaml
+#
+# run after `ingest-params` (ingesting a country file replaces its model_values
+# rows, so the overlay has to follow it). This file exists so the knowledge also
+# survives `docker compose down -v`, is reviewable in git, and can say *why*
+# each parameter is flagged.
+#
+# temporal_basis: deliberately no section. Every ES parameter is `in_force`:
+# the IRPF período impositivo is the calendar year (LIRPF art. 12), so EUROMOD
+# system year Y states the law of year Y — no FR-style income-year offset.
+# Do not add one to compensate for BOE's `fecha_vigencia` (the legal
+# entry-into-force date, e.g. 2024-12-22 for a measure "con efectos desde el
+# 1 de enero de 2025"): that is a valid_from question, not a basis question.
+
+country: ES
+
+source_type:
+  - type: national_team
+    note: >-
+      $SMI2 is not the minimum wage the law sets. RD 87/2025 art. 1 fixes the
+      2025 SMI at 1184 euros/month, but the model deliberately freezes this
+      constant at its 2018 level (735.90) because it indexes regional
+      minimum-income rules (Aragón's benefit ceiling, the Basque lone-parent
+      complement) that reference "the minimum wage" without following its
+      later increases — a national-team modelling choice documented in the
+      parameter's own description. Left unflagged, every run would "correct"
+      it to 1184 and propose overwriting a value that is right on purpose.
+    targets:
+      - euromod://ES/ConstDef_es/def_const/$SMI2
+
+  - type: national_team
+    note: >-
+      Childcare costs in Spain are not set by national legislation. The
+      school dining fee (comedor) and the means-tested "becas comedor"
+      discounts on it are fixed by each autonomous community's (and often
+      each municipality's) own annual call, so there is no national act for
+      the pipeline to cite. The EUROMOD values are the national team's
+      assumption over those regional schedules, documented in the Country
+      Report's childcare theme. Confirmed against the corpus: `comedor`
+      appears only in LIRPF art. 42 (in-kind income), never in a fee schedule.
+    targets:
+      - euromod://ES/xcc_es/def_const/$xcc_amt
+      - euromod://ES/xcc_es/def_const/$xccdc_amt1
+      - euromod://ES/xcc_es/def_const/$xccdc_amt2
+      - euromod://ES/xcc_es/def_const/$xccdc_amt3
+      - euromod://ES/xcc_es/def_const/$xccdc_lim1
+      - euromod://ES/xcc_es/def_const/$xccdc_lim2
+      - euromod://ES/xcc_es/def_const/$xccdc_lim3
+
+  - type: national_team
+    note: >-
+      The $tco_t_* constants are implicit consumption-tax rates per COICOP
+      category, derived by the national team from Household Budget Survey
+      statistics and the VAT/excise structure — the same class IE's tco_ie
+      family belongs to. No act states an implicit rate; the legislated
+      inputs (Ley 37/1992 VAT rates, Ley 38/1992 excise amounts) are the
+      $tco_v_* and $tco_a_* constants, which are NOT flagged here.
+    targets:
+      - euromod://ES/tco_es/def_const/$tco_t_01111
+      - euromod://ES/tco_es/def_const/$tco_t_01112
+      - euromod://ES/tco_es/def_const/$tco_t_01113
+      - euromod://ES/tco_es/def_const/$tco_t_01114
+      - euromod://ES/tco_es/def_const/$tco_t_01115
+      - euromod://ES/tco_es/def_const/$tco_t_01116
+      - euromod://ES/tco_es/def_const/$tco_t_01121
+      - euromod://ES/tco_es/def_const/$tco_t_01122
+      - euromod://ES/tco_es/def_const/$tco_t_01123
+      - euromod://ES/tco_es/def_const/$tco_t_01124
+      - euromod://ES/tco_es/def_const/$tco_t_01125
+      - euromod://ES/tco_es/def_const/$tco_t_01126
+      - euromod://ES/tco_es/def_const/$tco_t_01127
+      - euromod://ES/tco_es/def_const/$tco_t_01131
+      - euromod://ES/tco_es/def_const/$tco_t_01132
+      - euromod://ES/tco_es/def_const/$tco_t_01133
+      - euromod://ES/tco_es/def_const/$tco_t_01134
+      - euromod://ES/tco_es/def_const/$tco_t_01141
+      - euromod://ES/tco_es/def_const/$tco_t_01142
+      - euromod://ES/tco_es/def_const/$tco_t_01143
+      - euromod://ES/tco_es/def_const/$tco_t_01144
+      - euromod://ES/tco_es/def_const/$tco_t_01145
+      - euromod://ES/tco_es/def_const/$tco_t_01146
+      - euromod://ES/tco_es/def_const/$tco_t_01147
+      - euromod://ES/tco_es/def_const/$tco_t_01151
+      - euromod://ES/tco_es/def_const/$tco_t_01152
+      - euromod://ES/tco_es/def_const/$tco_t_01153
+      - euromod://ES/tco_es/def_const/$tco_t_01154
+      - euromod://ES/tco_es/def_const/$tco_t_01155
+      - euromod://ES/tco_es/def_const/$tco_t_01161
+      - euromod://ES/tco_es/def_const/$tco_t_01162
+      - euromod://ES/tco_es/def_const/$tco_t_01163
+      - euromod://ES/tco_es/def_const/$tco_t_01164
+      - euromod://ES/tco_es/def_const/$tco_t_01165
+      - euromod://ES/tco_es/def_const/$tco_t_01166
+      - euromod://ES/tco_es/def_const/$tco_t_01167
+      - euromod://ES/tco_es/def_const/$tco_t_01168
+      - euromod://ES/tco_es/def_const/$tco_t_01169
+      - euromod://ES/tco_es/def_const/$tco_t_01171
+      - euromod://ES/tco_es/def_const/$tco_t_01172
+      - euromod://ES/tco_es/def_const/$tco_t_01173
+      - euromod://ES/tco_es/def_const/$tco_t_01174
+      - euromod://ES/tco_es/def_const/$tco_t_01175
+      - euromod://ES/tco_es/def_const/$tco_t_01176
+      - euromod://ES/tco_es/def_const/$tco_t_01177
+      - euromod://ES/tco_es/def_const/$tco_t_01178
+      - euromod://ES/tco_es/def_const/$tco_t_01181
+      - euromod://ES/tco_es/def_const/$tco_t_01182
+      - euromod://ES/tco_es/def_const/$tco_t_01183
+      - euromod://ES/tco_es/def_const/$tco_t_01184
+      - euromod://ES/tco_es/def_const/$tco_t_01185
+      - euromod://ES/tco_es/def_const/$tco_t_01186
+      - euromod://ES/tco_es/def_const/$tco_t_01191
+      - euromod://ES/tco_es/def_const/$tco_t_01192
+      - euromod://ES/tco_es/def_const/$tco_t_01193
+      - euromod://ES/tco_es/def_const/$tco_t_01194
+      - euromod://ES/tco_es/def_const/$tco_t_01211
+      - euromod://ES/tco_es/def_const/$tco_t_01212
+      - euromod://ES/tco_es/def_const/$tco_t_01213
+      - euromod://ES/tco_es/def_const/$tco_t_01221
+      - euromod://ES/tco_es/def_const/$tco_t_01222
+      - euromod://ES/tco_es/def_const/$tco_t_01223
+      - euromod://ES/tco_es/def_const/$tco_t_01224
+      - euromod://ES/tco_es/def_const/$tco_t_02111
+      - euromod://ES/tco_es/def_const/$tco_t_02121
+      - euromod://ES/tco_es/def_const/$tco_t_02122
+      - euromod://ES/tco_es/def_const/$tco_t_02131
+      - euromod://ES/tco_es/def_const/$tco_t_02211
+      - euromod://ES/tco_es/def_const/$tco_t_02212
+      - euromod://ES/tco_es/def_const/$tco_t_02213
+      - euromod://ES/tco_es/def_const/$tco_t_03111
+      - euromod://ES/tco_es/def_const/$tco_t_03121
+      - euromod://ES/tco_es/def_const/$tco_t_03122
+      - euromod://ES/tco_es/def_const/$tco_t_03123
+      - euromod://ES/tco_es/def_const/$tco_t_03131
+      - euromod://ES/tco_es/def_const/$tco_t_03141
+      - euromod://ES/tco_es/def_const/$tco_t_03211
+      - euromod://ES/tco_es/def_const/$tco_t_03212
+      - euromod://ES/tco_es/def_const/$tco_t_03213
+      - euromod://ES/tco_es/def_const/$tco_t_03221
+      - euromod://ES/tco_es/def_const/$tco_t_04111
+      - euromod://ES/tco_es/def_const/$tco_t_04121
+      - euromod://ES/tco_es/def_const/$tco_t_04311
+      - euromod://ES/tco_es/def_const/$tco_t_04321
+      - euromod://ES/tco_es/def_const/$tco_t_04411
+      - euromod://ES/tco_es/def_const/$tco_t_04421
+      - euromod://ES/tco_es/def_const/$tco_t_04431
+      - euromod://ES/tco_es/def_const/$tco_t_04441
+      - euromod://ES/tco_es/def_const/$tco_t_04511
+      - euromod://ES/tco_es/def_const/$tco_t_04521
+      - euromod://ES/tco_es/def_const/$tco_t_04522
+      - euromod://ES/tco_es/def_const/$tco_t_04531
+      - euromod://ES/tco_es/def_const/$tco_t_04541
+      - euromod://ES/tco_es/def_const/$tco_t_04551
+      - euromod://ES/tco_es/def_const/$tco_t_05111
+      - euromod://ES/tco_es/def_const/$tco_t_05121
+      - euromod://ES/tco_es/def_const/$tco_t_05131
+      - euromod://ES/tco_es/def_const/$tco_t_05211
+      - euromod://ES/tco_es/def_const/$tco_t_05311
+      - euromod://ES/tco_es/def_const/$tco_t_05312
+      - euromod://ES/tco_es/def_const/$tco_t_05313
+      - euromod://ES/tco_es/def_const/$tco_t_05314
+      - euromod://ES/tco_es/def_const/$tco_t_05315
+      - euromod://ES/tco_es/def_const/$tco_t_05316
+      - euromod://ES/tco_es/def_const/$tco_t_05317
+      - euromod://ES/tco_es/def_const/$tco_t_05321
+      - euromod://ES/tco_es/def_const/$tco_t_05331
+      - euromod://ES/tco_es/def_const/$tco_t_05411
+      - euromod://ES/tco_es/def_const/$tco_t_05412
+      - euromod://ES/tco_es/def_const/$tco_t_05413
+      - euromod://ES/tco_es/def_const/$tco_t_05414
+      - euromod://ES/tco_es/def_const/$tco_t_05511
+      - euromod://ES/tco_es/def_const/$tco_t_05521
+      - euromod://ES/tco_es/def_const/$tco_t_05611
+      - euromod://ES/tco_es/def_const/$tco_t_05612
+      - euromod://ES/tco_es/def_const/$tco_t_05621
+      - euromod://ES/tco_es/def_const/$tco_t_05622
+      - euromod://ES/tco_es/def_const/$tco_t_06111
+      - euromod://ES/tco_es/def_const/$tco_t_06121
+      - euromod://ES/tco_es/def_const/$tco_t_06131
+      - euromod://ES/tco_es/def_const/$tco_t_06211
+      - euromod://ES/tco_es/def_const/$tco_t_06221
+      - euromod://ES/tco_es/def_const/$tco_t_06231
+      - euromod://ES/tco_es/def_const/$tco_t_06232
+      - euromod://ES/tco_es/def_const/$tco_t_06233
+      - euromod://ES/tco_es/def_const/$tco_t_06311
+      - euromod://ES/tco_es/def_const/$tco_t_07111
+      - euromod://ES/tco_es/def_const/$tco_t_07112
+      - euromod://ES/tco_es/def_const/$tco_t_07121
+      - euromod://ES/tco_es/def_const/$tco_t_07131
+      - euromod://ES/tco_es/def_const/$tco_t_07141
+      - euromod://ES/tco_es/def_const/$tco_t_07211
+      - euromod://ES/tco_es/def_const/$tco_t_07221
+      - euromod://ES/tco_es/def_const/$tco_t_07231
+      - euromod://ES/tco_es/def_const/$tco_t_07241
+      - euromod://ES/tco_es/def_const/$tco_t_07311
+      - euromod://ES/tco_es/def_const/$tco_t_07321
+      - euromod://ES/tco_es/def_const/$tco_t_07331
+      - euromod://ES/tco_es/def_const/$tco_t_07341
+      - euromod://ES/tco_es/def_const/$tco_t_07351
+      - euromod://ES/tco_es/def_const/$tco_t_07361
+      - euromod://ES/tco_es/def_const/$tco_t_08111
+      - euromod://ES/tco_es/def_const/$tco_t_08211
+      - euromod://ES/tco_es/def_const/$tco_t_08311
+      - euromod://ES/tco_es/def_const/$tco_t_09111
+      - euromod://ES/tco_es/def_const/$tco_t_09112
+      - euromod://ES/tco_es/def_const/$tco_t_09121
+      - euromod://ES/tco_es/def_const/$tco_t_09122
+      - euromod://ES/tco_es/def_const/$tco_t_09131
+      - euromod://ES/tco_es/def_const/$tco_t_09141
+      - euromod://ES/tco_es/def_const/$tco_t_09151
+      - euromod://ES/tco_es/def_const/$tco_t_09211
+      - euromod://ES/tco_es/def_const/$tco_t_09221
+      - euromod://ES/tco_es/def_const/$tco_t_09222
+      - euromod://ES/tco_es/def_const/$tco_t_09231
+      - euromod://ES/tco_es/def_const/$tco_t_09311
+      - euromod://ES/tco_es/def_const/$tco_t_09321
+      - euromod://ES/tco_es/def_const/$tco_t_09331
+      - euromod://ES/tco_es/def_const/$tco_t_09341
+      - euromod://ES/tco_es/def_const/$tco_t_09351
+      - euromod://ES/tco_es/def_const/$tco_t_09411
+      - euromod://ES/tco_es/def_const/$tco_t_09421
+      - euromod://ES/tco_es/def_const/$tco_t_09422
+      - euromod://ES/tco_es/def_const/$tco_t_09423
+      - euromod://ES/tco_es/def_const/$tco_t_09424
+      - euromod://ES/tco_es/def_const/$tco_t_09511
+      - euromod://ES/tco_es/def_const/$tco_t_09521
+      - euromod://ES/tco_es/def_const/$tco_t_09531
+      - euromod://ES/tco_es/def_const/$tco_t_09541
+      - euromod://ES/tco_es/def_const/$tco_t_09611
+      - euromod://ES/tco_es/def_const/$tco_t_10111
+      - euromod://ES/tco_es/def_const/$tco_t_10211
+      - euromod://ES/tco_es/def_const/$tco_t_10311
+      - euromod://ES/tco_es/def_const/$tco_t_10411
+      - euromod://ES/tco_es/def_const/$tco_t_10511
+      - euromod://ES/tco_es/def_const/$tco_t_11111
+      - euromod://ES/tco_es/def_const/$tco_t_11112
+      - euromod://ES/tco_es/def_const/$tco_t_11121
+      - euromod://ES/tco_es/def_const/$tco_t_11211
+      - euromod://ES/tco_es/def_const/$tco_t_12111
+      - euromod://ES/tco_es/def_const/$tco_t_12121
+      - euromod://ES/tco_es/def_const/$tco_t_12131
+      - euromod://ES/tco_es/def_const/$tco_t_12311
+      - euromod://ES/tco_es/def_const/$tco_t_12321
+      - euromod://ES/tco_es/def_const/$tco_t_12322
+      - euromod://ES/tco_es/def_const/$tco_t_12411
+      - euromod://ES/tco_es/def_const/$tco_t_12412
+      - euromod://ES/tco_es/def_const/$tco_t_12521
+      - euromod://ES/tco_es/def_const/$tco_t_12531
+      - euromod://ES/tco_es/def_const/$tco_t_12541
+      - euromod://ES/tco_es/def_const/$tco_t_12551
+      - euromod://ES/tco_es/def_const/$tco_t_12621
+      - euromod://ES/tco_es/def_const/$tco_t_12711
+      - euromod://ES/tco_es/def_const/$tco_t_red1
+      - euromod://ES/tco_es/def_const/$tco_t_red2
+      - euromod://ES/tco_es/def_const/$tco_t_red3
+      - euromod://ES/tco_es/def_const/$tco_t_std
+      - euromod://ES/tco_es/def_const/$tco_t_zero

@@ -242,6 +242,15 @@ unit:
     targets: [euromod://FR/tinkt_fr/def_const/$tin_rate3, …]
 ```
 
+The same defect exists in the IE and LT exports — 48 and 54 rate-like
+parameters (income-tax and USC rates, PRSI class rates, contribution rates,
+replacement rates, benefit shares, percent literals named `*_amt`) — and is
+curated the same way in `IE.curation.yaml` and `LT.curation.yaml`. Membership
+is decided by value, never by name alone: every value of every year must be a
+fraction in [0,1], a `N%` literal, a fraction literal or a `$`-formula, which
+keeps the weekly benefit amounts named `*_rate` and the benefit multipliers
+above 1 (`$tin_MaxLimit_coef3` = 60 average wages) out.
+
 The unit must be one the export itself uses (`/1`, `currency`,
 `currency/{day,week,month,year}`); anything else is rejected as a typo.
 Materialized parameter files carry the unit, so rebuild them after curating

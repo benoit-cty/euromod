@@ -184,7 +184,10 @@ hand-curated from the acts themselves into
 [golden_sources/lt.json](golden_sources/lt.json) (`"corpus": "curated"`) — 10
 parameters each, in increasing pipeline difficulty, rationale per entry in
 [golden_set_IE.md](golden_set_IE.md) / [golden_set_LT.md](golden_set_LT.md).
-`build-curated-dataset` turns a selection into cases:
+`build-curated-dataset` turns a selection into cases. Adding a country end
+to end (readiness gate, selection spread across the difficulty ladder,
+curation overlay, rationale doc, build, smoke run) is the `add-golden-country`
+skill in [.claude/skills/add-golden-country/](../.claude/skills/add-golden-country/SKILL.md).
 
 ```bash
 # 0. the parameter store must hold the parameters under test (once per DB reset)

@@ -124,6 +124,21 @@ Two more scoring rules worth knowing:
   equals the model under test, the model graded itself — never compare that
   column across models. Pin a judge with `EVAL_CRITIQUE_MODEL` first.
 
+**Retrieval: read the framed query before blaming the corpus.** The frame step
+builds the query from the parameter's label and description, which the
+enrichment wrote for EUROMOD readers: Country Report table references, EUROMOD
+function names and identifiers, and the export's own — often stale or wrong —
+value («fixé à 11 496 EUR pour le revenu imposable 2025»). In an OR-of-terms
+FTS leg every such token pulls unrelated chunks; on the FR barème thresholds
+CGI art. 197 sat at rank 22 of 60 and no threshold case could be answered.
+`pipeline._clean_query_text` now strips parentheticals, «quoted» titles and
+`_identifiers`/`$refs` — not numbers: the export's value is usually still the
+law's and "11,88" is what finds the SMIC arrêté — which moved it to rank 8 and,
+measured offline over the 39 ready FR cases with a golden citation, raised
+golden-citation recall at k=15 from 31 to 34 with no case lost. The Phoenix `frame` span shows
+the query a run used; re-run `retrieval.retrieve` with it at a larger k to see
+where the golden article ranks before concluding it is missing.
+
 ### b. Corpus gap — could any model have answered?
 
 First check whether it is really a gap. The gap-fill scout records what the
@@ -248,6 +263,24 @@ PY
 A `verified: true` case carrying a drafting warning is the dangerous
 combination: the drafter doubted it and a human waved it through anyway.
 
+**Income-year cases: a consolidated code article in force on the retrieval
+date is evidence, whatever its version start.** France assesses income year Y
+in Y+1, so the code article as consolidated on 1 July Y+1 is the text that
+assessment applies: CGI art. 197 «en vigueur du 16 février 2025 au 21 février
+2026» is the 2024-income barème, and art. 223 sexies has read the same since
+2018 because the CEHR thresholds never moved. The critique used to treat any
+version older than the budget-act window as "probably last year's value" and
+demand a finance-act clause naming Y — which rejected four correct CEHR
+proposals in one run (`the cited article never names income year 2024, but
+(JORFTEXT000048727345, …) does`). `pipeline._consolidated_in_force` now grants
+the presumption when the cited text is a `code` instrument whose version
+contains the retrieval date and whose corpus snapshot is at least that fresh,
+unless its application note names the *next* income year (the CDHR). If you
+still see that rejection on an unchanged value, check the snapshot date of the
+cited version (`fetch_snapshots.retrieved_at`) before anything else. The NOTA
+application notes are ingested since 8 Sep 2026 (`cli reparse`), so a
+year-naming clause may now sit at the end of the consolidated article itself.
+
 **Income-year cases: check the year the prompt states before blaming the model.**
 `schema.income_year_for` is the single place the system-year → income-year
 mapping is decided (offset −1), and CLAUDE.md forbids re-deriving `as_of.year ± 1`
@@ -270,7 +303,8 @@ that is neither the model's nor the corpus's. `unit` comes from the read-only
 EUROMOD export, but the curation overlay can override it
 (`curation/<CC>.curation.yaml`, `unit:` rules, re-applied after every
 `ingest-params`): the FR export labelled all 146 `*rate*` parameters
-`currency`, and under that unit the proposal prompt never normalises "11 %" to
+`currency` (IE 48 and LT 54 rate-like parameters too, curated the same way —
+membership by value, never by name), and under that unit the proposal prompt never normalises "11 %" to
 0.11 and the critique's `values_sane` either refuses the fraction or skips its
 range check — one model refused the barème's 0 % band as "a currency amount",
 another had every rate it proposed rejected. Curate the unit, rebuild the
