@@ -59,9 +59,56 @@ fn command_spec(command: &str) -> Option<(Vec<&'static str>, Vec<&'static str>)>
     match command {
         "instrument" => Some((vec![], vec!["instrument"])),
         "citation" => Some((vec![], vec!["citation"])),
+        // A reviewer's own document: a URL or a file, plus the fields they state.
+        "document" => Some((vec![], vec!["document"])),
+        // The pre-check the Contributed-document section runs before a run:
+        // one JSON line saying contributed, adapter or refused.
+        "route" => Some((vec![], vec!["route"])),
         // BGE-M3 picks its extra at spawn time: see `embedding_environment`.
         "embeddings" => Some((vec![], vec!["embeddings", "build"])),
         "translate" => Some((vec!["--extra", "translate"], vec!["translate", "run"])),
+        _ => None,
+    }
+}
+
+/// The full `uv` argv for one ingest command.
+///
+/// Split out of [`run`] so the mapping from a UI payload to a command line is
+/// a plain function: the reviewer's form fields reach the CLI as its own
+/// options, and nothing about them depends on a spawned process.
+pub(crate) fn build_argv(
+    command: &str,
+    args: &[String],
+    db_url: &str,
+    embedding_extra: Option<&str>,
+) -> Result<Vec<String>, String> {
+    let (extras, subcommand) =
+        command_spec(command).ok_or_else(|| format!("unknown ingest command: {command}"))?;
+    let mut argv: Vec<String> = vec!["run".into()];
+    argv.extend(extras.into_iter().map(String::from));
+    if let Some(extra) = embedding_extra {
+        argv.push("--extra".into());
+        argv.push(extra.into());
+    }
+    argv.push("python".into());
+    argv.push("-m".into());
+    argv.push("nomotheca_ingest.cli".into());
+    argv.extend(subcommand.into_iter().map(String::from));
+    argv.extend(args.iter().cloned());
+    argv.push("--database-url".into());
+    argv.push(db_url.to_string());
+    Ok(argv)
+}
+
+/// The run to start automatically once this one finishes, if any.
+///
+/// A contributed document is only retrievable once its chunks are embedded, so
+/// a successful `document` run chains an embeddings build. A failed one chains
+/// nothing: there is nothing new to embed, and an error should not be followed
+/// by a second run scrolling past it.
+pub(crate) fn follow_up_command(command: &str, success: bool) -> Option<&'static str> {
+    match (command, success) {
+        ("document", true) => Some("embeddings"),
         _ => None,
     }
 }
@@ -116,28 +163,21 @@ pub async fn run(
     state: State<'_, IngestState>,
     payload: IngestPayload,
 ) -> Result<Value, String> {
-    let (extras, subcommand) = command_spec(&payload.command)
-        .ok_or_else(|| format!("unknown ingest command: {}", payload.command))?;
     let dir =
         ingest_dir().ok_or_else(|| "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)".to_string())?;
 
-    let mut argv: Vec<String> = vec!["run".into()];
-    argv.extend(extras.into_iter().map(String::from));
-    let project_environment = if payload.command == "embeddings" {
+    let (embedding_extra, project_environment) = if payload.command == "embeddings" {
         let (extra, environment) = embedding_environment(&dir);
-        argv.push("--extra".into());
-        argv.push(extra.into());
-        environment
+        (Some(extra), environment)
     } else {
-        None
+        (None, None)
     };
-    argv.push("python".into());
-    argv.push("-m".into());
-    argv.push("nomotheca_ingest.cli".into());
-    argv.extend(subcommand.into_iter().map(String::from));
-    argv.extend(payload.args.iter().cloned());
-    argv.push("--database-url".into());
-    argv.push(payload.db_url.clone());
+    let argv = build_argv(
+        &payload.command,
+        &payload.args,
+        &payload.db_url,
+        embedding_extra,
+    )?;
 
     emit_log(&app, &payload.run_id, "system", &format!("$ uv {}", argv.join(" ")));
     emit_log(&app, &payload.run_id, "system", &format!("cwd: {}", dir.display()));
@@ -183,7 +223,12 @@ pub async fn run(
 
     let result = tokio::select! {
         status = child.wait() => match status {
-            Ok(s) => Ok(json!({ "canceled": false, "success": s.success(), "code": s.code() })),
+            Ok(s) => Ok(json!({
+                "canceled": false,
+                "success": s.success(),
+                "code": s.code(),
+                "follow_up": follow_up_command(&payload.command, s.success()),
+            })),
             Err(e) => Err(format!("process error: {e}")),
         },
         _ = cancel_rx => {
@@ -213,7 +258,100 @@ pub fn stop(state: State<'_, IngestState>, run_id: String) -> Result<Value, Stri
 
 #[cfg(test)]
 mod tests {
-    use super::{embedding_environment, CUDA_EXTRA, EMBEDDING_EXTRA};
+    use super::{
+        build_argv, embedding_environment, follow_up_command, CUDA_EXTRA, EMBEDDING_EXTRA,
+    };
+
+    fn args(values: &[&str]) -> Vec<String> {
+        values.iter().map(|value| value.to_string()).collect()
+    }
+
+    #[test]
+    fn a_document_payload_becomes_the_document_subcommand() {
+        let payload = args(&[
+            "/home/reviewer/circulaire.pdf",
+            "--jurisdiction",
+            "fr",
+            "--lang",
+            "fr",
+            "--title",
+            "Circulaire Unedic",
+            "--kind",
+            "circulaire",
+            "--valid-from",
+            "2025-04-01",
+            "--progress-json",
+        ]);
+
+        let argv = build_argv("document", &payload, "postgresql://jrc@localhost/legislation", None)
+            .unwrap();
+
+        assert_eq!(
+            argv,
+            args(&[
+                "run",
+                "python",
+                "-m",
+                "nomotheca_ingest.cli",
+                "document",
+                "/home/reviewer/circulaire.pdf",
+                "--jurisdiction",
+                "fr",
+                "--lang",
+                "fr",
+                "--title",
+                "Circulaire Unedic",
+                "--kind",
+                "circulaire",
+                "--valid-from",
+                "2025-04-01",
+                "--progress-json",
+                "--database-url",
+                "postgresql://jrc@localhost/legislation",
+            ])
+        );
+    }
+
+    #[test]
+    fn a_route_payload_becomes_the_route_subcommand() {
+        let argv = build_argv(
+            "route",
+            &args(&["https://bofip.impots.gouv.fr/bofip/1234-PGP.html"]),
+            "postgresql://jrc@localhost/legislation",
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(argv[4], "route");
+        assert_eq!(argv[5], "https://bofip.impots.gouv.fr/bofip/1234-PGP.html");
+        assert_eq!(argv[argv.len() - 2], "--database-url");
+    }
+
+    #[test]
+    fn an_unknown_command_is_refused_by_name() {
+        let error = build_argv("rm-rf", &[], "postgresql://x", None).unwrap_err();
+
+        assert!(error.contains("rm-rf"), "{error}");
+    }
+
+    #[test]
+    fn the_embedding_extra_is_inserted_before_the_interpreter() {
+        let argv = build_argv("embeddings", &[], "postgresql://x", Some(EMBEDDING_EXTRA)).unwrap();
+
+        assert_eq!(argv[..4], args(&["run", "--extra", "embeddings", "python"])[..]);
+    }
+
+    #[test]
+    fn a_successful_document_run_schedules_an_embeddings_build() {
+        assert_eq!(follow_up_command("document", true), Some("embeddings"));
+    }
+
+    #[test]
+    fn a_failed_document_run_schedules_nothing() {
+        assert_eq!(follow_up_command("document", false), None);
+        assert_eq!(follow_up_command("instrument", true), None);
+        assert_eq!(follow_up_command("route", true), None);
+    }
 
     #[test]
     fn embedding_environment_defaults_to_the_cpu_venv() {

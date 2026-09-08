@@ -82,6 +82,7 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                                           date_correct, citation_correct, extract_verbatim,
                                           supportedness, critique_pass,
                                           hallucination, retrieval_hit, abstained,
+                                          guidance_only,
                                           corpus_available, readiness, confidence,
                                           latency_ms, error, details,
                                           phoenix_trace_id, llm_calls, tokens_prompt,
@@ -90,7 +91,7 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s)
+                        %s, %s, %s, %s)
                 """,
                 [
                     (
@@ -114,6 +115,7 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest, results: list[Ca
                         r.hallucination,
                         r.retrieval_hit,
                         r.abstained,
+                        r.guidance_only,
                         r.corpus_available,
                         r.readiness,
                         r.confidence,

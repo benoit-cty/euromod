@@ -72,6 +72,10 @@
         title: r.title ?? '',
         href: r.href ?? '',
         jrc_database_id: r.jrc_database_id ?? '',
+        // Read-only: the class of the instrument this citation came from
+        // (ADR 0001). Carried through the form so a hand-edited reference does
+        // not silently lose what the value rests on.
+        source_trust_class: r.source_trust_class ?? null,
         legal_unit_ref: r.legal_unit_ref ?? '',
         supporting_extract: r.supporting_extract ?? '',
         // kept so an untouched extract keeps its verified offsets
@@ -200,6 +204,7 @@
         title: r.title || null,
         href: r.href || null,
         jrc_database_id: r.jrc_database_id || null,
+        source_trust_class: r.source_trust_class || null,
         legal_unit_ref: r.legal_unit_ref || null,
         supporting_extract: r.supporting_extract || null,
         // a hand-edited extract no longer matches the verified offsets
@@ -214,6 +219,7 @@
       title: '',
       href: '',
       jrc_database_id: '',
+      source_trust_class: null,
       legal_unit_ref: '',
       supporting_extract: '',
       _extract_orig: '',
@@ -270,6 +276,15 @@
         </div>
       </div>
       <span class="badge {item.routing}">{item.routing}</span>
+      {#if item.guidance_only}
+        <!-- ADR 0001: "Legislation is King" stays visible in every decision
+             record. Informational only — Accept is not blocked, because for a
+             circular-governed scheme the circular IS the operative text. -->
+        <span
+          class="badge guidance"
+          title="Every citation on this proposal comes from administrative guidance (a circular or doctrine), not from legislation."
+        >guidance only</span>
+      {/if}
       <span class="badge {item.status}">{item.status}</span>
     </header>
 
@@ -481,6 +496,12 @@
                     Chunk id <span class="muted">(jrc_database_id — read only)</span>
                     <input class="mono" value={ref.jrc_database_id} readonly tabindex="-1" />
                   </label>
+                  {#if ref.source_trust_class}
+                    <div class="trust">
+                      Source class
+                      <span class="badge {ref.source_trust_class}">{ref.source_trust_class}</span>
+                    </div>
+                  {/if}
                 </div>
                 <label class="block">
                   Supporting extract <span class="muted">(verbatim quote)</span>
@@ -607,6 +628,7 @@
   button.was:disabled { color: var(--muted); cursor: default; }
   .block { display: flex; flex-direction: column; }
   .refs { display: flex; flex-direction: column; gap: 0.5rem; }
+  .trust { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); }
   .ref {
     display: flex;
     flex-direction: column;

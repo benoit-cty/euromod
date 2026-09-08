@@ -13,6 +13,10 @@ export const api = {
   pickDataDir: () => invoke('pick_data_dir'),
   dbStats: (dbUrl) => invoke('db_stats', { payload: { db_url: dbUrl } }),
   searchArticles: (payload) => invoke('search_articles', { payload }),
+  // Contributed documents: the instruments a document can be said to implement
+  // (title or national-id fragment, `context` instruments excluded).
+  searchInstruments: (dbUrl, country, query, limit = 20) =>
+    invoke('search_instruments', { payload: { db_url: dbUrl, country, query, limit } }),
   // Every language rendering (authentic / official / machine translation) of the
   // legal-unit version a cited chunk belongs to.
   chunkRenderings: (dbUrl, chunkId) =>

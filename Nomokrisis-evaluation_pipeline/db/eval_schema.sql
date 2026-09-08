@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS eval.results (
     hallucination    boolean NOT NULL DEFAULT false,
     retrieval_hit    boolean,
     abstained        boolean NOT NULL DEFAULT false,  -- refused rather than guessed
+    guidance_only    boolean NOT NULL DEFAULT false,  -- every citation was guidance, not legislation
     corpus_available boolean,               -- false: the source act is not ingested yet
     readiness        text,                   -- ready | no_corpus | undocumented
     confidence       real,
@@ -74,6 +75,7 @@ ALTER TABLE eval.results
     ADD COLUMN IF NOT EXISTS corpus_available  boolean,
     ADD COLUMN IF NOT EXISTS readiness         text,
     ADD COLUMN IF NOT EXISTS hazards           text[] NOT NULL DEFAULT '{}',
+    ADD COLUMN IF NOT EXISTS guidance_only     boolean NOT NULL DEFAULT false,
     ADD COLUMN IF NOT EXISTS impact_estimated  boolean;
 
 ALTER TABLE eval.runs
@@ -155,6 +157,10 @@ SELECT
     count(*) FILTER (WHERE res.readiness_eff = 'no_corpus')    AS cases_no_corpus,
     count(*) FILTER (WHERE res.readiness_eff = 'undocumented') AS cases_undocumented,
     count(*) FILTER (WHERE res.abstained)                 AS abstentions,
+    -- Guidance-only proposals, per language and model: not a quality KPI but
+    -- the evidence base for revisiting the equal-ranking decision (ADR 0001).
+    count(*) FILTER (WHERE res.guidance_only)             AS guidance_only_cases,
+    round(100 * avg(res.guidance_only::int), 1)           AS guidance_only_pct,
     count(*) FILTER (WHERE res.rejected)                  AS rejections,
     round(100 * avg(res.routing_correct::int)
           FILTER (WHERE res.readiness_eff = 'ready'), 1)  AS routing_pct_ready,

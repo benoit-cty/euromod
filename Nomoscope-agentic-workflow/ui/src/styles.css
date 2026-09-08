@@ -115,6 +115,11 @@ tr.selected td { background: var(--accent-soft); }
 .badge.accepted, .badge.edited { background: var(--ok-soft); color: var(--ok); }
 .badge.rejected { background: var(--err-soft); color: var(--err); }
 .badge.escalated { background: var(--info-soft); color: var(--info); }
+/* Source-trust class (ADR 0001): what a value rests on, never whether it may
+   be accepted. */
+.badge.guidance { background: var(--warn-soft); color: var(--warn); }
+.badge.evidence { background: var(--ok-soft); color: var(--ok); }
+.badge.context  { background: var(--panel-2); color: var(--muted); }
 
 .muted { color: var(--muted); }
 .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.85em; }

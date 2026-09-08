@@ -70,6 +70,13 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
         )
         .map_err(|e| e.to_string())?;
 
+    // The languages the store is configured to index. The Contributed-document
+    // form offers these and nothing else: a text stored under a language with
+    // no FTS config is invisible to full-text search.
+    let languages = client
+        .query("SELECT lang FROM lang_fts_config ORDER BY lang", &[])
+        .map_err(|e| e.to_string())?;
+
     // Non-legislative inputs the pipeline needs beside the law corpus: the
     // EUROMOD Country Report (instrument_type = 'country_report', a separate
     // corpus class excluded from evidence retrieval) and the enriched
@@ -203,6 +210,7 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
             "chunks": r.get::<_, i64>("chunks"),
             "embedded_chunks": r.get::<_, i64>("embedded_chunks"),
         })).collect::<Vec<_>>(),
+        "languages": languages.iter().map(|r| r.get::<_, String>("lang")).collect::<Vec<_>>(),
         "embedding_models": models.iter().map(|r| json!({
             "id": r.get::<_, i32>(0),
             "name": r.get::<_, String>("name"),
@@ -354,6 +362,49 @@ pub fn eval_run_detail(db_url: &str, run_pk: i64) -> Result<Value, String> {
             "error": r.get::<_, Option<String>>("error"),
             "details": r.get::<_, Option<Value>>("details"),
         })).collect::<Vec<_>>(),
+    }))
+}
+
+/// Instruments a contributed document could be said to implement.
+///
+/// Read-only, matching a fragment of the title or of the national id. Context
+/// instruments are excluded: a Country Report describes the EUROMOD model, so
+/// nothing implements one.
+pub fn search_instruments(
+    db_url: &str,
+    country: &str,
+    query: &str,
+    limit: i64,
+) -> Result<Value, String> {
+    let mut client = connect(db_url)?;
+    let pattern = format!("%{}%", query.trim());
+    let rows = client
+        .query(
+            "SELECT i.national_id,
+                    i.instrument_type,
+                    i.source_trust_class,
+                    i.title_search           AS title,
+                    i.publication_date::text AS publication_date
+             FROM instruments i
+             JOIN jurisdictions j ON j.id = i.jurisdiction_id
+             WHERE j.code = upper($1)
+               AND i.source_trust_class <> 'context'
+               AND i.national_id IS NOT NULL
+               AND (i.title_search ILIKE $2 OR i.national_id ILIKE $2)
+             ORDER BY (i.national_id ILIKE $2) DESC, i.publication_date DESC NULLS LAST
+             LIMIT $3",
+            &[&country, &pattern, &limit],
+        )
+        .map_err(|e| format!("instrument search failed: {e}"))?;
+
+    Ok(json!({
+        "instruments": rows.iter().map(|r| json!({
+            "national_id": r.get::<_, String>("national_id"),
+            "instrument_type": r.get::<_, String>("instrument_type"),
+            "source_trust_class": r.get::<_, String>("source_trust_class"),
+            "title": r.get::<_, Option<String>>("title"),
+            "publication_date": r.get::<_, Option<String>>("publication_date"),
+        })).collect::<Vec<_>>()
     }))
 }
 
@@ -988,6 +1039,24 @@ mod search_tests {
         );
         assert_eq!(SearchMode::parse("vector").unwrap(), SearchMode::Vector);
         assert!(SearchMode::parse("semantic").is_err());
+    }
+
+    #[test]
+    fn instrument_search_excludes_context_instruments() {
+        let url = std::env::var("WORKFLOW_DATABASE_URL")
+            .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
+        if super::connect(&url).is_err() {
+            return;
+        }
+        let result = super::search_instruments(&url, "FR", "", 50).unwrap();
+
+        let classes: Vec<String> = result["instruments"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|row| row["source_trust_class"].as_str().unwrap().to_string())
+            .collect();
+        assert!(!classes.contains(&"context".to_string()), "{classes:?}");
     }
 
     #[test]

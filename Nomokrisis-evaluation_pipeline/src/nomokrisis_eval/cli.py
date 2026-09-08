@@ -701,6 +701,18 @@ def report(
             f"  citation={pct(row['citation_pct_ready'])}"
         )
 
+    def guidance(row) -> str:
+        """What share of this run's proposals rested on guidance alone.
+
+        Printed only when it happened. Not a quality figure — it is the data
+        the "guidance ranks equal to legislation" decision is to be revisited
+        on (ADR 0001).
+        """
+        cases = row.get("guidance_only_cases") or 0
+        if not cases:
+            return ""
+        return f"  guidance_only={cases} ({pct(row.get('guidance_only_pct'))})"
+
     def breakdown(row, label: str, source: list[dict], key: str) -> str:
         """One indented line per bucket, ready cases only. Silent when a single
         bucket holds everything — a lone rung compares with nothing."""
@@ -728,6 +740,7 @@ def report(
             f"  supported={pct(row['supportedness_pct'])}  critique={pct(row['critique_pass_pct'])}"
             f"  halluc={pct(row['hallucination_pct'])}  recall={pct(row['retrieval_recall_pct'])}"
             f"  abstained={abstentions}  rejected={rejections}"
+            f"{guidance(row)}"
             f"{impact(row)}"
             f"  {row['run_id']}"
             f"{readiness(row)}"

@@ -218,6 +218,8 @@ def route(
     from nomotheca_ingest.core.contributed import suggest
     from nomotheca_ingest.core.routing import RouteOutcome
 
+    from nomotheca_ingest.core.contributed import KINDS_BY_JURISDICTION
+
     url, file_path = _document_source(source)
     outcome = route_source(url, database_url) if url else RouteOutcome(kind="contributed", url=source)
     if outcome.kind == "contributed":
@@ -227,7 +229,15 @@ def route(
             # A prefill is a convenience: an unreachable page must not stop the
             # reviewer from filling the fields themselves.
             outcome.suggestions = {"error": str(exc)}
-    typer.echo(json.dumps(outcome.as_json(), ensure_ascii=False))
+    payload = outcome.as_json()
+    # Everything the contributed-document form needs to render, from the one
+    # call it already makes: the kinds a reviewer may state, in each
+    # jurisdiction's own words, so the UI never keeps its own copy of the table.
+    payload["kinds"] = {
+        jurisdiction: {label: level.value for label, level in table}
+        for jurisdiction, table in KINDS_BY_JURISDICTION.items()
+    }
+    typer.echo(json.dumps(payload, ensure_ascii=False))
 
 
 @app.command()

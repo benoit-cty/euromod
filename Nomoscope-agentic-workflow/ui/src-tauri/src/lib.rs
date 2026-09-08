@@ -65,6 +65,14 @@ struct EvalRunPayload {
 }
 
 #[derive(Deserialize)]
+struct InstrumentSearchPayload {
+    db_url: String,
+    country: String,
+    query: String,
+    limit: Option<i64>,
+}
+
+#[derive(Deserialize)]
 struct SearchPayload {
     db_url: String,
     query: String,
@@ -268,6 +276,20 @@ async fn search_articles(
 }
 
 #[tauri::command]
+async fn search_instruments(payload: InstrumentSearchPayload) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        db::search_instruments(
+            &payload.db_url,
+            &payload.country,
+            &payload.query,
+            payload.limit.unwrap_or(20),
+        )
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
 async fn params_list(payload: DbPayload) -> Result<Value, String> {
     tauri::async_runtime::spawn_blocking(move || db::params_list(&payload.db_url))
         .await
@@ -352,6 +374,7 @@ pub fn run() {
             pick_data_dir,
             db_stats,
             search_articles,
+            search_instruments,
             eval_runs,
             eval_run_detail,
             golden_cases,
