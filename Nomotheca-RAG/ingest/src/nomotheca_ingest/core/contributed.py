@@ -22,7 +22,7 @@ The rules that matter (ADR 0001, and the spec's Implementation Decisions):
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from enum import StrEnum
 from hashlib import sha256
@@ -138,6 +138,123 @@ KINDS_BY_JURISDICTION: dict[str, tuple[tuple[str, NormLevel], ...]] = {
 }
 
 
+@dataclass(frozen=True, slots=True)
+class ContributedFields:
+    """Everything the reviewer states about a document nobody else can key.
+
+    These six always travel together — from the CLI options or the UI form,
+    through the parse, into the instrument — and three of them only mean
+    anything with the others present: a kind is a kind *in a jurisdiction*, and
+    the source-trust class is the kind read through that country's hierarchy of
+    norms. Passing them as one value keeps that reading in one place instead of
+    at every call site.
+
+    Built by `stated_fields`, which is where an incomplete declaration is
+    refused; constructing one directly asserts the reviewer answered.
+    """
+
+    jurisdiction: str
+    lang: str
+    title: str
+    kind: str
+    valid_from: date
+    #: national_id of the instrument this document implements; None = "none",
+    #: a valid answer that must never block an upload.
+    implements: str | None = None
+
+    def __post_init__(self) -> None:
+        """Normalise the jurisdiction once, so no caller has to remember to."""
+        object.__setattr__(self, "jurisdiction", self.jurisdiction.upper())
+        # Fails fast, by name, on a kind this country does not use.
+        norm_level_for(self.jurisdiction, self.kind)
+
+    @property
+    def norm_level(self) -> NormLevel:
+        """Where the stated kind sits in this country's hierarchy of norms."""
+        return norm_level_for(self.jurisdiction, self.kind)
+
+    @property
+    def source_trust_class(self) -> SourceTrustClass:
+        """Derived from the kind, never stated — see ADR 0001."""
+        return TRUST_CLASS_BY_LEVEL[self.norm_level]
+
+    @property
+    def source_code(self) -> str:
+        """The contributed-document source row this jurisdiction writes to."""
+        return source_code_for(self.jurisdiction)
+
+
+def stated_fields(
+    *,
+    jurisdiction: str | None,
+    lang: str,
+    title: str | None,
+    kind: str | None,
+    valid_from: date | None,
+    implements: str | None = None,
+) -> ContributedFields:
+    """The reviewer's declaration, refusing an incomplete one by name.
+
+    Separate from the value object because the refusals are reviewer-facing
+    text, and because the fields arrive optional: a URL that turns out to
+    belong to an official portal needs none of them.
+    """
+    if not jurisdiction:
+        msg = "A contributed document needs the jurisdiction it belongs to"
+        raise ValueError(msg)
+    if not title:
+        msg = "A contributed document needs a title"
+        raise ValueError(msg)
+    if not kind:
+        allowed = ", ".join(kinds_for(jurisdiction))
+        msg = f"A contributed document needs a kind (one of: {allowed})"
+        raise ValueError(msg)
+    if valid_from is None:
+        msg = (
+            "A contributed document needs the date it is in force from "
+            "(--valid-from): no version enters the store with an invented legal date"
+        )
+        raise ValueError(msg)
+    return ContributedFields(
+        jurisdiction=jurisdiction,
+        lang=lang,
+        title=title,
+        kind=kind,
+        valid_from=valid_from,
+        implements=implements,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class SourceDocument:
+    """One contributed document's bytes, and where they came from.
+
+    The other half of the pair: what was read, as against what the reviewer
+    said about it. Identity is derived from the bytes and the origin, so it is
+    settled before anything is archived and cannot drift from the content it
+    names.
+    """
+
+    raw: bytes
+    content_type: str
+    #: The URL fetched, or a file:// URI for an upload.
+    origin: str
+    #: Canonical URL, or file:<sha256> — see `national_id_for`.
+    national_id: str
+    #: fetch_snapshots.id, once the bytes have been archived. None until then,
+    #: because archive-first means nothing is parsed before this is known.
+    snapshot_id: UUID | None = None
+
+    @property
+    def content_hash(self) -> str:
+        """The sha256 that decides "already present" and keys the version."""
+        return content_hash(self.raw)
+
+    def archived_as(self, snapshot_id: UUID) -> "SourceDocument":
+        """The same document, now with the snapshot that proves it was archived."""
+        return replace(self, snapshot_id=snapshot_id)
+
+
 @dataclass(slots=True)
 class DocumentResult:
     """What one contributed-document run did."""
@@ -145,10 +262,12 @@ class DocumentResult:
     jurisdiction: str
     source_code: str
     national_id: str
-    kind: str
-    source_trust_class: SourceTrustClass
-    content_hash: str
     origin: str
+    # None on the adapter path: an official act ingested by its own adapter has
+    # no reviewer-stated kind, and its bytes were archived by that adapter.
+    kind: str | None = None
+    source_trust_class: SourceTrustClass | None = None
+    content_hash: str | None = None
     #: 'contributed', or 'adapter' when the URL turned out to belong to a
     #: known official source and the legislation ingester ran instead.
     routed_to: RouteKind = "contributed"
@@ -186,9 +305,6 @@ def _ingest_through_adapter(
         jurisdiction=outcome.jurisdiction,
         source_code=outcome.source_name or "",
         national_id=outcome.national_id,
-        kind="",
-        source_trust_class=SourceTrustClass.EVIDENCE,
-        content_hash="",
         origin=outcome.url,
         routed_to="adapter",
         units=sum(item.units for item in pipeline_result.loaded),
@@ -254,67 +370,59 @@ def national_id_for(raw: bytes, url: str | None = None) -> str:
     return canonical_url(url) if url else f"file:{content_hash(raw)}"
 
 
-def parse_document(
-    raw: bytes,
-    *,
-    content_type: str,
-    jurisdiction: str,
-    lang: str,
-    title: str,
-    kind: str,
-    valid_from: date,
-    source_code: str,
-    national_id: str,
-    origin: str,
-    snapshot_id: UUID,
-    implements: str | None = None,
-) -> ParsedDoc:
-    """Turn archived bytes plus the reviewer's fields into loadable IR.
+def parse_document(document: SourceDocument, fields: ContributedFields) -> ParsedDoc:
+    """Turn one archived document plus the reviewer's declaration into loadable IR.
 
     Pure: no network, no database. This is the seam the parse tests exercise.
-    The reviewer's fields are already validated by `ingest_document`, which is
-    where a missing one is refused.
     """
-    jurisdiction = jurisdiction.upper()
-    trust_class = trust_class_for(jurisdiction, kind)
-    extracted = extract.extract(raw, content_type)
-    digest = content_hash(raw)
+    if document.snapshot_id is None:
+        msg = "Archive the bytes before parsing them (archive-first)"
+        raise ValueError(msg)
+
+    extracted = extract.extract(document.raw, document.content_type)
+    digest = document.content_hash
 
     instrument = build_document(
         text=extracted.text,
-        jurisdiction=jurisdiction,
-        source_code=source_code,
-        instrument_type=kind,
-        source_trust_class=trust_class,
-        national_id=national_id,
-        title=title,
-        lang=lang,
-        valid_from=valid_from,
-        snapshot_id=snapshot_id,
-        citation_prefix=title[:120],
+        jurisdiction=fields.jurisdiction,
+        source_code=fields.source_code,
+        instrument_type=fields.kind,
+        source_trust_class=fields.source_trust_class,
+        national_id=document.national_id,
+        title=fields.title,
+        lang=fields.lang,
+        valid_from=fields.valid_from,
+        snapshot_id=document.snapshot_id,
+        citation_prefix=fields.title[:120],
         pattern=extracted.pattern,
         # Content, not the date, decides identity of a version: re-adding the
         # same bytes reuses the version, a changed page opens a new one and
         # the loader closes the previous (see LegislationLoader._chain_versions).
-        version_key=f"{national_id}@{digest[:16]}",
+        version_key=f"{document.national_id}@{digest[:16]}",
         content_html=extracted.html,
         metadata={
             "contributed": True,
-            "kind": kind,
-            "norm_level": norm_level_for(jurisdiction, kind).value,
+            "kind": fields.kind,
+            "norm_level": fields.norm_level.value,
             "content_hash": digest,
-            "content_type": content_type,
-            "origin": origin,
+            "content_type": document.content_type,
+            "origin": document.origin,
         },
     )
-    ref = SourceRef(
-        jurisdiction=jurisdiction,
-        source_code=source_code,
-        source_id=national_id,
-        source_type=SOURCE_TYPE,
-    )
     return ParsedDoc(
-        ref=ref, instruments=[instrument], relations=_relations_for(national_id, implements)
+        ref=source_ref(document, fields),
+        instruments=[instrument],
+        relations=_relations_for(document.national_id, fields.implements),
+    )
+
+
+def source_ref(document: SourceDocument, fields: ContributedFields) -> SourceRef:
+    """How this document is addressed in the snapshot store and the loader."""
+    return SourceRef(
+        jurisdiction=fields.jurisdiction,
+        source_code=fields.source_code,
+        source_id=document.national_id,
+        source_type=SOURCE_TYPE,
     )
 
 
@@ -349,11 +457,12 @@ def stored_content_hash(conn: psycopg.Connection, source_code: str, national_id:
     return row[0] if row else None
 
 
-def read_input(url: str | None, file_path: str | None) -> tuple[bytes, str, str]:
+def read_input(url: str | None, file_path: str | None) -> SourceDocument:
     """Read a contributed document's bytes, however the reviewer named it.
 
-    Returns (raw bytes, content type, origin URI). Fetching happens here, in
-    Python — never in the UI, which passes a URL or a path and nothing else.
+    Fetching happens here, in Python — never in the UI, which passes a URL or
+    a path and nothing else. The returned document is not yet archived; its
+    `snapshot_id` is filled in by `archived_as` once it is.
     """
     if bool(url) == bool(file_path):
         msg = "Contribute exactly one of a URL or a file path"
@@ -369,10 +478,22 @@ def read_input(url: str | None, file_path: str | None) -> tuple[bytes, str, str]
             response = client.get(url)
         response.raise_for_status()
         raw = response.content
-        return raw, extract.content_type_for(url, response.headers.get("content-type"), raw), str(response.url)
+        return SourceDocument(
+            raw=raw,
+            content_type=extract.content_type_for(
+                url, response.headers.get("content-type"), raw
+            ),
+            origin=str(response.url),
+            national_id=national_id_for(raw, url),
+        )
     path = Path(file_path)
     raw = path.read_bytes()
-    return raw, extract.content_type_for(path.name, None, raw), path.resolve().as_uri()
+    return SourceDocument(
+        raw=raw,
+        content_type=extract.content_type_for(path.name, None, raw),
+        origin=path.resolve().as_uri(),
+        national_id=national_id_for(raw, None),
+    )
 
 
 def suggest(url: str | None = None, file_path: str | None = None) -> dict[str, str | None]:
@@ -381,15 +502,15 @@ def suggest(url: str | None = None, file_path: str | None = None) -> dict[str, s
     Cheap enough for the UI to call while the reviewer is still typing: it
     reads the document, never the database.
     """
-    raw, content_type, origin = read_input(url, file_path)
-    extracted = extract.extract(raw, content_type)
-    fallback = Path(urlsplit(origin).path).name or None
+    document = read_input(url, file_path)
+    extracted = extract.extract(document.raw, document.content_type)
+    fallback = Path(urlsplit(document.origin).path).name or None
     title = extracted.suggested_title or fallback
-    valid_from = extract.suggested_valid_from(title, url or origin)
+    valid_from = extract.suggested_valid_from(title, url or document.origin)
     return {
         "title": title,
         "valid_from": valid_from.isoformat() if valid_from else None,
-        "content_type": content_type,
+        "content_type": document.content_type,
     }
 
 
@@ -431,81 +552,74 @@ def ingest_document(
             )
             return _ingest_through_adapter(outcome, database_url, max_items)
 
-    if not jurisdiction:
-        msg = "A contributed document needs the jurisdiction it belongs to"
-        raise ValueError(msg)
-    if not title:
-        msg = "A contributed document needs a title"
-        raise ValueError(msg)
-    if not kind:
-        allowed = ", ".join(kinds_for(jurisdiction))
-        msg = f"A contributed document needs a kind (one of: {allowed})"
-        raise ValueError(msg)
-    if valid_from is None:
-        msg = (
-            "A contributed document needs the date it is in force from "
-            "(--valid-from): no version enters the store with an invented legal date"
-        )
-        raise ValueError(msg)
-    jurisdiction = jurisdiction.upper()
-    trust_class = trust_class_for(jurisdiction, kind)  # fails fast on an unknown kind
-    source_code = source_code_for(jurisdiction)
+    # The fields arrive optional because an adapter URL needs none of them;
+    # past the routing they must be a complete declaration.
+    fields = stated_fields(
+        jurisdiction=jurisdiction,
+        lang=lang,
+        title=title,
+        kind=kind,
+        valid_from=valid_from,
+        implements=implements,
+    )
 
     report({"phase": "fetch", "detail": url or file_path or ""})
-    raw, content_type, origin = read_input(url, file_path)
-    national_id = national_id_for(raw, url)
-    digest = content_hash(raw)
-    report({"phase": "archive", "detail": f"{len(raw)} bytes, {content_type}"})
+    document = read_input(url, file_path)
+    report(
+        {"phase": "archive", "detail": f"{len(document.raw)} bytes, {document.content_type}"}
+    )
 
     with psycopg.connect(database_url) as conn:
         ensure_source(
             conn,
-            jurisdiction,
-            source_code,
-            name=f"Contributed documents ({jurisdiction})",
+            fields.jurisdiction,
+            fields.source_code,
+            name=f"Contributed documents ({fields.jurisdiction})",
             id_system=ID_SYSTEM,
             fetch_skill="core/contributed",
             note="documents contributed by a reviewer from the validation UI or the CLI",
         )
-        run_id = create_fetch_run(conn, source_code, SKILL_VERSION, Trigger.MANUAL)
+        run_id = create_fetch_run(conn, fields.source_code, SKILL_VERSION, Trigger.MANUAL)
         result = DocumentResult(
-            jurisdiction=jurisdiction,
-            source_code=source_code,
-            national_id=national_id,
-            kind=kind,
-            source_trust_class=trust_class,
-            content_hash=digest,
-            origin=origin,
+            jurisdiction=fields.jurisdiction,
+            source_code=fields.source_code,
+            national_id=document.national_id,
+            kind=fields.kind,
+            source_trust_class=fields.source_trust_class,
+            content_hash=document.content_hash,
+            origin=document.origin,
             fetch_run_id=run_id,
-            implements=implements,
+            implements=fields.implements,
         )
         try:
-            ref = SourceRef(
-                jurisdiction=jurisdiction,
-                source_code=source_code,
-                source_id=national_id,
-                source_type=SOURCE_TYPE,
+            ref = source_ref(document, fields)
+            document = document.archived_as(
+                PostgresSnapshotStore(conn, run_id).write_snapshot(
+                    ref=ref,
+                    url=document.origin,
+                    status_code=200,
+                    content_type=document.content_type,
+                    content_hash=document.content_hash,
+                    content=document.raw,
+                )
             )
-            store = PostgresSnapshotStore(conn, run_id)
-            result.snapshot_id = store.write_snapshot(
-                ref=ref,
-                url=origin,
-                status_code=200,
-                content_type=content_type,
-                content_hash=digest,
-                content=raw,
-            )
-            if stored_content_hash(conn, source_code, national_id) == digest:
-                report({"phase": "already_present", "detail": national_id})
+            result.snapshot_id = document.snapshot_id
+
+            stored = stored_content_hash(conn, fields.source_code, document.national_id)
+            if stored == document.content_hash:
+                report({"phase": "already_present", "detail": document.national_id})
                 result.already_present = True
                 # The bytes are unchanged, so nothing is re-parsed — but the
                 # reviewer may have come back to state (or correct) which
                 # statute this document implements, and that is the only way
                 # to record it once a document is in the store.
-                if implements:
-                    relations = _relations_for(national_id, implements)
+                if fields.implements:
                     LegislationLoader(conn).load(
-                        ParsedDoc(ref=ref, instruments=[], relations=relations)
+                        ParsedDoc(
+                            ref=ref,
+                            instruments=[],
+                            relations=_relations_for(document.national_id, fields.implements),
+                        )
                     )
                 finish_fetch_run(
                     conn,
@@ -513,29 +627,16 @@ def ingest_document(
                     "succeeded",
                     {
                         "trigger": Trigger.MANUAL.value,
-                        "national_id": national_id,
+                        "national_id": document.national_id,
                         "already_present": True,
-                        "implements": implements,
+                        "implements": fields.implements,
                     },
                 )
                 return result
 
-            report({"phase": "parse", "detail": content_type})
-            doc = parse_document(
-                raw,
-                content_type=content_type,
-                jurisdiction=jurisdiction,
-                lang=lang,
-                title=title,
-                kind=kind,
-                valid_from=valid_from,
-                source_code=source_code,
-                national_id=national_id,
-                origin=origin,
-                snapshot_id=result.snapshot_id,
-                implements=implements,
-            )
-            report({"phase": "load", "detail": national_id})
+            report({"phase": "parse", "detail": document.content_type})
+            doc = parse_document(document, fields)
+            report({"phase": "load", "detail": document.national_id})
             stats: LoadStats = LegislationLoader(conn).load(doc)
             report({"phase": "done", "detail": f"{stats.chunks} chunks"})
             result.units = stats.units
@@ -548,9 +649,9 @@ def ingest_document(
                 "succeeded",
                 {
                     "trigger": Trigger.MANUAL.value,
-                    "national_id": national_id,
-                    "kind": kind,
-                    "source_trust_class": trust_class.value,
+                    "national_id": document.national_id,
+                    "kind": fields.kind,
+                    "source_trust_class": fields.source_trust_class.value,
                     "units": stats.units,
                     "versions": stats.versions,
                     "texts": stats.texts,

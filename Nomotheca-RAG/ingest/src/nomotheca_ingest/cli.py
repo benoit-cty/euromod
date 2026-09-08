@@ -188,7 +188,9 @@ def document(
                 "source_code": result.source_code,
                 "national_id": result.national_id,
                 "kind": result.kind,
-                "source_trust_class": result.source_trust_class.value,
+                "source_trust_class": (
+                    result.source_trust_class.value if result.source_trust_class else None
+                ),
                 "implements": result.implements,
                 "units": result.units,
                 "versions": result.versions,

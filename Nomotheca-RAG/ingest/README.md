@@ -30,6 +30,13 @@ uv run python -m nomotheca_ingest.cli document \
 uv run python -m nomotheca_ingest.cli route "<url or path>" -d $EUROMOD_DATABASE_URL
 ```
 
+The two halves of a contributed document are two values in the code: what the
+reviewer states (`ContributedFields` — the jurisdiction, language, title, kind,
+validity start and optional link, which only mean anything together) and what
+was read (`SourceDocument` — the bytes, their content type, where they came
+from, the identity derived from them, and the snapshot proving they were
+archived). `parse_document(document, fields)` is the whole parse seam.
+
 **Fields.** `--jurisdiction` (retrievability and language configuration —
 French in France is not French in Belgium), `--lang` (declared, never
 detected), `--title` (suggested from the page title, the PDF metadata or the

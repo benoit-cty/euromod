@@ -8,7 +8,9 @@ from uuid import uuid4
 import pytest
 
 from nomotheca_ingest.core.contributed import (
+    ContributedFields,
     NormLevel,
+    SourceDocument,
     canonical_url,
     content_hash,
     ingest_document,
@@ -17,6 +19,7 @@ from nomotheca_ingest.core.contributed import (
     norm_level_for,
     parse_document,
     source_code_for,
+    stated_fields,
     suggest,
     trust_class_for,
 )
@@ -68,21 +71,23 @@ def _all_text(doc) -> str:
 
 
 def _parse(raw: bytes, content_type: str, *, kind: str = "circulaire", url: str | None = None, **kwargs):
-    national_id = national_id_for(raw, url)
-    return parse_document(
-        raw,
+    """Parse one document the way `ingest_document` does, minus the database."""
+    document = SourceDocument(
+        raw=raw,
         content_type=content_type,
+        origin=url or "file:///tmp/circulaire.md",
+        national_id=national_id_for(raw, url),
+        snapshot_id=uuid4(),
+    )
+    fields = ContributedFields(
         jurisdiction="fr",
         lang="fr",
         title="Circulaire Unedic n. 2025-01",
         kind=kind,
         valid_from=date(2025, 4, 1),
-        source_code=source_code_for("FR"),
-        national_id=national_id,
-        origin=url or "file:///tmp/circulaire.md",
-        snapshot_id=uuid4(),
         **kwargs,
     )
+    return parse_document(document, fields)
 
 
 # --- identity -------------------------------------------------------------
@@ -369,3 +374,75 @@ def test_in_page_navigation_inside_the_article_is_dropped_too() -> None:
     assert "Document precedent" not in body
     assert "Document suivant" not in body
     assert "Permalien du document" not in body
+
+
+# --- the reviewer's declaration, as one value ------------------------------
+
+
+def _stated(**overrides):
+    return stated_fields(
+        **{
+            "jurisdiction": "fr",
+            "lang": "fr",
+            "title": "Circulaire Unedic n. 2025-01",
+            "kind": "circulaire",
+            "valid_from": date(2025, 4, 1),
+            **overrides,
+        }
+    )
+
+
+def test_the_declaration_reads_its_own_kind() -> None:
+    """A kind is a kind *in a jurisdiction*, so the value answers for both."""
+    fields = _stated()
+
+    assert fields.jurisdiction == "FR"        # normalised once, not at call sites
+    assert fields.norm_level == NormLevel.ADMINISTRATIVE_GUIDANCE
+    assert fields.source_trust_class == SourceTrustClass.GUIDANCE
+    assert fields.source_code == "FR-CONTRIB"
+    assert _stated(kind="loi").source_trust_class == SourceTrustClass.EVIDENCE
+
+
+def test_an_incomplete_declaration_is_refused_by_name() -> None:
+    """Each refusal names the field, because a reviewer reads these."""
+    with pytest.raises(ValueError, match="jurisdiction"):
+        _stated(jurisdiction=None)
+    with pytest.raises(ValueError, match="title"):
+        _stated(title="")
+    with pytest.raises(ValueError, match="circulaire"):  # the kinds it could be
+        _stated(kind=None)
+    with pytest.raises(ValueError, match="in force from"):
+        _stated(valid_from=None)
+
+
+def test_a_kind_the_country_does_not_use_never_becomes_a_declaration() -> None:
+    """Caught here rather than after the run has started writing."""
+    with pytest.raises(ValueError, match="Unknown kind"):
+        _stated(jurisdiction="es", kind="circulaire")
+
+
+def test_a_document_is_not_parsed_before_it_is_archived() -> None:
+    """Archive-first, enforced by the seam and not only by call order."""
+    unarchived = SourceDocument(
+        raw=MARKDOWN,
+        content_type="text/markdown",
+        origin="file:///tmp/circulaire.md",
+        national_id=national_id_for(MARKDOWN, None),
+    )
+
+    with pytest.raises(ValueError, match="archive-first"):
+        parse_document(unarchived, _stated())
+
+
+def test_a_documents_identity_follows_its_bytes() -> None:
+    """Nothing has to remember to recompute the hash beside the content."""
+    document = SourceDocument(
+        raw=MARKDOWN,
+        content_type="text/markdown",
+        origin="file:///tmp/circulaire.md",
+        national_id=national_id_for(MARKDOWN, None),
+    )
+
+    assert document.content_hash == content_hash(MARKDOWN)
+    assert document.national_id.endswith(document.content_hash)
+    assert document.archived_as(uuid4()).content_hash == document.content_hash
