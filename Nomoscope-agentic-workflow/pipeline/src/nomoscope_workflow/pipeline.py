@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import date, datetime, timedelta, timezone
+from collections.abc import Iterable
 from pathlib import Path
 from typing import TypedDict
 
@@ -51,7 +52,16 @@ MAX_PROPOSAL_ATTEMPTS = 2
 GUIDANCE_ONLY_ISSUE = "supported by guidance only: no legislation among the cited sources"
 
 
-def guidance_only(classes) -> bool:
+def cited_classes(
+    draft: ProposalDraft | None, hits: list[RetrievalHit]
+) -> list[SourceTrustClass]:
+    """Source-trust class of every retrieved chunk the draft actually cites."""
+    if draft is None or not draft.citation_chunk_id:
+        return []
+    return [hit.source_trust_class for hit in hits if hit.chunk_id == draft.citation_chunk_id]
+
+
+def guidance_only(classes: Iterable[SourceTrustClass | None]) -> bool:
     """True when a proposal cites something and every citation is guidance.
 
     An empty citation list is not guidance-only: there is nothing to label.
@@ -568,11 +578,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
 
                 # Informational only: appended to issues, never folded into the
                 # four booleans the verdict is computed from.
-                if guidance_only(
-                    hit.source_trust_class
-                    for hit in hits
-                    if hit.chunk_id == draft.citation_chunk_id
-                ):
+                if guidance_only(cited_classes(draft, hits)):
                     report.issues.append(GUIDANCE_ONLY_ISSUE)
 
                 # The LLM critique must see the sibling chunks too — the

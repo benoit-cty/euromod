@@ -34,7 +34,12 @@ from uuid import UUID
 import psycopg
 
 from nomotheca_ingest.core import extract
-from nomotheca_ingest.core.db import PostgresSnapshotStore, create_fetch_run, finish_fetch_run
+from nomotheca_ingest.core.db import (
+    PostgresSnapshotStore,
+    create_fetch_run,
+    ensure_source,
+    finish_fetch_run,
+)
 from nomotheca_ingest.core.documents import build_document
 from nomotheca_ingest.core.ir import (
     InstrumentRelationIR,
@@ -44,7 +49,7 @@ from nomotheca_ingest.core.ir import (
     Trigger,
 )
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
-from nomotheca_ingest.core.routing import RouteOutcome
+from nomotheca_ingest.core.routing import RouteKind, RouteOutcome
 from nomotheca_ingest.core.snapshots import USER_AGENT
 
 ID_SYSTEM = "contributed"
@@ -146,7 +151,7 @@ class DocumentResult:
     origin: str
     #: 'contributed', or 'adapter' when the URL turned out to belong to a
     #: known official source and the legislation ingester ran instead.
-    routed_to: str = "contributed"
+    routed_to: RouteKind = "contributed"
     #: True when the same document, byte-for-byte, was already in the store:
     #: the run archived the bytes and stopped, so duplicates never pile up.
     already_present: bool = False
@@ -195,16 +200,10 @@ def _ingest_through_adapter(
 
 
 def route(url: str, database_url: str | None = None) -> RouteOutcome:
-    """Classify a URL, resolving Legifrance ELI URLs through the FR resolver."""
+    """Classify a URL against the official portals the adapters declare."""
     from nomotheca_ingest.core import routing
-    from nomotheca_ingest.countries.fr.resolver import resolve_legifrance_url
 
-    return routing.route_url(
-        url,
-        resolve_legifrance=lambda target: resolve_legifrance_url(
-            target, database_url=database_url
-        ),
-    )
+    return routing.route_url(url, database_url=database_url)
 
 
 def kinds_for(jurisdiction: str) -> dict[str, NormLevel]:
@@ -273,11 +272,9 @@ def parse_document(
     """Turn archived bytes plus the reviewer's fields into loadable IR.
 
     Pure: no network, no database. This is the seam the parse tests exercise.
+    The reviewer's fields are already validated by `ingest_document`, which is
+    where a missing one is refused.
     """
-    if valid_from is None:  # pragma: no cover - guarded by ingest_document too
-        msg = "A contributed document needs the date it is in force from"
-        raise ValueError(msg)
-
     jurisdiction = jurisdiction.upper()
     trust_class = trust_class_for(jurisdiction, kind)
     extracted = extract.extract(raw, content_type)
@@ -310,44 +307,33 @@ def parse_document(
             "origin": origin,
         },
     )
-    relations = []
-    if implements:
-        relations.append(
-            InstrumentRelationIR(
-                relation_type=IMPLEMENTS_RELATION,
-                from_ref=national_id,
-                to_ref=implements,
-                metadata={"stated_by": "reviewer"},
-            )
-        )
     ref = SourceRef(
         jurisdiction=jurisdiction,
         source_code=source_code,
         source_id=national_id,
         source_type=SOURCE_TYPE,
     )
-    return ParsedDoc(ref=ref, instruments=[instrument], relations=relations)
-
-
-def ensure_source(conn: psycopg.Connection, jurisdiction: str, source_code: str) -> None:
-    """Idempotently register the per-country contributed-document source row.
-
-    Created on first use so no seed change is needed before a reviewer's first
-    upload.
-    """
-    row = conn.execute("SELECT id FROM jurisdictions WHERE code = %s", (jurisdiction,)).fetchone()
-    if row is None:
-        msg = f"Unknown jurisdiction: {jurisdiction} (seed it before contributing a document)"
-        raise ValueError(msg)
-    conn.execute(
-        """
-        INSERT INTO sources (jurisdiction_id, code, name, id_system, fetch_skill, terms)
-        VALUES (%s, %s, %s, %s, 'core/contributed',
-                '{"note": "documents contributed by a reviewer from the validation UI or the CLI"}'::jsonb)
-        ON CONFLICT (code) DO NOTHING
-        """,
-        (row[0], source_code, f"Contributed documents ({jurisdiction})", ID_SYSTEM),
+    return ParsedDoc(
+        ref=ref, instruments=[instrument], relations=_relations_for(national_id, implements)
     )
+
+
+def _relations_for(national_id: str, implements: str | None) -> list[InstrumentRelationIR]:
+    """The provenance edge a reviewer's "implements" answer stands for.
+
+    "None" is a valid answer — a missing statute must never block an upload —
+    and then there is no edge.
+    """
+    if not implements:
+        return []
+    return [
+        InstrumentRelationIR(
+            relation_type=IMPLEMENTS_RELATION,
+            from_ref=national_id,
+            to_ref=implements,
+            metadata={"stated_by": "reviewer"},
+        )
+    ]
 
 
 def stored_content_hash(conn: psycopg.Connection, source_code: str, national_id: str) -> str | None:
@@ -472,7 +458,15 @@ def ingest_document(
     report({"phase": "archive", "detail": f"{len(raw)} bytes, {content_type}"})
 
     with psycopg.connect(database_url) as conn:
-        ensure_source(conn, jurisdiction, source_code)
+        ensure_source(
+            conn,
+            jurisdiction,
+            source_code,
+            name=f"Contributed documents ({jurisdiction})",
+            id_system=ID_SYSTEM,
+            fetch_skill="core/contributed",
+            note="documents contributed by a reviewer from the validation UI or the CLI",
+        )
         run_id = create_fetch_run(conn, source_code, SKILL_VERSION, Trigger.MANUAL)
         result = DocumentResult(
             jurisdiction=jurisdiction,
@@ -504,6 +498,15 @@ def ingest_document(
             if stored_content_hash(conn, source_code, national_id) == digest:
                 report({"phase": "already_present", "detail": national_id})
                 result.already_present = True
+                # The bytes are unchanged, so nothing is re-parsed — but the
+                # reviewer may have come back to state (or correct) which
+                # statute this document implements, and that is the only way
+                # to record it once a document is in the store.
+                if implements:
+                    relations = _relations_for(national_id, implements)
+                    LegislationLoader(conn).load(
+                        ParsedDoc(ref=ref, instruments=[], relations=relations)
+                    )
                 finish_fetch_run(
                     conn,
                     run_id,
@@ -512,6 +515,7 @@ def ingest_document(
                         "trigger": Trigger.MANUAL.value,
                         "national_id": national_id,
                         "already_present": True,
+                        "implements": implements,
                     },
                 )
                 return result

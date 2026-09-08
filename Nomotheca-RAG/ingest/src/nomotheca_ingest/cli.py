@@ -203,7 +203,9 @@ def document(
 
 @app.command()
 def route(
-    source: Annotated[str, typer.Argument(help="URL, or path to a file, to classify.")],
+    source: Annotated[
+        str, typer.Argument(help="URL, or path to a file, to classify. Omit for the kinds table only.")
+    ] = "",
     database_url: Annotated[
         str | None, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")
     ] = None,
@@ -212,29 +214,42 @@ def route(
 
     The validation UI calls this before starting a run, so it can announce a
     switch to the legislation ingester, prefill the title and validity date,
-    or show a refusal hint.
+    or show a refusal hint. With no source it answers with the kinds table
+    alone — what the contributed-document form needs to render itself.
     """
+    from nomotheca_ingest.core.contributed import KINDS_BY_JURISDICTION, TRUST_CLASS_BY_LEVEL
     from nomotheca_ingest.core.contributed import route as route_source
     from nomotheca_ingest.core.contributed import suggest
     from nomotheca_ingest.core.routing import RouteOutcome
 
-    from nomotheca_ingest.core.contributed import KINDS_BY_JURISDICTION
-
     url, file_path = _document_source(source)
-    outcome = route_source(url, database_url) if url else RouteOutcome(kind="contributed", url=source)
-    if outcome.kind == "contributed":
-        try:
-            outcome.suggestions = suggest(url=url, file_path=file_path)
-        except Exception as exc:
-            # A prefill is a convenience: an unreachable page must not stop the
-            # reviewer from filling the fields themselves.
-            outcome.suggestions = {"error": str(exc)}
+    outcome = RouteOutcome(kind="contributed", url=source)
+    if source:
+        if url:
+            outcome = route_source(url, database_url)
+        if outcome.kind == "contributed":
+            try:
+                outcome.suggestions = suggest(url=url, file_path=file_path)
+            except Exception as exc:
+                # A prefill is a convenience: an unreachable page must not stop
+                # the reviewer from filling the fields themselves.
+                outcome.suggestions = {"error": str(exc)}
     payload = outcome.as_json()
+    if not source:
+        payload["outcome"] = None
     # Everything the contributed-document form needs to render, from the one
     # call it already makes: the kinds a reviewer may state, in each
     # jurisdiction's own words, so the UI never keeps its own copy of the table.
+    # Each kind carries its level AND the class derived from it, so the UI can
+    # show what a kind means without re-implementing the mapping.
     payload["kinds"] = {
-        jurisdiction: {label: level.value for label, level in table}
+        jurisdiction: {
+            label: {
+                "norm_level": level.value,
+                "source_trust_class": TRUST_CLASS_BY_LEVEL[level].value,
+            }
+            for label, level in table
+        }
         for jurisdiction, table in KINDS_BY_JURISDICTION.items()
     }
     typer.echo(json.dumps(payload, ensure_ascii=False))

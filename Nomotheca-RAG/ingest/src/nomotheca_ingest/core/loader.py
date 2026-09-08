@@ -61,42 +61,50 @@ class LegislationLoader:
                             text_id = self._upsert_text(version_id, text)
                             stats.texts += 1
                             self._replace_chunks(text_id, instrument, unit, version, text, stats)
-            for relation in doc.relations:
-                self._upsert_relation(doc, relation, loaded, stats)
+            self._replace_relations(doc, loaded, stats)
         return stats
 
-    def _upsert_relation(
-        self,
-        doc: ParsedDoc,
-        relation: InstrumentRelationIR,
-        loaded: dict[str, UUID],
-        stats: LoadStats,
+    def _replace_relations(
+        self, doc: ParsedDoc, loaded: dict[str, UUID], stats: LoadStats
     ) -> None:
-        """Record one provenance edge between instruments.
+        """Restate this document's relations, one edge type at a time.
 
         Restated rather than accumulated: re-running a document with a
-        different link replaces the edge of that type instead of leaving both
-        behind. A target that is not in the corpus yet is kept as free text,
-        so the reviewer's statement survives until the statute is ingested.
+        different link replaces the edges of that type instead of leaving both
+        behind. Grouped by (source instrument, type) and cleared once per
+        group, so a document that legitimately declares two edges of one type
+        keeps both.
         """
-        from_id = loaded.get(relation.from_ref)
-        if from_id is None:
-            from_id = self._instrument_id_by_national_id(doc.ref.jurisdiction, relation.from_ref)
-        if from_id is None:
-            return
-        to_id = (
-            self._instrument_id_by_national_id(doc.ref.jurisdiction, relation.to_ref)
-            if relation.to_ref
-            else None
-        )
-        if to_id is None and not relation.to_ref:
-            return
-        with self.conn.cursor() as cur:
-            cur.execute(
-                "DELETE FROM instrument_relations "
-                "WHERE from_instrument_id = %s AND relation_type = %s",
-                (from_id, relation.relation_type),
+        grouped: dict[tuple[UUID, str], list[InstrumentRelationIR]] = {}
+        for relation in doc.relations:
+            from_id = loaded.get(relation.from_ref) or self._instrument_id_by_national_id(
+                doc.ref.jurisdiction, relation.from_ref
             )
+            if from_id is None or not relation.to_ref:
+                continue
+            grouped.setdefault((from_id, relation.relation_type), []).append(relation)
+
+        for (from_id, relation_type), relations in grouped.items():
+            with self.conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM instrument_relations "
+                    "WHERE from_instrument_id = %s AND relation_type = %s",
+                    (from_id, relation_type),
+                )
+            for relation in relations:
+                self._insert_relation(from_id, doc.ref.jurisdiction, relation)
+                stats.relations += 1
+
+    def _insert_relation(
+        self, from_id: UUID, jurisdiction: str, relation: InstrumentRelationIR
+    ) -> None:
+        """Write one provenance edge.
+
+        A target that is not in the corpus yet is kept as free text, so the
+        reviewer's statement survives until the statute is ingested.
+        """
+        to_id = self._instrument_id_by_national_id(jurisdiction, relation.to_ref)
+        with self.conn.cursor() as cur:
             cur.execute(
                 """
                 INSERT INTO instrument_relations
@@ -111,7 +119,6 @@ class LegislationLoader:
                     Jsonb(relation.metadata),
                 ),
             )
-        stats.relations += 1
 
     def _instrument_id_by_national_id(self, jurisdiction: str, national_id: str | None) -> UUID | None:
         """Find an instrument in a jurisdiction by the id its portal knows it by."""

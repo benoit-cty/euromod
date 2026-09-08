@@ -2,19 +2,31 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from nomotheca_ingest.countries.lt.fetcher import fetch_tar
 from nomotheca_ingest.countries.lt.parser import parse_tar_json
 from nomotheca_ingest.countries.lt.resolver import LtResolver, canary_facts
+from nomotheca_ingest.countries.base import UrlSource
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
 from nomotheca_ingest.core.snapshots import SnapshotClient
+
+
+LT_URL_SOURCE = UrlSource(
+    name="e-seimas / e-tar",
+    domains=("e-seimas.lrs.lt", "e-tar.lt"),
+    # Two id generations coexist in TAR: "TAR." + 12 uppercase hex for acts
+    # migrated in 2014, and a 32-lowercase-hex registration id since.
+    id_pattern=re.compile(r"\b(?:TAR\.[0-9A-F]{12}|[0-9a-f]{32})\b"),
+)
 
 
 class LtAdapter:
     """Lithuania implementation of the country adapter protocol."""
 
     jurisdiction = "LT"
+    url_source = LT_URL_SOURCE
     default_source_code = "LT-TAR"
 
     def __init__(self, resolver: LtResolver | None = None) -> None:

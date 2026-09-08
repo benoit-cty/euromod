@@ -2,11 +2,48 @@
 
 from __future__ import annotations
 
+import re
+from dataclasses import dataclass, field
 from datetime import date
-from typing import Protocol
+from typing import Callable, Protocol
 
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
 from nomotheca_ingest.core.snapshots import SnapshotClient
+
+
+class ResolvedId(Protocol):
+    """A national id recovered from a URL, and which tier recovered it."""
+
+    national_id: str
+    tier: str
+
+
+@dataclass(frozen=True, slots=True)
+class UrlSource:
+    """How one country's official portal shows up in a URL a reviewer pastes.
+
+    Declared by the adapter, because which domains a country publishes on,
+    what its ids look like and which URLs are not one document are adapter
+    facts. `core/routing.py` reads these and knows no country: adding a sixth
+    member state stays an adapter, not an edit to the router.
+    """
+
+    #: What to call the source when telling the reviewer we recognised it.
+    name: str
+    #: Domains served by this portal; subdomains match too.
+    domains: tuple[str, ...]
+    #: The national id, as it appears in the portal's own URLs.
+    id_pattern: re.Pattern[str]
+    #: (pattern, hint) pairs for URLs that are recognisably this portal's but
+    #: must not be ingested — a whole code is two thousand articles, not one
+    #: document. Checked before `id_pattern`.
+    refusals: tuple[tuple[re.Pattern[str], str], ...] = ()
+    #: What to tell the reviewer when the URL is this portal's but carries no
+    #: ingestible id and nothing resolved it.
+    no_id_hint: str | None = None
+    #: Last resort for a URL with no id in it: (url, database_url) -> id.
+    #: None for a portal that always puts its id in the path.
+    resolve: Callable[[str, str | None], ResolvedId | None] | None = field(default=None)
 
 
 class CountryAdapter(Protocol):

@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import re
+from dataclasses import replace
+
 import pytest
 
+from nomotheca_ingest.countries.base import UrlSource
+from nomotheca_ingest.countries.fr.adapter import ELI_HINT, FR_URL_SOURCE, WHOLE_CODE_HINT
 from nomotheca_ingest.countries.fr.resolver import (
     EliResolution,
     resolve_legifrance_url,
 )
-from nomotheca_ingest.core.routing import ELI_HINT, WHOLE_CODE_HINT, route_url
+from nomotheca_ingest.countries.registry import url_sources
+from nomotheca_ingest.core.routing import route_url
 
 ELI_URL = "https://www.legifrance.gouv.fr/eli/arrete/2020/12/28/CCPD2036946A/jo/texte"
 
@@ -139,13 +145,48 @@ def test_all_tiers_failing_resolves_to_nothing_not_to_a_guess() -> None:
 
 def test_a_resolved_url_routes_to_the_fr_adapter() -> None:
     resolution = EliResolution(national_id="JORFTEXT000042753489", tier="browser")
+    sources = {
+        "FR": replace(FR_URL_SOURCE, resolve=lambda url, database_url: resolution)
+    }
 
-    outcome = route_url(ELI_URL, resolve_legifrance=lambda url: resolution)
+    outcome = route_url(ELI_URL, sources=sources)
 
     assert outcome.kind == "adapter"
     assert outcome.jurisdiction == "FR"
     assert outcome.national_id == "JORFTEXT000042753489"
     assert outcome.resolved_by == "browser"
+
+
+def test_the_router_knows_no_country_of_its_own() -> None:
+    """Every portal fact comes from an adapter, so a sixth member state is an
+    adapter and not an edit to `core/routing.py` (12_ingestion-architecture §7).
+    """
+    import inspect
+
+    from nomotheca_ingest.core import routing
+
+    source = inspect.getsource(routing)
+    for code in url_sources():
+        assert f'"{code}"' not in source, f"{code} is named in core/routing.py"
+
+
+def test_a_portal_declared_by_an_adapter_is_all_the_router_needs() -> None:
+    """A made-up member state routes without the router learning about it."""
+    sources = {
+        "XX": UrlSource(
+            name="Gazette of Xanadu",
+            domains=("gazette.xx",),
+            id_pattern=re.compile(r"\bXX-\d{4}-\d+\b"),
+        )
+    }
+
+    outcome = route_url("https://gazette.xx/acts/XX-2025-17", sources=sources)
+
+    assert (outcome.kind, outcome.jurisdiction, outcome.national_id) == (
+        "adapter",
+        "XX",
+        "XX-2025-17",
+    )
 
 
 def test_the_resolver_result_carries_an_id_and_a_tier_and_nothing_else() -> None:
@@ -218,4 +259,4 @@ def test_a_missing_browser_extra_skips_the_tier_even_on_a_403(monkeypatch) -> No
     monkeypatch.setattr(resolver, "http_attempt", lambda url, timeout=20.0: (None, 403))
 
     assert resolver.resolve_legifrance_url(ELI_URL) is None
-    assert route_url(ELI_URL, resolve_legifrance=resolver.resolve_legifrance_url).hint == ELI_HINT
+    assert route_url(ELI_URL).hint == ELI_HINT

@@ -28,20 +28,22 @@
   let docImplements = $state('');      // '' = none
   let implementsQuery = $state('');
   let implementsResults = $state([]);
-  let languages = $state(['en', 'fr', 'es', 'nl', 'lt']);
-  let kindTable = $state({});          // jurisdiction -> { label: norm level }
+  // Both filled from the store / the ingester; the seeds only cover the moment
+  // before those answer.
+  let languages = $state(['en']);
+  let jurisdictions = $state(['FR']);
+  // jurisdiction -> { kind: { norm_level, source_trust_class } }, straight from
+  // the ingester's own table (`route`), so the UI keeps no copy of the mapping.
+  let kindTable = $state({});
   let routeOutcome = $state(null);     // { outcome, source, national_id, hint, ... }
   let routing = $state(false);
 
-  const GUIDANCE_LEVELS = ['administrative_guidance', 'other'];
   let docKinds = $derived(
     Object.keys(kindTable[docJurisdiction.toUpperCase()] ?? {}).length
       ? kindTable[docJurisdiction.toUpperCase()]
       : (kindTable.DEFAULT ?? {})
   );
-  let docTrustClass = $derived(
-    GUIDANCE_LEVELS.includes(docKinds[docKind]) ? 'guidance' : 'evidence'
-  );
+  let docTrustClass = $derived(docKinds[docKind]?.source_trust_class ?? '');
   // An adapter outcome supplies every field itself: the contributed fields are
   // hidden and the instrument command runs instead.
   let switchingToAdapter = $derived(routeOutcome?.outcome === 'adapter');
@@ -53,7 +55,9 @@
             docJurisdiction.trim() &&
             docLang.trim() &&
             docTitle.trim() &&
-            docKind &&
+            // A kind this jurisdiction actually offers: `circulaire` is not an
+            // ES label, and the CLI would refuse it after the run had started.
+            docKinds[docKind] &&
             docValidFrom &&
             routeOutcome?.outcome !== 'refused'
         )
@@ -101,14 +105,17 @@
     if (dbUrl && !url) url = dbUrl;
   });
 
-  // The languages the store is configured to index: a text stored under any
-  // other language would be invisible to full-text search.
+  // The vocabulary the store actually has: languages it is configured to index
+  // (a text stored under any other is invisible to full-text search) and the
+  // jurisdictions it holds.
   $effect(() => {
     if (!url.trim()) return;
     api
       .dbStats(url.trim())
       .then((stats) => {
         if (stats?.languages?.length) languages = stats.languages;
+        const codes = (stats?.by_country ?? []).map((row) => row.code).filter(Boolean);
+        if (codes.length) jurisdictions = codes;
       })
       .catch(() => {});
   });
@@ -120,7 +127,17 @@
     return () => clearInterval(t);
   });
 
+  // The kinds each jurisdiction offers, and the class each one implies, come
+  // from the ingester so the two can never drift. `route` with no source
+  // answers with the table alone, so the Kind select is populated before the
+  // reviewer has pasted anything.
+  async function loadKindTable() {
+    const outcome = await routeSource();
+    if (outcome?.kinds) kindTable = outcome.kinds;
+  }
+
   onMount(() => {
+    loadKindTable().catch(() => {});
     const unlistenP = api.onIngestLog((payload) => {
       if (payload.run_id !== runId) return; // only the active run
       if (payload.stream === 'stdout' && payload.line.startsWith(PROGRESS_PREFIX)) {
@@ -145,20 +162,36 @@
   // Ask the ingester what this input is, before any run starts: prefill for a
   // contributed document, announce-and-switch for a known official source, a
   // hint for something we will not ingest this way.
-  async function precheckSource() {
-    const source = docSource.trim();
-    routeOutcome = null;
-    if (!source) return;
-    routing = true;
+  // One `route` run, read off the log stream: the CLI prints exactly one JSON
+  // line, and going through runIngest keeps every child process on the one
+  // spawn/cancel path.
+  async function routeSource(source) {
     const lines = [];
     const id = crypto.randomUUID();
     const unlisten = await api.onIngestLog((payload) => {
       if (payload.run_id === id && payload.stream === 'stdout') lines.push(payload.line);
     });
     try {
-      await api.runIngest({ run_id: id, command: 'route', db_url: url.trim(), args: [source] });
+      await api.runIngest({
+        run_id: id,
+        command: 'route',
+        db_url: url.trim(),
+        args: source ? [source] : [],
+      });
       const last = [...lines].reverse().find((line) => line.trim().startsWith('{'));
-      routeOutcome = last ? JSON.parse(last) : null;
+      return last ? JSON.parse(last) : null;
+    } finally {
+      unlisten();
+    }
+  }
+
+  async function precheckSource() {
+    const source = docSource.trim();
+    routeOutcome = null;
+    if (!source) return;
+    routing = true;
+    try {
+      routeOutcome = await routeSource(source);
       if (routeOutcome?.kinds) kindTable = routeOutcome.kinds;
       const suggestions = routeOutcome?.suggestions ?? {};
       if (suggestions.title && !docTitle.trim()) docTitle = suggestions.title;
@@ -166,9 +199,16 @@
     } catch (e) {
       error = String(e);
     } finally {
-      unlisten();
       routing = false;
     }
+  }
+
+  // Changing the country changes the words: an ES document is not a
+  // `circulaire`. Fall back to the first kind the new jurisdiction offers.
+  function onJurisdictionChange() {
+    if (!docKinds[docKind]) docKind = Object.keys(docKinds)[0] ?? '';
+    implementsResults = [];
+    docImplements = '';
   }
 
   async function pickDocumentFile() {
@@ -431,7 +471,11 @@
       <div class="grid">
         <label>
           Jurisdiction
-          <input bind:value={docJurisdiction} placeholder="fr" />
+          <select bind:value={docJurisdiction} onchange={onJurisdictionChange}>
+            {#each jurisdictions as code (code)}
+              <option value={code}>{code}</option>
+            {/each}
+          </select>
         </label>
         <label>
           Language
@@ -448,8 +492,8 @@
         <label>
           Kind
           <select bind:value={docKind}>
-            {#each Object.keys(docKinds) as label (label)}
-              <option value={label}>{label}</option>
+            {#each Object.entries(docKinds) as [label, kind] (label)}
+              <option value={label}>{label} ({kind.source_trust_class})</option>
             {/each}
           </select>
         </label>

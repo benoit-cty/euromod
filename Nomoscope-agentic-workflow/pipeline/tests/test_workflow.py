@@ -15,6 +15,7 @@ from nomoscope_workflow.scout import (
 )
 from nomoscope_workflow.pipeline import (
     GUIDANCE_ONLY_ISSUE,
+    cited_classes,
     guidance_only,
     _current_value,
     _income_year_date_issues,
@@ -606,3 +607,29 @@ def test_guidance_only_flag_survives_the_queue_roundtrip(tmp_path: Path):
 
     assert loaded.guidance_only
     assert loaded.proposed_value.references[0].source_trust_class == SourceTrustClass.GUIDANCE
+
+
+def _draft_citing(chunk_id: str) -> ProposalDraft:
+    return ProposalDraft(found=True, value_scalar=0.45, citation_chunk_id=chunk_id)
+
+
+def test_the_finding_reads_the_class_of_the_chunk_the_draft_cites():
+    """The wiring itself: only the CITED hit decides, not whatever was retrieved.
+
+    A guidance document answering the question sits next to evidence chunks in
+    every real run — reading the whole hit list instead of the cited chunk
+    would label almost nothing.
+    """
+    guidance = _hit(chunk_id="c-guidance", source_trust_class=SourceTrustClass.GUIDANCE)
+    evidence = _hit(chunk_id="c-evidence", source_trust_class=SourceTrustClass.EVIDENCE)
+    hits = [evidence, guidance]
+
+    assert guidance_only(cited_classes(_draft_citing("c-guidance"), hits))
+    assert not guidance_only(cited_classes(_draft_citing("c-evidence"), hits))
+    # A citation that is not among the retrieved chunks labels nothing: the
+    # critique has already failed it on the citation leg.
+    assert cited_classes(_draft_citing("c-unknown"), hits) == []
+    assert not guidance_only(cited_classes(_draft_citing("c-unknown"), hits))
+    # No proposal at all, and no citation on one, are both "nothing to label".
+    assert cited_classes(None, hits) == []
+    assert cited_classes(ProposalDraft(found=False), hits) == []

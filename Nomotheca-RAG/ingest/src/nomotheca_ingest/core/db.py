@@ -52,6 +52,38 @@ class PostgresSnapshotStore:
         return row[0]
 
 
+def ensure_source(
+    conn: Connection,
+    jurisdiction: str,
+    source_code: str,
+    *,
+    name: str,
+    id_system: str,
+    fetch_skill: str,
+    note: str,
+) -> None:
+    """Idempotently register a source row for a corpus fed from a local file.
+
+    Country adapters fetch from sources the seed already declares; the two
+    file-fed corpora (Country Reports, contributed documents) mint theirs on
+    first use, so no seed change is needed before a reviewer's first upload.
+    """
+    row = conn.execute(
+        "SELECT id FROM jurisdictions WHERE code = %s", (jurisdiction.upper(),)
+    ).fetchone()
+    if row is None:
+        msg = f"Unknown jurisdiction: {jurisdiction} (seed it before ingesting for it)"
+        raise ValueError(msg)
+    conn.execute(
+        """
+        INSERT INTO sources (jurisdiction_id, code, name, id_system, fetch_skill, terms)
+        VALUES (%s, %s, %s, %s, %s, jsonb_build_object('note', %s::text))
+        ON CONFLICT (code) DO NOTHING
+        """,
+        (row[0], source_code, name, id_system, fetch_skill, note),
+    )
+
+
 def create_fetch_run(
     conn: Connection,
     source_code: str,

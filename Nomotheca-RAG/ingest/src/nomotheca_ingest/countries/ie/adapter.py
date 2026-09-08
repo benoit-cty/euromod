@@ -2,19 +2,31 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from nomotheca_ingest.countries.ie.fetcher import SOURCE_CODE_EISB, fetch_ie
 from nomotheca_ingest.countries.ie.parser import act_index_child_metadata, parse_ie
 from nomotheca_ingest.countries.ie.resolver import IeResolver, canary_facts
+from nomotheca_ingest.countries.base import UrlSource
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
 from nomotheca_ingest.core.snapshots import SnapshotClient
+
+
+IE_URL_SOURCE = UrlSource(
+    name="electronic Irish Statute Book",
+    domains=("irishstatutebook.ie",),
+    # The eISB ELI act id: Acts of the Oireachtas only. Statutory instruments
+    # (/eli/<year>/si/<no>) are not ingestible yet.
+    id_pattern=re.compile(r"\b(?:19|20)\d{2}/act/\d{1,3}\b"),
+)
 
 
 class IeAdapter:
     """Ireland implementation of the country adapter protocol."""
 
     jurisdiction = "IE"
+    url_source = IE_URL_SOURCE
     default_source_code = SOURCE_CODE_EISB
 
     def __init__(self, resolver: IeResolver | None = None) -> None:

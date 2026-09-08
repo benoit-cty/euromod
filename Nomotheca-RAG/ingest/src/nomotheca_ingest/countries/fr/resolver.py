@@ -31,7 +31,7 @@ DILA_ID = re.compile(r"\b(?:JORFTEXT|LEGIARTI)\d{12}\b")
 #: A bare NOR (ministerial reference), which reviewers also paste.
 NOR = re.compile(r"\b[A-Z]{4}\d{7}[A-Z]\b")
 
-ResolutionTier = Literal["database", "http", "browser"]
+ResolutionTier = Literal["url", "database", "http", "browser"]
 
 #: Browser-like headers: Legifrance's edge rejects a bare client outright, and
 #: the whole point of the request is to be told where the ELI URL points.
@@ -163,8 +163,8 @@ def resolve_in_browser(url: str, timeout_ms: int = 30000) -> EliResolution | Non
 
 def resolve_legifrance_url(
     url: str,
-    *,
     database_url: str | None = None,
+    *,
     tiers=None,
 ) -> EliResolution | None:
     """Turn an ELI-form Legifrance URL (or a bare NOR) into a DILA id.
@@ -181,7 +181,7 @@ def resolve_legifrance_url(
     already = DILA_ID.search(url)
     if already:
         # Nothing to resolve: the id is right there in what was pasted.
-        return EliResolution(national_id=already.group(0), tier="database")
+        return EliResolution(national_id=already.group(0), tier="url")
     if tiers is None:
         tiers = default_tiers(database_url)
     for tier in tiers:

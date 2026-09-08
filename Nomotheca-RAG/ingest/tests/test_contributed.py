@@ -56,6 +56,17 @@ HTML_PAGE = b"""<html><head><title>BOFiP - IR - Bareme d'imposition</title></hea
 </body></html>"""
 
 
+def _all_text(doc) -> str:
+    """Everything a reader would find in the loaded document, as one string."""
+    return " ".join(
+        text.content
+        for instrument in doc.instruments
+        for unit in instrument.units
+        for version in unit.versions
+        for text in version.texts
+    )
+
+
 def _parse(raw: bytes, content_type: str, *, kind: str = "circulaire", url: str | None = None, **kwargs):
     national_id = national_id_for(raw, url)
     return parse_document(
@@ -164,9 +175,7 @@ def test_html_keeps_the_main_block_and_drops_the_chrome() -> None:
     """Chunks must contain the doctrine, not the portal navigation and footer."""
     doc = _parse(HTML_PAGE, "text/html", kind="doctrine", url="https://bofip.impots.gouv.fr/x.html")
     instrument = doc.instruments[0]
-    body = " ".join(
-        text.content for unit in instrument.units for version in unit.versions for text in version.texts
-    )
+    body = _all_text(doc)
 
     assert "11 %" in body
     assert "889 EUR" in body
@@ -344,9 +353,7 @@ BOFIP_SHAPED_PAGE = b"""<html><head><title>BOFiP - BIC - Credit d'impot</title><
 def test_a_portal_shell_around_the_document_is_not_the_document() -> None:
     """The largest <article> wins over a <main> that wraps the whole app."""
     doc = _parse(BOFIP_SHAPED_PAGE, "text/html", kind="doctrine", url="https://bofip.impots.gouv.fr/x.html")
-    body = " ".join(
-        text.content for unit in doc.instruments[0].units for version in unit.versions for text in version.texts
-    )
+    body = _all_text(doc)
 
     assert "credit d'impot" in body
     assert "Formulaire de recherche" not in body
@@ -357,9 +364,7 @@ def test_a_portal_shell_around_the_document_is_not_the_document() -> None:
 def test_in_page_navigation_inside_the_article_is_dropped_too() -> None:
     """No tag-based rule removes these: they are bare links inside the content."""
     doc = _parse(BOFIP_SHAPED_PAGE, "text/html", kind="doctrine", url="https://bofip.impots.gouv.fr/x.html")
-    body = " ".join(
-        text.content for unit in doc.instruments[0].units for version in unit.versions for text in version.texts
-    )
+    body = _all_text(doc)
 
     assert "Document precedent" not in body
     assert "Document suivant" not in body

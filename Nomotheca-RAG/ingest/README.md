@@ -39,7 +39,11 @@ URL; **a missing one is refused**, never invented), and optionally
 implements — written as one `implements` instrument relation, for provenance.
 
 **Routing.** A URL is classified before anything is fetched, and again when the
-run starts, so the library never trusts the caller:
+run starts, so the library never trusts the caller. Which domains a member
+state publishes on, what its ids look like, which URLs are not one document and
+how to recover an id that is not in the path are declared by each adapter as a
+`countries.base.UrlSource` — `core/routing.py` names no country, so a sixth
+member state is an adapter and not an edit to the router:
 
 | outcome | what happens |
 | --- | --- |

@@ -20,7 +20,7 @@ from uuid import UUID
 
 import psycopg
 
-from nomotheca_ingest.core.db import create_fetch_run, finish_fetch_run
+from nomotheca_ingest.core.db import create_fetch_run, ensure_source, finish_fetch_run
 from nomotheca_ingest.core.documents import build_document
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
@@ -62,6 +62,11 @@ def parse_country_report(
     The shape is the shared `documents.build_document`; what is said here is
     only what a Country Report *is*: a context corpus, titled by its own h1,
     cited as "CR <CC> <vintage>", and versioned once per vintage.
+
+    One shared behaviour is worth knowing when re-ingesting an older report: a
+    heading with no body and no text-bearing children yields no unit (see
+    `documents._prune_textless`). It never produced a chunk, so nothing becomes
+    less retrievable — the row simply stops being created.
     """
     jurisdiction = jurisdiction.upper()
     national_id = f"CR-{jurisdiction}-{vintage}"
@@ -82,25 +87,6 @@ def parse_country_report(
         version_key=f"{national_id}@{valid_from.isoformat()}",
         unit_type_by_depth=_UNIT_TYPE_BY_DEPTH,
         metadata={"vintage": vintage, "corpus_class": INSTRUMENT_TYPE},
-    )
-
-
-def _ensure_source(conn: psycopg.Connection, jurisdiction: str, source_code: str) -> None:
-    """Idempotently register the per-country EUROMOD-CR source row."""
-    row = conn.execute(
-        "SELECT id FROM jurisdictions WHERE code = %s", (jurisdiction,)
-    ).fetchone()
-    if row is None:
-        msg = f"Unknown jurisdiction: {jurisdiction} (seed it before ingesting its CR)"
-        raise ValueError(msg)
-    conn.execute(
-        """
-        INSERT INTO sources (jurisdiction_id, code, name, id_system, fetch_skill, terms)
-        VALUES (%s, %s, %s, %s, 'core/country_reports',
-                '{"note": "non-legislative corpus: excluded from evidence retrieval"}'::jsonb)
-        ON CONFLICT (code) DO NOTHING
-        """,
-        (row[0], source_code, f"EUROMOD Country Report ({jurisdiction})", ID_SYSTEM),
     )
 
 
@@ -139,7 +125,15 @@ def ingest_country_report(
     source_code = source_code_for(jurisdiction)
 
     with psycopg.connect(database_url) as conn:
-        _ensure_source(conn, jurisdiction, source_code)
+        ensure_source(
+            conn,
+            jurisdiction,
+            source_code,
+            name=f"EUROMOD Country Report ({jurisdiction})",
+            id_system=ID_SYSTEM,
+            fetch_skill="core/country_reports",
+            note="non-legislative corpus: excluded from evidence retrieval",
+        )
         run_id = create_fetch_run(conn, source_code, SKILL_VERSION, Trigger.BULK_SEED)
         try:
             snapshot_id = _write_file_snapshot(conn, run_id, source_code, file_path, raw)
