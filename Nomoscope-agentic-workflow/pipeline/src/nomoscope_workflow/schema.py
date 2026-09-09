@@ -148,7 +148,11 @@ class RetrievalHit(BaseModel):
     context_header: str | None = None
     # "sibling": not retrieved by search — another chunk of an already-retrieved
     # article, pulled in so the whole article is visible (income-year checks).
-    method: Literal["citation", "fts", "vector", "hybrid", "country_report", "sibling"] = "hybrid"
+    # "located": not ranked either — looked up by the article/act the analyst
+    # named when it reported a missing source (retrieval.locate_named_units).
+    method: Literal[
+        "citation", "fts", "vector", "hybrid", "country_report", "sibling", "located"
+    ] = "hybrid"
     #: Read from the instrument the chunk belongs to. Defaults to evidence so
     #: hand-built and mock hits behave exactly as before this column existed.
     source_trust_class: SourceTrustClass = SourceTrustClass.EVIDENCE
@@ -221,6 +225,21 @@ class ParameterRecord(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+class Operand(BaseModel):
+    """One figure a derivation uses, with the verbatim extract that states it.
+
+    Checked exactly like a supporting_extract: the quote must be found
+    character-for-character in the cited chunk, and it must state `value`.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(description="Symbol used in `derivation`, e.g. a, b, hours")
+    value: float = Field(description="The figure as the extract states it (108 % -> 1.08 is fine)")
+    citation_chunk_id: str = Field(description="chunk_id of the extract stating this figure")
+    supporting_extract: str = Field(description="VERBATIM contiguous quote from that chunk containing the figure")
+
+
 class ProposalDraft(BaseModel):
     """Structured output of the proposal step (LLM or mock extractor)."""
 
@@ -251,6 +270,19 @@ class ProposalDraft(BaseModel):
     #: act it lacks and says so in prose, and this makes that machine-readable.
     #: It names DOCUMENTS to fetch, never values — nothing here is ever evidence.
     missing_sources: list[str] = Field(default_factory=list)
+    #: Arithmetic over quoted operands, for a value no extract states but the
+    #: extracts state everything it is computed from (a ratio of two statutory
+    #: amounts, a base plus a statutory increment, hourly rate x statutory
+    #: hours). `value_scalar` must equal this expression over `operands`; each
+    #: operand is verified verbatim against its chunk like a supporting_extract
+    #: and the only bare figures allowed are calendar constants
+    #: (pipeline.DERIVATION_CONSTANTS). A stated value always wins over a
+    #: derived one; the prompt says so and the critique reads both.
+    derivation: str | None = Field(
+        default=None,
+        description="Arithmetic over operand names (+ - * / only), e.g. 'a / b', when the extracts state the operands but not the value",
+    )
+    operands: list[Operand] = Field(default_factory=list)
 
 
 class CritiqueFindings(BaseModel):
@@ -280,6 +312,9 @@ class CritiqueReport(BaseModel):
     issues: list[str] = Field(default_factory=list)
     verdict: Literal["pass", "fail"] = "fail"
     critique_model: str | None = None
+    #: Offsets of each operand extract (same order as draft.operands) when the
+    #: proposal carried a derivation; None per operand whose quote failed.
+    operand_offsets: list[tuple[int, int] | None] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -334,3 +369,6 @@ class ReviewItem(BaseModel):
     # Gap-fill provenance: queries run / instruments auto-ingested before the
     # final retrieval, so the reviewer sees the corpus was extended by this run.
     scout: dict | None = None
+    #: «a / b with a = 347.83 (AKW, artikel 12), b = 286.45 (AKW, artikel 12)»
+    #: when the value was derived from quoted operands rather than stated.
+    derivation: str | None = None

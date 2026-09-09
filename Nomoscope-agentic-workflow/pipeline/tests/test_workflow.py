@@ -692,3 +692,144 @@ def test_the_finding_reads_the_class_of_the_chunk_the_draft_cites():
     # No proposal at all, and no citation on one, are both "nothing to label".
     assert cited_classes(None, hits) == []
     assert cited_classes(ProposalDraft(found=False), hits) == []
+
+
+# ---------------------------------------------------------------------------
+# Derived values: arithmetic over quoted operands, checked like an extract
+# ---------------------------------------------------------------------------
+
+from nomoscope_workflow.paramdb import record_value  # noqa: E402
+from nomoscope_workflow.pipeline import (  # noqa: E402
+    DERIVATION_CONSTANTS,
+    _check_derivation,
+    _figures_in,
+    evaluate_derivation,
+)
+from nomoscope_workflow.retrieval import _article_tokens  # noqa: E402
+from nomoscope_workflow.schema import Operand  # noqa: E402
+
+AKW_TEXT = (
+    "3. Het aan een verzekerde over een kalenderkwartaal te betalen bedrag aan kinderbijslag "
+    "bedraagt voor een kind, dat op de eerste dag van dat kwartaal:\na. jonger is dan 6 jaar: "
+    "€ 286,45\nb. 6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83 en\nc. 12 jaar en ouder, "
+    "maar jonger is dan 18 jaar: € 409,21"
+)
+
+
+def _verify_in(hits):
+    content = {h.chunk_id: h.content for h in hits}
+
+    def verify(chunk_id, extract):
+        idx = content.get(chunk_id, "").find(extract)
+        return (idx, idx + len(extract)) if idx >= 0 else None
+
+    return verify
+
+
+def _derived(**overrides) -> ProposalDraft:
+    draft = dict(
+        found=True,
+        value_scalar=1.2143,
+        citation_chunk_id="akw",
+        supporting_extract="6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83",
+        derivation="a / b",
+        operands=[
+            Operand(name="a", value=347.83, citation_chunk_id="akw",
+                    supporting_extract="6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83"),
+            Operand(name="b", value=286.45, citation_chunk_id="akw",
+                    supporting_extract="jonger is dan 6 jaar: € 286,45"),
+        ],
+    )
+    draft.update(overrides)
+    return ProposalDraft(**draft)
+
+
+def test_derivation_over_quoted_operands_is_verified():
+    hits = [_hit(chunk_id="akw", citation="AKW, artikel 12", lang="nl", content=AKW_TEXT)]
+    issues, offsets, note = _check_derivation(_derived(), hits, _verify_in(hits))
+    assert issues == []
+    assert all(span is not None for span in offsets) and len(offsets) == 2
+    assert "a = 347.83 (AKW, artikel 12)" in note and "= 1.2142" in note
+
+
+def test_derivation_rejects_a_figure_that_is_not_quoted():
+    """Statutory monthly hours remembered rather than quoted are not evidence."""
+    hits = [_hit(chunk_id="akw", content=AKW_TEXT)]
+    draft = _derived(derivation="a * 151.67", value_scalar=52755.0)
+    issues, _, _ = _check_derivation(draft, hits, _verify_in(hits))
+    assert issues and "151.67" in issues[0] and "not a quoted operand" in issues[0]
+
+
+def test_derivation_allows_calendar_constants_only():
+    assert evaluate_derivation("a * 12 + b", {"a": 2.0, "b": 1.0}) == 25.0
+    assert 12.0 in DERIVATION_CONSTANTS
+    for bad in ("a ** 2", "__import__('os').system('x')", "max(a, b)", "a.real", "0.5 * a"):
+        with pytest.raises(ValueError):
+            evaluate_derivation(bad, {"a": 1.0, "b": 2.0})
+
+
+def test_derivation_rejects_an_operand_the_extract_does_not_state():
+    hits = [_hit(chunk_id="akw", content=AKW_TEXT)]
+    draft = _derived(operands=[
+        Operand(name="a", value=347.83, citation_chunk_id="akw",
+                supporting_extract="6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83"),
+        Operand(name="b", value=286.45, citation_chunk_id="akw",
+                supporting_extract="12 jaar en ouder, maar jonger is dan 18 jaar: € 409,21"),
+    ])
+    issues, _, _ = _check_derivation(draft, hits, _verify_in(hits))
+    assert issues == ["derivation: operand b's extract does not state 286.45"]
+
+
+def test_derivation_rejects_a_paraphrased_operand_and_an_unretrieved_chunk():
+    hits = [_hit(chunk_id="akw", content=AKW_TEXT)]
+    draft = _derived(operands=[
+        Operand(name="a", value=347.83, citation_chunk_id="akw",
+                supporting_extract="between 6 and 12 years: € 347,83"),
+        Operand(name="b", value=286.45, citation_chunk_id="elsewhere",
+                supporting_extract="jonger is dan 6 jaar: € 286,45"),
+    ])
+    issues, offsets, _ = _check_derivation(draft, hits, _verify_in(hits))
+    assert offsets == [None, None]
+    assert any("not a verbatim quote" in i for i in issues)
+    assert any("not retrieved" in i for i in issues)
+
+
+def test_derivation_must_evaluate_to_the_proposed_value():
+    hits = [_hit(chunk_id="akw", content=AKW_TEXT)]
+    issues, _, _ = _check_derivation(_derived(value_scalar=1.3), hits, _verify_in(hits))
+    assert issues and "evaluates to 1.21428" in issues[0]
+
+
+def test_figures_are_read_in_every_european_spelling():
+    assert 1801.80 in _figures_in("11,88 € par heure, soit 1 801,80 € par mois")
+    assert 1801.80 in _figures_in("1.801,80 euros")
+    assert 9139.0 in _figures_in("vermeerderd met € 9.139")  # Dutch thousands
+    assert 2.1 in _figures_in("artikel 2.10") and 44000.0 in _figures_in("€44,000")
+
+
+def test_record_value_prefers_the_ingested_scalar_for_percent_literals():
+    """`8.17%` is null in the export's normalized value; the ingester read it."""
+    assert record_value(None, 0.0817, "numeric") == 0.0817
+    assert record_value(0.2, 0.2, "numeric") == 0.2
+    assert record_value("$PSS * 4", None, "expression") == "$PSS * 4"
+    assert record_value(None, None, "n_a") is None
+
+
+def test_article_tokens_follow_each_country_idiom():
+    assert _article_tokens("article D. 633-3 du code de la sécurité sociale") == ["D633-3"]
+    assert _article_tokens("artículo 66.2 de la Ley 35/2006") == ["66.2"]
+    assert _article_tokens("de tabel in artikel 2.10, eerste lid, van de Wet IB 2001") == ["2.10"]
+    assert _article_tokens("Finance Act 2024, section amending section 531AN of the TCA 1997") == ["531AN"]
+    assert _article_tokens("section 461 of the Taxes Consolidation Act 1997") == ["461"]
+    assert _article_tokens("VSDĮ 10 straipsnio 1 dalis") == ["10"]
+    assert _article_tokens("art. L. 241-3 du CSS et l'article 4 bis") == ["L241-3", "4 bis"]
+    assert _article_tokens("l'arrêté fixant le plafond de la sécurité sociale pour 2025") == []
+
+
+def test_scout_rounds_merge_located_citations():
+    merged = merge_results([
+        ScoutResult(mode="tavily", round=1, located=["LIRPF Artículo 66"]),
+        ScoutResult(mode="tavily", round=2, located=["LIRPF Artículo 66", "LIRPF Artículo 76"]),
+    ])
+    assert merged.located == ["LIRPF Artículo 66", "LIRPF Artículo 76"]
+    assert "located" in merged.summary()

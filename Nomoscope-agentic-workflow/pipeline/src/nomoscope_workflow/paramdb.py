@@ -583,6 +583,24 @@ def _clean_lineage(lineage: dict) -> Lineage | None:
         return None
 
 
+def record_value(value_raw, value_numeric: float | None, value_kind: str | None):
+    """The value a materialized record carries for one model_values row.
+
+    `value_raw` is the export's own normalized value, which is null for the
+    percent literals the NL/LT/IE exports state rates as (`8.17%`, `4.1%`);
+    `normalise_value` reads those into `value_numeric` at ingest, but the
+    record was built from `value_raw` alone, so every such parameter reached
+    the workflow with a null current value: `_current_value` had nothing to
+    route against and a correct 0.495 proposal came back `changed` (NL
+    `$tin_br3`, IE `$tscee_prsiA_rate1`, 2026-09-09 eval — on both models).
+    Prefer the scalar the ingester established whenever the export gave none;
+    formulas and brackets keep their raw form.
+    """
+    if value_raw is None and value_kind == "numeric" and value_numeric is not None:
+        return value_numeric
+    return value_raw
+
+
 def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
     """Rebuild the Activity 1 record for one parameter (model_target or
     parameter_key) from params.parameters + params.model_values."""
@@ -616,17 +634,18 @@ def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
     )
 
     values: list[ParameterValue] = []
-    for (value_raw, valid_from, valid_to, legal_status, source_type,
-         oj_date, references, lineage) in conn.execute(
+    for (value_raw, value_numeric, value_kind, valid_from, valid_to, legal_status,
+         source_type, oj_date, references, lineage) in conn.execute(
         """
-        SELECT value_raw, valid_from, valid_to, legal_status, source_type,
-               official_journal_date, received_references, lineage
+        SELECT value_raw, value_numeric, value_kind, valid_from, valid_to, legal_status,
+               source_type, official_journal_date, received_references, lineage
         FROM params.model_values
         WHERE parameter_id = %s
         ORDER BY seq
         """,
         (parameter_id,),
     ).fetchall():
+        value_raw = record_value(value_raw, value_numeric, value_kind)
         envelope = dict(
             valid_from=valid_from,
             valid_to=valid_to,

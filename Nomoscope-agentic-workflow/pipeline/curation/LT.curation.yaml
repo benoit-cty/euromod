@@ -57,7 +57,8 @@ unit:
       `$bunct01_*Contr_coef`, `$tin_MaxLimit_coef*` — 60 average wages —,
       `$xhcht_*_coef`) and the durations/volumes (`$bplct_duration_m`,
       `$xhcht_*_m3`): they are not fractions, and no export unit fits them
-      today — that is a separate item for the economists.
+      today — that is a separate item for the economists (the multipliers are
+      curated to `ratio` in the rule below).
     targets:
       # ConstDef_lt
       - euromod://LT/ConstDef_lt/def_const/$bmact_FirstYear_rate  # 100%,45%,54.31%,70%,90%,n/a — Option I: first 12 months replacement rate
@@ -115,3 +116,40 @@ unit:
       # xcc_lt
       - euromod://LT/xcc_lt/def_const/$xcc_ded_rate1  # 0.5 — Childcare cost discount rates
       - euromod://LT/xcc_lt/def_const/$xcc_ded_rate2  # 1
+  - unit: ratio
+    note: >-
+      Multipliers of a base amount — the base social benefit (BSB), the
+      minimum monthly salary (MMS), the average wage (VDU) — that the export
+      files under `/1` or `currency`. Membership is by value: at least one
+      year's value is above 1, so none of these is a fraction, and under `/1`
+      the critique's range check rejected the correct value (2026-09-09 eval:
+      `$bchnm_coef` 1.75 "values fail sanity checks", `$tin_MaxLimit_coef3` 60
+      "a dimensionless multiplier declared in currency" — on both models).
+      `ratio` is the unit the store keeps for exactly this (NL `$bfa_mult2`);
+      the export has no unit for a multiplier, reported with the `/1` batch.
+    targets:
+      - euromod://LT/ConstDef_lt/def_const/$bch00_coef1  # 0.4,0.53,1.03 — child benefit: multiplier of BSB
+      - euromod://LT/ConstDef_lt/def_const/$bch00_coef1I  # 0.75,0.53,1.03
+      - euromod://LT/ConstDef_lt/def_const/$bch00_coef3  # 1.1,0.53,1.03
+      - euromod://LT/ConstDef_lt/def_const/$bch00_disab_coef2  # n/a,1.84,1.03
+      - euromod://LT/ConstDef_lt/def_const/$bch00_IncomeTest_coef  # n/a,3,1.5,2 — income test: multiple of SSI
+      - euromod://LT/ConstDef_lt/def_const/$bchba_coef  # 8,11,12.75,14 — birth grant: multiple of BSB
+      - euromod://LT/ConstDef_lt/def_const/$bchmp_other_coef  # n/a,12
+      - euromod://LT/ConstDef_lt/def_const/$bchmp_triplets_coef  # n/a,8
+      - euromod://LT/ConstDef_lt/def_const/$bchmp_twins_coef  # n/a,4
+      - euromod://LT/ConstDef_lt/def_const/$bchnm_coef  # n/a,0.79,1.32,1.54,1.75 — child benefit: multiple of BSB
+      - euromod://LT/ConstDef_lt/def_const/$bmaed_coef  # n/a,4,6
+      - euromod://LT/ConstDef_lt/def_const/$bmaprnc_coef  # 2,6.43
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_all_coef  # n/a,1.1
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_single12m_coef  # n/a,1.2
+      - euromod://LT/ConstDef_lt/def_const/$bsa00_single6m_coef  # n/a,1.4
+      - euromod://LT/ConstDef_lt/def_const/$bunct01_MaxContr_coef  # n/a,3,2.3274 — unemployment benefit: multiple of MMS
+      - euromod://LT/ConstDef_lt/def_const/$bunct01_MediumContr_coef  # n/a,2,1.5516
+      - euromod://LT/ConstDef_lt/def_const/$bunct01_ShortContr_coef  # n/a,1,0.7758
+      - euromod://LT/ConstDef_lt/def_const/$tin_MaxLimit_coef1  # n/a,12 — SIC ceiling: multiple of VDU
+      - euromod://LT/ConstDef_lt/def_const/$tin_MaxLimit_coef2  # n/a,36
+      - euromod://LT/ConstDef_lt/def_const/$tin_MaxLimit_coef3  # n/a,120,84,60
+      - euromod://LT/ConstDef_lt/def_const/$tin_MaxLimit_coeflow  # n/a,43
+      - euromod://LT/ConstDef_lt/def_const/$tin_MaxLimit_coef_other  # n/a,120,n/a
+      - euromod://LT/ConstDef_lt/def_const/$xhcht_Single_coef  # n/a,1.5,3 — heating compensation: multiple of SSI
+      - euromod://LT/ConstDef_lt/def_const/$xhcht_SubsPers_coef  # n/a,1,2

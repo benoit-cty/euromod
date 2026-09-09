@@ -314,6 +314,179 @@ def retrieve(
     return list(merged.values())[: cfg.retrieval_k]
 
 
+# ---------------------------------------------------------------------------
+# Locating a source the analyst named
+# ---------------------------------------------------------------------------
+
+#: An article designator as the analyst writes it in a "missing source": the
+#: country's word for article/section then the number — «article D. 633-3»,
+#: «artículo 66.2», «artikel 2.10», «section 461», «s. 531AN» — or, in
+#: Lithuanian, the number then «straipsnis».
+_ARTICLE_REF = re.compile(
+    r"(?:\b(?:art(?:[ií]culo|ikel|icle)?s?\.?|sections?|s\.|§)\s*(?:n[°º]\s*)?"
+    r"([A-Z]?\.?\s?\d+(?:[.\-]\d+)*[A-Za-z]{0,2}(?:\s(?:bis|ter|quater|quinquies|sexies))?))"
+    r"|(?:\b(\d+(?:[.\-]\d+)*)\s+straipsn)",
+    re.IGNORECASE,
+)
+
+#: How much of an act's title must appear in the need for the act to count as
+#: named: Ley 35/2006's full title scores 0.47 against «artículo 66.2 de la Ley
+#: 35/2006, del Impuesto sobre la Renta de las Personas Físicas …» and the next
+#: act 0.35; a code named in full scores 0.85–1.0.
+NAMED_ACT_MIN_SCORE = 0.4
+
+_NAMED_INSTRUMENTS_SQL = """
+SELECT i.id::text AS instrument_id, i.national_id, i.title_search,
+       word_similarity(i.title_search, %(need)s)::float8 AS score
+FROM instruments i
+JOIN jurisdictions j ON j.id = i.jurisdiction_id
+WHERE j.code = ANY(%(jurisdictions)s::text[])
+  AND i.source_trust_class <> 'context'
+  AND word_similarity(i.title_search, %(need)s) >= %(min_score)s
+ORDER BY score DESC
+LIMIT 3
+"""
+
+_NAMED_UNIT_SQL = f"""
+WITH {_LIVE_VERSION_CTE}
+SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
+       v.validity::text AS validity, v.version_status, i.source_trust_class,
+       word_similarity(i.title_search, %(need)s)::float8 AS score
+FROM legal_units u
+JOIN instruments i         ON i.id = u.instrument_id
+JOIN legal_unit_versions v ON v.legal_unit_id = u.id
+JOIN live_version lv       ON lv.version_id = v.id
+JOIN unit_texts t          ON t.version_id = v.id
+JOIN chunks ch             ON ch.unit_text_id = t.id
+WHERE t.lang = %(lang)s
+  AND u.citation ~* %(pattern)s
+  AND (%(instrument_ids)s::uuid[] IS NULL OR i.id = ANY(%(instrument_ids)s::uuid[]))
+ORDER BY score DESC, u.citation, ch.seq
+LIMIT %(k)s
+"""
+
+_NAMED_INSTRUMENT_FTS_SQL = f"""
+WITH {_LIVE_VERSION_CTE}
+SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
+       v.validity::text AS validity, v.version_status, i.source_trust_class,
+       -- Content only: chunks.tsv carries the context header at weight A, and
+       -- the header repeats the act's title in every chunk of the act.
+       ts_rank_cd(to_tsvector(ch.search_config, ch.content),
+                  websearch_to_tsquery(ch.search_config, %(fts_q)s), 1|32)::float8 AS score
+FROM chunks ch
+JOIN unit_texts t          ON t.id = ch.unit_text_id
+JOIN legal_unit_versions v ON v.id = t.version_id
+JOIN live_version lv       ON lv.version_id = v.id
+JOIN legal_units u         ON u.id = v.legal_unit_id
+JOIN instruments i         ON i.id = u.instrument_id
+WHERE t.lang = %(lang)s
+  AND i.id = %(instrument_id)s::uuid
+  AND to_tsvector(ch.search_config, ch.content) @@ websearch_to_tsquery(ch.search_config, %(fts_q)s)
+ORDER BY score DESC
+LIMIT %(k)s
+"""
+
+
+def _article_tokens(need: str) -> list[str]:
+    """Article numbers named in a need, spelled the way `legal_units.citation`
+    spells them: «D. 633-3» -> «D633-3», «66.2» stays (the ES paragraph idiom is
+    handled by the caller), «4 bis» keeps its suffix."""
+    tokens: list[str] = []
+    for match in _ARTICLE_REF.finditer(need):
+        raw = (match.group(1) or match.group(2) or "").strip()
+        token = re.sub(r"^([A-Za-z])\.?\s*", r"\1", raw)
+        token = re.sub(r"\s+(bis|ter|quater|quinquies|sexies)$", r" \1", token, flags=re.IGNORECASE)
+        if token and token not in tokens:
+            tokens.append(token)
+    return tokens
+
+
+def _citation_pattern(token: str) -> str:
+    """POSIX regex matching `token` as a whole article number inside a citation."""
+    return r"(^|[^0-9A-Za-z.])" + re.escape(token) + r"($|[^0-9A-Za-z.\-])"
+
+
+def locate_named_units(
+    conn: psycopg.Connection,
+    country: Scope,
+    lang: str,
+    as_of: date,
+    need: str,
+    k: int = 6,
+) -> list[RetrievalHit]:
+    """Chunks of the source an analyst NAMED, looked up rather than ranked.
+
+    A proposal that answers found=false names what it lacks («artículo 66 de la
+    Ley 35/2006», «article D. 633-3 du code de la sécurité sociale», «Finance
+    Act 2024 … amending section 461»). The gap-fill scout treats that as a
+    corpus gap, but on the 2026-09-09 eval six of nine such misses were acts
+    already held — the framed query, written from the parameter's EUROMOD
+    description, simply ranked the article below k (LIRPF art. 66 not in the
+    top 60; CGI-style code articles at rank 17–31). Web search and ingest can
+    do nothing for those; a direct lookup can, and it needs no ranking:
+
+    1. the act — every instrument in scope whose title the need contains
+       (pg_trgm `word_similarity`, NAMED_ACT_MIN_SCORE), up to three;
+    2. the article — every legal unit whose citation carries an article number
+       the need spells out, scoped to those acts when any matched (fallback for
+       the ES paragraph idiom: «66.2» is article 66);
+    3. failing an article, the analyst's own words searched inside each named
+       act alone (FTS), two chunks per act — «Finance Act 2024 … personal tax
+       credit» finds s. 3 without knowing its number.
+
+    As-of and jurisdiction scoping are the retrieval CTE's; hits come back
+    with method="located" so the trace shows they were not ranked in.
+    """
+    jurisdictions = scope_codes(country)
+    base = {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of, "need": need}
+    with conn.cursor(row_factory=dict_row) as cur:
+        acts = cur.execute(
+            _NAMED_INSTRUMENTS_SQL, {**base, "min_score": NAMED_ACT_MIN_SCORE}
+        ).fetchall()
+    act_ids = [act["instrument_id"] for act in acts] or None
+    hits: dict[str, RetrievalHit] = {}
+
+    def lookup(token: str, scoped: bool) -> None:
+        params = {
+            **base,
+            "pattern": _citation_pattern(token),
+            "instrument_ids": act_ids if scoped else None,
+            "k": k,
+        }
+        with conn.cursor(row_factory=dict_row) as cur:
+            rows = cur.execute(_NAMED_UNIT_SQL, params).fetchall()
+        for row in rows:
+            hits.setdefault(row["chunk_id"], RetrievalHit(method="located", **row))
+
+    tokens = _article_tokens(need)
+    for token in tokens:
+        lookup(token, scoped=act_ids is not None)
+    if not hits and act_ids:
+        for token in tokens:
+            head = re.match(r"[A-Za-z]?\d+", token)
+            if head and head.group(0) != token:
+                lookup(head.group(0), scoped=True)
+    if not hits and act_ids:
+        for act in acts:
+            # The act's own title words match all of its chunks: search the
+            # rest of the need — the article number, the concept, the year.
+            # (A need that IS the title — «l'arrêté fixant le plafond de la
+            # sécurité sociale pour 2025» — keeps nothing; then the whole need.)
+            title_words = set(re.findall(r"\w{2,}", (act["title_search"] or "").lower()))
+            terms = [t for t in re.findall(r"\w{2,}", need.lower()) if t not in title_words]
+            queries = [" OR ".join(dict.fromkeys(terms))] if terms else []
+            queries.append(_fts_query(need))
+            for fts_q in queries:
+                params = {**base, "instrument_id": act["instrument_id"], "fts_q": fts_q, "k": 3}
+                with conn.cursor(row_factory=dict_row) as cur:
+                    rows = cur.execute(_NAMED_INSTRUMENT_FTS_SQL, params).fetchall()
+                if rows:
+                    for row in rows:
+                        hits.setdefault(row["chunk_id"], RetrievalHit(method="located", **row))
+                    break
+    return list(hits.values())[:k]
+
+
 _CR_SEARCH_SQL = """
 SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
        v.validity::text AS validity, v.version_status, i.source_trust_class,

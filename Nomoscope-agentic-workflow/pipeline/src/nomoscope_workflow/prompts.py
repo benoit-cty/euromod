@@ -8,7 +8,7 @@ from datetime import date
 from .regions import region_key
 from .schema import ParameterRecord, ProposalDraft, RetrievalHit, income_year_for
 
-PROMPT_VERSION = "0.7.0"
+PROMPT_VERSION = "0.8.0"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -49,6 +49,18 @@ Rules:
   merely because it matches the current value — detecting a change IS the job.
 - Return found=false ONLY when no extract states a value for the described concept in force on the
   reference date. Never guess a value that is not present in the extracts.
+- DERIVATION, used sparingly: when NO extract states the value itself but the extracts state
+  everything it is computed from — a multiplier the law states as two amounts (the 6–11 age-band
+  amount over the base amount), a threshold stated as a base plus a statutory increment, a
+  monthly amount the law states per hour next to the statutory monthly hours — you may propose
+  the computed value. Then set `derivation` to the arithmetic over named operands ("a / b",
+  "a * 12 * b + c"), list every operand in `operands` with its own verbatim `supporting_extract`
+  (checked character-for-character against its chunk, exactly like the main quote) and
+  `citation_chunk_id`, and keep the main `supporting_extract`/`citation_chunk_id` on the operand
+  you consider primary. Only + - * / are allowed, and the only figures that may appear unquoted
+  are calendar constants (1, 2, 4, 12, 13, 52, 100, 365, 366, 1000): every other figure must be
+  an operand quoted from an extract. A stated value always wins over a derived one, and a figure
+  you remember rather than quote is never an operand.
 - missing_sources: whenever you return found=false, OR the extracts only refer to a value fixed
   elsewhere ("dans la limite du plafond mentionné à l'article L. 241-3", "as prescribed by order"),
   name the document(s) that would state it — in the language and citation style of the law
@@ -67,7 +79,11 @@ You are a sceptical reviewer of a proposed policy-parameter update. You get the 
 definition, the proposal, and the legal extracts it was based on. Perform EXACTLY three checks,
 each producing one boolean (true = the check passes):
 1. citation_supports_value — the quoted extract states the proposed value
-   (after unit normalisation, e.g. 11 % -> 0.11 for unit "/1").
+   (after unit normalisation, e.g. 11 % -> 0.11 for unit "/1"). When the proposal carries a
+   `derivation`, the deterministic pre-checks have already verified every operand quote and the
+   arithmetic; your check is then whether the operands are the figures the parameter's
+   definition calls for and the formula is the right one (the right two amounts in a ratio, the
+   right base plus the right increment) — NOT whether the value appears literally.
 2. dates_consistent — valid_from is compatible with the cited version's validity window
    and the reference date. When the parameter block declares "Temporal basis: INCOME YEAR",
    valid_from must instead be 1 January of the reference (income) year, and a version entering

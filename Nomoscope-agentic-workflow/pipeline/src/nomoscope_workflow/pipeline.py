@@ -11,7 +11,10 @@ pure functions. One Phoenix trace per parameter run.
 
 from __future__ import annotations
 
+import ast
 import json
+import math
+import operator
 import re
 import uuid
 from datetime import date, datetime, timedelta, timezone
@@ -572,6 +575,26 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 else:
                     report.issues.append("citation_chunk_id missing or not among retrieved chunks")
 
+                if draft.derivation:
+                    # A derived value: the extract check, operand by operand,
+                    # plus the arithmetic. Verified, the critique is told so
+                    # (the value is not literally in any extract); failed, the
+                    # proposal is rejected exactly like a non-verbatim quote.
+                    with retrieval.connect(cfg) as conn:
+                        derivation_issues, report.operand_offsets, note = _check_derivation(
+                            draft,
+                            hits,
+                            lambda chunk_id, extract: retrieval.verify_extract(
+                                conn, chunk_id, extract
+                            ),
+                        )
+                    if derivation_issues:
+                        report.citation_verified = False
+                        report.issues.extend(derivation_issues)
+                    else:
+                        mech_notes.append(note)
+                        report.issues.append(f"note: derived — {_derivation_summary(draft, hits)}")
+
                 if info.temporal_basis == TemporalBasis.INCOME_YEAR:
                     # Publication after as_of is EXPECTED here (the finance act
                     # for income year Y arrives in Y+1); the real checks are
@@ -804,6 +827,11 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 parameter_file=state.get("parameter_file"),
                 derived_from=state.get("derived_from") or None,
                 scout=state["scout"].summary() if state.get("scout") else None,
+                derivation=(
+                    _derivation_summary(draft, state.get("hits", []))
+                    if draft is not None and draft.found and draft.derivation
+                    else None
+                ),
             )
             set_output(span, {"routing": routing, "item_id": item.id})
         return {"routing": routing, "item": item}
@@ -883,6 +911,36 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
         rounds = [*state.get("scout_rounds", []), result]
         return {"scout_rounds": rounds, "scout": scout.merge_results(rounds)}
 
+    def locate_step(state: WorkflowState) -> bool:
+        """Look the last round's needs up in the corpus we hold; True when new chunks arrived.
+
+        The scout's other half: `run` fetches what is missing, this finds what
+        is present but ranked out — on the 2026-09-09 eval, six of nine "corpus
+        gap" refusals named an act already held (LIRPF art. 66, Wet IB 2001
+        art. 2.10, CSS art. D633-3, Finance Act 2024 …). Located chunks go in
+        FRONT of the hits so the retry reads them first.
+        """
+        record, as_of = state["record"], state["as_of"]
+        last = state["scout_rounds"][-1]
+        known = [h.chunk_id for h in state.get("hits", [])]
+        with step_span(
+            tracer,
+            "locate",
+            kind="RETRIEVER",
+            input_value={"needs": last.needs, "round": last.round},
+        ) as span:
+            located_hits, citations = scout.locate(
+                cfg, record, state.get("retrieval_as_of", as_of), last.needs, known
+            )
+            last.located = citations
+            state["scout"] = scout.merge_results(state["scout_rounds"])
+            set_output(span, {"located": citations, "chunks": len(located_hits)})
+        if not located_hits:
+            return False
+        progress(f"  [scout] located in the corpus: {', '.join(citations)}")
+        state["hits"] = [*located_hits, *state.get("hits", [])]
+        return True
+
     def _propose_and_critique(state: WorkflowState) -> None:
         while True:
             state.update(propose(state))
@@ -941,9 +999,15 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 if not _needs_gap_fill(state):
                     break
                 state.update(scout_step(state, round_index))
-                if not state["scout_rounds"][-1].ingested:
-                    break  # nothing new arrived; another round would ask the same question
-                state.update(retrieve(state))
+                ingested = bool(state["scout_rounds"][-1].ingested)
+                if ingested:
+                    state.update(retrieve(state))
+                # Whether or not anything was fetched, the named article may be
+                # held and ranked out (a freshly ingested act's article can be
+                # too): look it up directly. Nothing new from either leg means
+                # another round would only ask the same question.
+                if not locate_step(state) and not ingested:
+                    break
                 if state["hits"]:
                     _propose_and_critique(state)
 
@@ -971,6 +1035,163 @@ def _resolve_chunk_by_extract(hits: list[RetrievalHit], extract: str) -> str | N
         return None
     matches = [h.chunk_id for h in hits if h.content and needle in h.content]
     return matches[0] if len(matches) == 1 else None
+
+
+#: Figures a derivation may use without quoting them: calendar and scaling
+#: constants (months, quarters, weeks, days in a year, percent, per mille).
+#: Everything else is a fact about the law and must be an operand quoted
+#: verbatim from a retrieved chunk — that is what keeps a derived value inside
+#: the anti-hallucination contract.
+DERIVATION_CONSTANTS = frozenset({1.0, 2.0, 4.0, 12.0, 13.0, 52.0, 100.0, 365.0, 366.0, 1000.0})
+_DERIVATION_OPS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+}
+
+
+def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
+    """Evaluate `expression` over named operands.
+
+    Raises ValueError for anything but + - * / over operand names and
+    DERIVATION_CONSTANTS — no calls, no attributes, no other literals.
+    """
+    try:
+        tree = ast.parse(expression.strip(), mode="eval")
+    except SyntaxError as exc:
+        raise ValueError(f"derivation is not an arithmetic expression ({exc.msg})") from None
+
+    def ev(node: ast.AST) -> float:
+        if isinstance(node, ast.Expression):
+            return ev(node.body)
+        if (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, (int, float))
+            and not isinstance(node.value, bool)
+        ):
+            if float(node.value) not in DERIVATION_CONSTANTS:
+                raise ValueError(
+                    f"bare figure {node.value} is not a quoted operand (only "
+                    f"{sorted(int(c) for c in DERIVATION_CONSTANTS)} may appear unquoted)"
+                )
+            return float(node.value)
+        if isinstance(node, ast.Name):
+            if node.id not in operands:
+                raise ValueError(f"operand {node.id!r} is not listed in operands")
+            return operands[node.id]
+        if isinstance(node, ast.BinOp) and type(node.op) in _DERIVATION_OPS:
+            return _DERIVATION_OPS[type(node.op)](ev(node.left), ev(node.right))
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+            value = ev(node.operand)
+            return -value if isinstance(node.op, ast.USub) else value
+        raise ValueError("only + - * / over operand names and calendar constants are allowed")
+
+    try:
+        return float(ev(tree))
+    except ZeroDivisionError:
+        raise ValueError("derivation divides by zero") from None
+
+
+_FIGURE = re.compile(r"\d(?:[\d\s\u00a0\u202f.,]*\d)?")
+
+
+def _figures_in(text: str) -> set[float]:
+    """Every reading of every number in `text`: «1 801,80» and «1.801,80»
+    (thousands separators), «1,801.80», «9.139» (a Dutch thousand or an English
+    decimal — both readings kept), «347,83»."""
+    figures: set[float] = set()
+    for raw in _FIGURE.findall(text):
+        compact = re.sub(r"[\s\u00a0\u202f]", "", raw)
+        for candidate in (
+            compact,
+            compact.replace(",", "."),
+            compact.replace(".", "").replace(",", "."),
+            compact.replace(",", ""),
+        ):
+            try:
+                figures.add(float(candidate))
+            except ValueError:
+                pass
+    return figures
+
+
+def _extract_states(extract: str, value: float) -> bool:
+    """Whether the extract states `value` — as such, or as a percentage (108 % for 1.08)."""
+    return any(
+        math.isclose(figure, target, rel_tol=1e-9, abs_tol=1e-9)
+        for figure in _figures_in(extract)
+        for target in (value, value * 100)
+    )
+
+
+def _derivation_summary(draft: ProposalDraft, hits: list[RetrievalHit]) -> str:
+    """«a / b with a = 347.83 (AKW, artikel 12), b = 286.45 (AKW, artikel 12)» — for the reviewer."""
+    citations = {h.chunk_id: h.citation for h in hits}
+    parts = [
+        f"{op.name} = {op.value:g} ({citations.get(op.citation_chunk_id) or op.citation_chunk_id})"
+        for op in draft.operands
+    ]
+    return f"{draft.derivation} with " + ", ".join(parts)
+
+
+def _check_derivation(
+    draft: ProposalDraft,
+    hits: list[RetrievalHit],
+    verify,
+) -> tuple[list[str], list[tuple[int, int] | None], str | None]:
+    """Mechanical check of a derived proposal — the extract check, per operand.
+
+    `verify(chunk_id, extract)` returns the extract's offsets in the chunk or
+    None (retrieval.verify_extract in production). Every operand must cite a
+    retrieved chunk, quote it verbatim and state its own figure; the
+    expression may use only those operands and calendar constants; and it
+    must evaluate to the proposed value. Returns (issues, operand offsets,
+    note for the critique) — issues empty means verified.
+    """
+    if draft.value_brackets is not None or draft.value_scalar is None:
+        return ["derivation: only a scalar value can be derived"], [], None
+    if not draft.operands:
+        return ["derivation: no operands quoted"], [], None
+    issues: list[str] = []
+    offsets: list[tuple[int, int] | None] = []
+    hit_ids = {h.chunk_id for h in hits}
+    values: dict[str, float] = {}
+    for op in draft.operands:
+        where = f"operand {op.name}"
+        if op.name in values:
+            issues.append(f"derivation: {where} is listed twice")
+            offsets.append(None)
+            continue
+        values[op.name] = op.value
+        if op.citation_chunk_id not in hit_ids:
+            issues.append(f"derivation: {where} cites a chunk that was not retrieved")
+            offsets.append(None)
+            continue
+        span = verify(op.citation_chunk_id, op.supporting_extract)
+        offsets.append(span)
+        if span is None:
+            issues.append(f"derivation: {where}'s extract is not a verbatim quote of its chunk")
+        elif not _extract_states(op.supporting_extract, op.value):
+            issues.append(f"derivation: {where}'s extract does not state {op.value:g}")
+    if issues:
+        return issues, offsets, None
+    try:
+        result = evaluate_derivation(draft.derivation or "", values)
+    except ValueError as exc:
+        return [f"derivation: {exc}"], offsets, None
+    if not math.isclose(result, draft.value_scalar, rel_tol=1e-3, abs_tol=1e-6):
+        return [
+            f"derivation: {draft.derivation} evaluates to {result:g}, "
+            f"not the proposed {draft.value_scalar:g}"
+        ], offsets, None
+    note = (
+        f"derivation verified deterministically: {_derivation_summary(draft, hits)} = {result:g}; "
+        "every operand extract is verbatim in its cited chunk and states its figure, so do NOT "
+        "fail citation_supports_value for the value not being stated literally — judge whether "
+        "these are the right operands and the right formula for the parameter"
+    )
+    return [], offsets, note
 
 
 def _values_sane(unit: str, draft: ProposalDraft) -> bool:
@@ -1004,6 +1225,29 @@ def _build_proposed_value(state: WorkflowState, cfg: WorkflowConfig) -> Paramete
                 source_trust_class=cited.source_trust_class,
             )
         )
+    model_answer = draft.reasoning
+    if draft.derivation:
+        # One reference per operand, so the reviewer sees every figure the
+        # value was computed from with its own verbatim quote; the primary
+        # reference is kept first and not repeated.
+        offsets = (report.operand_offsets if report else None) or []
+        for index, operand in enumerate(draft.operands):
+            source = next((h for h in hits if h.chunk_id == operand.citation_chunk_id), None)
+            if source is None or (
+                operand.citation_chunk_id == draft.citation_chunk_id
+                and operand.supporting_extract == draft.supporting_extract
+            ):
+                continue
+            references.append(
+                Reference(
+                    title=source.citation or (source.context_header or "retrieved chunk"),
+                    supporting_extract=operand.supporting_extract,
+                    extract_offsets=offsets[index] if index < len(offsets) else None,
+                    jrc_database_id=source.chunk_id,
+                    source_trust_class=source.source_trust_class,
+                )
+            )
+        model_answer = f"Derived: {_derivation_summary(draft, hits)}. {draft.reasoning or ''}".strip()
     return ParameterValue(
         value=_draft_value(draft),
         valid_from=draft.valid_from or state["as_of"],
@@ -1018,7 +1262,7 @@ def _build_proposed_value(state: WorkflowState, cfg: WorkflowConfig) -> Paramete
             prompt_version=PROMPT_VERSION,
             agent_version=AGENT_VERSION,
             model=cfg.model,
-            model_answer=draft.reasoning,
+            model_answer=model_answer,
             confidence=draft.confidence,
             retrieval_trace=[h.model_copy(update={"content": ""}) for h in hits],
         ),

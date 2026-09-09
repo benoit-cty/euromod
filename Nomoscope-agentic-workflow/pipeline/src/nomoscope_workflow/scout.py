@@ -22,16 +22,17 @@ import os
 import re
 import subprocess
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import llm
+from . import llm, regions, retrieval
 from .config import WorkflowConfig
 from .query_encoder import embedding_process, ingest_dir
-from .schema import ParameterRecord
+from .schema import ParameterRecord, RetrievalHit
 from .tracing import progress
 
 INGEST_TIMEOUT = 600  # a single arrêté is seconds; a loi de finances, minutes
@@ -42,6 +43,13 @@ INGEST_TIMEOUT = 600  # a single arrêté is seconds; a loi de finances, minutes
 # is installed). The build commits per batch, so even a timeout here keeps the
 # vectors computed so far; the retry then resumes where it stopped.
 EMBED_TIMEOUT = int(os.environ.get("WORKFLOW_SCOUT_EMBED_TIMEOUT", "1800"))
+
+#: Set once the web-search provider has refused for good in this process —
+#: Tavily answers HTTP 432 when the plan's usage limit is spent. Both eval runs
+#: of 2026-09-09 (212 cases) hit it on every single query and the only trace
+#: was a per-item error string: the scout ran blind for a whole evaluation and
+#: nobody saw. Remember it, say it once, and stop paying a round trip per query.
+_web_search_unavailable: str | None = None
 
 # Per-country discovery rules: the official domains web search is restricted
 # to, and the id shapes the archive-first ingester can fetch directly.
@@ -238,6 +246,9 @@ class ScoutResult:
     ingested: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     reasoning: str | None = None
+    #: Citations of sources the analyst named that turned out to be already in
+    #: the corpus — looked up directly and handed to the retry (see `locate`).
+    located: list[str] = field(default_factory=list)
     #: 1-based gap-fill round this result came from.
     round: int = 1
     #: What the analyst said it was missing, verbatim — the input that drove
@@ -253,6 +264,7 @@ class ScoutResult:
             "urls": self.urls,
             "candidate_ids": self.candidate_ids,
             "ingested": self.ingested,
+            "located": self.located,
             "errors": self.errors,
             "reasoning": self.reasoning,
         }
@@ -270,6 +282,7 @@ def merge_results(results: list["ScoutResult"]) -> "ScoutResult":
         merged.urls += [u for u in r.urls if u not in merged.urls]
         merged.candidate_ids += [c for c in r.candidate_ids if c not in merged.candidate_ids]
         merged.ingested += [i for i in r.ingested if i not in merged.ingested]
+        merged.located += [c for c in r.located if c not in merged.located]
         merged.errors += r.errors
     merged.reasoning = " | ".join(r.reasoning for r in results if r.reasoning) or None
     return merged
@@ -525,7 +538,10 @@ def run(
     pattern: re.Pattern = rules["id_pattern"]
     ids = [m for text in suggestion.instrument_ids for m in pattern.findall(text)]
     titles: dict[str, str] = {}  # instrument id -> best search-result title
-    if cfg.scout == "tavily" and cfg.tavily_api_key:
+    global _web_search_unavailable
+    if cfg.scout == "tavily" and cfg.tavily_api_key and _web_search_unavailable:
+        result.errors.append(_web_search_unavailable)
+    elif cfg.scout == "tavily" and cfg.tavily_api_key:
         for query in result.queries:
             try:
                 for hit in _tavily_search(cfg.tavily_api_key, query, rules["domains"]):
@@ -536,6 +552,14 @@ def run(
                         titles.setdefault(found, hit.get("title", ""))
             except Exception as exc:
                 result.errors.append(f"tavily search failed: {exc}")
+                if "432" in str(exc):
+                    _web_search_unavailable = (
+                        "web search unavailable: the Tavily plan's usage limit is exhausted "
+                        "(HTTP 432) — discovery runs on the model's own instrument ids and "
+                        "the corpus lookup only until the quota resets or TAVILY_API_KEY changes"
+                    )
+                    progress(f"  [scout] ✗ {_web_search_unavailable}")
+                    break
 
     result.candidate_ids = list(dict.fromkeys(ids))
     if len(result.candidate_ids) > 1 and titles:
@@ -564,6 +588,8 @@ def run(
         else:
             result.errors.append(error)
             progress(f"  [scout] ✗ {error}")
+    if not result.candidate_ids and not result.errors:
+        progress("  [scout] no candidate instrument found for the stated needs")
     if result.ingested and cfg.embedding_model_id != 99:
         progress(
             "  [scout] embedding new chunks with BGE-M3 "
@@ -580,3 +606,39 @@ def run(
         else:
             progress(f"  [scout] ✓ embeddings up to date ({time.monotonic() - started:.0f}s)")
     return result
+
+
+def locate(
+    cfg: WorkflowConfig,
+    record: ParameterRecord,
+    as_of: date,
+    needs: list[str],
+    known_chunk_ids: Iterable[str],
+) -> tuple[list[RetrievalHit], list[str]]:
+    """Look the analyst's named sources up in the corpus we already hold.
+
+    The complement of `run`: that one fetches what is missing, this one finds
+    what is present but was ranked out. Nothing here weakens the contract —
+    the chunks come from the database like any retrieved chunk and the
+    verbatim-quote check still applies to whatever gets cited from them.
+    Returns the new chunks (not already among `known_chunk_ids`) and the
+    citations they belong to, for the ScoutResult and the reviewer.
+    """
+    info = record.information
+    seen = set(known_chunk_ids)
+    hits: list[RetrievalHit] = []
+    citations: list[str] = []
+    with retrieval.connect(cfg) as conn:
+        scope = retrieval.jurisdiction_scope(
+            conn, info.country, regions.region_key(info.country, info.model_target)
+        )
+        lang = retrieval.LANG_BY_COUNTRY.get(retrieval.scope_codes(scope)[0], "en")
+        for need in needs[:5]:
+            for hit in retrieval.locate_named_units(conn, scope, lang, as_of, need):
+                if hit.chunk_id in seen:
+                    continue
+                seen.add(hit.chunk_id)
+                hits.append(hit)
+                if hit.citation and hit.citation not in citations:
+                    citations.append(hit.citation)
+    return hits, citations

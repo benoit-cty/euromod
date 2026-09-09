@@ -173,7 +173,20 @@ print(json.dumps(d.get('scout'), indent=2, ensure_ascii=False))" .eval_runs/<run
 ```
 
 `needs` is the analyst's own account of the missing document, `ingested` is what
-the scout fetched. `needs` set but `ingested` empty means one of: the act is not
+the scout fetched, `located` the citations the corpus lookup found for those
+needs without fetching anything. **Read `errors` first**: `432` on every
+Tavily call means the plan quota is spent and the web leg ran blind for the
+whole run (both 2026-09-09 runs) — a "corpus gap" then measures nothing.
+
+**A refusal that names an act we hold is a ranking miss, not a gap.** On the
+2026-09-09 pair, six of nine `retrieval_hit=False` misses named acts already
+ingested (LIRPF art. 66 was not in the top 60 for its framed query); the
+`locate` step now looks named articles up directly. Re-run
+`retrieval.locate_named_units` with the item's `scout.needs` before ingesting
+anything. **A refusal "cannot be supplied by calculation" is now answerable**
+when every operand is stated by an extract (NL `$bfa_mult2`, `$chall_b2`):
+the proposal may carry a `derivation`, mechanically checked; a refusal of that
+kind after prompt 0.8.0 is a model choice, not a rule. `needs` set but `ingested` empty means one of: the act is not
 findable on the country's official domains, the country has no
 `scout.COUNTRY_SOURCES` entry, or — check this one — **the act is in the corpus
 and retrieval simply did not surface it**, which is a retrieval problem wearing a
