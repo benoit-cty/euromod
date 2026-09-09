@@ -19,5 +19,5 @@
   "verified": true,
   "drafted_by": "human",
   "reviewed_by": "ben",
-  "notes": "curated: nl.json#tin_br3 | euromod value in force at 2025-06-01: '49.50%' from 2020-01-01 | EASY — the top rate, 49,50 %, unchanged since 2020 while everything around it moved for 2025 (a new first band, 36,97 -> 37,48 in band 2, both thresholds re-indexed). The no-change trap: the pipeline must re-confirm 49,50 from the same table it reads the new bands from, not infer a change from the reform. Unit /100 in the export, curated to /1 in NL.curation.yaml (the value is a percent literal like its /1 sibling $tin_br1). ROUTING: `unchanged`."
+  "notes": "curated: nl.json#tin_br3 | euromod value in force at 2025-06-01: 0.495 from 2020-01-01 | EASY — the top rate, 49,50 %, unchanged since 2020 while everything around it moved for 2025 (a new first band, 36,97 -> 37,48 in band 2, both thresholds re-indexed). The no-change trap: the pipeline must re-confirm 49,50 from the same table it reads the new bands from, not infer a change from the reform. Unit /100 in the export, curated to /1 in NL.curation.yaml (the value is a percent literal like its /1 sibling $tin_br1). ROUTING: `unchanged`."
 }

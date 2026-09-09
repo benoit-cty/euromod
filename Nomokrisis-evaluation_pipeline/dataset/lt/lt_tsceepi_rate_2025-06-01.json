@@ -20,6 +20,6 @@
   },
   "verified": true,
   "drafted_by": "human",
-  "notes": "curated: lt.json#tsceepi_rate | euromod value in force at 2025-06-01: '8.72%' from 2019-01-01 | MEDIUM — employee pension social-insurance contribution, 8.72% since the 2019 tax reform. VSDĮ only says the tariffs are approved by the annual law on the state social funds' budget indicators; the number itself is in that law: for 2025 the Valstybės socialinių fondų biudžetų 2025 metų rodiklių patvirtinimo įstatymas XV-46 (TAR 2024-22173), art. 3 ('pensijų socialinio draudimo įmokos tarifą – 8,72 procento'), ingested 2026-09-08 through the LT adapter's never-consolidated-act fallback (<id>/orig). Unchanged trap plus the percent-string spelling (normalise_value reads '8.72%' as 0.0872). ACCEPTED CITATIONS: XV-46 art. 3 (the value) or any VSDĮ article (the delegation).",
-  "reviewed_by": "ben"
+  "reviewed_by": "ben",
+  "notes": "curated: lt.json#tsceepi_rate | euromod value in force at 2025-06-01: 0.0872 from 2019-01-01 | MEDIUM — employee pension social-insurance contribution, 8.72% since the 2019 tax reform. VSDĮ only says the tariffs are approved by the annual law on the state social funds' budget indicators; the number itself is in that law: for 2025 the Valstybės socialinių fondų biudžetų 2025 metų rodiklių patvirtinimo įstatymas XV-46 (TAR 2024-22173), art. 3 ('pensijų socialinio draudimo įmokos tarifą – 8,72 procento'), ingested 2026-09-08 through the LT adapter's never-consolidated-act fallback (<id>/orig). Unchanged trap plus the percent-string spelling (normalise_value reads '8.72%' as 0.0872). ACCEPTED CITATIONS: XV-46 art. 3 (the value) or any VSDĮ article (the delegation)."
 }

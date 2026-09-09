@@ -18,7 +18,7 @@
       "expected_valid_from": "2025-01-01",
       "citations": [
         "Finance Act 2024, s. 3",
-        "TCA 1997, s. 15"
+        "Taxes Consolidation Act 1997, s. 15"
       ],
       "note": "EASY — the income-tax bracket case. Standard rate band, single person: 42,000 -> 44,000 for 2025, stated verbatim in Finance Act 2024 s. 3 (ingested, English, one section carries the whole PIT parameter set). The pipeline's happy path. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
       "id": "tin_stdsingleband_lim"
@@ -42,7 +42,7 @@
       "expected_valid_from": "2025-01-01",
       "citations": [
         "Finance Act 2024, s. 3",
-        "TCA 1997, s. 461"
+        "Taxes Consolidation Act 1997, s. 461"
       ],
       "note": "EASY-MEDIUM — personal tax credit 1,875 -> 2,000 for 2025, in the same Finance Act section as the band: tests extracting several distinct parameters from one dense amending section without cross-contamination. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
       "id": "tin_perstc_amt"
@@ -55,7 +55,7 @@
       "expected_valid_from": "2025-01-01",
       "citations": [
         "Finance Act 2024, s. 2",
-        "TCA 1997, s. 531AN"
+        "Taxes Consolidation Act 1997, s. 531AN"
       ],
       "note": "MEDIUM — USC middle rate cut 4% -> 3% (Budget 2025). Stored numerically (0.03) so it scores cleanly, unlike the percent-string rates. USC lives in TCA Part 18D, amended by FA 2024 s. 2 — a different section than the PIT family. ROUTING: EUROMOD already carries the 2025 value, so a correct pipeline routes `unchanged` — it must re-confirm the value with a citation, not propose a change. The 2024->2025 movement described above is still what the value and citation legs test.",
       "id": "txcin_rate3"
@@ -68,7 +68,7 @@
       "expected_valid_from": "2025-01-01",
       "citations": [
         "Finance Act 2024, s. 2",
-        "TCA 1997, s. 531AN"
+        "Taxes Consolidation Act 1997, s. 531AN"
       ],
       "note": "MEDIUM — USC 2% band ceiling. The law says 27,382 (12,012 + 15,370); EUROMOD stores 27,383 — a EUROMOD-side off-by-one, mirroring the FR bareme 1-euro erratum, to be reported to the economists team. Per the FR precedent the expected value is the LAW's (27,382), and the 1e-6 scoring tolerance keeps the difference visible.",
       "id": "txcin_upthres2"

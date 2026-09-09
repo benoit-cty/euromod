@@ -13,7 +13,7 @@
       "en": "$csg_red_thres"
     },
     "description": {
-      "en": "This is the annual earnings threshold, computed as four times the PSS (Plafond de la Sécurité Sociale, the French social-security earnings ceiling), above which the 1.75% professional-expenses reduction no longer applies to the CSG (Contribution Sociale Généralisée) base — above this level the CSG is calculated on 100% of gross earnings instead of 98.25%. It is used in policy tinty_fr (personal income tax module) in the ArithOp computing the 'Amount of CSG - earnings' and the BenCalc computing 'Amount of CSG - unemployment benefits', and equivalently in the CSG policy tscxc_fr for the same two computations, always as a formula input alongside $csg_redrate. Per the taxes documentation, CSG is levied on 98.25% of current gross earnings until this four-times-PSS threshold, and on 100% above it."
+      "en": "Defines the annual earnings threshold, computed as four times the social-security ceiling ($PSS), above which the reduced CSG (Contribution Sociale Généralisée) assessment base of 98.25% of gross pay no longer applies and CSG is instead levied on the full 100% of gross income. It is used in tinty_fr's ArithOp function (Formula parameter, \"Amount of CSG - earnings\") and BenCalc function (Comp_perTU parameter, \"Amount of CSG - unemployment benefits\"), as well as the equivalent CSG-calculation functions in policy tscxc_fr. Theme_doc taxes.md confirms this exactly: the CSG base is \"98.25% on gross income until four times the annual PSS, 100% above or for pension\"."
     },
     "explanation": {
       "en": "EUROMOD function group: Parameters for determining net taxable income (RNI)"
@@ -35,7 +35,7 @@
         "run_id": null,
         "prompt_version": null,
         "agent_version": null,
-        "model": "euromod-connector:EUROMOD_MASTER_VERSION_J2.19",
+        "model": "euromod-connector:euromod_master_version_j2.53",
         "model_answer": "$PSS * 4",
         "reviewed_by": null,
         "review_status": "pending",

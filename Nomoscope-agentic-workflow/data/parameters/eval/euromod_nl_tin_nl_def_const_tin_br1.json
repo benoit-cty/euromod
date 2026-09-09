@@ -437,7 +437,7 @@
       }
     },
     {
-      "value": null,
+      "value": 0.0817,
       "valid_from": "2025-01-01",
       "valid_to": "2025-12-31",
       "legal_status": null,
@@ -460,7 +460,7 @@
       }
     },
     {
-      "value": null,
+      "value": 0.081,
       "valid_from": "2026-01-01",
       "valid_to": null,
       "legal_status": null,

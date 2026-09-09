@@ -4,7 +4,7 @@
     "model_target": "euromod://LT/ConstDef_lt/def_const/$tin_MaxLimit_coef3",
     "spine_order": "3",
     "value_type": "scalar",
-    "unit": "currency",
+    "unit": "ratio",
     "threshold_unit": null,
     "label": {
       "en": "cap for PIT & SICER/SICEE. Cap= $AMS*$tin_MaxLimit_coef3/12"

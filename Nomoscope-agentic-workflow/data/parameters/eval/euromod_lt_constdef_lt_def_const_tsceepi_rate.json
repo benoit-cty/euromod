@@ -23,7 +23,7 @@
   },
   "values": [
     {
-      "value": null,
+      "value": 0.025,
       "valid_from": "2005-01-01",
       "valid_to": "2008-12-31",
       "legal_status": null,
@@ -46,7 +46,7 @@
       }
     },
     {
-      "value": null,
+      "value": 0.03,
       "valid_from": "2009-01-01",
       "valid_to": "2018-12-31",
       "legal_status": null,
@@ -69,7 +69,7 @@
       }
     },
     {
-      "value": null,
+      "value": 0.0872,
       "valid_from": "2019-01-01",
       "valid_to": null,
       "legal_status": null,
