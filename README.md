@@ -54,9 +54,9 @@ All persistent state lives in the one Postgres 17 + pgvector container (`nomothe
 Logical dump (recommended — portable across Postgres versions, works while the stack is running):
 
 ```bash
-mkdir -p backups
-docker exec nomotheca-legislation-db pg_dump -U jrc -Fc -d legislation > backups/legislation_$(date +%Y%m%d).dump
-docker exec nomotheca-legislation-db pg_dump -U jrc -Fc -d phoenix     > backups/phoenix_$(date +%Y%m%d).dump
+mkdir -p ../backups
+docker exec nomotheca-legislation-db pg_dump -U jrc -Fc -d legislation > ../backups/legislation_$(date +%Y%m%d).dump
+docker exec nomotheca-legislation-db pg_dump -U jrc -Fc -d phoenix     > ../backups/phoenix_$(date +%Y%m%d).dump
 ```
 
 `-Fc` (custom format) is compressed and restorable with `pg_restore`, including selective/parallel restore. For a plain-SQL dump instead (diff-friendly, restorable with `psql`):
