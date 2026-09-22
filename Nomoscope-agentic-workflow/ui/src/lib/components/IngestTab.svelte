@@ -1,6 +1,10 @@
 <script>
+  // Ingest tab: every sub-form describes a job (ops.jobs) the worker runs —
+  // `ingest` (instrument / citation / document / route), `embed`, `translate`
+  // — and follows its events until it finishes. Nothing runs on this machine.
   import { onMount } from 'svelte';
   import { api } from '../api.js';
+  import { submitAndFollow, summarize } from '../jobs.js';
 
   let { dbUrl = '' } = $props();
 
@@ -19,7 +23,7 @@
   // --- contributed-document form ---
   // A reviewer pastes a URL or picks a file and states what the document is.
   // The class is never stated: it follows from the kind (ADR 0001).
-  let docSource = $state('');          // URL or local file path
+  let docSource = $state('');          // URL or file path (on the worker's host)
   let docJurisdiction = $state('fr');
   let docLang = $state('fr');
   let docTitle = $state('');
@@ -64,20 +68,20 @@
   );
 
   // --- embeddings form ---
-  // Seeded at mount from the environment the run will actually use: a machine
-  // with the CUDA venv installed runs torch on the Hub model, and has no
-  // OpenVINO export to point `--model-path` at.
-  let modelPath = $state('models/bge-m3-openvino');
-  let backend = $state('openvino'); // torch | openvino
-  let gpuEmbeddings = $state(false);
-  let device = $state('');
+  // Backend, model path and device are the worker's business: it runs BGE-M3
+  // on whatever it has (CUDA, else CPU). The form only says what to embed.
   let modelId = $state(1);
   let batchSize = $state(16);
   let embLimit = $state('');
   let embDryRun = $state(false);
 
   // --- translation form ---
-  let model = $state('azure_openai/gpt-5.6-luna');
+  // The model is picked from the list the worker publishes (ops.worker_models),
+  // never typed: a free-text model string is how a wrong deployment went
+  // unnoticed for a month.
+  let models = $state([]);            // [{ model, kind, is_default }] of kind llm
+  let model = $state('');
+  let workerAlive = $state(null);     // null = unknown yet
   let targetLang = $state('en');
   let trLimit = $state('');
   let requestTimeout = $state(120);
@@ -85,18 +89,16 @@
 
   // --- run state ---
   let running = $state(false);
-  let runId = $state('');
+  let jobId = $state(null);
   let logLines = $state([]);
   let summary = $state('');
   let error = $state('');
-  let logEl;
+  let logEl = $state(null);
 
   // --- progress state ---
-  // The CLI is run with --progress-json (embeddings/translate), which prints
-  // machine-readable "@progress {json}" lines on stdout. We pull those out of
-  // the log stream and render a real bar; ingestion runs (no totals) get an
-  // indeterminate activity bar + elapsed time instead.
-  const PROGRESS_PREFIX = '@progress ';
+  // The worker turns the CLI's "@progress {json}" lines into progress events
+  // and we render a real bar; ingestion runs (no totals) get an indeterminate
+  // activity bar + elapsed time instead.
   let progress = $state(null); // { task, phase, done, total, translated?, embedded?, failed?, detail }
   let startedAt = $state(0);
   let now = $state(0);
@@ -122,6 +124,7 @@
         if (codes.length) jurisdictions = codes;
       })
       .catch(() => {});
+    loadWorker().catch(() => {});
   });
 
   // Tick the elapsed clock while a run is active.
@@ -130,6 +133,15 @@
     const t = setInterval(() => (now = Date.now()), 1000);
     return () => clearInterval(t);
   });
+
+  async function loadWorker() {
+    const status = await api.workerStatus(url.trim());
+    workerAlive = (status.workers ?? []).some((w) => w.alive);
+    models = (status.models ?? []).filter((m) => m.kind === 'llm');
+    if (!models.some((m) => m.model === model)) {
+      model = (models.find((m) => m.is_default) ?? models[0])?.model ?? '';
+    }
+  }
 
   // The kinds each jurisdiction offers, and the class each one implies, come
   // from the ingester so the two can never drift. `route` with no source
@@ -141,29 +153,9 @@
   }
 
   onMount(() => {
-    loadKindTable().catch(() => {});
-    api
-      .embeddingDefaults()
-      .then((defaults) => {
-        if (!defaults) return;
-        gpuEmbeddings = Boolean(defaults.gpu);
-        backend = defaults.backend;
-        modelPath = defaults.model_path;
-      })
-      .catch(() => {});
-    const unlistenP = api.onIngestLog((payload) => {
-      if (payload.run_id !== runId) return; // only the active run
-      if (payload.stream === 'stdout' && payload.line.startsWith(PROGRESS_PREFIX)) {
-        try {
-          progress = JSON.parse(payload.line.slice(PROGRESS_PREFIX.length));
-          return; // progress lines feed the bar, not the log
-        } catch {
-          // fall through: show the malformed line in the log
-        }
-      }
-      logLines = [...logLines, payload];
-    });
-    return () => unlistenP.then((un) => un());
+    // needs a worker: the table comes back as a job result
+    const t = setTimeout(() => loadKindTable().catch(() => {}), 500);
+    return () => clearTimeout(t);
   });
 
   // Auto-scroll the log to the bottom as lines arrive.
@@ -174,28 +166,17 @@
 
   // Ask the ingester what this input is, before any run starts: prefill for a
   // contributed document, announce-and-switch for a known official source, a
-  // hint for something we will not ingest this way.
-  // One `route` run, read off the log stream: the CLI prints exactly one JSON
-  // line, and going through runIngest keeps every child process on the one
-  // spawn/cancel path.
+  // hint for something we will not ingest this way. One `route` job; the
+  // worker stores the JSON line the CLI prints as the job's result.
   async function routeSource(source) {
-    const lines = [];
-    const id = crypto.randomUUID();
-    const unlisten = await api.onIngestLog((payload) => {
-      if (payload.run_id === id && payload.stream === 'stdout') lines.push(payload.line);
+    if (workerAlive === null) await loadWorker();
+    if (!workerAlive) throw new Error('no worker is running — the source cannot be checked');
+    const final = await submitAndFollow(url.trim(), 'ingest', {
+      command: 'route',
+      args: source ? [source] : [],
     });
-    try {
-      await api.runIngest({
-        run_id: id,
-        command: 'route',
-        db_url: url.trim(),
-        args: source ? [source] : [],
-      });
-      const last = [...lines].reverse().find((line) => line.trim().startsWith('{'));
-      return last ? JSON.parse(last) : null;
-    } finally {
-      unlisten();
-    }
+    if (final.status !== 'succeeded') throw new Error(`route job #${final.id}: ${summarize(final)}`);
+    return final.result ?? null;
   }
 
   async function precheckSource() {
@@ -210,7 +191,7 @@
       if (suggestions.title && !docTitle.trim()) docTitle = suggestions.title;
       if (suggestions.valid_from && !docValidFrom) docValidFrom = suggestions.valid_from;
     } catch (e) {
-      error = String(e);
+      error = String(e.message ?? e);
     } finally {
       routing = false;
     }
@@ -222,18 +203,6 @@
     if (!docKinds[docKind]) docKind = Object.keys(docKinds)[0] ?? '';
     implementsResults = [];
     docImplements = '';
-  }
-
-  async function pickDocumentFile() {
-    const { open } = await import('@tauri-apps/plugin-dialog');
-    const picked = await open({
-      multiple: false,
-      filters: [{ name: 'Documents', extensions: ['pdf', 'html', 'htm', 'md', 'markdown', 'txt'] }],
-    });
-    if (typeof picked === 'string') {
-      docSource = picked;
-      await precheckSource();
-    }
   }
 
   async function searchInstruments() {
@@ -262,19 +231,18 @@
     ];
   }
 
-  function embeddingArgs() {
-    const args = [
-      '--model-path', modelPath.trim(),
-      '--backend', backend,
-      '--model-id', String(modelId),
-      '--batch-size', String(batchSize),
-      '--progress-json',
-    ];
-    if (device.trim()) args.push('--device', device.trim());
-    return args;
+  const optionalInt = (value) => (String(value).trim() ? Number(String(value).trim()) : null);
+
+  function embedPayload() {
+    return {
+      model_id: Number(modelId),
+      batch_size: Number(batchSize),
+      limit: optionalInt(embLimit),
+      dry_run: Boolean(embDryRun),
+    };
   }
 
-  // Build the CLI command + args for the active sub-tab.
+  // Build the job type + payload for the active sub-tab.
   function buildRequest() {
     if (sub === 'ingestion') {
       const args = [];
@@ -289,40 +257,53 @@
       }
       if (sourceCode.trim()) args.push('--source-code', sourceCode.trim());
       args.push('--max-items', String(maxItems));
-      return { command: ingMode, args };
+      return { job_type: 'ingest', payload: { command: ingMode, args } };
     }
     if (sub === 'document') {
-      if (!docSource.trim()) throw new Error('paste a URL or pick a file first');
+      if (!docSource.trim()) throw new Error('paste a URL or a path first');
       if (routeOutcome?.outcome === 'refused') throw new Error(routeOutcome.hint);
       // A known official source is ingested by its adapter, from its national
       // id — never as a page. The library re-routes anyway; this only keeps
       // the log honest about which command actually ran.
       if (switchingToAdapter) {
         return {
-          command: 'instrument',
-          args: [routeOutcome.jurisdiction, routeOutcome.national_id, '--max-items', String(maxItems)],
+          job_type: 'ingest',
+          payload: {
+            command: 'instrument',
+            args: [routeOutcome.jurisdiction, routeOutcome.national_id, '--max-items', String(maxItems)],
+          },
         };
       }
       if (!docValidFrom) throw new Error('a validity start date is required');
-      return { command: 'document', args: documentArgs() };
+      return { job_type: 'ingest', payload: { command: 'document', args: documentArgs() } };
     }
     if (sub === 'embeddings') {
-      const args = embeddingArgs();
-      if (String(embLimit).trim()) args.push('--limit', String(embLimit).trim());
-      if (embDryRun) args.push('--dry-run');
-      return { command: 'embeddings', args };
+      return { job_type: 'embed', payload: embedPayload() };
     }
     // translation
-    const args = [
-      '--model', model.trim(),
-      '--target-lang', targetLang.trim(),
-      '--progress-json',
-    ];
-    if (String(requestTimeout).trim()) args.push('--request-timeout', String(requestTimeout).trim());
-    if (String(trLimit).trim()) args.push('--limit', String(trLimit).trim());
-    if (trDryRun) args.push('--dry-run');
-    return { command: 'translate', args };
+    if (!model) throw new Error('no model to translate with — the worker has published none');
+    return {
+      job_type: 'translate',
+      payload: {
+        model,
+        target_lang: targetLang.trim(),
+        limit: optionalInt(trLimit),
+        request_timeout: optionalInt(requestTimeout) ?? 120,
+        dry_run: Boolean(trDryRun),
+      },
+    };
   }
+
+  const handlers = {
+    onSubmit: (id) => {
+      jobId = id;
+      logLines = [...logLines, { stream: 'system', line: `job #${id} submitted` }];
+    },
+    onLine: (e) => (logLines = [...logLines, e]),
+    onProgress: (data) => {
+      if (data) progress = data;
+    },
+  };
 
   async function run() {
     error = '';
@@ -338,28 +319,24 @@
       error = String(e.message ?? e);
       return;
     }
-    runId = crypto.randomUUID();
+    jobId = null;
     logLines = [];
     progress = null;
     startedAt = Date.now();
     now = startedAt;
     running = true;
     try {
-      const res = await api.runIngest({
-        run_id: runId,
-        command: req.command,
-        db_url: url.trim(),
-        args: req.args,
-      });
-      if (res.canceled) summary = 'Canceled.';
-      else if (res.success) summary = 'Finished successfully.';
-      else summary = `Exited with code ${res.code ?? '?'}.`;
+      if (workerAlive === false) {
+        logLines = [{ stream: 'system', line: 'no worker alive — the job waits in the queue until one starts' }];
+      }
+      const final = await submitAndFollow(url.trim(), req.job_type, req.payload, handlers);
+      summary = summarize(final);
       // A contributed document is only retrievable once its chunks are
-      // embedded, so the ingester chains the build itself (ingest.rs decides;
-      // a failed run chains nothing).
-      if (res.follow_up === 'embeddings') await runFollowUpEmbeddings();
+      // embedded, so a successful `document` job is followed by an embeddings
+      // build. A failed one chains nothing: there is nothing new to embed.
+      if (final.status === 'succeeded' && req.payload.command === 'document') await runFollowUpEmbeddings();
     } catch (e) {
-      error = String(e);
+      error = String(e.message ?? e);
     } finally {
       running = false;
     }
@@ -367,23 +344,18 @@
 
   async function runFollowUpEmbeddings() {
     summary = 'Document loaded. Building embeddings for the new chunks…';
-    runId = crypto.randomUUID();
     progress = null;
     startedAt = Date.now();
     now = startedAt;
-    const res = await api.runIngest({
-      run_id: runId,
-      command: 'embeddings',
-      db_url: url.trim(),
-      args: embeddingArgs(),
-    });
-    summary = res.success
-      ? 'Finished successfully; the document is retrievable.'
-      : `Document loaded, but the embeddings build exited with code ${res.code ?? '?'}.`;
+    const final = await submitAndFollow(url.trim(), 'embed', embedPayload(), handlers);
+    summary =
+      final.status === 'succeeded'
+        ? 'Finished successfully; the document is retrievable.'
+        : `Document loaded, but the embeddings build ${summarize(final).toLowerCase()}`;
   }
 
   async function stop() {
-    if (runId) await api.stopIngest(runId);
+    if (jobId != null) await api.cancelJob(url.trim(), jobId);
   }
 
   function fmtElapsed(seconds) {
@@ -399,6 +371,11 @@
       Database URL
       <input bind:value={url} class="mono" />
     </label>
+    {#if workerAlive === false}
+      <span class="badge fail" title="ops.workers heartbeat stale">no worker alive</span>
+    {:else if workerAlive}
+      <span class="badge pass">worker alive</span>
+    {/if}
   </div>
 
   <nav class="subtabs">
@@ -450,19 +427,19 @@
     <p class="muted">
       Add a document you found — a circular, an arrêté, a doctrine page — as a URL or a file
       (PDF, HTML, Markdown, text). Its trust class follows from the kind you state; a URL on a
-      known official portal is ingested by that country's adapter instead.
+      known official portal is ingested by that country's adapter instead. The worker fetches
+      it, so a file path must be one the worker's host can read.
     </p>
     <div class="row">
       <label class="grow">
-        URL or file
+        URL or file path
         <input
           bind:value={docSource}
           onchange={precheckSource}
-          placeholder="https://… or /home/reviewer/circulaire.pdf"
+          placeholder="https://… or /data/contributed/circulaire.pdf"
           class="mono"
         />
       </label>
-      <button onclick={pickDocumentFile} disabled={running}>Pick file…</button>
       <button onclick={precheckSource} disabled={running || !docSource.trim()}>
         {routing ? 'Checking…' : 'Check'}
       </button>
@@ -556,30 +533,11 @@
       {/if}
     {/if}
   {:else if sub === 'embeddings'}
-    <p class="muted">Build local BGE-M3 vectors for chunks missing fresh embeddings.</p>
-    {#if gpuEmbeddings}
-      <p class="muted">
-        A CUDA environment (<span class="mono">.venv-cuda</span>) is installed, so this run uses the
-        GPU: keep the <span class="mono">torch</span> backend — OpenVINO cannot drive an NVIDIA card
-        and that environment carries no local export.
-      </p>
-    {/if}
+    <p class="muted">
+      Build BGE-M3 vectors for chunks missing fresh embeddings, on the worker's GPU (or CPU
+      when it has none — the worker decides).
+    </p>
     <div class="grid">
-      <label class="grow">
-        Model path
-        <input bind:value={modelPath} placeholder="BAAI/bge-m3 or models/bge-m3-openvino" />
-      </label>
-      <label>
-        Backend
-        <select bind:value={backend}>
-          <option value="torch">torch</option>
-          <option value="openvino">openvino</option>
-        </select>
-      </label>
-      <label>
-        Device (opt.)
-        <input bind:value={device} placeholder="cpu, cuda, NPU…" />
-      </label>
       <label>
         Model id
         <input type="number" min="1" bind:value={modelId} />
@@ -598,11 +556,17 @@
       </label>
     </div>
   {:else}
-    <p class="muted">Machine-translate unit texts missing a target-language rendering with an LLM.</p>
+    <p class="muted">Machine-translate unit texts missing a target-language rendering with an LLM served by the worker.</p>
     <div class="grid">
       <label class="grow">
         Model
-        <input bind:value={model} placeholder="openrouter/…, anthropic/…, openai/…" />
+        <select bind:value={model} disabled={!models.length}>
+          {#each models as m (m.model)}
+            <option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>
+          {:else}
+            <option value="">no model published by the worker</option>
+          {/each}
+        </select>
       </label>
       <label>
         Target lang
@@ -627,7 +591,8 @@
     <button class="primary" onclick={run} disabled={running || (sub === 'document' && !docReady)}>
       {running ? 'Running…' : 'Run'}
     </button>
-    <button onclick={stop} disabled={!running}>Stop</button>
+    <button onclick={stop} disabled={!running || jobId == null}>Cancel</button>
+    {#if jobId != null}<span class="muted mono">job #{jobId}</span>{/if}
     {#if summary}<span class="muted">{summary}</span>{/if}
   </div>
 
@@ -654,7 +619,7 @@
     {#each logLines as l, i (i)}
       <div class="line {l.stream}"><span class="mono">{l.line}</span></div>
     {:else}
-      <div class="muted empty">Output will appear here when you run a script.</div>
+      <div class="muted empty">Output will appear here when you run a job.</div>
     {/each}
   </div>
 </section>

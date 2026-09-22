@@ -61,9 +61,28 @@ def get_model(model: str):
         from pydantic_ai.providers.together import TogetherProvider
 
         return OpenAIChatModel(name, provider=TogetherProvider())
+    if provider == "jrc":
+        from pydantic_ai.models.openai import OpenAIChatModel
+        from pydantic_ai.providers.openai import OpenAIProvider
+
+        # JRC's own OpenAI-compatible gateway (ADR 0004). Its own prefix rather
+        # than "openai/" + env overrides for the same reason azure_openai/ is:
+        # the string must say where the call goes. The base URL and key are
+        # only ever set on the worker.
+        base_url = os.environ.get("JRC_LLM_BASE_URL", "")
+        if not base_url:
+            raise ValueError("jrc/ needs JRC_LLM_BASE_URL (and JRC_LLM_API_KEY) in the environment")
+        if not name:
+            raise ValueError("jrc/ needs the served model name after the slash")
+        return OpenAIChatModel(
+            name,
+            provider=OpenAIProvider(
+                base_url=base_url, api_key=os.environ.get("JRC_LLM_API_KEY") or "unset"
+            ),
+        )
     raise ValueError(
         f"Unknown provider prefix in {model!r}; expected one of "
-        "anthropic/, openai/, azure_openai/, openrouter/, together/, mock/"
+        "anthropic/, openai/, azure_openai/, openrouter/, together/, jrc/, mock/"
     )
 
 

@@ -223,3 +223,81 @@ JOIN eval.scored_results res ON res.run_pk = r.id
 CROSS JOIN LATERAL unnest(res.hazards) AS hazard
 WHERE res.readiness_eff = 'ready'
 GROUP BY r.id, res.language, hazard;
+
+-- ----------------------------------------------------------------------------
+-- The golden set lives here, not in git (ADR 0004). A golden *selection* is
+-- what used to be golden_sources/<cc>.json (curated, per country) or
+-- golden_sources/openfisca_<cc>.json: the header and its entries, verbatim.
+-- A golden *case* is one built case; the review verdict is in columns so the
+-- reviewer role can be granted UPDATE on exactly those, and `case` holds the
+-- rest of the GoldenCase (never the verdict — loading merges the two).
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS eval.golden_selections (
+    country    text NOT NULL,
+    kind       text NOT NULL CHECK (kind IN ('openfisca', 'curated')),
+    header     jsonb NOT NULL DEFAULT '{}'::jsonb,
+    entries    jsonb NOT NULL DEFAULT '[]'::jsonb,
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    updated_by text NOT NULL DEFAULT current_user,
+    PRIMARY KEY (country, kind)
+);
+
+CREATE TABLE IF NOT EXISTS eval.golden_cases (
+    id           text PRIMARY KEY,
+    country      text NOT NULL,
+    language     text NOT NULL,
+    as_of        date NOT NULL,
+    "case"       jsonb NOT NULL,          -- GoldenCase minus verified/reviewed_by/review_note
+    verified     boolean NOT NULL DEFAULT false,
+    reviewed_by  text,
+    reviewed_at  timestamptz,
+    review_note  text,
+    drafted_at   timestamptz NOT NULL DEFAULT now(),
+    updated_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS golden_cases_country_idx ON eval.golden_cases (country, verified);
+
+-- Retrieval-only cases (dataset_embedding/), same treatment.
+CREATE TABLE IF NOT EXISTS eval.embedding_cases (
+    id          text PRIMARY KEY,
+    country     text NOT NULL,
+    language    text NOT NULL,
+    "case"      jsonb NOT NULL,
+    verified    boolean NOT NULL DEFAULT false,
+    reviewed_by text,
+    reviewed_at timestamptz,
+    review_note text,
+    updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- A run is resumable from the database alone: its frozen case list and every
+-- result scored so far are rows, appended as they land. eval.runs.status
+-- replaces the on-disk manifest/results.jsonl pair; `golden_set_hash` is the
+-- content hash of exactly the cases in eval.run_cases (dataset_version keeps
+-- its old name for the views).
+ALTER TABLE eval.runs
+    ADD COLUMN IF NOT EXISTS model        text,           -- full provider-prefixed string
+    ADD COLUMN IF NOT EXISTS status       text NOT NULL DEFAULT 'complete'
+        CHECK (status IN ('running', 'complete', 'failed')),
+    ADD COLUMN IF NOT EXISTS submitted_by text,
+    ADD COLUMN IF NOT EXISTS finished_at  timestamptz;
+
+CREATE TABLE IF NOT EXISTS eval.run_cases (
+    run_pk  bigint NOT NULL REFERENCES eval.runs(id) ON DELETE CASCADE,
+    case_id text NOT NULL,
+    "case"  jsonb NOT NULL,
+    PRIMARY KEY (run_pk, case_id)
+);
+
+-- The ReviewItem the pipeline produced for the case, so `rescore` can re-apply
+-- a scoring change without spending tokens (was <run dir>/queue/<item>.json).
+ALTER TABLE eval.results ADD COLUMN IF NOT EXISTS review_item jsonb;
+
+-- Retrieval-eval runs (was .eval_runs/<id>/manifest.json + results.json).
+CREATE TABLE IF NOT EXISTS eval.embedding_runs (
+    id         bigserial PRIMARY KEY,
+    run_id     text UNIQUE NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    manifest   jsonb NOT NULL,
+    results    jsonb NOT NULL
+);

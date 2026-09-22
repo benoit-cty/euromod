@@ -11,9 +11,9 @@ docker compose up -d               # repo root: legislation DB + Phoenix
 cd Nomoscope-agentic-workflow/pipeline
 uv sync
 uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025   # mock model, no API key needed
-uv run nomoscope-workflow run-all --params-dir data/parameters/db --year 2025
-uv run nomoscope-workflow queue
-uv run nomoscope-workflow export
+uv run nomoscope-workflow run-country FR --year 2025 --limit 20   # every FR parameter in the params DB (then its bracket-schedule groups)
+uv run nomoscope-workflow queue --country FR --status pending
+uv run nomoscope-workflow export --out-dir export                # one <CC>_accepted.json per country
 
 # Parameter store (params schema in the legislation DB — db/params_schema.sql)
 uv run nomoscope-workflow init-param-db
@@ -23,13 +23,32 @@ uv run nomoscope-workflow curate-params curation/FR.curation.yaml
 uv run nomoscope-workflow translate-params --country FR   # law-language search text (real model needed)
 uv run nomoscope-workflow ingest-openfisca ~/Euromod/openfisca-france/openfisca_france/parameters --country FR
 uv run nomoscope-workflow match-openfisca --country FR --dry-run             # EUROMOD <-> OpenFisca link suggestions
-uv run nomoscope-workflow match-openfisca --seed ../../Nomokrisis-evaluation_pipeline/golden_sources/openfisca_fr.json
-
-# Reviewer decisions live in params.review_decisions; the UI writes them there
-# and refuses the decision if it cannot. Repair tool only — replays the local
-# data/decisions.jsonl copy, idempotently, if the two ever drift.
-uv run nomoscope-workflow sync-decisions
+uv run nomoscope-workflow match-openfisca --seed openfisca_fr.json   # a selection exported with `nomokrisis-eval selection-export FR --kind openfisca`
 ```
+
+**Nothing runtime lives on disk** (ADR 0004). Parameters are read straight from
+`params.*` (`run-targets` takes `euromod://…` targets or `group:<id>`;
+`run-country` runs a whole country); every run writes its `ReviewItem` as a row
+of `params.review_queue`, keyed `<country>_<target>_<system year>` so a re-run
+replaces a pending review and never a decided one (unless `--force`). The UI
+reads the queue from the DB and records a decision through
+`params.decide_review_item()`, which appends to `params.review_decisions` and
+updates the item in one transaction — a decision the DB refuses fails outright.
+`export` is the only file writer: one `<CC>_accepted.json` array per country,
+built from accepted/edited queue rows. `run-targets` and `run-country` end with
+exactly one `@result {"item_ids": [...]}` line, which the Nomergon worker stores
+as the job result. `pipeline.run_parameter(cfg, tracer, record, as_of, force,
+parameter_ref, enqueue)` takes a `ParameterRecord`; the evaluation pipeline
+calls it with `enqueue=False` and keeps the item itself.
+
+Environment switches the worker relies on: `NOMOS_PYTHON` (every subprocess the
+pipeline spawns — scout ingest, scout embeddings build, the query encoder — runs
+`[NOMOS_PYTHON, -m, module, …]` in the current directory, no `uv`, no ingest-dir
+walk); `WORKFLOW_ENCODER=db` (the query vector comes from an `encode` job in
+`ops.jobs` via `encode_client`, instead of a BGE-M3 subprocess — on any failure
+the vector leg is disabled for the process and retrieval is FTS-only, with one
+console note); `JRC_LLM_BASE_URL` / `JRC_LLM_API_KEY` for the `jrc/<served name>`
+model prefix (an OpenAI-compatible gateway).
 
 `ingest-params` accepts both export envelopes (the bare record list and the
 0.2.0 `{schema_version, country, parameters, groups}` object) and prefers
@@ -53,7 +72,7 @@ else. `extracted_parameters/enriched/<CC>.enriched.json` stays read-only.
 `ingest-openfisca` **replaces the corpus wholesale**, and `parameter_links`
 references `external_parameters` `ON DELETE CASCADE` — so re-ingesting drops
 every link, curated and validated alike. Always follow it with
-`match-openfisca --seed …/golden_sources/openfisca_fr.json` to rebuild them, and
+`match-openfisca --seed <exported selection>` (`nomokrisis-eval selection-export FR --kind openfisca`) to rebuild them, and
 re-check `validated_by` if anyone had signed links off.
 
 `match-openfisca` suggests `params.parameter_links` rows between EUROMOD
@@ -77,5 +96,5 @@ Every run also writes a `params.extraction_runs` row (plus `params.proposals`
 and `params.proposal_references`) carrying `phoenix_trace_id`, the OTel trace
 id of the run's root span — the link from a stored proposal to the full agent
 trace in Phoenix. The same id is on each queue item as `phoenix_trace_id`.
-The DB write is best-effort: if the params schema is missing, the run still
-completes on the file queue and prints a `[paramdb]` warning.
+That write is best-effort (a `[paramdb]` warning if it fails); the queue row
+itself is not — a run whose item cannot be written fails.

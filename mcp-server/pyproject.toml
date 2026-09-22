@@ -4,19 +4,21 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nomotheca-legislation-mcp"
-version = "0.1.0"
-description = "Read-only MCP tools for hybrid retrieval over the EUROMOD legislation database."
+version = "0.2.0"
+description = "MCP tools for hybrid retrieval over the EUROMOD legislation database; query vectors come from the Nomergon worker via ops.jobs."
 readme = "README.md"
 license = {text = "EUPL-1.2"}
 requires-python = ">=3.12"
 dependencies = [
   "mcp[cli]>=1.28,<2",
   "psycopg[binary]>=3.2",
-  "nomotheca-legislation-ingest[embeddings]",
 ]
 
 [project.scripts]
 nomotheca-legislation-mcp = "nomotheca_mcp.server:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nomotheca_mcp"]
@@ -24,6 +26,3 @@ packages = ["src/nomotheca_mcp"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-
-[tool.uv.sources]
-nomotheca-legislation-ingest = { path = "../Nomotheca-RAG/ingest", editable = true }

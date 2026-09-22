@@ -1,8 +1,8 @@
 # Nómos
 
 Assisted update of EUROMOD fiscal parameters from legislation: a legislation store (Nomotheca),
-an agentic proposal workflow with a human validation UI (Nomoscope), and an evaluation pipeline
-(Nomokrisis) sharing one database. This file is the opinionated glossary; the wider reference
+an agentic proposal workflow with a human validation UI (Nomoscope), an evaluation pipeline
+(Nomokrisis) and the worker that executes every model-bound job (Nomergon), all sharing one database. This file is the opinionated glossary; the wider reference
 with pointers into the code is [vocabulary.md](vocabulary.md).
 
 ## Language
@@ -78,3 +78,35 @@ _Avoid_: tax year, as-of year
 **Reviewer**:
 The human who accepts or rejects proposals in the validation UI and who adds contributed documents.
 _Avoid_: user, validator, operator, national team (a specific EUROMOD role)
+
+### Execution
+
+**Job**:
+One unit of work submitted for the worker to execute: a workflow run, an ingestion, an embedding build, a translation, an evaluation, the encoding of one query. Queued in the shared database with a priority, never started on the workstation.
+_Avoid_: task, run (for server-side work), batch (as a noun), background process
+
+**Job type**:
+Which of the fixed set of work kinds a job is. The worker knows how to execute each type; the UI only knows how to describe it.
+_Avoid_: kind (already means a document's place in the hierarchy of norms), command, subcommand
+
+**Worker**:
+The single process on the server that claims queued jobs and executes them. It is the only place that holds model credentials or loads a model, so the workstation holds neither.
+_Avoid_: backend (ambiguous with the UI's Rust side), runner, agent, server (the machine, not the process)
+
+**Workstation**:
+The analyst's machine running the validation UI. It holds one credential, its database login, and executes no job.
+_Avoid_: UI backend, client, laptop
+
+### Evaluation
+
+**Golden source**:
+The curated statement, per country, of which parameters belong to the golden set and what the correct value and citations of each one are, established against the ingested act. Stored in the database; a case is built from it.
+_Avoid_: selection file, golden_sources, ground-truth file
+
+**Golden case**:
+One evaluation case built from a golden source: a parameter, a system year, the expected value and the citations any correct pipeline may give. Verified by a reviewer before it counts.
+_Avoid_: test case, sample, dataset entry
+
+**Golden set hash**:
+The content hash of the exact golden cases an evaluation run scored, recorded on the run so two runs are comparable without a git commit.
+_Avoid_: dataset version, golden version

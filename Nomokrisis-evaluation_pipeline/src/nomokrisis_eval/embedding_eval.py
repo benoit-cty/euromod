@@ -31,7 +31,7 @@ from nomoscope_workflow.schema import RetrievalHit
 
 from . import EVAL_VERSION
 from .config import REPO_ROOT, EvalConfig
-from .dataset import dataset_version
+from .golden_store import embedding_set_hash
 from .schema import EmbeddingCase, EmbeddingCaseResult
 from .scoring import citation_equal
 
@@ -145,7 +145,7 @@ def run_embedding_eval(
         "embedding_model_id": embedding_model_id,
         "k": k,
         "eval_version": EVAL_VERSION,
-        "dataset_version": dataset_version(cfg.embedding_dataset_dir),
+        "dataset_version": embedding_set_hash(cases),
         "git_commit": _git_commit(),
         "countries": sorted({c.country for c in cases}),
         "cases": len(cases),

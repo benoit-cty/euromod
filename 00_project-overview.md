@@ -102,7 +102,7 @@ flowchart TD
     subgraph AGENT["Nomoscope-agentic-workflow/pipeline\nnomoscope_workflow (PydanticAI)"]
         FRAME["Frame\nlaw-language query + citation hints"]
         FRAME --> RET["Retrieve"] --> PROP["Propose"] --> CRIT["Critique"] --> DIFF["Diff"]
-        QUEUE["Review queue\ndata/queue/*.json"]
+        QUEUE["Review queue\nparams.review_queue"]
         DIFF --> QUEUE
         PARAMCLI["CLI: ingest-params / ingest-openfisca\ntranslate-params"]
         MATCH["Matcher (planned)\nvalue fingerprint + structure\n→ link suggestions"]

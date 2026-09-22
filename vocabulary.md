@@ -37,6 +37,8 @@ is the one to read before trusting any number shown in the validation UI.
 | **Nomosync** | The ingestion side of Nomotheca (fetch → snapshot → parse → chunk → load). |
 | **Nomoscope** | The agentic workflow + validation UI ("looking at the law"). Directory [Nomoscope-agentic-workflow/](Nomoscope-agentic-workflow/), package `nomoscope_workflow`. Implements **Activity 3**. |
 | **Nomokrisis** | The evaluation pipeline ("judgement of the law"). Directory [Nomokrisis-evaluation_pipeline/](Nomokrisis-evaluation_pipeline/), package `nomokrisis_eval`. Implements **Activity 4**. |
+| **Nomergon** | The worker ("work of the law"): the one process that executes every job the UI or a developer submits through `ops.jobs`, and the only one holding model credentials or loading a model ([ADR 0004](docs/adr/0004-model-access-lives-only-in-a-worker-fed-by-a-postgres-job-table.md)). Directory [Nomergon-worker/](Nomergon-worker/), package `nomergon`. |
+| **Job** / **Job type** / **Worker** / **Workstation** | The execution vocabulary, defined in [CONTEXT.md](CONTEXT.md#execution). |
 | **Activity 1–5** | The five contractual deliverables ([00_project-overview.md](00_project-overview.md)): 1 parameter format, 2 RAG architecture, 3 agentic workflow, 4 validation, 5 technical report. |
 | **Triangulator** | An earlier prototype kept for harvesting, [08 - EUROMOD Triangulator/](08%20-%20EUROMOD%20Triangulator/). "Triangulation" there = cross-checking a parameter across **three** sources: the EUROMOD XML, the Country Report and the national legislation. |
 
@@ -92,7 +94,7 @@ Compares the proposed value with the current one (float tolerance, bracket-by-br
 assigns the **routing** (`unchanged` / `changed` / `new` / `not_found` / …, see §11).
 
 ### enqueue
-Writes a `ReviewItem` JSON into `data/queue/`. Nothing is written into EUROMOD files —
+Writes the `ReviewItem` as one `params.review_queue` row. Nothing is written into EUROMOD files —
 the pipeline is **export-first and human-gated**. Reviewed items are immutable to re-runs
 unless `--force`; decisions are appended to `params.review_decisions` in the database.
 
@@ -461,8 +463,8 @@ are the raw material. That work does not exist today, and the field should be re
 (`schema_valid`, `citation_verified`, `dates_consistent`, `values_sane`).
 
 **`status`** (the human decision, `ItemStatus`) — `pending`, `accepted`, `rejected`, `edited`,
-`escalated`. Written to the append-only `params.review_decisions` table (with
-`data/decisions.jsonl` as a local write-ahead mirror); that log is itself future
+`escalated`. Written to the append-only `params.review_decisions` table by
+`params.decide_review_item()`, which also updates the queue row; that log is itself future
 training and validation data.
 
 **`legal_status`** (the law's lifecycle, on a value) — `enacted_in_force`,

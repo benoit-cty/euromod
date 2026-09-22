@@ -33,3 +33,23 @@ def test_azure_without_any_deployment_is_an_error(azure_env, monkeypatch):
     monkeypatch.delenv("AZURE_OPENAI_DEPLOYMENT", raising=False)
     with pytest.raises(ValueError, match="deployment"):
         get_model("azure_openai/")
+
+
+def test_jrc_prefix_is_an_openai_compatible_gateway(monkeypatch):
+    """jrc/<served name>: the name after the slash is the served model, the gateway comes from env."""
+    monkeypatch.setenv("JRC_LLM_BASE_URL", "https://llm.jrc.example/v1")
+    monkeypatch.setenv("JRC_LLM_API_KEY", "test")
+    model = get_model("jrc/x")
+    assert model.model_name == "x"
+    assert model.base_url.rstrip("/") == "https://llm.jrc.example/v1"
+
+
+def test_jrc_without_a_gateway_is_an_error(monkeypatch):
+    monkeypatch.delenv("JRC_LLM_BASE_URL", raising=False)
+    with pytest.raises(ValueError, match="JRC_LLM_BASE_URL"):
+        get_model("jrc/x")
+
+
+def test_unknown_prefix_lists_jrc():
+    with pytest.raises(ValueError, match="jrc/"):
+        get_model("nope/x")

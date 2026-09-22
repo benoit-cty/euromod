@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
 
 from nomoscope_workflow.schema import Bracket, LegalStatus, Routing
 
@@ -67,15 +67,30 @@ Hazard = Literal[
 Readiness = Literal["ready", "no_corpus", "undocumented"]
 
 
+#: The review verdict lives in its own columns of eval.golden_cases (so the
+#: reviewer role can be granted UPDATE on exactly those); everything else is
+#: the `case` jsonb. `golden_store` merges the two on load and strips these on
+#: save and when hashing a golden set.
+REVIEW_FIELDS = frozenset({"verified", "reviewed_by", "reviewed_at", "review_note"})
+
+
 class GoldenCase(BaseModel):
-    """One validation case: run the workflow on parameter_file at as_of, compare to expected."""
+    """One validation case: run the workflow on `parameter_target` at as_of, compare to expected.
+
+    Rows live in eval.golden_cases (ADR 0004). `parameter_target` names the
+    parameter under test in the params DB — `euromod://…` for one parameter
+    (`paramdb.load_record`) or `group:<group_id>` for a bracket schedule
+    assembled from params.parameter_groups (`paramdb.load_group_record`).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     id: str
     country: str
     language: str = Field(description="Language of the source legislation, e.g. 'fr'")
-    parameter_file: str = Field(description="Activity 1 parameter JSON, path relative to the repo root")
+    parameter_target: str = Field(
+        description="`euromod://<cc>/<policy>/<function>/$name` or `group:<group_id>` in the params DB"
+    )
     as_of: date
     difficulty: Difficulty | None = None
     hazards: list[Hazard] = Field(
@@ -106,8 +121,27 @@ class GoldenCase(BaseModel):
     # "rejected by a human" (reviewed_by set, verified false) from "not looked at
     # yet" — both of which keep the case out of a frozen evaluation run.
     reviewed_by: str | None = None
+    reviewed_at: datetime | None = None
     review_note: str | None = None
     notes: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _legacy_parameter_file(cls, data: object, info: ValidationInfo) -> object:
+        """Cases written before the golden set moved into the DB point at a
+        materialized parameter file (`parameter_file`). Only `import-golden`
+        may read those — it maps the path to a `parameter_target` — and it says
+        so through the validation context. Anywhere else the legacy key is a
+        stale file that never went through the importer: fail loudly."""
+        if isinstance(data, dict) and "parameter_file" in data:
+            context = info.context or {}
+            if not context.get("legacy_parameter_file"):
+                raise ValueError(
+                    "golden case carries the legacy `parameter_file` key; the golden set "
+                    "lives in eval.golden_cases now — run `nomokrisis-eval import-golden` "
+                    "to map it to `parameter_target`"
+                )
+        return data
 
     @field_validator("difficulty", mode="before")
     @classmethod
@@ -276,12 +310,16 @@ class CaseResult(BaseModel):
 
 
 class RunManifest(BaseModel):
-    """Reproducibility manifest, written next to the results and into eval.runs."""
+    """Reproducibility manifest: the eval.runs row (ADR 0004 — no file twin)."""
 
     model_config = ConfigDict(extra="forbid")
 
     run_id: str
     created_at: datetime
+    #: running | complete | failed — a run is resumable from its rows alone.
+    status: str = "complete"
+    submitted_by: str | None = None
+    finished_at: datetime | None = None
     as_of: date
     model: str
     model_provider: str
@@ -299,6 +337,7 @@ class RunManifest(BaseModel):
     prompt_version: str
     agent_version: str
     eval_version: str
+    #: `golden_store.golden_set_hash` of exactly the cases frozen in eval.run_cases.
     dataset_version: str
     git_commit: str | None = None
     countries: list[str] = Field(default_factory=list)

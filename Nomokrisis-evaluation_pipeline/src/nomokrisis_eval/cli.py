@@ -1,12 +1,22 @@
 """CLI: build the golden dataset, run evaluations, report KPIs.
 
   uv run nomokrisis-eval init-db
-  uv run nomokrisis-eval build-dataset docs/fr_country_report_excerpt.md --country FR --as-of 2025-06-01
+  uv run nomokrisis-eval import-golden            # once: dataset/, dataset_embedding/, golden_sources/ -> eval.*
+  uv run nomokrisis-eval build-openfisca-dataset --year 2025 --country FR
+  uv run nomokrisis-eval build-curated-dataset --year 2025 --country IE
+  uv run nomokrisis-eval build-dataset notes.md --country FR --as-of 2025-06-01 --target 'euromod://FR/…'
   uv run nomokrisis-eval list-cases
+  uv run nomokrisis-eval selections                 # the selection rows (what golden_sources/ used to be)
+  uv run nomokrisis-eval selection-export ES --out es.json   # edit the JSON, then:
+  uv run nomokrisis-eval selection-import es.json            # ... and rebuild
   uv run nomokrisis-eval run --as-of 2025-06-01 --model anthropic/claude-sonnet-5
   uv run nomokrisis-eval resume            # continue the last interrupted run
   uv run nomokrisis-eval list-runs
   uv run nomokrisis-eval report
+
+Everything lives in the eval schema of the shared Postgres (ADR 0004): there
+is no dataset directory, no run directory and no `--no-db`. Commands a worker
+job wraps end with one `@result {json}` line on stdout.
 """
 
 from __future__ import annotations
@@ -18,27 +28,31 @@ from datetime import date
 from pathlib import Path
 
 import typer
-from nomoscope_workflow.queue_store import load_record
+from nomoscope_workflow import paramdb
 from nomoscope_workflow.tracing import set_progress
 
 from . import build_dataset as builder
 from . import curated_golden
 from . import db as evaldb
+from . import golden_store
 from . import openfisca_golden
-from .config import REPO_ROOT, EvalConfig, load_eval_config
-from .dataset import dataset_version, load_cases, load_embedding_cases, save_case
+from .config import EvalConfig, load_eval_config
+from .import_golden import (
+    DEFAULT_DATASET_DIR,
+    DEFAULT_EMBEDDING_DATASET_DIR,
+    DEFAULT_SOURCES_DIR,
+    import_golden,
+)
 from .labels import DraftedLabels, draft_labels
 from .runner import (
-    RESULTS_FILENAME,
     execute_run,
     latest_incomplete_run,
     list_runs,
-    load_partial_results,
+    load_case_record,
     rescore_run,
     resume_run,
-    run_directory,
-    rewrite_partial,
     start_run,
+    store_rescored,
     summarize,
 )
 from .schema import CaseResult, GoldenCase, RunManifest
@@ -50,6 +64,15 @@ def _parse_date(value: str) -> date:
     return date.fromisoformat(value)
 
 
+def _result(payload: dict) -> None:
+    """The one `@result` line a worker job parses (contracts.md)."""
+    typer.echo("@result " + json.dumps(payload))
+
+
+def _progress(payload: dict) -> None:
+    typer.echo("@progress " + json.dumps(payload))
+
+
 @app.command("init-db")
 def init_db() -> None:
     """Create the eval schema (tables + summary view) in the legislation DB."""
@@ -59,81 +82,72 @@ def init_db() -> None:
     typer.echo(f"eval schema applied to {cfg.database_url}")
 
 
-@app.command("build-dataset")
-def build_dataset_cmd(
-    source_file: Path = typer.Argument(..., help="Trusted source document (country report excerpt, notes)"),
-    country: str = typer.Option(..., "--country", help="ISO country code, e.g. FR"),
-    as_of: str = typer.Option(..., "--as-of", help="Reference date, YYYY-MM-DD"),
-    language: str = typer.Option(None, "--language", help="Source-legislation language (default: country code lowercased)"),
-    params_dir: Path = typer.Option(
-        None, "--params-dir", help="Directory of Activity 1 parameter JSON files (default: Nomoscope-agentic-workflow/data/parameters)"
+@app.command("import-golden")
+def import_golden_cmd(
+    dataset_dir: Path = typer.Option(DEFAULT_DATASET_DIR, "--dataset-dir", help="dataset/<cc>/*.json"),
+    embedding_dataset_dir: Path = typer.Option(
+        DEFAULT_EMBEDDING_DATASET_DIR, "--embedding-dataset-dir", help="dataset_embedding/<cc>/*.json"
     ),
-    model: str = typer.Option(None, "--model", help="Drafting model (default: EVAL_BUILDER_MODEL, claude-fable-5)"),
+    sources_dir: Path = typer.Option(DEFAULT_SOURCES_DIR, "--sources-dir", help="golden_sources/*.json"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Resolve and count, write nothing"),
 ) -> None:
-    """Draft golden cases with Claude (verified=false until a human confirms them)."""
-    cfg = load_eval_config()
-    from .config import REPO_ROOT
+    """Import the on-disk golden set (cases, retrieval cases, selections) into eval.*, once.
 
-    folder = params_dir or REPO_ROOT / "Nomoscope-agentic-workflow" / "data" / "parameters"
-    files = sorted(p for p in folder.glob("*.json*") if p.suffix in (".json", ".jsonc"))
-    if not files:
-        typer.echo(f"No parameter files in {folder}")
-        raise typer.Exit(1)
-
-    results = builder.build_cases(
-        model or cfg.builder_model,
-        source_file,
-        files,
-        _parse_date(as_of),
-        (language or country).lower(),
-    )
-    written = 0
-    for case, message in results:
-        typer.echo(message)
-        if case is not None and case.country.upper() == country.upper():
-            path = save_case(cfg.dataset_dir, case)
-            typer.echo(f"  -> {path} (verified=false — review before freezing)")
-            written += 1
-    typer.echo(f"{written} draft case(s) written. Review them, set verified=true, commit to git.")
-
-
-@app.command("build-openfisca-dataset")
-def build_openfisca_dataset(
-    year: int = typer.Option(..., "--year", help="EUROMOD system year to draft cases for, e.g. 2025"),
-    country: str = typer.Option("FR", "--country", help="ISO country code"),
-    source: Path = typer.Option(
-        None, "--source", help="Curated selection file (default: golden_sources/openfisca_<cc>.json)"
-    ),
-    limit: int = typer.Option(50, "--limit", help="Maximum number of cases to write"),
-    fill: bool = typer.Option(
-        True, "--fill/--curated-only", help="Top the set up from params.parameter_links suggestions"
-    ),
-    as_of: str = typer.Option(
-        None, "--as-of", help="Anchor date inside the system year (default: <year>-06-01)"
-    ),
-) -> None:
-    """Draft golden cases from the ingested OpenFisca corpus (verified=false).
-
-    Ground truth comes from OpenFisca's curated per-date values and legal
-    references; routing is computed deterministically against what EUROMOD
-    holds. Review each case in the UI's Golden set tab before it counts.
+    Idempotent: every row is upserted. Cases keep the verdict recorded in their
+    file. A case whose `parameter_file` cannot be mapped to a parameter in the
+    params DB is reported and skipped.
     """
     cfg = load_eval_config()
-    from .config import EVAL_ROOT
-
-    selection = source or EVAL_ROOT / "golden_sources" / f"openfisca_{country.lower()}.json"
-    if not selection.exists():
-        typer.echo(f"no selection file at {selection} — pass --source or use --curated-only")
-        selection = None
-    anchor = _parse_date(as_of) if as_of else date(year, 6, 1)
     with evaldb.connect(cfg.database_url) as conn:
-        outcomes = openfisca_golden.build_dataset(
-            conn, cfg.dataset_dir, selection, anchor,
-            country=country.upper(), limit=limit, fill_from_links=fill,
+        report = import_golden(
+            conn,
+            dataset_dir=dataset_dir,
+            embedding_dataset_dir=embedding_dataset_dir,
+            sources_dir=sources_dir,
+            dry_run=dry_run,
         )
+    verb = "would import" if dry_run else "imported"
+    typer.echo(
+        f"{verb}: {report.selections} selection(s), {report.cases} golden case(s) "
+        f"({report.cases_verified} verified), {report.embedding_cases} embedding case(s)"
+    )
+    if report.resolved_by:
+        typer.echo("  targets resolved via " + ", ".join(f"{k}={v}" for k, v in sorted(report.resolved_by.items())))
+    for warning in report.warnings:
+        typer.echo(f"  ! {warning}")
+    for unresolved in report.unresolved:
+        typer.echo(f"  x skipped {unresolved}")
+    _result(
+        {
+            "selections": report.selections,
+            "cases": report.cases,
+            "embedding_cases": report.embedding_cases,
+            "unresolved": len(report.unresolved),
+            "dry_run": dry_run,
+        }
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Building the golden set
+# --------------------------------------------------------------------------- #
+
+
+def _selection_or_exit(conn, country: str, kind: str) -> tuple[dict, list[dict]]:
+    try:
+        return golden_store.load_selection(conn, country, kind)
+    except KeyError as exc:
+        typer.echo(
+            f"{exc.args[0]} — write one with `nomokrisis-eval selection-import <file>` "
+            "(or `import-golden` for the pre-ADR-0004 golden_sources/ files)"
+        )
+        raise typer.Exit(1) from exc
+
+
+def _echo_outcomes(outcomes, width: int) -> int:
     written = 0
     for outcome in outcomes:
-        label = outcome.entry.get("model_target") or outcome.entry.get("parameter_file", "?")
+        label = outcome.entry.get("model_target") or outcome.entry.get("group_id", "?")
         if outcome.case is None:
             typer.echo(f"  ~ skipped {label}: {outcome.skipped}")
             # A skip can retire a case the previous run wrote; never silently.
@@ -142,88 +156,162 @@ def build_openfisca_dataset(
             continue
         written += 1
         expected = outcome.case.expected
+        verdict = "verified" if outcome.case.verified else "draft"
         typer.echo(
-            f"  {expected.routing:<10} {outcome.case.id}"
+            f"  {expected.routing:<{width}} {outcome.case.id}"
             f"  value={expected.value}  valid_from={expected.valid_from}"
-            f"  citations={expected.citations or '[]'}"
+            f"  citations={expected.citations or '[]'}  [{verdict}]"
         )
+        for warning in outcome.warnings:
+            typer.echo(f"    ! {warning}")
+    return written
+
+
+@app.command("build-dataset")
+def build_dataset_cmd(
+    source_file: Path = typer.Argument(..., help="Trusted source document (country report excerpt, notes)"),
+    country: str = typer.Option(..., "--country", help="ISO country code, e.g. FR"),
+    as_of: str = typer.Option(..., "--as-of", help="Reference date, YYYY-MM-DD"),
+    language: str = typer.Option(None, "--language", help="Source-legislation language (default: country code lowercased)"),
+    target: list[str] = typer.Option(
+        None, "--target",
+        help="Parameter(s) to draft: euromod://… or group:<group_id> in the params DB "
+        "(default: every parameter of the country)",
+    ),
+    model: str = typer.Option(None, "--model", help="Provider-prefixed drafting model (default: EVAL_BUILDER_MODEL)"),
+) -> None:
+    """Draft golden cases with an LLM from a trusted document (verified=false until a human confirms them)."""
+    cfg = load_eval_config()
+    try:
+        drafting_model = builder.check_builder_model(model or cfg.builder_model)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(1) from exc
+    if not source_file.exists():
+        typer.echo(f"no source document at {source_file}")
+        raise typer.Exit(1)
+    source_text = source_file.read_text(encoding="utf-8")
+
+    with evaldb.connect(cfg.database_url) as conn:
+        targets = list(target or [])
+        if not targets:
+            targets = [
+                row[0] for row in conn.execute(
+                    "SELECT model_target FROM params.parameters WHERE country = %s ORDER BY spine_order, model_target",
+                    (country.upper(),),
+                ).fetchall()
+            ]
+        if not targets:
+            typer.echo(f"no parameters for {country.upper()} in the params DB (ingest-params first)")
+            raise typer.Exit(1)
+        records = []
+        for parameter_target in targets:
+            try:
+                records.append((load_case_record(conn, parameter_target), parameter_target))
+            except (KeyError, ValueError) as exc:
+                typer.echo(f"  ~ skipped {parameter_target}: {exc}")
+
+        results = builder.build_cases(
+            drafting_model, source_text, records, _parse_date(as_of), (language or country).lower()
+        )
+        written = 0
+        for case, message in results:
+            typer.echo(message)
+            if case is not None and case.country.upper() == country.upper():
+                reset = golden_store.save_drafted_case(conn, case)
+                typer.echo(f"  -> {case.id} ({'verdict reset — ' if reset else ''}review before freezing)")
+                written += 1
+    typer.echo(f"{written} draft case(s) written to eval.golden_cases. Review them in the UI's Golden set tab.")
+    _result({"written": written})
+
+
+@app.command("build-openfisca-dataset")
+def build_openfisca_dataset(
+    year: int = typer.Option(..., "--year", help="EUROMOD system year to draft cases for, e.g. 2025"),
+    country: str = typer.Option(..., "--country", help="ISO country code"),
+    as_of: str = typer.Option(
+        None, "--as-of", help="Anchor date inside the system year (default: <year>-06-01)"
+    ),
+    limit: int = typer.Option(50, "--limit", help="Maximum number of cases to write"),
+    fill: bool = typer.Option(
+        True, "--fill/--curated-only", help="Top the set up from params.parameter_links suggestions"
+    ),
+) -> None:
+    """Draft golden cases from the ingested OpenFisca corpus (verified=false).
+
+    The selection comes from eval.golden_selections (kind `openfisca`). Ground
+    truth comes from OpenFisca's curated per-date values and legal references;
+    routing is computed deterministically against what EUROMOD holds. Review
+    each case in the UI's Golden set tab before it counts.
+    """
+    cfg = load_eval_config()
+    anchor = _parse_date(as_of) if as_of else date(year, 6, 1)
+    with evaldb.connect(cfg.database_url) as conn:
+        header, entries = _selection_or_exit(conn, country, "openfisca")
+        outcomes = openfisca_golden.build_dataset(
+            conn, header, entries, anchor,
+            country=country.upper(), limit=limit, fill_from_links=fill,
+        )
+    written = _echo_outcomes(outcomes, 10)
     typer.echo(
-        f"\n{written} draft case(s) in {cfg.dataset_dir} (verified=false). "
+        f"\n{written} draft case(s) in eval.golden_cases. "
         "Review them in the UI's Golden set tab (or `nomokrisis-eval verify <id>`) before running an evaluation."
     )
+    _result({"written": written})
 
 
 @app.command("build-curated-dataset")
 def build_curated_dataset(
     year: int = typer.Option(..., "--year", help="EUROMOD system year to draft cases for, e.g. 2025"),
     country: str = typer.Option(..., "--country", help="ISO country code, e.g. IE"),
-    source: Path = typer.Option(
-        None, "--source", help="Curated selection file (default: golden_sources/<cc>.json)"
-    ),
     as_of: str = typer.Option(
         None, "--as-of", help="Anchor date inside the system year (default: <year>-06-01)"
     ),
 ) -> None:
-    """Draft golden cases from a hand-curated selection file (verified=false).
+    """Draft golden cases from the hand-curated selection (verified=false).
 
-    For countries with no external corpus to read ground truth from (IE, LT):
-    the expected values are curated in golden_sources/<cc>.json from the acts
-    themselves. The parameter under test still comes from the params DB, and
-    the selection's routing is cross-checked against what EUROMOD holds.
+    For countries with no external corpus to read ground truth from (IE, LT,
+    ES, NL): the expected values are curated from the acts themselves in the
+    `curated` selection of eval.golden_selections. The parameter under test
+    still comes from the params DB, and the selection's routing is
+    cross-checked against what EUROMOD holds.
     """
     cfg = load_eval_config()
-
-    selection = source or curated_golden.selection_path(country)
-    if not selection.exists():
-        typer.echo(f"no selection file at {selection}")
-        raise typer.Exit(1)
     anchor = _parse_date(as_of) if as_of else date(year, 6, 1)
     with evaldb.connect(cfg.database_url) as conn:
+        header, entries = _selection_or_exit(conn, country, "curated")
         outcomes = curated_golden.build_dataset(
-            conn, cfg.dataset_dir, selection, anchor, country=country.upper()
+            conn, header, entries, anchor, country=country.upper(),
+            selection_name=f"{country.lower()}.json",
         )
-    written = 0
-    for outcome in outcomes:
-        label = outcome.entry.get("model_target") or outcome.entry.get("group_id", "?")
-        if outcome.case is None:
-            typer.echo(f"  ~ skipped {label}: {outcome.skipped}")
-            for warning in outcome.warnings:
-                typer.echo(f"    ! {warning}")
-            continue
-        written += 1
-        expected = outcome.case.expected
-        typer.echo(
-            f"  {expected.routing:<20} {outcome.case.id}"
-            f"  value={expected.value}  valid_from={expected.valid_from}"
-            f"  citations={expected.citations or '[]'}"
-        )
-        for warning in outcome.warnings:
-            typer.echo(f"    ! {warning}")
+    written = _echo_outcomes(outcomes, 20)
     typer.echo(
-        f"\n{written} draft case(s) in {cfg.dataset_dir} (verified=false). "
+        f"\n{written} draft case(s) in eval.golden_cases. "
         "Review them in the UI's Golden set tab (or `nomokrisis-eval verify <id>`) before running an evaluation."
     )
+    _result({"written": written})
 
 
 @app.command()
 def verify(
     case_ids: list[str] = typer.Argument(..., help="Golden case ids to mark as human-verified"),
     unverify: bool = typer.Option(False, "--unverify", help="Clear the flag instead of setting it"),
-    reviewer: str = typer.Option(None, "--reviewer", help="Recorded in the case's notes"),
+    note: str = typer.Option(None, "--note", help="Review note stored with the verdict"),
 ) -> None:
-    """Flip `verified` on golden cases — the human gate before the set counts as ground truth."""
+    """Flip `verified` on golden cases — the human gate before the set counts as ground truth.
+
+    The reviewer is the database login (`current_user`), never a flag.
+    """
     cfg = load_eval_config()
-    cases = {case.id: case for case in load_cases(cfg.dataset_dir)}
-    for case_id in case_ids:
-        case = cases.get(case_id)
-        if case is None:
-            typer.echo(f"  ! unknown case {case_id}")
-            continue
-        case.verified = not unverify
-        if reviewer and not unverify:
-            case.notes = " | ".join(filter(None, [case.notes, f"verified by {reviewer}"]))
-        save_case(cfg.dataset_dir, case)
-        typer.echo(f"  {'verified' if case.verified else 'unverified'} {case_id}")
+    with evaldb.connect(cfg.database_url) as conn:
+        for case_id in case_ids:
+            case = golden_store.set_verified(conn, case_id, not unverify, note)
+            if case is None:
+                typer.echo(f"  ! unknown case {case_id}")
+                continue
+            typer.echo(
+                f"  {'verified' if case.verified else 'unverified'} {case_id} by {case.reviewed_by}"
+            )
 
 
 @app.command("list-cases")
@@ -231,16 +319,141 @@ def list_cases(
     country: list[str] = typer.Option(None, "--country"),
     verified_only: bool = typer.Option(False, "--verified-only"),
 ) -> None:
-    """List the golden set."""
+    """List the golden set (eval.golden_cases)."""
     cfg = load_eval_config()
-    cases = load_cases(cfg.dataset_dir, countries=country or None, verified_only=verified_only)
+    with evaldb.connect(cfg.database_url) as conn:
+        cases = golden_store.load_cases(conn, countries=country or None, verified_only=verified_only)
     for case in cases:
-        flag = "✓" if case.verified else "draft"
+        flag = "✓" if case.verified else ("rejected" if case.reviewed_by else "draft")
         typer.echo(
-            f"{flag:<6} {case.country} {case.language} as_of={case.as_of} "
+            f"{flag:<8} {case.country} {case.language} as_of={case.as_of} "
             f"routing={case.expected.routing:<12} {case.id}"
         )
-    typer.echo(f"{len(cases)} case(s), dataset_version={dataset_version(cfg.dataset_dir)}")
+    typer.echo(f"{len(cases)} case(s), golden_set_hash={golden_store.golden_set_hash(cases)}")
+
+
+# --------------------------------------------------------------------------- #
+# Golden selections: the row is edited as a file, then written back
+# --------------------------------------------------------------------------- #
+
+_REBUILD_FOR_KIND = {
+    "curated": "build-curated-dataset",
+    "openfisca": "build-openfisca-dataset",
+}
+
+
+@app.command("selections")
+def selections_cmd() -> None:
+    """List the golden selections (eval.golden_selections): country, kind, entries, last update."""
+    cfg = load_eval_config()
+    with evaldb.connect(cfg.database_url) as conn:
+        rows = golden_store.list_selections(conn)
+    if not rows:
+        typer.echo("No golden selections yet (selection-import <file>, or import-golden for the old files).")
+        return
+    for row in rows:
+        typer.echo(
+            f"{row['country']}  {row['kind']:<9} entries={row['entries']:<4}"
+            f" updated={row['updated_at']:%Y-%m-%d %H:%M} by {row['updated_by']}"
+        )
+
+
+def _selection_kind_or_exit(conn, country: str, kind: str | None) -> str:
+    """The kind to act on: the one given, else the single kind the country
+    has; two kinds and none given is an error, not a guess."""
+    if kind is not None:
+        if kind not in golden_store.SELECTION_KINDS:
+            typer.echo(f"--kind must be one of {', '.join(golden_store.SELECTION_KINDS)}, not {kind!r}")
+            raise typer.Exit(2)
+        return kind
+    kinds = golden_store.selection_kinds(conn, country)
+    if len(kinds) == 1:
+        return kinds[0]
+    if not kinds:
+        typer.echo(f"no golden selection for {country.upper()} in eval.golden_selections")
+    else:
+        typer.echo(
+            f"{country.upper()} has both a {' and a '.join(kinds)} selection — say which with --kind"
+        )
+    raise typer.Exit(1)
+
+
+@app.command("selection-export")
+def selection_export(
+    country: str = typer.Argument(..., help="ISO country code, e.g. ES"),
+    kind: str = typer.Option(
+        None, "--kind", help="curated | openfisca (default: the one kind the country has)"
+    ),
+    out: Path = typer.Option(None, "--out", help="Write to this file instead of stdout"),
+) -> None:
+    """Write a golden selection row as the JSON file it used to be (golden_sources/<cc>.json).
+
+    The header keys come first, `"entries"` last — edit the file, then
+    `selection-import` it and rebuild the country's cases.
+    """
+    cfg = load_eval_config()
+    with evaldb.connect(cfg.database_url) as conn:
+        resolved = _selection_kind_or_exit(conn, country, kind)
+        header, entries = _selection_or_exit(conn, country, resolved)
+    text = json.dumps(golden_store.selection_document(header, entries), indent=2, ensure_ascii=False) + "\n"
+    if out is None:
+        typer.echo(text, nl=False)
+        return
+    out.write_text(text, encoding="utf-8")
+    typer.echo(f"{country.upper()} {resolved} selection ({len(entries)} entries) -> {out}")
+
+
+@app.command("selection-import")
+def selection_import(
+    file: Path = typer.Argument(..., help="A selection JSON file (header keys + \"entries\")"),
+    country: str = typer.Option(None, "--country", help="Override the country the file states"),
+    kind: str = typer.Option(None, "--kind", help="curated | openfisca (default: the file's `corpus`, else its name)"),
+) -> None:
+    """Upsert a selection file into eval.golden_selections, then rebuild.
+
+    Country and kind are read from the header (`country`, `corpus`) the way
+    `import-golden` read golden_sources/ files, with the filename as fallback
+    (`openfisca_fr.json` -> FR, openfisca). The cases are NOT rebuilt here:
+    run the builder the reminder names, and read every skip it prints.
+    """
+    if not file.exists():
+        typer.echo(f"no selection file at {file}")
+        raise typer.Exit(1)
+    try:
+        doc = json.loads(file.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        typer.echo(f"{file} is not valid JSON: {exc}")
+        raise typer.Exit(1) from exc
+    if not isinstance(doc, dict) or not isinstance(doc.get("entries", []), list):
+        typer.echo(f"{file} must be a JSON object with an `entries` list")
+        raise typer.Exit(1)
+    try:
+        inferred_country, inferred_kind = golden_store.selection_identity(doc, str(file))
+    except ValueError as exc:
+        typer.echo(f"{exc} — pass --country")
+        raise typer.Exit(1) from exc
+    country = (country or inferred_country).upper()
+    kind = kind or inferred_kind
+    if kind not in golden_store.SELECTION_KINDS:
+        typer.echo(f"--kind must be one of {', '.join(golden_store.SELECTION_KINDS)}, not {kind!r}")
+        raise typer.Exit(2)
+    header = {k: v for k, v in doc.items() if k != "entries"}
+    entries = list(doc.get("entries", []))
+
+    cfg = load_eval_config()
+    with evaldb.connect(cfg.database_url) as conn:
+        golden_store.save_selection(conn, country, kind, header, entries)
+    typer.echo(
+        f"{country} {kind} selection: {len(entries)} entries -> eval.golden_selections.\n"
+        f"  the cases are not rebuilt yet — run:\n"
+        f"  nomokrisis-eval {_REBUILD_FOR_KIND[kind]} --country {country} --year <YYYY>"
+    )
+    _result({"country": country, "kind": kind, "entries": len(entries)})
+
+
+# --------------------------------------------------------------------------- #
+# Running
+# --------------------------------------------------------------------------- #
 
 
 @app.command()
@@ -250,7 +463,6 @@ def run(
     country: list[str] = typer.Option(None, "--country", help="Restrict to country code(s)"),
     language: list[str] = typer.Option(None, "--language", help="Restrict to language(s)"),
     verified_only: bool = typer.Option(True, "--verified-only/--include-drafts", help="Evaluate only human-verified cases"),
-    no_db: bool = typer.Option(False, "--no-db", help="Skip writing results to Postgres"),
     notes: str = typer.Option(None, "--notes"),
     verbose: bool = typer.Option(
         False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
@@ -258,24 +470,24 @@ def run(
 ) -> None:
     """Run the agentic workflow over the golden set, score it, store the results.
 
-    Progress is printed case by case, and every scored case is written to the
-    run directory as it lands: a Ctrl-C (or a crash) is picked up again with
-    `nomokrisis-eval resume`.
+    Progress is printed case by case, and every scored case is written to
+    eval.results as it lands: a Ctrl-C (or a crash) is picked up again with
+    `nomokrisis-eval resume`. Ends with `@result {"run_id": …}`.
     """
     cfg = load_eval_config()
-    cases = load_cases(
-        cfg.dataset_dir, countries=country or None, languages=language or None, verified_only=verified_only
-    )
-    if not cases:
-        typer.echo("No matching golden cases (try --include-drafts).")
-        raise typer.Exit(1)
-
-    manifest = start_run(cfg, cases, _parse_date(as_of), model, notes=notes)
-    typer.echo(
-        f"run {manifest.run_id}  model={manifest.model}  as_of={manifest.as_of}"
-        f"  dataset={manifest.dataset_version}  cases={len(cases)}"
-    )
-    _execute_and_report(cfg, manifest, cases, [], no_db=no_db, verbose=verbose)
+    with evaldb.connect(cfg.database_url) as conn:
+        cases = golden_store.load_cases(
+            conn, countries=country or None, languages=language or None, verified_only=verified_only
+        )
+        if not cases:
+            typer.echo("No matching golden cases (try --include-drafts).")
+            raise typer.Exit(1)
+        manifest = start_run(conn, cfg, cases, _parse_date(as_of), model, notes=notes)
+        typer.echo(
+            f"run {manifest.run_id}  model={manifest.model}  as_of={manifest.as_of}"
+            f"  dataset={manifest.dataset_version}  cases={len(cases)}"
+        )
+        _execute_and_report(conn, cfg, manifest, cases, [], verbose=verbose)
 
 
 @app.command("list-runs")
@@ -283,56 +495,56 @@ def list_runs_cmd(
     limit: int = typer.Option(20, "--limit"),
     incomplete_only: bool = typer.Option(False, "--incomplete-only", help="Only runs left unfinished"),
 ) -> None:
-    """Evaluation runs on disk, newest first, with their progress."""
+    """Evaluation runs in eval.runs, newest first, with their progress."""
     cfg = load_eval_config()
-    runs = [r for r in list_runs(cfg) if not incomplete_only or not r["complete"]][:limit]
+    with evaldb.connect(cfg.database_url) as conn:
+        runs = [r for r in list_runs(conn) if not incomplete_only or not r["complete"]][:limit]
     if not runs:
-        typer.echo("No evaluation runs on disk yet.")
+        typer.echo("No evaluation runs yet.")
         return
     for entry in runs:
         manifest: RunManifest = entry["manifest"]
-        state = "complete" if entry["complete"] else "incomplete"
         total = entry["total"] or "?"
         typer.echo(
             f"{manifest.created_at:%Y-%m-%d %H:%M}  {manifest.model:<34}"
-            f"  {entry['done']}/{total:<5} {state:<10} {manifest.run_id}"
+            f"  {entry['done']}/{total:<5} {entry['status']:<10} {manifest.run_id}"
         )
 
 
 @app.command()
 def resume(
     run_id: str = typer.Argument(None, help="Run id to continue (default: the most recent unfinished run)"),
-    no_db: bool = typer.Option(False, "--no-db", help="Skip writing results to Postgres"),
     verbose: bool = typer.Option(
         False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
     ),
 ) -> None:
     """Continue an interrupted evaluation run: same manifest, same case list,
-    only the cases that have not been scored yet."""
+    only the cases that have not been scored yet. Ends with `@result {"run_id": …}`."""
     cfg = load_eval_config()
-    if run_id is None:
-        candidate = latest_incomplete_run(cfg)
-        if candidate is None:
-            typer.echo("No unfinished evaluation run in the runs directory.")
-            raise typer.Exit(1)
-        run_id = candidate["run_id"]
-    try:
-        manifest, cases, done = resume_run(cfg, run_id)
-    except (FileNotFoundError, ValueError) as exc:
-        typer.echo(f"cannot resume: {exc}")
-        raise typer.Exit(1) from exc
+    with evaldb.connect(cfg.database_url) as conn:
+        if run_id is None:
+            candidate = latest_incomplete_run(conn)
+            if candidate is None:
+                typer.echo("No unfinished evaluation run in eval.runs.")
+                raise typer.Exit(1)
+            run_id = candidate["run_id"]
+        try:
+            manifest, cases, done = resume_run(conn, run_id)
+        except (LookupError, ValueError) as exc:
+            typer.echo(f"cannot resume: {exc}")
+            raise typer.Exit(1) from exc
 
-    current = dataset_version(cfg.dataset_dir)
-    if current != manifest.dataset_version:
+        current = golden_store.golden_set_hash(golden_store.load_cases(conn, verified_only=True))
+        if current != manifest.dataset_version:
+            typer.echo(
+                f"! golden set is {current} today, this run froze {manifest.dataset_version}; "
+                "replaying the run's frozen case list"
+            )
         typer.echo(
-            f"! golden set changed since this run started "
-            f"({manifest.dataset_version} -> {current}); replaying the run's frozen case list"
+            f"resuming {manifest.run_id}  model={manifest.model}  as_of={manifest.as_of}"
+            f"  {len(done)}/{len(cases)} already scored"
         )
-    typer.echo(
-        f"resuming {manifest.run_id}  model={manifest.model}  as_of={manifest.as_of}"
-        f"  {len(done)}/{len(cases)} already scored"
-    )
-    _execute_and_report(cfg, manifest, cases, done, no_db=no_db, verbose=verbose)
+        _execute_and_report(conn, cfg, manifest, cases, done, verbose=verbose)
 
 
 _MARK = {True: "\u2713", False: "\u2717", None: "\u00b7"}
@@ -387,46 +599,41 @@ def _progress_callbacks(verbose: bool):
 
 
 def _execute_and_report(
+    conn,
     cfg: EvalConfig,
     manifest: RunManifest,
     cases: list[GoldenCase],
     done: list[CaseResult],
-    no_db: bool,
     verbose: bool = False,
 ) -> None:
-    """Score the pending cases with live progress, then persist and summarize."""
+    """Score the pending cases with live progress, then summarize."""
     set_progress(verbose)  # per-step workflow chatter would drown the per-case lines
-    run_dir = run_directory(cfg, manifest.run_id)
     on_case_start, on_case_done = _progress_callbacks(verbose)
+
+    def on_done(index: int, total: int, case: GoldenCase, result: CaseResult) -> None:
+        on_case_done(index, total, case, result)
+        _progress({"done": index, "total": total, "case": case.id, "run_id": manifest.run_id})
+
     try:
         results = execute_run(
-            cfg, manifest, cases, done,
-            on_case_start=on_case_start, on_case_done=on_case_done,
+            conn, cfg, manifest, cases, done,
+            on_case_start=on_case_start, on_case_done=on_done,
         )
     except KeyboardInterrupt:
-        scored = len(load_partial_results(run_dir))
+        scored = len(evaldb.load_results(conn, evaldb.load_run(conn, manifest.run_id)[0]))
         typer.echo(
             f"\ninterrupted after {scored}/{len(cases)} case(s) — nothing lost.\n"
             f"  resume with: nomokrisis-eval resume {manifest.run_id}"
         )
+        _result({"run_id": manifest.run_id, "status": "running"})
         raise typer.Exit(130) from None
-
-    # Run manifest + full results on disk (reproducibility, per 04_activity4_validation.md)
-    (run_dir / RESULTS_FILENAME).write_text(
-        json.dumps([r.model_dump(mode="json") for r in results], indent=2), encoding="utf-8"
-    )
-
-    if not no_db:
-        with evaldb.connect(cfg.database_url) as conn:
-            evaldb.apply_schema(conn)
-            evaldb.insert_run(conn, manifest, results)
-        typer.echo(f"stored in Postgres: run_id={manifest.run_id}")
 
     typer.echo(f"\nrun {manifest.run_id}  model={manifest.model}  dataset={manifest.dataset_version}")
     for lang, kpis in summarize(results).items():
         pretty = "  ".join(f"{k}={v}" for k, v in kpis.items())
         typer.echo(f"  [{lang}] {pretty}")
-    typer.echo(f"\nmanifest + per-case results: {run_dir}")
+    typer.echo(f"stored in Postgres: run_id={manifest.run_id} (eval.runs / eval.results)")
+    _result({"run_id": manifest.run_id})
 
 
 @app.command("list-embedding-cases")
@@ -434,11 +641,12 @@ def list_embedding_cases(
     country: list[str] = typer.Option(None, "--country"),
     verified_only: bool = typer.Option(False, "--verified-only"),
 ) -> None:
-    """List the embedding (retrieval) evaluation set."""
+    """List the embedding (retrieval) evaluation set (eval.embedding_cases)."""
     cfg = load_eval_config()
-    cases = load_embedding_cases(
-        cfg.embedding_dataset_dir, countries=country or None, verified_only=verified_only
-    )
+    with evaldb.connect(cfg.database_url) as conn:
+        cases = golden_store.load_embedding_cases(
+            conn, countries=country or None, verified_only=verified_only
+        )
     for case in cases:
         flag = "✓" if case.verified else "draft"
         corpus = case.corpus_lang or case.language
@@ -448,7 +656,7 @@ def list_embedding_cases(
             f"expects={'; '.join(case.expected_citations)}  {case.id}"
         )
     typer.echo(
-        f"{len(cases)} case(s), dataset_version={dataset_version(cfg.embedding_dataset_dir)}"
+        f"{len(cases)} case(s), dataset_version={golden_store.embedding_set_hash(cases)}"
     )
 
 
@@ -471,12 +679,13 @@ def run_embeddings(
     from .embedding_eval import run_embedding_eval, summarize_embedding
 
     cfg = load_eval_config()
-    cases = load_embedding_cases(
-        cfg.embedding_dataset_dir,
-        countries=country or None,
-        languages=language or None,
-        verified_only=verified_only,
-    )
+    with evaldb.connect(cfg.database_url) as conn:
+        cases = golden_store.load_embedding_cases(
+            conn,
+            countries=country or None,
+            languages=language or None,
+            verified_only=verified_only,
+        )
     if not cases:
         typer.echo("No matching embedding cases.")
         raise typer.Exit(1)
@@ -484,13 +693,8 @@ def run_embeddings(
     manifest, results = run_embedding_eval(
         cfg, cases, k=k, embedding_model_id=embedding_model_id, notes=notes
     )
-
-    run_dir = cfg.runs_dir / manifest["run_id"]
-    run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    (run_dir / "results.json").write_text(
-        json.dumps([r.model_dump(mode="json") for r in results], indent=2), encoding="utf-8"
-    )
+    with evaldb.connect(cfg.database_url) as conn:
+        evaldb.insert_embedding_run(conn, manifest, results)
 
     def fmt_rank(result, method) -> str:
         if method not in result.ranks:
@@ -514,16 +718,14 @@ def run_embeddings(
         for method, metrics in methods.items():
             pretty = "  ".join(f"{k_}={v}" for k_, v in metrics.items()) or "not scored"
             typer.echo(f"    {method:<7} {pretty}")
-    typer.echo(f"\nmanifest + per-case results: {run_dir}")
+    typer.echo(f"stored in Postgres: eval.embedding_runs run_id={manifest['run_id']}")
+    _result({"run_id": manifest["run_id"]})
 
 
 @app.command()
 def rescore(
     run_id: str = typer.Argument(..., help="Run id to re-score under the current scoring rules"),
-    write: bool = typer.Option(
-        False, "--write", help="Persist the new scores (results.json/.jsonl, and Postgres)"
-    ),
-    no_db: bool = typer.Option(False, "--no-db", help="With --write, skip Postgres"),
+    write: bool = typer.Option(False, "--write", help="Persist the new scores into eval.results"),
 ) -> None:
     """Re-apply today's scoring to a finished run's stored ReviewItems.
 
@@ -533,124 +735,122 @@ def rescore(
     golden-set change, start a new run. Dry-run by default.
     """
     cfg = load_eval_config()
-    manifest, results = rescore_run(cfg, run_id)
-    run_dir = run_directory(cfg, run_id)
-    before = summarize(load_partial_results(run_dir))
-    after = summarize(results)
+    with evaldb.connect(cfg.database_url) as conn:
+        try:
+            manifest, previous, results = rescore_run(conn, run_id)
+        except LookupError as exc:
+            typer.echo(str(exc))
+            raise typer.Exit(1) from exc
+        before = summarize(previous)
+        after = summarize(results)
 
-    typer.echo(f"run {manifest.run_id}  model={manifest.model}  cases={len(results)}")
-    for key in sorted(set(before) | set(after)):
-        old_kpis, new_kpis = before.get(key, {}), after.get(key, {})
-        changes = [
-            f"{k}: {old_kpis.get(k, '-')} -> {v}"
-            for k, v in new_kpis.items()
-            if old_kpis.get(k) != v
-        ]
-        typer.echo(f"  [{key}] " + ("  ".join(changes) if changes else "unchanged"))
+        typer.echo(f"run {manifest.run_id}  model={manifest.model}  cases={len(results)}")
+        for key in sorted(set(before) | set(after)):
+            old_kpis, new_kpis = before.get(key, {}), after.get(key, {})
+            changes = [
+                f"{k}: {old_kpis.get(k, '-')} -> {v}"
+                for k, v in new_kpis.items()
+                if old_kpis.get(k) != v
+            ]
+            typer.echo(f"  [{key}] " + ("  ".join(changes) if changes else "unchanged"))
 
-    if not write:
-        typer.echo("\ndry run — pass --write to persist")
-        return
-    (run_dir / RESULTS_FILENAME).write_text(
-        json.dumps([r.model_dump(mode="json") for r in results], indent=2), encoding="utf-8"
-    )
-    rewrite_partial(run_dir, results)
-    if not no_db:
-        with evaldb.connect(cfg.database_url) as conn:
-            evaldb.apply_schema(conn)
-            evaldb.insert_run(conn, manifest, results)
-        typer.echo(f"stored in Postgres: run_id={manifest.run_id}")
-    typer.echo(f"rescored results written to {run_dir}")
+        if not write:
+            typer.echo("\ndry run — pass --write to persist")
+            return
+        store_rescored(conn, run_id, results)
+    typer.echo(f"rescored results stored in Postgres: run_id={manifest.run_id}")
 
 
 @app.command("label-cases")
 def label_cases(
     country: list[str] = typer.Option(None, "--country"),
-    apply: bool = typer.Option(False, "--apply", help="Write the proposals into the case files"),
+    apply: bool = typer.Option(False, "--apply", help="Write the proposals into the cases"),
 ) -> None:
     """Draft a difficulty rung + hazard flags for each golden case, for review.
 
     Prints one line per case with the proposal and the reason for it, then a
     per-bucket count. Nothing is written without --apply, and even then only
     `difficulty`/`hazards` change: labels are metadata about a case, not ground
-    truth about its value, so a human `verified` flag survives untouched.
+    truth about its value, so a human `verified` flag survives untouched
+    (golden_store.save_case never writes the verdict columns).
 
-    A label you disagree with belongs in the selection file
-    (golden_sources/<cc>.json), as `difficulty` / `hazards` on the entry — the
-    builders prefer an explicit entry value over anything drafted here, so a
-    rebuild will not undo your correction.
+    A label you disagree with belongs in the selection (eval.golden_selections,
+    as `difficulty` / `hazards` on the entry) — the builders prefer an explicit
+    entry value over anything drafted here, so a rebuild will not undo your
+    correction.
     """
     cfg = load_eval_config()
-    cases = load_cases(cfg.dataset_dir, countries=country or None)
-    if not cases:
-        typer.echo("No golden cases found.")
-        return
+    with evaldb.connect(cfg.database_url) as conn:
+        cases = golden_store.load_cases(conn, countries=country or None)
+        if not cases:
+            typer.echo("No golden cases found.")
+            return
 
-    changed: list[tuple[GoldenCase, DraftedLabels]] = []
-    locked: list[GoldenCase] = []
-    buckets: Counter[str] = Counter()
-    hazard_counts: Counter[str] = Counter()
-    for case in sorted(cases, key=lambda c: c.id):
-        # temporal_basis lives on the parameter record, not on the case.
-        try:
-            record = load_record(REPO_ROOT / case.parameter_file)
-            basis = record.information.temporal_basis
-        except (OSError, ValueError):
-            basis = None
-        drafted = draft_labels(
-            value=case.expected.value,
-            citations=case.expected.citations,
-            temporal_basis=basis,
-            is_bracket_table=isinstance(case.expected.value, list),
-        )
-        buckets[drafted.difficulty] += 1
-        for hazard in drafted.hazards:
-            hazard_counts[hazard] += 1
-        if not case.labels_drafted:
-            mark = "="  # a human set this in the selection file; the draft is FYI only
-        elif (case.difficulty, case.hazards) == (drafted.difficulty, drafted.hazards):
-            mark = " "
-        else:
-            mark = "*"
-        flags = f" +{','.join(drafted.hazards)}" if drafted.hazards else ""
+        changed: list[tuple[GoldenCase, DraftedLabels]] = []
+        locked: list[GoldenCase] = []
+        buckets: Counter[str] = Counter()
+        hazard_counts: Counter[str] = Counter()
+        for case in sorted(cases, key=lambda c: c.id):
+            # temporal_basis lives on the parameter record, not on the case.
+            try:
+                basis = load_case_record(conn, case.parameter_target).information.temporal_basis
+            except (KeyError, ValueError):
+                conn.rollback()
+                basis = None
+            drafted = draft_labels(
+                value=case.expected.value,
+                citations=case.expected.citations,
+                temporal_basis=basis,
+                is_bracket_table=isinstance(case.expected.value, list),
+            )
+            buckets[drafted.difficulty] += 1
+            for hazard in drafted.hazards:
+                hazard_counts[hazard] += 1
+            if not case.labels_drafted:
+                mark = "="  # a human set this in the selection; the draft is FYI only
+            elif (case.difficulty, case.hazards) == (drafted.difficulty, drafted.hazards):
+                mark = " "
+            else:
+                mark = "*"
+            flags = f" +{','.join(drafted.hazards)}" if drafted.hazards else ""
+            typer.echo(
+                f"{mark} {case.id:<52} {case.difficulty or '-':<9} -> {drafted.difficulty:<9}{flags}"
+            )
+            for reason in drafted.reasons:
+                typer.echo(f"      · {reason}")
+            if mark == "*":
+                changed.append((case, drafted))
+            elif mark == "=" and (case.difficulty, case.hazards) != (drafted.difficulty, drafted.hazards):
+                locked.append(case)
+
         typer.echo(
-            f"{mark} {case.id:<52} {case.difficulty or '-':<9} -> {drafted.difficulty:<9}{flags}"
+            "\ndifficulty: " + "  ".join(f"{k}={v}" for k, v in sorted(buckets.items()))
+            + "\nhazards:    " + ("  ".join(f"{k}={v}" for k, v in sorted(hazard_counts.items())) or "none")
         )
-        for reason in drafted.reasons:
-            typer.echo(f"      · {reason}")
-        if mark == "*":
-            changed.append((case, drafted))
-        elif mark == "=" and (case.difficulty, case.hazards) != (drafted.difficulty, drafted.hazards):
-            locked.append(case)
-
-    typer.echo(
-        "\ndifficulty: " + "  ".join(f"{k}={v}" for k, v in sorted(buckets.items()))
-        + "\nhazards:    " + ("  ".join(f"{k}={v}" for k, v in sorted(hazard_counts.items())) or "none")
-    )
-    # The drafter can see three hazards and is blind to three others; say so,
-    # so a reviewer knows the flag list is a floor rather than a verdict.
-    typer.echo(
-        "not drafted (a human has to add these): mid_year_change, unit_conversion, "
-        "budget_act_window"
-    )
-
-    if locked:
+        # The drafter can see three hazards and is blind to three others; say so,
+        # so a reviewer knows the flag list is a floor rather than a verdict.
         typer.echo(
-            f"\n{len(locked)} case(s) marked '=' keep a label set by hand in "
-            "golden_sources/ and are left alone: "
-            + ", ".join(c.id for c in locked)
+            "not drafted (a human has to add these): mid_year_change, unit_conversion, "
+            "budget_act_window"
         )
-    if not changed:
-        typer.echo("\nevery case already carries its drafted label.")
-        return
-    if not apply:
-        typer.echo(f"\n{len(changed)} case(s) would change (*). Re-run with --apply to write them.")
-        return
-    for case, drafted in changed:
-        case.difficulty = drafted.difficulty
-        case.hazards = list(drafted.hazards)
-        save_case(cfg.dataset_dir, case)
-    typer.echo(f"\nwrote {len(changed)} case file(s); `verified` untouched.")
+
+        if locked:
+            typer.echo(
+                f"\n{len(locked)} case(s) marked '=' keep a label set by hand in "
+                "the selection and are left alone: "
+                + ", ".join(c.id for c in locked)
+            )
+        if not changed:
+            typer.echo("\nevery case already carries its drafted label.")
+            return
+        if not apply:
+            typer.echo(f"\n{len(changed)} case(s) would change (*). Re-run with --apply to write them.")
+            return
+        for case, drafted in changed:
+            case.difficulty = drafted.difficulty
+            case.hazards = list(drafted.hazards)
+            golden_store.save_case(conn, case)
+        typer.echo(f"\nwrote {len(changed)} case(s); `verified` untouched.")
 
 
 @app.command()

@@ -1,0 +1,23 @@
+# Applies to the repo-root build context of Nomergon-worker/Dockerfile
+# (BuildKit reads <Dockerfile>.dockerignore next to the Dockerfile).
+# Nothing that is a secret, an environment, a model cache or runtime data.
+*
+!Nomotheca-RAG/ingest/
+!Nomoscope-agentic-workflow/pipeline/
+!Nomokrisis-evaluation_pipeline/
+!Nomergon-worker/
+
+**/.env
+**/.env.*
+**/.venv*
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/*.pyc
+**/node_modules/
+**/.git/
+Nomotheca-RAG/ingest/models/
+Nomotheca-RAG/ingest/logs/
+Nomoscope-agentic-workflow/pipeline/data/
+Nomokrisis-evaluation_pipeline/.eval_runs/

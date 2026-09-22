@@ -1,6 +1,6 @@
 ---
 name: review-eval
-description: Review a Nomokrisis evaluation run and improve the golden set behind it — separate real model failures from scoring artifacts, corpus gaps and mislabelled ground truth, then fix the selection files. Use when asked to review, interpret or sanity-check eval results ("is the eval correct?", "why is the score so low?", "did the model really fail these?"), or to add/repair golden cases.
+description: Review a Nomokrisis evaluation run and improve the golden set behind it — separate real model failures from scoring artifacts, corpus gaps and mislabelled ground truth, then fix the golden selections in the database. Use when asked to review, interpret or sanity-check eval results ("is the eval correct?", "why is the score so low?", "did the model really fail these?"), or to add/repair golden cases.
 argument-hint: [run-id]
 ---
 
@@ -19,26 +19,67 @@ fix.
 
 ```bash
 cd Nomokrisis-evaluation_pipeline
-uv run nomokrisis-eval list-runs            # run ids, model, progress
-ls .eval_runs/<run-id>/                     # manifest.json cases.json results.json queue/
+uv run nomokrisis-eval list-runs            # run ids, model, done/total, status
+uv run nomokrisis-eval report --run-id <run-id>
 ```
 
-A run directory is self-contained and is the thing to read:
+A run lives in the database alone (ADR 0004) — there is no run directory,
+no `manifest.json`, `cases.json`, `results.json` or `queue/`. Everything a
+review needs is in four places:
 
-| file | what it is |
+| where | what it is |
 |---|---|
-| `manifest.json` | model, **critique_model**, **resolved_model / resolved_critique_model** (what the provider layer actually called), prompt/agent/eval versions, dataset hash, `as_of` |
-| `cases.json` | the golden cases **frozen at run start** — the expectations actually used |
-| `results.json` | one scored `CaseResult` per case |
-| `queue/<item_id>.json` | the full `ReviewItem`: proposal, references, critique, retrieval trace |
+| `eval.runs` | the manifest: `model`, **`critique_model`**, **`resolved_model` / `resolved_critique_model`** (what the provider layer actually called), prompt/agent/eval versions, `dataset_version` (the golden set hash), `as_of`, `status`, `submitted_by`, `notes` (`smoke` = ignore) |
+| `eval.run_cases` | the golden cases **frozen at run start** (`"case"` jsonb) — the expectations actually used |
+| `eval.results` | one scored `CaseResult` per case: the KPI columns, `details` (the full dump), `phoenix_trace_id` |
+| `eval.results.review_item` | the full `ReviewItem` (jsonb): proposal, references, critique, scout, retrieval trace |
 
-`results.json` alone cannot tell you *why* anything scored as it did. The
-answer is nearly always in the matching `queue/` item — read it.
+The KPI columns alone cannot tell you *why* anything scored as it did. The
+answer is nearly always in the matching `review_item` — read it.
+
+**One loader for every snippet below.** Save it once as `/tmp/eval_run.py`;
+each snippet starts with `from eval_run import load_run` and runs from
+`Nomokrisis-evaluation_pipeline/` as `PYTHONPATH=/tmp uv run python - <<'PY'`:
+
+```python
+# /tmp/eval_run.py — a run's manifest, frozen cases, results and review items, from the DB
+from nomokrisis_eval import db as evaldb
+from nomokrisis_eval.config import load_eval_config
+
+
+def load_run(run_id: str):
+    """(manifest, cases, results, items).
+
+    manifest: RunManifest (attributes: model, critique_model, resolved_model, ...)
+    cases:    {case_id: dict}  eval.run_cases  — the frozen GoldenCase, with `expected`
+    results:  {case_id: dict}  eval.results    — the scored CaseResult
+    items:    {case_id: dict}  eval.results.review_item — the ReviewItem (None-free)
+    """
+    conn = evaldb.connect(load_eval_config().database_url)
+    loaded = evaldb.load_run(conn, run_id)
+    if loaded is None:
+        raise SystemExit(f"no run {run_id} in eval.runs — `nomokrisis-eval list-runs`")
+    run_pk, manifest = loaded
+    cases = {c.id: c.model_dump(mode="json") for c in evaldb.load_run_cases(conn, run_pk)}
+    results = {r.case_id: r.model_dump(mode="json") for r in evaldb.load_results(conn, run_pk)}
+    items = evaldb.load_review_items(conn, run_pk)
+    return manifest, cases, results, items
+```
+
+The same rows straight from psql, when one field is all you need:
+
+```bash
+DB=$(docker compose -f ../docker-compose.yml ps -q db)
+docker exec $DB psql -U jrc -d legislation -A -c "
+SELECT res.case_id, res.routing_actual, res.routing_correct, res.value_correct, res.citation_correct,
+       jsonb_pretty(res.review_item->'critique')
+FROM eval.results res JOIN eval.runs r ON r.id=res.run_pk WHERE r.run_id='<run-id>' AND res.case_id='<case-id>';"
+```
 
 ### Before comparing two runs: prove they ran two models
 
 A comparison is only about the models if the two runs reached two models.
-`manifest.model` is what was *asked for*; Phoenix records what was *called*.
+`eval.runs.model` is what was *asked for*; Phoenix records what was *called*.
 For `azure_openai/<name>` the name is the deployment, and until 8 Sep 2026
 `AZURE_OPENAI_DEPLOYMENT` in `.env` overrode it — so a "Sol vs Luna" pair,
 judge included, was Luna vs Luna, and every `azure_openai/*` run since
@@ -48,24 +89,26 @@ same. The differences between such runs are sampling noise at temperature
 mistake that was made. Check both runs before anything else:
 
 ```bash
-uv run python - <<'PY'
-import json
-for R in (".eval_runs/<run-a>", ".eval_runs/<run-b>"):
-    m = json.load(open(R + "/manifest.json"))
-    print(m["model"], "->", m.get("resolved_model"), "| judge", m.get("critique_model"), "->", m.get("resolved_critique_model"))
-PY
+docker exec $DB psql -U jrc -d legislation -A -c "
+SELECT run_id, model, resolved_model, critique_model, resolved_critique_model, notes
+FROM eval.runs WHERE run_id IN ('<run-a>', '<run-b>');"
 ```
 
-Then confirm against the traces — every queue item carries `phoenix_trace_id`:
+Then confirm against the traces — every result carries `phoenix_trace_id`
+(the same id is on the review item), and the two databases share one server:
 
 ```bash
-docker exec $(docker compose ps -q db) psql -U jrc -d phoenix -A -c "
+docker exec $DB psql -U jrc -d legislation -A -t -c "
+SELECT string_agg(quote_literal(res.phoenix_trace_id), ',') FROM eval.results res
+JOIN eval.runs r ON r.id=res.run_pk WHERE r.run_id='<run-id>' AND res.phoenix_trace_id IS NOT NULL;"
+docker exec $DB psql -U jrc -d phoenix -A -c "
 SELECT s.attributes->'llm'->>'model_name', count(*) FROM spans s JOIN traces t ON t.id=s.trace_rowid
-WHERE s.span_kind='LLM' AND t.trace_id IN ('<trace ids from queue/*.json>') GROUP BY 1;"
+WHERE s.span_kind='LLM' AND t.trace_id IN (<the list above>) GROUP BY 1;"
 ```
 
-One model name across both runs means there is nothing to compare. Older
-manifests have no `resolved_*` fields; for those only Phoenix can tell.
+One model name across both runs means there is nothing to compare. Runs
+stored before the `resolved_*` columns existed have them NULL; for those only
+Phoenix can tell.
 
 ## 1. The five explanations, in the order that costs least to check
 
@@ -85,17 +128,16 @@ Generalise the check. For every KPI that looks bad, ask what the pipeline
 definitions rather than assuming they match:
 
 ```bash
-uv run python - <<'PY'
-import json, collections
-R = ".eval_runs/<run-id>"
-cases = {c["id"]: c for c in json.load(open(R + "/cases.json"))}
-res = json.load(open(R + "/results.json"))
+PYTHONPATH=/tmp uv run python - <<'PY'
+import collections
+from eval_run import load_run
+manifest, cases, results, items = load_run("<run-id>")
 counts = collections.Counter()
-for r in res:
+for case_id, r in results.items():
     if r["date_correct"] is False:
-        item = json.load(open(f"{R}/queue/{r['item_id']}.json")) if r["item_id"] else {}
+        item = items.get(case_id) or {}
         prop = (item.get("proposed_value") or {}).get("valid_from")
-        counts[(cases[r["case_id"]]["expected"]["valid_from"], prop, r["routing_actual"])] += 1
+        counts[(cases[case_id]["expected"].get("valid_from"), prop, r["routing_actual"])] += 1
 for k, n in counts.most_common():
     print(f"  expected={k[0]}  proposed={k[1]}  routing={k[2]}  n={n}")
 PY
@@ -167,9 +209,9 @@ First check whether it is really a gap. The gap-fill scout records what the
 proposal said it was missing and what it did about it, on every review item:
 
 ```bash
-uv run python -c "
-import json,sys; d=json.load(open(sys.argv[1]))
-print(json.dumps(d.get('scout'), indent=2, ensure_ascii=False))" .eval_runs/<run-id>/queue/<item_id>.json
+docker exec $DB psql -U jrc -d legislation -A -t -c "
+SELECT jsonb_pretty(res.review_item->'scout') FROM eval.results res JOIN eval.runs r ON r.id=res.run_pk
+WHERE r.run_id='<run-id>' AND res.case_id='<case-id>';"
 ```
 
 `needs` is the analyst's own account of the missing document, `ingested` is what
@@ -249,7 +291,7 @@ uv run nomokrisis-eval label-cases --apply      # writes difficulty/hazards only
 `label-cases` drafts from the expected value, the citations and the parameter's
 `temporal_basis`. It is blind to `mid_year_change`, `unit_conversion` and
 `budget_act_window` — those need a human. It also refuses to touch a case whose
-label a human set in `golden_sources/` (`labels_drafted: false`), because the
+label a human set in the selection (`labels_drafted: false`), because the
 drafter sees less than a reviewer does: once a case is materialized it cannot
 tell a bracket group from a scalar.
 
@@ -270,7 +312,8 @@ other reading and scored as model failures.
 
 `curated_golden.draft_case` now **skips** an entry whose stated `routing:`
 contradicts `route_against_current`, instead of warning. If you see that skip,
-the selection file is wrong — fix it there, never in `dataset/`.
+the selection is wrong — fix the entry (§3: export, edit, import, rebuild),
+never the case row in `eval.golden_cases`.
 
 **A `$`-formula parameter owes `derived`, not `unchanged`.** The cross-check
 above cannot catch this: `route_against_current` only asks whether the proposal
@@ -285,14 +328,10 @@ it.
 Check the drafting warnings that did survive:
 
 ```bash
-uv run python - <<'PY'
-import json, glob
-for p in sorted(glob.glob("dataset/**/*.json", recursive=True)):
-    c = json.load(open(p))
-    for part in (c.get("notes") or "").split(" | "):
-        if part.startswith("drafting warning"):
-            print(f"{c['id']:46s} verified={c['verified']} :: {part[:140]}")
-PY
+docker exec $DB psql -U jrc -d legislation -A -c "
+SELECT id, verified, left(part, 140) FROM eval.golden_cases,
+     unnest(string_to_array(\"case\"->>'notes', ' | ')) AS part
+WHERE part LIKE 'drafting warning%' ORDER BY id;"
 ```
 
 A `verified: true` case carrying a drafting warning is the dangerous
@@ -342,12 +381,16 @@ EUROMOD export, but the curation overlay can override it
 membership by value, never by name), and under that unit the proposal prompt never normalises "11 %" to
 0.11 and the critique's `values_sane` either refuses the fraction or skips its
 range check — one model refused the barème's 0 % band as "a currency amount",
-another had every rate it proposed rejected. Curate the unit, rebuild the
-dataset so the materialized parameter files pick it up (the human verdicts
-survive: the rebuild compares the file *path*), and still report the defect to
-the economists team, as the set already does for `$Minwage_hourly`, the FR
-barème 1-€ erratum and IE's 27 382/27 383. What cannot be curated (a wrong
-value, a mislabelled period) goes in the selection file's `note`.
+another had every rate it proposed rejected. Curate the unit and re-apply
+`curate-params`: a run loads the parameter from the store by the case's
+`parameter_target` at run time, so the curated unit reaches the next run
+without a rebuild. Rebuild the country's cases anyway when the selection's
+routing cross-check or the "value EUROMOD holds" note depended on it (the
+human verdicts survive while the ground truth is unchanged), and still report
+the defect to the economists team, as the set already does for
+`$Minwage_hourly`, the FR barème 1-€ erratum and IE's 27 382/27 383. What
+cannot be curated (a wrong value, a mislabelled period) goes in the selection
+entry's `note`.
 
 **The critique verdict gates routing and value.** `pipeline.diff` routes on the
 value alone, so a proposal the critique rejected still lands as `unchanged` when
@@ -378,16 +421,16 @@ extract was in no retrieved chunk at all — a real failure.
 Only now read the proposals. For refusals, the reason is in the critique:
 
 ```bash
-uv run python - <<'PY'
-import json
-R = ".eval_runs/<run-id>"
-for r in json.load(open(R + "/results.json")):
-    if r["routing_actual"] != "not_found":
+PYTHONPATH=/tmp uv run python - <<'PY'
+from eval_run import load_run
+manifest, cases, results, items = load_run("<run-id>")
+for case_id, r in results.items():
+    if r["routing_actual"] != "not_found" or case_id not in items:
         continue
-    item = json.load(open(f"{R}/queue/{r['item_id']}.json"))
-    reasons = [i for i in (item.get("critique") or {}).get("issues", []) if i.startswith("model:")]
-    print(f"--- {r['case_id']}  retrieval_hit={r['retrieval_hit']}")
-    print("   ", (reasons[0] if reasons else str((item.get('critique') or {}).get('issues')))[:300])
+    critique = items[case_id].get("critique") or {}
+    reasons = [i for i in critique.get("issues", []) if i.startswith("model:")]
+    print(f"--- {case_id}  retrieval_hit={r['retrieval_hit']}")
+    print("   ", (reasons[0] if reasons else str(critique.get("issues")))[:300])
 PY
 ```
 
@@ -408,28 +451,60 @@ After changing `scoring.py`, apply it to past runs for free — no LLM calls:
 
 ```bash
 uv run nomokrisis-eval rescore <run-id>            # dry run: prints the KPI delta
-uv run nomokrisis-eval rescore <run-id> --write    # persist (results.json + Postgres)
+uv run nomokrisis-eval rescore <run-id> --write    # persist into eval.results (review_item kept)
 ```
 
-It replays the run's stored `ReviewItem`s against the run's **frozen**
-`cases.json`, so what you see is the effect of the scoring change alone. To
-measure a golden-set change, start a new run.
+It replays the run's stored `ReviewItem`s (`eval.results.review_item`) against
+the run's **frozen** cases (`eval.run_cases`), so what you see is the effect of
+the scoring change alone. To measure a golden-set change, start a new run:
+
+```bash
+uv run nomokrisis-eval run --as-of 2025-06-01 --model <provider/model> --country FR
+uv run nomokrisis-eval run --as-of 2025-06-01 --model mock/extractor --country FR --include-drafts --notes smoke   # loads every case, no LLM
+```
+
+A run can equally be submitted to the worker, which holds the keys and the GPU:
+`nomergon submit eval --payload '{"as_of": "2025-06-01", "model": "<provider/model>", "countries": ["FR"]}'`
+(`{"resume": "<run_id>"}` continues one). Either way it lands in `eval.runs`;
+a smoke run is not deleted, its `notes` say `smoke`.
 
 ## 3. Improving the golden set
 
-Cases are **generated**, never hand-written. Edit
-`golden_sources/{openfisca_fr,ie,lt}.json` and rebuild:
+Cases are **generated**, never hand-written. The selection behind a country's
+cases is one row, `eval.golden_selections (country, kind, header, entries)` —
+`kind` is `openfisca` (FR) or `curated` (IE, LT, ES, NL) — edited as the JSON
+file it used to be, then written back and rebuilt:
 
 ```bash
-uv run nomokrisis-eval build-openfisca-dataset --year 2025 --country FR
+uv run nomokrisis-eval selections                                   # every row: country, kind, entries, updated_at/by
+uv run nomokrisis-eval selection-export IE --out /tmp/ie.json       # --kind curated|openfisca when a country has both
+#   ... edit /tmp/ie.json (header keys + "entries": [...]) ...
+uv run nomokrisis-eval selection-import /tmp/ie.json                # country/kind read from its header; prints the entry count
 uv run nomokrisis-eval build-curated-dataset  --year 2025 --country IE
+uv run nomokrisis-eval build-openfisca-dataset --year 2025 --country FR   # for the openfisca kind
 ```
 
-Never edit a file under `dataset/` by hand — the next rebuild overwrites it.
+Never UPDATE a row of `eval.golden_cases` by hand — the next rebuild
+overwrites it, and the verdict columns are the reviewer's. (There is no
+`dataset/` directory any more; `import-golden` was the one-off migration.)
+The `golden_set_<CC>.md` narratives stay in git as the rationale documents;
+update the one for the country when the selection changes.
+
+To read the cases as they stand: `nomokrisis-eval list-cases --country IE`,
+or the rows — `"case"` is the GoldenCase minus the verdict, the verdict is in
+`verified` / `reviewed_by` / `reviewed_at` / `review_note`, and the parameter
+under test is `"case"->>'parameter_target'` (`euromod://…` or `group:<group_id>`,
+loaded from the params DB at run time — there is no `parameter_file`):
+
+```bash
+docker exec $DB psql -U jrc -d legislation -A -c "
+SELECT id, verified, reviewed_by, \"case\"->>'parameter_target', \"case\"->'expected'->>'routing', \"case\"->'expected'->>'value'
+FROM eval.golden_cases WHERE country='IE' ORDER BY id;"
+```
 
 A rebuild **keeps the human verdict when the ground truth is unchanged** and
-resets it to `verified: false` when `expected`, the parameter file or `as_of`
-moved (`dataset.save_drafted_case`). A reset is printed; act on it, because
+resets it to `verified: false` when `expected`, `parameter_target` or `as_of`
+moved (`golden_store.save_drafted_case`). A reset is printed; act on it, because
 `nomokrisis-eval run` is `--verified-only` by default and silently drops
 unverified cases from the next run.
 
@@ -457,7 +532,7 @@ unverified cases from the next run.
   `citation_matches` is one-way containment, so a golden citation carrying more
   than the corpus does can never match. LT scored **citation 0% and recall 0%**
   on a whole run while the pipeline had cited the right article in four of seven
-  cases, purely because the selection file wrote `GPMĮ IX-1007, 20 straipsnis`
+  cases, purely because the selection wrote `GPMĮ IX-1007, 20 straipsnis`
   where the corpus — and so the pipeline — writes `GPMĮ 20 straipsnis`. Check a
   new citation against the DB before relying on it:
   ```bash
@@ -475,11 +550,11 @@ unverified cases from the next run.
 - **Say why in `note:`.** It lands in the case's `notes` and is what a reviewer
   reads at the verification gate. Difficulty tiers ("EASY / HARD / IMPOSSIBLE
   today") are how the IE and LT sets make future improvements legible.
-- **Correct a difficulty label in the selection file, not the case file.** Set
-  `difficulty` / `hazards` on the `golden_sources/<cc>.json` entry: the builders
+- **Correct a difficulty label in the selection, not the case row.** Set
+  `difficulty` / `hazards` on the entry (export, edit, import): the builders
   prefer an explicit entry value over anything drafted, mark the case
-  `labels_drafted: false`, and a rebuild will not undo you. Editing the
-  materialized case in `dataset/` loses the change on the next build.
+  `labels_drafted: false`, and a rebuild will not undo you. Updating the case
+  row in `eval.golden_cases` loses the change on the next build.
 - **Aim for spread across the ladder.** A set that is all `verbatim` cannot show
   whether the pipeline can combine provisions. `derive` is the rung to watch:
   every formula-valued parameter in the store is currently either `$`-referenced
@@ -499,7 +574,9 @@ unverified cases from the next run.
 
 `verified: true` means a person checked the ground truth against the act.
 Drafters always emit `verified: false`, and `nomokrisis-eval verify <id>
---reviewer <name>` (or the UI's Golden set tab) is the only way to flip it.
+[--note …]` (or the UI's Golden set tab) is the only way to flip it — the
+reviewer recorded is the database login (`current_user`), there is no
+`--reviewer` flag to put someone else's name on it.
 **Never verify cases on the user's behalf** — list what needs re-verifying and
 why, and let them.
 

@@ -1,6 +1,6 @@
 ---
 name: add-golden-country
-description: Add a country to the Nomokrisis golden set — readiness gate (corpus, embeddings, translation, parameter store, curation overlay, scout), select ~10 parameters spread across the difficulty ladder and the routing traps, establish each ground truth against the ingested act, write golden_sources/<cc>.json + golden_set_<CC>.md + curation/<CC>.curation.yaml, build, smoke-run, hand the drafts to a human. Use when asked to add a country to the golden set or evaluation dataset ("add ES and NL to the golden set", "golden cases for the Netherlands"), or to extend an existing country's set with new difficulty tiers.
+description: Add a country to the Nomokrisis golden set — readiness gate (corpus, embeddings, translation, parameter store, curation overlay, scout), select ~10 parameters spread across the difficulty ladder and the routing traps, establish each ground truth against the ingested act, write the selection (selection-import into eval.golden_selections) + golden_set_<CC>.md + curation/<CC>.curation.yaml, build, smoke-run, hand the drafts to a human. Use when asked to add a country to the golden set or evaluation dataset ("add ES and NL to the golden set", "golden cases for the Netherlands"), or to extend an existing country's set with new difficulty tiers.
 argument-hint: <CC> [--year 2025]
 ---
 
@@ -15,22 +15,30 @@ the first FR set was 42/47 `unchanged`, all `verbatim`, and could not show
 whether the pipeline could combine provisions at all. The hand-curated IE and
 LT sets are the template — read
 [golden_set_IE.md](../../../Nomokrisis-evaluation_pipeline/golden_set_IE.md) and
-[golden_sources/lt.json](../../../Nomokrisis-evaluation_pipeline/golden_sources/lt.json)
-once before starting, then copy their shape.
+the LT selection (`uv run nomokrisis-eval selection-export LT`, from
+`Nomokrisis-evaluation_pipeline/`) once before starting, then copy their shape.
 
 **Done means all five exist and the last one is a list, not a promise:**
 
 1. `Nomoscope-agentic-workflow/pipeline/curation/<CC>.curation.yaml`, applied.
-2. `Nomokrisis-evaluation_pipeline/golden_sources/<cc>.json` meeting the
+2. The `curated` selection row for the country in `eval.golden_selections`
+   (written with `nomokrisis-eval selection-import <cc>.json`) meeting the
    spread table in §2, every entry's ground truth checked against the act (§3).
-3. `Nomokrisis-evaluation_pipeline/golden_set_<CC>.md`, the rationale and gaps.
-4. `dataset/<cc>/` drafted by the builder with **zero skips**, every warning read.
+3. `Nomokrisis-evaluation_pipeline/golden_set_<CC>.md`, the rationale and gaps
+   — this narrative stays in git; it is the only file the set leaves behind.
+4. The country's cases in `eval.golden_cases`, drafted by the builder with
+   **zero skips**, every warning read.
 5. A `mock/extractor` run over the drafts, and the case ids handed to the user
    to verify. **Never run `verify` yourself** — `verified: true` is a human's
    signature.
 
-Ground truth is generated, never hand-written: edit the selection file and
-rebuild. Never edit a file under `dataset/`.
+Ground truth is generated, never hand-written. The golden set lives in the
+database (ADR 0004): a selection is edited as a file — `selection-export` →
+edit the JSON → `selection-import` — and the cases are rebuilt from it. Never
+UPDATE `eval.golden_cases` by hand; the next rebuild would overwrite it, and
+the verdict columns are the reviewer's. (`import-golden` was the one-off
+migration of the old `golden_sources/` and `dataset/` files; there is nothing
+left to import.)
 
 ## 0. Readiness gate
 
@@ -178,7 +186,8 @@ authoring time:
 - **`routing`** omitted unless the entry pins a trap. A stored value carrying
   `$` owes `derived` with `expected_value: null`. A stated routing that
   contradicts the store *skips* the entry at build time — that skip means the
-  selection is wrong, and the fix is the entry, never `dataset/`.
+  selection is wrong, and the fix is the entry (edit, `selection-import`,
+  rebuild), never the case row.
 - **`expected_valid_from`** is the fiscal effect date, not the gazette's
   entry-into-force date (ES `fecha_vigencia` 2024-12-22 for a measure "con
   efectos desde el 1 de enero de 2025"). Omit it on an `unchanged` entry —
@@ -212,9 +221,22 @@ uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/$CC.
 uv run nomoscope-workflow curate-params curation/$CC.curation.yaml     # after EVERY ingest-params; '! not in params DB' = a typo
 ```
 
-## 5. Write the two files
+## 5. Write the selection and the rationale
 
-`golden_sources/<cc>.json` — `"corpus": "curated"`, `country`, `language`
+The selection is one row, `eval.golden_selections (country, kind='curated',
+header, entries)`, edited as the JSON file it used to be. Start from LT's
+shape and write yours anywhere outside the repo (it is not a git file):
+
+```bash
+cd ../../Nomokrisis-evaluation_pipeline
+uv run nomokrisis-eval selection-export LT --out /tmp/lt.json     # the template
+uv run nomokrisis-eval selection-export $CC --out /tmp/$CC.json   # extending an existing country
+#   ... write /tmp/<cc>.json ...
+uv run nomokrisis-eval selection-import /tmp/<cc>.json            # country/kind read from its header
+uv run nomokrisis-eval selections                                 # the row, its entry count, who wrote it
+```
+
+`<cc>.json` — `"corpus": "curated"`, `country`, `language`
 (the legislation's, `es` / `nl`), a `description`, a `conventions` block
 stating `temporal_basis`, `expected_value` spelling, the routing semantics
 and the source rule (copy LT's wording; they are what a reviewer reads), and
@@ -236,7 +258,8 @@ and the source rule (copy LT's wording; they are what a reviewer reads), and
 }
 ```
 
-`golden_set_<CC>.md` — mirror IE/LT section for section: why the country is
+`golden_set_<CC>.md` — in git, next to `golden_set_IE.md`; mirror IE/LT
+section for section: why the country is
 built this way, the build procedure, *Prerequisites and gaps* dated today
 (translation, group defects, scoring gaps found in §3), the N-cases table
 (`# | target | 2025 value | difficulty | expected routing | source`), the
@@ -245,7 +268,6 @@ rationale per tier, and *What this fixes in the existing sets' blind spots*.
 ## 6. Build, read every line, fix at the source
 
 ```bash
-cd ../../Nomokrisis-evaluation_pipeline
 uv run nomokrisis-eval build-curated-dataset --country $CC --year 2025
 ```
 
@@ -254,7 +276,10 @@ Every `~ skipped` line is a defect in the selection: `contested routing`
 `model_target` — check the exact name in the store, `$SMI` vs `$SMI2`),
 `no routing … cannot be normalised` (state `routing:` for a percent string
 or a raw value the scorer refuses). Every `!` warning is read and either
-resolved or copied into *Prerequisites and gaps*. Rebuild until zero skips.
+resolved or copied into *Prerequisites and gaps*. Fix the entry in your
+`<cc>.json`, `selection-import` it, rebuild — until zero skips. A rebuild
+keeps a human verdict only while the entry's ground truth is unchanged
+(`golden_store.save_drafted_case`) and prints every reset.
 
 Then check the spread and the drafter's labels against §2:
 
@@ -263,23 +288,36 @@ uv run nomokrisis-eval label-cases --country $CC       # proposals + reasons; '=
 uv run nomokrisis-eval list-cases --country $CC
 ```
 
+To read a case in full, query the row — `"case"` is the GoldenCase minus the
+verdict, which sits in its own columns:
+
+```bash
+docker exec $DB psql -U jrc -d legislation -A -c "
+SELECT id, verified, reviewed_by, jsonb_pretty(\"case\") FROM eval.golden_cases WHERE country='$CC' ORDER BY id;"
+```
+
 A rung with zero cases and no written reason in the `.md` is not done.
 
 ## 7. Smoke run and hand-off
 
 ```bash
-uv run nomokrisis-eval run --as-of 2025-06-01 --model mock/extractor --country $CC --include-drafts --no-db
+uv run nomokrisis-eval run --as-of 2025-06-01 --model mock/extractor --country $CC --include-drafts --notes smoke
 uv run nomokrisis-eval report --run-id <run-id>
 ```
 
+The run is stored like any other (`eval.runs`, `eval.run_cases`,
+`eval.results`) — that is fine, the `smoke` note is what tells a later reader
+to ignore it. It can equally be submitted through the worker:
+`nomergon submit eval --payload '{"as_of": "2025-06-01", "model": "mock/extractor", "countries": ["<CC>"], "include_drafts": true, "notes": "smoke"}'`.
+
 The mock cannot read law; what this proves is that every case loads, its
-parameter file materializes, the `derived` and `national_team_source` cases
-route without an LLM, and `report` prints the readiness split
-(`N source not in corpus`) you intended.
+parameter record comes out of the store by `parameter_target`, the
+`derived` and `national_team_source` cases route without an LLM, and
+`report` prints the readiness split (`N source not in corpus`) you intended.
 
 Report to the user: the spread table filled in, the gaps recorded, the
 defects found on the EUROMOD side (an off-by-one, a mislabelled unit — these
 go to the economists team, not into the ground truth), and the list of case
-ids awaiting `nomokrisis-eval verify <id> --reviewer <name>` or the UI's
-Golden set tab. Cases stay `verified: false` until then, and `run` drops them
-by default.
+ids awaiting `nomokrisis-eval verify <id>` (the reviewer is the database
+login, `current_user`) or the UI's Golden set tab. Cases stay
+`verified: false` until then, and `run` drops them by default.

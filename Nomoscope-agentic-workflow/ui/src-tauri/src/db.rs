@@ -9,6 +9,16 @@ fn connect(db_url: &str) -> Result<Client, String> {
     Client::connect(db_url, NoTls).map_err(|e| format!("DB connection failed: {e}"))
 }
 
+/// The login the UI connected with: the reviewer identity everywhere
+/// (`decide_review_item`, `ops.jobs.submitted_by`, golden verdicts).
+pub fn current_user(db_url: &str) -> Result<String, String> {
+    let mut client = connect(db_url)?;
+    client
+        .query_one("SELECT current_user", &[])
+        .map_err(|e| e.to_string())
+        .map(|row| row.get::<_, String>(0))
+}
+
 /// Corpus totals, per-jurisdiction breakdown, embedding coverage and the
 /// per-country readiness of the two non-legislative inputs (Country Report,
 /// enriched parameter store).
@@ -599,79 +609,9 @@ fn swap_database(db_url: &str, dbname: &str) -> String {
 /// from the `phoenix` database that shares this Postgres instance. The GID is
 // ---------------------------------------------------------------------------
 // Stage D — reviewer decisions. params.review_decisions is the system of
-// record; data/decisions.jsonl is a local mirror the pipeline can replay
-// (`nomoscope-workflow sync-decisions`) when the DB was down at decision time.
+// record, written only by params.decide_review_item (store.rs); this side
+// just reads it for the Audit tab.
 // ---------------------------------------------------------------------------
-
-fn text(entry: &Value, key: &str) -> Option<String> {
-    entry.get(key).and_then(Value::as_str).map(str::to_string)
-}
-
-/// Insert one reviewer decision. Idempotent on (item_id, decided_at), so
-/// re-inserting an entry already written — the replay path — is a no-op.
-/// Returns the new row's id, or null when the row was already there.
-pub fn insert_decision(db_url: &str, entry: &Value) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
-    let item_id = text(entry, "item_id");
-    let run_id = text(entry, "run_id");
-    // paramdb.record_run keys proposals as "<run_id>/<item_id>"; without both
-    // we still log the decision, just unlinked to its proposal row.
-    let proposal_id = match (&run_id, &item_id) {
-        (Some(run), Some(item)) => Some(format!("{run}/{item}")),
-        _ => None,
-    };
-    let proposal_pk: Option<i64> = match &proposal_id {
-        Some(pid) => client
-            .query_opt(
-                "SELECT id FROM params.proposals WHERE proposal_id = $1",
-                &[pid],
-            )
-            .map_err(|e| format!("proposal lookup failed: {e}"))?
-            .map(|row| row.get(0)),
-        None => None,
-    };
-
-    let row = client
-        .query_opt(
-            "INSERT INTO params.review_decisions
-                 (proposal_pk, item_id, run_id, model_target, as_of, routing, action,
-                  reviewer, note, edited_value, edited_fields, confidence,
-                  critique_verdict, decided_at, logged_at)
-             -- double casts (::text::date, not ::date): a bare cast makes
-             -- Postgres infer the parameter itself as date/real/timestamptz,
-             -- and the client then fails to serialize a string into it.
-             VALUES ($1, $2, $3, $4, $5::text::date, $6, $7, $8, $9, $10, $11,
-                     $12::float8::real, $13, $14::text::timestamptz,
-                     coalesce($15::text::timestamptz, now()))
-             ON CONFLICT DO NOTHING
-             RETURNING id",
-            &[
-                &proposal_pk,
-                &item_id,
-                &run_id,
-                &text(entry, "model_target"),
-                &text(entry, "as_of"),
-                &text(entry, "routing"),
-                &text(entry, "action").ok_or("decision entry has no action")?,
-                &text(entry, "reviewer"),
-                &text(entry, "note"),
-                &entry.get("edited_value").filter(|v| !v.is_null()),
-                &entry.get("edited_fields").filter(|v| !v.is_null()),
-                &entry.get("confidence").and_then(Value::as_f64),
-                &text(entry, "critique_verdict"),
-                // log lines written before decided_at was added dedupe on
-                // logged_at, which the UI set to the same instant
-                &text(entry, "decided_at").or_else(|| text(entry, "logged_at")),
-                &text(entry, "logged_at"),
-            ],
-        )
-        .map_err(|e| format!("decision insert failed: {e}"))?;
-
-    Ok(json!({
-        "id": row.map(|r| r.get::<_, i64>(0)),
-        "proposal_pk": proposal_pk,
-    }))
-}
 
 /// The audit log, newest first — the Audit tab's data source.
 pub fn load_decisions(db_url: &str, limit: i64) -> Result<Value, String> {
@@ -769,74 +709,6 @@ mod tests {
             assert!(detail["summary"].is_array());
             assert!(detail["cases"].is_array());
         }
-    }
-
-    /// The Stage D write path against the live stack: every column binds, the
-    /// entry round-trips, and a replay of the same entry is a no-op. Skipped
-    /// when the DB is down or the params schema has not been applied.
-    #[test]
-    fn decision_insert_is_idempotent() {
-        use serde_json::json;
-
-        let url = std::env::var("WORKFLOW_DATABASE_URL")
-            .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
-        let Ok(mut client) = super::connect(&url) else {
-            return;
-        };
-        if client
-            .execute("SELECT 1 FROM params.review_decisions LIMIT 0", &[])
-            .is_err()
-        {
-            return; // `nomoscope-workflow init-param-db` not run
-        }
-        let item_id = "zz_decision_insert_is_idempotent";
-        let entry = json!({
-            "item_id": item_id,
-            "run_id": "test-run",
-            "action": "edited",
-            "reviewer": "cargo-test",
-            "note": "smoke",
-            "as_of": "2025-06-01",
-            "routing": "changed",
-            "model_target": "euromod://ZZ/test/def_const/$x",
-            "edited_value": 0.25,
-            "edited_fields": { "legal_status": "enacted_in_force" },
-            "confidence": 0.9,
-            "critique_verdict": "pass",
-            "decided_at": "2025-06-02T10:00:00+00:00",
-            "logged_at": "2025-06-02T10:00:00+00:00",
-        });
-
-        let cleanup = |client: &mut super::Client| {
-            client
-                .execute(
-                    "DELETE FROM params.review_decisions WHERE item_id = $1",
-                    &[&item_id],
-                )
-                .unwrap();
-        };
-        cleanup(&mut client);
-
-        let first = super::insert_decision(&url, &entry).unwrap();
-        assert!(first["id"].is_i64(), "first insert should write a row");
-        let again = super::insert_decision(&url, &entry).unwrap();
-        assert!(again["id"].is_null(), "replaying the entry must be a no-op");
-
-        let logged = super::load_decisions(&url, 500).unwrap();
-        let row = logged["decisions"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .find(|d| d["item_id"] == item_id)
-            .expect("decision should be readable back");
-        assert_eq!(row["action"], "edited");
-        assert_eq!(row["edited_value"], json!(0.25));
-        assert_eq!(row["edited_fields"]["legal_status"], "enacted_in_force");
-        assert_eq!(row["as_of"], "2025-06-01");
-        // confidence is `real` in the schema, as it is on params.proposals
-        assert!((row["confidence"].as_f64().unwrap() - 0.9).abs() < 1e-6);
-
-        cleanup(&mut client);
     }
 }
 

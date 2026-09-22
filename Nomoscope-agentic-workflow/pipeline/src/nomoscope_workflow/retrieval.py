@@ -9,8 +9,8 @@ Two paths, per Nomotheca-RAG/11_database-model.md §5:
      the SQL pattern from Nomotheca-RAG/db/demo_queries.sql (f).
 
 The vector leg encodes the query with the real BGE-M3 encoder (model_id 1,
-via query_encoder — the ingest package's OpenVINO subprocess) and falls back
-to FTS-only when the encoder is unavailable. The demo placeholder embedder
+via query_encoder — the ingest package's subprocess, or the worker's encode
+job when WORKFLOW_ENCODER=db) and falls back to FTS-only when the encoder is unavailable. The demo placeholder embedder
 (model_id 99) keeps its embed-in-SQL path via placeholder_embedding().
 """
 
@@ -306,7 +306,9 @@ def retrieve(
     merged: dict[str, RetrievalHit] = {}
     for hit in citation_fast_path(conn, country, lang, as_of, citations, cfg.retrieval_k):
         merged[hit.chunk_id] = hit
-    query_vector = query_encoder.encode(query) if cfg.embedding_model_id != 99 else None
+    query_vector = (
+        query_encoder.encode(query, cfg.database_url) if cfg.embedding_model_id != 99 else None
+    )
     for hit in hybrid_search(
         conn, country, lang, as_of, query, cfg.embedding_model_id, cfg.retrieval_k, query_vector
     ):

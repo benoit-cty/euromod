@@ -1,8 +1,10 @@
 <script>
   // Environmental impact of traced LLM calls: EcoLogits estimates computed by
-  // the pipeline CLI over Phoenix spans (see nomoscope_workflow/impact.py).
+  // the pipeline CLI over Phoenix spans (see nomoscope_workflow/impact.py),
+  // run on the worker as an `impact` job whose result is the report.
   // Impacts are min–max ranges: proprietary model architectures are estimated.
   import { api } from '../api.js';
+  import { submitAndFollow, summarize } from '../jobs.js';
 
   let { dbUrl = '' } = $props();
 
@@ -13,6 +15,7 @@
   let loading = $state(false);
   let error = $state('');
   let loadedOnce = $state(false);
+  let jobId = $state(null);
 
   const zones = [
     { value: 'EEE', label: 'Europe (EEE)' },
@@ -41,13 +44,25 @@
     loading = true;
     error = '';
     try {
-      report = await api.impactReport(dbUrl, project, zone);
+      const final = await submitAndFollow(
+        dbUrl,
+        'impact',
+        { project, since: null, until: null, zone },
+        { onSubmit: (id) => (jobId = id) },
+      );
+      if (final.status !== 'succeeded') throw new Error(`impact job #${final.id}: ${summarize(final)}`);
+      report = final.result;
+      if (!report) throw new Error(`impact job #${final.id} returned no report`);
     } catch (e) {
-      error = String(e);
+      error = String(e.message ?? e);
       report = null;
     } finally {
       loading = false;
     }
+  }
+
+  async function cancel() {
+    if (jobId != null) await api.cancelJob(dbUrl, jobId);
   }
 
   // Target of the shell's Reload button while this tab is showing.
@@ -100,6 +115,7 @@
       </select>
     </label>
     <button onclick={load} disabled={loading}>{loading ? 'Computing…' : 'Refresh'}</button>
+    {#if loading}<button onclick={cancel}>Cancel</button>{/if}
   </div>
 
   {#if error}<p class="error">{error}</p>{/if}
@@ -180,7 +196,7 @@
       </p>
     {/if}
   {:else if loading}
-    <p class="muted">Computing impact report…</p>
+    <p class="muted">Computing impact report on the worker{#if jobId != null} (job #{jobId}){/if}…</p>
   {/if}
 </section>
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -28,7 +28,6 @@ class WorkflowConfig:
     # 8 was too tight: the correct CGI art. 197 consolidation ranked #11 behind
     # amending finance-act articles that repeat the same fiscal vocabulary.
     retrieval_k: int = 15
-    data_dir: Path = field(default_factory=lambda: WORKFLOW_ROOT / "data")
     phoenix_endpoint: str = ""
     phoenix_project: str = ""
     phoenix_database_url: str = ""  # phoenix DB in the same Postgres (impact reports)
@@ -59,7 +58,6 @@ def load_config() -> WorkflowConfig:
         critique_model=_env("WORKFLOW_CRITIQUE_MODEL", "") or _env("WORKFLOW_MODEL", "mock/extractor"),
         embedding_model_id=int(_env("WORKFLOW_EMBEDDING_MODEL_ID", "99")),
         retrieval_k=int(_env("WORKFLOW_RETRIEVAL_K", "15")),
-        data_dir=Path(_env("WORKFLOW_DATA_DIR", str(WORKFLOW_ROOT / "data"))),
         phoenix_endpoint=_env("PHOENIX_COLLECTOR_ENDPOINT", "http://localhost:6006"),
         phoenix_project=_env("PHOENIX_PROJECT_NAME", "nomoscope-agentic-workflow"),
         phoenix_database_url=_env(

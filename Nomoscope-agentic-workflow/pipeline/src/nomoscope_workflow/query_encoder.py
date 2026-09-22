@@ -1,11 +1,21 @@
 """BGE-M3 query encoding for the vector leg of hybrid retrieval.
 
-Reuses the ingest package's long-lived JSON-lines encoder
-(nomotheca_ingest.query_embeddings — the same subprocess the validation UI
-spawns), so the pipeline carries no ML dependencies of its own. The process
-starts lazily on the first query and is reused for every subsequent
-parameter in the run; any failure disables the vector leg for the rest of
-the process and retrieval degrades to FTS-only with a console note.
+Two ways to get a query vector, chosen by `WORKFLOW_ENCODER`:
+
+- `subprocess` (default): reuse the ingest package's long-lived JSON-lines
+  encoder (nomotheca_ingest.query_embeddings), so the pipeline carries no ML
+  dependencies of its own. The process starts lazily on the first query and
+  is reused for every subsequent parameter in the run.
+- `db`: submit an `encode` job to the worker's `ops.jobs` table and poll
+  (encode_client) — the worker keeps the model warm and runs workflow jobs
+  with this mode, so the subprocess never loads the model itself.
+
+Any failure disables the vector leg for the rest of the process and retrieval
+degrades to FTS-only with one console note naming the encoder mode.
+
+Subprocess spawns honour `NOMOS_PYTHON`: when set (the worker sets it to its
+own interpreter), the command is `[NOMOS_PYTHON, -m, module, …]` run in the
+current directory — no `uv`, no ingest-dir walk.
 """
 
 from __future__ import annotations
@@ -17,12 +27,26 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import encode_client
+
 EMBEDDING_EXTRA = "embeddings"
 CUDA_EXTRA = "embeddings-cuda"
 CUDA_ENVIRONMENT = ".venv-cuda"
 
+DEFAULT_DATABASE_URL = "postgresql://jrc:jrc@localhost:5434/legislation"
+
 _process: subprocess.Popen | None = None
 _disabled = False
+
+
+def encoder_mode() -> str:
+    """`subprocess` (default) or `db` — see WORKFLOW_ENCODER."""
+    return os.environ.get("WORKFLOW_ENCODER", "subprocess").strip().lower() or "subprocess"
+
+
+def nomos_python() -> str | None:
+    """The interpreter every spawned subprocess must use, when the worker sets it."""
+    return os.environ.get("NOMOS_PYTHON") or None
 
 
 def ingest_dir() -> Path | None:
@@ -45,33 +69,43 @@ class EmbeddingProcess:
     command: list[str]
     env: dict[str, str]
     cuda: bool
+    cwd: Path
 
 
-def embedding_process(directory: Path, module: str, *args: str) -> EmbeddingProcess:
-    """Build the `uv run` invocation for an ingest embedding subprocess.
+def embedding_process(directory: Path | None, module: str, *args: str) -> EmbeddingProcess:
+    """Build the invocation for an ingest embedding subprocess.
 
-    The GPU wheels live in their own environment because CUDA and CPU torch are
-    conflicting extras in the ingest package: if the operator has run
+    With `NOMOS_PYTHON` set the spawn is that interpreter, `-m module`, in the
+    current working directory, env unchanged (minus VIRTUAL_ENV) — the worker's
+    own environment already holds the ingest package and its ML wheels.
+
+    Otherwise it is `uv run` inside the ingest package. The GPU wheels live in
+    their own environment because CUDA and CPU torch are conflicting extras in
+    the ingest package: if the operator has run
     `UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda` there,
     point uv at it and BGE-M3 runs on the GPU (roughly 20x the CPU rate);
     otherwise nothing changes and the CPU/OpenVINO `.venv` is used.
     """
     env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
     env["PYTHONUNBUFFERED"] = "1"
+    python = nomos_python()
+    if python:
+        return EmbeddingProcess(
+            command=[python, "-m", module, *args], env=env, cuda=False, cwd=Path.cwd()
+        )
+    if directory is None:
+        raise RuntimeError("could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR or NOMOS_PYTHON)")
     cuda_environment = directory / CUDA_ENVIRONMENT
     cuda = (cuda_environment / "pyvenv.cfg").is_file()
     if cuda:
         env["UV_PROJECT_ENVIRONMENT"] = str(cuda_environment)
     extra = CUDA_EXTRA if cuda else EMBEDDING_EXTRA
     command = ["uv", "run", "--extra", extra, "python", "-m", module, *args]
-    return EmbeddingProcess(command=command, env=env, cuda=cuda)
+    return EmbeddingProcess(command=command, env=env, cuda=cuda, cwd=directory)
 
 
 def _start() -> subprocess.Popen:
-    directory = ingest_dir()
-    if directory is None:
-        raise RuntimeError("could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)")
-    spec = embedding_process(directory, "nomotheca_ingest.query_embeddings")
+    spec = embedding_process(ingest_dir(), "nomotheca_ingest.query_embeddings")
     load_note = "GPU" if spec.cuda else "expect high CPU"
     print(
         f"[retrieval] starting BGE-M3 query encoder (first query — model load can take minutes, {load_note})…",
@@ -80,7 +114,7 @@ def _start() -> subprocess.Popen:
     started = time.monotonic()
     process = subprocess.Popen(
         spec.command,
-        cwd=directory,
+        cwd=spec.cwd,
         env=spec.env,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
@@ -94,21 +128,36 @@ def _start() -> subprocess.Popen:
     return process
 
 
-def encode(query: str) -> str | None:
-    """halfvec literal for a query, or None when the encoder is unavailable."""
-    global _process, _disabled
+def _encode_subprocess(query: str) -> str:
+    global _process
+    if _process is None or _process.poll() is not None:
+        _process = _start()
+    _process.stdin.write(json.dumps({"query": query}) + "\n")
+    _process.stdin.flush()
+    response = json.loads(_process.stdout.readline() or "{}")
+    if "halfvec" not in response:
+        raise RuntimeError(response.get("error", "no halfvec in encoder response"))
+    return response["halfvec"]
+
+
+def encode(query: str, database_url: str | None = None) -> str | None:
+    """halfvec literal for a query, or None when the encoder is unavailable.
+
+    `database_url` is only used by the `db` encoder mode (defaults to
+    WORKFLOW_DATABASE_URL, same default as config.py).
+    """
+    global _disabled
     if _disabled:
         return None
+    mode = encoder_mode()
     try:
-        if _process is None or _process.poll() is not None:
-            _process = _start()
-        _process.stdin.write(json.dumps({"query": query}) + "\n")
-        _process.stdin.flush()
-        response = json.loads(_process.stdout.readline() or "{}")
-        if "halfvec" not in response:
-            raise RuntimeError(response.get("error", "no halfvec in encoder response"))
-        return response["halfvec"]
+        if mode == "db":
+            url = database_url or os.environ.get("WORKFLOW_DATABASE_URL", DEFAULT_DATABASE_URL)
+            return encode_client.encode_via_jobs(url, query)
+        if mode != "subprocess":
+            raise ValueError(f"unknown WORKFLOW_ENCODER {mode!r} (subprocess | db)")
+        return _encode_subprocess(query)
     except Exception as exc:
         _disabled = True
-        print(f"[retrieval] vector leg disabled ({exc.__class__.__name__}: {exc})")
+        print(f"[retrieval] vector leg disabled (encoder={mode}; {exc.__class__.__name__}: {exc})")
         return None

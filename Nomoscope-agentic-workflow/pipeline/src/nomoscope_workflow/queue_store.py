@@ -1,27 +1,26 @@
-"""File-based review queue + decision log.
+"""The review queue, as rows in `params.review_queue` (ADR 0004).
 
-Layout under WORKFLOW_DATA_DIR (default Nomoscope-agentic-workflow/data):
-  parameters/   input parameter records (Activity 1 JSON, git-versioned)
-  queue/        one JSON per ReviewItem — what the validation UI reads/writes
-  decisions.jsonl  append-only audit log of every reviewer decision
-  export/       accepted records in the Activity 1 format (write-back is export-first)
-
-The Tauri UI operates on the same files (see ui/src-tauri/src/store.rs); this
-module is the Python side used by the pipeline and the CLI.
+One row per queue item, keyed `<country>_<target>_<system year>` (item_id),
+holding the ReviewItem as JSON so the item schema can evolve pipeline-side
+without a lockstep UI release. The pipeline writes items here (a re-run
+replaces a pending item, never a decided one unless forced); the validation
+UI reads them and records decisions through `params.decide_review_item()`,
+which updates the item and appends to `params.review_decisions` in one
+transaction. Nothing about the queue lives on disk.
 """
 
 from __future__ import annotations
 
 import json
 import re
-from datetime import date, datetime, timezone
-from pathlib import Path
 
-from .schema import ItemStatus, ParameterRecord, ReviewItem
+import psycopg
+
+from .schema import ItemStatus, ReviewItem
 
 
 def slugify(text: str) -> str:
-    """Filesystem-safe slug of a model_target path."""
+    """Id-safe slug of a model_target path."""
     return re.sub(r"[^A-Za-z0-9]+", "_", text).strip("_").lower()
 
 
@@ -35,142 +34,95 @@ def item_id(country: str, model_target: str, system_year: int) -> str:
     return f"{country.lower()}_{slugify(model_target)}_{system_year}"
 
 
-def queue_dir(data_dir: Path) -> Path:
-    return data_dir / "queue"
+_COLUMNS = "item_id, country, model_target, system_year, routing, status, run_id, created_at, item"
 
 
-def load_record(path: Path) -> ParameterRecord:
-    """Load an Activity 1 parameter record; tolerates //-comment lines (.jsonc)."""
-    text = path.read_text(encoding="utf-8")
-    text = re.sub(r"^\s*//.*$", "", text, flags=re.MULTILINE)
-    return ParameterRecord.model_validate_json(text)
+def write_item(conn: psycopg.Connection, item: ReviewItem, force: bool = False) -> bool:
+    """Upsert a queue item; never clobber an already-reviewed item unless forced.
 
-
-def write_item(item: ReviewItem, data_dir: Path, force: bool = False) -> bool:
-    """Write a queue item; never clobber an already-reviewed item unless forced."""
-    path = queue_dir(data_dir) / f"{item.id}.json"
-    if path.exists() and not force:
-        existing = json.loads(path.read_text(encoding="utf-8"))
-        if existing.get("status") != ItemStatus.PENDING:
-            return False
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(item.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    return True
-
-
-def load_items(data_dir: Path) -> list[ReviewItem]:
-    """All queue items, newest first."""
-    folder = queue_dir(data_dir)
-    if not folder.is_dir():
-        return []
-    items = [
-        ReviewItem.model_validate_json(p.read_text(encoding="utf-8"))
-        for p in sorted(folder.glob("*.json"))
-    ]
-    return sorted(items, key=lambda i: i.created_at, reverse=True)
-
-
-def migrate_item_ids(data_dir: Path, apply: bool = False) -> list[dict]:
-    """Re-key queue files from the old `<country>_<target>_<as_of>` id to the
-    system-year id, collapsing the duplicates that produced.
-
-    Items written before `--year` existed carry `system_year: null`; their anchor
-    date was the run date, so the year is taken from `as_of`. When several runs
-    land on the same system year, the decided one wins over a pending one and the
-    newest wins among equals; the losers are moved to `queue_superseded/` rather
-    than deleted, because they are the audit trail of what was proposed when.
-
-    Returns one plan entry per file; nothing is written unless `apply` is set.
+    Returns whether the row was written. Commits: an item is the run's output
+    and must survive whatever happens to the rest of the run.
     """
-    folder = queue_dir(data_dir)
-    if not folder.is_dir():
-        return []
-
-    candidates: dict[str, list[tuple[Path, dict, str]]] = {}
-    plan: list[dict] = []
-    for path in sorted(folder.glob("*.json")):
-        item = json.loads(path.read_text(encoding="utf-8"))
-        year = item.get("system_year") or int(str(item.get("as_of", ""))[:4] or 0)
-        if not (year and item.get("country") and item.get("model_target")):
-            plan.append({"path": path, "action": "skip", "reason": "no country/target/year"})
-            continue
-        new_id = item_id(item["country"], item["model_target"], year)
-        candidates.setdefault(new_id, []).append((path, item, str(year)))
-
-    for new_id, runs in sorted(candidates.items()):
-        # decided beats pending, then newest created_at; ties broken by filename
-        runs.sort(
-            key=lambda r: (
-                r[1].get("status", "pending") != "pending",
-                str(r[1].get("created_at", "")),
-                r[0].name,
-            ),
-            reverse=True,
-        )
-        (winner_path, winner, year), losers = runs[0], runs[1:]
-        target = folder / f"{new_id}.json"
-        if target.exists() and target not in {p for p, _, _ in runs}:
-            # a file already owns the canonical name but holds another parameter
-            plan.append({"path": winner_path, "action": "skip", "reason": f"{target.name} taken"})
-            continue
-        plan.append(
-            {
-                "path": winner_path,
-                "action": "keep" if winner_path == target else "rename",
-                "new_id": new_id,
-                "old_id": winner.get("id"),
-                "status": winner.get("status"),
-                "superseded": len(losers),
-            }
-        )
-        if apply:
-            winner["id"] = new_id
-            winner["system_year"] = int(year)
-            if winner_path != target:
-                winner_path.unlink()
-            target.write_text(
-                json.dumps(winner, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-            )
-        for loser_path, loser, _ in losers:
-            plan.append(
-                {
-                    "path": loser_path,
-                    "action": "supersede",
-                    "new_id": new_id,
-                    "old_id": loser.get("id"),
-                    "status": loser.get("status"),
-                }
-            )
-            if apply:
-                archive = data_dir / "queue_superseded"
-                archive.mkdir(parents=True, exist_ok=True)
-                loser_path.replace(archive / loser_path.name)
-    return plan
+    row = conn.execute(
+        f"""
+        INSERT INTO params.review_queue ({_COLUMNS})
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (item_id) DO UPDATE SET
+            country = EXCLUDED.country,
+            model_target = EXCLUDED.model_target,
+            system_year = EXCLUDED.system_year,
+            routing = EXCLUDED.routing,
+            status = EXCLUDED.status,
+            run_id = EXCLUDED.run_id,
+            created_at = EXCLUDED.created_at,
+            item = EXCLUDED.item,
+            updated_at = now()
+        WHERE params.review_queue.status = 'pending' OR %s
+        RETURNING item_id
+        """,
+        (
+            item.id,
+            item.country,
+            item.model_target,
+            item.system_year,
+            item.routing.value,
+            item.status.value,
+            item.run_id,
+            item.created_at,
+            json.dumps(item.model_dump(mode="json"), ensure_ascii=False),
+            force,
+        ),
+    ).fetchone()
+    conn.commit()
+    return row is not None
 
 
-def append_decision(data_dir: Path, entry: dict) -> None:
-    """Append one reviewer decision to the audit log (this log is training data)."""
-    entry.setdefault("logged_at", datetime.now(timezone.utc).isoformat())
-    path = data_dir / "decisions.jsonl"
-    with path.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+def _from_row(status: str, item: dict) -> ReviewItem:
+    loaded = ReviewItem.model_validate(item)
+    # The status column is what decide_review_item maintains; the JSON copy
+    # normally agrees, but the column is authoritative.
+    if loaded.status.value != status:
+        loaded = loaded.model_copy(update={"status": ItemStatus(status)})
+    return loaded
 
 
-def export_accepted(data_dir: Path, out_dir: Path | None = None) -> list[Path]:
-    """Write accepted/edited items' full records for the modelling team."""
-    out = out_dir or data_dir / "export"
-    out.mkdir(parents=True, exist_ok=True)
-    written: list[Path] = []
-    for item in load_items(data_dir):
+def load_items(
+    conn: psycopg.Connection, country: str | None = None, status: str | None = None
+) -> list[ReviewItem]:
+    """Queue items, newest first, optionally filtered by country and/or status."""
+    clauses, params = [], []
+    if country:
+        clauses.append("country = %s")
+        params.append(country.upper())
+    if status:
+        clauses.append("status = %s")
+        params.append(str(status))
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    rows = conn.execute(
+        f"SELECT status, item FROM params.review_queue {where} ORDER BY created_at DESC, item_id",
+        params,
+    ).fetchall()
+    return [_from_row(status, item) for status, item in rows]
+
+
+def load_item(conn: psycopg.Connection, item_id: str) -> ReviewItem | None:
+    """One queue item by id, or None."""
+    row = conn.execute(
+        "SELECT status, item FROM params.review_queue WHERE item_id = %s", (item_id,)
+    ).fetchone()
+    return _from_row(*row) if row else None
+
+
+def export_accepted(conn: psycopg.Connection) -> dict[str, list[dict]]:
+    """Accepted/edited items' full records (Activity 1 format), grouped by country.
+
+    Write-back is export-first: this is the only thing that leaves the DB, one
+    file per country, and only after a human accepted the item in the UI.
+    """
+    exported: dict[str, list[dict]] = {}
+    for item in load_items(conn):
         if item.status in (ItemStatus.ACCEPTED, ItemStatus.EDITED) and item.proposed_record:
-            path = out / f"{item.id}.json"
-            path.write_text(
-                json.dumps(item.proposed_record.model_dump(mode="json"), ensure_ascii=False, indent=2)
-                + "\n",
-                encoding="utf-8",
+            exported.setdefault(item.country, []).append(
+                item.proposed_record.model_dump(mode="json")
             )
-            written.append(path)
-    return written
+    return exported

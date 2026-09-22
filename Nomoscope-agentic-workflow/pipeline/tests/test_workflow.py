@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from nomoscope_workflow import mock, queue_store
+from nomoscope_workflow import mock
 from nomoscope_workflow.query_encoder import embedding_process
 from nomoscope_workflow.scout import (
     ScoutResult,
@@ -120,70 +120,6 @@ def test_unchanged_routing_keeps_the_current_validity_window():
     assert kept.valid_from == date(2024, 1, 1)
     assert kept.valid_to is None
     assert kept.value == 0.45
-
-
-def test_queue_roundtrip_preserves_reviewed_items(tmp_path: Path):
-    record = _record("scalar", "/1", 0.45)
-    item = ReviewItem(
-        id="fr_test_2025-06-01",
-        run_id="run-1",
-        created_at="2026-07-09T00:00:00Z",
-        country="FR",
-        model_target="euromod://FR/test",
-        as_of=date(2025, 6, 1),
-        value_type="scalar",
-        unit="/1",
-        routing=Routing.UNCHANGED,
-        proposed_record=record,
-    )
-    assert queue_store.write_item(item, tmp_path)
-    loaded = queue_store.load_items(tmp_path)
-    assert loaded[0].id == item.id
-
-    # a decided item is not overwritten without force
-    decided = item.model_copy(update={"status": ItemStatus.ACCEPTED})
-    assert queue_store.write_item(decided, tmp_path, force=True)
-    assert not queue_store.write_item(item, tmp_path)
-    assert queue_store.write_item(item, tmp_path, force=True)
-
-
-def test_migrate_item_ids_collapses_same_year_runs(tmp_path: Path):
-    """Old date-keyed ids re-key to the system year; same-year runs collapse."""
-
-    def item(as_of: date, created: str, status: ItemStatus = ItemStatus.PENDING) -> ReviewItem:
-        return ReviewItem(
-            id=f"fr_euromod_fr_test_{as_of.isoformat()}",
-            run_id=f"run-{created}",
-            created_at=created,
-            country="FR",
-            model_target="euromod://FR/test",
-            as_of=as_of,
-            system_year=None,  # written before --year existed
-            value_type="scalar",
-            unit="/1",
-            routing=Routing.UNCHANGED,
-            status=status,
-        )
-
-    old = item(date(2025, 6, 1), "2026-07-09T00:00:00Z", ItemStatus.ACCEPTED)
-    newer = item(date(2025, 7, 1), "2026-08-05T00:00:00Z")
-    other_year = item(date(2024, 7, 1), "2026-08-05T00:00:00Z")
-    for entry in (old, newer, other_year):
-        assert queue_store.write_item(entry, tmp_path, force=True)
-
-    queue_store.migrate_item_ids(tmp_path, apply=True)
-    loaded = {i.id: i for i in queue_store.load_items(tmp_path)}
-    assert set(loaded) == {"fr_euromod_fr_test_2025", "fr_euromod_fr_test_2024"}
-    # the decided run wins over the newer pending one, and keeps its decision
-    kept = loaded["fr_euromod_fr_test_2025"]
-    assert kept.status == ItemStatus.ACCEPTED
-    assert kept.system_year == 2025
-    # the loser is archived, not deleted
-    assert [p.name for p in (tmp_path / "queue_superseded").iterdir()] == [
-        "fr_euromod_fr_test_2025-07-01.json"
-    ]
-    # idempotent: a second pass has nothing left to move
-    assert {e["action"] for e in queue_store.migrate_item_ids(tmp_path)} == {"keep"}
 
 
 def test_derived_refs_detects_formula_parameters():
@@ -476,6 +412,7 @@ def _ingest_package(tmp_path: Path, *, cuda: bool) -> Path:
 def test_embedding_process_stays_on_the_cpu_environment_by_default(tmp_path: Path, monkeypatch) -> None:
     """Without .venv-cuda the spawn is exactly the CPU/OpenVINO invocation."""
     monkeypatch.delenv("UV_PROJECT_ENVIRONMENT", raising=False)
+    monkeypatch.delenv("NOMOS_PYTHON", raising=False)
     directory = _ingest_package(tmp_path, cuda=False)
 
     spec = embedding_process(directory, "nomotheca_ingest.query_embeddings")
@@ -490,6 +427,7 @@ def test_embedding_process_stays_on_the_cpu_environment_by_default(tmp_path: Pat
 def test_embedding_process_prefers_the_installed_cuda_environment(tmp_path: Path, monkeypatch) -> None:
     """An installed .venv-cuda routes the subprocess to the GPU wheels."""
     monkeypatch.delenv("UV_PROJECT_ENVIRONMENT", raising=False)
+    monkeypatch.delenv("NOMOS_PYTHON", raising=False)
     directory = _ingest_package(tmp_path, cuda=True)
 
     spec = embedding_process(directory, "nomotheca_ingest.cli", "embeddings", "build")
@@ -499,6 +437,60 @@ def test_embedding_process_prefers_the_installed_cuda_environment(tmp_path: Path
     assert spec.command[-3:] == ["nomotheca_ingest.cli", "embeddings", "build"]
     assert spec.env["UV_PROJECT_ENVIRONMENT"] == str(directory / ".venv-cuda")
     assert "VIRTUAL_ENV" not in spec.env
+    assert spec.cwd == directory
+
+
+def test_embedding_process_uses_nomos_python_in_the_current_directory(tmp_path: Path, monkeypatch) -> None:
+    """Inside the worker the spawn is its interpreter, -m module, here: no uv, no ingest-dir walk."""
+    monkeypatch.setenv("NOMOS_PYTHON", "/opt/worker/bin/python")
+    monkeypatch.setenv("VIRTUAL_ENV", "/somewhere/.venv")
+    monkeypatch.chdir(tmp_path)
+    directory = _ingest_package(tmp_path, cuda=True)  # would pick CUDA on the uv path
+
+    spec = embedding_process(None, "nomotheca_ingest.cli", "embeddings", "build")
+
+    assert spec.command == ["/opt/worker/bin/python", "-m", "nomotheca_ingest.cli", "embeddings", "build"]
+    assert spec.cwd == Path.cwd()
+    assert spec.cuda is False
+    assert "VIRTUAL_ENV" not in spec.env
+    assert "UV_PROJECT_ENVIRONMENT" not in spec.env
+    # the walk-based directory is ignored even when it exists
+    assert embedding_process(directory, "nomotheca_ingest.query_embeddings").command[0] == "/opt/worker/bin/python"
+
+
+def test_scout_ingest_uses_nomos_python(tmp_path: Path, monkeypatch) -> None:
+    """The scout's archive-first ingest follows the same switch."""
+    from nomoscope_workflow import scout as scout_mod
+    from nomoscope_workflow.config import WorkflowConfig
+
+    monkeypatch.setenv("NOMOS_PYTHON", "/opt/worker/bin/python")
+    monkeypatch.chdir(tmp_path)
+    calls: list[dict] = []
+
+    class _Done:
+        returncode = 0
+        stdout = stderr = ""
+
+    def fake_run(command, **kwargs):
+        calls.append({"command": command, **kwargs})
+        return _Done()
+
+    monkeypatch.setattr(scout_mod.subprocess, "run", fake_run)
+    cfg = WorkflowConfig(database_url="postgresql://u@h/db")
+
+    assert scout_mod._ingest_instrument(cfg, "FR", "JORFTEXT000051168007") is None
+    assert calls[0]["command"] == [
+        "/opt/worker/bin/python", "-m", "nomotheca_ingest.cli",
+        "instrument", "fr", "JORFTEXT000051168007", "--database-url", "postgresql://u@h/db",
+    ]
+    assert calls[0]["cwd"] == Path.cwd()
+    assert "VIRTUAL_ENV" not in calls[0]["env"]
+
+    assert scout_mod._build_embeddings(cfg) is None
+    assert calls[1]["command"] == [
+        "/opt/worker/bin/python", "-m", "nomotheca_ingest.cli", "embeddings", "build",
+        "--database-url", "postgresql://u@h/db", "--no-progress",
+    ]
 
 
 def test_embedding_model_args_never_send_the_openvino_export_to_the_gpu(tmp_path: Path) -> None:
@@ -635,7 +627,7 @@ def test_guidance_only_finding_leaves_the_verdict_alone():
     assert GUIDANCE_ONLY_ISSUE in report.issues
 
 
-def test_guidance_only_flag_survives_the_queue_roundtrip(tmp_path: Path):
+def test_guidance_only_flag_survives_the_queue_roundtrip():
     """A reviewer reopening the queue still sees what the value rested on."""
     item = ReviewItem(
         id="fr_guidance_2025",
@@ -661,8 +653,8 @@ def test_guidance_only_flag_survives_the_queue_roundtrip(tmp_path: Path):
         ),
     )
 
-    assert queue_store.write_item(item, tmp_path)
-    loaded = queue_store.load_items(tmp_path)[0]
+    # the queue row stores item.model_dump(mode="json"); this is that round trip
+    loaded = ReviewItem.model_validate(item.model_dump(mode="json"))
 
     assert loaded.guidance_only
     assert loaded.proposed_value.references[0].source_trust_class == SourceTrustClass.GUIDANCE
@@ -833,3 +825,97 @@ def test_scout_rounds_merge_located_citations():
     ])
     assert merged.located == ["LIRPF Artículo 66", "LIRPF Artículo 76"]
     assert "located" in merged.summary()
+
+
+# ---------------------------------------------------------------------------
+# The queue item and run_parameter on an in-memory record (ADR 0004)
+# ---------------------------------------------------------------------------
+
+
+def _item_kwargs(**extra) -> dict:
+    return dict(
+        id="fr_euromod_fr_test_2025",
+        run_id="run-1",
+        created_at="2026-07-09T00:00:00Z",
+        country="FR",
+        model_target="euromod://FR/test",
+        as_of=date(2025, 7, 1),
+        system_year=2025,
+        value_type="scalar",
+        unit="/1",
+        routing=Routing.UNCHANGED,
+        **extra,
+    )
+
+
+def test_review_item_still_loads_the_old_parameter_file_key():
+    """Items stored before the queue moved into the DB named the materialized file."""
+    stored = {**_item_kwargs(), "as_of": "2025-07-01", "parameter_file": "data/parameters/db/x.json"}
+    loaded = ReviewItem.model_validate(stored)
+    assert loaded.parameter_ref == "data/parameters/db/x.json"
+    assert "parameter_ref" in loaded.model_dump(mode="json")
+    assert "parameter_file" not in loaded.model_dump(mode="json")
+    fresh = ReviewItem(**_item_kwargs(), parameter_ref="group:FR:tinkt_fr:tin_schedule")
+    assert ReviewItem.model_validate(fresh.model_dump(mode="json")).parameter_ref == fresh.parameter_ref
+
+
+def _offline_cfg():
+    """A config that cannot reach any DB: the run must not need one."""
+    from nomoscope_workflow.config import WorkflowConfig
+
+    return WorkflowConfig(
+        database_url="postgresql://nobody@127.0.0.1:1/nothing",
+        model="mock/extractor",
+        critique_model="mock/extractor",
+        tracing_enabled=False,
+        scout="off",
+    )
+
+
+def test_run_parameter_takes_a_record_and_can_skip_the_queue(capsys):
+    """run_parameter(cfg, tracer, record, as_of, enqueue=False) returns the item without writing.
+
+    A national-team-sourced value is routed before any retrieval, so this
+    exercises the whole record -> item path with no DB at all; record_run_safe
+    only prints its warning.
+    """
+    from nomoscope_workflow.pipeline import run_parameter
+    from nomoscope_workflow.schema import SourceType
+    from nomoscope_workflow.tracing import setup_tracing
+
+    record = ParameterRecord(
+        information=ParameterInformation(
+            country="FR", model_target="euromod://FR/nt_fr/def_const/$nt_test",
+            value_type="scalar", unit="/1",
+        ),
+        values=[ParameterValue(value=0.45, valid_from=date(2024, 1, 1), source_type=SourceType.NATIONAL_TEAM)],
+    )
+    cfg = _offline_cfg()
+    item = run_parameter(
+        cfg, setup_tracing(cfg), record, date(2025, 7, 1),
+        parameter_ref="euromod://FR/nt_fr/def_const/$nt_test", enqueue=False,
+    )
+    assert item.routing == Routing.NATIONAL_TEAM_SOURCE
+    assert item.id == "fr_euromod_fr_nt_fr_def_const_nt_test_2025"
+    assert item.system_year == 2025
+    assert item.parameter_ref == "euromod://FR/nt_fr/def_const/$nt_test"
+    assert item.status == ItemStatus.PENDING
+    assert "not recorded" in capsys.readouterr().out  # record_run_safe stayed best-effort
+
+    # parameter_ref defaults to the record's model_target
+    assert run_parameter(cfg, setup_tracing(cfg), record, date(2025, 7, 1), enqueue=False).parameter_ref == record.information.model_target
+
+
+def test_run_parameter_with_enqueue_fails_when_the_queue_is_unreachable():
+    """The queue is rows: no DB, no item — never a silent file fallback."""
+    from nomoscope_workflow.pipeline import run_parameter
+    from nomoscope_workflow.schema import SourceType
+    from nomoscope_workflow.tracing import setup_tracing
+
+    record = ParameterRecord(
+        information=ParameterInformation(country="FR", model_target="euromod://FR/test", value_type="scalar", unit="/1"),
+        values=[ParameterValue(value=0.45, valid_from=date(2024, 1, 1), source_type=SourceType.NATIONAL_TEAM)],
+    )
+    cfg = _offline_cfg()
+    with pytest.raises(Exception):
+        run_parameter(cfg, setup_tracing(cfg), record, date(2025, 7, 1))

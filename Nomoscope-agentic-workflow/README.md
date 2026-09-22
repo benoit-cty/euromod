@@ -8,29 +8,24 @@ desktop validation UI. Human validation is the product, not a fallback.
 Nomoscope-agentic-workflow/
 ├── pipeline/        Python (uv): frame → retrieve → propose → critique → diff → enqueue
 ├── ui/              Tauri 2 (Rust) + Svelte 5 validation UI
-├── data/
-│   ├── parameters/  Activity 1 records materialized FROM the params DB — derived,
-│   │                never hand-authored: db/ (run-targets), eval/ (golden set)
-│   ├── queue/       review items written by the pipeline, read/written by the UI
-│   │                one file per (parameter, system year): <country>_<target>_<year>.json
-│   ├── queue_superseded/  older runs collapsed by `migrate-queue-ids` (kept, never read)
-│   ├── decisions.jsonl  redundant local copy of the audit log; the log itself
-│   │                    is params.review_decisions in Postgres
-│   └── export/      accepted records, Activity 1 format (export-first write-back)
 ├── observability.md decision document: why Arize Phoenix
+│                    (no data/ directory: the review queue is params.review_queue, the
+│                    decisions are params.review_decisions, runs are jobs the worker
+│                    executes — ADR 0004; the only file is the EUROMOD export)
 └── .env.example     all configuration knobs
 ```
 
 ## Quick start
 
 ```bash
-docker compose up -d                     # repo root: legislation DB + pgAdmin + Phoenix
+docker compose --profile gpu up -d       # repo root: legislation DB + pgAdmin + Phoenix + the worker (--profile cpu without a GPU)
 
 cd Nomoscope-agentic-workflow/pipeline
 uv sync
-uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025
-                                                        # mock model — no API key needed; one run = one system year
-uv run nomoscope-workflow run-all --params-dir data/parameters/db --year 2025   # re-run everything materialized so far
+uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025 --model mock/extractor
+                                                        # mock model — no API key needed; one run = one system year;
+                                                        # from the UI the same run is a `workflow` job the worker executes
+uv run nomoscope-workflow run-country FR --year 2025 --model mock/extractor   # every parameter of a country
 uv run nomoscope-workflow queue
 
 cd ../ui
@@ -76,7 +71,7 @@ by an explicit control flow
 | **critique** | code + **LLM** | mechanical checks: extract is a verbatim quote of the cited chunk (offsets computed against `unit_texts.content`), dates consistent, units/brackets sane, schema-valid — then an LLM pass for semantic issues | verdict `fail` → one LLM retry, then goes to the human with the failed critique attached |
 | **scout** (gap-fill) | **LLM** + web + ingest | when the corpus is missing the establishing text (`WORKFLOW_SCOUT=llm\|tavily`, see *Gap-fill* below): the LLM names the official act, **steered by what the proposal said it lacked** (`ProposalDraft.missing_sources`) and told which citations we already hold; Tavily searches official domains only and instrument ids are harvested from result URLs (per-country rules in `scout.COUNTRY_SOURCES` — FR: legifrance.gouv.fr / `JORFTEXT…`, LT: e-seimas.lrs.lt / `TAR.…`), LLM-ranked against the result titles, then **archive-first ingested** via `nomotheca_ingest` (+ incremental BGE-M3 embedding), then retrieval and the proposal run again. Repeats up to `WORKFLOW_SCOUT_MAX_ROUNDS` times | web text is never evidence — only discovery; quotes still verify against the DB. Every round's needs, queries and ingested ids are recorded on the review item. A country absent from `COUNTRY_SOURCES` cannot gap-fill at all |
 | **diff** | code | proposal vs current value → routing `unchanged \| changed \| new \| not_found \| provisional \| national_team_source \| derived`. On `unchanged` the proposal keeps the validity window already in force: the citation re-confirms the value, it does not restart it, so no new `valid_from` is proposed. `provisional` (income-year params whose enacting act is missing) keeps the found value visible but no `proposed_record` — nothing acceptable to export | national-team-sourced values are never overwritten by the pipeline |
-| **enqueue** | code | full `ReviewItem` (side-by-side values, critique, retrieval trace incl. source texts, merged candidate record with `lineage`) → `data/queue/<country>_<target>_<system year>.json` | re-runs of the same system year overwrite that item; an already-reviewed one is never clobbered (unless `--force`) |
+| **enqueue** | code | full `ReviewItem` (side-by-side values, critique, retrieval trace incl. source texts, merged candidate record with `lineage`) → one `params.review_queue` row keyed `<country>_<target>_<system year>` | re-runs of the same system year overwrite that item; an already-reviewed one is never clobbered (unless `--force`) |
 
 The anti-hallucination rule from the activity doc is mechanical, not prompt-only:
 `supporting_extract` must be found character-for-character (whitespace-insensitive)
@@ -332,11 +327,10 @@ schema can evolve pipeline-side without lockstep releases.
   unblocks Accept. Hand-editing an extract drops its verified `extract_offsets`.
   Every decision is recorded in `params.review_decisions` — append-only, linked
   to its proposal row — and mirrored into the record's `lineage`. **The database
-  write gates the decision:** it commits first, and only then are the queue item
-  and the `data/decisions.jsonl` copy written. If Postgres is unreachable the
-  decision fails with an explanatory error and the item stays pending, rather
-  than looking accepted in a log that never received it. `nomoscope-workflow
-  sync-decisions` replays the local copy (idempotently) if the two ever drift.
+  write is the decision:** `params.decide_review_item()` inserts the audit row
+  and updates the queue item in one transaction, with the reviewer taken from
+  `current_user`. If Postgres is unreachable the decision fails with an
+  explanatory error and the item stays pending; there is no local copy to drift.
 - **Contributed documents** (Ingest tab) — a reviewer pastes a URL or picks a
   file (PDF, HTML, Markdown, text) and states the jurisdiction, the language
   (constrained to the languages the store indexes), the title, the document's

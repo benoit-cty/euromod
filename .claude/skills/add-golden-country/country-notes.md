@@ -81,7 +81,7 @@ nothing to hit until `translate run` is done.
 **Store.** 528 parameters, 19 policies, 14 groups. `NL.curation.yaml` exists
 since the set was built (2026-09-08): `$xcc_amt` + 296 `$tco_t_*` national_team,
 23 `/100` rates curated to `/1`, tax-rate basis decided (`$tin_br1` = statutory
-8,17 %). Set: `golden_sources/nl.json`, rationale `golden_set_NL.md`.
+8,17 %). Set: the NL `curated` selection (`nomokrisis-eval selection-export NL`), rationale `golden_set_NL.md`.
 
 - `tco_nl` is 373 of the 528 and has no numeric value — the
   `national_team_source` family.

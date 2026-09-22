@@ -87,7 +87,7 @@
     for (const { hit } of plan) sentenceScores[hit.chunk_id] = { status: 'loading' };
     const batch = plan.flatMap(({ sentences, indices }) => indices.map((i) => sentences[i].text));
     try {
-      const similarities = await api.scoreSentences(forQuery, batch);
+      const similarities = await api.scoreSentences(url, forQuery, batch);
       if (token !== searchToken) return; // a newer search replaced these hits
       let offset = 0;
       for (const { hit, sentences, indices } of plan) {
@@ -337,6 +337,7 @@
   </form>
 
   {#if results}
+    {#if results.notice}<p class="notice">{results.notice}</p>{/if}
     <div class="retrieval-summary">
       <strong>{results.results.length} result(s)</strong>
       <span>{results.ranking}</span>
@@ -416,6 +417,7 @@
   label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }
   label input { width: 100%; }
   .error { color: var(--err); }
+  .notice { color: var(--accent); margin: 0; font-size: 0.9rem; }
   .cards { display: flex; gap: 0.6rem; flex-wrap: wrap; }
   .card {
     background: var(--panel-2);

@@ -7,47 +7,64 @@ parameters with known correct values, and stores KPI results in the existing Pos
 per-language model comparisons (Activity 5) fall out of a SQL view.
 
 Design goal: *simple*. Scoring is pure deterministic code (no LLM judge), storage is
-two tables + one view, and the workflow under test is reused as-is (same retrieval,
-prompts, critique and Phoenix tracing).
+a handful of tables + views in the shared Postgres, and the workflow under test is
+reused as-is (same retrieval, prompts, critique and Phoenix tracing).
+
+**Nothing runtime lives on disk** (ADR 0004). The golden set, its selections, the
+retrieval cases, every run and every result are rows in the `eval` schema:
 
 ```
-dataset/<country>/*.json     golden cases (git-versioned; the frozen test set)
-dataset_embedding/<cc>/*.json  embedding/retrieval cases (query → relevant citations)
-golden_sources/openfisca_<cc>.json  curated EUROMOD ↔ OpenFisca pairs the drafter starts from
-golden_sources/<cc>.json     hand-curated selection for countries with no external corpus (IE, LT)
+eval.golden_selections       one row per (country, kind): the curated / openfisca selection
+                             (header + entries, what golden_sources/<cc>.json used to hold)
+eval.golden_cases            one row per golden case; the review verdict (verified,
+                             reviewed_by, reviewed_at, review_note) is in columns, not in the case
+eval.embedding_cases         retrieval cases (query → relevant citations)
+eval.runs / run_cases / results   a run's manifest (+ status), its frozen case list, one
+                             result per scored case (with the ReviewItem, for `rescore`)
+eval.embedding_runs          retrieval-eval runs (manifest + results JSON)
 src/nomokrisis_eval/
   schema.py                  GoldenCase / Expected / CaseResult / RunManifest (+ EmbeddingCase)
-  dataset.py                 load/save cases + content-hash dataset_version
-  build_dataset.py           Claude Fable drafts cases from a trusted document
+  golden_store.py            load/save cases, selections, embedding cases; set_verified; golden_set_hash
+  import_golden.py           one-off import of the old dataset/, dataset_embedding/, golden_sources/ files
+  build_dataset.py           an LLM (via nomoscope_workflow.llm.run_agent) drafts cases from a trusted document
   openfisca_golden.py        drafts cases from the ingested OpenFisca corpus (no LLM)
-  curated_golden.py          drafts cases from a hand-curated selection file (no LLM)
+  curated_golden.py          drafts cases from the hand-curated selection (no LLM)
   scoring.py                 KPI scoring (pure functions)
-  runner.py                  drives nomoscope_workflow.run_parameter over the set
+  runner.py                  drives nomoscope_workflow.run_parameter over the set, resumable from the DB
   embedding_eval.py          ranks golden chunks under fts / vector / hybrid search
-  db.py                      Postgres persistence (eval.runs / eval.results)
-  cli.py                     nomokrisis-eval init-db | build-dataset | build-openfisca-dataset
-                             | build-curated-dataset | list-cases | verify | run | report
+  db.py                      Postgres persistence (eval.runs / run_cases / results / embedding_runs)
+  cli.py                     nomokrisis-eval init-db | import-golden | build-dataset
+                             | build-openfisca-dataset | build-curated-dataset | list-cases | verify
+                             | selections | selection-export | selection-import
+                             | label-cases | run | resume | list-runs | rescore | report
                              | list-embedding-cases | run-embeddings
 db/eval_schema.sql           tables + eval.run_summary view (the UI read surface)
-.eval_runs/<run_id>/         scratch queue + manifest.json + results.json per run (gitignored)
+dataset/, dataset_embedding/, golden_sources/   the pre-ADR-0004 files: import them ONCE with
+                             `import-golden`, then they go (kept only until that import is done)
 ```
+
+Commands a worker job wraps (`run`, `resume`, the three builders, `import-golden`,
+`run-embeddings`) end with one `@result {json}` line on stdout — `{"run_id": …}` for
+runs, `{"written": n}` for the builders — and `run` emits `@progress {…}` per case.
 
 ## Quick start
 
 ```bash
 cd Nomokrisis-evaluation_pipeline
 uv run nomokrisis-eval init-db                                  # create eval schema (DB must be up)
+uv run nomokrisis-eval import-golden --dry-run                  # once: the old files -> eval.* (drop --dry-run to write)
 uv run nomokrisis-eval list-cases                               # inspect the golden set
 uv run nomokrisis-eval run --as-of 2025-06-01 --model mock/extractor    # offline smoke run
 uv run nomokrisis-eval run --as-of 2025-06-01 --model azure_openai/gpt-5.6-luna --language fr
-uv run nomokrisis-eval list-runs                                # runs on disk + their progress
+uv run nomokrisis-eval list-runs                                # eval.runs + their progress
 uv run nomokrisis-eval resume                                   # continue the last unfinished run
 uv run nomokrisis-eval report                                   # KPI summary per (run, language)
 ```
 
-Every run writes a reproducibility manifest (`.eval_runs/<run_id>/manifest.json`) with
-pinned model, prompt/agent versions, dataset content-hash and git commit — the "run
-manifest" required by `04_activity4_validation.md`.
+Every run is a row in `eval.runs` holding the reproducibility manifest — pinned model,
+prompt/agent versions, the **golden set hash** (`dataset_version`: sha256 over the
+cases it froze, verdict stripped, 12 hex) and git commit — the "run manifest" required
+by `04_activity4_validation.md`. `submitted_by` is the database login (`current_user`).
 
 ### Progress and resuming
 
@@ -61,9 +78,10 @@ scored KPIs (`✓` correct, `✗` wrong, `·` not exercised), the case latency a
 The workflow's own per-step chatter is silenced during an evaluation so those lines stay
 readable; pass `--verbose` to see every `frame → retrieve → propose → …` step as well.
 
-Runs are crash-safe. The manifest and the frozen case list are written before the first
-case, and each scored case is appended to `.eval_runs/<run_id>/results.jsonl` as it lands,
-so a Ctrl-C, a crash or an API outage costs at most the case in flight:
+Runs are crash-safe. The `eval.runs` row (`status='running'`) and the frozen case list
+(`eval.run_cases`) are written before the first case, and each scored case is upserted
+into `eval.results` as it lands, so a Ctrl-C, a crash or an API outage costs at most the
+case in flight:
 
 ```bash
 uv run nomokrisis-eval resume                     # the most recent unfinished run
@@ -72,42 +90,68 @@ uv run nomokrisis-eval resume eval-2025…-abc123   # a specific one
 
 `resume` replays the run's *frozen* case list — not whatever the dataset filters would
 select today — and reuses the original manifest, so a resumed run stays one comparable
-(model, prompt, agent, dataset) data point; it warns if the golden set changed meanwhile.
-Only unscored cases are re-run, and storing the run in Postgres is idempotent per
-`run_id`, so a resume whose final DB write failed can simply be resumed again.
+(model, prompt, agent, dataset) data point; it warns if the golden set hash changed
+meanwhile. Only unscored cases are re-run, and every write is an upsert keyed on
+`(run, case)`, so resuming twice is harmless.
 
 ## Golden dataset
 
-One JSON file per case: the Activity 1 parameter file to run, the `as_of` date, and an
-`expected` block (routing, value, valid_from, acceptable citations). Composition follows
+One row per case in `eval.golden_cases`: the `parameter_target` to run (`euromod://…`
+for one parameter in the params DB, `group:<group_id>` for a bracket schedule assembled
+from `params.parameter_groups`), the `as_of` date, and an `expected` block (routing,
+value, valid_from, acceptable citations). The review verdict is in its own columns and
+`golden_store.save_case` cannot touch it; only `verify` / the UI (`set_verified`, reviewer
+= `current_user`) can. Composition follows
 the Activity 4 plan: stratify by type (scalar / bracket), difficulty (`plain` / `combine`
 / `table`), and source class; include **no-change cases** (`routing: unchanged`) and
 `not_found` / `national_team_source` routing traps.
 
-### Building it with Claude Fable
+Cases are generated from a **golden selection** — one row per `(country, kind)` in
+`eval.golden_selections`, `kind` = `openfisca` (FR) or `curated` (IE, LT, ES, NL),
+holding the header and the entries of what used to be `golden_sources/<cc>.json`.
+The row is still edited as that file, round-tripped through the CLI:
+
+```bash
+uv run nomokrisis-eval selections                              # country, kind, entries, updated_at, updated_by
+uv run nomokrisis-eval selection-export ES --out /tmp/es.json  # the row in the old file shape (header keys + "entries")
+                                                               # --kind curated|openfisca when a country has both
+#   ... edit /tmp/es.json ...
+uv run nomokrisis-eval selection-import /tmp/es.json           # country/kind from its header (`country`, `corpus`),
+                                                               # else from the file name (openfisca_fr.json); --country/--kind override
+uv run nomokrisis-eval build-curated-dataset --country ES --year 2025    # the import reminds you; rebuild, read every skip
+```
+
+Never edit the case rows directly: a rebuild overwrites them, and the verdict columns are
+the reviewer's. The `golden_set_<CC>.md` files stay in git as the rationale behind each
+selection. Ground truth flows one way: selection → builder → `eval.golden_cases` → human
+verdict.
+
+### Building it with an LLM
 
 `build-dataset` drafts cases from a *trusted* source document (EUROMOD country report
 excerpt, national-team notes, or a pasted consolidated article):
 
 ```bash
-uv run nomokrisis-eval build-dataset docs/fr_country_report_2025.md --country FR --as-of 2025-06-01
+uv run nomokrisis-eval build-dataset docs/fr_country_report_2025.md --country FR --as-of 2025-06-01 \
+    --target 'euromod://FR/ConstDef_fr/def_const/$PSS' --target group:FR:tinkt_fr:tin_schedule
 ```
 
-- One Fable call per parameter file; the model extracts value / valid_from / citations
-  **only from the document** (structured output, JSON-schema enforced).
-- Expected *routing* is computed deterministically by diffing against the parameter
-  file's recorded value — the model never decides routing.
-- Drafts are saved with `"verified": false`. A human flips `verified` to `true` after
-  checking; `run` evaluates verified cases only (default) — that's the freeze.
+- One structured-output call per parameter (`--target`, default: every parameter of the
+  country in the params DB), through `nomoscope_workflow.llm.run_agent` like every other
+  LLM call in the system; the model extracts value / valid_from / citations **only from
+  the document**.
+- Expected *routing* is computed deterministically by diffing against the parameter's
+  recorded value — the model never decides routing.
+- Drafts are saved with `verified = false`. A human flips it after checking; `run`
+  evaluates verified cases only (default) — that's the freeze.
 - **Rebuilding preserves the human verdict** when the ground truth is unchanged, and
-  resets it to `verified: false` the moment `expected`, the parameter file or `as_of`
-  moves (`dataset.save_drafted_case`) — a review approved a specific value, not a
-  case id. The reset is printed; act on it, or `--verified-only` silently drops the
-  case from the next run.
-- Model: `claude-fable-5` (override with `--model` / `EVAL_BUILDER_MODEL`). Server-side
-  refusal fallback to `claude-opus-4-8` is enabled, so a classifier false-positive
-  degrades gracefully instead of failing the batch. Needs `ANTHROPIC_API_KEY` (loaded
-  from the repo-root `.env`).
+  resets it the moment `expected`, `parameter_target` or `as_of` moves
+  (`golden_store.save_drafted_case`) — a review approved a specific value, not a case
+  id. The reset is printed; act on it, or `--verified-only` silently drops the case from
+  the next run.
+- Model: provider-prefixed, `anthropic/claude-fable-5` by default (`--model` /
+  `EVAL_BUILDER_MODEL`); `mock/…` is refused — a mock cannot read the document, so its
+  output would be a fabricated ground truth. The key lives on the worker (ADR 0004).
 
 ### Building it from OpenFisca-France
 
@@ -126,17 +170,19 @@ uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.e
 uv run nomoscope-workflow ingest-params ../../extracted_parameters/curated/FR.in_function.json
 uv run nomoscope-workflow curate-params curation/FR.curation.yaml
 
-# 1. suggest EUROMOD <-> OpenFisca links (workflow package, writes params.parameter_links)
-uv run nomoscope-workflow match-openfisca --seed ../../Nomokrisis-evaluation_pipeline/golden_sources/openfisca_fr.json
+# 1. suggest EUROMOD <-> OpenFisca links (workflow package, writes params.parameter_links);
+#    the seed is the FR openfisca selection, exported as a file
+(cd ../../Nomokrisis-evaluation_pipeline && uv run nomokrisis-eval selection-export FR --kind openfisca --out /tmp/openfisca_fr.json)
+uv run nomoscope-workflow match-openfisca --seed /tmp/openfisca_fr.json
 
 # 2. draft the golden set from those links
 cd -
-uv run nomokrisis-eval build-openfisca-dataset --year 2025            # 50 drafts, verified=false
-uv run nomokrisis-eval build-openfisca-dataset --year 2025 --curated-only
+uv run nomokrisis-eval build-openfisca-dataset --year 2025 --country FR            # 50 drafts, verified=false
+uv run nomokrisis-eval build-openfisca-dataset --year 2025 --country FR --curated-only
 ```
 
-- **Linking** is value-fingerprint matching plus a curated seed file
-  ([golden_sources/openfisca_fr.json](golden_sources/openfisca_fr.json)):
+- **Linking** is value-fingerprint matching plus a curated seed — the FR `openfisca`
+  selection row (`selection-export FR --kind openfisca`):
   both sides hold multi-year numeric histories, so a link is proposed when the
   same value appears in the same year on both sides at least three times. The
   seed file pins the families that no fingerprint can find on its own — the
@@ -179,12 +225,13 @@ uv run nomokrisis-eval build-openfisca-dataset --year 2025 --curated-only
 ### Building it by hand (countries with no external corpus)
 
 Ireland and Lithuania have no OpenFisca package, so their ground truth is
-hand-curated from the acts themselves into
-[golden_sources/ie.json](golden_sources/ie.json) /
-[golden_sources/lt.json](golden_sources/lt.json) (`"corpus": "curated"`) — 10
+hand-curated from the acts themselves into the `curated` selection row of
+`eval.golden_selections` (`"corpus": "curated"`; edited through
+`selection-export` / `selection-import`, see above) — 10
 parameters each, in increasing pipeline difficulty, rationale per entry in
 [golden_set_IE.md](golden_set_IE.md) / [golden_set_LT.md](golden_set_LT.md).
-`build-curated-dataset` turns a selection into cases. Adding a country end
+`build-curated-dataset` turns the selection into cases (it exits 1 naming
+`selection-import` when the country has no selection row yet). Adding a country end
 to end (readiness gate, selection spread across the difficulty ladder,
 curation overlay, rationale doc, build, smoke run) is the `add-golden-country`
 skill in [.claude/skills/add-golden-country/](../.claude/skills/add-golden-country/SKILL.md).
@@ -195,18 +242,22 @@ cd ../Nomoscope-agentic-workflow/pipeline
 uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/LT.enriched.json
 uv run nomoscope-workflow curate-params curation/LT.curation.yaml   # national_team flags
 
-# 1. draft the cases (verified=false)
+# 1. (when the selection changed) export, edit, import it
 cd -
+uv run nomokrisis-eval selection-export LT --out /tmp/lt.json
+uv run nomokrisis-eval selection-import /tmp/lt.json
+
+# 2. draft the cases (verified=false)
 uv run nomokrisis-eval build-curated-dataset --country LT --year 2025
 uv run nomokrisis-eval build-curated-dataset --country IE --year 2025
 ```
 
 Same guarantees as the OpenFisca drafter, minus the corpus: the parameter under
-test is loaded from the params DB and materialized under
-`data/parameters/eval/`, and the value EUROMOD holds at `as_of` is written into
-the case notes so the reviewer sees it at the gate. What differs:
+test is loaded from the params DB by its `parameter_target`, and the value
+EUROMOD holds at `as_of` is written into the case notes so the reviewer sees it
+at the gate. What differs:
 
-- **Ground truth is the selection file's `expected_value`** — the LAW's value,
+- **Ground truth is the selection entry's `expected_value`** — the LAW's value,
   cross-checked against the act text. An entry that states none (or `null`)
   leaves the value leg *unscored* rather than freezing EUROMOD's own value into
   the golden set: `bch_amt1`, `tco_t_01131`, `xcc_amt1` and the LT PIT schedule
@@ -247,8 +298,8 @@ sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-
   libssl-dev libayatana-appindicator3-dev librsvg2-dev libgtk-3-dev pkg-config
 ```
 
-The UI reads the dataset directory straight off disk and writes the verdict
-back into the case file:
+The UI reads `eval.golden_cases` and writes the verdict into its columns
+(`golden_store.set_verified`; the reviewer is the analyst's database login):
 
 ```bash
 cd ../Nomoscope-agentic-workflow/ui && npm run tauri dev    # WSL: prefix LIBGL_ALWAYS_SOFTWARE=1
@@ -259,15 +310,27 @@ value OpenFisca states**, the expected routing/date/citations, Legifrance
 deep-links for every cited act, and the draft's provenance. *Accept* sets
 `verified: true`; *Reject* leaves it false but stamps `reviewed_by`, so
 "a human said no" stays distinct from "nobody has looked yet". Both write only
-those three fields, so the rest of the case survives untouched — commit the
-file to freeze it into the set.
+the verdict columns, so the rest of the case survives untouched; a verified
+case is in the frozen set from the next `run` on.
 
 Same thing without the GUI:
 
 ```bash
-uv run nomokrisis-eval verify fr_constdef_pss_2025-06-01 --reviewer ben
+uv run nomokrisis-eval verify fr_constdef_pss_2025-06-01 --note "checked against the arrêté"
 uv run nomokrisis-eval verify fr_tinkt_tin_rate1_2025-06-01 --unverify
 ```
+
+### Importing the pre-ADR-0004 files (once)
+
+`dataset/`, `dataset_embedding/` and `golden_sources/` are the golden set as it was
+kept in git. `nomokrisis-eval import-golden [--dry-run]` upserts them into the tables —
+selections (`<cc>.json` → kind `curated`, `openfisca_<cc>.json` → kind `openfisca`),
+cases with the verdict their file records, retrieval cases — mapping each case's
+`parameter_file` to a `parameter_target` (the materialized file's `information.model_target`,
+a group id mapped back through `params.parameter_groups`; failing that, the case id
+matched against the selection entries; else reported and skipped). Idempotent. Once
+imported, the directories are removed from git, and every later edit to a selection goes
+through `selection-export` / `selection-import` — never through `import-golden` again.
 
 ## Embedding (retrieval) evaluation dataset
 
@@ -294,9 +357,8 @@ uv run nomokrisis-eval run-embeddings --country FR --k 20
 Metrics per (query language, method): `hit@1`, `hit@k`, `MRR`. Per-case output
 also shows the candidate-pool size and how much of it is embedded — "ingested
 but not embedded" is the most common cause of a vector miss (same failure mode
-as `/debug-phoenix-trace`). Results go to `.eval_runs/embeval-*/` as JSON; no
-`eval`-schema tables yet (add them if/when embedding-model comparisons need to
-be queryable next to the workflow KPIs).
+as `/debug-phoenix-trace`). Cases come from `eval.embedding_cases`; each run's
+manifest + per-case results are stored as JSON in `eval.embedding_runs`.
 
 Case-design rules:
 
@@ -348,7 +410,7 @@ assigned from the ground truth and never from a run's outcome:
 `nomokrisis-eval label-cases` drafts both from the expected value, the citations and the
 parameter's `temporal_basis`, printing its reasoning; `--apply` writes them. Three hazards
 are invisible to it and stay with a human, and it will not touch a label set by hand in
-`golden_sources/` (`labels_drafted: false`). The predecessor field was assigned as
+the selection entry (`labels_drafted: false`). The predecessor field was assigned as
 `"table" if brackets else "plain"` and put 58 of 67 cases in one bucket — if every bucket
 scores alike, suspect the labels before the axis.
 
@@ -385,16 +447,16 @@ critiqued so old runs stay interpretable.
 
 ### Re-scoring past runs
 
-A run directory keeps every `ReviewItem` the pipeline produced, so a fix to `scoring.py`
-can be applied to finished runs without re-spending their tokens:
+Every `eval.results` row keeps the `ReviewItem` the pipeline produced, so a fix to
+`scoring.py` can be applied to finished runs without re-spending their tokens:
 
 ```bash
 uv run nomokrisis-eval rescore <run-id>          # dry run: prints the KPI delta
-uv run nomokrisis-eval rescore <run-id> --write  # persist to results.json + Postgres
+uv run nomokrisis-eval rescore <run-id> --write  # upsert the new scores into eval.results
 ```
 
-It replays against the run's **frozen** `cases.json`, so the delta is the effect of the
-scoring change alone. To measure a golden-set change, start a new run.
+It replays against the run's **frozen** `eval.run_cases`, so the delta is the effect of
+the scoring change alone. To measure a golden-set change, start a new run.
 
 ## Does Phoenix help?
 
@@ -426,11 +488,8 @@ expandable per-case list with a failures-only filter. Exercised by the
 
 | Var | Default | |
 |---|---|---|
-| `EVAL_DATABASE_URL` | falls back to `WORKFLOW_DATABASE_URL`, then `postgresql://jrc:jrc@localhost:5434/legislation` | where eval results go |
-| `EVAL_DATASET_DIR` | `Nomokrisis-evaluation_pipeline/dataset` | golden set location |
-| `EVAL_EMBEDDING_DATASET_DIR` | `Nomokrisis-evaluation_pipeline/dataset_embedding` | embedding/retrieval case location |
-| `EVAL_RUNS_DIR` | `Nomokrisis-evaluation_pipeline/.eval_runs` | scratch + manifests |
-| `EVAL_BUILDER_MODEL` | `claude-fable-5` | dataset drafting model |
+| `EVAL_DATABASE_URL` | falls back to `WORKFLOW_DATABASE_URL`, then `postgresql://jrc:jrc@localhost:5434/legislation` | the golden set, the runs and the results |
+| `EVAL_BUILDER_MODEL` | `anthropic/claude-fable-5` | provider-prefixed drafting model (`mock/` refused) |
 | `EVAL_CRITIQUE_MODEL` | _(empty — the model under test critiques itself)_ | pin one judge so `supportedness`/`critique_pass` are comparable across models |
 | `EVAL_PHOENIX_PROJECT` | `nomokrisis-evaluation` | Phoenix project for eval traces |
 
@@ -527,7 +586,7 @@ why a legally-correct value can still be "wrong" for the model.
   scores as a difference. Values normalisation cannot read fall back to strict
   equality, never a guessed match; the OpenFisca drafter likewise refuses to draft
   a routing when EUROMOD holds an FYA average that differs from the point value
-  (ambiguous by convention — set an explicit `routing:` in the selection file);
+  (ambiguous by convention — set an explicit `routing:` on the selection entry);
 - routing classes include `not_found` and `national_team_source`;
 - human verification gate before a case enters the frozen set;
 - per-case NULL KPIs so abstention cases don't pollute `value_pct`.

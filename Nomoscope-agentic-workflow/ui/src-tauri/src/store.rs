@@ -1,24 +1,21 @@
-//! File-backed review queue, decision log and export.
+//! The review queue as rows (`params.review_queue`, ADR 0004) and the
+//! EUROMOD export, the only file the UI ever writes.
 //!
-//! Same layout as the Python side (pipeline/src/nomoscope_workflow/queue_store.py):
-//!   <data>/queue/*.json    one ReviewItem per file
-//!   <data>/decisions.jsonl local mirror of the decision log
-//!   <data>/export/*.json   accepted records, Activity 1 format
-//!
-//! Reviewer decisions live in Postgres (params.review_decisions, see db.rs) and
-//! are written there first: [prepare_decision] only computes, [commit_decision]
-//! writes to disk, and the caller puts the DB insert between them. A decision
-//! the database refused therefore leaves no trace on disk — the item stays
-//! pending and the reviewer takes it again. decisions.jsonl is a redundant
-//! local copy of what the DB already holds, not a queue of pending writes.
+//! A reviewer decision is computed here ([compute_decision], pure) and
+//! recorded by ONE database call, `params.decide_review_item(item_id, item,
+//! entry)`: the audit row in `params.review_decisions` and the updated queue
+//! item land in the same transaction, and a decision the database refuses
+//! changes nothing anywhere — the item stays pending and the reviewer takes it
+//! again. There is no local mirror: `params.review_decisions` is the record.
 //!
 //! Items stay loosely typed (serde_json::Value) so the queue schema can evolve
 //! in the pipeline without lockstep releases of the UI.
 
 use chrono::Utc;
+use postgres::{Client, NoTls};
 use serde::Serialize;
 use serde_json::{json, Value};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -30,14 +27,17 @@ pub struct Facets {
     pub row_count: usize,
 }
 
-fn read_json(path: &Path) -> Result<Value, String> {
-    let text = fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
-    serde_json::from_str(&text).map_err(|e| format!("{}: {e}", path.display()))
+fn connect(db_url: &str) -> Result<Client, String> {
+    Client::connect(db_url, NoTls).map_err(|e| format!("DB connection failed: {e}"))
 }
 
-fn write_json(path: &Path, value: &Value) -> Result<(), String> {
-    let text = serde_json::to_string_pretty(value).map_err(|e| e.to_string())?;
-    fs::write(path, text + "\n").map_err(|e| format!("{}: {e}", path.display()))
+/// `postgres::Error` displays as a bare "db error"; the server's message (a
+/// RAISE in decide_review_item, a missing relation) is what the reviewer needs.
+fn describe(e: postgres::Error) -> String {
+    match e.as_db_error() {
+        Some(db) => format!("{}: {}", e, db.message()),
+        None => e.to_string(),
+    }
 }
 
 fn str_field(value: &Value, key: &str) -> String {
@@ -48,22 +48,40 @@ fn str_field(value: &Value, key: &str) -> String {
         .to_string()
 }
 
-pub fn load_queue(data_dir: &Path) -> Result<Value, String> {
-    let queue = data_dir.join("queue");
-    let mut items: Vec<Value> = Vec::new();
-    if queue.is_dir() {
-        let mut paths: Vec<PathBuf> = fs::read_dir(&queue)
-            .map_err(|e| e.to_string())?
-            .filter_map(|entry| entry.ok().map(|e| e.path()))
-            .filter(|p| p.extension().is_some_and(|ext| ext == "json"))
-            .collect();
-        paths.sort();
-        for path in paths {
-            items.push(read_json(&path)?);
-        }
-    }
-    items.sort_by_key(|item| std::cmp::Reverse(str_field(item, "created_at")));
+/// Every queue item, newest first, with the filter facets the list offers.
+pub fn load_queue(db_url: &str) -> Result<Value, String> {
+    let mut client = connect(db_url)?;
+    let rows = client
+        .query(
+            "SELECT item_id, status, item FROM params.review_queue ORDER BY created_at DESC, item_id",
+            &[],
+        )
+        .map_err(describe)
+        .map_err(|e| {
+            let hint = if e.contains("review_queue") {
+                " (the params schema is missing or outdated — run `nomoscope-workflow init-param-db`)"
+            } else {
+                ""
+            };
+            format!("review queue query failed{hint}: {e}")
+        })?;
+    let items: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            let mut item: Value = r.get("item");
+            // The row is authoritative for identity and status: the worker
+            // wrote the item, decide_review_item keeps both in step.
+            if item.get("id").and_then(Value::as_str).is_none() {
+                item["id"] = json!(r.get::<_, String>("item_id"));
+            }
+            item["status"] = json!(r.get::<_, String>("status"));
+            item
+        })
+        .collect();
+    Ok(queue_with_facets(items))
+}
 
+fn queue_with_facets(items: Vec<Value>) -> Value {
     let mut countries = BTreeSet::new();
     let mut routings = BTreeSet::new();
     let mut statuses = BTreeSet::new();
@@ -78,7 +96,7 @@ pub fn load_queue(data_dir: &Path) -> Result<Value, String> {
         statuses: statuses.into_iter().collect(),
         row_count: items.len(),
     };
-    Ok(json!({ "items": items, "facets": facets, "data_dir": data_dir }))
+    json!({ "items": items, "facets": facets })
 }
 
 /// Patch one value envelope in place: the scalar/bracket value, then any other
@@ -101,16 +119,16 @@ fn apply_edits(target: &mut Value, edited_value: Option<&Value>, edited_fields: 
     }
 }
 
-/// Compute a reviewer decision without writing anything: the updated queue item
-/// (review fields mirrored into the exported record's lineage) and the audit
-/// entry for params.review_decisions.
+/// Compute a reviewer decision over a queue item without touching anything:
+/// the updated item (review fields mirrored into the exported record's
+/// lineage) and the audit entry `params.decide_review_item` records.
 ///
-/// Deciding is split prepare → DB → [commit_decision] on purpose. The database
-/// is the system of record, so it commits first; if it refuses, nothing has
-/// touched the disk and the item is still pending. Decided items stay editable —
-/// re-deciding overwrites the item and appends a new audit entry.
-pub fn prepare_decision(
-    data_dir: &Path,
+/// `reviewer` only fills the item's own `decision` block for display; the
+/// database stamps the audit row with `current_user` and ignores the entry's
+/// `reviewer` key. Decided items stay editable — re-deciding overwrites the
+/// item and appends a new audit entry.
+pub fn compute_decision(
+    mut item: Value,
     item_id: &str,
     action: &str,
     reviewer: &str,
@@ -124,7 +142,6 @@ pub fn prepare_decision(
         "escalated" => "needs_revision",
         other => return Err(format!("unknown action: {other}")),
     };
-    let mut item = read_json(&queue_item_path(data_dir, item_id))?;
     let now = Utc::now().to_rfc3339();
 
     item["status"] = json!(action);
@@ -184,83 +201,99 @@ pub fn prepare_decision(
     Ok((item, log_entry))
 }
 
-fn queue_item_path(data_dir: &Path, item_id: &str) -> PathBuf {
-    data_dir.join("queue").join(format!("{item_id}.json"))
+fn read_item(client: &mut Client, item_id: &str) -> Result<Value, String> {
+    let row = client
+        .query_opt("SELECT item FROM params.review_queue WHERE item_id = $1", &[&item_id])
+        .map_err(|e| format!("review item read failed: {}", describe(e)))?
+        .ok_or_else(|| format!("review item {item_id} is not in the queue"))?;
+    Ok(row.get("item"))
 }
 
-/// Persist a decision to disk, once params.review_decisions has accepted it:
-/// the updated queue item, then the decisions.jsonl mirror. Both are downstream
-/// of the database — the mirror is a convenience copy, not the audit log.
-pub fn commit_decision(
-    data_dir: &Path,
+/// Read the item from the queue and compute the decision ([compute_decision]).
+#[allow(clippy::too_many_arguments)]
+pub fn prepare_decision(
+    db_url: &str,
     item_id: &str,
-    item: &Value,
-    entry: &Value,
-) -> Result<(), String> {
-    write_json(&queue_item_path(data_dir, item_id), item)?;
-    append_decision(data_dir, entry)
+    action: &str,
+    reviewer: &str,
+    note: Option<&str>,
+    edited_value: Option<&Value>,
+    edited_fields: Option<&Value>,
+) -> Result<(Value, Value), String> {
+    let mut client = connect(db_url)?;
+    let item = read_item(&mut client, item_id)?;
+    compute_decision(item, item_id, action, reviewer, note, edited_value, edited_fields)
 }
 
-fn append_decision(data_dir: &Path, entry: &Value) -> Result<(), String> {
-    use std::io::Write;
-    let path = data_dir.join("decisions.jsonl");
-    let mut file = fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&path)
-        .map_err(|e| format!("{}: {e}", path.display()))?;
-    writeln!(file, "{entry}").map_err(|e| e.to_string())
+/// Record the decision: one call, one transaction, audit row + queue item.
+/// Returns the audit row id, or null when that exact decision (item,
+/// decided_at) was already recorded — a replay is a no-op.
+pub fn commit_decision(db_url: &str, item_id: &str, item: &Value, entry: &Value) -> Result<Value, String> {
+    let mut client = connect(db_url)?;
+    let row = client
+        .query_one(
+            "SELECT params.decide_review_item($1, $2::jsonb, $3::jsonb)",
+            &[&item_id, item, entry],
+        )
+        .map_err(|e| format!("decision refused: {}", describe(e)))?;
+    let id: Option<i64> = row.get(0);
+    Ok(json!({ "id": id }))
 }
 
-/// Read the local mirror. Only used when the DB is unreachable — the Audit tab
-/// reads params.review_decisions (db::load_decisions) otherwise.
-pub fn load_decisions(data_dir: &Path, limit: usize) -> Result<Vec<Value>, String> {
-    let path = data_dir.join("decisions.jsonl");
-    if !path.exists() {
-        return Ok(Vec::new());
-    }
-    let text = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let mut entries: Vec<Value> = text
-        .lines()
-        .filter(|line| !line.trim().is_empty())
-        .filter_map(|line| serde_json::from_str(line).ok())
-        .collect();
-    entries.reverse();
-    entries.truncate(limit);
-    Ok(entries)
-}
-
-/// Export accepted/edited items' full Activity 1 records (write-back is export-first).
-pub fn export_accepted(data_dir: &Path) -> Result<Value, String> {
-    let out = data_dir.join("export");
-    fs::create_dir_all(&out).map_err(|e| e.to_string())?;
-    let queue = load_queue(data_dir)?;
-    let mut written: Vec<String> = Vec::new();
-    for item in queue["items"].as_array().unwrap_or(&Vec::new()) {
-        let status = str_field(item, "status");
-        if (status == "accepted" || status == "edited") && !item["proposed_record"].is_null() {
-            let path = out.join(format!("{}.json", str_field(item, "id")));
-            write_json(&path, &item["proposed_record"])?;
-            written.push(path.display().to_string());
+/// Accepted/edited items' Activity 1 records, grouped by country — what the
+/// export writes (write-back is export-first: nothing touches EUROMOD files).
+pub fn export_records(db_url: &str) -> Result<BTreeMap<String, Vec<Value>>, String> {
+    let mut client = connect(db_url)?;
+    let rows = client
+        .query(
+            "SELECT country, item -> 'proposed_record' AS record
+             FROM params.review_queue
+             WHERE status IN ('accepted', 'edited') AND item ? 'proposed_record'
+             ORDER BY country, model_target, system_year, item_id",
+            &[],
+        )
+        .map_err(|e| format!("export query failed: {}", describe(e)))?;
+    let mut groups: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+    for r in &rows {
+        let record: Value = r.get("record");
+        if record.is_null() {
+            continue;
         }
+        groups.entry(r.get::<_, String>("country")).or_default().push(record);
     }
-    Ok(json!({ "count": written.len(), "paths": written }))
+    Ok(groups)
+}
+
+/// Write `<CC>_accepted_<date>.json` per country into `dir`: one JSON array of
+/// records each. Returns the paths written.
+pub fn write_export(dir: &Path, groups: &BTreeMap<String, Vec<Value>>, date: &str) -> Result<Vec<String>, String> {
+    let mut paths = Vec::new();
+    for (country, records) in groups {
+        let path: PathBuf = dir.join(format!("{country}_accepted_{date}.json"));
+        let text = serde_json::to_string_pretty(&Value::Array(records.clone())).map_err(|e| e.to_string())?;
+        fs::write(&path, text + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
+        paths.push(path.display().to_string());
+    }
+    Ok(paths)
+}
+
+pub fn today() -> String {
+    Utc::now().format("%Y-%m-%d").to_string()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn seed_item(dir: &Path) {
-        let queue = dir.join("queue");
-        fs::create_dir_all(&queue).unwrap();
-        let item = json!({
-            "id": "fr_test_2025-06-01",
+    fn seed_item() -> Value {
+        json!({
+            "id": "fr_test_2025",
             "created_at": "2026-07-09T00:00:00Z",
             "country": "FR",
             "routing": "changed",
             "status": "pending",
             "model_target": "euromod://FR/test",
+            "system_year": 2025,
             "as_of": "2025-06-01",
             "run_id": "run-1",
             "proposed_value": {
@@ -273,126 +306,55 @@ mod tests {
             },
             "proposed_record": { "information": {}, "values": [ { "value": 0.2, "valid_from": "2025-01-01", "lineage": { "review_status": "pending" } } ] },
             "critique": { "verdict": "pass" }
-        });
-        write_json(&queue.join("fr_test_2025-06-01.json"), &item).unwrap();
+        })
     }
 
-    /// prepare + commit, the way lib.rs does it around the DB insert.
     fn decide(
-        dir: &Path,
-        item_id: &str,
+        item: Value,
         action: &str,
-        reviewer: &str,
         note: Option<&str>,
         edited_value: Option<&Value>,
         edited_fields: Option<&Value>,
-    ) -> Result<Value, String> {
-        let (item, entry) =
-            prepare_decision(dir, item_id, action, reviewer, note, edited_value, edited_fields)?;
-        commit_decision(dir, item_id, &item, &entry)?;
-        Ok(item)
-    }
-
-    /// The hard-fail guarantee: when the DB refuses the entry, lib.rs never
-    /// reaches commit_decision, and the reviewer must find the item exactly as
-    /// they left it — still pending, with nothing in the audit mirror.
-    #[test]
-    fn prepare_alone_writes_nothing() {
-        let dir = tempfile::tempdir().unwrap();
-        seed_item(dir.path());
-        let (item, _entry) = prepare_decision(
-            dir.path(),
-            "fr_test_2025-06-01",
-            "accepted",
-            "ben",
-            None,
-            None,
-            None,
-        )
-        .unwrap();
-        assert_eq!(item["status"], "accepted", "the computed item is decided");
-
-        let on_disk = read_json(&queue_item_path(dir.path(), "fr_test_2025-06-01")).unwrap();
-        assert_eq!(on_disk["status"], "pending", "but disk is untouched");
-        assert!(!dir.path().join("decisions.jsonl").exists());
-        assert!(load_decisions(dir.path(), 10).unwrap().is_empty());
+    ) -> (Value, Value) {
+        compute_decision(item, "fr_test_2025", action, "ben", note, edited_value, edited_fields).unwrap()
     }
 
     #[test]
-    fn decision_roundtrip_and_export() {
-        let dir = tempfile::tempdir().unwrap();
-        seed_item(dir.path());
-
-        let updated = decide(
-            dir.path(),
-            "fr_test_2025-06-01",
-            "accepted",
-            "ben",
-            Some("looks right"),
-            None,
-            None,
-        )
-        .unwrap();
+    fn decision_mirrors_review_into_item_and_entry() {
+        let (updated, entry) = decide(seed_item(), "accepted", Some("looks right"), None, None);
         assert_eq!(updated["status"], "accepted");
-        assert_eq!(
-            updated
-                .pointer("/proposed_value/lineage/review_status")
-                .unwrap(),
-            "accepted"
-        );
-        assert_eq!(
-            updated
-                .pointer("/proposed_record/values/0/lineage/reviewed_by")
-                .unwrap(),
-            "ben"
-        );
+        assert_eq!(updated["decision"]["reviewer"], "ben");
+        assert_eq!(updated.pointer("/proposed_value/lineage/review_status").unwrap(), "accepted");
+        assert_eq!(updated.pointer("/proposed_record/values/0/lineage/reviewed_by").unwrap(), "ben");
+        // the entry carries the keys decide_review_item reads, keyed on the
+        // same instant as the item's decision block
+        assert_eq!(entry["action"], "accepted");
+        assert_eq!(entry["item_id"], "fr_test_2025");
+        assert_eq!(entry["decided_at"], updated["decision"]["decided_at"]);
+        assert_eq!(entry["run_id"], "run-1");
+        assert_eq!(entry["as_of"], "2025-06-01");
+        assert_eq!(entry["confidence"], json!(0.9));
+        assert_eq!(entry["critique_verdict"], "pass");
+        assert_eq!(entry["note"], "looks right");
+    }
 
-        let decisions = load_decisions(dir.path(), 10).unwrap();
-        assert_eq!(decisions.len(), 1);
-        assert_eq!(decisions[0]["action"], "accepted");
-
-        let export = export_accepted(dir.path()).unwrap();
-        assert_eq!(export["count"], 1);
-
-        let queue = load_queue(dir.path()).unwrap();
-        assert_eq!(queue["facets"]["row_count"], 1);
-        assert_eq!(queue["items"][0]["status"], "accepted");
+    #[test]
+    fn unknown_action_is_refused() {
+        let error = compute_decision(seed_item(), "x", "maybe", "ben", None, None, None).unwrap_err();
+        assert!(error.contains("maybe"));
     }
 
     #[test]
     fn edited_value_replaces_proposal() {
-        let dir = tempfile::tempdir().unwrap();
-        seed_item(dir.path());
-        let updated = decide(
-            dir.path(),
-            "fr_test_2025-06-01",
-            "edited",
-            "ben",
-            None,
-            Some(&json!(0.25)),
-            None,
-        )
-        .unwrap();
-        assert_eq!(
-            updated.pointer("/proposed_value/value").unwrap(),
-            &json!(0.25)
-        );
-        assert_eq!(
-            updated.pointer("/proposed_record/values/0/value").unwrap(),
-            &json!(0.25)
-        );
-        assert_eq!(
-            updated
-                .pointer("/proposed_value/lineage/review_status")
-                .unwrap(),
-            "accepted"
-        );
+        let (updated, entry) = decide(seed_item(), "edited", None, Some(&json!(0.25)), None);
+        assert_eq!(updated.pointer("/proposed_value/value").unwrap(), &json!(0.25));
+        assert_eq!(updated.pointer("/proposed_record/values/0/value").unwrap(), &json!(0.25));
+        assert_eq!(updated.pointer("/proposed_value/lineage/review_status").unwrap(), "accepted");
+        assert_eq!(entry["edited_value"], json!(0.25));
     }
 
     #[test]
     fn edited_fields_patch_dates_and_references() {
-        let dir = tempfile::tempdir().unwrap();
-        seed_item(dir.path());
         let fields = json!({
             "value": 0.3,
             "valid_from": "2026-01-01",
@@ -401,75 +363,136 @@ mod tests {
             "references": [ { "title": "JORF, art. 1", "supporting_extract": "le taux est de 30 %" } ],
             "lineage": { "review_status": "spoofed" },
         });
-        let updated = decide(
-            dir.path(),
-            "fr_test_2025-06-01",
-            "edited",
-            "ben",
-            None,
-            Some(&json!(0.3)),
-            Some(&fields),
-        )
-        .unwrap();
+        let (updated, _) = decide(seed_item(), "edited", None, Some(&json!(0.3)), Some(&fields));
 
         for base in ["/proposed_value", "/proposed_record/values/0"] {
-            assert_eq!(
-                updated.pointer(&format!("{base}/valid_from")).unwrap(),
-                "2026-01-01"
-            );
-            assert_eq!(
-                updated.pointer(&format!("{base}/valid_to")).unwrap(),
-                "2026-12-31"
-            );
-            assert_eq!(
-                updated.pointer(&format!("{base}/legal_status")).unwrap(),
-                "enacted_in_force"
-            );
-            assert_eq!(
-                updated.pointer(&format!("{base}/references/0/title")).unwrap(),
-                "JORF, art. 1"
-            );
+            assert_eq!(updated.pointer(&format!("{base}/valid_from")).unwrap(), "2026-01-01");
+            assert_eq!(updated.pointer(&format!("{base}/valid_to")).unwrap(), "2026-12-31");
+            assert_eq!(updated.pointer(&format!("{base}/legal_status")).unwrap(), "enacted_in_force");
+            assert_eq!(updated.pointer(&format!("{base}/references/0/title")).unwrap(), "JORF, art. 1");
             assert_eq!(updated.pointer(&format!("{base}/value")).unwrap(), &json!(0.3));
             // lineage is bookkeeping, never patched from the form
-            assert_eq!(
-                updated
-                    .pointer(&format!("{base}/lineage/review_status"))
-                    .unwrap(),
-                "accepted"
-            );
+            assert_eq!(updated.pointer(&format!("{base}/lineage/review_status")).unwrap(), "accepted");
         }
     }
 
     #[test]
     fn decided_item_can_be_edited_again() {
-        let dir = tempfile::tempdir().unwrap();
-        seed_item(dir.path());
-        decide(
-            dir.path(),
-            "fr_test_2025-06-01",
-            "rejected",
-            "ben",
-            None,
-            None,
-            None,
-        )
-        .unwrap();
-        let updated = decide(
-            dir.path(),
-            "fr_test_2025-06-01",
+        let (rejected, _) = decide(seed_item(), "rejected", None, None, None);
+        let (updated, _) = decide(
+            rejected,
             "edited",
-            "ben",
             Some("second look"),
             Some(&json!(0.4)),
             Some(&json!({ "legal_status": "enacted_in_force" })),
-        )
-        .unwrap();
+        );
         assert_eq!(updated["status"], "edited");
         assert_eq!(updated.pointer("/proposed_value/value").unwrap(), &json!(0.4));
-        // the audit log keeps both decisions
-        let decisions = load_decisions(dir.path(), 10).unwrap();
-        assert_eq!(decisions.len(), 2);
-        assert_eq!(decisions[0]["action"], "edited");
-        assert_eq!(decisions[1]["action"], "rejected");
+        assert_eq!(updated["decision"]["note"], "second look");
+    }
+
+    #[test]
+    fn facets_come_from_the_items() {
+        let mut second = seed_item();
+        second["country"] = json!("ES");
+        second["status"] = json!("accepted");
+        let queue = queue_with_facets(vec![seed_item(), second]);
+        assert_eq!(queue["facets"]["row_count"], 2);
+        assert_eq!(queue["facets"]["countries"], json!(["ES", "FR"]));
+        assert_eq!(queue["facets"]["statuses"], json!(["accepted", "pending"]));
+    }
+
+    #[test]
+    fn export_writes_one_array_per_country() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut groups: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+        groups.insert("FR".into(), vec![json!({ "information": { "country": "FR" } }), json!({ "b": 2 })]);
+        groups.insert("ES".into(), vec![json!({ "information": { "country": "ES" } })]);
+        let paths = write_export(dir.path(), &groups, "2026-09-22").unwrap();
+        assert_eq!(paths.len(), 2);
+        assert!(paths[0].ends_with("ES_accepted_2026-09-22.json"));
+        let fr: Value = serde_json::from_str(&fs::read_to_string(dir.path().join("FR_accepted_2026-09-22.json")).unwrap()).unwrap();
+        assert_eq!(fr.as_array().unwrap().len(), 2);
+        assert_eq!(fr[0]["information"]["country"], "FR");
+    }
+
+    /// The decide path against the live stack: a `zz_` item goes into the
+    /// queue, one call records the decision and updates the row, a replay of
+    /// the same entry is a no-op. Skipped when the DB is down or the params
+    /// schema does not yet have the queue table.
+    #[test]
+    fn decision_round_trip_smoke() {
+        let url = std::env::var("WORKFLOW_DATABASE_URL")
+            .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
+        let Ok(mut client) = connect(&url) else { return };
+        if client.execute("SELECT 1 FROM params.review_queue LIMIT 0", &[]).is_err() {
+            return; // `nomoscope-workflow init-param-db` not run (or old schema)
+        }
+        let item_id = "zz_store_decision_round_trip";
+        let cleanup = |client: &mut Client| {
+            client.execute("DELETE FROM params.review_decisions WHERE item_id = $1", &[&item_id]).unwrap();
+            client.execute("DELETE FROM params.review_queue WHERE item_id = $1", &[&item_id]).unwrap();
+        };
+        cleanup(&mut client);
+        let mut seeded = seed_item();
+        seeded["id"] = json!(item_id);
+        seeded["country"] = json!("ZZ");
+        client
+            .execute(
+                "INSERT INTO params.review_queue
+                     (item_id, country, model_target, system_year, routing, status, run_id, created_at, item)
+                 VALUES ($1, 'ZZ', 'euromod://ZZ/test', 2025, 'changed', 'pending', 'run-1', now(), $2)",
+                &[&item_id, &seeded],
+            )
+            .unwrap();
+
+        // the queue lists it, pending
+        let queue = load_queue(&url).unwrap();
+        let listed = queue["items"].as_array().unwrap().iter().find(|i| i["id"] == item_id).unwrap();
+        assert_eq!(listed["status"], "pending");
+
+        let (item, entry) =
+            prepare_decision(&url, item_id, "edited", "cargo-test", Some("smoke"), Some(&json!(0.25)), None).unwrap();
+        // nothing recorded yet
+        let pending: String = client
+            .query_one("SELECT status FROM params.review_queue WHERE item_id = $1", &[&item_id])
+            .unwrap()
+            .get(0);
+        assert_eq!(pending, "pending");
+
+        let first = commit_decision(&url, item_id, &item, &entry).unwrap();
+        assert!(first["id"].is_i64(), "first decision writes an audit row: {first}");
+        let again = commit_decision(&url, item_id, &item, &entry).unwrap();
+        assert!(again["id"].is_null(), "replaying the same decision is a no-op");
+
+        let row = client
+            .query_one("SELECT status, item FROM params.review_queue WHERE item_id = $1", &[&item_id])
+            .unwrap();
+        assert_eq!(row.get::<_, String>("status"), "edited");
+        let stored: Value = row.get("item");
+        assert_eq!(stored.pointer("/proposed_value/value").unwrap(), &json!(0.25));
+
+        let decisions = client
+            .query(
+                "SELECT action, reviewer, note, edited_value FROM params.review_decisions WHERE item_id = $1",
+                &[&item_id],
+            )
+            .unwrap();
+        assert_eq!(decisions.len(), 1);
+        assert_eq!(decisions[0].get::<_, String>("action"), "edited");
+        assert_eq!(decisions[0].get::<_, Option<String>>("note").as_deref(), Some("smoke"));
+        // the server stamps current_user, whatever the entry said
+        let me: String = client.query_one("SELECT current_user", &[]).unwrap().get(0);
+        assert_eq!(decisions[0].get::<_, Option<String>>("reviewer").as_deref(), Some(me.as_str()));
+        assert_eq!(decisions[0].get::<_, Option<Value>>("edited_value"), Some(json!(0.25)));
+
+        // the export sees it, under its country
+        let groups = export_records(&url).unwrap();
+        assert!(groups.get("ZZ").is_some_and(|records| records.len() == 1));
+
+        // a vanished item fails outright
+        cleanup(&mut client);
+        let error = commit_decision(&url, item_id, &item, &entry).unwrap_err();
+        assert!(error.contains("not in the queue"), "{error}");
     }
 }

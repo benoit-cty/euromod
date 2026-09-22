@@ -9,16 +9,16 @@
   // nothing here counts until a reviewer compares the drafted value against the
   // parameter EUROMOD holds and accepts it. Accept sets verified=true; Reject
   // records that a human said no, which is not the same as nobody having looked
-  // yet.
+  // yet. Cases are rows in eval.golden_cases; the verdict is stamped with the
+  // database's current_user.
   import { api } from '../api.js';
 
-  let { datasetDir = '', reviewer = 'reviewer' } = $props();
+  let { dbUrl = '' } = $props();
 
-  let dir = $state(''); // seeded from datasetDir once config loads
   let cases = $state(null);
   let error = $state('');
   let loading = $state(false);
-  let selectedPath = $state(null);
+  let selectedId = $state(null);
   let note = $state('');
   let filter = $state('unreviewed');
   let saving = $state(false);
@@ -41,7 +41,7 @@
   const visible = $derived(
     (cases ?? []).filter((c) => filter === 'all' || status(c) === filter),
   );
-  const selected = $derived((cases ?? []).find((c) => c._path === selectedPath) ?? null);
+  const selected = $derived((cases ?? []).find((c) => c.id === selectedId) ?? null);
   const counts = $derived({
     total: cases?.length ?? 0,
     verified: (cases ?? []).filter((c) => c.verified).length,
@@ -49,20 +49,16 @@
   });
 
   $effect(() => {
-    if (datasetDir && !dir) dir = datasetDir;
-  });
-
-  $effect(() => {
-    if (dir && !cases && !loading && !error) load();
+    if (dbUrl && !cases && !loading && !error) load();
   });
 
   async function load() {
     loading = true;
     error = '';
     try {
-      const res = await api.goldenCases(dir);
+      const res = await api.goldenCases(dbUrl);
       cases = res.cases;
-      if (selectedPath && !cases.some((c) => c._path === selectedPath)) selectedPath = null;
+      if (selectedId && !cases.some((c) => c.id === selectedId)) selectedId = null;
     } catch (e) {
       error = String(e);
       cases = null;
@@ -77,7 +73,7 @@
   }
 
   function select(c) {
-    selectedPath = c._path;
+    selectedId = c.id;
     note = c.review_note ?? '';
   }
 
@@ -85,7 +81,7 @@
   // be below the fold of a list that now scrolls independently. Same for the
   // arrow keys below.
   $effect(() => {
-    selectedPath;
+    selectedId;
     visible;
     listEl?.querySelector('tr.selected')?.scrollIntoView({ block: 'nearest' });
   });
@@ -94,14 +90,14 @@
   // selected yet, enter the list from the end the reviewer is arrowing towards.
   function move(delta) {
     if (!visible.length) return;
-    const current = visible.findIndex((c) => c._path === selectedPath);
+    const current = visible.findIndex((c) => c.id === selectedId);
     const next =
       current === -1
         ? delta > 0
           ? 0
           : visible.length - 1
         : Math.min(visible.length - 1, Math.max(0, current + delta));
-    if (visible[next]._path !== selectedPath) select(visible[next]);
+    if (visible[next].id !== selectedId) select(visible[next]);
   }
 
   // Arrow keys walk the worklist. Bound on the window rather than on a focusable
@@ -132,18 +128,18 @@
     saving = true;
     try {
       const res = await api.setGoldenVerified({
-        path: selected._path,
+        db_url: dbUrl,
+        id: selected.id,
         verified,
-        reviewer,
         note: note || null,
       });
       // Keep the enrichment the list was loaded with: the write path only
-      // round-trips the case file itself.
-      const updated = { ...selected, ...res.case };
-      cases = cases.map((c) => (c._path === updated._path ? updated : c));
+      // round-trips the case row itself.
+      const updated = { ...selected, review_note: undefined, ...res.case };
+      cases = cases.map((c) => (c.id === updated.id ? updated : c));
       error = '';
       // Reviewing runs down a filtered worklist; step to the next one still in it.
-      const next = visible.find((c) => c._path !== updated._path);
+      const next = visible.find((c) => c.id !== updated.id);
       if (next && filter !== 'all') select(next);
     } catch (e) {
       error = String(e);
@@ -193,10 +189,7 @@
 
 <section class="panel golden" bind:this={sectionEl}>
   <div class="row">
-    <label class="grow">
-      Golden dataset directory
-      <input bind:value={dir} class="mono" />
-    </label>
+    <span class="muted grow">Drafted cases in <span class="mono">eval.golden_cases</span> — accept or reject each against the value EUROMOD holds.</span>
     <button onclick={load} disabled={loading}>{loading ? 'Loading…' : 'Reload cases'}</button>
   </div>
 
@@ -222,8 +215,8 @@
             <tr><th></th><th>Case</th><th>Routing</th><th>Expected</th><th>From</th></tr>
           </thead>
           <tbody>
-            {#each visible as c (c._path)}
-              <tr class:selected={c._path === selectedPath} onclick={() => select(c)}>
+            {#each visible as c (c.id)}
+              <tr class:selected={c.id === selectedId} onclick={() => select(c)}>
                 <td>
                   {#if c.verified}<span class="tick ok" title="accepted">✓</span>
                   {:else if c.reviewed_by}<span class="tick bad" title="rejected">✗</span>
@@ -253,7 +246,15 @@
             · drafted by <span class="mono">{selected.drafted_by}</span>
           </p>
 
-          {#if selected._parameter}
+          {#if selected._parameter?.group}
+            <h3>Parameter under test</h3>
+            <p class="mono small">{selected.parameter_target}</p>
+            <p class="muted small">a parameter group (bracket schedule) — no single current value to show</p>
+          {:else if selected._parameter?.missing}
+            <h3>Parameter under test</h3>
+            <p class="mono small">{selected._parameter.missing}</p>
+            <p class="muted small">not in the parameter store — run <span class="mono">ingest-params</span> for this country</p>
+          {:else if selected._parameter}
             <h3>Parameter under test</h3>
             <p class="mono small">{selected._parameter.model_target}</p>
             <p>{text(selected._parameter.label) || text(selected._parameter.short_label)}</p>
@@ -337,9 +338,9 @@
             <button disabled={saving} onclick={() => decide(false)}>Reject</button>
           </div>
           <p class="muted small">
-            Accepting sets <span class="mono">verified: true</span> in
-            <span class="mono">{selected._path}</span> — commit the file to freeze it into the
-            golden set.
+            Accepting sets <span class="mono">verified = true</span> on the row, stamped with your
+            database login; evaluation runs score verified cases only and record the golden-set
+            hash of exactly the cases they ran.
           </p>
         {/if}
       </div>

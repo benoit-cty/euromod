@@ -1,16 +1,11 @@
 <script>
-  let { decisions = [], source = 'database' } = $props();
+  let { decisions = [] } = $props();
 </script>
 
 <section class="panel log">
   <h2>
     Audit log
     <span class="muted">({decisions.length} decisions — this log is future training/validation data)</span>
-    {#if source === 'file'}
-      <span class="badge stale" title="Postgres unreachable — showing data/decisions.jsonl">
-        local mirror
-      </span>
-    {/if}
   </h2>
   <div class="scroll">
     <table>
@@ -44,5 +39,4 @@
 <style>
   .log { display: flex; flex-direction: column; min-height: 0; }
   .scroll { overflow: auto; flex: 1; }
-  .badge.stale { background: #b45309; color: #fff; }
 </style>

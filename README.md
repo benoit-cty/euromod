@@ -10,6 +10,7 @@ kept alongside the original descriptive name for readability:
 | Nomotheca (+ Nomosync) | [Nomotheca-RAG/](Nomotheca-RAG/) | Legislation DB (Nomotheca) + its ingestion pipeline (Nomosync); package `nomotheca-ingest` (Activity 2) |
 | Nomoscope | [Nomoscope-agentic-workflow/](Nomoscope-agentic-workflow/) | Agentic workflow + validation UI (Activity 3) |
 | Nomokrisis | [Nomokrisis-evaluation_pipeline/](Nomokrisis-evaluation_pipeline/) | Evaluation pipeline (Activity 4) |
+| Nomergon | [Nomergon-worker/](Nomergon-worker/) | The worker: the one process that runs every job (ingestion, embedding, translation, workflow runs, evaluation) and the only one that holds model credentials or loads a model ([ADR 0004](docs/adr/0004-model-access-lives-only-in-a-worker-fed-by-a-postgres-job-table.md)) |
 
 ### Why these names
 
@@ -21,18 +22,26 @@ reads and reasons over fiscal legislation.
 - **Nomosync** — _nómos_ + _sync_: **keeping the law in sync**, i.e. the ingestion pipeline that fetches, snapshots and loads legislation into Nomotheca. It is a pipeline within the Nomotheca-RAG subproject, not a separate package — the code ships as `nomotheca-ingest`.
 - **Nomoscope** — _nómos_ + _-scope_ (_skopein_, "to examine/observe"): **the law examiner**, i.e. the agentic workflow that inspects legislation and proposes parameter updates.
 - **Nomokrisis** — _nómos_ + _krisis_ (κρίσις, "judgment/decision", root of _critic_): **the judgment of the law**, i.e. the evaluation pipeline that scores the proposals.
+- **Nomergon** — _nómos_ + _érgon_ (ἔργον, "work"): **the work of the law**, i.e. the worker that executes every job the others submit. The desktop UI never runs anything itself: it inserts a job row into the shared database and the worker picks it up.
 
 ## Quick start
 
-Launch the server side:
+Launch the server side (PostgreSQL + pgAdmin + Phoenix + the worker; the worker is
+behind a compose profile: `gpu` needs the NVIDIA container toolkit, `cpu` runs
+anywhere, slowly; API keys come from the repo-root `.env`):
 ```sh
 git clone XXXX
 cd XXXX
-docker compose up
+cp Nomoscope-agentic-workflow/.env.example .env   # then set the keys the worker needs
+docker compose --profile gpu up -d                 # or --profile cpu
 ```
 
 - Database interface: pgAdmin: http://localhost:5050
 - Phoenix (LLM traces / evals): http://localhost:6006
+- Worker: `docker compose logs -f worker`; `docker compose exec worker nomergon status`
+
+One-off after the first start with an existing checkout: import the golden set
+that used to live in git (`docker compose exec worker nomokrisis-eval import-golden`).
 
 Launch the UI in another terminal:
 ```sh
@@ -124,8 +133,7 @@ docker compose up -d
 ### Notes
 
 - `docker compose down -v` deletes the `pgdata` volume — never run it without a recent backup once a run holds real (non-seed) data.
-- Human review decisions are the one piece of state with a redundant copy outside Postgres: `Nomoscope-agentic-workflow/pipeline/data/decisions.jsonl` mirrors `params.review_decisions`. If a restore loses recent decisions, replay them with `uv run nomoscope-workflow sync-decisions` (from `Nomoscope-agentic-workflow/pipeline`) instead of re-deciding in the UI.
-- The review queue itself (`Nomoscope-agentic-workflow/pipeline/data/queue/`) and materialized parameter files under `data/parameters/db|eval/` are files, not database state — back them up separately (or regenerate the parameter files from the DB) if you need them.
+- Everything is in the database: the review queue (`params.review_queue`), the decisions (`params.review_decisions`), the golden set (`eval.golden_selections`, `eval.golden_cases`), evaluation runs and the job log (`ops.*`). Nothing runtime lives on a workstation; the only file the UI writes is the EUROMOD export of accepted values, one per country, where the analyst chooses.
 
 ## Agentic workflow (Activity 3)
 
@@ -136,8 +144,12 @@ queue, side-by-side diff, citation viewer, audit log and a database explorer tab
 See [Nomoscope-agentic-workflow/README.md](Nomoscope-agentic-workflow/README.md).
 
 ```bash
+# a run is a job the worker executes (mock model, no API key needed):
+docker compose exec worker nomergon submit workflow --wait \
+  --payload '{"targets": ["group:FR:tinkt_fr:tin_schedule"], "year": 2025, "model": "mock/extractor"}'
+# or, from a checkout with the stack up, directly:
 cd Nomoscope-agentic-workflow/pipeline && uv sync
-uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025   # mock model, no API key needed
+uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule --year 2025 --model mock/extractor
 cd ../ui && npm install && npm run tauri dev
 ```
 

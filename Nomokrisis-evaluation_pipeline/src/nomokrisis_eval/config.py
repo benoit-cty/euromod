@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -19,10 +19,12 @@ def _env(name: str, default: str) -> str:
 
 @dataclass(slots=True)
 class EvalConfig:
+    #: The golden set, the runs and their results all live in this database
+    #: (schema `eval`, ADR 0004) — nothing runtime is on disk any more.
     database_url: str = ""
-    dataset_dir: Path = field(default_factory=lambda: EVAL_ROOT / "dataset")
-    embedding_dataset_dir: Path = field(default_factory=lambda: EVAL_ROOT / "dataset_embedding")
-    runs_dir: Path = field(default_factory=lambda: EVAL_ROOT / ".eval_runs")
+    #: Provider-prefixed drafting model for `build-dataset` (`anthropic/…`,
+    #: `azure_openai/…`, `jrc/…`); `mock/` is refused — a drafted ground truth
+    #: from a mock would be a fabricated golden case.
     builder_model: str = ""
     #: Model for the workflow's critique step during an evaluation run. Empty
     #: means "the model under test grades itself", which is fine for tracking
@@ -42,12 +44,7 @@ def load_eval_config() -> EvalConfig:
             "EVAL_DATABASE_URL",
             _env("WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation"),
         ),
-        dataset_dir=Path(_env("EVAL_DATASET_DIR", str(EVAL_ROOT / "dataset"))),
-        embedding_dataset_dir=Path(
-            _env("EVAL_EMBEDDING_DATASET_DIR", str(EVAL_ROOT / "dataset_embedding"))
-        ),
-        runs_dir=Path(_env("EVAL_RUNS_DIR", str(EVAL_ROOT / ".eval_runs"))),
-        builder_model=_env("EVAL_BUILDER_MODEL", "claude-fable-5"),
+        builder_model=_env("EVAL_BUILDER_MODEL", "anthropic/claude-fable-5"),
         critique_model=_env("EVAL_CRITIQUE_MODEL", ""),
         phoenix_project=_env("EVAL_PHOENIX_PROJECT", "nomokrisis-evaluation"),
     )

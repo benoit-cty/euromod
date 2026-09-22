@@ -1,9 +1,10 @@
 <script>
   // Parameters tab: browse every EUROMOD parameter in the params DB, filter,
-  // select some, launch the agentic workflow on them (run-targets), then jump
-  // to the review-queue item or open the run's trace in Phoenix.
-  import { onMount } from 'svelte';
+  // select some, submit a `workflow` job for them (the worker runs
+  // run-targets), then jump to the review-queue item or open the run's trace
+  // in Phoenix.
   import { api } from '../api.js';
+  import { submitAndFollow, summarize } from '../jobs.js';
 
   // The component stays mounted (hidden) while other tabs are shown, so a
   // launched run keeps streaming; `active` re-triggers the log auto-scroll on
@@ -40,15 +41,19 @@
   // on no evidence. Null until the params list loads and supplies the years.
   let systemYears = $state({}); // country -> [year, …] ascending
   let systemYear = $state(null);
+  // The model is picked from the list the worker publishes; '' = the worker's
+  // default (the job carries `model: null`). Never free text (see llm.py).
+  let models = $state([]);
   let model = $state('');
+  let workerAlive = $state(null);
   let force = $state(false);
 
   // --- run state ---
   let running = $state(false);
-  let runId = $state('');
+  let jobId = $state(null);
   let logLines = $state([]);
   let summary = $state('');
-  let logEl;
+  let logEl = $state(null);
   // Liveness: when the run started, when the child last wrote a line, and a
   // 1 s clock so both ages tick while the pipeline is silent (model loads,
   // LLM calls) — a hang then looks different from a slow step.
@@ -191,6 +196,14 @@
     } catch {
       gids = {}; // Phoenix links degrade to the projects page
     }
+    try {
+      const status = await api.workerStatus(dbUrl);
+      workerAlive = (status.workers ?? []).some((w) => w.alive);
+      models = (status.models ?? []).filter((m) => m.kind === 'llm');
+      if (model && !models.some((m) => m.model === model)) model = '';
+    } catch {
+      models = [];
+    }
   }
 
   $effect(() => {
@@ -202,15 +215,21 @@
     return refresh();
   }
 
-  onMount(() => {
-    const unlisten = api.onWorkflowLog((payload) => {
-      if (payload.run_id !== runId) return;
+  const handlers = {
+    onSubmit: (id) => {
+      jobId = id;
+      logLines = [...logLines, { stream: 'system', line: `job #${id} submitted` }];
+    },
+    onLine: (e) => {
       lastLogAt = Date.now();
-      trackProgress(payload.line);
-      logLines = [...logLines, payload];
-    });
-    return () => unlisten.then((un) => un());
-  });
+      trackProgress(e.line);
+      logLines = [...logLines, e];
+    },
+    onProgress: (data) => {
+      lastLogAt = Date.now();
+      if (data && data.total > 0) progress = { ...(progress ?? {}), ...data };
+    },
+  };
 
   // Auto-scroll the log as lines arrive — and when the tab is shown again
   // (while hidden the pane has no layout, so scrollHeight was 0).
@@ -267,34 +286,32 @@
   async function runSelected() {
     const targets = selectedTargets;
     if (!targets.length || running || !systemYear) return;
-    const args = ['run-targets', ...targets, '--year', String(systemYear)];
-    if (model.trim()) args.push('--model', model.trim());
-    if (force) args.push('--force');
-    runId = crypto.randomUUID();
-    logLines = [];
+    const payload = { targets, year: Number(systemYear), model: model || null, force: Boolean(force) };
+    jobId = null;
+    logLines = workerAlive === false
+      ? [{ stream: 'system', line: 'no worker alive — the job waits in the queue until one starts' }]
+      : [];
     progress = null;
     summary = '';
     error = '';
     running = true;
     startedAt = lastLogAt = now = Date.now();
     try {
-      const res = await api.runWorkflow({ run_id: runId, args, db_url: dbUrl || null });
+      const final = await submitAndFollow(dbUrl, 'workflow', payload, handlers);
       const took = fmtDur(Date.now() - startedAt);
       let line;
-      if (res.canceled) {
-        summary = `Canceled after ${took}.`;
-        line = `✗ canceled after ${took}`;
-      } else if (res.success) {
-        summary = `Finished: ${targets.length} parameter(s) processed in ${took}.`;
-        line = `✓ finished (exit 0, ${took})`;
+      if (final.status === 'succeeded') {
+        const n = final.result?.item_ids?.length ?? targets.length;
+        summary = `Finished: ${n} parameter(s) processed in ${took}.`;
+        line = `✓ finished (${took})`;
         if (progress) progress = { ...progress, done: progress.total, current: '', detail: 'done' };
       } else {
-        summary = `Exited with code ${res.code ?? '?'} after ${took}.`;
-        line = `✗ exited with code ${res.code ?? '?'} after ${took}`;
+        summary = summarize(final, took);
+        line = `✗ ${summary}`;
       }
-      logLines = [...logLines, { run_id: runId, stream: res.success ? 'system' : 'stderr', line }];
+      logLines = [...logLines, { stream: final.status === 'succeeded' ? 'system' : 'stderr', line }];
     } catch (e) {
-      error = String(e);
+      error = String(e.message ?? e);
     } finally {
       running = false;
       await refresh();
@@ -302,7 +319,7 @@
   }
 
   async function stop() {
-    if (runId) await api.stopWorkflow(runId);
+    if (jobId != null) await api.cancelJob(dbUrl, jobId);
   }
 </script>
 
@@ -365,7 +382,12 @@
     </label>
     <label>
       Model
-      <input bind:value={model} placeholder="default (WORKFLOW_MODEL)" class="mono" size="24" />
+      <select bind:value={model} class="mono">
+        <option value="">worker default</option>
+        {#each models as m (m.model)}
+          <option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>
+        {/each}
+      </select>
     </label>
     <label class="check">
       <input type="checkbox" bind:checked={force} />
@@ -374,7 +396,9 @@
     <button class="primary" onclick={runSelected} disabled={running || !selectedTargets.length || !systemYear}>
       {running ? `Running… ${fmtDur(now - startedAt)}` : `Run agentic update (${selectedTargets.length})`}
     </button>
-    <button onclick={stop} disabled={!running}>Stop</button>
+    <button onclick={stop} disabled={!running || jobId == null}>Cancel</button>
+    {#if jobId != null}<span class="muted mono count">job #{jobId}</span>{/if}
+    {#if workerAlive === false}<span class="badge fail" title="ops.workers heartbeat stale">no worker alive</span>{/if}
   </div>
 
   {#if error}<p class="error">{error}</p>{/if}

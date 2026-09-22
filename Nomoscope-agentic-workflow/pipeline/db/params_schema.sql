@@ -412,3 +412,90 @@ LEFT JOIN LATERAL (
     ORDER BY mv.valid_from DESC
     LIMIT 1
 ) mv ON true;
+
+-- ----------------------------------------------------------------------------
+-- review_queue — the review queue itself (ADR 0004). One row per queue item,
+-- keyed like the old file name (`<country>_<target>_<system year>`), holding
+-- the ReviewItem as JSON so the item schema can evolve pipeline-side without a
+-- lockstep UI release. The worker writes items (a re-run replaces a pending
+-- item, never a decided one unless forced); the UI reads them and decides
+-- through decide_review_item below. Nothing about the queue lives on disk.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS params.review_queue (
+    item_id      text PRIMARY KEY,
+    country      text NOT NULL,
+    model_target text NOT NULL,
+    system_year  integer,
+    routing      text,
+    status       text NOT NULL DEFAULT 'pending' CHECK (status IN
+                   ('pending', 'accepted', 'rejected', 'edited', 'escalated')),
+    run_id       text,
+    created_at   timestamptz NOT NULL,
+    updated_at   timestamptz NOT NULL DEFAULT now(),
+    item         jsonb NOT NULL
+);
+CREATE INDEX IF NOT EXISTS review_queue_country_idx ON params.review_queue (country, model_target);
+CREATE INDEX IF NOT EXISTS review_queue_status_idx  ON params.review_queue (status);
+
+-- Record one human decision and update its queue item, atomically.
+--   p_item_id  the queue item
+--   p_item     the updated ReviewItem the UI computed (status, decision block,
+--              reviewer edits applied) — stored verbatim
+--   p_entry    the audit entry: same keys record_decision/insert_decision took
+--              (action, note, edited_value, edited_fields, routing, model_target,
+--              as_of, run_id, confidence, critique_verdict, decided_at, logged_at)
+-- The reviewer is always current_user: the entry's `reviewer` key is ignored.
+-- Idempotent on (item_id, decided_at) exactly like the old insert; returns the
+-- audit row id, or NULL when that decision was already recorded. Raises when
+-- the item does not exist, so a decision on a vanished item fails outright.
+-- SECURITY DEFINER: nomos_reviewer holds EXECUTE on this and no UPDATE on the
+-- queue — a decision is the only way an analyst changes a queue row.
+CREATE OR REPLACE FUNCTION params.decide_review_item(p_item_id text, p_item jsonb, p_entry jsonb)
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = params, public
+AS $$
+DECLARE
+    v_action      text := p_entry ->> 'action';
+    v_run_id      text := p_entry ->> 'run_id';
+    v_proposal_pk bigint;
+    v_decided_at  timestamptz := coalesce((p_entry ->> 'decided_at')::timestamptz,
+                                          (p_entry ->> 'logged_at')::timestamptz, now());
+    v_id          bigint;
+BEGIN
+    IF v_action IS NULL OR v_action NOT IN ('accepted', 'rejected', 'edited', 'escalated', 'needs_revision') THEN
+        RAISE EXCEPTION 'decision entry has no valid action (%)', v_action;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM params.review_queue WHERE item_id = p_item_id) THEN
+        RAISE EXCEPTION 'review item % is not in the queue', p_item_id;
+    END IF;
+    IF v_run_id IS NOT NULL THEN
+        SELECT id INTO v_proposal_pk FROM params.proposals
+        WHERE proposal_id = v_run_id || '/' || p_item_id;
+    END IF;
+    INSERT INTO params.review_decisions
+        (proposal_pk, item_id, run_id, model_target, as_of, routing, action,
+         reviewer, note, edited_value, edited_fields, confidence,
+         critique_verdict, decided_at, logged_at)
+    VALUES
+        (v_proposal_pk, p_item_id, v_run_id,
+         p_entry ->> 'model_target', (p_entry ->> 'as_of')::date, p_entry ->> 'routing',
+         v_action, current_user, p_entry ->> 'note',
+         CASE WHEN p_entry ? 'edited_value' AND p_entry -> 'edited_value' <> 'null'::jsonb
+              THEN p_entry -> 'edited_value' END,
+         CASE WHEN p_entry ? 'edited_fields' AND p_entry -> 'edited_fields' <> 'null'::jsonb
+              THEN p_entry -> 'edited_fields' END,
+         (p_entry ->> 'confidence')::real, p_entry ->> 'critique_verdict',
+         v_decided_at, coalesce((p_entry ->> 'logged_at')::timestamptz, now()))
+    ON CONFLICT DO NOTHING
+    RETURNING id INTO v_id;
+    UPDATE params.review_queue
+       SET item = p_item,
+           status = CASE v_action WHEN 'needs_revision' THEN 'escalated' ELSE v_action END,
+           routing = coalesce(p_item ->> 'routing', routing),
+           updated_at = now()
+     WHERE item_id = p_item_id;
+    RETURN v_id;
+END;
+$$;

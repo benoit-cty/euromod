@@ -6,8 +6,8 @@ per-date legal references (`LEGIARTI`/`JORFTEXT` hrefs). That is exactly the
 of parameters, at a pinned git commit — §4.3 of
 Param_Schema/openfisca_france_usage.md.
 
-What this module does NOT do: decide anything. Every case it writes is
-`verified: false` and carries its own provenance in `notes` (OpenFisca path,
+What this module does NOT do: decide anything. Every case it writes (a row in
+eval.golden_cases) is `verified: false` and carries its own provenance in `notes` (OpenFisca path,
 component, scale, the reference titles, whether the cited act is in the
 legislation corpus). A human confirms each one in the validation UI's Golden
 set tab before it counts as ground truth. OpenFisca is curated and occasionally
@@ -33,12 +33,10 @@ latest entry at or before D — never an entry keyed exactly D.
 
 from __future__ import annotations
 
-import json
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date
-from pathlib import Path
 
 import psycopg
 
@@ -52,31 +50,18 @@ from nomoscope_workflow.schema import (
 )
 from nomoscope_workflow import paramdb
 
-from .build_dataset import _current_value
-from .config import REPO_ROOT
-from .dataset import save_drafted_case
+from .build_dataset import _current_value, case_slug
+from .golden_store import delete_case, load_case, save_drafted_case
 from .labels import draft_labels
 from .schema import Expected, GoldenCase
 from .scoring import normalise_value, values_equal
 
-# Parameter files materialized from the params DB for the golden set. A
-# subdirectory, so `run-all`'s data/parameters/*.json glob ignores them — they
-# are evaluation inputs, not the review queue's working set.
-EVAL_PARAMS_DIR = REPO_ROOT / "Nomoscope-agentic-workflow" / "data" / "parameters" / "eval"
+GROUP_PREFIX = "group:"
 
 _BRACKET_COMPONENT = re.compile(r"^brackets\[(\d+)\]\.(\w+)$")
 
-
-def _case_slug(model_target: str, country: str) -> str:
-    """euromod://FR/tinkt_fr/def_const/$tin_upthres1 -> 'tinkt_tin_upthres1'.
-
-    The country prefixes the case id already and `def_const` is the only
-    function in the export, so both are noise in a filename.
-    """
-    parts = paramdb.parse_model_target(model_target)
-    policy = (parts["policy"] or "").removesuffix(f"_{country.lower()}")
-    name = (parts["name"] or model_target).lstrip("$")
-    return slugify(f"{policy}_{name}") if policy else slugify(name)
+#: Kept under its old name for the callers (and tests) that import it here.
+_case_slug = case_slug
 
 
 @dataclass
@@ -85,7 +70,6 @@ class DraftOutcome:
 
     entry: dict
     case: GoldenCase | None = None
-    path: Path | None = None
     skipped: str | None = None
     warnings: list[str] = field(default_factory=list)
 
@@ -264,35 +248,26 @@ def resolve_citation(conn: psycopg.Connection, national_id: str) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-def _load_record(conn: psycopg.Connection, entry: dict) -> tuple[ParameterRecord, Path]:
-    """The parameter under test, plus the file path the runner hands to the workflow.
+def _load_record(conn: psycopg.Connection, entry: dict) -> tuple[ParameterRecord, str]:
+    """The parameter under test, plus the `parameter_target` the runner hands
+    to the workflow.
 
     **Everything comes from the parameter store**, so a golden case never
     depends on a loose file whose provenance nobody can trace:
 
     - `group_id` — a bracket schedule assembled from `params.parameter_groups`
       (the FR barème is 4 thresholds + 5 rates; the export's groups block is the
-      only place it exists as an object).
+      only place it exists as an object) → target `group:<group_id>`.
     - `model_target` — a single parameter from `params.parameters`. Parameters
       EUROMOD defines inside functions rather than as named constants (CDHR)
       reach the store through `extracted_parameters/curated/<CC>.in_function.json`
       like any other ingest, not through a file read at run time.
-
-    The workflow's entry point takes a path, so the record is materialized under
-    `data/parameters/eval/` — a derived artifact of the DB, regenerated on every
-    build, exactly like `run-targets`' `data/parameters/db/`.
     """
     if entry.get("group_id"):
         record = paramdb.load_group_record(conn, entry["group_id"])
-    else:
-        record = paramdb.load_record(conn, entry["model_target"])
-    EVAL_PARAMS_DIR.mkdir(parents=True, exist_ok=True)
-    path = EVAL_PARAMS_DIR / f"{slugify(record.information.model_target)}.json"
-    path.write_text(
-        json.dumps(record.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    return record, path
+        return record, f"{GROUP_PREFIX}{entry['group_id']}"
+    record = paramdb.load_record(conn, entry["model_target"])
+    return record, record.information.model_target
 
 
 def db_constants(conn: psycopg.Connection, country: str, as_of: date) -> dict[str, object]:
@@ -379,8 +354,8 @@ def draft_case(
 ) -> DraftOutcome:
     outcome = DraftOutcome(entry=entry)
     try:
-        record, param_path = _load_record(conn, entry)
-    except (KeyError, FileNotFoundError) as exc:
+        record, parameter_target = _load_record(conn, entry)
+    except (KeyError, ValueError) as exc:
         outcome.skipped = f"parameter not available: {exc}"
         return outcome
 
@@ -529,7 +504,7 @@ def draft_case(
         id=f"{country.lower()}_{slug}_{as_of.isoformat()}",
         country=country.upper(),
         language=language,
-        parameter_file=param_path.relative_to(REPO_ROOT).as_posix(),
+        parameter_target=parameter_target,
         as_of=as_of,
         difficulty=entry.get("difficulty") or drafted.difficulty,
         hazards=entry.get("hazards", drafted.hazards),
@@ -547,18 +522,12 @@ def draft_case(
         notes=" | ".join(note_parts),
     )
     outcome.case = case
-    outcome.path = param_path
     return outcome
 
 
 # ---------------------------------------------------------------------------
 # Selecting what to draft
 # ---------------------------------------------------------------------------
-
-
-def load_selection(path: Path) -> tuple[dict, list[dict]]:
-    doc = json.loads(path.read_text(encoding="utf-8"))
-    return doc, list(doc.get("entries", []))
 
 
 def entries_from_links(
@@ -614,8 +583,8 @@ def entries_from_links(
 
 def build_dataset(
     conn: psycopg.Connection,
-    dataset_dir: Path,
-    selection: Path | None,
+    header: dict,
+    entries: list[dict],
     as_of: date,
     country: str = "FR",
     language: str = "fr",
@@ -623,12 +592,14 @@ def build_dataset(
     fill_from_links: bool = True,
     kind: str = "openfisca",
 ) -> list[DraftOutcome]:
-    entries: list[dict] = []
-    if selection is not None and selection.exists():
-        doc, curated = load_selection(selection)
-        country = doc.get("country", country)
-        language = doc.get("language", language)
-        entries.extend(curated)
+    """Draft (and upsert into eval.golden_cases) one case per selection entry,
+    topped up from params.parameter_links when `fill_from_links`.
+
+    `header`/`entries` are the selection row (`golden_store.load_selection`).
+    """
+    country = (header.get("country") or country).upper()
+    language = (header.get("language") or language).lower()
+    entries = list(entries)
     outcomes: list[DraftOutcome] = []
     written = 0
     constants = db_constants(conn, country, as_of)
@@ -641,8 +612,7 @@ def build_dataset(
             outcome = draft_case(conn, entry, as_of, country, language, kind=kind, constants=constants)
             outcomes.append(outcome)
             if outcome.case is not None:
-                _, reset = save_drafted_case(dataset_dir, outcome.case)
-                if reset:
+                if save_drafted_case(conn, outcome.case):
                     outcome.warnings.append(
                         "ground truth changed since it was reviewed — the case is back to "
                         "verified:false and must be re-verified before it counts"
@@ -657,18 +627,29 @@ def build_dataset(
         exclude = {e["model_target"] for e in entries if e.get("model_target")}
         extra = entries_from_links(conn, country, as_of, (limit - written) * 3, exclude, kind=kind)
         drain(extra)
-    _retire_skipped(dataset_dir, outcomes, as_of, country)
+    _retire_skipped(conn, outcomes, as_of, country)
     return outcomes
 
 
+def stale_case_id(entry: dict, as_of: date, country: str) -> str | None:
+    """The id the entry's case carries (or would carry), from the entry alone."""
+    target = entry.get("model_target") or entry.get("group_id")
+    if not target:
+        return None
+    slug = entry.get("id") or (
+        _case_slug(target, country) if target.startswith("euromod://") else slugify(target)
+    )
+    return f"{country.lower()}_{slug}_{as_of.isoformat()}"
+
+
 def _retire_skipped(
-    dataset_dir: Path, outcomes: list[DraftOutcome], as_of: date, country: str
+    conn: psycopg.Connection, outcomes: list[DraftOutcome], as_of: date, country: str
 ) -> None:
-    """Delete the case file of an entry that stopped drafting this run.
+    """Delete the case row of an entry that stopped drafting this run.
 
     An entry can stop producing a case because the world changed under it — the
     CDHR has no value in the income year the system year now maps to. Leaving
-    the previous run's file on disk would keep a case in the golden set that
+    the previous run's row in place would keep a case in the golden set that
     the current rules no longer generate, and the count would still read 50.
     A reviewed case is never removed: a human verdict outranks a rebuild, and
     the mismatch is worth seeing rather than silently erasing.
@@ -676,22 +657,17 @@ def _retire_skipped(
     for outcome in outcomes:
         if outcome.case is not None or not outcome.skipped:
             continue
-        target = outcome.entry.get("model_target") or outcome.entry.get("group_id")
-        if not target:
+        case_id = stale_case_id(outcome.entry, as_of, country)
+        if case_id is None:
             continue
-        slug = outcome.entry.get("id") or (
-            _case_slug(target, country) if target.startswith("euromod://") else slugify(target)
-        )
-        folder = country.lower()
-        stale = dataset_dir / folder / f"{folder}_{slug}_{as_of.isoformat()}.json"
-        if not stale.exists():
+        existing = load_case(conn, case_id)
+        if existing is None:
             continue
-        existing = json.loads(stale.read_text(encoding="utf-8"))
-        if existing.get("reviewed_by"):
+        if existing.reviewed_by:
             outcome.warnings.append(
-                f"reviewed case {stale.name} kept on disk although the entry no longer drafts "
+                f"reviewed case {case_id} kept although the entry no longer drafts "
                 f"({outcome.skipped}) — re-verify or delete it by hand"
             )
             continue
-        stale.unlink()
-        outcome.warnings.append(f"removed stale draft {stale.name} ({outcome.skipped})")
+        delete_case(conn, case_id)
+        outcome.warnings.append(f"removed stale draft {case_id} ({outcome.skipped})")

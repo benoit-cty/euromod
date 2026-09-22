@@ -19,7 +19,6 @@ import re
 import uuid
 from datetime import date, datetime, timedelta, timezone
 from collections.abc import Iterable
-from pathlib import Path
 from typing import TypedDict
 
 from opentelemetry.trace import Tracer
@@ -76,7 +75,8 @@ def guidance_only(classes: Iterable[SourceTrustClass | None]) -> bool:
 
 class WorkflowState(TypedDict, total=False):
     record: ParameterRecord
-    parameter_file: str
+    #: What the run was asked for: a `euromod://…` target or `group:<group_id>`.
+    parameter_ref: str
     as_of: date
     # Date used to select in-force legislation versions; differs from as_of
     # for income_year parameters (see _retrieval_as_of).
@@ -84,6 +84,9 @@ class WorkflowState(TypedDict, total=False):
     run_id: str
     phoenix_trace_id: str | None
     force: bool
+    #: False = return the item without writing it to params.review_queue (the
+    #: evaluation pipeline keeps the item itself and scores it).
+    enqueue: bool
     query: str
     citations: list[str]
     #: Jurisdiction codes retrieval drew on: the country, plus the region's
@@ -824,7 +827,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                     h.model_copy(update={"content": ""}) for h in state.get("hits", [])
                 ],
                 proposed_record=proposed_record,
-                parameter_file=state.get("parameter_file"),
+                parameter_ref=state.get("parameter_ref"),
                 derived_from=state.get("derived_from") or None,
                 scout=state["scout"].summary() if state.get("scout") else None,
                 derivation=(
@@ -838,11 +841,21 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
 
     def enqueue(state: WorkflowState) -> dict:
         item = state["item"]
-        # Keep full source texts on the item so the UI can show the cited law offline.
+        # Keep full source texts on the item so the UI can show the cited law
+        # without another corpus query.
         item = item.model_copy(update={"retrieval_trace": state.get("hits", [])})
-        written = queue_store.write_item(item, cfg.data_dir, force=state.get("force", False))
-        with step_span(tracer, "enqueue", input_value={"item_id": item.id}) as span:
-            set_output(span, {"written": written, "path": str(queue_store.queue_dir(cfg.data_dir))})
+        wanted = state.get("enqueue", True)
+        written = False
+        with step_span(
+            tracer, "enqueue", input_value={"item_id": item.id, "enqueue": wanted}
+        ) as span:
+            if wanted:
+                # The queue is rows in params.review_queue (ADR 0004); a DB that
+                # refuses the write fails the run — there is no file to fall
+                # back on, and a silently lost item is worse than a failed run.
+                with paramdb.connect(cfg) as conn:
+                    written = queue_store.write_item(conn, item, force=state.get("force", False))
+            set_output(span, {"written": written})
         return {"item": item, "enqueued": written}
 
     def _retry_proposal(state: WorkflowState) -> bool:
@@ -1288,12 +1301,21 @@ def _merge_record(
 def run_parameter(
     cfg: WorkflowConfig,
     tracer: Tracer,
-    parameter_file: Path,
+    record: ParameterRecord,
     as_of: date,
     force: bool = False,
+    parameter_ref: str | None = None,
+    enqueue: bool = True,
 ) -> ReviewItem:
-    """Run the full workflow for one parameter file; returns the queue item."""
-    record = queue_store.load_record(parameter_file)
+    """Run the full workflow for one parameter record; returns the queue item.
+
+    `record` comes from the params DB (`paramdb.load_record` /
+    `load_group_record`) — never from a file. `parameter_ref` is what the run
+    was asked for (`euromod://…` or `group:<id>`; defaults to the record's
+    model_target) and travels on the item. With `enqueue=False` the item is
+    returned but not written to params.review_queue: the evaluation pipeline
+    scores items without ever touching the review queue.
+    """
     info = record.information
     run_id = f"{datetime.now(timezone.utc):%Y-%m-%dT%H:%MZ}#{info.country.lower()}-{uuid.uuid4().hex[:6]}"
     workflow = build_workflow(cfg, tracer)
@@ -1321,11 +1343,12 @@ def run_parameter(
         result = workflow(
             {
                 "record": record,
-                "parameter_file": str(parameter_file),
+                "parameter_ref": parameter_ref or info.model_target,
                 "as_of": as_of,
                 "run_id": run_id,
                 "phoenix_trace_id": phoenix_trace_id,
                 "force": force,
+                "enqueue": enqueue,
             }
         )
         set_output(span, {"routing": result["routing"], "item_id": result["item"].id})

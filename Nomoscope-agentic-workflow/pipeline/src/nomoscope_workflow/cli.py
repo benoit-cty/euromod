@@ -2,14 +2,16 @@
 
   uv run nomoscope-workflow run-targets 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025
   uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule --year 2025
-  uv run nomoscope-workflow run-all --params-dir data/parameters/db --year 2025
-  uv run nomoscope-workflow queue
-  uv run nomoscope-workflow export
-  uv run nomoscope-workflow migrate-queue-ids --apply
+  uv run nomoscope-workflow run-country FR --year 2025 --limit 20
+  uv run nomoscope-workflow queue [--country FR] [--status pending]
+  uv run nomoscope-workflow export --out-dir export
   uv run nomoscope-workflow init-param-db
-  uv run nomoscope-workflow sync-decisions
   uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
   uv run nomoscope-workflow curate-params curation/FR.curation.yaml
+
+Parameters are read from the params DB and queue items are written to
+params.review_queue: nothing runtime lives on disk (ADR 0004). Commands the
+worker runs as jobs end with exactly one `@result {json}` line on stdout.
 """
 
 from __future__ import annotations
@@ -30,7 +32,8 @@ from . import (
     retrieval,
     translate,
 )
-from .config import load_config
+from .config import WorkflowConfig, load_config
+from .schema import ParameterRecord
 from .tracing import setup_tracing
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -60,25 +63,24 @@ def _anchor_date(year: int | None, as_of: str | None) -> date:
     return parsed
 
 
-def _countries_in(files: list[Path]) -> tuple[dict[str, int], dict[str, int]]:
+def _result_line(payload: dict) -> None:
+    """The one `@result {json}` line the worker parses into ops.jobs.result."""
+    typer.echo("@result " + json.dumps(payload, ensure_ascii=False))
+
+
+def _countries_in(records: list[ParameterRecord]) -> tuple[dict[str, int], dict[str, int]]:
     """Parameter counts per country, and how many of them are income-year."""
     totals: dict[str, int] = {}
     income_year: dict[str, int] = {}
-    for path in files:
-        try:
-            info = json.loads(path.read_text(encoding="utf-8")).get("information", {})
-        except (OSError, ValueError):
-            continue  # jsonc / unreadable: the per-file run will report it
-        country = info.get("country")
-        if not country:
-            continue
-        totals[country] = totals.get(country, 0) + 1
-        if info.get("temporal_basis") == "income_year":
-            income_year[country] = income_year.get(country, 0) + 1
+    for record in records:
+        info = record.information
+        totals[info.country] = totals.get(info.country, 0) + 1
+        if info.temporal_basis == "income_year":
+            income_year[info.country] = income_year.get(info.country, 0) + 1
     return totals, income_year
 
 
-def _assert_system_year(cfg, files: list[Path], anchor: date) -> None:
+def _assert_system_year(cfg: WorkflowConfig, records: list[ParameterRecord], anchor: date) -> None:
     """Refuse a system year EUROMOD does not define for the country.
 
     Anchoring on today's date is the easy mistake (the UI used to default to it)
@@ -86,7 +88,7 @@ def _assert_system_year(cfg, files: list[Path], anchor: date) -> None:
     the proposal against the newest value on file and routes every parameter
     `changed` — a confident-looking queue item for a system nobody can accept.
     """
-    totals, _ = _countries_in(files)
+    totals, _ = _countries_in(records)
     try:
         with paramdb.connect(cfg) as conn:
             bounds = {c: paramdb.system_year_bounds(conn, c) for c in sorted(totals)}
@@ -104,9 +106,9 @@ def _assert_system_year(cfg, files: list[Path], anchor: date) -> None:
             raise typer.Exit(2)
 
 
-def _readiness_banner(cfg, files: list[Path], anchor: date) -> None:
+def _readiness_banner(cfg: WorkflowConfig, records: list[ParameterRecord], anchor: date) -> None:
     """Per-country corpus readiness for the system year, printed once, up front."""
-    totals, income_year = _countries_in(files)
+    totals, income_year = _countries_in(records)
     for country in sorted(totals):
         try:
             with retrieval.connect(cfg) as conn:
@@ -123,54 +125,38 @@ def _readiness_banner(cfg, files: list[Path], anchor: date) -> None:
             typer.echo(readiness.describe(status, income_year.get(country, 0)))
 
 
-@app.command()
-def run(
-    parameter_files: list[Path] = typer.Argument(..., help="Activity 1 parameter JSON file(s)"),
-    year: int = typer.Option(None, "--year", help=_YEAR_HELP),
-    as_of: str = typer.Option(None, "--as-of", help=_AS_OF_HELP),
-    model: str = typer.Option(None, "--model", help="Override WORKFLOW_MODEL (e.g. anthropic/claude-sonnet-5)"),
-    force: bool = typer.Option(False, "--force", help="Overwrite already-reviewed queue items"),
-) -> None:
-    """Run the workflow for the given parameter file(s) for ONE system year."""
-    cfg = load_config()
+def _load_target(conn, target: str) -> ParameterRecord:
+    """A `group:<group_id>` target assembles a bracket schedule; anything else is a parameter."""
+    return (
+        paramdb.load_group_record(conn, target.removeprefix("group:"))
+        if target.startswith("group:")
+        else paramdb.load_record(conn, target)
+    )
+
+
+def _run_records(
+    cfg: WorkflowConfig,
+    records: list[tuple[str, ParameterRecord]],
+    anchor: date,
+    model: str | None,
+    force: bool,
+) -> list[str]:
+    """Run every (ref, record) for one system year; returns the queue item ids."""
     if model:
         cfg.model = model
         cfg.critique_model = model
     tracer = setup_tracing(cfg)
-    reference_date = _anchor_date(year, as_of)
-    _assert_system_year(cfg, parameter_files, reference_date)
-    _readiness_banner(cfg, parameter_files, reference_date)
-    for i, path in enumerate(parameter_files, 1):
-        typer.echo(f"[{i}/{len(parameter_files)}] {path.name}")
-        item = pipeline.run_parameter(cfg, tracer, path, reference_date, force=force)
+    only_records = [record for _, record in records]
+    _assert_system_year(cfg, only_records, anchor)
+    _readiness_banner(cfg, only_records, anchor)
+    item_ids: list[str] = []
+    for i, (ref, record) in enumerate(records, 1):
+        typer.echo(f"[{i}/{len(records)}] {ref}")
+        item = pipeline.run_parameter(cfg, tracer, record, anchor, force=force, parameter_ref=ref)
         verdict = item.critique.verdict if item.critique else "-"
-        typer.echo(f"{item.id}: routing={item.routing} critique={verdict} -> queue/{item.id}.json")
-
-
-@app.command("run-all")
-def run_all(
-    params_dir: Path = typer.Option(None, "--params-dir", help="Directory of parameter JSON files"),
-    year: int = typer.Option(None, "--year", help=_YEAR_HELP),
-    as_of: str = typer.Option(None, "--as-of", help=_AS_OF_HELP),
-    model: str = typer.Option(None, "--model"),
-    force: bool = typer.Option(False, "--force"),
-) -> None:
-    """Run the workflow for every parameter file in a directory, for ONE system year."""
-    cfg = load_config()
-    folder = params_dir or cfg.data_dir / "parameters"
-    files = sorted(p for p in folder.glob("*.json*") if p.suffix in (".json", ".jsonc"))
-    if not files:
-        # The parameter store is the source; <data>/parameters holds only
-        # materialized subdirectories (db/ from run-targets, eval/ from the
-        # golden-set builder), so an empty top level is the normal state.
-        typer.echo(
-            f"No parameter files in {folder}. Parameters live in the params DB — "
-            "materialize them with `run-targets <model_target|group:...>`, or point "
-            "--params-dir at a directory of already-materialized records "
-            f"(e.g. {folder / 'db'})."
-        )
-        raise typer.Exit(1)
-    run(parameter_files=files, year=year, as_of=as_of, model=model, force=force)
+        typer.echo(f"{item.id}: routing={item.routing} critique={verdict}")
+        item_ids.append(item.id)
+    return item_ids
 
 
 @app.command("run-targets")
@@ -187,45 +173,74 @@ def run_targets(
 ) -> None:
     """Run the workflow for parameters stored in the params DB (see ingest-params).
 
-    The DB is the source: each target is materialized as an Activity 1 JSON file
-    under <data>/parameters/db/ (a subdirectory, so run-all's glob ignores it),
-    then goes through the standard file-based workflow. Those files are derived
-    artefacts — regenerated on every run, never hand-edited.
-
-    A `group:` target assembles one bracket schedule out of the scalar constants
-    the export declares as its bands, e.g.
-    `group:FR:tinkt_fr:tin_schedule` for the French income-tax barème.
+    The DB is the source: each target is loaded straight from params.* and run;
+    the resulting items land in params.review_queue. A `group:` target
+    assembles one bracket schedule out of the scalar constants the export
+    declares as its bands, e.g. `group:FR:tinkt_fr:tin_schedule` for the French
+    income-tax barème. Ends with `@result {"item_ids": [...]}`.
     """
     cfg = load_config()
-    out_dir = cfg.data_dir / "parameters" / "db"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    files: list[Path] = []
+    anchor = _anchor_date(year, as_of)
+    records: list[tuple[str, ParameterRecord]] = []
     with paramdb.connect(cfg) as conn:
         for target in targets:
             try:
-                record = (
-                    paramdb.load_group_record(conn, target.removeprefix("group:"))
-                    if target.startswith("group:")
-                    else paramdb.load_record(conn, target)
-                )
+                records.append((target, _load_target(conn, target)))
             except (KeyError, ValueError) as exc:
                 typer.echo(str(exc))
                 raise typer.Exit(1)
-            path = out_dir / f"{queue_store.slugify(record.information.model_target)}.json"
-            path.write_text(
-                json.dumps(record.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
-            typer.echo(f"materialized {path.relative_to(cfg.data_dir)}")
-            files.append(path)
-    run(parameter_files=files, year=year, as_of=as_of, model=model, force=force)
+    item_ids = _run_records(cfg, records, anchor, model, force)
+    _result_line({"item_ids": item_ids})
+
+
+@app.command("run-country")
+def run_country(
+    country: str = typer.Argument(..., help="ISO country code, e.g. FR"),
+    year: int = typer.Option(None, "--year", help=_YEAR_HELP),
+    as_of: str = typer.Option(None, "--as-of", help=_AS_OF_HELP),
+    model: str = typer.Option(None, "--model", help="Override WORKFLOW_MODEL"),
+    force: bool = typer.Option(False, "--force", help="Overwrite already-reviewed queue items"),
+    limit: int = typer.Option(0, "--limit", help="Run at most N parameters (0 = all)"),
+) -> None:
+    """Run the workflow for every parameter of a country in the params DB, for ONE system year.
+
+    Parameters come in spine order, then the country's bracket-schedule groups
+    (`group:<id>`). National-team-sourced values are not skipped up front: the
+    pipeline routes them `national_team_source` before any retrieval or LLM
+    call, so they cost nothing and still get a queue item. Ends with
+    `@result {"item_ids": [...]}`.
+    """
+    cfg = load_config()
+    anchor = _anchor_date(year, as_of)
+    records: list[tuple[str, ParameterRecord]] = []
+    with paramdb.connect(cfg) as conn:
+        refs = paramdb.country_targets(conn, country) + [
+            f"group:{g}" for g in paramdb.country_groups(conn, country)
+        ]
+        if not refs:
+            typer.echo(f"No parameters for {country.upper()} in the params DB (see ingest-params).")
+            raise typer.Exit(1)
+        if limit:
+            refs = refs[:limit]
+        for ref in refs:
+            try:
+                records.append((ref, _load_target(conn, ref)))
+            except (KeyError, ValueError) as exc:
+                typer.echo(f"skipped {ref}: {exc}")
+    typer.echo(f"{country.upper()}: {len(records)} parameter(s) for system year {anchor.year}")
+    item_ids = _run_records(cfg, records, anchor, model, force)
+    _result_line({"item_ids": item_ids})
 
 
 @app.command()
-def queue() -> None:
-    """List the review queue."""
+def queue(
+    country: str = typer.Option(None, "--country", help="Only this country"),
+    status: str = typer.Option(None, "--status", help="pending | accepted | rejected | edited | escalated"),
+) -> None:
+    """List the review queue (params.review_queue)."""
     cfg = load_config()
-    items = queue_store.load_items(cfg.data_dir)
+    with paramdb.connect(cfg) as conn:
+        items = queue_store.load_items(conn, country=country, status=status)
     if not items:
         typer.echo("Queue is empty.")
         return
@@ -238,76 +253,26 @@ def queue() -> None:
         )
 
 
-@app.command("migrate-queue-ids")
-def migrate_queue_ids(
-    apply: bool = typer.Option(False, "--apply", help="Write the changes (default: dry run)"),
-    db: bool = typer.Option(True, "--db/--no-db", help="Also re-point the params DB's item ids"),
-) -> None:
-    """Re-key queue files onto the system-year id and collapse the duplicates.
-
-    Queue items used to be keyed by anchor date, so every re-run of the same
-    parameter for the same system year left another near-identical review. This
-    renames each file to `<country>_<target>_<year>.json` and moves the extra
-    runs to `<data>/queue_superseded/` (kept, not deleted). Decided items win
-    over pending ones; the newest wins among equals. Run it once per data dir.
-
-    The params DB stores the same ids (extraction_runs.item_id is the Parameters
-    tab's link into the queue), so they are rewritten too. data/decisions.jsonl
-    is append-only and keeps the ids as they were logged.
-    """
-    cfg = load_config()
-    plan = queue_store.migrate_item_ids(cfg.data_dir, apply=apply)
-    counts: dict[str, int] = {}
-    for entry in plan:
-        counts[entry["action"]] = counts.get(entry["action"], 0) + 1
-        if entry["action"] == "keep":
-            continue
-        detail = entry.get("reason") or f"-> {entry['new_id']} ({entry.get('status')})"
-        typer.echo(f"{entry['action']:<10} {entry['path'].name} {detail}")
-    summary = ", ".join(f"{n} {action}" for action, n in sorted(counts.items())) or "nothing to do"
-    typer.echo(f"queue: {summary}{'' if apply else ' — dry run, pass --apply to write'}")
-    if db:
-        try:
-            rows = paramdb.remap_item_ids(cfg, apply=apply)
-        except Exception as exc:  # the file queue is the primary store
-            typer.echo(f"params DB not migrated ({exc.__class__.__name__}: {exc})")
-            return
-        typer.echo("db: " + ", ".join(f"{n} {table}" for table, n in rows.items()))
-
-
 @app.command()
 def export(
-    out_dir: Path = typer.Option(None, "--out-dir", help="Defaults to <data>/export"),
+    out_dir: Path = typer.Option(Path("export"), "--out-dir", help="Directory for <CC>_accepted.json"),
 ) -> None:
-    """Export accepted/edited records in the Activity 1 format."""
-    cfg = load_config()
-    written = queue_store.export_accepted(cfg.data_dir, out_dir)
-    for path in written:
-        typer.echo(f"exported {path}")
-    typer.echo(f"{len(written)} record(s) exported.")
+    """Export accepted/edited records, one Activity 1 JSON array per country.
 
-
-@app.command("sync-decisions")
-def sync_decisions(
-    log: Path = typer.Option(None, "--log", help="Defaults to <data>/decisions.jsonl"),
-) -> None:
-    """Replay the local decision copy into params.review_decisions.
-
-    A repair tool. The UI records decisions in the database directly and refuses
-    the decision if it cannot, so the two only drift if a write succeeded in the
-    DB but failed on disk, or the log is being restored from a backup.
-    Idempotent: entries already recorded are skipped.
+    The EUROMOD export is the only file this system writes; it is built from
+    params.review_queue, only from items a human accepted or edited in the UI.
     """
     cfg = load_config()
-    path = log or cfg.data_dir / "decisions.jsonl"
-    if not path.exists():
-        typer.echo(f"No decision log at {path} — nothing to sync.")
-        return
-    entries = [
-        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
-    ]
-    inserted, skipped = paramdb.sync_decisions(cfg, entries)
-    typer.echo(f"{path}: {inserted} decision(s) recorded, {skipped} already present.")
+    with paramdb.connect(cfg) as conn:
+        exported = queue_store.export_accepted(conn)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    total = 0
+    for country, records in sorted(exported.items()):
+        path = out_dir / f"{country}_accepted.json"
+        path.write_text(json.dumps(records, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        typer.echo(f"exported {path} ({len(records)} record(s))")
+        total += len(records)
+    typer.echo(f"{total} record(s) exported.")
 
 
 @app.command("init-param-db")
@@ -468,7 +433,7 @@ def impact(
     since: str = typer.Option(None, "--since", help="Only spans on/after this ISO date/datetime"),
     until: str = typer.Option(None, "--until", help="Only spans before this ISO date/datetime"),
     zone: str = typer.Option(None, "--zone", help="EcoLogits electricity mix zone (default: config, EEE)"),
-    json_output: bool = typer.Option(False, "--json", help="Machine-readable output (used by the UI)"),
+    json_output: bool = typer.Option(False, "--json", help="Machine-readable output: exactly one JSON line (used by the worker/UI)"),
 ) -> None:
     """Estimate the environmental impact of traced LLM calls (EcoLogits over Phoenix spans)."""
     from . import impact as impact_mod

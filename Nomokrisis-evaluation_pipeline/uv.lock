@@ -449,7 +449,6 @@ name = "nomokrisis-evaluation"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "anthropic" },
     { name = "nomoscope-agentic-workflow" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
@@ -464,7 +463,6 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "anthropic", specifier = ">=0.116" },
     { name = "nomoscope-agentic-workflow", editable = "../Nomoscope-agentic-workflow/pipeline" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pydantic", specifier = ">=2.8" },

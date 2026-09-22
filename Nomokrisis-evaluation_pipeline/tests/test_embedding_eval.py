@@ -1,42 +1,36 @@
-"""Embedding-eval unit tests: committed cases parse, rank/metric arithmetic is right.
+"""Embedding-eval unit tests: rank/metric arithmetic is right, the set hash is stable.
 
-No database needed — the DB-touching paths (vector_search, run_embedding_eval)
-are exercised by `nomokrisis-eval run-embeddings` against the live stack.
+No database needed — the DB-touching paths (vector_search, run_embedding_eval,
+eval.embedding_cases round trips) are exercised in test_golden_store.py against
+the dev stack and by `nomokrisis-eval run-embeddings`.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
+from datetime import date
 
 from nomoscope_workflow.schema import RetrievalHit
 
-from nomokrisis_eval.dataset import dataset_version, load_embedding_cases
 from nomokrisis_eval.embedding_eval import first_relevant_rank, rank_metrics
+from nomokrisis_eval.golden_store import embedding_set_hash
+from nomokrisis_eval.schema import EmbeddingCase
 from nomokrisis_eval.scoring import citation_equal
-
-DATASET_DIR = Path(__file__).resolve().parents[1] / "dataset_embedding"
 
 
 def _hit(citation: str) -> RetrievalHit:
     return RetrievalHit(chunk_id="00000000-0000-0000-0000-000000000000", citation=citation)
 
 
-def test_committed_embedding_cases_parse():
-    cases = load_embedding_cases(DATASET_DIR)
-    assert len(cases) >= 10
-    assert {c.country for c in cases} >= {"FR", "BE", "ES", "IE", "NL", "LT"}
-    assert all(c.expected_citations for c in cases)
-    # ids are unique — they double as result keys and dataset filenames
-    assert len({c.id for c in cases}) == len(cases)
-
-
-def test_filters_and_cross_lingual_default():
-    assert load_embedding_cases(DATASET_DIR, countries=["fr"]) == load_embedding_cases(
-        DATASET_DIR, countries=["FR"]
+def _case(case_id: str = "fr_pss_2025", verified: bool = False) -> EmbeddingCase:
+    return EmbeddingCase(
+        id=case_id,
+        country="FR",
+        language="fr",
+        as_of=date(2025, 6, 1),
+        query="plafond de la sécurité sociale 2025",
+        expected_citations=["JORFTEXT000050854392, art. 1"],
+        verified=verified,
     )
-    assert load_embedding_cases(DATASET_DIR, languages=["de"]) == []
-    xlingual = [c for c in load_embedding_cases(DATASET_DIR) if c.corpus_lang]
-    assert any(c.language != c.corpus_lang for c in xlingual)
 
 
 def test_citation_equal_is_strict():
@@ -64,6 +58,9 @@ def test_rank_metrics():
     assert rank_metrics([], k=10) == {}
 
 
-def test_dataset_version_covers_embedding_dir():
-    assert len(dataset_version(DATASET_DIR)) == 12
-    assert dataset_version(DATASET_DIR) == dataset_version(DATASET_DIR)
+def test_embedding_set_hash_ignores_the_verdict_and_the_order():
+    a, b = _case("a"), _case("b")
+    assert len(embedding_set_hash([a, b])) == 12
+    assert embedding_set_hash([a, b]) == embedding_set_hash([b, a])
+    assert embedding_set_hash([a, b]) == embedding_set_hash([_case("a", verified=True), b])
+    assert embedding_set_hash([a]) != embedding_set_hash([a, b])

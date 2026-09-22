@@ -1,31 +1,31 @@
-"""Draft golden cases with Claude Fable from a source document + Activity 1 parameter files.
+"""Draft golden cases with an LLM from a trusted source document + parameter records.
 
 The model only extracts the ground-truth value/date/citation from the supplied
 document (a EUROMOD country report excerpt, national-team notes, or a pasted
 article). The expected *routing* is computed deterministically by comparing the
-drafted value against the parameter file's value in force. Every drafted case is
+drafted value against the parameter's value in force. Every drafted case is
 saved with verified=False — a human must confirm it before it counts as ground
 truth (freeze the golden set only from verified cases).
+
+The call goes through `nomoscope_workflow.llm.run_agent` (PydanticAI structured
+output) like every other LLM call in the system (ADR 0004): the model is a
+provider-prefixed string, and the worker is the only process that holds a key.
 """
 
 from __future__ import annotations
 
-import json
 from datetime import date
-from pathlib import Path
 
-import anthropic
 from pydantic import BaseModel, ConfigDict
 
-from nomoscope_workflow.queue_store import load_record
+from nomoscope_workflow import paramdb
+from nomoscope_workflow.llm import run_agent
+from nomoscope_workflow.queue_store import slugify
 from nomoscope_workflow.schema import Bracket, ParameterRecord, ParameterValue, Routing
 
-from .config import REPO_ROOT
 from .labels import draft_labels
 from .schema import Expected, GoldenCase
 from .scoring import values_equal
-
-FALLBACK_MODEL = "claude-opus-4-8"
 
 SYSTEM_PROMPT = """\
 You are building a validation ("golden") dataset for a pipeline that updates EUROMOD
@@ -45,37 +45,6 @@ the source document. Rules:
   Never guess or use outside knowledge for the value itself.
 """
 
-DRAFT_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "found": {"type": "boolean"},
-        "value_scalar": {"type": ["number", "null"]},
-        "value_brackets": {
-            "type": ["array", "null"],
-            "items": {
-                "type": "object",
-                "properties": {
-                    "threshold": {"type": "number"},
-                    "rate": {"type": ["number", "null"]},
-                    "amount": {"type": ["number", "null"]},
-                },
-                "required": ["threshold", "rate", "amount"],
-                "additionalProperties": False,
-            },
-        },
-        "valid_from": {"type": ["string", "null"], "description": "ISO date YYYY-MM-DD"},
-        "citations": {"type": "array", "items": {"type": "string"}},
-        "quote": {"type": ["string", "null"]},
-        "confidence": {"type": "number"},
-        "notes": {"type": ["string", "null"]},
-    },
-    "required": [
-        "found", "value_scalar", "value_brackets", "valid_from",
-        "citations", "quote", "confidence", "notes",
-    ],
-    "additionalProperties": False,
-}
-
 
 class DraftedTruth(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -90,11 +59,39 @@ class DraftedTruth(BaseModel):
     notes: str | None = None
 
 
+def check_builder_model(model: str) -> str:
+    """A drafting model must be a real one: a `mock/` drafter would write a
+    fabricated ground truth into the golden set."""
+    provider = model.partition("/")[0]
+    if not provider or "/" not in model:
+        raise ValueError(
+            f"builder model must be provider-prefixed (anthropic/…, azure_openai/…, jrc/…), not {model!r}"
+        )
+    if provider == "mock":
+        raise ValueError(
+            f"refusing to draft golden cases with {model!r}: a mock model cannot read the "
+            "source document, so its output would be a fabricated ground truth"
+        )
+    return model
+
+
 def _current_value(record: ParameterRecord, as_of: date) -> ParameterValue | None:
     for value in record.values:
         if value.valid_from <= as_of and (value.valid_to is None or value.valid_to >= as_of):
             return value
     return None
+
+
+def case_slug(model_target: str, country: str) -> str:
+    """euromod://FR/tinkt_fr/def_const/$tin_upthres1 -> 'tinkt_tin_upthres1'.
+
+    The country prefixes the case id already and `def_const` is the only
+    function in the export, so both are noise in a case id.
+    """
+    parts = paramdb.parse_model_target(model_target)
+    policy = (parts["policy"] or "").removesuffix(f"_{country.lower()}")
+    name = (parts["name"] or model_target).lstrip("$")
+    return slugify(f"{policy}_{name}") if policy else slugify(name)
 
 
 def _build_user_prompt(record: ParameterRecord, as_of: date, source_text: str) -> str:
@@ -109,31 +106,20 @@ def _build_user_prompt(record: ParameterRecord, as_of: date, source_text: str) -
     )
 
 
-def draft_truth(
-    client: anthropic.Anthropic, model: str, record: ParameterRecord, as_of: date, source_text: str
-) -> DraftedTruth:
-    """One Fable call -> validated DraftedTruth. Raises on refusal of the whole chain."""
-    response = client.beta.messages.create(
-        model=model,
-        max_tokens=16000,
-        # Fable's safety classifiers can false-positive; fall back to Opus in-call.
-        betas=["server-side-fallback-2026-06-01"],
-        fallbacks=[{"model": FALLBACK_MODEL}],
-        output_config={"format": {"type": "json_schema", "schema": DRAFT_SCHEMA}},
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": _build_user_prompt(record, as_of, source_text)}],
+def draft_truth(model: str, record: ParameterRecord, as_of: date, source_text: str) -> DraftedTruth:
+    """One structured-output call -> validated DraftedTruth."""
+    return run_agent(
+        check_builder_model(model),
+        SYSTEM_PROMPT,
+        _build_user_prompt(record, as_of, source_text),
+        output_type=DraftedTruth,
+        temperature=0.0,
     )
-    if response.stop_reason == "refusal":
-        raise RuntimeError(
-            f"model declined the request ({response.stop_details.category if response.stop_details else 'unknown'})"
-        )
-    text = next(b.text for b in response.content if b.type == "text")
-    return DraftedTruth.model_validate(json.loads(text))
 
 
 def to_golden_case(
     record: ParameterRecord,
-    parameter_file: Path,
+    parameter_target: str,
     as_of: date,
     language: str,
     draft: DraftedTruth,
@@ -154,7 +140,12 @@ def to_golden_case(
     else:
         routing = Routing.CHANGED
 
-    case_id = f"{info.country.lower()}_{parameter_file.stem}_{as_of.isoformat()}"
+    country = info.country.lower()
+    slug = (
+        case_slug(info.model_target, country)
+        if not parameter_target.startswith("group:")
+        else slugify(parameter_target.removeprefix("group:"))
+    )
     notes = " | ".join(filter(None, [draft.notes, f"quote: {draft.quote}" if draft.quote else None]))
     drafted = draft_labels(
         value=value,
@@ -163,10 +154,10 @@ def to_golden_case(
         is_bracket_table=bool(draft.value_brackets),
     )
     return GoldenCase(
-        id=case_id,
+        id=f"{country}_{slug}_{as_of.isoformat()}",
         country=info.country,
         language=language,
-        parameter_file=parameter_file.relative_to(REPO_ROOT).as_posix(),
+        parameter_target=parameter_target,
         as_of=as_of,
         difficulty=drafted.difficulty,
         hazards=drafted.hazards,
@@ -185,22 +176,21 @@ def to_golden_case(
 
 def build_cases(
     model: str,
-    source_file: Path,
-    parameter_files: list[Path],
+    source_text: str,
+    records: list[tuple[ParameterRecord, str]],
     as_of: date,
     language: str,
 ) -> list[tuple[GoldenCase | None, str]]:
-    """Draft one case per parameter file; returns (case, message) pairs."""
-    client = anthropic.Anthropic()
-    source_text = source_file.read_text(encoding="utf-8")
+    """Draft one case per (record, parameter_target); returns (case, message) pairs."""
+    check_builder_model(model)
     out: list[tuple[GoldenCase | None, str]] = []
-    for path in parameter_files:
-        record = load_record(path)
+    for record, parameter_target in records:
+        label = parameter_target
         try:
-            draft = draft_truth(client, model, record, as_of, source_text)
+            draft = draft_truth(model, record, as_of, source_text)
         except Exception as exc:
-            out.append((None, f"{path.name}: FAILED ({exc.__class__.__name__}: {exc})"))
+            out.append((None, f"{label}: FAILED ({exc.__class__.__name__}: {exc})"))
             continue
-        case = to_golden_case(record, path.resolve(), as_of, language, draft, drafted_by=model)
-        out.append((case, f"{path.name}: {case.expected.routing} (confidence {draft.confidence:.2f})"))
+        case = to_golden_case(record, parameter_target, as_of, language, draft, drafted_by=model)
+        out.append((case, f"{label}: {case.expected.routing} (confidence {draft.confidence:.2f})"))
     return out

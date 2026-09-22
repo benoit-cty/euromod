@@ -19,7 +19,7 @@ def make_case(**kwargs) -> GoldenCase:
         id=kwargs.pop("id", "fr_case"),
         country="FR",
         language="fr",
-        parameter_file="Nomoscope-agentic-workflow/data/parameters/eval/x.json",
+        parameter_target="euromod://FR/x_fr/def_const/$x",
         as_of=date(2025, 6, 1),
         expected=expected,
         **kwargs,

@@ -31,7 +31,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from . import llm, regions, retrieval
 from .config import WorkflowConfig
-from .query_encoder import embedding_process, ingest_dir
+from .query_encoder import embedding_process, ingest_dir, nomos_python
 from .schema import ParameterRecord, RetrievalHit
 from .tracing import progress
 
@@ -353,23 +353,24 @@ def _proc_failure(what: str, proc: subprocess.CompletedProcess) -> str:
 
 
 def _ingest_instrument(cfg: WorkflowConfig, country: str, instrument_id: str) -> str | None:
-    """Archive-first ingest of one instrument via the Nomotheca CLI; error text on failure."""
-    directory = ingest_dir()
-    if directory is None:
-        return "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)"
+    """Archive-first ingest of one instrument via the Nomotheca CLI; error text on failure.
+
+    Inside the worker (`NOMOS_PYTHON` set) the CLI runs from that interpreter
+    in the current directory; otherwise through `uv run` in the ingest package.
+    """
+    args = ["instrument", country.lower(), instrument_id, "--database-url", cfg.database_url]
     env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
     env["PYTHONUNBUFFERED"] = "1"
+    python = nomos_python()
+    if python:
+        command, cwd = [python, "-m", "nomotheca_ingest.cli", *args], Path.cwd()
+    else:
+        cwd = ingest_dir()
+        if cwd is None:
+            return "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR or NOMOS_PYTHON)"
+        command = ["uv", "run", "python", "-m", "nomotheca_ingest.cli", *args]
     proc = subprocess.run(
-        [
-            "uv", "run", "python", "-m", "nomotheca_ingest.cli",
-            "instrument", country.lower(), instrument_id,
-            "--database-url", cfg.database_url,
-        ],
-        cwd=directory,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=INGEST_TIMEOUT,
+        command, cwd=cwd, env=env, capture_output=True, text=True, timeout=INGEST_TIMEOUT
     )
     if proc.returncode != 0:
         return _proc_failure(f"{instrument_id}: ingest", proc)
@@ -408,9 +409,15 @@ def _build_embeddings(cfg: WorkflowConfig) -> str | None:
     """Embed chunks that are missing vectors (incremental) so the vector leg
     of the retrieval retry covers what the scout just ingested."""
     directory = ingest_dir()
-    if directory is None:
-        return "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)"
-    cuda = _cuda_available(directory)
+    if nomos_python():
+        # The worker's interpreter, current directory: no local model export to
+        # point at, so the CLI falls back to the Hugging Face id and its own
+        # device selection.
+        model_args: list[str] = []
+    elif directory is None:
+        return "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR or NOMOS_PYTHON)"
+    else:
+        model_args = _embedding_model_args(directory, cuda=_cuda_available(directory))
     spec = embedding_process(
         directory,
         "nomotheca_ingest.cli",
@@ -421,10 +428,10 @@ def _build_embeddings(cfg: WorkflowConfig) -> str | None:
         # Rich's live progress is noise in captured output and can bury the
         # real error; the per-batch commits do not depend on it.
         "--no-progress",
-        *_embedding_model_args(directory, cuda=cuda),
+        *model_args,
     )
     proc = subprocess.run(
-        spec.command, cwd=directory, env=spec.env, capture_output=True, text=True, timeout=EMBED_TIMEOUT
+        spec.command, cwd=spec.cwd, env=spec.env, capture_output=True, text=True, timeout=EMBED_TIMEOUT
     )
     if proc.returncode != 0:
         return _proc_failure("embeddings build", proc)

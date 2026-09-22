@@ -4,35 +4,31 @@
 //! JSON argument, deserialised into a typed struct, returning
 //! `Result<serde_json::Value, String>` so the frontend gets either data or a
 //! rejected promise with the error string.
+//!
+//! The UI is fully remote (ADR 0004): it spawns nothing and reads no data
+//! directory. Its one credential is the analyst's Postgres login; everything
+//! that needs a model or the internet is a row in `ops.jobs` (jobs.rs) that
+//! the worker picks up. The only file it ever writes is the EUROMOD export.
 
 mod db;
-mod encoder;
 mod golden;
-mod ingest;
+mod jobs;
 mod store;
-mod workflow;
 
-use encoder::EmbeddingState;
-use golden::{GoldenPayload, GoldenVerifyPayload};
-use ingest::{IngestPayload, IngestState};
-use workflow::{ImpactPayload, WorkflowPayload, WorkflowState};
+use golden::GoldenVerifyPayload;
+use jobs::{EncodePayload, EventsPayload, JobPayload, ListPayload, SubmitPayload};
 
 use serde::Deserialize;
 use serde_json::{json, Value};
-use std::path::{Path, PathBuf};
-
-#[derive(Deserialize)]
-struct DataDirPayload {
-    data_dir: String,
-}
 
 #[derive(Deserialize)]
 struct DecisionPayload {
-    data_dir: String,
     db_url: String,
     item_id: String,
     action: String,
-    reviewer: String,
+    /// Shown in the item's own `decision` block; the audit row is stamped with
+    /// the server's `current_user` regardless.
+    reviewer: Option<String>,
     note: Option<String>,
     edited_value: Option<Value>,
     /// Patch of the other reviewer-editable proposal fields (validity dates,
@@ -42,7 +38,6 @@ struct DecisionPayload {
 
 #[derive(Deserialize)]
 struct DecisionsPayload {
-    data_dir: String,
     db_url: String,
     limit: Option<usize>,
 }
@@ -85,51 +80,25 @@ struct SearchPayload {
 
 #[derive(Deserialize)]
 struct SentenceScorePayload {
+    db_url: String,
     query: String,
     sentences: Vec<String>,
 }
 
-/// Default data dir: $WORKFLOW_DATA_DIR, else the nearest `data/queue` or
-/// `Nomoscope-agentic-workflow/data` walking up from the current directory.
-fn default_data_dir() -> Option<PathBuf> {
-    if let Ok(dir) = std::env::var("WORKFLOW_DATA_DIR") {
-        return Some(PathBuf::from(dir));
-    }
-    let cwd = std::env::current_dir().ok()?;
-    for ancestor in cwd.ancestors() {
-        for candidate in [ancestor.join("data"), ancestor.join("Nomoscope-agentic-workflow").join("data")] {
-            if candidate.join("queue").is_dir() || candidate.join("parameters").is_dir() {
-                return Some(candidate);
-            }
-        }
-    }
-    None
+async fn blocking<T, F>(f: F) -> Result<T, String>
+where
+    T: Send + 'static,
+    F: FnOnce() -> Result<T, String> + Send + 'static,
+{
+    tauri::async_runtime::spawn_blocking(f)
+        .await
+        .map_err(|e| e.to_string())?
 }
 
-/// Default golden-set location: $EVAL_DATASET_DIR, else the eval package's
-/// `dataset/` next to the workflow package (same walk as [default_data_dir]).
-fn default_dataset_dir() -> Option<PathBuf> {
-    if let Ok(dir) = std::env::var("EVAL_DATASET_DIR") {
-        return Some(PathBuf::from(dir));
-    }
-    let cwd = std::env::current_dir().ok()?;
-    for ancestor in cwd.ancestors() {
-        let candidate = ancestor
-            .join("Nomokrisis-evaluation_pipeline")
-            .join("dataset");
-        if candidate.is_dir() {
-            return Some(candidate);
-        }
-    }
-    None
-}
-
+/// Connection settings plus the reviewer identity, which is the database's
+/// `current_user` (the per-analyst login), never an environment guess.
 #[tauri::command]
-fn get_env_config() -> Result<Value, String> {
-    let reviewer = std::env::var("REVIEWER")
-        .or_else(|_| std::env::var("USER"))
-        .or_else(|_| std::env::var("USERNAME"))
-        .unwrap_or_else(|_| "reviewer".to_string());
+async fn get_env_config() -> Result<Value, String> {
     let db_url = std::env::var("WORKFLOW_DATABASE_URL")
         .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
     let phoenix_endpoint = std::env::var("PHOENIX_COLLECTOR_ENDPOINT")
@@ -137,10 +106,15 @@ fn get_env_config() -> Result<Value, String> {
     // same default as the pipeline's config.py, so trace deep-links resolve
     let phoenix_project = std::env::var("PHOENIX_PROJECT_NAME")
         .unwrap_or_else(|_| "nomoscope-agentic-workflow".to_string());
+    let url = db_url.clone();
+    let reviewer = blocking(move || db::current_user(&url)).await;
+    let (reviewer, db_error) = match reviewer {
+        Ok(user) => (Some(user), None),
+        Err(e) => (None, Some(e)),
+    };
     Ok(json!({
-        "data_dir": default_data_dir().map(|p| p.display().to_string()),
-        "dataset_dir": default_dataset_dir().map(|p| p.display().to_string()),
         "reviewer": reviewer,
+        "db_error": db_error,
         "db_url": db_url,
         "phoenix_endpoint": phoenix_endpoint.trim_end_matches('/'),
         "phoenix_project": phoenix_project,
@@ -148,125 +122,143 @@ fn get_env_config() -> Result<Value, String> {
 }
 
 #[tauri::command]
-fn golden_cases(payload: GoldenPayload) -> Result<Value, String> {
-    golden::load_cases(Path::new(&payload.dataset_dir))
+async fn golden_cases(payload: DbPayload) -> Result<Value, String> {
+    blocking(move || golden::load_cases(&payload.db_url)).await
 }
 
 #[tauri::command]
-fn set_golden_verified(payload: GoldenVerifyPayload) -> Result<Value, String> {
-    golden::set_verified(&payload)
+async fn set_golden_verified(payload: GoldenVerifyPayload) -> Result<Value, String> {
+    blocking(move || golden::set_verified(&payload)).await
 }
 
 #[tauri::command]
-fn load_queue(payload: DataDirPayload) -> Result<Value, String> {
-    store::load_queue(Path::new(&payload.data_dir))
+async fn load_queue(payload: DbPayload) -> Result<Value, String> {
+    blocking(move || store::load_queue(&payload.db_url)).await
 }
 
-/// Record a reviewer decision. params.review_decisions is the system of record,
-/// so it commits first; the queue item and the decisions.jsonl mirror are
-/// written only once it has accepted the entry.
+/// Record a reviewer decision: read the item, compute the decided item and
+/// the audit entry, and hand both to `params.decide_review_item`, which
+/// writes the audit row and the queue item in one transaction.
 ///
-/// An unreachable database therefore fails the whole decision, leaving the item
-/// pending and nothing written to disk. That is deliberate: a decision the audit
-/// log never received must not look accepted in the UI.
+/// A refused decision (database unreachable, item vanished, schema missing)
+/// therefore changes nothing: the item is still pending and the reviewer
+/// takes it again. That is deliberate — a decision the audit log never
+/// received must not look accepted in the UI.
 #[tauri::command]
 async fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
-    let data_dir = PathBuf::from(&payload.data_dir);
-    let (item, entry) = store::prepare_decision(
-        &data_dir,
-        &payload.item_id,
-        &payload.action,
-        &payload.reviewer,
-        payload.note.as_deref(),
-        payload.edited_value.as_ref(),
-        payload.edited_fields.as_ref(),
-    )?;
-
-    let db_url = payload.db_url.clone();
-    let for_db = entry.clone();
-    let decision = tauri::async_runtime::spawn_blocking(move || db::insert_decision(&db_url, &for_db))
-        .await
-        .map_err(|e| e.to_string())?
-        .map_err(|e| {
-            // The two ways this fails look very different to a reviewer: a
+    blocking(move || {
+        let reviewer = payload.reviewer.clone().unwrap_or_else(|| "reviewer".to_string());
+        let (item, entry) = store::prepare_decision(
+            &payload.db_url,
+            &payload.item_id,
+            &payload.action,
+            &reviewer,
+            payload.note.as_deref(),
+            payload.edited_value.as_ref(),
+            payload.edited_fields.as_ref(),
+        )?;
+        let decision = store::commit_decision(&payload.db_url, &payload.item_id, &item, &entry).map_err(|e| {
+            // The ways this fails look very different to a reviewer: a
             // stopped container, or a database that never had the params
             // schema applied (fresh stack / after `docker compose down -v`).
-            let hint = if e.contains("params.review_decisions") || e.contains("schema \"params\"") {
-                "the params schema is missing — run `nomoscope-workflow init-param-db`"
+            let hint = if e.contains("decide_review_item") || e.contains("schema \"params\"") {
+                "the params schema is missing or outdated — run `nomoscope-workflow init-param-db`"
+            } else if e.contains("not in the queue") {
+                "the item is no longer in the review queue — reload it"
             } else {
                 "the database is unreachable — check it is running, then take the decision again"
             };
-            format!("Decision not recorded, so nothing was changed: the audit log lives in the database and {hint}. ({e})")
+            format!("Decision not recorded, so nothing was changed: {hint}. ({e})")
         })?;
-
-    // Recorded in the audit log. A disk failure from here on leaves the queue
-    // item stale rather than the decision lost, which is the safe direction.
-    store::commit_decision(&data_dir, &payload.item_id, &item, &entry)?;
-    Ok(json!({ "item": item, "decision": decision }))
+        Ok(json!({ "item": item, "decision": decision }))
+    })
+    .await
 }
 
-/// The audit log from params.review_decisions, falling back to the local
-/// mirror when the DB is unreachable (so the tab still shows this session's
-/// decisions offline). `source` tells the UI which one it got.
+/// The audit log from params.review_decisions.
 #[tauri::command]
 async fn load_decisions(payload: DecisionsPayload) -> Result<Value, String> {
     let limit = payload.limit.unwrap_or(200);
-    let db_url = payload.db_url.clone();
-    let from_db =
-        tauri::async_runtime::spawn_blocking(move || db::load_decisions(&db_url, limit as i64))
-            .await
-            .map_err(|e| e.to_string())?;
-    match from_db {
-        Ok(mut value) => {
-            value["source"] = json!("database");
-            Ok(value)
-        }
-        Err(db_error) => {
-            let entries = store::load_decisions(Path::new(&payload.data_dir), limit)?;
-            Ok(json!({ "decisions": entries, "source": "file", "db_error": db_error }))
-        }
-    }
+    blocking(move || db::load_decisions(&payload.db_url, limit as i64)).await
 }
 
+/// Export accepted/edited items' Activity 1 records, one JSON file per
+/// country, into a folder the reviewer picks. The only file the UI writes.
 #[tauri::command]
-fn export_accepted(payload: DataDirPayload) -> Result<Value, String> {
-    store::export_accepted(Path::new(&payload.data_dir))
+async fn export_accepted(app_handle: tauri::AppHandle, payload: DbPayload) -> Result<Value, String> {
+    use tauri_plugin_dialog::DialogExt;
+    let groups = blocking(move || store::export_records(&payload.db_url)).await?;
+    if groups.is_empty() {
+        return Ok(json!({ "count": 0, "paths": [], "canceled": false }));
+    }
+    let count: usize = groups.values().map(Vec::len).sum();
+    let picked = tauri::async_runtime::spawn_blocking(move || {
+        app_handle
+            .dialog()
+            .file()
+            .set_title("Export accepted records — choose a folder")
+            .blocking_pick_folder()
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+    let Some(folder) = picked else {
+        return Ok(json!({ "count": count, "paths": [], "canceled": true }));
+    };
+    let dir = folder
+        .into_path()
+        .map_err(|e| format!("folder picker returned an unusable path: {e}"))?;
+    let paths = blocking(move || store::write_export(&dir, &groups, &store::today())).await?;
+    Ok(json!({ "count": count, "paths": paths, "canceled": false }))
 }
 
 #[tauri::command]
 async fn db_stats(payload: DbPayload) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || db::stats(&payload.db_url))
-        .await
-        .map_err(|e| e.to_string())?
+    blocking(move || db::stats(&payload.db_url)).await
 }
 
 #[tauri::command]
 async fn eval_runs(payload: DbPayload) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || db::eval_runs(&payload.db_url))
-        .await
-        .map_err(|e| e.to_string())?
+    blocking(move || db::eval_runs(&payload.db_url)).await
 }
 
 #[tauri::command]
 async fn eval_run_detail(payload: EvalRunPayload) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || db::eval_run_detail(&payload.db_url, payload.run_pk))
-        .await
-        .map_err(|e| e.to_string())?
+    blocking(move || db::eval_run_detail(&payload.db_url, payload.run_pk)).await
 }
 
+/// Article search. Vector and hybrid modes need the query encoded by the
+/// worker (an `encode` job); when no worker is alive the search degrades to
+/// full-text and says so in `notice`, rather than failing.
 #[tauri::command]
-async fn search_articles(
-    state: tauri::State<'_, EmbeddingState>,
-    payload: SearchPayload,
-) -> Result<Value, String> {
-    let mode = db::SearchMode::parse(payload.mode.as_deref().unwrap_or("hybrid"))?;
-    let query_vector = if mode.uses_vector() {
-        Some(state.encode(&payload.query).await?)
-    } else {
-        None
-    };
-    tauri::async_runtime::spawn_blocking(move || {
-        db::search_articles(
+async fn search_articles(payload: SearchPayload) -> Result<Value, String> {
+    blocking(move || {
+        let mut mode = db::SearchMode::parse(payload.mode.as_deref().unwrap_or("hybrid"))?;
+        let mut notice: Option<String> = None;
+        let query_vector = if mode.uses_vector() {
+            match jobs::encode_query(&EncodePayload {
+                db_url: payload.db_url.clone(),
+                query: payload.query.clone(),
+                sentences: None,
+            }) {
+                Ok(result) => Some(
+                    result
+                        .get("halfvec")
+                        .and_then(Value::as_str)
+                        .filter(|v| v.starts_with('[') && v.ends_with(']'))
+                        .ok_or("encode job returned no halfvec")?
+                        .to_string(),
+                ),
+                Err(e) if e == jobs::NO_WORKER => {
+                    notice = Some(format!("{e}; showing full-text results instead"));
+                    mode = db::SearchMode::FullText;
+                    None
+                }
+                Err(e) => return Err(e),
+            }
+        } else {
+            None
+        };
+        let mut result = db::search_articles(
             &payload.db_url,
             &payload.query,
             payload.country.as_deref(),
@@ -275,25 +267,49 @@ async fn search_articles(
             mode,
             query_vector.as_deref(),
             payload.limit.unwrap_or(25),
-        )
+        )?;
+        result["notice"] = json!(notice);
+        Ok(result)
     })
     .await
-    .map_err(|e| e.to_string())?
 }
 
-/// Cosine of each sentence against the query, one BGE-M3 batch. The Database
-/// tab uses it to tint, inside a hit, the sentence that most likely answers.
+/// Cosine of each sentence against the query, one BGE-M3 batch on the
+/// worker. The Database tab uses it to tint, inside a hit, the sentence that
+/// most likely answers.
 #[tauri::command]
-async fn score_sentences(
-    state: tauri::State<'_, EmbeddingState>,
-    payload: SentenceScorePayload,
-) -> Result<Vec<f64>, String> {
-    state.score_sentences(&payload.query, &payload.sentences).await
+async fn score_sentences(payload: SentenceScorePayload) -> Result<Vec<f64>, String> {
+    if payload.sentences.is_empty() {
+        return Ok(Vec::new());
+    }
+    let expected = payload.sentences.len();
+    blocking(move || {
+        let result = jobs::encode_query(&EncodePayload {
+            db_url: payload.db_url,
+            query: payload.query,
+            sentences: Some(payload.sentences),
+        })?;
+        let similarities = result
+            .get("similarities")
+            .and_then(Value::as_array)
+            .ok_or("encode job returned no similarities")?;
+        if similarities.len() != expected {
+            return Err(format!(
+                "encode job returned {} similarities for {expected} sentences",
+                similarities.len()
+            ));
+        }
+        similarities
+            .iter()
+            .map(|v| v.as_f64().ok_or_else(|| "encode job returned a non-numeric similarity".to_string()))
+            .collect()
+    })
+    .await
 }
 
 #[tauri::command]
 async fn search_instruments(payload: InstrumentSearchPayload) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || {
+    blocking(move || {
         db::search_instruments(
             &payload.db_url,
             &payload.country,
@@ -302,101 +318,70 @@ async fn search_instruments(payload: InstrumentSearchPayload) -> Result<Value, S
         )
     })
     .await
-    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
 async fn params_list(payload: DbPayload) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || db::params_list(&payload.db_url))
-        .await
-        .map_err(|e| e.to_string())?
+    blocking(move || db::params_list(&payload.db_url)).await
 }
 
 #[tauri::command]
 async fn chunk_renderings(payload: ChunkPayload) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        db::chunk_renderings(&payload.db_url, &payload.chunk_id)
-    })
-    .await
-    .map_err(|e| e.to_string())?
+    blocking(move || db::chunk_renderings(&payload.db_url, &payload.chunk_id)).await
 }
 
 #[tauri::command]
 async fn phoenix_projects(payload: DbPayload) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || db::phoenix_projects(&payload.db_url))
-        .await
-        .map_err(|e| e.to_string())?
+    blocking(move || db::phoenix_projects(&payload.db_url)).await
+}
+
+// ---------------------------------------------------------------- jobs ----
+
+#[tauri::command]
+async fn submit_job(payload: SubmitPayload) -> Result<Value, String> {
+    blocking(move || jobs::submit_job(&payload)).await
 }
 
 #[tauri::command]
-async fn run_workflow(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, WorkflowState>,
-    payload: WorkflowPayload,
-) -> Result<Value, String> {
-    workflow::run(app, state, payload).await
+async fn job_status(payload: JobPayload) -> Result<Value, String> {
+    blocking(move || jobs::job_status(&payload)).await
 }
 
 #[tauri::command]
-fn stop_workflow(state: tauri::State<'_, WorkflowState>, run_id: String) -> Result<Value, String> {
-    workflow::stop(state, run_id)
+async fn job_events(payload: EventsPayload) -> Result<Value, String> {
+    blocking(move || jobs::job_events(&payload)).await
 }
 
 #[tauri::command]
-async fn impact_report(payload: ImpactPayload) -> Result<Value, String> {
-    workflow::impact_report(payload).await
+async fn cancel_job(payload: JobPayload) -> Result<Value, String> {
+    blocking(move || jobs::cancel_job(&payload)).await
 }
 
 #[tauri::command]
-async fn run_ingest(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, IngestState>,
-    payload: IngestPayload,
-) -> Result<Value, String> {
-    ingest::run(app, state, payload).await
-}
-
-/// Which BGE-M3 backend and model the Ingest tab should default to, given the
-/// environment `run_ingest` will pick for an embeddings run on this machine.
-#[tauri::command]
-fn embedding_defaults() -> Result<Value, String> {
-    let dir = ingest::ingest_dir()
-        .ok_or_else(|| "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR)".to_string())?;
-    Ok(ingest::embedding_defaults(&dir))
+async fn list_jobs(payload: ListPayload) -> Result<Value, String> {
+    blocking(move || jobs::list_jobs(&payload)).await
 }
 
 #[tauri::command]
-fn stop_ingest(state: tauri::State<'_, IngestState>, run_id: String) -> Result<Value, String> {
-    ingest::stop(state, run_id)
+async fn worker_status(payload: DbPayload) -> Result<Value, String> {
+    blocking(move || jobs::worker_status(&payload.db_url)).await
 }
 
 #[tauri::command]
-async fn pick_data_dir(app_handle: tauri::AppHandle) -> Result<Value, String> {
-    use tauri_plugin_dialog::DialogExt;
-    let (tx, rx) = tokio::sync::oneshot::channel();
-    app_handle.dialog().file().pick_folder(move |folder| {
-        let _ = tx.send(folder);
-    });
-    match rx.await.map_err(|e| e.to_string())? {
-        Some(path) => Ok(json!({ "canceled": false, "path": path.to_string() })),
-        None => Ok(json!({ "canceled": true })),
-    }
+async fn encode_query(payload: EncodePayload) -> Result<Value, String> {
+    blocking(move || jobs::encode_query(&payload)).await
 }
 
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .manage(EmbeddingState::default())
-        .manage(IngestState::default())
-        .manage(WorkflowState::default())
         .invoke_handler(tauri::generate_handler![
             get_env_config,
             load_queue,
             save_decision,
             load_decisions,
             export_accepted,
-            pick_data_dir,
             db_stats,
             search_articles,
             score_sentences,
@@ -405,15 +390,16 @@ pub fn run() {
             eval_run_detail,
             golden_cases,
             set_golden_verified,
-            run_ingest,
-            stop_ingest,
-            embedding_defaults,
             params_list,
             chunk_renderings,
             phoenix_projects,
-            run_workflow,
-            stop_workflow,
-            impact_report,
+            submit_job,
+            job_status,
+            job_events,
+            cancel_job,
+            list_jobs,
+            worker_status,
+            encode_query,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

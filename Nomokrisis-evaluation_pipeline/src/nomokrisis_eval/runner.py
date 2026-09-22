@@ -1,18 +1,20 @@
 """Run the agentic workflow over the golden set and score each case.
 
 Reuses nomoscope_workflow end-to-end (same retrieval, prompts, critique, Phoenix
-tracing), but writes queue items to a per-run scratch directory so evaluation
-runs never pollute the human review queue.
+tracing) with `enqueue=False`, so evaluation runs never touch the human review
+queue: the ReviewItem comes back to the runner, is scored, and is stored with
+its result.
 
-A run is crash-safe: the manifest and the frozen case list are written before
-the first case, and every scored case is appended to ``results.jsonl`` as soon
-as it lands. An interrupted run is therefore resumable — see `resume_run`,
-which replays the same manifest and case list and skips what is already scored.
+A run is crash-safe and lives in the database alone (ADR 0004): the eval.runs
+row (`status='running'`) and the frozen case list (eval.run_cases) are written
+before the first case, and every scored case is upserted into eval.results the
+moment it lands. An interrupted run is therefore resumable — see `resume_run`,
+which reloads the manifest, the frozen list and what is already scored from
+those tables and skips the latter.
 """
 
 from __future__ import annotations
 
-import json
 import re
 import subprocess
 import time
@@ -20,25 +22,26 @@ import uuid
 from collections import defaultdict
 from collections.abc import Callable
 from datetime import date, datetime, timezone
-from pathlib import Path
 
-from nomoscope_workflow import AGENT_VERSION
+import psycopg
+
+from nomoscope_workflow import AGENT_VERSION, paramdb
 from nomoscope_workflow.config import WorkflowConfig, load_config as load_workflow_config
 from nomoscope_workflow.impact import trace_impact
 from nomoscope_workflow.pipeline import run_parameter
 from nomoscope_workflow.prompts import PROMPT_VERSION
+from nomoscope_workflow.schema import ParameterRecord, ReviewItem
 from nomoscope_workflow.tracing import setup_tracing
 
 from . import EVAL_VERSION
+from . import db as evaldb
 from .config import REPO_ROOT, EvalConfig
-from .dataset import dataset_version
+from .golden_store import golden_set_hash
+from .openfisca_golden import db_constants
 from .schema import CaseResult, GoldenCase, RunManifest
 from .scoring import score_item
 
-MANIFEST_FILENAME = "manifest.json"
-CASES_FILENAME = "cases.json"
-PARTIAL_FILENAME = "results.jsonl"  # append-only, one CaseResult per line
-RESULTS_FILENAME = "results.json"
+GROUP_PREFIX = "group:"
 
 
 def _git_commit() -> str | None:
@@ -55,128 +58,34 @@ def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
-def _value_in_force(rows: list[dict], as_of: date):
-    """The value of the latest row in force at as_of; falls back to the raw
-    EUROMOD string in lineage.model_answer when the row has no normalised
-    scalar (FYA/formula rows materialize as value: null)."""
-    best: tuple[date, object] | None = None
-    for row in rows:
-        valid_from = date.fromisoformat(row["valid_from"])
-        valid_to = row.get("valid_to")
-        if valid_from <= as_of and (valid_to is None or date.fromisoformat(valid_to) >= as_of):
-            value = row.get("value")
-            if value is None:
-                value = (row.get("lineage") or {}).get("model_answer")
-            if best is None or valid_from >= best[0]:
-                best = (valid_from, value)
-    return best[1] if best else None
+def load_case_record(conn: psycopg.Connection, parameter_target: str) -> ParameterRecord:
+    """The parameter under test, from the params DB: `group:<group_id>` is a
+    bracket schedule assembled from params.parameter_groups, anything else a
+    model_target (or parameter_key) in params.parameters."""
+    if parameter_target.startswith(GROUP_PREFIX):
+        return paramdb.load_group_record(conn, parameter_target[len(GROUP_PREFIX):])
+    return paramdb.load_record(conn, parameter_target)
 
 
-def _scoring_constants(cases: list[GoldenCase], as_of: date) -> dict[str, dict[str, object]]:
-    """Per-country $-constant resolution map for scoring.values_equal: every
-    parameter file in the directories the cases point at, keyed by casefolded
-    constant name, valued by its value in force at as_of (a number, or the raw
-    EUROMOD string that normalise_value resolves recursively)."""
-    by_country: dict[str, dict[str, object]] = {}
-    for directory in sorted({(REPO_ROOT / c.parameter_file).parent for c in cases}):
-        for path in sorted(directory.glob("*.json")):
-            try:
-                record = json.loads(path.read_text(encoding="utf-8"))
-                info = record["information"]
-                name = info["model_target"].rsplit("/", 1)[-1].lstrip("$").casefold()
-                country = info["country"]
-                value = _value_in_force(record.get("values", []), as_of)
-            except (OSError, ValueError, KeyError, TypeError):
-                continue
-            if value is not None:
-                by_country.setdefault(country, {})[name] = value
-    return by_country
+def _scoring_constants(
+    conn: psycopg.Connection, cases: list[GoldenCase], as_of: date
+) -> dict[str, dict[str, object]]:
+    """Per-country $-constant resolution map for scoring.values_equal, read
+    from the params DB (`openfisca_golden.db_constants`) for every country the
+    cases cover."""
+    return {
+        country: db_constants(conn, country, as_of)
+        for country in sorted({c.country.upper() for c in cases})
+    }
 
 
-# --------------------------------------------------------------------------- #
-# Run directories: manifest + frozen case list + append-only partial results
-# --------------------------------------------------------------------------- #
+def list_runs(conn: psycopg.Connection, limit: int | None = None) -> list[dict]:
+    """Every run in eval.runs, newest first, with done/total progress."""
+    return evaldb.list_runs(conn, limit=limit)
 
 
-def run_directory(cfg: EvalConfig, run_id: str) -> Path:
-    return cfg.runs_dir / run_id
-
-
-def load_manifest(run_dir: Path) -> RunManifest:
-    return RunManifest.model_validate_json(
-        (run_dir / MANIFEST_FILENAME).read_text(encoding="utf-8")
-    )
-
-
-def load_run_cases(run_dir: Path) -> list[GoldenCase]:
-    """The case list frozen at run start — resuming must replay exactly it, not
-    whatever the dataset filters would select today."""
-    payload = json.loads((run_dir / CASES_FILENAME).read_text(encoding="utf-8"))
-    return [GoldenCase.model_validate(entry) for entry in payload]
-
-
-def load_partial_results(run_dir: Path) -> list[CaseResult]:
-    """Every case scored so far. A torn last line (killed mid-write) is dropped."""
-    path = run_dir / PARTIAL_FILENAME
-    if not path.exists():
-        return []
-    results: list[CaseResult] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            results.append(CaseResult.model_validate_json(line))
-        except ValueError:
-            continue
-    return results
-
-
-def _append_result(run_dir: Path, result: CaseResult) -> None:
-    with (run_dir / PARTIAL_FILENAME).open("a", encoding="utf-8") as handle:
-        handle.write(result.model_dump_json() + "\n")
-        handle.flush()
-
-
-def rewrite_partial(run_dir: Path, results: list[CaseResult]) -> None:
-    """Re-materialize results.jsonl (used after impact columns are backfilled)."""
-    (run_dir / PARTIAL_FILENAME).write_text(
-        "".join(r.model_dump_json() + "\n" for r in results), encoding="utf-8"
-    )
-
-
-def list_runs(cfg: EvalConfig) -> list[dict]:
-    """Every run on disk, newest first: manifest plus done/total progress."""
-    runs: list[dict] = []
-    if not cfg.runs_dir.exists():
-        return runs
-    for run_dir in sorted(cfg.runs_dir.iterdir(), reverse=True):
-        if not (run_dir / MANIFEST_FILENAME).exists():
-            continue
-        try:
-            manifest = load_manifest(run_dir)
-            cases = load_run_cases(run_dir) if (run_dir / CASES_FILENAME).exists() else []
-        except (OSError, ValueError):
-            continue
-        done = len(load_partial_results(run_dir))
-        runs.append(
-            {
-                "run_id": manifest.run_id,
-                "manifest": manifest,
-                "run_dir": run_dir,
-                "done": done,
-                "total": len(cases),
-                # Runs written before results.jsonl existed have no case list;
-                # a finished results.json still marks them complete.
-                "complete": bool(cases) and done >= len(cases),
-                "stored": (run_dir / RESULTS_FILENAME).exists(),
-            }
-        )
-    return runs
-
-
-def latest_incomplete_run(cfg: EvalConfig) -> dict | None:
-    for run in list_runs(cfg):
+def latest_incomplete_run(conn: psycopg.Connection) -> dict | None:
+    for run in list_runs(conn):
         if not run["complete"] and run["total"]:
             return run
     return None
@@ -210,18 +119,22 @@ def critique_model_for(cfg: EvalConfig, model: str) -> str:
 
 
 def start_run(
+    conn: psycopg.Connection,
     cfg: EvalConfig,
     cases: list[GoldenCase],
     as_of: date,
     model: str,
     notes: str | None = None,
 ) -> RunManifest:
-    """Allocate a run id, create its directory and freeze manifest + case list."""
+    """Allocate a run id, insert the eval.runs row (`status='running'`,
+    `submitted_by` = current_user, `dataset_version` = the golden set hash of
+    exactly these cases) and freeze the case list into eval.run_cases."""
     provider, _, model_name = model.partition("/")
     run_id = f"eval-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}-{_slug(model_name or provider)}-{uuid.uuid4().hex[:6]}"
     manifest = RunManifest(
         run_id=run_id,
         created_at=datetime.now(timezone.utc),
+        status="running",
         as_of=as_of,
         model=model,
         model_provider=provider,
@@ -232,33 +145,32 @@ def start_run(
         prompt_version=PROMPT_VERSION,
         agent_version=AGENT_VERSION,
         eval_version=EVAL_VERSION,
-        dataset_version=dataset_version(cfg.dataset_dir),
+        dataset_version=golden_set_hash(cases),
         git_commit=_git_commit(),
         countries=sorted({c.country for c in cases}),
         notes=notes,
     )
-    run_dir = run_directory(cfg, run_id)
-    run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / MANIFEST_FILENAME).write_text(
-        manifest.model_dump_json(indent=2), encoding="utf-8"
-    )
-    (run_dir / CASES_FILENAME).write_text(
-        json.dumps([c.model_dump(mode="json") for c in cases], indent=2), encoding="utf-8"
-    )
-    return manifest
+    run_pk = evaldb.insert_run(conn, manifest)
+    evaldb.freeze_run_cases(conn, run_pk, cases)
+    loaded = evaldb.load_run(conn, run_id)
+    return loaded[1] if loaded else manifest
 
 
-def resume_run(cfg: EvalConfig, run_id: str) -> tuple[RunManifest, list[GoldenCase], list[CaseResult]]:
-    """Reload an interrupted run: its manifest, its frozen case list, and what
-    it already scored. Raises FileNotFoundError if the run cannot be resumed."""
-    run_dir = run_directory(cfg, run_id)
-    if not (run_dir / MANIFEST_FILENAME).exists():
-        raise FileNotFoundError(f"no evaluation run at {run_dir}")
-    if not (run_dir / CASES_FILENAME).exists():
-        raise FileNotFoundError(
-            f"run {run_id} predates resumable runs (no {CASES_FILENAME}) — start a new run"
+def resume_run(
+    conn: psycopg.Connection, run_id: str
+) -> tuple[RunManifest, list[GoldenCase], list[CaseResult]]:
+    """Reload an interrupted run from the tables: its manifest, its frozen case
+    list, and what it already scored. Raises LookupError if it cannot be resumed."""
+    loaded = evaldb.load_run(conn, run_id)
+    if loaded is None:
+        raise LookupError(f"no evaluation run {run_id} in eval.runs")
+    run_pk, manifest = loaded
+    cases = evaldb.load_run_cases(conn, run_pk)
+    if not cases:
+        raise LookupError(
+            f"run {run_id} predates resumable runs (no rows in eval.run_cases) — start a new run"
         )
-    return load_manifest(run_dir), load_run_cases(run_dir), load_partial_results(run_dir)
+    return manifest, cases, evaldb.load_results(conn, run_pk)
 
 
 def _workflow_config(cfg: EvalConfig, manifest: RunManifest) -> WorkflowConfig:
@@ -268,32 +180,54 @@ def _workflow_config(cfg: EvalConfig, manifest: RunManifest) -> WorkflowConfig:
     # they graded themselves, so replaying them must keep doing that.
     wf_cfg.critique_model = manifest.critique_model or manifest.model
     wf_cfg.phoenix_project = cfg.phoenix_project
-    wf_cfg.data_dir = run_directory(cfg, manifest.run_id)  # scratch queue, not the review queue
-    wf_cfg.data_dir.mkdir(parents=True, exist_ok=True)
     return wf_cfg
 
 
+def _error_result(case: GoldenCase, exc: BaseException) -> CaseResult:
+    return CaseResult(
+        case_id=case.id,
+        country=case.country,
+        language=case.language,
+        difficulty=case.difficulty,
+        hazards=list(case.hazards),
+        source_class=case.source_class,
+        routing_expected=case.expected.routing.value,
+        corpus_available=case.corpus_available,
+        readiness=case.readiness,
+        error=f"{exc.__class__.__name__}: {exc}",
+    )
+
+
 def execute_run(
+    conn: psycopg.Connection,
     cfg: EvalConfig,
     manifest: RunManifest,
     cases: list[GoldenCase],
     done_results: list[CaseResult] | None = None,
     on_case_start: Callable[[int, int, GoldenCase], None] | None = None,
     on_case_done: Callable[[int, int, GoldenCase, CaseResult], None] | None = None,
+    run_case: Callable[[WorkflowConfig, object, ParameterRecord, GoldenCase, date], ReviewItem] | None = None,
 ) -> list[CaseResult]:
     """Score every case not already in `done_results`, persisting as it goes.
 
-    Results are appended to the run's results.jsonl the moment each case is
-    scored, so a Ctrl-C (or a crash) loses at most the case in flight.
+    Each result is upserted into eval.results (with the ReviewItem) the moment
+    the case is scored, so a Ctrl-C (or a crash) loses at most the case in
+    flight; the run is flipped to `complete` at the end. `run_case` exists for
+    tests — it replaces the workflow call and nothing else.
     """
+    loaded = evaldb.load_run(conn, manifest.run_id)
+    if loaded is None:
+        raise LookupError(f"run {manifest.run_id} is not in eval.runs — start_run first")
+    run_pk = loaded[0]
+    evaldb.set_run_status(conn, run_pk, "running")
+
     results = list(done_results or [])
     scored = {r.case_id for r in results}
     pending = [c for c in cases if c.id not in scored]
 
     wf_cfg = _workflow_config(cfg, manifest)
     tracer = setup_tracing(wf_cfg)
-    run_dir = run_directory(cfg, manifest.run_id)
-    constants = _scoring_constants(cases, manifest.as_of)
+    constants = _scoring_constants(conn, cases, manifest.as_of)
     total = len(cases)
 
     for case in pending:
@@ -301,35 +235,40 @@ def execute_run(
         if on_case_start:
             on_case_start(index, total, case)
         started = time.perf_counter()
+        item: ReviewItem | None = None
         try:
-            item = run_parameter(
-                wf_cfg, tracer, REPO_ROOT / case.parameter_file, manifest.as_of, force=True
-            )
-            result = score_item(case, item, constants.get(case.country))
+            record = load_case_record(conn, case.parameter_target)
+            if run_case is not None:
+                item = run_case(wf_cfg, tracer, record, case, manifest.as_of)
+            else:
+                item = run_parameter(
+                    wf_cfg, tracer, record, manifest.as_of,
+                    force=True, parameter_ref=case.parameter_target, enqueue=False,
+                )
+            result = score_item(case, item, constants.get(case.country.upper()))
         except Exception as exc:  # score the failure, keep the run going
-            result = CaseResult(
-                case_id=case.id,
-                country=case.country,
-                language=case.language,
-                difficulty=case.difficulty,
-                source_class=case.source_class,
-                routing_expected=case.expected.routing.value,
-                corpus_available=case.corpus_available,
-                error=f"{exc.__class__.__name__}: {exc}",
-            )
+            conn.rollback()
+            result = _error_result(case, exc)
         result.latency_ms = int((time.perf_counter() - started) * 1000)
         results.append(result)
-        _append_result(run_dir, result)
+        evaldb.upsert_result(
+            conn, run_pk, result, item.model_dump(mode="json") if item is not None else None
+        )
         if on_case_done:
             on_case_done(index, total, case, result)
 
     if not manifest.model.startswith("mock") and pending:
         if _attach_impact(results, wf_cfg):
-            rewrite_partial(run_dir, results)
+            for result in results:
+                if result.llm_calls is not None:
+                    evaldb.upsert_result(conn, run_pk, result)
+    evaldb.set_run_status(conn, run_pk, "complete")
+    manifest.status = "complete"
     return results
 
 
 def run_evaluation(
+    conn: psycopg.Connection,
     cfg: EvalConfig,
     cases: list[GoldenCase],
     as_of: date,
@@ -339,55 +278,67 @@ def run_evaluation(
     on_case_done: Callable[[int, int, GoldenCase, CaseResult], None] | None = None,
 ) -> tuple[RunManifest, list[CaseResult]]:
     """Fresh run: freeze the manifest + case list, then score every case."""
-    manifest = start_run(cfg, cases, as_of, model, notes=notes)
+    manifest = start_run(conn, cfg, cases, as_of, model, notes=notes)
     results = execute_run(
-        cfg, manifest, cases, on_case_start=on_case_start, on_case_done=on_case_done
+        conn, cfg, manifest, cases, on_case_start=on_case_start, on_case_done=on_case_done
     )
     return manifest, results
 
 
-def rescore_run(cfg: EvalConfig, run_id: str) -> tuple[RunManifest, list[CaseResult]]:
-    """Re-score a finished run from the ReviewItems it stored — no LLM, no DB.
+def rescore_run(conn: psycopg.Connection, run_id: str) -> tuple[RunManifest, list[CaseResult], list[CaseResult]]:
+    """Re-score a finished run from the ReviewItems it stored — no LLM.
 
-    A run directory keeps every queue item the pipeline produced, so a fix to
-    `scoring.py` can be re-applied to past runs instead of re-spending a full
-    run's tokens. Only the scoring moves: routing, values, citations and
+    Every eval.results row keeps the ReviewItem the pipeline produced, so a fix
+    to `scoring.py` can be re-applied to past runs instead of re-spending a
+    full run's tokens. Only the scoring moves: routing, values, citations and
     retrieval traces stay exactly what the model produced at the time.
 
-    Expectations come from the run's frozen `cases.json`, never from today's
+    Expectations come from the run's frozen eval.run_cases, never from today's
     golden set — so a rescore isolates the effect of a scoring change from any
     golden-set edit. To measure a golden-set change instead, start a new run.
     Latency and impact columns are carried over from the previous results: they
     are measurements, not scores, and cannot be recomputed offline.
-    """
-    from nomoscope_workflow.schema import ReviewItem
 
-    run_dir = run_directory(cfg, run_id)
-    manifest = load_manifest(run_dir)
-    cases = {case.id: case for case in load_run_cases(run_dir)}
-    previous = {r.case_id: r for r in load_partial_results(run_dir)}
-    constants = _scoring_constants(list(cases.values()), manifest.as_of)
+    Returns (manifest, previous results, rescored results).
+    """
+    loaded = evaldb.load_run(conn, run_id)
+    if loaded is None:
+        raise LookupError(f"no evaluation run {run_id} in eval.runs")
+    run_pk, manifest = loaded
+    cases = {case.id: case for case in evaldb.load_run_cases(conn, run_pk)}
+    previous_list = evaldb.load_results(conn, run_pk)
+    previous = {r.case_id: r for r in previous_list}
+    items = evaldb.load_review_items(conn, run_pk)
+    constants = _scoring_constants(conn, list(cases.values()), manifest.as_of)
 
     rescored: list[CaseResult] = []
     for case_id, case in cases.items():
         before = previous.get(case_id)
         if before is None:
             continue
-        item_path = run_dir / "queue" / f"{before.item_id}.json" if before.item_id else None
-        if before.error or item_path is None or not item_path.exists():
-            # Nothing to re-score: an errored case has no ReviewItem, and a run
-            # whose queue was cleaned keeps only what it already recorded.
+        item_dump = items.get(case_id)
+        if before.error or item_dump is None:
+            # Nothing to re-score: an errored case has no ReviewItem, and a
+            # result stored without one keeps only what it already recorded.
             rescored.append(before)
             continue
-        item = ReviewItem.model_validate_json(item_path.read_text(encoding="utf-8"))
-        result = score_item(case, item, constants.get(case.country))
+        item = ReviewItem.model_validate(item_dump)
+        result = score_item(case, item, constants.get(case.country.upper()))
         for measured in (
             "latency_ms", "phoenix_trace_id", "llm_calls", "tokens_prompt",
             "tokens_completion", "energy_kwh", "gwp_kgco2eq", "impact_estimated",
         ):
             setattr(result, measured, getattr(before, measured))
         rescored.append(result)
-    return manifest, rescored
+    return manifest, previous_list, rescored
+
+
+def store_rescored(conn: psycopg.Connection, run_id: str, results: list[CaseResult]) -> None:
+    loaded = evaldb.load_run(conn, run_id)
+    if loaded is None:
+        raise LookupError(f"no evaluation run {run_id} in eval.runs")
+    for result in results:
+        evaldb.upsert_result(conn, loaded[0], result)  # review_item kept (coalesce)
 
 
 def _attach_impact(results: list[CaseResult], wf_cfg: WorkflowConfig) -> bool:

@@ -20,7 +20,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 chrono = { version = "0.4", features = ["serde"] }
 log = "0.4"
-tokio = { version = "1", features = ["sync", "process", "io-util", "macros", "rt-multi-thread"] }
 postgres = { version = "0.19", features = ["with-serde_json-1"] }
 base64 = "0.22"
 

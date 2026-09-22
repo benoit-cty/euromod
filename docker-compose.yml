@@ -1,10 +1,45 @@
 # EUROMOD RAG stack — local prototype (run from the repo root)
 #   docker compose up -d          starts PostgreSQL 17 + pgvector + pgAdmin + Phoenix,
-#                                 auto-applies Nomotheca-RAG/db/schema.sql then Nomotheca-RAG/db/seed.sql
+#                                 auto-applies Nomotheca-RAG/db/schema.sql, seed.sql and
+#                                 Nomergon-worker/db/ops_schema.sql (the job table, ADR 0004)
+#   docker compose --profile gpu up -d
+#                                 ... plus the Nomergon worker on the NVIDIA GPU (needs the
+#                                 nvidia container toolkit; put COMPOSE_PROFILES=gpu in .env
+#                                 to make plain `up -d` include it)
+#   docker compose --profile cpu up -d
+#                                 ... plus the worker on the CPU (a box with no NVIDIA runtime)
 #   pgAdmin is available at       http://localhost:5050
 #   Phoenix (LLM traces/evals) at http://localhost:6006
 #   docker exec -i nomotheca-legislation-db psql -U jrc -d legislation < Nomotheca-RAG/db/demo_queries.sql
 #   docker compose down -v        resets everything (schema is re-applied on next up)
+#
+# The worker is the only container that holds provider keys: they come from the
+# repo-root .env (env_file), never from this file. It needs outbound internet
+# (legislation sources, LLM APIs, the Hugging Face hub for BGE-M3 on first run).
+
+# Shared definition of the worker service; `worker` (GPU) and `worker-cpu`
+# differ only in the device reservation, and profiles keep both out of a plain
+# `docker compose up -d` so the stack still starts on a box without the NVIDIA
+# runtime (a GPU reservation fails there before the container starts).
+x-worker: &worker
+  build:
+    context: .
+    dockerfile: Nomergon-worker/Dockerfile
+  image: nomergon-worker
+  depends_on:
+    db:
+      condition: service_healthy
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    WORKER_DATABASE_URL: postgresql://jrc:jrc@db:5432/legislation
+    PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006
+    PHOENIX_DATABASE_URL: postgresql://jrc:jrc@db:5432/phoenix
+  volumes:
+    - hf-cache:/models
+  restart: unless-stopped
+
 services:
   db:
     image: pgvector/pgvector:pg17
@@ -19,6 +54,7 @@ services:
       - ./Nomotheca-RAG/db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
       - ./Nomotheca-RAG/db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
       - ./Nomotheca-RAG/db/create_phoenix_db.sql:/docker-entrypoint-initdb.d/03_create_phoenix_db.sql:ro
+      - ./Nomergon-worker/db/ops_schema.sql:/docker-entrypoint-initdb.d/04_ops_schema.sql:ro
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U jrc -d legislation"]
@@ -64,7 +100,28 @@ services:
     volumes:
       - phoenix-data:/mnt/data
 
+  # Nomergon — the worker (ADR 0004): claims ops.jobs rows and runs every
+  # LLM call, embedding build, translation and ingestion. One job at a time,
+  # plus an in-process BGE-M3 lane for the UI's query vectors.
+  worker:
+    <<: *worker
+    container_name: nomergon-worker
+    profiles: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  worker-cpu:
+    <<: *worker
+    container_name: nomergon-worker-cpu
+    profiles: [cpu]
+
 volumes:
   pgdata:
   pgadmin-data:
   phoenix-data:
+  hf-cache:

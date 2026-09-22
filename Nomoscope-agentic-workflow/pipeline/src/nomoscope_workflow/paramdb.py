@@ -9,8 +9,9 @@ Two responsibilities:
      never instead. Re-ingesting a file replaces its rows.
   2. Stage C persistence — record one extraction_runs row per pipeline run,
      carrying the Phoenix trace id of the run's root span, plus the proposal
-     and its evidence references. The file queue stays the UI's primary store;
-     the DB write is best-effort (see record_run_safe).
+     and its evidence references. The queue item itself lives in
+     params.review_queue (queue_store); this write is best-effort (see
+     record_run_safe).
 """
 
 from __future__ import annotations
@@ -601,6 +602,34 @@ def record_value(value_raw, value_numeric: float | None, value_kind: str | None)
     return value_raw
 
 
+def country_targets(conn: psycopg.Connection, country: str) -> list[str]:
+    """Every parameter of a country in params.parameters, in spine order."""
+    return [
+        row[0]
+        for row in conn.execute(
+            """
+            SELECT model_target FROM params.parameters
+            WHERE country = %s ORDER BY spine_order NULLS LAST, model_target
+            """,
+            (country.upper(),),
+        ).fetchall()
+    ]
+
+
+def country_groups(conn: psycopg.Connection, country: str) -> list[str]:
+    """Every bracket-schedule group of a country (run as `group:<id>` targets)."""
+    return [
+        row[0]
+        for row in conn.execute(
+            """
+            SELECT group_id FROM params.parameter_groups
+            WHERE country = %s AND kind = 'bracket_schedule' ORDER BY group_id
+            """,
+            (country.upper(),),
+        ).fetchall()
+    ]
+
+
 def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
     """Rebuild the Activity 1 record for one parameter (model_target or
     parameter_key) from params.parameters + params.model_values."""
@@ -950,8 +979,9 @@ def record_run_safe(
     started_at: datetime,
     finished_at: datetime,
 ) -> None:
-    """record_run, best-effort: the file queue is the primary store, so a
-    missing params schema or an unreachable DB must not fail the run."""
+    """record_run, best-effort: the queue item (params.review_queue, or the
+    caller's hands with enqueue=False) is the run's output; a missing params
+    schema must not fail a run that already produced it."""
     try:
         with connect(cfg) as conn:
             record_run(conn, cfg, item, prompt_version, agent_version, started_at, finished_at)
@@ -964,15 +994,20 @@ def record_run_safe(
 
 # ---------------------------------------------------------------------------
 # Stage D: reviewer decisions. params.review_decisions is the system of record —
-# the UI's Accept/Reject/Edit fails if this insert does. data/decisions.jsonl is
-# a redundant local copy, replayed by `nomoscope-workflow sync-decisions`.
+# the UI's Accept/Reject/Edit fails if this insert does. The UI records a
+# decision through the SQL function params.decide_review_item(), which appends
+# the audit row AND updates the params.review_queue item in one transaction.
 # ---------------------------------------------------------------------------
 
 
 def record_decision(conn: psycopg.Connection, entry: dict) -> int | None:
     """Insert one audit entry; returns its id, or None if it was already there.
 
-    Deduplication is on (item_id, decided_at), so replaying the whole log is
+    Reference implementation of the insert half of `params.decide_review_item()`
+    (db/params_schema.sql), which the UI calls instead so the queue item update
+    rides in the same transaction and the reviewer is `current_user`.
+
+    Deduplication is on (item_id, decided_at), so replaying a set of entries is
     idempotent while a genuine re-decision (a new instant) still appends.
     """
     if not entry.get("action"):
@@ -1023,60 +1058,3 @@ def record_decision(conn: psycopg.Connection, entry: dict) -> int | None:
         ),
     ).fetchone()
     return row[0] if row else None
-
-
-# Old queue ids ended on the run's anchor date; the system-year id keeps its year.
-_OLD_ITEM_ID = r"_(\d{4})-\d{2}-\d{2}$"
-
-
-def remap_item_ids(cfg: WorkflowConfig, apply: bool = False) -> dict[str, int]:
-    """Re-point stored item ids at the system-year queue ids (see
-    queue_store.migrate_item_ids). Idempotent — rows already migrated don't match.
-
-    extraction_runs.item_id is what the Parameters tab follows to open a review
-    item, so a stale id there is a dead link; proposals.proposal_id embeds the
-    item id as "<run_id>/<item_id>" and is how a decision finds its proposal.
-    """
-    statements = {
-        "extraction_runs": (
-            "UPDATE params.extraction_runs "
-            "SET item_id = regexp_replace(item_id, %s, '_\\1') WHERE item_id ~ %s"
-        ),
-        "review_decisions": (
-            "UPDATE params.review_decisions "
-            "SET item_id = regexp_replace(item_id, %s, '_\\1') WHERE item_id ~ %s"
-        ),
-        # "<run_id>/<item_id>", and run ids never contain a slash
-        "proposals": (
-            "UPDATE params.proposals "
-            "SET proposal_id = left(proposal_id, position('/' in proposal_id)) "
-            "  || regexp_replace(substr(proposal_id, position('/' in proposal_id) + 1), "
-            "                    %s, '_\\1') "
-            "WHERE position('/' in proposal_id) > 0 "
-            "  AND substr(proposal_id, position('/' in proposal_id) + 1) ~ %s"
-        ),
-    }
-    counts: dict[str, int] = {}
-    with connect(cfg) as conn:
-        for table, sql in statements.items():
-            # one transaction per table: a unique-index clash in the audit table
-            # must not take the (independent) extraction_runs remap down with it
-            with conn.transaction():
-                counts[table] = conn.execute(sql, (_OLD_ITEM_ID, _OLD_ITEM_ID)).rowcount
-                if not apply:
-                    raise psycopg.Rollback
-    return counts
-
-
-def sync_decisions(cfg: WorkflowConfig, entries: list[dict]) -> tuple[int, int]:
-    """Replay audit entries into params.review_decisions.
-
-    Returns (inserted, skipped); skipped are entries already in the table, so
-    replaying the whole log after every outage is safe.
-    """
-    inserted = 0
-    with connect(cfg) as conn, conn.transaction():
-        for entry in entries:
-            if record_decision(conn, entry) is not None:
-                inserted += 1
-    return inserted, len(entries) - inserted

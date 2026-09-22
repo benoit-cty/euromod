@@ -9,11 +9,13 @@
   import GoldenTab from './lib/components/GoldenTab.svelte';
   import ParamsTab from './lib/components/ParamsTab.svelte';
   import ImpactTab from './lib/components/ImpactTab.svelte';
+  import JobsTab from './lib/components/JobsTab.svelte';
 
+  // The UI is remote (ADR 0004): its one credential is the database login,
+  // and `reviewer` is that login's current_user as the server sees it.
   let config = $state({
-    data_dir: null,
-    dataset_dir: null,
-    reviewer: 'reviewer',
+    reviewer: null,
+    db_error: null,
     db_url: '',
     phoenix_endpoint: '',
     phoenix_project: '',
@@ -24,11 +26,9 @@
   let facets = $state(null);
   let selectedId = $state(null);
   let decisions = $state([]);
-  // 'database' (params.review_decisions) or 'file' (decisions.jsonl fallback)
-  let decisionSource = $state('database');
   let tab = $state('review');
   // Tabs are kept alive once visited (hidden, not destroyed): switching away
-  // must not kill an in-flight agentic run or reset filters/selections.
+  // must not lose a followed job's log or reset filters/selections.
   let visited = $state({ review: true });
   let paramsRunning = $state(false);
   let error = $state('');
@@ -40,6 +40,7 @@
   let evalTab = $state(null);
   let goldenTab = $state(null);
   let impactTab = $state(null);
+  let jobsTab = $state(null);
 
   const selected = $derived(items.find((i) => i.id === selectedId) ?? null);
   // Every run of the selected parameter (newest first, as loadQueue sorts them):
@@ -64,7 +65,8 @@
   async function init() {
     try {
       config = await api.getEnvConfig();
-      if (config.data_dir) await refresh();
+      if (config.db_error) error = `Database unreachable: ${config.db_error}`;
+      else await refresh();
     } catch (e) {
       error = String(e);
     }
@@ -80,7 +82,7 @@
 
   async function refresh() {
     try {
-      const res = await api.loadQueue(config.data_dir);
+      const res = await api.loadQueue(config.db_url);
       items = res.items;
       facets = res.facets;
       error = '';
@@ -94,7 +96,6 @@
   async function decide(action, note, editedValue, editedFields) {
     try {
       const res = await api.saveDecision({
-        data_dir: config.data_dir,
         db_url: config.db_url,
         item_id: selected.id,
         action,
@@ -116,18 +117,12 @@
 
   async function exportAccepted() {
     try {
-      const res = await api.exportAccepted(config.data_dir);
-      statusMsg = `${res.count} record(s) exported to ${config.data_dir}/export`;
+      const res = await api.exportAccepted(config.db_url);
+      if (res.canceled) statusMsg = 'Export cancelled.';
+      else if (res.count === 0) statusMsg = 'Nothing to export — no accepted or edited items.';
+      else statusMsg = `${res.count} record(s) exported: ${res.paths.join(', ')}`;
     } catch (e) {
       error = String(e);
-    }
-  }
-
-  async function pickDir() {
-    const res = await api.pickDataDir();
-    if (!res.canceled) {
-      config.data_dir = res.path;
-      await refresh();
     }
   }
 
@@ -139,10 +134,8 @@
   }
 
   async function loadDecisions() {
-    const res = await api.loadDecisions(config.data_dir, config.db_url);
+    const res = await api.loadDecisions(config.db_url);
     decisions = res.decisions;
-    decisionSource = res.source;
-    if (res.db_error) error = `Audit log read from the local mirror: ${res.db_error}`;
   }
 
   async function showAudit() {
@@ -164,6 +157,7 @@
     golden: () => goldenTab?.reload(),
     eval: () => evalTab?.reload(),
     impact: () => impactTab?.reload(),
+    jobs: () => jobsTab?.reload(),
   };
 
   async function reloadActive() {
@@ -191,17 +185,16 @@
       <button class:primary={tab === 'golden'} onclick={() => (tab = 'golden')}>Golden set</button>
       <button class:primary={tab === 'eval'} onclick={() => (tab = 'eval')}>Evaluation</button>
       <button class:primary={tab === 'impact'} onclick={() => (tab = 'impact')}>Impact</button>
+      <button class:primary={tab === 'jobs'} onclick={() => (tab = 'jobs')}>Jobs</button>
     </nav>
     <div class="spacer"></div>
-    <label class="inline">
-      Reviewer
-      <input size="10" bind:value={config.reviewer} />
-    </label>
-    <button onclick={pickDir} title={config.data_dir ?? 'no data directory'}>Data dir…</button>
+    <span class="inline" title="your database login (current_user) — every decision, job and verdict is recorded under it">
+      Reviewer <strong class="mono">{config.reviewer ?? '—'}</strong>
+    </span>
     <button onclick={reloadActive} disabled={!reloaders[tab]} title="Reload the current tab">
       Reload
     </button>
-    <button onclick={exportAccepted}>Export accepted</button>
+    <button onclick={exportAccepted} title="One JSON file per country, into a folder you pick">Export accepted…</button>
     <button onclick={() => (dark = !dark)}>{dark ? '☀' : '☾'}</button>
   </header>
 
@@ -236,7 +229,7 @@
   {/if}
   {#if visited.audit}
     <main class="single" hidden={tab !== 'audit'}>
-      <AuditLog {decisions} source={decisionSource} />
+      <AuditLog {decisions} />
     </main>
   {/if}
   {#if visited.database}
@@ -251,11 +244,7 @@
   {/if}
   {#if visited.golden}
     <main class="single" hidden={tab !== 'golden'}>
-      <GoldenTab
-        bind:this={goldenTab}
-        datasetDir={config.dataset_dir}
-        reviewer={config.reviewer}
-      />
+      <GoldenTab bind:this={goldenTab} dbUrl={config.db_url} />
     </main>
   {/if}
   {#if visited.eval}
@@ -266,6 +255,11 @@
   {#if visited.impact}
     <main class="single" hidden={tab !== 'impact'}>
       <ImpactTab bind:this={impactTab} dbUrl={config.db_url} />
+    </main>
+  {/if}
+  {#if visited.jobs}
+    <main class="single" hidden={tab !== 'jobs'}>
+      <JobsTab bind:this={jobsTab} dbUrl={config.db_url} active={tab === 'jobs'} />
     </main>
   {/if}
 </div>

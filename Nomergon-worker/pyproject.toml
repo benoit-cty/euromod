@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nomergon-worker"
+version = "0.1.0"
+description = "Nomergon: the one process that holds model credentials and loads models; fed by the ops.jobs table (ADR 0004)."
+readme = "README.md"
+license = {text = "EUPL-1.2"}
+requires-python = ">=3.12"
+dependencies = [
+  "psycopg[binary]>=3.2",
+  "pydantic>=2.8",
+  "python-dotenv>=1.0",
+  "typer>=0.12",
+  # The three packages whose CLIs the worker runs as subprocesses, installed
+  # into this one environment so every job runs from `sys.executable -m …`.
+  # embeddings-cuda: torch from the cu126 index (see [tool.uv.sources]) — the
+  # Pascal-capable channel; translate: the LLM translator; legifrance: the
+  # Playwright tier-3 fallback of the Legifrance resolver (ADR 0002).
+  "nomotheca-legislation-ingest[embeddings-cuda,translate,legifrance]",
+  "nomoscope-agentic-workflow",
+  "nomokrisis-evaluation",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[project.scripts]
+nomergon = "nomergon.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nomergon"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+# torch must come from the CUDA 12.6 wheel index: it is the newest PyTorch
+# channel that still ships Pascal (sm_61) kernels (GTX 1080 Ti). The cu126
+# wheels run on a CPU-only box too, so one environment serves both. uv only
+# honours the sources of the root project, so the index and the path sources
+# of the transitive packages are repeated here rather than inherited from
+# Nomotheca-RAG/ingest/pyproject.toml.
+[[tool.uv.index]]
+name = "pytorch_cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch_cu126" }
+nomotheca-legislation-ingest = { path = "../Nomotheca-RAG/ingest", editable = true }
+nomoscope-agentic-workflow = { path = "../Nomoscope-agentic-workflow/pipeline", editable = true }
+nomokrisis-evaluation = { path = "../Nomokrisis-evaluation_pipeline", editable = true }

@@ -30,7 +30,7 @@ def make_case(**expected_kwargs) -> GoldenCase:
         id="fr_test_case",
         country="FR",
         language="fr",
-        parameter_file="Nomoscope-agentic-workflow/data/parameters/eval/euromod_fr_tinkt_fr_def_const_tin_rate6.json",
+        parameter_target="euromod://FR/tinkt_fr/def_const/$tin_rate6",
         as_of=date(2025, 6, 1),
         expected=Expected(**expected_kwargs),
         verified=True,
@@ -350,51 +350,46 @@ def test_normalise_value_shapes():
     assert normalise_value(True) is None
 
 
-def test_runner_builds_constants_from_parameter_files(tmp_path):
-    import json
-
+def test_runner_builds_constants_from_the_params_db():
+    """`_scoring_constants` reads every country's $-constants in force at as_of
+    from params.* (openfisca_golden.db_constants), keyed by casefolded name;
+    a formula row keeps its raw EUROMOD string so normalise_value can evaluate it."""
     from nomokrisis_eval.runner import _scoring_constants
 
-    def write(name, model_target, values):
-        (tmp_path / name).write_text(
-            json.dumps(
-                {
-                    "information": {"country": "FR", "model_target": model_target},
-                    "values": values,
-                }
-            )
-        )
+    class _Cursor:
+        def __init__(self, rows):
+            self.rows = rows
 
-    write(
-        "pss.json",
-        "euromod://FR/ConstDef_fr/def_const/$PSS",
-        [
-            {"value": 46368.0, "valid_from": "2024-01-01", "valid_to": "2024-12-31"},
-            {"value": 47100.0, "valid_from": "2025-01-01", "valid_to": None},
-        ],
-    )
-    write(
-        "minwage.json",
-        "euromod://FR/SetDefault_fr/def_const/$MinWage",
-        [
-            {
-                # formula rows materialize with no scalar; raw stays in lineage
-                "value": None,
-                "valid_from": "2024-01-01",
-                "valid_to": "2024-12-31",
-                "lineage": {"model_answer": "(1766.92*10+1801.80*2)/12#m"},
-            }
-        ],
-    )
+        def fetchall(self):
+            return self.rows
 
+    class FakeConn:
+        """Answers db_constants' one query: (model_target, value_numeric, raw)."""
+
+        def __init__(self, by_as_of):
+            self.by_as_of = by_as_of
+
+        def execute(self, sql, params):
+            as_of, _, country = params
+            assert country == "FR"
+            return _Cursor(self.by_as_of[as_of])
+
+    conn = FakeConn(
+        {
+            date(2025, 6, 1): [("euromod://FR/ConstDef_fr/def_const/$PSS", 47100.0, "47100")],
+            date(2024, 6, 1): [
+                ("euromod://FR/ConstDef_fr/def_const/$PSS", 46368.0, "46368"),
+                ("euromod://FR/SetDefault_fr/def_const/$MinWage", None, "(1766.92*10+1801.80*2)/12#m"),
+            ],
+        }
+    )
     case = make_case(routing=Routing.UNCHANGED, value=1.0)
-    case = case.model_copy(update={"parameter_file": str(tmp_path / "pss.json")})
 
-    by_country = _scoring_constants([case], date(2025, 6, 1))
+    by_country = _scoring_constants(conn, [case], date(2025, 6, 1))
     assert by_country["FR"]["pss"] == 47100.0
     assert "minwage" not in by_country["FR"]  # no 2025 row -> nothing in force
 
-    by_country = _scoring_constants([case], date(2024, 6, 1))
+    by_country = _scoring_constants(conn, [case], date(2024, 6, 1))
     assert by_country["FR"]["pss"] == 46368.0
     assert values_equal("$MinWage", 1772.7333333333333, by_country["FR"])
 

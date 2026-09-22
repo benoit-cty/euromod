@@ -21,10 +21,13 @@ DATABASE_URL = os.getenv(
 BGE_M3_MODEL_ID = 1
 
 mcp = FastMCP("EUROMOD legislation", json_response=True)
-encoder = QueryEncoder()
+# Query vectors come from the Nomergon worker through ops.jobs; the server never
+# loads a model. The encoder opens its own autocommit connection per call.
+encoder = QueryEncoder(DATABASE_URL)
 
 
 def _connect() -> psycopg.Connection:
+    """Read-only connection for search and chunk lookup (never used for jobs)."""
     return psycopg.connect(
         DATABASE_URL,
         options="-c default_transaction_read_only=on -c statement_timeout=30000",
