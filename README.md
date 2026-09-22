@@ -191,10 +191,11 @@ Download Quarto from https://quarto.org/docs/download/
 Convert it_needs_for_deployment.md:
 
 ```sh
+cd docs
 sed 's/^```mermaid$/```{mermaid}/' it_needs_for_deployment.md > it_needs_for_deployment.qmd
 quarto render it_needs_for_deployment.qmd --to typst \
   -M toc:true -M toc-depth:2 -M papersize:a4 \
-  -M shift-heading-level-by:-1 -M date:2026-08-11
+  -M shift-heading-level-by:-1 -M date:2026-09-22
 rm it_needs_for_deployment.qmd
 ```
 
