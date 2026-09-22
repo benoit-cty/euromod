@@ -1,1 +1,0 @@
-"""French legislation adapter."""

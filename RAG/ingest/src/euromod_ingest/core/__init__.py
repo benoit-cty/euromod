@@ -1,1 +1,0 @@
-"""Country-neutral ingestion components."""
