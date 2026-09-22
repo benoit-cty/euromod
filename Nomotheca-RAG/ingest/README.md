@@ -203,6 +203,12 @@ better CPU/iGPU optimization on this hardware, and is directly supported by
 `sentence-transformers`. ONNX Runtime is still useful for portability, but it is
 not the first choice for this Intel-only workstation setup.
 
+Download the model (Warning: 5Gb)
+```bash
+hf download BAAI/bge-m3 --local-dir Nomotheca-RAG/ingest/models/bge-m3
+```
+
+Run the embedding with PyTorch.
 ```bash
 uv sync --extra embeddings
 uv run python -m nomotheca_ingest.cli embeddings build \
@@ -215,6 +221,8 @@ uv run python -m nomotheca_ingest.cli embeddings build \
 Use `--model-path /path/to/local/bge-m3` to point at an already downloaded model.
 Use `--dry-run` to count chunks that need fresh embeddings without loading the model
 or writing rows.
+
+See below if you want Nvidia GPU acceleration or even lower for Intel CPU acceleration.
 
 ### NVIDIA GPU (CUDA)
 
@@ -276,6 +284,8 @@ Three things are specific to this card:
   chunks.
 
 ### OpenVINO export
+
+After downloading the model in Nomotheca-RAG/ingest/models/bge-m3 
 
 Export the canonical `BAAI/bge-m3` model to a local OpenVINO directory:
 

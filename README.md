@@ -62,13 +62,13 @@ docker exec nomotheca-legislation-db pg_dump -U jrc -Fc -d phoenix     > ../back
 `-Fc` (custom format) is compressed and restorable with `pg_restore`, including selective/parallel restore. For a plain-SQL dump instead (diff-friendly, restorable with `psql`):
 
 ```bash
-docker exec nomotheca-legislation-db pg_dump -U jrc -d legislation > backups/legislation_$(date +%Y%m%d).sql
+docker exec nomotheca-legislation-db pg_dump -U jrc -d legislation > ../backups/legislation_$(date +%Y%m%d).sql
 ```
 
 Whole-cluster alternative (both databases + roles in one file):
 
 ```bash
-docker exec nomotheca-legislation-db pg_dumpall -U jrc > backups/cluster_$(date +%Y%m%d).sql
+docker exec nomotheca-legislation-db pg_dumpall -U jrc > ../backups/cluster_$(date +%Y%m%d).sql
 ```
 
 Volume-level (cold) backup — stop the DB first for a consistent snapshot; faster for full-disaster recovery but not portable across Postgres major versions:
@@ -87,12 +87,12 @@ docker compose start db
 Into a running stack, from a custom-format dump (`--clean --if-exists` drops existing objects first, so this also works for overwriting a stack that already has data):
 
 ```bash
-docker exec -i nomotheca-legislation-db pg_restore -U jrc -d legislation --clean --if-exists < backups/legislation_20260901.dump
+docker exec -i nomotheca-legislation-db pg_restore -U jrc -d legislation --clean --if-exists < ../backups/legislation_20260901.dump
 docker compose stop phoenix
 
 docker exec -i nomotheca-legislation-db psql -U jrc -d postgres -c "DROP DATABASE IF EXISTS phoenix;"
 docker exec -i nomotheca-legislation-db psql -U jrc -d postgres -c "CREATE DATABASE phoenix OWNER jrc;"
-docker exec -i nomotheca-legislation-db pg_restore -U jrc -d phoenix < backups/phoenix_20260901.dump
+docker exec -i nomotheca-legislation-db pg_restore -U jrc -d phoenix < ../backups/phoenix_20260901.dump
 
 docker compose start phoenix
 ```
