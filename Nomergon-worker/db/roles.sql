@@ -8,9 +8,11 @@
 --                   server and a developer's read-only tooling may do
 --   <analyst>       one LOGIN role per analyst, IN ROLE nomos_reviewer
 --
--- The UI writes exactly three things: a human decision (through
+-- The UI writes exactly four things: a human decision (through
 -- params.decide_review_item, SECURITY DEFINER, so it needs no UPDATE on the
--- queue), a job request, and a golden-case verdict. Everything else is a read.
+-- queue), a parameter metadata edit (through params.edit_parameter, likewise:
+-- no UPDATE on params.parameters, ADR 0005), a job request, and a golden-case
+-- verdict. Everything else is a read.
 
 DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'nomos_worker') THEN
@@ -40,6 +42,11 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public, params, eval, ops GRANT SELECT ON TAB
 -- a decision: only through the function (inserts the audit row and updates the
 -- queue item in one transaction; refuses if the item is unknown)
 GRANT EXECUTE ON FUNCTION params.decide_review_item(text, jsonb, jsonb) TO nomos_reviewer;
+
+-- a metadata edit (unit, source_type, texts): only through the function, which
+-- refuses identity and values, validates the unit/source_type vocabulary and
+-- audits under current_user in params.parameter_edits
+GRANT EXECUTE ON FUNCTION params.edit_parameter(text, text, jsonb, text) TO nomos_reviewer;
 
 -- a job: insert, read, cancel one's own
 GRANT INSERT ON ops.jobs TO nomos_reviewer;

@@ -270,6 +270,21 @@ def test_cuda_dtype_keeps_fp32_on_pascal(monkeypatch: pytest.MonkeyPatch) -> Non
     assert cuda_dtype_for(fake_torch, "cuda") == "float16"
 
 
+def test_cuda_dtype_never_picks_fp16_for_a_bf16_trained_model() -> None:
+    """Qwen3 overflows in fp16: bf16 where the GPU has it, fp32 otherwise."""
+    from nomotheca_ingest.core.embedding_models import get_model
+
+    qwen = get_model("qwen3-embedding-0.6b")
+    fake_torch = ModuleType("torch")
+    fake_torch.cuda = _FakeCuda(capability=(7, 5))
+    assert cuda_dtype_for(fake_torch, "cuda", spec=qwen) is None
+    fake_torch.cuda = _FakeCuda(capability=(8, 0))
+    assert cuda_dtype_for(fake_torch, "cuda", spec=qwen) == "bfloat16"
+    # An explicit precision is the operator's call.
+    assert cuda_dtype_for(fake_torch, "cuda", precision="fp32", spec=qwen) is None
+    assert cuda_dtype_for(fake_torch, "cuda", precision="fp16") == "float16"
+
+
 def test_load_kwargs_forward_dtype_only_when_set() -> None:
     """The dtype reaches transformers through model_kwargs, and only when chosen."""
     assert sentence_transformer_load_kwargs(backend="torch", device="cuda") == {"device": "cuda"}

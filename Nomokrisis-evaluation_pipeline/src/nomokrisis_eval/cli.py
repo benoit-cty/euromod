@@ -13,6 +13,9 @@
   uv run nomokrisis-eval resume            # continue the last interrupted run
   uv run nomokrisis-eval list-runs
   uv run nomokrisis-eval report
+  uv run nomokrisis-eval build-embedding-cases     # golden cases -> retrieval cases (the workflow's own query)
+  uv run nomokrisis-eval run-embeddings --embedding-model-id 2 --verified-only --k 15
+  uv run nomokrisis-eval compare-embeddings        # latest run of every embedding model, side by side
 
 Everything lives in the eval schema of the shared Postgres (ADR 0004): there
 is no dataset directory, no run directory and no `--no-db`. Commands a worker
@@ -27,7 +30,9 @@ from collections import Counter
 from datetime import date
 from pathlib import Path
 
+import psycopg
 import typer
+from psycopg.rows import dict_row
 from nomoscope_workflow import paramdb
 from nomoscope_workflow.tracing import set_progress
 
@@ -660,6 +665,92 @@ def list_embedding_cases(
     )
 
 
+@app.command("build-embedding-cases")
+def build_embedding_cases(
+    country: list[str] = typer.Option(None, "--country", help="Restrict to country code(s)"),
+    include_drafts: bool = typer.Option(
+        False, "--include-drafts", help="Also derive from golden cases no human has verified yet"
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print the cases, write nothing"),
+) -> None:
+    """Derive retrieval cases from the golden set, with the workflow's own query.
+
+    One `golden:<case id>` row in eval.embedding_cases per golden case that
+    expects a citation: the query the `frame` step builds for its parameter,
+    the date and jurisdiction scope a run searches, and the golden citations
+    resolved to the exact article citations in that corpus. Idempotent — a
+    re-run after a golden or corpus change rewrites the rows.
+    """
+    from nomoscope_workflow.config import load_config as load_workflow_config
+
+    from .embedding_eval import cases_from_golden
+
+    cfg = load_eval_config()
+    wf_cfg = load_workflow_config()
+    with evaldb.connect(cfg.database_url) as conn:
+        golden = golden_store.load_cases(
+            conn, countries=country or None, verified_only=not include_drafts
+        )
+        # The retrieval helpers read rows by column name.
+        with psycopg.connect(cfg.database_url, row_factory=dict_row) as corpus:
+            derived = cases_from_golden(conn, corpus, wf_cfg, golden)
+        if not dry_run:
+            for case in derived.cases:
+                golden_store.save_embedding_case(conn, case)
+    for case in derived.cases:
+        typer.echo(f"  {case.id:<48} expects={'; '.join(case.expected_citations)}")
+        typer.echo(f"      query: {case.query[:160]}")
+    for case_id, reason in derived.skipped.items():
+        typer.echo(f"  skip {case_id}: {reason}")
+    verb = "would write" if dry_run else "wrote"
+    typer.echo(
+        f"{verb} {len(derived.cases)} case(s) from {len(golden)} golden case(s); "
+        f"{len(derived.skipped)} skipped"
+    )
+    _result({"cases": len(derived.cases), "skipped": len(derived.skipped)})
+
+
+@app.command("compare-embeddings")
+def compare_embeddings(
+    method: str = typer.Option("vector", "--method", help="fts | vector | hybrid"),
+    dataset_version: str = typer.Option(
+        None, "--dataset-version", help="Only runs on this case set (default: each model's latest run)"
+    ),
+) -> None:
+    """The latest `run-embeddings` of every model, side by side, per language.
+
+    Only the cases every compared run scored are counted.
+    """
+    from .embedding_eval import METHODS, compare_runs, latest_runs
+
+    if method not in METHODS:
+        raise typer.BadParameter(f"method must be one of: {', '.join(METHODS)}")
+    cfg = load_eval_config()
+    with evaldb.connect(cfg.database_url) as conn:
+        runs = latest_runs(conn, dataset_version)
+    if not runs:
+        typer.echo("No embedding runs yet: `nomokrisis-eval run-embeddings --embedding-model-id N`.")
+        raise typer.Exit(1)
+    for run in runs:
+        manifest = run["manifest"]
+        latency = manifest.get("query_encode_ms_median")
+        typer.echo(
+            f"  {run['run_id']}  model={manifest.get('embedding_model')}  "
+            f"cases={manifest['cases']}  set={manifest['dataset_version']}"
+            + (f"  query≈{latency} ms" if latency is not None else "")
+        )
+    rows = compare_runs(runs, method)
+    if not rows:
+        typer.echo(f"No {method} scores in these runs.")
+        raise typer.Exit(1)
+    columns = list(rows[0])
+    widths = {c: max(len(c), *(len(r.get(c, "")) for r in rows)) for c in columns}
+    typer.echo(f"\n{method} leg")
+    typer.echo("  ".join(c.ljust(widths[c]) for c in columns))
+    for row in rows:
+        typer.echo("  ".join(row.get(c, "").ljust(widths[c]) for c in columns))
+
+
 @app.command("run-embeddings")
 def run_embeddings(
     country: list[str] = typer.Option(None, "--country", help="Restrict to country code(s)"),
@@ -667,7 +758,8 @@ def run_embeddings(
     k: int = typer.Option(10, "--k", help="Rank cutoff for hit@k / MRR"),
     embedding_model_id: int = typer.Option(
         1, "--embedding-model-id",
-        help="embeddings.model_id to evaluate (1 = BGE-M3; 99 = in-SQL placeholder demo embedder, no encoder needed)",
+        help="embeddings.model_id to evaluate: an ingest registry id (`nomotheca-ingest embeddings models`; "
+        "1 = BGE-M3), whose chunk vectors must be built; 99 = in-SQL placeholder demo embedder",
     ),
     verified_only: bool = typer.Option(
         False, "--verified-only/--include-drafts",

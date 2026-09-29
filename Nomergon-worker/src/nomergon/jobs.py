@@ -55,10 +55,14 @@ class IngestPayload(_Payload):
 
 
 class EmbedPayload(_Payload):
+    #: Registry id (nomotheca_ingest.core.embedding_models); 1 = BGE-M3.
     model_id: int = 1
     batch_size: int = Field(default=16, ge=1)
     limit: int | None = Field(default=None, ge=1)
     dry_run: bool = False
+    precision: Literal["auto", "fp32", "fp16", "bf16"] = "auto"
+    #: Skip machine translations — what a candidate model under evaluation needs.
+    authentic_only: bool = False
 
 
 class TranslatePayload(_Payload):
@@ -81,6 +85,8 @@ class TranslateParamsPayload(_Payload):
 class EncodePayload(_Payload):
     query: str
     sentences: list[str] | None = None
+    #: Registry id of the model whose vectors the query is compared with.
+    model_id: int = 1
 
     @model_validator(mode="after")
     def _query_not_blank(self) -> EncodePayload:
@@ -210,18 +216,21 @@ def build_command(
             return _python(INGEST_MODULE) + [payload.command, *payload.args, "--database-url", cfg.database_url]
         case "embed":
             assert isinstance(payload, EmbedPayload)
-            argv = _python(INGEST_MODULE) + [
-                "embeddings",
-                "build",
-                "--backend",
-                "torch",
-                "--model-path",
-                cfg.embedding_model_path,
+            argv = _python(INGEST_MODULE) + ["embeddings", "build", "--backend", "torch"]
+            # The configured path holds BGE-M3's weights; any other registry
+            # model loads from its own Hugging Face id.
+            if payload.model_id == 1:
+                argv += ["--model-path", cfg.embedding_model_path]
+            argv += [
                 "--model-id",
                 str(payload.model_id),
                 "--batch-size",
                 str(payload.batch_size),
             ]
+            if payload.precision != "auto":
+                argv += ["--precision", payload.precision]
+            if payload.authentic_only:
+                argv.append("--authentic-only")
             if payload.limit is not None:
                 argv += ["--limit", str(payload.limit)]
             if payload.dry_run:

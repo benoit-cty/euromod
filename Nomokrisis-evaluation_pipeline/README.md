@@ -31,13 +31,15 @@ src/nomokrisis_eval/
   curated_golden.py          drafts cases from the hand-curated selection (no LLM)
   scoring.py                 KPI scoring (pure functions)
   runner.py                  drives nomoscope_workflow.run_parameter over the set, resumable from the DB
-  embedding_eval.py          ranks golden chunks under fts / vector / hybrid search
+  embedding_eval.py          ranks golden chunks under fts / vector / hybrid search; golden-derived
+                             cases; side-by-side comparison of embedding models
   db.py                      Postgres persistence (eval.runs / run_cases / results / embedding_runs)
   cli.py                     nomokrisis-eval init-db | import-golden | build-dataset
                              | build-openfisca-dataset | build-curated-dataset | list-cases | verify
                              | selections | selection-export | selection-import
                              | label-cases | run | resume | list-runs | rescore | report
-                             | list-embedding-cases | run-embeddings
+                             | build-embedding-cases | list-embedding-cases | run-embeddings
+                             | compare-embeddings
 db/eval_schema.sql           tables + eval.run_summary view (the UI read surface)
 dataset/, dataset_embedding/, golden_sources/   the pre-ADR-0004 files: import them ONCE with
                              `import-golden`, then they go (kept only until that import is done)
@@ -347,18 +349,68 @@ pool the production pipeline uses (Country Reports excluded):
 - `hybrid` — the production RRF fusion (what the workflow actually retrieves with)
 
 ```bash
-cd Nomokrisis-evaluation_pipeline/src
+cd Nomokrisis-evaluation_pipeline
+uv run nomokrisis-eval build-embedding-cases                    # golden cases -> golden:<id> retrieval cases
 uv run nomokrisis-eval list-embedding-cases
-uv run nomokrisis-eval run-embeddings                           # BGE-M3 (model_id 1); spawns the ingest query encoder
+uv run nomokrisis-eval run-embeddings --verified-only --k 15    # BGE-M3 (model_id 1); spawns the ingest query encoder
 uv run nomokrisis-eval run-embeddings --embedding-model-id 99   # in-SQL placeholder embedder, no encoder needed
-uv run nomokrisis-eval run-embeddings --country FR --k 20
+uv run nomokrisis-eval compare-embeddings                       # latest run of every model, side by side
 ```
 
-Metrics per (query language, method): `hit@1`, `hit@k`, `MRR`. Per-case output
-also shows the candidate-pool size and how much of it is embedded — "ingested
-but not embedded" is the most common cause of a vector miss (same failure mode
-as `/debug-phoenix-trace`). Cases come from `eval.embedding_cases`; each run's
-manifest + per-case results are stored as JSON in `eval.embedding_runs`.
+Metrics per (query language, method): `hit@1`, `hit@3`, `hit@k`, `MRR`. `hit@3`
+is the production cut — the hybrid fusion guarantees the vector leg's top 3 a
+place in what the model reads. Per-case output also shows the candidate-pool
+size and how much of it is embedded — "ingested but not embedded" is the most
+common cause of a vector miss (same failure mode as `/debug-phoenix-trace`).
+Cases come from `eval.embedding_cases`; each run's manifest (model name, case-set
+hash, median query-encoding latency) + per-case results are stored as JSON in
+`eval.embedding_runs`.
+
+### Comparing embedding models
+
+The embedding model is a registry id (`nomotheca-ingest embeddings models`, in
+`nomotheca_ingest/core/embedding_models.py`): 1 = BGE-M3, 2 = Qwen3-Embedding-0.6B,
+5 = Arctic-Embed-L v2, … Each model's chunk vectors live under its own
+`embeddings.model_id`, and its queries are encoded with its own query prompt, so
+a comparison is: build the candidate's vectors, score it, compare.
+
+```bash
+cd Nomotheca-RAG/ingest     # the GPU environment; the build only needs what the cases search
+UV_PROJECT_ENVIRONMENT=.venv-cuda uv run python -m nomotheca_ingest.cli embeddings build \
+  --model qwen3-embedding-0.6b --authentic-only --in-force-on 2025-06-01 --in-force-on 2025-07-01 \
+  --batch-size 64 --encode-batch-size 8
+cd ../../Nomokrisis-evaluation_pipeline
+uv run nomokrisis-eval run-embeddings --embedding-model-id 2 --verified-only --k 15
+uv run nomokrisis-eval compare-embeddings --method vector      # or hybrid: what the workflow retrieves with
+```
+
+(Through the worker: `nomergon submit embed --payload '{"model_id": 2, "authentic_only": true}'`,
+then an `eval`-style run with `WORKFLOW_ENCODER=db` — the encode lane loads a
+non-default model on its first query.)
+
+`build-embedding-cases` turns every verified golden case that expects a
+citation into a retrieval case, searched with **the query the workflow's
+`frame` step builds for that parameter** (`pipeline.frame_query`), on the date
+(`_retrieval_as_of`: 1 July after the income year for income-year parameters)
+and jurisdiction scope a run would search. The golden citations are resolved to
+exact `legal_units.citation` strings in that corpus — an exact match wins over
+the main eval's containment (so `CGI, art. 197` does not also accept `197 A`),
+and a citation naming more than three articles (`VSDĮ`, a bare `JORFTEXT…`) is
+instrument-level and dropped. `derived` / `national_team_source` routings,
+`corpus_available: false` cases and cases with no pinpoint citation left are
+skipped with the reason printed. Re-run it after a golden-set or corpus change.
+
+`compare-embeddings` only counts the cases every compared run scored. The FR
+share is dominated by the barème family (15 near-identical CGI art. 197 cases):
+read the per-language rows, not just `all`.
+
+The vector leg is ranked **exactly** over one country's candidates. Before
+2026-09-29 it ordered by `e.embedding <=> q`, which let the planner walk
+BGE-M3's HNSW index: the 40 nearest chunks of the whole corpus, filtered
+afterwards — a Lithuanian query got 2 rows out of 15. Vector scores of earlier
+`run-embeddings` runs understate BGE-M3; the production vector leg
+(`retrieval._VEC_CTE_QVEC`, ranked inside a window function) never takes the
+index and was not affected.
 
 Case-design rules:
 

@@ -54,6 +54,7 @@ def test_rank_metrics():
     assert metrics["cases"] == "4"
     assert metrics["hit@1"] == "25%"
     assert metrics["hit@10"] == "75%"
+    assert metrics["hit@3"] == "50%"
     assert metrics["mrr"] == f"{(1 + 0.5 + 0 + 0.25) / 4:.2f}"
     assert rank_metrics([], k=10) == {}
 
@@ -64,3 +65,68 @@ def test_embedding_set_hash_ignores_the_verdict_and_the_order():
     assert embedding_set_hash([a, b]) == embedding_set_hash([b, a])
     assert embedding_set_hash([a, b]) == embedding_set_hash([_case("a", verified=True), b])
     assert embedding_set_hash([a]) != embedding_set_hash([a, b])
+
+
+class _Rows:
+    """A connection stub answering the in-scope units query."""
+
+    def __init__(self, rows: list[tuple[str, str]]):
+        self.rows = [{"citation": c, "context_header": h} for c, h in rows]
+
+    def execute(self, *_args):
+        return self
+
+    def fetchall(self):
+        return self.rows
+
+
+def test_resolve_citations_prefers_the_exact_article():
+    from nomokrisis_eval.embedding_eval import resolve_citations
+
+    conn = _Rows([
+        ("CGI, art. 197", "Code général des impôts > CGI, art. 197"),
+        ("CGI, art. 197 A", "Code général des impôts > CGI, art. 197 A"),
+        ("Wet IB 2001, artikel 2.10a", "Wet inkomstenbelasting 2001 > artikel 2.10a"),
+    ])
+    assert resolve_citations(conn, ["CGI, art. 197"], ["FR"], "fr", date(2025, 7, 1)) == ["CGI, art. 197"]
+    # No exact match: the main eval's containment rule, against the header too.
+    assert resolve_citations(conn, ["artikel 2.10a"], ["NL"], "nl", date(2025, 6, 1)) == [
+        "Wet IB 2001, artikel 2.10a"
+    ]
+
+
+def test_resolve_citations_drops_instrument_level_citations():
+    from nomokrisis_eval.embedding_eval import resolve_citations
+
+    conn = _Rows([(f"VSDĮ {n} straipsnis", f"VSDĮ > {n} straipsnis") for n in range(1, 10)]
+                 + [("GPMĮ 6 straipsnis", "GPMĮ > 6 straipsnis")])
+    # "VSDĮ" names every article of the act: any hit would count, so it is dropped.
+    assert resolve_citations(conn, ["VSDĮ", "GPMĮ 6 straipsnis"], ["LT"], "lt", date(2025, 6, 1)) == [
+        "GPMĮ 6 straipsnis"
+    ]
+
+
+def _run(model: str, model_id: int, ranks: dict[str, int | None]) -> dict:
+    return {
+        "run_id": f"run-{model}",
+        "manifest": {"embedding_model": model, "embedding_model_id": model_id},
+        "results": [
+            {"case_id": case_id, "country": "FR", "language": "fr", "corpus_lang": "fr", "k": 15,
+             "ranks": {"vector": rank}}
+            for case_id, rank in ranks.items()
+        ],
+    }
+
+
+def test_compare_runs_scores_only_the_cases_every_run_has():
+    from nomokrisis_eval.embedding_eval import compare_runs
+
+    rows = compare_runs([
+        _run("bge-m3", 1, {"a": 1, "b": None, "c": 2}),
+        _run("qwen3", 2, {"a": 2, "b": 1}),  # never asked c
+    ])
+    by_model = {(r["model"], r["lang"]): r for r in rows}
+    assert by_model[("bge-m3", "all")]["cases"] == "2"
+    assert by_model[("bge-m3", "all")]["hit@1"] == "50%"
+    assert by_model[("qwen3", "all")]["hit@1"] == "50%"
+    assert by_model[("qwen3", "fr")]["mrr"] == f"{(0.5 + 1) / 2:.2f}"

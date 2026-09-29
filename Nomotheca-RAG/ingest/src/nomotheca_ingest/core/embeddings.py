@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
+from datetime import date
 from hashlib import sha256
 from importlib import import_module
 import sys
@@ -13,17 +14,34 @@ from uuid import UUID
 
 from psycopg import Connection
 from psycopg.rows import dict_row
+from psycopg.types.json import Jsonb
+
+from nomotheca_ingest.core.embedding_models import (
+    DEFAULT_MODEL,
+    STORED_DIM,
+    EmbeddingModelSpec,
+    fit_dimension,
+    get_model,
+)
 
 
-BGE_M3_MODEL = "BAAI/bge-m3"
-BGE_M3_DIM = 1024
+BGE_M3_MODEL = DEFAULT_MODEL.hf_id
+BGE_M3_DIM = STORED_DIM
 EMBEDDING_BACKENDS = ("torch", "openvino")
+PRECISIONS = ("auto", "fp32", "fp16", "bf16")
 TORCH_WRAPPER_DEVICE = "cpu"
 AUTO_DEVICE = "auto"
-# Half precision is only a win from Volta (sm_70) on. Pascal cards — the GTX
-# 1080 Ti on this workstation is sm_61 — run fp16 arithmetic at 1/64 of their
-# fp32 rate, so asking for it there is a large slowdown, not a speedup.
+# `auto` only picks half precision from Volta (sm_70) on. Pascal's native fp16
+# ALUs run at 1/64 of fp32. A bare 4096² fp16 matmul does run fast on the GTX
+# 1080 Ti (sm_61; cuBLAS computes it in fp32: 8.3 TFLOPS vs 5.1), but a whole
+# model does not: BGE-M3 embedded 1.7 real chunks/s in fp16 against 7.5 in fp32
+# (vectors agree to cosine 0.9997), so Pascal stays fp32.
 CUDA_FP16_MIN_CAPABILITY = (7, 0)
+CUDA_BF16_MIN_CAPABILITY = (8, 0)
+#: Longest input fed to the model, in tokens. Chunks are articles (the longest
+#: is a few thousand tokens); a 32k window would only let one outlier allocate
+#: an attention matrix the card cannot hold.
+DEFAULT_MAX_SEQ_LENGTH = 8192
 CUDA_INSTALL_HINT = (
     "Install the CUDA build in its own environment: "
     "UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda"
@@ -55,27 +73,37 @@ class EmbeddingBackend(Protocol):
     """Minimal interface used by the database embedding builder."""
 
     def encode(self, inputs: Sequence[str]) -> list[list[float]]:
-        """Return one 1024-dimensional embedding per input string."""
+        """Return one 1024-dimensional passage embedding per input string."""
 
 
 class SentenceTransformerBackend:
-    """Local sentence-transformers backend for BGE-M3."""
+    """Local sentence-transformers backend for any registry model (BGE-M3 by default)."""
 
     def __init__(
         self,
-        model_path: str = BGE_M3_MODEL,
+        model_path: str | None = None,
         device: str | None = None,
         backend: str = "torch",
         fix_mistral_regex: bool = False,
         slow_tokenizer: bool = False,
         encode_batch_size: int | None = None,
+        spec: EmbeddingModelSpec | None = None,
+        precision: str = "auto",
+        max_seq_length: int | None = DEFAULT_MAX_SEQ_LENGTH,
     ) -> None:
-        """Load a local or Hugging Face model path lazily.
+        """Load a registry model, from a local path or its Hugging Face id.
 
+        `spec` says which model this is (prompts, dimension); `model_path` only
+        overrides where its weights come from (a local or OpenVINO export).
         With the torch backend and no explicit device, an available CUDA GPU is
         used; `encode_batch_size` caps how many texts reach the GPU at once,
         independently of the caller's database batch size.
         """
+        self.spec = spec or DEFAULT_MODEL
+        model_path = model_path or self.spec.hf_id
+        if precision not in PRECISIONS:
+            msg = f"precision must be one of {', '.join(PRECISIONS)}"
+            raise ValueError(msg)
         if backend not in EMBEDDING_BACKENDS:
             msg = f"Unsupported embedding backend: {backend}"
             raise ValueError(msg)
@@ -95,7 +123,7 @@ class SentenceTransformerBackend:
         torch_dtype: str | None = None
         if self._torch is not None:
             raise_for_unsupported_cuda_arch(self._torch, self.device)
-            torch_dtype = cuda_dtype_for(self._torch, self.device)
+            torch_dtype = cuda_dtype_for(self._torch, self.device, precision=precision, spec=self.spec)
 
         processor_kwargs = processor_kwargs_for(
             fix_mistral_regex=fix_mistral_regex,
@@ -106,13 +134,17 @@ class SentenceTransformerBackend:
             device=self.device,
             torch_dtype=torch_dtype,
         )
+        if self.spec.trust_remote_code:
+            load_kwargs["trust_remote_code"] = True
         self.model = sentence_transformers.SentenceTransformer(
             model_path,
             backend=backend,
             **load_kwargs,
             processor_kwargs=processor_kwargs,
         )
-        self.description = describe_backend(
+        if max_seq_length:
+            self.model.max_seq_length = min(max_seq_length, self.spec.max_seq_length)
+        self.description = f"model={self.spec.key} " + describe_backend(
             backend=backend,
             device=self.device,
             torch_dtype=torch_dtype,
@@ -120,11 +152,18 @@ class SentenceTransformerBackend:
         )
 
     def encode(self, inputs: Sequence[str]) -> list[list[float]]:
-        """Encode passage inputs as normalized BGE-M3 embeddings."""
-        texts = list(inputs)
+        """Encode passages (chunks) as normalised STORED_DIM vectors."""
+        return self._encode(inputs, self.spec.document_prompt)
+
+    def encode_queries(self, inputs: Sequence[str]) -> list[list[float]]:
+        """Encode search queries: same model, the registry's query prompt."""
+        return self._encode(inputs, self.spec.query_prompt)
+
+    def _encode(self, inputs: Sequence[str], prompt: str) -> list[list[float]]:
+        texts = [prompt + text for text in inputs] if prompt else list(inputs)
         batch_size = min(self.encode_batch_size, len(texts)) if self.encode_batch_size else len(texts)
         vectors = self._encode_with_oom_backoff(texts, batch_size)
-        return [vector.astype(float).tolist() for vector in vectors]
+        return [fit_dimension(vector.astype(float).tolist(), self.spec) for vector in vectors]
 
     def _encode_with_oom_backoff(self, texts: list[str], batch_size: int) -> Any:
         """Encode, halving the GPU batch until it fits in VRAM.
@@ -184,9 +223,30 @@ def resolve_torch_device(device: str | None, *, backend: str = "torch") -> str |
     return "cpu"
 
 
-def cuda_dtype_for(torch: Any, device: str) -> str | None:
-    """Return the model dtype for a CUDA device, or None to keep the fp32 default."""
-    if torch.cuda.get_device_capability(device) >= CUDA_FP16_MIN_CAPABILITY:
+def cuda_dtype_for(
+    torch: Any,
+    device: str,
+    *,
+    precision: str = "auto",
+    spec: EmbeddingModelSpec | None = None,
+) -> str | None:
+    """Return the model dtype for a CUDA device, or None to keep the fp32 default.
+
+    `auto`: bf16 on Ampere+ for models that are not fp16-safe (bf16-trained
+    decoders such as Qwen3 overflow in fp16), fp16 from Volta on for the rest,
+    fp32 below. An explicit precision is honoured as asked.
+    """
+    if precision == "fp32":
+        return None
+    if precision == "fp16":
+        return "float16"
+    if precision == "bf16":
+        return "bfloat16"
+    capability = tuple(torch.cuda.get_device_capability(device))
+    fp16_safe = spec.fp16_safe if spec is not None else True
+    if not fp16_safe:
+        return "bfloat16" if capability >= CUDA_BF16_MIN_CAPABILITY else None
+    if capability >= CUDA_FP16_MIN_CAPABILITY:
         return "float16"
     return None
 
@@ -292,22 +352,38 @@ def build_embeddings(
     dry_run: bool = False,
     progress: EmbeddingProgressCallback | None = None,
     commit_each_batch: bool = False,
+    authentic_only: bool = False,
+    langs: Sequence[str] | None = None,
+    in_force_on: Sequence[date] | None = None,
 ) -> EmbeddingBuildStats:
     """Embed chunks missing a fresh row for the requested model.
 
     With commit_each_batch, every embedded batch is committed as it lands so a
     killed or timed-out run keeps the vectors already computed — embedding is
     minutes of CPU work, and the input-hash check makes re-runs resume cleanly.
+
+    `authentic_only` / `langs` / `in_force_on` narrow the build to what
+    evidence retrieval searches (the law's own text, in the country's
+    language, on the dates asked): a candidate model under evaluation does not
+    need the ~16k machine-translated chunks nor every superseded version.
     """
     if not dry_run:
-        ensure_bge_m3_model(conn, model_id=model_id)
+        ensure_embedding_model(conn, get_model(model_id))
         if commit_each_batch:
             conn.commit()  # the model row must survive even if the first batch doesn't
 
     stats = EmbeddingBuildStats()
     batch: list[ChunkForEmbedding] = []
 
-    for chunk in iter_chunks_needing_embeddings(conn, model_id=model_id, limit=limit):
+    chunks = iter_chunks_needing_embeddings(
+        conn,
+        model_id=model_id,
+        limit=limit,
+        authentic_only=authentic_only,
+        langs=langs,
+        in_force_on=in_force_on,
+    )
+    for chunk in chunks:
         stats = EmbeddingBuildStats(stats.scanned + 1, stats.embedded, stats.skipped)
         batch.append(chunk)
         _emit_progress(progress, "candidate", stats, len(batch))
@@ -343,23 +419,51 @@ def _emit_progress(
     progress({"phase": phase, "scanned": stats.scanned, "embedded": stats.embedded, "batch_size": batch_size})
 
 
+_SCOPE_FILTER = """
+  AND (NOT %(authentic_only)s OR t.authenticity <> 'machine_translation')
+  AND (%(langs)s::text[] IS NULL OR t.lang = ANY(%(langs)s::text[]))
+  AND (%(in_force_on)s::date[] IS NULL OR EXISTS (
+        SELECT 1 FROM legal_unit_versions v, unnest(%(in_force_on)s::date[]) AS d(day)
+        WHERE v.id = t.version_id AND v.validity @> d.day))
+"""
+
+
+def _scope_params(
+    model_id: int,
+    authentic_only: bool,
+    langs: Sequence[str] | None,
+    in_force_on: Sequence[date] | None = None,
+) -> dict[str, object]:
+    return {
+        "model_id": model_id,
+        "authentic_only": authentic_only,
+        "langs": list(langs) if langs else None,
+        "in_force_on": list(in_force_on) if in_force_on else None,
+    }
+
+
 def iter_chunks_needing_embeddings(
     conn: Connection,
     *,
     model_id: int = 1,
     limit: int | None = None,
+    authentic_only: bool = False,
+    langs: Sequence[str] | None = None,
+    in_force_on: Sequence[date] | None = None,
 ) -> Iterable[ChunkForEmbedding]:
     """Yield chunks whose embedding row is missing or stale."""
     yielded = 0
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
-            """
+            f"""
             SELECT c.id, c.context_header, c.content, e.input_hash
             FROM chunks c
-            LEFT JOIN embeddings e ON e.chunk_id = c.id AND e.model_id = %s
+            JOIN unit_texts t ON t.id = c.unit_text_id
+            LEFT JOIN embeddings e ON e.chunk_id = c.id AND e.model_id = %(model_id)s
+            WHERE true {_SCOPE_FILTER}
             ORDER BY c.id
             """,
-            (model_id,),
+            _scope_params(model_id, authentic_only, langs, in_force_on),
         )
         for row in cur:
             input_text = embedding_input(row["context_header"], row["content"])
@@ -377,6 +481,9 @@ def count_chunks_needing_embeddings(
     *,
     model_id: int = 1,
     limit: int | None = None,
+    authentic_only: bool = False,
+    langs: Sequence[str] | None = None,
+    in_force_on: Sequence[date] | None = None,
 ) -> int:
     """Count the chunks `iter_chunks_needing_embeddings` would yield.
 
@@ -386,31 +493,47 @@ def count_chunks_needing_embeddings(
     """
     with conn.cursor() as cur:
         cur.execute(
-            """
+            f"""
             SELECT count(*)
             FROM chunks c
-            LEFT JOIN embeddings e ON e.chunk_id = c.id AND e.model_id = %s
+            JOIN unit_texts t ON t.id = c.unit_text_id
+            LEFT JOIN embeddings e ON e.chunk_id = c.id AND e.model_id = %(model_id)s
             WHERE e.input_hash IS DISTINCT FROM
                   encode(sha256(convert_to(c.context_header || chr(10) || c.content, 'UTF8')), 'hex')
+            {_SCOPE_FILTER}
             """,
-            (model_id,),
+            _scope_params(model_id, authentic_only, langs, in_force_on),
         )
         total = int(cur.fetchone()[0])
     return min(total, limit) if limit is not None else total
 
 
-def ensure_bge_m3_model(conn: Connection, *, model_id: int = 1) -> None:
-    """Ensure the BGE-M3 model registry row exists."""
+def ensure_embedding_model(conn: Connection, spec: EmbeddingModelSpec) -> None:
+    """Ensure the model's `embedding_models` row exists (BGE-M3 is the default).
+
+    An existing row is left alone: `is_default` is an operator's decision and
+    the seeded BGE-M3 row predates the registry's config keys.
+    """
+    row = spec.registry_row()
     with conn.cursor() as cur:
         cur.execute(
             """
             INSERT INTO embedding_models
               (id, name, provider, native_dim, stored_dim, normalize, is_default, config)
-            VALUES (%s, 'bge-m3', 'self-hosted', %s, %s, true, true, '{"context": 8192}'::jsonb)
+            VALUES (%s, %s, %s, %s, %s, true, %s, %s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (model_id, BGE_M3_DIM, BGE_M3_DIM),
+            (
+                row["id"],
+                row["name"],
+                row["provider"],
+                row["native_dim"],
+                row["stored_dim"],
+                spec.id == DEFAULT_MODEL.id,
+                Jsonb(row["config"]),
+            ),
         )
+
 
 
 def embedding_input(context_header: str, content: str) -> str:

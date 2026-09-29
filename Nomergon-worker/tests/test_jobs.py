@@ -142,6 +142,14 @@ def test_embed_limit_and_dry_run(cfg: WorkerConfig) -> None:
     assert argv[-2:] == ["--database-url", DB]
 
 
+def test_embed_candidate_model_loads_its_own_weights(cfg: WorkerConfig) -> None:
+    # The configured path holds BGE-M3; a registry candidate must not be built from it.
+    argv = build("embed", {"model_id": 2, "precision": "fp16", "authentic_only": True}, cfg)
+    assert "--model-path" not in argv
+    assert argv[argv.index("--precision") + 1] == "fp16"
+    assert "--authentic-only" in argv
+
+
 # --------------------------------------------------------------- translate --
 
 

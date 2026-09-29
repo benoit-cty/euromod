@@ -1,5 +1,9 @@
 """The encode lane: BGE-M3 kept warm in-process, answering ``encode`` jobs.
 
+A job naming another registry model (``model_id``, e.g. while that model is
+evaluated against BGE-M3) loads it on first use and keeps it too; BGE-M3 is
+the only one loaded at start.
+
 A query vector for the UI's semantic search (or the pipeline's retrieval when
 ``WORKFLOW_ENCODER=db``) must never wait behind a GPU batch, so this thread
 has its own connection and its own claim query. The answer format is that of
@@ -36,7 +40,7 @@ def describe_device() -> str:
     return "cpu"
 
 
-def load_backend(model_path: str) -> Any:
+def load_backend(model_path: str | None, model_id: int = 1) -> Any:
     """Load ``SentenceTransformerBackend`` on CUDA when usable, else on the CPU.
 
     Mirrors ``query_embeddings.main``'s torch choices; the one addition is the
@@ -44,15 +48,17 @@ def load_backend(model_path: str) -> Any:
     (``raise_for_unsupported_cuda_arch``) or a CUDA load failure degrades to
     the CPU instead of leaving the lane dead.
     """
+    from nomotheca_ingest.core.embedding_models import get_model
     from nomotheca_ingest.core.embeddings import SentenceTransformerBackend, resolve_torch_device
 
+    spec = get_model(model_id)
     device = resolve_torch_device(None, backend="torch")
     if device.startswith("cuda"):
         try:
-            return SentenceTransformerBackend(model_path=model_path, backend="torch", device=device)
+            return SentenceTransformerBackend(model_path=model_path, backend="torch", device=device, spec=spec)
         except RuntimeError as exc:
             log.warning("CUDA encoder unavailable (%s); falling back to the CPU", exc)
-    return SentenceTransformerBackend(model_path=model_path, backend="torch", device="cpu")
+    return SentenceTransformerBackend(model_path=model_path, backend="torch", device="cpu", spec=spec)
 
 
 class EncodeLane(threading.Thread):
@@ -63,6 +69,7 @@ class EncodeLane(threading.Thread):
         self.cfg = cfg
         self.stop_event = stop
         self.backend: Any = None
+        self.extra_backends: dict[int, Any] = {}
         self.load_error: str | None = None
         self.ready = threading.Event()
         self._next_load_attempt = 0.0
@@ -108,15 +115,26 @@ class EncodeLane(threading.Thread):
             log.error("encoder failed to load %s: %s", self.cfg.embedding_model_path, self.load_error)
             return False
 
+    def _backend_for(self, model_id: int) -> Any:
+        """The warm backend for a registry model; non-default ones load on first use."""
+        if model_id not in self.extra_backends:
+            started = time.monotonic()
+            self.extra_backends[model_id] = load_backend(None, model_id)
+            log.info("encoder ready for model %s (%.1fs)", model_id, time.monotonic() - started)
+        return self.extra_backends[model_id]
+
     def _answer(self, conn: Any, job: dict[str, Any]) -> None:
         job_id = int(job["id"])
-        if not self._ensure_backend():
+        payload = dict(job["payload"] or {})
+        model_id = int(payload.pop("model_id", 1))
+        if model_id == 1 and not self._ensure_backend():
             db.finish_job(conn, job_id, "failed", error=f"encoder unavailable: {self.load_error}")
             return
         try:
             from nomotheca_ingest.query_embeddings import handle_request
 
-            response = handle_request(self.backend, dict(job["payload"] or {}))
+            backend = self.backend if model_id == 1 else self._backend_for(model_id)
+            response = handle_request(backend, payload)
         except Exception as exc:  # noqa: BLE001
             db.finish_job(conn, job_id, "failed", error=f"{type(exc).__name__}: {exc}")
             return

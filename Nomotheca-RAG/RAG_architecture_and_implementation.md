@@ -12,7 +12,7 @@ format:
 ---
 
 **Audience:** the EUROMOD team at JRC.B.2, national-team colleagues and project stakeholders.
-No IT background is assumed. Deployment and hosting questions are covered separately in
+Deployment and hosting questions are covered separately in
 [it_needs_for_deployment.md](../docs/it_needs_for_deployment.md).
 
 **Purpose:** explain *why* Nómos is built around a RAG, *what logic* it follows and *how* it
@@ -38,7 +38,8 @@ the code.
   article), *by keywords* (exact legal terms) and *by meaning* (vectors computed by the
   **BGE-M3** model). Their results are merged into one ranked list.
 - **Why BGE-M3.** Open, free, multilingual (Lithuanian and Dutch included), able to read a whole
-  article at once, and runnable **inside JRC** so no legal text has to leave.
+  article at once, and runnable **inside JRC** to reduce cost. Newer open models covering all
+  24 EU languages can be **compared with it on our own golden set** (§5.4–5.5).
 - **Runs anywhere.** The same model runs on an NVIDIA **GPU** (fast) or on a plain **CPU**
   (slower, no special hardware). Both produce the same vectors.
 - **English for everyone.** Every foreign-language article can get an **English machine
@@ -288,19 +289,17 @@ against the project's own constraints:
 
 | Requirement | Why it matters here | BGE-M3 |
 |------|--------|--------|
-| **Multilingual** | Five pilot languages today, 24 EU languages tomorrow; keyword search is weakest in Lithuanian (no stemmer available) | Trained on 100+ languages, including Lithuanian, Dutch, Spanish, French and Irish |
+| **Multilingual** | Five pilot languages today, the 24 official languages of the 27 member states tomorrow; keyword search is weakest in Lithuanian (no stemmer available) | Trained on 100+ languages, including Lithuanian, Dutch, Spanish, French and Irish |
 | **Long input** | A legal article can be long; cutting it loses context | Reads up to ~8 000 tokens: most articles fit as one chunk |
 | **Runs at JRC** | No legal text or query should have to leave JRC while the model-hosting policy is open | Open weights, runs on JRC hardware, no external API |
 | **Free and open licence** | Redistribution to JRC and reuse by other services | MIT licence |
 | **Modest hardware** | Must run on a standard GPU or even on CPU | ~570 M parameters; ~4 GB of GPU memory |
 | **Strong retrieval quality** | Finds the right article | Among the best open multilingual retrieval models at selection time |
 
-Alternatives considered for comparison: `multilingual-e5-large` (shorter input), `jina-embeddings-v3`
-(licence to check) and OpenAI's `text-embedding-3-large` (external API, only if JRC policy
-allows it). The database keeps one vector per chunk **per model**, so these can be added side by
-side and compared in the final report without changing the design. Changing the default model
-means recomputing every vector, which is why we stay with BGE-M3 unless the evaluation shows a
-clear gain.
+The database keeps one vector per chunk **per model**, so alternatives can be added side by
+side and compared without changing the design (§5.4–5.5). Changing the default model means
+recomputing every vector, which is why we stay with BGE-M3 unless the evaluation shows a clear
+gain.
 
 ### 5.3 CPU or GPU: the same result, different speed
 
@@ -314,12 +313,102 @@ load the model. The worker exists in two builds from the same recipe:
   run in full precision). Embedding a whole country's corpus takes **hours**.
 - **CPU build.** No graphics card and no CUDA libraries needed, so the image is much smaller.
   On Intel processors the model runs through **OpenVINO**, Intel's optimised runtime (which can
-  also use the Intel integrated GPU or NPU). Embedding a whole corpus takes **days**, but a
+  also use the Intel integrated GPU or NPU). Embedding the whole corpus takes **days**, but a
   single search question is still encoded in about a second.
 
 Both builds produce **the same vectors** in the same table. The choice between them is about
 budget and speed and has no effect on results. The usual pattern: bulk embedding on a GPU
 (overnight batches), everyday searching on whichever machine is available.
+
+### 5.4 Alternatives that cover all EU languages
+
+The 27 member states have **24 official languages**. The two that most models handle worst are
+**Irish** and **Maltese**. Both countries also publish their law in English, so English
+retrieval is a safety net there, but a model for 27 countries should still read them.
+
+Since BGE-M3 was released (early 2024), open models trained for multilingual retrieval have
+improved a lot. The candidates below all have **open weights and run inside JRC**. They are
+registered in Nomotheca, so any of them can be built and compared with one command:
+
+| Model | Size | Reads up to (tokens) | Licence | EU languages | Why consider it |
+|---|---|---|---|---|---|
+| **BGE-M3** (current) | 0.57 B | 8 000 | MIT | 23 of 24 (no Maltese) | The baseline |
+| **Qwen3-Embedding-0.6B** | 0.6 B | 32 000 | Apache 2.0 | all 24 (per its authors) | Same size and vector length as BGE-M3, clearly ahead on the public multilingual benchmark |
+| **Qwen3-Embedding-4B / 8B** | 4 B / 8 B | 32 000 | Apache 2.0 | all 24 (per its authors) | The best open models on that benchmark. They need a newer GPU (§5.6) |
+| **Arctic-Embed-L v2** (Snowflake) | 0.57 B | 8 000 | Apache 2.0 | as BGE-M3 | Same architecture as BGE-M3, further tuned for retrieval: a drop-in swap |
+| **multilingual-E5-large-instruct** | 0.56 B | 512 | MIT | as BGE-M3 | Strong, but reads about one page: long articles are cut |
+| **EmbeddingGemma** (Google) | 0.3 B | 2 000 | Gemma terms | 100+ languages | Small and fast. Licence terms to check, and the download needs registration |
+| **gte-multilingual-base** (Alibaba) | 0.3 B | 8 000 | Apache 2.0 | 70+ languages | The cheapest option |
+
+On the public multilingual benchmark (MMTEB: general-purpose texts, not law), the Qwen3 family
+scores well above BGE-M3: roughly 64 for the 0.6B and 70 for the 8B, against 60 for BGE-M3.
+Two cautions apply. A general-purpose ranking does not carry over automatically to national tax
+and social-security law. And some top-ranked models (from NVIDIA and Jina, for example) are
+**licensed for non-commercial use only**, which rules them out for JRC production. That is why
+we measure on our own task (§5.5) before changing anything.
+
+Models behind an external API (OpenAI, Google, Mistral, Cohere) could be compared the same way,
+but only if JRC policy allows sending legislation and queries outside.
+
+### 5.5 Comparing models on our own task
+
+The comparison uses the **golden set** of the evaluation pipeline (Nomokrisis): parameters for
+which a human has verified which article states the value. Each one becomes a search test:
+
+1. **The question** is exactly what Nómos sends when it looks for that parameter (the framing
+   step of §3.3): its label and description in the law's language, plus Country Report
+   vocabulary.
+2. **The answer** is the article (or articles) the verified case names, looked up in the library
+   on the right date and in the right country.
+3. **Each model ranks all the country's texts** in force on that date. We record where the right
+   article appears: first, in the top 3, or in the top 15.
+
+The scores are simple and deterministic, with no AI judge:
+
+- **hit@1**: the right article is the first result;
+- **hit@3**: it is in the top 3, the results the hybrid search always passes on to the language
+  model;
+- **hit@15**: it is somewhere in what the language model reads;
+- **MRR**: the average of 1 ÷ rank (1 means always first, 0.5 always second).
+
+All models answer the same 64 questions over the same texts, and a question counts only if every
+model was asked it. Keyword search and the full hybrid search are scored alongside, to check
+that a better embedding also improves what Nómos actually retrieves.
+
+RESULTS_PLACEHOLDER
+
+### 5.6 Do we need a bigger GPU?
+
+**For embeddings, no.** Measured on the development workstation, a 2017 NVIDIA GTX 1080 Ti with
+11 GB of memory, shared with the worker:
+
+| | BGE-M3 | Qwen3-Embedding-0.6B |
+|---|---|---|
+| Video memory used | ~4.3 GB | ~5.4 GB |
+| Speed (whole articles) | ~7.5 articles/s | SPEED_QWEN |
+| All authentic pilot texts (~23 000 articles) | under 1 hour | TIME_QWEN |
+| One search question | tens of milliseconds | tens of milliseconds |
+
+The library is built on demand, so it grows with the parameters, not with the whole legal
+system. At the pilot's density, 27 countries would be about 120 000 authentic articles: **one
+night** of embedding on this card. After that, only new or amended articles are embedded again.
+The 0.6-billion-parameter class (every drop-in candidate above) therefore runs comfortably on
+the existing GPU, and a plain CPU is enough to encode everyday search questions.
+
+Two limits of this card are worth knowing:
+
+- **No fast half-precision mode.** Newer GPUs run models in 16-bit precision at about twice the
+  speed and half the memory. The 1080 Ti predates that: we measured 16-bit to be **four times
+  slower** than 32-bit, so it runs everything in 32-bit.
+- **The large models do not fit.** Qwen3-Embedding-4B needs about 16 GB in 32-bit, the 8B about
+  32 GB. They need a recent card with 16-bit support: **16 to 24 GB for the 4B, 24 GB or more for
+  the 8B** (an NVIDIA L4 or RTX 4090 class card, for example). They also cost 7 to 13 times more
+  computation per article.
+
+So a bigger GPU becomes worthwhile only in two cases: if the comparison shows that a **4B or 8B
+model** brings a gain the 0.6B class does not, or if Nómos starts running its **language
+models** locally instead of through an API. Language models, not embeddings, are what need
+large GPUs.
 
 {{< pagebreak >}}
 
@@ -393,23 +482,31 @@ A _skill_ has been prepared in `.claude/skills/add-country/SKILL.md` so a coding
 The Nomoscope UI display the state of the database:
 ![The Nomoscope UI display the state of the database](figures/rag-report/ui_database.png){width=100%}
 
-Here we can see that the embeddings cover all article, as the translation for XX.
+Here we can see that the embeddings cover all articles, but we are missing translations for Spain and Netherlands.
 
-It's possible to start them from the interface by clicking on 
+It's possible to start them from the 'Ingest' panel.
 
-## . Limitation
+This panel also allow for custom ingest of a webpage or a PDF:
+![The Nomoscope UI display the ingestion of a custom document](figures/rag-report/ui_ingest_document.png){width=100%}
 
-- **Coverage follows demand.** The library holds what EUROMOD parameters have needed so far.
-  A proposal of "not found" is most often a missing act, and the scout is there to close
-  such gaps.
-- **Enrichment can lag.** A freshly ingested act is searchable by keyword immediately, by
-  meaning only once its embeddings are computed, and readable in English once translated.
-  The database tab of the UI shows these coverage figures per country.
-- **The model's "confidence" is not a probability.** Proposals should be judged on
-  mechanical checks: whether the quote was verified, the critique's verdict, the routing.
-  The model's self-reported confidence score carries much less information.
-- **Humans stay in charge.** Nothing is written into EUROMOD files automatically. Every value is
-  accepted, edited or rejected by an analyst, and that decision is recorded permanently.
+So the RAG database is not limited to the document the AI find. Not even to laws related to Euromod, it could be used for other purpose of the JRC.
+
+## Conclusion
+
+Nomotheca is the foundation of Nómos: a library of national legislation and a search engine on top of it. It gives the agentic workflow what a language model cannot provide by itself: the law **as it read on a given date**, an **identified passage** to cite and a **stored text** against which every quote is verified. That is what turns a proposed parameter value into something an analyst can check in seconds, instead of a claim to believe.
+
+Four choices make it trustworthy and keep it practical:
+
+- **Built on demand, archived first.** The library holds what EUROMOD parameters depend on, each text kept with its origin and its dates, so any answer can be reproduced.
+- **Hybrid search.** Citation lookup, keywords and meaning (embeddings) run together, so the right article is found whether the parameter's name matches the law's wording or not.
+- **Open and local.** The model, the archive and the database run inside JRC, on a GPU or on a plain CPU. No legal text has to leave.
+- **Original text as evidence, English as help.** The translation lets any analyst read any country. The proof is always in the authentic text.
+
+The library is also not tied to EUROMOD. The same pipeline ingests any web page or PDF, and a new country is one adapter away (§9), so it can serve other JRC uses.
+
+The main limit is coverage: the pilot library is only as complete as the acts ingested so far. When a search finds nothing, the first thing to check is a missing act or a missing translation, not the model. The next step is to measure retrieval on the golden set (Nomokrisis) and extend the library to more member states.
+
+CONCLUSION_PLACEHOLDER
 
 {{< pagebreak >}}
 
@@ -452,6 +549,8 @@ ones needed for this report.
 | **Chunk** | The piece of text that is searched and cited, usually one article with a header. |
 | **Embedding / vector** | A list of numbers (1 024 for BGE-M3) representing a text's meaning. Similar meanings get similar numbers. |
 | **BGE-M3** | The open multilingual embedding model we use (§5). |
+| **Embedding benchmark** | The side-by-side test of embedding models on questions built from the golden set (§5.5). |
+| **hit@k / MRR** | Search scores: the right article is in the top *k* results / the average of 1 ÷ its rank. |
 | **Full-text (keyword) search** | Word-based search in the law's language, with stemming and accent-insensitive matching. |
 | **Hybrid search** | Keyword and meaning searches run together and merged. |
 | **RRF** | *Reciprocal Rank Fusion*: the rule that merges ranked lists, favouring chunks ranked high in both. |

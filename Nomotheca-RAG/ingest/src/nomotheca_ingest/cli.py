@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from datetime import date
 from typing import Annotated
 
@@ -10,9 +11,11 @@ import psycopg
 import typer
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
+from nomotheca_ingest.core.embedding_models import MODELS, get_model
 from nomotheca_ingest.core.embeddings import (
+    DEFAULT_MAX_SEQ_LENGTH,
     EMBEDDING_BACKENDS,
-    BGE_M3_MODEL,
+    PRECISIONS,
     SentenceTransformerBackend,
     build_embeddings,
     count_chunks_needing_embeddings,
@@ -296,15 +299,54 @@ def tui() -> None:
     PipelineTui().run()
 
 
+@embeddings_app.command("models")
+def list_embedding_models() -> None:
+    """List the embedding models the registry can build (id, key, dimension, licence)."""
+    for spec in MODELS:
+        typer.echo(
+            f"{spec.id:>2}  {spec.key:<32} {spec.hf_id:<42} {spec.native_dim:>4}d "
+            f"({spec.dim_fit}) ctx={spec.max_seq_length:<6} {spec.licence}"
+        )
+        if spec.notes:
+            typer.echo(f"    {spec.notes}")
+
+
 @embeddings_app.command("build")
 def build_chunk_embeddings(
     database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
-    model_path: Annotated[str, typer.Option("--model-path", help="Local path or Hugging Face id for BGE-M3.")] = BGE_M3_MODEL,
+    model: Annotated[
+        str | None,
+        typer.Option("--model", "-m", help="Registry key or id (see `embeddings models`); default: --model-id."),
+    ] = None,
+    model_path: Annotated[
+        str | None,
+        typer.Option("--model-path", help="Local path overriding the registry's Hugging Face id (same model)."),
+    ] = None,
     backend: Annotated[
         str,
         typer.Option("--backend", help="sentence-transformers backend: torch or openvino."),
     ] = "torch",
-    model_id: Annotated[int, typer.Option("--model-id", min=1)] = 1,
+    model_id: Annotated[int, typer.Option("--model-id", min=1, help="Registry id; 1 = BGE-M3.")] = 1,
+    precision: Annotated[
+        str,
+        typer.Option("--precision", help="auto | fp32 | fp16 | bf16 (auto: see embeddings.cuda_dtype_for)."),
+    ] = "auto",
+    max_seq_length: Annotated[
+        int,
+        typer.Option("--max-seq-length", min=16, help="Token cap per chunk (longer chunks are truncated)."),
+    ] = DEFAULT_MAX_SEQ_LENGTH,
+    authentic_only: Annotated[
+        bool,
+        typer.Option("--authentic-only", help="Skip machine translations (evidence retrieval never searches them)."),
+    ] = False,
+    langs: Annotated[
+        list[str] | None,
+        typer.Option("--lang", help="Only chunks in this language (repeatable)."),
+    ] = None,
+    in_force_on: Annotated[
+        list[str] | None,
+        typer.Option("--in-force-on", help="Only versions in force on this YYYY-MM-DD (repeatable)."),
+    ] = None,
     batch_size: Annotated[int, typer.Option("--batch-size", min=1)] = 16,
     limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
     device: Annotated[
@@ -333,10 +375,22 @@ def build_chunk_embeddings(
         typer.Option("--slow-tokenizer", help="Use the slow tokenizer; may require sentencepiece."),
     ] = False,
 ) -> None:
-    """Build local BGE-M3 embeddings for chunks missing fresh vectors."""
+    """Build local embeddings (BGE-M3 unless --model) for chunks missing fresh vectors."""
     if backend not in EMBEDDING_BACKENDS:
         allowed = ", ".join(EMBEDDING_BACKENDS)
         raise typer.BadParameter(f"backend must be one of: {allowed}")
+    if precision not in PRECISIONS:
+        raise typer.BadParameter(f"precision must be one of: {', '.join(PRECISIONS)}")
+    try:
+        spec = get_model(model if model is not None else model_id)
+    except KeyError as exc:
+        raise typer.BadParameter(str(exc.args[0])) from exc
+    model_id = spec.id
+    scope = {
+        "authentic_only": authentic_only,
+        "langs": langs or None,
+        "in_force_on": [date.fromisoformat(day) for day in in_force_on] if in_force_on else None,
+    }
     embedding_backend = (
         _DryRunEmbeddingBackend()
         if dry_run
@@ -347,14 +401,18 @@ def build_chunk_embeddings(
             fix_mistral_regex=fix_mistral_regex,
             slow_tokenizer=slow_tokenizer,
             encode_batch_size=encode_batch_size or batch_size,
+            spec=spec,
+            precision=precision,
+            max_seq_length=max_seq_length,
         )
     )
     if not dry_run:
         # stderr: stdout carries the '@progress' protocol a wrapping UI parses.
         typer.echo(embedding_backend.description, err=True)
+    started = time.monotonic()
     with psycopg.connect(database_url) as conn:
         if progress_json:
-            total = count_chunks_needing_embeddings(conn, model_id=model_id, limit=limit)
+            total = count_chunks_needing_embeddings(conn, model_id=model_id, limit=limit, **scope)
             stats = build_embeddings(
                 conn,
                 embedding_backend,
@@ -364,6 +422,7 @@ def build_chunk_embeddings(
                 dry_run=dry_run,
                 progress=_embedding_json_progress(total),
                 commit_each_batch=True,
+                **scope,
             )
         else:
             stats = _build_embeddings_with_optional_progress(
@@ -374,8 +433,10 @@ def build_chunk_embeddings(
                 limit=limit,
                 dry_run=dry_run,
                 show_progress=show_progress,
+                **scope,
             )
         conn.commit()
+    elapsed = time.monotonic() - started
     if dry_run:
         typer.echo(
             f"scanned={stats.scanned} would_embed={stats.embedded} "
@@ -384,13 +445,24 @@ def build_chunk_embeddings(
     else:
         typer.echo(
             f"scanned={stats.scanned} embedded={stats.embedded} skipped={stats.skipped} "
-            f"model_id={model_id} backend={backend} device={embedding_backend.device} dry_run=False"
+            f"model={spec.key} model_id={model_id} backend={backend} device={embedding_backend.device} "
+            f"seconds={elapsed:.0f} dry_run=False"
         )
         if stats.skipped:
             typer.echo(
                 f"note: {stats.skipped} chunk(s) were re-chunked by a concurrent ingest "
                 "during this run; re-run the build to embed the replacements."
             )
+        result = {
+            "model": spec.key,
+            "model_id": model_id,
+            "embedded": stats.embedded,
+            "seconds": round(elapsed, 1),
+            "chunks_per_second": round(stats.embedded / elapsed, 2) if elapsed and stats.embedded else None,
+            "backend": embedding_backend.description,
+            "peak_vram_gib": _peak_vram_gib(embedding_backend),
+        }
+        typer.echo("@result " + json.dumps(result))
 
 
 @translate_app.command("run")
@@ -597,6 +669,14 @@ class _DryRunEmbeddingBackend:
         return []
 
 
+def _peak_vram_gib(embedding_backend: object) -> float | None:
+    """Peak GPU memory this process allocated, for sizing a card; None off-GPU."""
+    torch = getattr(embedding_backend, "_torch", None)
+    if torch is None:
+        return None
+    return round(torch.cuda.max_memory_allocated() / 1024**3, 2)
+
+
 def _build_embeddings_with_optional_progress(
     *,
     conn: psycopg.Connection,
@@ -606,8 +686,12 @@ def _build_embeddings_with_optional_progress(
     limit: int | None,
     dry_run: bool,
     show_progress: bool,
+    authentic_only: bool = False,
+    langs: list[str] | None = None,
+    in_force_on: list[date] | None = None,
 ):
     """Build embeddings with an optional Rich progress display."""
+    scope = {"authentic_only": authentic_only, "langs": langs, "in_force_on": in_force_on}
     if not show_progress:
         return build_embeddings(
             conn,
@@ -617,6 +701,7 @@ def _build_embeddings_with_optional_progress(
             limit=limit,
             dry_run=dry_run,
             commit_each_batch=True,
+            **scope,
         )
 
     with Progress(
@@ -646,6 +731,7 @@ def _build_embeddings_with_optional_progress(
             dry_run=dry_run,
             progress=update,
             commit_each_batch=True,
+            **scope,
         )
 
 

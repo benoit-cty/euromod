@@ -222,6 +222,33 @@ Use `--model-path /path/to/local/bge-m3` to point at an already downloaded model
 Use `--dry-run` to count chunks that need fresh embeddings without loading the model
 or writing rows.
 
+### Other embedding models
+
+BGE-M3 is registry id 1 of `core/embedding_models.py`; the registry also holds
+candidates to compare against it (`embeddings models` lists them: Qwen3-Embedding
+0.6B/4B/8B, Arctic-Embed-L v2, multilingual-E5-large-instruct, EmbeddingGemma,
+gte-multilingual). `--model <key|id>` builds a model's vectors under its own
+`embeddings.model_id`, next to BGE-M3's; the registry carries each model's query
+prompt (the query encoder applies it, never the passage build) and fits its
+dimension to the 1024-d column (Matryoshka truncation above, zero-padding below —
+padding leaves every cosine unchanged). A candidate under evaluation only needs
+what evidence retrieval searches:
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-cuda uv run python -m nomotheca_ingest.cli embeddings build \
+	--model qwen3-embedding-0.6b --authentic-only \
+	--in-force-on 2025-06-01 --in-force-on 2025-07-01 \
+	--batch-size 64 --encode-batch-size 8
+```
+
+The last stdout line is `@result {…}` with throughput and peak VRAM. Score it with
+`nomokrisis-eval run-embeddings --embedding-model-id <id>` and
+`compare-embeddings` (see the Nomokrisis README). Switching production to a
+model is `WORKFLOW_EMBEDDING_MODEL_ID=<id>` once its vectors cover the corpus, plus
+an HNSW index for its id (`CREATE INDEX … WHERE model_id = <id>`, as seed.sql does
+for BGE-M3). `--precision auto` keeps fp32 on Pascal (fp16 measured 4x slower
+end to end on the 1080 Ti) and never picks fp16 for bf16-trained Qwen3/Gemma.
+
 See below if you want Nvidia GPU acceleration or even lower for Intel CPU acceleration.
 
 ### NVIDIA GPU (CUDA)
