@@ -18,13 +18,16 @@
 # (legislation sources, LLM APIs, the Hugging Face hub for BGE-M3 on first run).
 
 # Shared definition of the worker service; `worker` (GPU) and `worker-cpu`
-# differ only in the device reservation, and profiles keep both out of a plain
+# differ in the device reservation and the image (worker-cpu is built with the
+# CPU-only torch, no nvidia-* libraries), and profiles keep both out of a plain
 # `docker compose up -d` so the stack still starts on a box without the NVIDIA
 # runtime (a GPU reservation fails there before the container starts).
 x-worker: &worker
   build:
     context: .
     dockerfile: Nomergon-worker/Dockerfile
+    args:
+      WORKER_VARIANT: gpu
   image: nomergon-worker
   depends_on:
     db:
@@ -117,6 +120,12 @@ services:
 
   worker-cpu:
     <<: *worker
+    build:
+      context: .
+      dockerfile: Nomergon-worker/Dockerfile
+      args:
+        WORKER_VARIANT: cpu
+    image: nomergon-worker-cpu
     container_name: nomergon-worker-cpu
     profiles: [cpu]
 

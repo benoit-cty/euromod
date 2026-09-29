@@ -16,13 +16,24 @@ dependencies = [
   "typer>=0.12",
   # The three packages whose CLIs the worker runs as subprocesses, installed
   # into this one environment so every job runs from `sys.executable -m …`.
-  # embeddings-cuda: torch from the cu126 index (see [tool.uv.sources]) — the
-  # Pascal-capable channel; translate: the LLM translator; legifrance: the
-  # Playwright tier-3 fallback of the Legifrance resolver (ADR 0002).
-  "nomotheca-legislation-ingest[embeddings-cuda,translate,legifrance]",
+  # translate: the LLM translator; legifrance: the Playwright tier-3 fallback
+  # of the Legifrance resolver (ADR 0002). torch comes from the gpu or cpu
+  # extra below.
+  "nomotheca-legislation-ingest[translate,legifrance]",
   "nomoscope-agentic-workflow",
   "nomokrisis-evaluation",
 ]
+
+# The torch build, one of two extras that cannot share an environment: `gpu`
+# takes torch from the cu126 index with ~4 GB of nvidia-* wheels; `cpu` the
+# CPU-only wheel, for a box without an NVIDIA GPU (`uv sync --extra cpu`, the
+# worker-cpu image). Both spell out the embeddings extra of
+# Nomotheca-RAG/ingest: going through `nomotheca-legislation-ingest[embeddings]`
+# would bring that package's own extra-scoped torch sources, a conflict uv
+# cannot resolve from here.
+[project.optional-dependencies]
+gpu = ["sentence-transformers[openvino]>=3.0", "torch>=2.13.0"]
+cpu = ["sentence-transformers[openvino]>=3.0", "torch>=2.13.0"]
 
 [dependency-groups]
 dev = ["pytest>=8"]
@@ -37,19 +48,30 @@ packages = ["src/nomergon"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 
-# torch must come from the CUDA 12.6 wheel index: it is the newest PyTorch
-# channel that still ships Pascal (sm_61) kernels (GTX 1080 Ti). The cu126
-# wheels run on a CPU-only box too, so one environment serves both. uv only
-# honours the sources of the root project, so the index and the path sources
-# of the transitive packages are repeated here rather than inherited from
-# Nomotheca-RAG/ingest/pyproject.toml.
+# gpu: torch from the CUDA 12.6 wheel index, the newest PyTorch channel that
+# still ships Pascal (sm_61) kernels (GTX 1080 Ti). The cu126 wheels run on a
+# CPU-only box too, but their nvidia-* libraries make the image ~4 GB larger,
+# hence the cpu extra. uv only honours the sources of the root project, so the
+# indexes and the path sources of the transitive packages are repeated here
+# rather than inherited from Nomotheca-RAG/ingest/pyproject.toml.
 [[tool.uv.index]]
 name = "pytorch_cu126"
 url = "https://download.pytorch.org/whl/cu126"
 explicit = true
 
+[[tool.uv.index]]
+name = "pytorch_cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv]
+conflicts = [[{ extra = "gpu" }, { extra = "cpu" }]]
+
 [tool.uv.sources]
-torch = { index = "pytorch_cu126" }
+torch = [
+  { index = "pytorch_cu126", extra = "gpu" },
+  { index = "pytorch_cpu", extra = "cpu" },
+]
 nomotheca-legislation-ingest = { path = "../Nomotheca-RAG/ingest", editable = true }
 nomoscope-agentic-workflow = { path = "../Nomoscope-agentic-workflow/pipeline", editable = true }
 nomokrisis-evaluation = { path = "../Nomokrisis-evaluation_pipeline", editable = true }

@@ -50,13 +50,16 @@ From the repo root, with the [NVIDIA container toolkit](https://docs.nvidia.com/
 ```bash
 docker compose --profile gpu up -d --build      # stack + worker on the GPU
 docker compose --profile cpu up -d --build      # stack + worker on the CPU (no NVIDIA runtime)
-docker compose logs -f worker
+docker compose logs -f worker                   # worker-cpu for the cpu profile
 ```
 
 Put `COMPOSE_PROFILES=gpu` (or `cpu`) in the repo-root `.env` and a plain
 `docker compose up -d` includes the worker. The profiles exist because a GPU
 reservation fails on a box without the NVIDIA runtime before the container
-starts, and the stack must still come up there.
+starts, and the stack must still come up there. The two profiles also build
+two images: `nomergon-worker` with the CUDA 12.6 torch wheels and
+`nomergon-worker-cpu` (`WORKER_VARIANT=cpu`) with the CPU-only wheel, which
+skips ~4 GB of nvidia-* libraries a laptop has no use for.
 
 The container reads the repo-root `.env` (`env_file`) for provider keys and
 `WORKER_MODELS`; `WORKER_DATABASE_URL`, `PHOENIX_COLLECTOR_ENDPOINT` and
@@ -70,7 +73,8 @@ needs outbound internet at run time (legislation sources, LLM APIs, the hub).
 
 ```bash
 cd Nomergon-worker
-uv sync                    # torch cu126 wheels: ~2.5 GB, run on CPU too
+uv sync --extra gpu        # torch cu126 wheels (~4 GB of nvidia-* libs), run on CPU too
+uv sync --extra cpu        # or: CPU-only torch, no nvidia-* libs
 uv run nomergon init-db    # ops schema (idempotent; the worker does it at start too)
 WORKER_MODELS=mock/extractor uv run nomergon serve
 ```
