@@ -12,9 +12,9 @@
 
   <!-- Band labels -->
   <rect x="10" y="10" width="555" height="28" rx="6" fill="#EAF2FB"/>
-  <text x="287" y="29" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1F3A5F">THE RAG (Nomotheca): this report</text>
+  <text x="287" y="29" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1F3A5F">Nomotheca RAG</text>
   <rect x="575" y="10" width="315" height="28" rx="6" fill="#F3F4F6"/>
-  <text x="732" y="29" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#4B5563">Uses the RAG (Nomoscope)</text>
+  <text x="732" y="29" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#4B5563">Nomoscope</text>
 
   <!-- 1 Portals -->
   <rect x="10" y="60" width="125" height="170" rx="10" fill="#FFFFFF" stroke="#6B7280" stroke-width="1.5"/>

@@ -38,8 +38,9 @@ the code.
   article), *by keywords* (exact legal terms) and *by meaning* (vectors computed by the
   **BGE-M3** model). Their results are merged into one ranked list.
 - **Why BGE-M3.** Open, free, multilingual (Lithuanian and Dutch included), able to read a whole
-  article at once, and runnable **inside JRC** to reduce cost. Newer open models covering all
-  24 EU languages can be **compared with it on our own golden set** (§5.4–5.5).
+  article at once, and runnable **inside JRC** to reduce cost. Four newer open models covering
+  all 24 EU languages, and two rerankers, were **compared with it on our own golden set**: none
+  did better, and the current GPU is enough (§5.4–5.7).
 - **Runs anywhere.** The same model runs on an NVIDIA **GPU** (fast) or on a plain **CPU**
   (slower, no special hardware). Both produce the same vectors.
 - **English for everyone.** Every foreign-language article can get an **English machine
@@ -82,6 +83,8 @@ Large language models read legal text well in many languages. But asked directly
    thinner than of French or English.
 
 ![The same question asked to an LLM alone and to an LLM grounded by the RAG.](figures/rag-report/01_why_rag.svg){width=100%}
+
+{{< pagebreak >}}
 
 ### 1.3 What a RAG changes
 
@@ -334,7 +337,7 @@ registered in Nomotheca, so any of them can be built and compared with one comma
 |---|---|---|---|---|---|
 | **BGE-M3** (current) | 0.57 B | 8 000 | MIT | 23 of 24 (no Maltese) | The baseline |
 | **Qwen3-Embedding-0.6B** | 0.6 B | 32 000 | Apache 2.0 | all 24 (per its authors) | Same size and vector length as BGE-M3, clearly ahead on the public multilingual benchmark |
-| **Qwen3-Embedding-4B / 8B** | 4 B / 8 B | 32 000 | Apache 2.0 | all 24 (per its authors) | The best open models on that benchmark. They need a newer GPU (§5.6) |
+| **Qwen3-Embedding-4B / 8B** | 4 B / 8 B | 32 000 | Apache 2.0 | all 24 (per its authors) | The best open models on that benchmark. They need a newer GPU (§5.7) |
 | **Arctic-Embed-L v2** (Snowflake) | 0.57 B | 8 000 | Apache 2.0 | as BGE-M3 | Same architecture as BGE-M3, further tuned for retrieval: a drop-in swap |
 | **multilingual-E5-large-instruct** | 0.56 B | 512 | MIT | as BGE-M3 | Strong, but reads about one page: long articles are cut |
 | **EmbeddingGemma** (Google) | 0.3 B | 2 000 | Gemma terms | 100+ languages | Small and fast. Licence terms to check, and the download needs registration |
@@ -375,19 +378,84 @@ All models answer the same 64 questions over the same texts, and a question coun
 model was asked it. Keyword search and the full hybrid search are scored alongside, to check
 that a better embedding also improves what Nómos actually retrieves.
 
-RESULTS_PLACEHOLDER
+**Results (29 September 2026, 64 questions: 34 French, 10 Dutch, 8 Spanish, 7 Lithuanian,
+5 Irish).** Meaning search alone ("vector" leg), then what Nómos actually retrieves ("hybrid"):
 
-### 5.6 Do we need a bigger GPU?
+| Model | Vector: hit@1 | hit@3 | hit@15 | MRR | Hybrid: hit@3 | hit@15 | MRR |
+|---|---|---|---|---|---|---|---|
+| **BGE-M3** (current) | **34%** | **59%** | **89%** | **0.49** | **59%** | 84% | **0.49** |
+| gte-multilingual-base | 31% | 55% | **89%** | 0.46 | 55% | **86%** | 0.46 |
+| Qwen3-Embedding-0.6B | 30% | 56% | 78% | 0.44 | 56% | 78% | **0.49** |
+| multilingual-E5-large-instruct | 23% | 45% | 83% | 0.39 | 45% | 78% | 0.40 |
+| Arctic-Embed-L v2 | 33% | 44% | 72% | 0.42 | 44% | 67% | 0.37 |
+
+What this tells us:
+
+- **No candidate beats BGE-M3 on our task.** It is first or tied on every overall score. The
+  public benchmark's ranking does not carry over to national fiscal legislation. The clearest
+  case is Qwen3-Embedding-0.6B, which leads BGE-M3 on the public benchmark: it finds the right
+  Lithuanian article in only 2 of 7 cases (BGE-M3: 5 of 7).
+- **Strengths differ by language.** Arctic is best in Lithuanian (6 of 7 in the top 15, first
+  in 5) but weak in French. gte-multilingual is best in Spanish and Dutch. With 5 to 10
+  questions per language, one question is 10 to 20 points, so these per-language differences
+  are signals, not conclusions.
+- **The smallest model is nearly as good.** gte-multilingual-base (half the size, three times
+  faster) matches BGE-M3's recall. It is the one to keep in mind if CPU cost becomes the
+  constraint.
+- **Side finding: keyword search sometimes hurts.** On the Irish cases, meaning search alone
+  puts the right section in the top 15 every time, but the merged hybrid list only 2 times in
+  5: English fiscal words match many long sections and push the right one out. This is a
+  tuning question for the merge rule (§3.3), not a model question, and is worth a follow-up.
+
+The decision is therefore to **keep BGE-M3**. The comparison takes one command per model and can
+be re-run when the golden set grows (especially in Lithuanian, Irish and Spanish), when a
+country is added, or when a new model is released.
+
+### 5.6 Would a reranker help?
+
+A **reranker** (or *cross-encoder*) is a second model that reads the question and one candidate
+article *together* and scores how well they match. Keyword and meaning search score each text
+separately and the merge only combines ranks, so a reranker is the usual way to improve the
+order of the final list. It runs on the 50 best hybrid candidates, never on the whole library.
+
+We tested the two open multilingual rerankers that fit on our hardware, placed after BGE-M3's
+hybrid search, on the same 64 questions:
+
+| | hit@1 | hit@3 | hit@15 | MRR | Time per question (GPU) |
+|---|---|---|---|---|---|
+| Hybrid search, no reranker (today) | **34%** | **59%** | **84%** | **0.49** | — |
+| + BGE-reranker-v2-m3 | 19% | 45% | 83% | 0.36 | ~5 s |
+| + Qwen3-Reranker-0.6B | 8% | 27% | 66% | 0.21 | ~8 s |
+
+**Both rerankers make the order worse**, clearly so in French, Lithuanian and Dutch. The only
+gain is in English: the BGE reranker brings the Irish sections the keyword search had pushed out
+back into the top 15 (5 of 5, against 2 of 5). The right article was among the 50 candidates for
+92% of the questions, so the reranker had it to work with and still ranked it lower.
+
+The likely reasons, not yet verified: our "question" is a parameter's description, not a
+question; many neighbouring articles of the same code are about the same subject; and a
+reranker reads only the first ~1 000 tokens of a long article, where the relevant figure may
+come later. General-purpose rerankers are trained to judge "is this about the topic?", while
+Nómos needs "is this the article that sets this amount?".
+
+**Recommendation: no reranker for now.** It would add a second model on the shared GPU and
+several seconds per parameter, for a worse result. Revisit it only with a reranker trained or
+tuned on legislation, and the evaluation will show whether it helps.
+
+### 5.7 Do we need a bigger GPU?
 
 **For embeddings, no.** Measured on the development workstation, a 2017 NVIDIA GTX 1080 Ti with
-11 GB of memory, shared with the worker:
+11 GB of memory (cost less than 200€ on the after market), shared with the worker:
 
 | | BGE-M3 | Qwen3-Embedding-0.6B |
 |---|---|---|
 | Video memory used | ~4.3 GB | ~5.4 GB |
-| Speed (whole articles) | ~7.5 articles/s | SPEED_QWEN |
-| All authentic pilot texts (~23 000 articles) | under 1 hour | TIME_QWEN |
+| Speed (whole articles) | ~7.5 articles/s | ~6.7 articles/s |
+| All authentic pilot texts (~23 000 articles) | under 1 hour | about 1 hour |
 | One search question | tens of milliseconds | tens of milliseconds |
+
+The smaller candidates are faster still: gte-multilingual-base embedded ~24 articles/s,
+E5 ~27 (it reads only the first 512 tokens), Arctic ~9.
 
 The library is built on demand, so it grows with the parameters, not with the whole legal
 system. At the pilot's density, 27 countries would be about 120 000 authentic articles: **one
@@ -477,19 +545,27 @@ and the workflow stay as they are.
 
 A _skill_ has been prepared in `.claude/skills/add-country/SKILL.md` so a coding agent could handle the task of adding a new country with a single command: `/add-country Belgium`.
 
+{{< pagebreak >}}
+
 ## 10. Interface
 
 The Nomoscope UI display the state of the database:
+
 ![The Nomoscope UI display the state of the database](figures/rag-report/ui_database.png){width=100%}
 
 Here we can see that the embeddings cover all articles, but we are missing translations for Spain and Netherlands.
 
 It's possible to start them from the 'Ingest' panel.
 
+{{< pagebreak >}}
+
 This panel also allow for custom ingest of a webpage or a PDF:
+
 ![The Nomoscope UI display the ingestion of a custom document](figures/rag-report/ui_ingest_document.png){width=100%}
 
 So the RAG database is not limited to the document the AI find. Not even to laws related to Euromod, it could be used for other purpose of the JRC.
+
+{{< pagebreak >}}
 
 ## Conclusion
 
@@ -506,7 +582,7 @@ The library is also not tied to EUROMOD. The same pipeline ingests any web page 
 
 The main limit is coverage: the pilot library is only as complete as the acts ingested so far. When a search finds nothing, the first thing to check is a missing act or a missing translation, not the model. The next step is to measure retrieval on the golden set (Nomokrisis) and extend the library to more member states.
 
-CONCLUSION_PLACEHOLDER
+The choice of BGE-M3 has been checked against four newer open models and two rerankers, on questions built from the verified golden set (§5.5–5.6). None did better on our legislation, so BGE-M3 stays, and the existing GPU is enough for embeddings even at 27 countries (§5.7). The comparison can be re-run in one command whenever a model or the golden set changes. Changing the model means recomputing every embedding in the database, so it is worth doing only for a measured gain.
 
 {{< pagebreak >}}
 
