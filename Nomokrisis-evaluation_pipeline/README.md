@@ -400,6 +400,16 @@ instrument-level and dropped. `derived` / `national_team_source` routings,
 `corpus_available: false` cases and cases with no pinpoint citation left are
 skipped with the reason printed. Re-run it after a golden-set or corpus change.
 
+`--reranker bge-reranker-v2-m3|qwen3-reranker-0.6b` (registry:
+`nomotheca_ingest/core/rerankers.py`) adds two legs: `rerank`, the hybrid
+candidates (`--rerank-pool`, default 50) re-ordered by the cross-encoder and cut
+at k, and `pool`, where the relevant chunk sits in that uncut list — its `found`
+column is the reranker's ceiling. The scorer runs as a JSON-lines subprocess
+(`nomotheca_ingest.rerank`, via `query_encoder.rerank`); nothing in production
+uses one. On 2026-09-29 both made BGE-M3's hybrid order worse (MRR 0.49 → 0.36 /
+0.21) at 5–8 s per query on the 1080 Ti — see §5.6 of
+`Nomotheca-RAG/RAG_architecture_and_implementation.md`.
+
 `compare-embeddings` only counts the cases every compared run scored. The FR
 share is dominated by the barème family (15 near-identical CGI art. 197 cases):
 read the per-language rows, not just `all`.

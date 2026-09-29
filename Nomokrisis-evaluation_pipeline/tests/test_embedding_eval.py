@@ -130,3 +130,21 @@ def test_compare_runs_scores_only_the_cases_every_run_has():
     assert by_model[("bge-m3", "all")]["hit@1"] == "50%"
     assert by_model[("qwen3", "all")]["hit@1"] == "50%"
     assert by_model[("qwen3", "fr")]["mrr"] == f"{(0.5 + 1) / 2:.2f}"
+
+
+def test_rerank_hits_reorders_by_score(monkeypatch):
+    from nomoscope_workflow import query_encoder
+
+    from nomokrisis_eval.embedding_eval import rerank_hits
+
+    monkeypatch.setattr(query_encoder, "rerank", lambda q, passages, model: [0.1, 0.9, 0.5])
+    hits = [_hit("CGI, art. 1"), _hit("CGI, art. 197"), _hit("CGI, art. 2")]
+    assert [h.citation for h in rerank_hits("q", hits, "m")] == ["CGI, art. 197", "CGI, art. 2", "CGI, art. 1"]
+    assert rerank_hits("q", [], "m") == []
+
+
+def test_rank_metrics_caps_hit_at_k_and_reports_what_the_pool_found():
+    metrics = rank_metrics([1, 20, None, 40], k=15)
+    assert metrics["hit@15"] == "25%"
+    assert metrics["found"] == "75%"
+    assert "found" not in rank_metrics([1, None], k=15)

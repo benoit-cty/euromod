@@ -738,6 +738,12 @@ def compare_embeddings(
             f"  {run['run_id']}  model={manifest.get('embedding_model')}  "
             f"cases={manifest['cases']}  set={manifest['dataset_version']}"
             + (f"  query≈{latency} ms" if latency is not None else "")
+            + (
+                f"  reranker={manifest['reranker']} pool={manifest['rerank_pool']}"
+                f" ≈{manifest.get('rerank_ms_median')} ms"
+                if manifest.get("reranker")
+                else ""
+            )
         )
     rows = compare_runs(runs, method)
     if not rows:
@@ -766,9 +772,14 @@ def run_embeddings(
         help="Restrict to human-verified cases (drafts included by default — this eval is diagnostic, not the contractual KPI freeze)",
     ),
     notes: str = typer.Option(None, "--notes"),
+    reranker: str = typer.Option(
+        None, "--reranker",
+        help="Also score a cross-encoder over the hybrid candidates (bge-reranker-v2-m3 | qwen3-reranker-0.6b)",
+    ),
+    rerank_pool: int = typer.Option(50, "--rerank-pool", help="Hybrid candidates handed to the reranker"),
 ) -> None:
-    """Rank each case's ground-truth chunks under fts / vector / hybrid search."""
-    from .embedding_eval import run_embedding_eval, summarize_embedding
+    """Rank each case's ground-truth chunks under fts / vector / hybrid search (+ rerank)."""
+    from .embedding_eval import METHODS, run_embedding_eval, summarize_embedding
 
     cfg = load_eval_config()
     with evaldb.connect(cfg.database_url) as conn:
@@ -783,7 +794,8 @@ def run_embeddings(
         raise typer.Exit(1)
 
     manifest, results = run_embedding_eval(
-        cfg, cases, k=k, embedding_model_id=embedding_model_id, notes=notes
+        cfg, cases, k=k, embedding_model_id=embedding_model_id, notes=notes,
+        reranker=reranker, rerank_pool=rerank_pool,
     )
     with evaldb.connect(cfg.database_url) as conn:
         evaldb.insert_embedding_run(conn, manifest, results)
@@ -796,7 +808,7 @@ def run_embeddings(
 
     typer.echo(f"run {manifest['run_id']}  model_id={embedding_model_id}  k={k}")
     for result in results:
-        legs = "  ".join(f"{m}={fmt_rank(result, m):<5}" for m in ("fts", "vector", "hybrid"))
+        legs = "  ".join(f"{m}={fmt_rank(result, m):<5}" for m in METHODS if m in result.ranks)
         pool = (
             f"({result.embedded_chunks}/{result.candidate_chunks} embedded)"
             if result.candidate_chunks is not None
@@ -808,6 +820,8 @@ def run_embeddings(
     for lang, methods in summarize_embedding(results).items():
         typer.echo(f"  [{lang}]")
         for method, metrics in methods.items():
+            if not metrics:
+                continue
             pretty = "  ".join(f"{k_}={v}" for k_, v in metrics.items()) or "not scored"
             typer.echo(f"    {method:<7} {pretty}")
     typer.echo(f"stored in Postgres: eval.embedding_runs run_id={manifest['run_id']}")

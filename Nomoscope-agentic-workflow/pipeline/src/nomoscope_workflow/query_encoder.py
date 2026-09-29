@@ -172,3 +172,40 @@ def encode(
         _disabled = True
         print(f"[retrieval] vector leg disabled (encoder={mode}; {exc.__class__.__name__}: {exc})")
         return None
+
+
+# ---------------------------------------------------------------------------
+# Cross-encoder reranking (evaluation only for now)
+# ---------------------------------------------------------------------------
+
+_rerankers: dict[str, subprocess.Popen] = {}
+
+
+def _start_reranker(model: str) -> subprocess.Popen:
+    spec = embedding_process(ingest_dir(), "nomotheca_ingest.rerank", "--model", model)
+    print(f"[retrieval] starting reranker {model}…", flush=True)
+    process = subprocess.Popen(
+        spec.command, cwd=spec.cwd, env=spec.env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True
+    )
+    ready = json.loads(process.stdout.readline() or "{}")
+    if not ready.get("ready"):
+        process.kill()
+        raise RuntimeError(f"reranker failed to initialize: {ready}")
+    return process
+
+
+def rerank(query: str, passages: list[str], model: str) -> list[float]:
+    """One cross-encoder score per passage (higher = more relevant).
+
+    Unlike `encode`, a failure raises: nothing in a workflow run depends on a
+    reranker yet, and the retrieval evaluation records the error per case.
+    """
+    process = _rerankers.get(model)
+    if process is None or process.poll() is not None:
+        process = _rerankers[model] = _start_reranker(model)
+    process.stdin.write(json.dumps({"query": query, "passages": passages}) + "\n")
+    process.stdin.flush()
+    response = json.loads(process.stdout.readline() or "{}")
+    if "scores" not in response:
+        raise RuntimeError(response.get("error", "no scores in reranker response"))
+    return response["scores"]

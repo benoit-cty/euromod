@@ -724,9 +724,20 @@ accepted AS (
                'item_id', q.item_id,
                'routing', q.routing,
                'decision', q.item -> 'decision',
-               'value', q.item -> 'proposed_record' -> 'values' -> -1)
+               'value', CASE
+                   WHEN v.val #> '{lineage,retrieval_trace}' IS NULL THEN v.val
+                   -- only the hits the value cites: the rest of the top-k is noise
+                   ELSE jsonb_set(v.val, '{lineage,retrieval_trace}', coalesce((
+                       SELECT jsonb_agg(h)
+                         FROM jsonb_array_elements(v.val #> '{lineage,retrieval_trace}') h
+                        WHERE h ->> 'chunk_id' IN (
+                            SELECT r ->> 'jrc_database_id'
+                              FROM jsonb_array_elements(coalesce(v.val -> 'references', '[]'::jsonb)) r)
+                   ), '[]'::jsonb))
+                   END)
              ORDER BY q.system_year, q.item_id) AS vals
       FROM params.review_queue q
+      CROSS JOIN LATERAL (SELECT q.item -> 'proposed_record' -> 'values' -> -1 AS val) v
      WHERE q.status IN ('accepted', 'edited')
        AND (q.routing IN ('changed', 'new') OR q.status = 'edited')
        AND q.item ? 'proposed_record'

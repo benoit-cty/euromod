@@ -28,6 +28,12 @@ Two sources of cases:
   than on a paraphrase of it.
 
 `compare_runs` puts the latest run of each model side by side.
+
+With a reranker (`--reranker <key>`, nomotheca_ingest.core.rerankers), two more
+legs are scored: `rerank` — the production hybrid candidates, `rerank_pool` of
+them, re-ordered by a cross-encoder reading query and chunk together, cut at k —
+and `pool`, where the relevant chunk sits in that uncut candidate list: the
+reranker's ceiling (it can only promote what the pool contains).
 """
 
 from __future__ import annotations
@@ -99,7 +105,7 @@ WHERE j.code = ANY(%(jurisdictions)s::text[]) AND t.lang = %(lang)s
   AND i.source_trust_class <> 'context'
 """
 
-METHODS = ("fts", "vector", "hybrid")
+METHODS = ("fts", "vector", "hybrid", "rerank", "pool")
 
 
 def vector_search(
@@ -147,13 +153,31 @@ def rank_metrics(ranks: list[int | None], k: int) -> dict[str, str]:
     n = len(ranks)
     if n == 0:
         return {}
-    return {
+    metrics = {
         "cases": str(n),
         "hit@1": f"{100 * sum(1 for r in ranks if r == 1) / n:.0f}%",
         "hit@3": f"{100 * sum(1 for r in ranks if r is not None and r <= 3) / n:.0f}%",
-        f"hit@{k}": f"{100 * sum(1 for r in ranks if r is not None) / n:.0f}%",
+        f"hit@{k}": f"{100 * sum(1 for r in ranks if r is not None and r <= k) / n:.0f}%",
         "mrr": f"{sum(1 / r for r in ranks if r) / n:.2f}",
     }
+    # The `pool` leg ranks past k (the whole reranker input): say how much of it
+    # the reranker could possibly promote.
+    if any(r is not None and r > k for r in ranks):
+        metrics["found"] = f"{100 * sum(1 for r in ranks if r is not None) / n:.0f}%"
+    return metrics
+
+
+def rerank_hits(query: str, hits: list[RetrievalHit], reranker: str) -> list[RetrievalHit]:
+    """`hits` re-ordered by the cross-encoder's score (stable on ties)."""
+    from nomoscope_workflow import query_encoder
+
+    if not hits:
+        return []
+    scores = query_encoder.rerank(
+        query, [f"{hit.context_header or ''}\n{hit.content or ''}" for hit in hits], reranker
+    )
+    order = sorted(range(len(hits)), key=lambda i: -scores[i])
+    return [hits[i] for i in order]
 
 
 def run_embedding_eval(
@@ -162,6 +186,8 @@ def run_embedding_eval(
     k: int = 10,
     embedding_model_id: int = 1,
     notes: str | None = None,
+    reranker: str | None = None,
+    rerank_pool: int = 50,
 ) -> tuple[dict, list[EmbeddingCaseResult]]:
     """Score every case under fts / vector / hybrid; returns (manifest, results)."""
     from nomoscope_workflow import query_encoder  # deferred: spawns a subprocess lazily
@@ -182,10 +208,13 @@ def run_embedding_eval(
         "countries": sorted({c.country for c in cases}),
         "cases": len(cases),
         "notes": notes,
+        "reranker": reranker,
+        "rerank_pool": rerank_pool if reranker else None,
     }
 
     results: list[EmbeddingCaseResult] = []
     encode_seconds: list[float] = []
+    rerank_seconds: list[float] = []
     with psycopg.connect(cfg.database_url, row_factory=dict_row) as conn:
         for case in cases:
             corpus_lang = case.corpus_lang or case.language
@@ -229,6 +258,15 @@ def run_embedding_eval(
                         *common, model_id=embedding_model_id, k=k, query_vector=qvec
                     )
                     result.ranks["hybrid"] = first_relevant_rank(case.expected_citations, hyb_hits)
+                    if reranker:
+                        pool = retrieval.hybrid_search(
+                            *common, model_id=embedding_model_id, k=rerank_pool, query_vector=qvec
+                        )
+                        result.ranks["pool"] = first_relevant_rank(case.expected_citations, pool)
+                        started = time.monotonic()
+                        reranked = rerank_hits(case.query, pool, reranker)[:k]
+                        rerank_seconds.append(time.monotonic() - started)
+                        result.ranks["rerank"] = first_relevant_rank(case.expected_citations, reranked)
                 else:
                     result.error = "query encoder unavailable — vector/hybrid not scored"
             except Exception as exc:  # score the failure, keep the run going
@@ -238,6 +276,8 @@ def run_embedding_eval(
     # The first query pays the model load; the median is the per-query cost.
     if len(encode_seconds) > 1:
         manifest["query_encode_ms_median"] = round(1000 * sorted(encode_seconds[1:])[len(encode_seconds[1:]) // 2])
+    if len(rerank_seconds) > 1:
+        manifest["rerank_ms_median"] = round(1000 * sorted(rerank_seconds[1:])[len(rerank_seconds[1:]) // 2])
     return manifest, results
 
 

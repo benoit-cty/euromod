@@ -79,6 +79,14 @@ _Avoid_: tax year, as-of year
 The human who accepts or rejects proposals in the validation UI and who adds contributed documents.
 _Avoid_: user, validator, operator, national team (a specific EUROMOD role)
 
+**Metadata edit**:
+A reviewer's correction of a parameter's unit, source type or language-keyed texts, made in the UI. It is recorded in `params.parameter_edits` and survives re-ingest. It never touches a parameter's identity or its values (ADR 0005).
+_Avoid_: override, patch, curation (curation is the developer-owned YAML overlay)
+
+**Change set**:
+What goes back to EUROMOD: per changed parameter, the net metadata edits (`from` → `to`) and only the value rows a reviewer accepted as a change or edited. Nothing unchanged and no history (`params.euromod_change_set`).
+_Avoid_: accepted records, full export
+
 ### Execution
 
 **Job**:
