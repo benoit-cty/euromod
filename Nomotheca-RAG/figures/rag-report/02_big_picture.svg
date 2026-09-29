@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" width="900" height="400" font-family="Arial, Helvetica, Liberation Sans, DejaVu Sans, sans-serif">
+  <title>The big picture: from official portals to a validated EUROMOD parameter</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4B5563"/>
+    </marker>
+    <marker id="o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#D98E04"/>
+    </marker>
+  </defs>
+  <rect width="900" height="400" fill="#FFFFFF"/>
+
+  <!-- Band labels -->
+  <rect x="10" y="10" width="555" height="28" rx="6" fill="#EAF2FB"/>
+  <text x="287" y="29" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1F3A5F">THE RAG (Nomotheca): this report</text>
+  <rect x="575" y="10" width="315" height="28" rx="6" fill="#F3F4F6"/>
+  <text x="732" y="29" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#4B5563">Uses the RAG (Nomoscope)</text>
+
+  <!-- 1 Portals -->
+  <rect x="10" y="60" width="125" height="170" rx="10" fill="#FFFFFF" stroke="#6B7280" stroke-width="1.5"/>
+  <text x="72" y="84" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F2937">Official</text>
+  <text x="72" y="101" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F2937">portals</text>
+  <g font-size="12" fill="#4B5563" text-anchor="middle">
+    <text x="72" y="128">Légifrance / DILA</text>
+    <text x="72" y="147">BOE</text>
+    <text x="72" y="166">eISB</text>
+    <text x="72" y="185">TAR</text>
+    <text x="72" y="204">wetten.nl (BWB)</text>
+  </g>
+  <line x1="135" y1="145" x2="158" y2="145" stroke="#4B5563" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 2 Ingest -->
+  <rect x="162" y="60" width="130" height="170" rx="10" fill="#1F3A5F"/>
+  <text x="227" y="86" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#FFFFFF">Ingest</text>
+  <text x="227" y="103" text-anchor="middle" font-size="11.5" fill="#C9D7E8">(Nomosync)</text>
+  <g font-size="12" fill="#FFFFFF" text-anchor="middle">
+    <text x="227" y="130">fetch</text>
+    <text x="227" y="149">archive the original</text>
+    <text x="227" y="168">cut into articles</text>
+    <text x="227" y="187">date each version</text>
+    <text x="227" y="206">cut into chunks</text>
+  </g>
+  <line x1="292" y1="145" x2="315" y2="145" stroke="#4B5563" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 3 DB -->
+  <path d="M319,72 a65,14 0 0,1 130,0 v146 a65,14 0 0,1 -130,0 z" fill="#2E6FB7"/>
+  <ellipse cx="384" cy="72" rx="65" ry="14" fill="#5B93D1"/>
+  <text x="384" y="108" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#FFFFFF">Legislation</text>
+  <text x="384" y="125" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#FFFFFF">database</text>
+  <g font-size="12" fill="#FFFFFF" text-anchor="middle">
+    <text x="384" y="152">dated texts</text>
+    <text x="384" y="171">+ English version</text>
+    <text x="384" y="190">+ embeddings</text>
+    <text x="384" y="209">(BGE-M3)</text>
+  </g>
+  <line x1="449" y1="145" x2="472" y2="145" stroke="#4B5563" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 4 Retrieve -->
+  <rect x="476" y="60" width="89" height="170" rx="10" fill="#1C8C7A"/>
+  <text x="520" y="90" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#FFFFFF">Search</text>
+  <g font-size="11.5" fill="#FFFFFF" text-anchor="middle">
+    <text x="520" y="120">citation</text>
+    <text x="520" y="137">keywords</text>
+    <text x="520" y="154">meaning</text>
+    <text x="520" y="184">at a date,</text>
+    <text x="520" y="201">in a country</text>
+  </g>
+  <line x1="565" y1="145" x2="588" y2="145" stroke="#4B5563" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 5 Propose -->
+  <rect x="592" y="60" width="140" height="170" rx="10" fill="#FFFFFF" stroke="#6B7280" stroke-width="1.5"/>
+  <text x="662" y="86" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#1F2937">Propose</text>
+  <text x="662" y="103" text-anchor="middle" font-size="11.5" fill="#6B7280">LLM + checks</text>
+  <g font-size="12" fill="#374151" text-anchor="middle">
+    <text x="662" y="132">value</text>
+    <text x="662" y="151">+ citation</text>
+    <text x="662" y="170">+ verbatim quote</text>
+    <text x="662" y="197" fill="#11594D" font-weight="bold">quote checked</text>
+    <text x="662" y="214" fill="#11594D" font-weight="bold">in the chunk</text>
+  </g>
+  <line x1="732" y1="145" x2="755" y2="145" stroke="#4B5563" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 6 Human -->
+  <rect x="759" y="60" width="131" height="170" rx="10" fill="#FFFFFF" stroke="#6B7280" stroke-width="1.5"/>
+  <text x="824" y="86" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#1F2937">Analyst</text>
+  <text x="824" y="103" text-anchor="middle" font-size="11.5" fill="#6B7280">validation UI</text>
+  <g font-size="12" fill="#374151" text-anchor="middle">
+    <text x="824" y="132">accept / edit</text>
+    <text x="824" y="151">/ reject</text>
+    <text x="824" y="190">→ export for</text>
+    <text x="824" y="209">EUROMOD</text>
+  </g>
+
+  <!-- Scout loop -->
+  <path d="M520,230 C520,320 227,320 227,236" fill="none" stroke="#D98E04" stroke-width="2.2" stroke-dasharray="7 5" marker-end="url(#o)"/>
+  <rect x="258" y="285" width="236" height="50" rx="10" fill="#FDF3E1" stroke="#D98E04"/>
+  <text x="376" y="306" text-anchor="middle" font-size="13" font-weight="bold" fill="#8A5A00">Nothing found? The scout names</text>
+  <text x="376" y="324" text-anchor="middle" font-size="13" font-weight="bold" fill="#8A5A00">the missing act; it gets ingested</text>
+
+  <text x="450" y="375" text-anchor="middle" font-size="13" fill="#4B5563">The corpus grows where EUROMOD parameters need it, not by crawling whole legal systems.</text>
+</svg>

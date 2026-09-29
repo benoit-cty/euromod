@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 380" width="900" height="380" font-family="Arial, Helvetica, Liberation Sans, DejaVu Sans, sans-serif">
+  <title>Hybrid search: filters, three search legs and rank fusion</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4B5563"/>
+    </marker>
+  </defs>
+  <rect width="900" height="380" fill="#FFFFFF"/>
+
+  <!-- query -->
+  <rect x="10" y="120" width="160" height="130" rx="10" fill="#FFFFFF" stroke="#6B7280" stroke-width="1.5"/>
+  <text x="90" y="145" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#1F2937">The question</text>
+  <g font-size="12" fill="#374151" text-anchor="middle">
+    <text x="90" y="170">parameter name,</text>
+    <text x="90" y="187">in the law's language,</text>
+    <text x="90" y="204">+ Country Report terms</text>
+    <text x="90" y="221">+ last year's citation</text>
+  </g>
+  <line x1="170" y1="185" x2="196" y2="185" stroke="#4B5563" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- filters funnel -->
+  <path d="M200,95 L340,125 L340,245 L200,275 z" fill="#1F3A5F"/>
+  <text x="270" y="150" text-anchor="middle" font-size="14" font-weight="bold" fill="#FFFFFF">Filters first</text>
+  <g font-size="11.5" fill="#D6E2F0" text-anchor="middle">
+    <text x="270" y="177">in force on the date</text>
+    <text x="270" y="195">right country / region</text>
+    <text x="270" y="213">law's language</text>
+    <text x="270" y="231">never "context"</text>
+  </g>
+
+  <!-- legs -->
+  <g stroke="#4B5563" stroke-width="2" fill="none">
+    <path d="M340,160 C360,160 360,60 386,60" marker-end="url(#a)"/>
+    <line x1="340" y1="185" x2="386" y2="185" marker-end="url(#a)"/>
+    <path d="M340,210 C360,210 360,310 386,310" marker-end="url(#a)"/>
+  </g>
+
+  <rect x="390" y="20" width="250" height="80" rx="10" fill="#FDF3E1" stroke="#D98E04" stroke-width="1.5"/>
+  <text x="405" y="45" font-size="14" font-weight="bold" fill="#8A5A00">① Citation fast path</text>
+  <text x="405" y="66" font-size="12" fill="#374151">"CGI art. 197" known from last year?</text>
+  <text x="405" y="84" font-size="12" fill="#374151">Go straight to it. Tolerant to typos.</text>
+
+  <rect x="390" y="145" width="250" height="80" rx="10" fill="#EAF2FB" stroke="#2E6FB7" stroke-width="1.5"/>
+  <text x="405" y="170" font-size="14" font-weight="bold" fill="#1F3A5F">② Keywords (full text)</text>
+  <text x="405" y="191" font-size="12" fill="#374151">"plafond", "barème": exact legal terms,</text>
+  <text x="405" y="209" font-size="12" fill="#374151">stemmed per language, accents ignored</text>
+
+  <rect x="390" y="270" width="250" height="80" rx="10" fill="#E6F4F1" stroke="#1C8C7A" stroke-width="1.5"/>
+  <text x="405" y="295" font-size="14" font-weight="bold" fill="#11594D">③ Meaning (BGE-M3 vectors)</text>
+  <text x="405" y="316" font-size="12" fill="#374151">finds the article that says the same</text>
+  <text x="405" y="334" font-size="12" fill="#374151">thing in other words</text>
+
+  <!-- fusion -->
+  <g stroke="#4B5563" stroke-width="2" fill="none">
+    <path d="M640,60 C665,60 665,165 690,165" marker-end="url(#a)"/>
+    <line x1="640" y1="185" x2="690" y2="185" marker-end="url(#a)"/>
+    <path d="M640,310 C665,310 665,205 690,205" marker-end="url(#a)"/>
+  </g>
+  <rect x="694" y="120" width="196" height="130" rx="10" fill="#2E6FB7"/>
+  <text x="792" y="147" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#FFFFFF">Merge &amp; rank</text>
+  <g font-size="12" fill="#FFFFFF" text-anchor="middle">
+    <text x="792" y="171">rank fusion (RRF):</text>
+    <text x="792" y="188">high in both lists = top</text>
+    <text x="792" y="212">+ neighbouring chunks</text>
+    <text x="792" y="229">of the same article</text>
+  </g>
+  <text x="792" y="275" text-anchor="middle" font-size="12.5" fill="#1F2937" font-weight="bold">→ a handful of dated,</text>
+  <text x="792" y="292" text-anchor="middle" font-size="12.5" fill="#1F2937" font-weight="bold">citable chunks for the LLM</text>
+</svg>

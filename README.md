@@ -210,6 +210,24 @@ quarto render parameter_report.qmd --to typst \
 rm parameter_report.qmd
 ```
 
+Convert Param_Schema/parameter_report.md:
+
+```sh
+cd Param_Schema
+sed 's/^```mermaid$/```{mermaid}/' parameter_report.md > parameter_report.qmd
+quarto render parameter_report.qmd --to typst \
+  -M toc:true -M toc-depth:2 -M papersize:a4 \
+  -M shift-heading-level-by:-1 -M date:2026-07-29
+rm parameter_report.qmd
+```
+
+Convert Nomotheca-RAG/RAG_architecture_and_implementation.md:
+```sh
+cd Nomotheca-RAG
+quarto render RAG_architecture_and_implementation.md --to typst \
+  -M toc:true -M toc-depth:2 -M papersize:a4 \
+  -M shift-heading-level-by:-1 -M date:2026-09-29
+```
 
 ## Improvement Skill
 
