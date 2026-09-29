@@ -2,8 +2,9 @@
   // Parameters tab: browse every EUROMOD parameter in the params DB, filter,
   // select some, submit a `workflow` job for them (the worker runs
   // run-targets), then jump to the review-queue item or open the run's trace
-  // in Phoenix.
+  // in Phoenix. The expanded row edits the parameter's metadata (ParameterEditor).
   import { api } from '../api.js';
+  import ParameterEditor from './ParameterEditor.svelte';
   import { submitAndFollow, summarize } from '../jobs.js';
 
   // The component stays mounted (hidden) while other tabs are shown, so a
@@ -439,6 +440,7 @@
                 {@const m = membership(p, group)}
                 <span class="badge">band {m.index}{m.role ? ` · ${m.role}` : ''}</span>
               {/if}
+              {#if p.edit_count}<span class="badge" title="metadata edited in the UI — part of the next EUROMOD export">edited</span>{/if}
               {#if p.label}<div class="muted small">{p.label}</div>{/if}
             </td>
             <td class="mono">{p.policy ?? '—'}</td>
@@ -496,6 +498,7 @@
                     {#if p.last_trace_id}· trace <span class="mono">{p.last_trace_id}</span>{/if}
                   </div>
                 {/if}
+                <ParameterEditor {dbUrl} param={p} onsaved={refresh} />
               </td>
             </tr>
           {/if}

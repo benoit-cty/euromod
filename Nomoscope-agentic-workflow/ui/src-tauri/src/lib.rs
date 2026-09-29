@@ -9,6 +9,8 @@
 //! directory. Its one credential is the analyst's Postgres login; everything
 //! that needs a model or the internet is a row in `ops.jobs` (jobs.rs) that
 //! the worker picks up. The only file it ever writes is the EUROMOD export.
+//! Besides decisions and jobs, the one thing it changes in the database is a
+//! parameter's metadata, through `params.edit_parameter` (ADR 0005).
 
 mod db;
 mod golden;
@@ -34,6 +36,23 @@ struct DecisionPayload {
     /// Patch of the other reviewer-editable proposal fields (validity dates,
     /// legal/source status, references). `None` = leave them as proposed.
     edited_fields: Option<Value>,
+}
+
+#[derive(Deserialize)]
+struct EditPayload {
+    db_url: String,
+    model_target: String,
+    /// unit | source_type | label | short_label | description | explanation;
+    /// anything else (identity, values) is refused by the database.
+    field: String,
+    value: Value,
+    note: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct TargetPayload {
+    db_url: String,
+    model_target: String,
 }
 
 #[derive(Deserialize)]
@@ -182,10 +201,34 @@ async fn load_decisions(payload: DecisionsPayload) -> Result<Value, String> {
     blocking(move || db::load_decisions(&payload.db_url, limit as i64)).await
 }
 
-/// Export accepted/edited items' Activity 1 records, one JSON file per
-/// country, into a folder the reviewer picks. The only file the UI writes.
+/// Correct one metadata field of a parameter (ADR 0005). One database call
+/// validates, audits (reviewer = current_user) and applies it; a refused edit
+/// changes nothing.
 #[tauri::command]
-async fn export_accepted(app_handle: tauri::AppHandle, payload: DbPayload) -> Result<Value, String> {
+async fn edit_parameter(payload: EditPayload) -> Result<Value, String> {
+    blocking(move || {
+        store::edit_parameter(
+            &payload.db_url,
+            &payload.model_target,
+            &payload.field,
+            &payload.value,
+            payload.note.as_deref().filter(|n| !n.trim().is_empty()),
+        )
+    })
+    .await
+}
+
+/// A parameter's metadata edit history, newest first.
+#[tauri::command]
+async fn parameter_edits(payload: TargetPayload) -> Result<Value, String> {
+    blocking(move || db::parameter_edits(&payload.db_url, &payload.model_target)).await
+}
+
+/// Export the change set for EUROMOD — metadata edits and accepted value
+/// changes only — one JSON file per country, into a folder the reviewer picks.
+/// The only file the UI writes.
+#[tauri::command]
+async fn export_changes(app_handle: tauri::AppHandle, payload: DbPayload) -> Result<Value, String> {
     use tauri_plugin_dialog::DialogExt;
     let groups = blocking(move || store::export_records(&payload.db_url)).await?;
     if groups.is_empty() {
@@ -196,7 +239,7 @@ async fn export_accepted(app_handle: tauri::AppHandle, payload: DbPayload) -> Re
         app_handle
             .dialog()
             .file()
-            .set_title("Export accepted records — choose a folder")
+            .set_title("Export changes for EUROMOD — choose a folder")
             .blocking_pick_folder()
     })
     .await
@@ -381,7 +424,9 @@ pub fn run() {
             load_queue,
             save_decision,
             load_decisions,
-            export_accepted,
+            export_changes,
+            edit_parameter,
+            parameter_edits,
             db_stats,
             search_articles,
             score_sentences,

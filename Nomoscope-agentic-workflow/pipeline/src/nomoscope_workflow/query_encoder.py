@@ -1,4 +1,9 @@
-"""BGE-M3 query encoding for the vector leg of hybrid retrieval.
+"""Query encoding for the vector leg of hybrid retrieval.
+
+The query must be encoded by the model that embedded the corpus being searched:
+`encode(query, model_id=N)` asks for embedding model N of the ingest registry
+(nomotheca_ingest.core.embedding_models; 1 = BGE-M3, the default), with that
+model's query prompt. One encoder process per model id, started on demand.
 
 Two ways to get a query vector, chosen by `WORKFLOW_ENCODER`:
 
@@ -35,7 +40,9 @@ CUDA_ENVIRONMENT = ".venv-cuda"
 
 DEFAULT_DATABASE_URL = "postgresql://jrc:jrc@localhost:5434/legislation"
 
-_process: subprocess.Popen | None = None
+DEFAULT_MODEL_ID = 1
+
+_processes: dict[int, subprocess.Popen] = {}
 _disabled = False
 
 
@@ -104,11 +111,12 @@ def embedding_process(directory: Path | None, module: str, *args: str) -> Embedd
     return EmbeddingProcess(command=command, env=env, cuda=cuda, cwd=directory)
 
 
-def _start() -> subprocess.Popen:
-    spec = embedding_process(ingest_dir(), "nomotheca_ingest.query_embeddings")
+def _start(model_id: int = DEFAULT_MODEL_ID) -> subprocess.Popen:
+    spec = embedding_process(ingest_dir(), "nomotheca_ingest.query_embeddings", "--model", str(model_id))
     load_note = "GPU" if spec.cuda else "expect high CPU"
     print(
-        f"[retrieval] starting BGE-M3 query encoder (first query — model load can take minutes, {load_note})…",
+        f"[retrieval] starting query encoder for embedding model {model_id} "
+        f"(first query — model load can take minutes, {load_note})…",
         flush=True,
     )
     started = time.monotonic()
@@ -128,20 +136,23 @@ def _start() -> subprocess.Popen:
     return process
 
 
-def _encode_subprocess(query: str) -> str:
-    global _process
-    if _process is None or _process.poll() is not None:
-        _process = _start()
-    _process.stdin.write(json.dumps({"query": query}) + "\n")
-    _process.stdin.flush()
-    response = json.loads(_process.stdout.readline() or "{}")
+def _encode_subprocess(query: str, model_id: int = DEFAULT_MODEL_ID) -> str:
+    process = _processes.get(model_id)
+    if process is None or process.poll() is not None:
+        process = _processes[model_id] = _start(model_id)
+    process.stdin.write(json.dumps({"query": query}) + "\n")
+    process.stdin.flush()
+    response = json.loads(process.stdout.readline() or "{}")
     if "halfvec" not in response:
         raise RuntimeError(response.get("error", "no halfvec in encoder response"))
     return response["halfvec"]
 
 
-def encode(query: str, database_url: str | None = None) -> str | None:
-    """halfvec literal for a query, or None when the encoder is unavailable.
+def encode(
+    query: str, database_url: str | None = None, model_id: int = DEFAULT_MODEL_ID
+) -> str | None:
+    """halfvec literal for a query under embedding model `model_id`, or None
+    when the encoder is unavailable.
 
     `database_url` is only used by the `db` encoder mode (defaults to
     WORKFLOW_DATABASE_URL, same default as config.py).
@@ -153,10 +164,10 @@ def encode(query: str, database_url: str | None = None) -> str | None:
     try:
         if mode == "db":
             url = database_url or os.environ.get("WORKFLOW_DATABASE_URL", DEFAULT_DATABASE_URL)
-            return encode_client.encode_via_jobs(url, query)
+            return encode_client.encode_via_jobs(url, query, model_id=model_id)
         if mode != "subprocess":
             raise ValueError(f"unknown WORKFLOW_ENCODER {mode!r} (subprocess | db)")
-        return _encode_subprocess(query)
+        return _encode_subprocess(query, model_id)
     except Exception as exc:
         _disabled = True
         print(f"[retrieval] vector leg disabled (encoder={mode}; {exc.__class__.__name__}: {exc})")

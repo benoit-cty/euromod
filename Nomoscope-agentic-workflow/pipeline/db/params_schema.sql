@@ -10,8 +10,9 @@
 -- Data ownership follows the doc's stages:
 --   Stage A (received)      -> parameters, model_values, parameter_usage.
 --     Ingested from extracted_parameters/enriched/<CC>.enriched.json and
---     treated as read-only source data: re-ingest replaces, nothing else
---     writes here.
+--     treated as read-only source data: re-ingest replaces. Two overlays
+--     write metadata back on top after every ingest: the curation YAML
+--     (curate-params) and the analyst's UI edits (parameter_edits, ADR 0005).
 --   Stage B (deterministic) -> normalized columns on those tables
 --     (value_numeric, value_kind, model_release, system_year, parsed
 --     model_address parts). Raw received fields are always preserved.
@@ -44,7 +45,7 @@ CREATE TABLE IF NOT EXISTS params.parameters (
     name                    text,                      -- '$tin_upthres1'
     spine_order             text,
     value_type              text NOT NULL,             -- 'scalar' throughout the FR export
-    unit                    text,                      -- received, authoritative (null for 5 FR params; never corrected)
+    unit                    text,                      -- received; corrected by curate-params and by UI edits (parameter_edits)
     unit_structured         jsonb,                     -- Stage B convenience view {quantity,currency,period,euromod_suffix}
     label                   jsonb,                     -- language-keyed, as received
     short_label             jsonb,
@@ -444,7 +445,10 @@ CREATE INDEX IF NOT EXISTS review_queue_status_idx  ON params.review_queue (stat
 --   p_entry    the audit entry: same keys record_decision/insert_decision took
 --              (action, note, edited_value, edited_fields, routing, model_target,
 --              as_of, run_id, confidence, critique_verdict, decided_at, logged_at)
--- The reviewer is always current_user: the entry's `reviewer` key is ignored.
+-- The reviewer is always session_user, the analyst's login: the entry's
+-- `reviewer` key is ignored. Not current_user — inside a SECURITY DEFINER
+-- function that is the function's owner, so every decision would be stamped
+-- with the schema owner's name.
 -- Idempotent on (item_id, decided_at) exactly like the old insert; returns the
 -- audit row id, or NULL when that decision was already recorded. Raises when
 -- the item does not exist, so a decision on a vanished item fails outright.
@@ -481,7 +485,7 @@ BEGIN
     VALUES
         (v_proposal_pk, p_item_id, v_run_id,
          p_entry ->> 'model_target', (p_entry ->> 'as_of')::date, p_entry ->> 'routing',
-         v_action, current_user, p_entry ->> 'note',
+         v_action, session_user, p_entry ->> 'note',
          CASE WHEN p_entry ? 'edited_value' AND p_entry -> 'edited_value' <> 'null'::jsonb
               THEN p_entry -> 'edited_value' END,
          CASE WHEN p_entry ? 'edited_fields' AND p_entry -> 'edited_fields' <> 'null'::jsonb
@@ -499,3 +503,240 @@ BEGIN
     RETURN v_id;
 END;
 $$;
+
+-- ----------------------------------------------------------------------------
+-- parameter_edits — an analyst's metadata corrections, made in the UI (ADR 0005).
+-- Append-only, one row per edit of one field; the latest row per
+-- (model_target, field) is the override in force. Only metadata is editable —
+-- unit, source_type and the language-keyed texts — never model_target,
+-- parameter_key or a value: a value changes only through a review decision.
+-- Keyed by model_target with no foreign key, so an edit outlives a re-ingest
+-- (which rewrites these columns from the export) and is put back by
+-- reapply_parameter_edits(), after ingest-params and after curate-params: a
+-- human edit wins over the export and over the YAML overlay.
+-- `previous` is what the parameter store held just before the edit; the
+-- EUROMOD change set reports the first `previous` against the latest `value`.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS params.parameter_edits (
+    id           bigserial PRIMARY KEY,
+    model_target text NOT NULL,
+    field        text NOT NULL CHECK (field IN
+                   ('unit', 'source_type', 'label', 'short_label', 'description', 'explanation')),
+    value        jsonb,                           -- a JSON string (unit, source_type) or a {lang: text} object
+    previous     jsonb,
+    reviewer     text NOT NULL DEFAULT session_user,
+    note         text,
+    edited_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS parameter_edits_target_idx
+    ON params.parameter_edits (model_target, field, edited_at DESC, id DESC);
+
+-- The structured view of a unit, as curate-params writes it
+-- (paramdb._curated_unit_structured): the export's own shape for "/1".
+CREATE OR REPLACE FUNCTION params.unit_structured_for(p_unit text)
+RETURNS jsonb
+LANGUAGE sql IMMUTABLE
+AS $$
+    SELECT CASE
+        WHEN p_unit = '/1' THEN '{"quantity": "rate", "scale": "/1"}'::jsonb
+        WHEN p_unit = 'ratio' THEN '{"quantity": "ratio"}'::jsonb
+        WHEN p_unit LIKE '%/%' THEN jsonb_build_object(
+            'quantity', CASE split_part(p_unit, '/', 1) WHEN 'currency' THEN 'money'
+                             ELSE split_part(p_unit, '/', 1) END,
+            'period', substr(p_unit, strpos(p_unit, '/') + 1))
+    END
+$$;
+
+-- What the store holds now for one editable field of a parameter. source_type
+-- sits on the value rows; the parameter's is its newest row's (curation sets
+-- all rows alike).
+CREATE OR REPLACE FUNCTION params.parameter_field(p_model_target text, p_field text)
+RETURNS jsonb
+LANGUAGE sql STABLE
+AS $$
+    SELECT CASE p_field
+        WHEN 'unit'        THEN to_jsonb(p.unit)
+        WHEN 'label'       THEN p.label
+        WHEN 'short_label' THEN p.short_label
+        WHEN 'description' THEN p.description
+        WHEN 'explanation' THEN p.explanation
+        WHEN 'source_type' THEN (SELECT to_jsonb(v.source_type) FROM params.model_values v
+                                 WHERE v.parameter_id = p.id
+                                 ORDER BY v.valid_from DESC, v.seq DESC LIMIT 1)
+    END
+    FROM params.parameters p WHERE p.model_target = p_model_target
+$$;
+
+-- Write one field onto the store (no audit row: edit_parameter and
+-- reapply_parameter_edits own that). Not granted to anyone.
+CREATE OR REPLACE FUNCTION params.apply_parameter_field(p_model_target text, p_field text, p_value jsonb)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    CASE p_field
+    WHEN 'unit' THEN
+        -- A money unit keeps what the export said about it (currency, #suffix);
+        -- a rate or ratio is dimensionless, so nothing carries over.
+        UPDATE params.parameters
+           SET unit = p_value #>> '{}',
+               unit_structured = CASE WHEN p_value #>> '{}' IN ('/1', 'ratio')
+                   THEN params.unit_structured_for(p_value #>> '{}')
+                   ELSE nullif(coalesce(unit_structured - 'quantity' - 'period' - 'scale', '{}'::jsonb)
+                               || coalesce(params.unit_structured_for(p_value #>> '{}'), '{}'::jsonb),
+                               '{}'::jsonb) END
+         WHERE model_target = p_model_target;
+    WHEN 'source_type' THEN
+        UPDATE params.model_values v SET source_type = p_value #>> '{}'
+          FROM params.parameters p
+         WHERE v.parameter_id = p.id AND p.model_target = p_model_target;
+    WHEN 'label' THEN
+        UPDATE params.parameters SET label = p_value WHERE model_target = p_model_target;
+    WHEN 'short_label' THEN
+        UPDATE params.parameters SET short_label = p_value WHERE model_target = p_model_target;
+    WHEN 'description' THEN
+        UPDATE params.parameters SET description = p_value WHERE model_target = p_model_target;
+    WHEN 'explanation' THEN
+        UPDATE params.parameters SET explanation = p_value WHERE model_target = p_model_target;
+    END CASE;
+END;
+$$;
+
+-- Record and apply one metadata edit. Validates what the pipeline relies on:
+-- a unit from paramdb.KNOWN_UNITS (the proposer normalises and the critique
+-- range-checks against it), a source_type from schema.SourceType, a text field
+-- as a {lang: text} object. Returns the edit's id, or NULL when the value is
+-- already the one in the store. Raises on an unknown parameter or field.
+-- The reviewer is session_user (see decide_review_item for why not current_user).
+-- SECURITY DEFINER: nomos_reviewer holds EXECUTE on this and no UPDATE on
+-- params.parameters — an edit is the only way an analyst changes a parameter.
+CREATE OR REPLACE FUNCTION params.edit_parameter(
+    p_model_target text, p_field text, p_value jsonb, p_note text DEFAULT NULL)
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = params, public
+AS $$
+DECLARE
+    v_previous jsonb;
+    v_id       bigint;
+BEGIN
+    IF p_field IS NULL OR p_field NOT IN
+       ('unit', 'source_type', 'label', 'short_label', 'description', 'explanation') THEN
+        RAISE EXCEPTION 'field % is not editable (unit, source_type, label, short_label, description, explanation)', p_field;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM params.parameters WHERE model_target = p_model_target) THEN
+        RAISE EXCEPTION 'parameter % is not in the parameter store', p_model_target;
+    END IF;
+    IF p_field = 'unit' AND (jsonb_typeof(p_value) IS DISTINCT FROM 'string' OR p_value #>> '{}' NOT IN
+       ('/1', 'currency', 'currency/hour', 'currency/day', 'currency/week',
+        'currency/month', 'currency/year', 'ratio')) THEN
+        RAISE EXCEPTION 'unknown unit %', p_value;
+    END IF;
+    IF p_field = 'source_type' AND (jsonb_typeof(p_value) IS DISTINCT FROM 'string' OR p_value #>> '{}' NOT IN
+       ('legislation', 'national_team', 'administrative_guidance', 'official_statistics',
+        'parliamentary_bill', 'government_announcement', 'other')) THEN
+        RAISE EXCEPTION 'unknown source_type %', p_value;
+    END IF;
+    IF p_field IN ('label', 'short_label', 'description', 'explanation') AND (
+       jsonb_typeof(p_value) IS DISTINCT FROM 'object'
+       OR EXISTS (SELECT 1 FROM jsonb_each(p_value) e WHERE jsonb_typeof(e.value) <> 'string')) THEN
+        RAISE EXCEPTION '% must be a {language: text} object', p_field;
+    END IF;
+    v_previous := params.parameter_field(p_model_target, p_field);
+    IF v_previous IS NOT DISTINCT FROM p_value THEN
+        RETURN NULL;
+    END IF;
+    INSERT INTO params.parameter_edits (model_target, field, value, previous, reviewer, note)
+    VALUES (p_model_target, p_field, p_value, v_previous, session_user, nullif(p_note, ''))
+    RETURNING id INTO v_id;
+    PERFORM params.apply_parameter_field(p_model_target, p_field, p_value);
+    RETURN v_id;
+END;
+$$;
+
+-- A SECURITY DEFINER function is executable by PUBLIC unless revoked; the
+-- reviewer role gets it back by name in Nomergon-worker/db/roles.sql.
+REVOKE EXECUTE ON FUNCTION params.edit_parameter(text, text, jsonb, text) FROM PUBLIC;
+
+-- Put every edit in force back onto the store; run by paramdb after
+-- ingest_file and apply_curation, which both rewrite these columns. Returns the
+-- number of (parameter, field) overrides applied.
+CREATE OR REPLACE FUNCTION params.reapply_parameter_edits(p_country text DEFAULT NULL)
+RETURNS integer
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    r record;
+    n integer := 0;
+BEGIN
+    FOR r IN
+        SELECT DISTINCT ON (e.model_target, e.field) e.model_target, e.field, e.value
+          FROM params.parameter_edits e
+          JOIN params.parameters p ON p.model_target = e.model_target
+         WHERE p_country IS NULL OR p.country = p_country
+         ORDER BY e.model_target, e.field, e.edited_at DESC, e.id DESC
+    LOOP
+        PERFORM params.apply_parameter_field(r.model_target, r.field, r.value);
+        n := n + 1;
+    END LOOP;
+    RETURN n;
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- euromod_change_set — what goes back to EUROMOD, and nothing else: one row per
+-- parameter that changed, with
+--   metadata  {field: {from, to, reviewer, edited_at, note}} — the analyst's
+--             edits whose net effect is a change (an edit reverted is gone);
+--   values    only the value rows a human accepted in the review queue as a
+--             change (routing changed/new) or edited, each with the system
+--             year and the decision — an accepted `unchanged` confirms, it
+--             changes nothing.
+-- Historical values and untouched fields are left out. Both exports read this
+-- view (the UI's store::export_records and queue_store.export_change_set), so
+-- they cannot drift.
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE VIEW params.euromod_change_set AS
+WITH edits AS (
+    SELECT e.model_target, e.field,
+           (array_agg(e.previous ORDER BY e.edited_at, e.id))[1]  AS from_value,
+           (array_agg(e.value ORDER BY e.edited_at DESC, e.id DESC))[1] AS to_value,
+           (array_agg(e.reviewer ORDER BY e.edited_at DESC, e.id DESC))[1] AS reviewer,
+           max(e.edited_at) AS edited_at,
+           (array_agg(e.note ORDER BY e.edited_at DESC, e.id DESC))[1] AS note
+      FROM params.parameter_edits e
+     GROUP BY e.model_target, e.field
+),
+metadata AS (
+    SELECT model_target,
+           jsonb_object_agg(field, jsonb_build_object(
+               'from', from_value, 'to', to_value, 'reviewer', reviewer,
+               'edited_at', edited_at, 'note', note) ORDER BY field) AS metadata
+      FROM edits
+     WHERE from_value IS DISTINCT FROM to_value
+     GROUP BY model_target
+),
+accepted AS (
+    SELECT q.model_target, q.country,
+           jsonb_agg(jsonb_build_object(
+               'system_year', q.system_year,
+               'item_id', q.item_id,
+               'routing', q.routing,
+               'decision', q.item -> 'decision',
+               'value', q.item -> 'proposed_record' -> 'values' -> -1)
+             ORDER BY q.system_year, q.item_id) AS vals
+      FROM params.review_queue q
+     WHERE q.status IN ('accepted', 'edited')
+       AND (q.routing IN ('changed', 'new') OR q.status = 'edited')
+       AND q.item ? 'proposed_record'
+     GROUP BY q.model_target, q.country
+)
+SELECT coalesce(p.country, a.country)              AS country,
+       coalesce(m.model_target, a.model_target)    AS model_target,
+       p.parameter_key,
+       coalesce(m.metadata, '{}'::jsonb)           AS metadata,
+       coalesce(a.vals, '[]'::jsonb)               AS "values"
+  FROM metadata m
+  FULL JOIN accepted a ON a.model_target = m.model_target
+  LEFT JOIN params.parameters p ON p.model_target = coalesce(m.model_target, a.model_target);

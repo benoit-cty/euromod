@@ -41,13 +41,21 @@ def _submit(database_url: str, payload: dict, timeout: float, poll: float) -> di
             time.sleep(poll)
 
 
-def encode_via_jobs(database_url: str, query: str, timeout: float = 60.0, poll: float = 0.1) -> str:
-    """halfvec literal for `query`, computed by the worker.
+def encode_via_jobs(
+    database_url: str, query: str, timeout: float = 60.0, poll: float = 0.1, model_id: int = 1
+) -> str:
+    """halfvec literal for `query` under embedding model `model_id`, computed by the worker.
+
+    The default model is left out of the payload, so a worker that predates
+    per-model encoding still answers it.
 
     Raises RuntimeError when the job failed or was cancelled, TimeoutError
     when no worker picked it up in time.
     """
-    return _submit(database_url, {"query": query}, timeout, poll)["halfvec"]
+    payload: dict = {"query": query}
+    if model_id != 1:
+        payload["model_id"] = model_id
+    return _submit(database_url, payload, timeout, poll)["halfvec"]
 
 
 def score_via_jobs(

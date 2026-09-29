@@ -13,7 +13,7 @@ uv sync
 uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025   # mock model, no API key needed
 uv run nomoscope-workflow run-country FR --year 2025 --limit 20   # every FR parameter in the params DB (then its bracket-schedule groups)
 uv run nomoscope-workflow queue --country FR --status pending
-uv run nomoscope-workflow export --out-dir export                # one <CC>_accepted.json per country
+uv run nomoscope-workflow export --out-dir export                # the change set: one <CC>_changes.json per country
 
 # Parameter store (params schema in the legislation DB — db/params_schema.sql)
 uv run nomoscope-workflow init-param-db
@@ -34,8 +34,11 @@ replaces a pending review and never a decided one (unless `--force`). The UI
 reads the queue from the DB and records a decision through
 `params.decide_review_item()`, which appends to `params.review_decisions` and
 updates the item in one transaction — a decision the DB refuses fails outright.
-`export` is the only file writer: one `<CC>_accepted.json` array per country,
-built from accepted/edited queue rows. `run-targets` and `run-country` end with
+`export` is the only file writer: one `<CC>_changes.json` array per country
+holding only what changed (`params.euromod_change_set`, ADR 0005): the
+reviewers' metadata edits (`params.parameter_edits`, made in the UI through
+`params.edit_parameter()` and re-applied after every `ingest-params` /
+`curate-params`) and the value rows accepted as a change or edited. `run-targets` and `run-country` end with
 exactly one `@result {"item_ids": [...]}` line, which the Nomergon worker stores
 as the job result. `pipeline.run_parameter(cfg, tracer, record, as_of, force,
 parameter_ref, enqueue)` takes a `ParameterRecord`; the evaluation pipeline

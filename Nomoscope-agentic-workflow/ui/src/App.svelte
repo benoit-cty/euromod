@@ -115,12 +115,12 @@
     }
   }
 
-  async function exportAccepted() {
+  async function exportChanges() {
     try {
-      const res = await api.exportAccepted(config.db_url);
+      const res = await api.exportChanges(config.db_url);
       if (res.canceled) statusMsg = 'Export cancelled.';
-      else if (res.count === 0) statusMsg = 'Nothing to export — no accepted or edited items.';
-      else statusMsg = `${res.count} record(s) exported: ${res.paths.join(', ')}`;
+      else if (res.count === 0) statusMsg = 'Nothing to export — no accepted value change and no metadata edit.';
+      else statusMsg = `${res.count} changed parameter(s) exported: ${res.paths.join(', ')}`;
     } catch (e) {
       error = String(e);
     }
@@ -194,7 +194,7 @@
     <button onclick={reloadActive} disabled={!reloaders[tab]} title="Reload the current tab">
       Reload
     </button>
-    <button onclick={exportAccepted} title="One JSON file per country, into a folder you pick">Export accepted…</button>
+    <button onclick={exportChanges} title="Only what changed — accepted values and metadata edits — one JSON file per country, into a folder you pick">Export changes…</button>
     <button onclick={() => (dark = !dark)}>{dark ? '☀' : '☾'}</button>
   </header>
 

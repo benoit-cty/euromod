@@ -182,7 +182,18 @@ def ingest_file(conn: psycopg.Connection, path: Path) -> dict:
         for group in groups:
             _upsert_group(conn, group, str(path))
             stats["groups"] += 1
+        stats["edits_reapplied"] = reapply_parameter_edits(conn)
     return stats
+
+
+def reapply_parameter_edits(conn: psycopg.Connection) -> int:
+    """Put the analysts' UI edits (params.parameter_edits) back on the store.
+
+    Re-ingest rewrites unit, texts and every value row's source_type from the
+    export, and the curation overlay rewrites unit and source_type after it;
+    a human edit made in the UI wins over both (ADR 0005), so both call this last.
+    """
+    return conn.execute("SELECT params.reapply_parameter_edits()").fetchone()[0]
 
 
 def system_year_bounds(conn: psycopg.Connection, country: str) -> tuple[int, int] | None:
@@ -329,6 +340,7 @@ def apply_curation(conn: psycopg.Connection, path: Path) -> dict:
             structured = _jsonb(_curated_unit_structured(unit))
             for target in rule.get("targets") or []:
                 _apply_curation_rule(conn, stats, _UNIT_SQL, target, unit, (structured,))
+        stats["edits_reapplied"] = reapply_parameter_edits(conn)
     if country:
         stats["country"] = country
     return stats

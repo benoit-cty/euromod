@@ -431,8 +431,13 @@ pub fn params_list(db_url: &str) -> Result<Value, String> {
     let rows = client
         .query(
             "SELECT p.country, p.model_target, p.policy, p.function, p.name,
-                    p.value_type, p.unit,
+                    p.value_type, p.unit, p.parameter_key,
                     coalesce(p.short_label->>'en', p.label->>'en') AS label,
+                    jsonb_build_object('label', p.label, 'short_label', p.short_label,
+                                       'description', p.description,
+                                       'explanation', p.explanation) AS texts,
+                    (SELECT count(*) FROM params.parameter_edits e
+                      WHERE e.model_target = p.model_target) AS edit_count,
                     p.description->>'en'            AS description,
                     p.classification->>'category'   AS category,
                     p.parameter_group               AS groups,
@@ -500,7 +505,11 @@ pub fn params_list(db_url: &str) -> Result<Value, String> {
             "name": r.get::<_, Option<String>>("name"),
             "value_type": r.get::<_, String>("value_type"),
             "unit": r.get::<_, Option<String>>("unit"),
+            "parameter_key": r.get::<_, Option<String>>("parameter_key"),
             "label": r.get::<_, Option<String>>("label"),
+            // the full language-keyed texts, for the metadata editor
+            "texts": r.get::<_, Value>("texts"),
+            "edit_count": r.get::<_, i64>("edit_count"),
             "description": r.get::<_, Option<String>>("description"),
             "category": r.get::<_, Option<String>>("category"),
             // group memberships: [{id, kind, role, index}, …] or null
@@ -520,6 +529,28 @@ pub fn params_list(db_url: &str) -> Result<Value, String> {
             "last_finished_at": r.get::<_, Option<String>>("last_finished_at"),
         })).collect::<Vec<_>>(),
     }))
+}
+
+/// One parameter's metadata edits (`params.parameter_edits`), newest first.
+pub fn parameter_edits(db_url: &str, model_target: &str) -> Result<Value, String> {
+    let mut client = connect(db_url)?;
+    let rows = client
+        .query(
+            "SELECT id, field, value, previous, reviewer, note, edited_at::text AS edited_at
+             FROM params.parameter_edits WHERE model_target = $1
+             ORDER BY edited_at DESC, id DESC",
+            &[&model_target],
+        )
+        .map_err(|e| format!("edit history query failed (run `nomoscope-workflow init-param-db`?): {e}"))?;
+    Ok(json!(rows.iter().map(|r| json!({
+        "id": r.get::<_, i64>("id"),
+        "field": r.get::<_, String>("field"),
+        "value": r.get::<_, Option<Value>>("value"),
+        "previous": r.get::<_, Option<Value>>("previous"),
+        "reviewer": r.get::<_, String>("reviewer"),
+        "note": r.get::<_, Option<String>>("note"),
+        "edited_at": r.get::<_, String>("edited_at"),
+    })).collect::<Vec<_>>()))
 }
 
 /// Every language rendering of the legal-unit version a cited chunk belongs to.

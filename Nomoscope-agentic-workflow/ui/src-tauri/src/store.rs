@@ -1,5 +1,6 @@
-//! The review queue as rows (`params.review_queue`, ADR 0004) and the
-//! EUROMOD export, the only file the UI ever writes.
+//! The review queue as rows (`params.review_queue`, ADR 0004), the analyst's
+//! metadata edits (`params.edit_parameter`, ADR 0005) and the EUROMOD export,
+//! the only file the UI ever writes.
 //!
 //! A reviewer decision is computed here ([compute_decision], pure) and
 //! recorded by ONE database call, `params.decide_review_item(item_id, item,
@@ -240,36 +241,62 @@ pub fn commit_decision(db_url: &str, item_id: &str, item: &Value, entry: &Value)
     Ok(json!({ "id": id }))
 }
 
-/// Accepted/edited items' Activity 1 records, grouped by country — what the
-/// export writes (write-back is export-first: nothing touches EUROMOD files).
+/// Record and apply one metadata edit (unit, source_type, or a language-keyed
+/// text) through ONE call to `params.edit_parameter`, which validates the value,
+/// writes the audit row with `reviewer = current_user` and updates the store.
+/// Identity and values are not editable: the function refuses them. Returns the
+/// edit id, or null when the value already was the store's.
+pub fn edit_parameter(
+    db_url: &str,
+    model_target: &str,
+    field: &str,
+    value: &Value,
+    note: Option<&str>,
+) -> Result<Value, String> {
+    let mut client = connect(db_url)?;
+    let row = client
+        .query_one(
+            "SELECT params.edit_parameter($1, $2, $3::jsonb, $4)",
+            &[&model_target, &field, value, &note],
+        )
+        .map_err(|e| format!("edit not recorded, nothing was changed: {}", describe(e)))?;
+    let id: Option<i64> = row.get(0);
+    Ok(json!({ "id": id }))
+}
+
+/// The change set for EUROMOD, grouped by country — what the export writes
+/// (write-back is export-first: nothing touches EUROMOD files). One entry per
+/// changed parameter from `params.euromod_change_set`, the view the CLI export
+/// reads too: metadata edits as `{field: {from, to, …}}` and only the value
+/// rows a human accepted as a change or edited — no history, no untouched field.
 pub fn export_records(db_url: &str) -> Result<BTreeMap<String, Vec<Value>>, String> {
     let mut client = connect(db_url)?;
     let rows = client
         .query(
-            "SELECT country, item -> 'proposed_record' AS record
-             FROM params.review_queue
-             WHERE status IN ('accepted', 'edited') AND item ? 'proposed_record'
-             ORDER BY country, model_target, system_year, item_id",
+            "SELECT country, model_target, parameter_key, metadata, \"values\"
+             FROM params.euromod_change_set
+             ORDER BY country, model_target",
             &[],
         )
         .map_err(|e| format!("export query failed: {}", describe(e)))?;
     let mut groups: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     for r in &rows {
-        let record: Value = r.get("record");
-        if record.is_null() {
-            continue;
-        }
-        groups.entry(r.get::<_, String>("country")).or_default().push(record);
+        groups.entry(r.get::<_, String>("country")).or_default().push(json!({
+            "parameter_key": r.get::<_, Option<String>>("parameter_key"),
+            "model_target": r.get::<_, String>("model_target"),
+            "metadata": r.get::<_, Value>("metadata"),
+            "values": r.get::<_, Value>("values"),
+        }));
     }
     Ok(groups)
 }
 
-/// Write `<CC>_accepted_<date>.json` per country into `dir`: one JSON array of
-/// records each. Returns the paths written.
+/// Write `<CC>_changes_<date>.json` per country into `dir`: one JSON array of
+/// changed parameters each. Returns the paths written.
 pub fn write_export(dir: &Path, groups: &BTreeMap<String, Vec<Value>>, date: &str) -> Result<Vec<String>, String> {
     let mut paths = Vec::new();
     for (country, records) in groups {
-        let path: PathBuf = dir.join(format!("{country}_accepted_{date}.json"));
+        let path: PathBuf = dir.join(format!("{country}_changes_{date}.json"));
         let text = serde_json::to_string_pretty(&Value::Array(records.clone())).map_err(|e| e.to_string())?;
         fs::write(&path, text + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
         paths.push(path.display().to_string());
@@ -410,8 +437,8 @@ mod tests {
         groups.insert("ES".into(), vec![json!({ "information": { "country": "ES" } })]);
         let paths = write_export(dir.path(), &groups, "2026-09-22").unwrap();
         assert_eq!(paths.len(), 2);
-        assert!(paths[0].ends_with("ES_accepted_2026-09-22.json"));
-        let fr: Value = serde_json::from_str(&fs::read_to_string(dir.path().join("FR_accepted_2026-09-22.json")).unwrap()).unwrap();
+        assert!(paths[0].ends_with("ES_changes_2026-09-22.json"));
+        let fr: Value = serde_json::from_str(&fs::read_to_string(dir.path().join("FR_changes_2026-09-22.json")).unwrap()).unwrap();
         assert_eq!(fr.as_array().unwrap().len(), 2);
         assert_eq!(fr[0]["information"]["country"], "FR");
     }
@@ -486,9 +513,12 @@ mod tests {
         assert_eq!(decisions[0].get::<_, Option<String>>("reviewer").as_deref(), Some(me.as_str()));
         assert_eq!(decisions[0].get::<_, Option<Value>>("edited_value"), Some(json!(0.25)));
 
-        // the export sees it, under its country
+        // the change set sees it, under its country: the edited value only
         let groups = export_records(&url).unwrap();
-        assert!(groups.get("ZZ").is_some_and(|records| records.len() == 1));
+        let changes = groups.get("ZZ").expect("the edited item is a change");
+        assert_eq!(changes.len(), 1);
+        assert_eq!(changes[0]["values"].as_array().unwrap().len(), 1);
+        assert_eq!(changes[0]["values"][0]["value"]["value"], json!(0.25));
 
         // a vanished item fails outright
         cleanup(&mut client);

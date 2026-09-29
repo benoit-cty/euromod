@@ -255,24 +255,25 @@ def queue(
 
 @app.command()
 def export(
-    out_dir: Path = typer.Option(Path("export"), "--out-dir", help="Directory for <CC>_accepted.json"),
+    out_dir: Path = typer.Option(Path("export"), "--out-dir", help="Directory for <CC>_changes.json"),
 ) -> None:
-    """Export accepted/edited records, one Activity 1 JSON array per country.
+    """Export the change set for EUROMOD, one JSON array per country.
 
-    The EUROMOD export is the only file this system writes; it is built from
-    params.review_queue, only from items a human accepted or edited in the UI.
+    The EUROMOD export is the only file this system writes, and it holds only
+    what changed: the analysts' metadata edits and the values a human accepted
+    as a change or edited in the UI (params.euromod_change_set).
     """
     cfg = load_config()
     with paramdb.connect(cfg) as conn:
-        exported = queue_store.export_accepted(conn)
+        exported = queue_store.export_change_set(conn)
     out_dir.mkdir(parents=True, exist_ok=True)
     total = 0
-    for country, records in sorted(exported.items()):
-        path = out_dir / f"{country}_accepted.json"
-        path.write_text(json.dumps(records, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        typer.echo(f"exported {path} ({len(records)} record(s))")
-        total += len(records)
-    typer.echo(f"{total} record(s) exported.")
+    for country, changes in sorted(exported.items()):
+        path = out_dir / f"{country}_changes.json"
+        path.write_text(json.dumps(changes, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        typer.echo(f"exported {path} ({len(changes)} changed parameter(s))")
+        total += len(changes)
+    typer.echo(f"{total} changed parameter(s) exported.")
 
 
 @app.command("init-param-db")
@@ -308,6 +309,7 @@ def curate_params(
     export does not carry or gets wrong.
 
     Run after ingest-params, which overwrites all three from the export.
+    The analysts' UI edits (params.parameter_edits) are re-applied last: they win.
     Idempotent — re-run it whenever a new export lands.
     """
     cfg = load_config()
@@ -316,7 +318,10 @@ def curate_params(
         paramdb.apply_schema(conn)
         for path in files:
             stats = paramdb.apply_curation(conn, path)
-            typer.echo(f"{path.name}: {stats['updated']} updated, {stats['unchanged']} already set")
+            typer.echo(
+                f"{path.name}: {stats['updated']} updated, {stats['unchanged']} already set, "
+                f"{stats['edits_reapplied']} UI edit(s) re-applied"
+            )
             for target in stats["missing"]:
                 typer.echo(f"  ! not in params DB: {target}")
                 exit_code = 1

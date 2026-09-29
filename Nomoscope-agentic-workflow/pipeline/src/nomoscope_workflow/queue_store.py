@@ -113,16 +113,26 @@ def load_item(conn: psycopg.Connection, item_id: str) -> ReviewItem | None:
     return _from_row(*row) if row else None
 
 
-def export_accepted(conn: psycopg.Connection) -> dict[str, list[dict]]:
-    """Accepted/edited items' full records (Activity 1 format), grouped by country.
+def export_change_set(conn: psycopg.Connection) -> dict[str, list[dict]]:
+    """What goes back to EUROMOD — only the changes — grouped by country.
 
-    Write-back is export-first: this is the only thing that leaves the DB, one
-    file per country, and only after a human accepted the item in the UI.
+    One entry per changed parameter, read from the params.euromod_change_set
+    view (the UI's export reads the same view): the analyst's metadata edits as
+    {field: {from, to, ...}} and only the value rows a human accepted as a
+    change or edited. Untouched fields and the value history are left out.
     """
     exported: dict[str, list[dict]] = {}
-    for item in load_items(conn):
-        if item.status in (ItemStatus.ACCEPTED, ItemStatus.EDITED) and item.proposed_record:
-            exported.setdefault(item.country, []).append(
-                item.proposed_record.model_dump(mode="json")
-            )
+    rows = conn.execute(
+        "SELECT country, model_target, parameter_key, metadata, \"values\" "
+        "FROM params.euromod_change_set ORDER BY country, model_target"
+    ).fetchall()
+    for country, model_target, parameter_key, metadata, values in rows:
+        exported.setdefault(country, []).append(
+            {
+                "parameter_key": parameter_key,
+                "model_target": model_target,
+                "metadata": metadata,
+                "values": values,
+            }
+        )
     return exported

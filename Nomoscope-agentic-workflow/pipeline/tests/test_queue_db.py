@@ -7,6 +7,7 @@ Only mock/extractor is ever used here.
 
 from __future__ import annotations
 
+import json
 import os
 import uuid
 from datetime import date, datetime, timezone
@@ -24,6 +25,7 @@ from nomoscope_workflow.schema import (
     ParameterValue,
     ReviewItem,
     Routing,
+    SourceType,
 )
 
 DATABASE_URL = os.environ.get("WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation")
@@ -97,18 +99,152 @@ def test_write_item_replaces_pending_and_keeps_decided_unless_forced(conn, scrat
     assert item.id not in {i.id for i in queue_store.load_items(conn, status="accepted")}
 
 
-def test_export_accepted_groups_records_by_country(conn, scratch_target):
-    assert queue_store.write_item(conn, _item(scratch_target, ItemStatus.ACCEPTED))
-    exported = queue_store.export_accepted(conn)
-    records = [r for r in exported.get("FR", []) if r["information"]["model_target"] == scratch_target]
-    assert len(records) == 1
-    assert records[0]["values"][0]["value"] == 0.45
-
-    assert queue_store.write_item(conn, _item(scratch_target, ItemStatus.REJECTED), force=True)
-    assert not [
-        r for r in queue_store.export_accepted(conn).get("FR", [])
-        if r["information"]["model_target"] == scratch_target
+def _item_with_history(target: str, status: ItemStatus, routing: Routing) -> ReviewItem:
+    """An item whose record holds the received history plus the proposed value last."""
+    item = _item(target, status)
+    item.routing = routing
+    item.proposed_record.values = [
+        ParameterValue(value=0.40, valid_from=date(2023, 1, 1), valid_to=date(2024, 12, 31)),
+        ParameterValue(value=0.45, valid_from=date(2025, 1, 1)),
     ]
+    return item
+
+
+def _change(conn, target: str) -> dict | None:
+    return next(
+        (c for c in queue_store.export_change_set(conn).get("FR", []) if c["model_target"] == target),
+        None,
+    )
+
+
+def test_change_set_holds_only_the_accepted_new_value(conn, scratch_target):
+    assert queue_store.write_item(conn, _item_with_history(scratch_target, ItemStatus.ACCEPTED, Routing.CHANGED))
+    change = _change(conn, scratch_target)
+    assert change["metadata"] == {}
+    assert [v["value"]["value"] for v in change["values"]] == [0.45]  # no history
+    assert change["values"][0]["system_year"] == 2025
+
+    # an accepted `unchanged` confirms, it changes nothing
+    assert queue_store.write_item(
+        conn, _item_with_history(scratch_target, ItemStatus.ACCEPTED, Routing.UNCHANGED), force=True
+    )
+    assert _change(conn, scratch_target) is None
+    # a rejected change never leaves
+    assert queue_store.write_item(
+        conn, _item_with_history(scratch_target, ItemStatus.REJECTED, Routing.CHANGED), force=True
+    )
+    assert _change(conn, scratch_target) is None
+
+
+@pytest.fixture
+def scratch_parameter(conn, scratch_target):
+    """A throwaway params.parameters row (one value row), and its edits cleaned up."""
+    parameter_id = conn.execute(
+        "INSERT INTO params.parameters (country, model_target, parameter_key, value_type, unit, "
+        "unit_structured, label, source_file) VALUES ('FR', %s, %s, 'scalar', 'currency', "
+        "'{\"quantity\": \"money\", \"currency\": \"EUR\"}', '{\"en\": \"Old label\"}', 'test') RETURNING id",
+        (scratch_target, scratch_target.removeprefix("euromod://").replace("/", ":")),
+    ).fetchone()[0]
+    conn.execute(
+        "INSERT INTO params.model_values (parameter_id, seq, value_raw, value_kind, valid_from) "
+        "VALUES (%s, 0, '0.2', 'numeric', '2024-01-01')",
+        (parameter_id,),
+    )
+    conn.commit()
+    yield scratch_target
+    conn.rollback()
+    conn.execute("DELETE FROM params.parameter_edits WHERE model_target = %s", (scratch_target,))
+    conn.execute("DELETE FROM params.parameters WHERE model_target = %s", (scratch_target,))
+    conn.commit()
+
+
+def _edit(conn, target: str, field: str, value, note: str | None = None):
+    return conn.execute(
+        "SELECT params.edit_parameter(%s, %s, %s::jsonb, %s)", (target, field, json.dumps(value), note)
+    ).fetchone()[0]
+
+
+def test_edit_parameter_applies_audits_and_exports_the_net_change(conn, scratch_parameter):
+    target = scratch_parameter
+    assert _edit(conn, target, "unit", "/1", "a rate, not an amount") is not None
+    assert _edit(conn, target, "unit", "/1") is None  # already the store's value: no row
+    assert _edit(conn, target, "label", {"en": "New label"}) is not None
+    assert _edit(conn, target, "source_type", "national_team") is not None
+    unit, structured, label = conn.execute(
+        "SELECT unit, unit_structured, label FROM params.parameters WHERE model_target = %s", (target,)
+    ).fetchone()
+    assert (unit, structured, label) == ("/1", {"quantity": "rate", "scale": "/1"}, {"en": "New label"})
+    assert conn.execute(
+        "SELECT source_type FROM params.model_values v JOIN params.parameters p ON p.id = v.parameter_id "
+        "WHERE p.model_target = %s", (target,)
+    ).fetchone()[0] == "national_team"
+    reviewer = conn.execute("SELECT DISTINCT reviewer FROM params.parameter_edits WHERE model_target = %s",
+                            (target,)).fetchall()
+    assert reviewer == [(conn.info.user,)]  # the login, via session_user
+
+    change = _change(conn, target)
+    assert change["parameter_key"] == target.removeprefix("euromod://").replace("/", ":")
+    assert change["values"] == []
+    assert {k: (v["from"], v["to"]) for k, v in change["metadata"].items()} == {
+        "unit": ("currency", "/1"),
+        "label": ({"en": "Old label"}, {"en": "New label"}),
+        "source_type": (None, "national_team"),
+    }
+    assert change["metadata"]["unit"]["note"] == "a rate, not an amount"
+
+    # an edit reverted is no change: it leaves the change set
+    _edit(conn, target, "label", {"en": "Old label"})
+    assert set(_change(conn, target)["metadata"]) == {"unit", "source_type"}
+    conn.commit()
+
+
+def test_edits_survive_a_re_ingest(conn, scratch_parameter):
+    target = scratch_parameter
+    _edit(conn, target, "unit", "currency/month")
+    # what ingest-params does to the row, then what it runs last
+    conn.execute("UPDATE params.parameters SET unit = 'currency' WHERE model_target = %s", (target,))
+    assert paramdb.reapply_parameter_edits(conn) >= 1
+    unit, structured = conn.execute(
+        "SELECT unit, unit_structured FROM params.parameters WHERE model_target = %s", (target,)
+    ).fetchone()
+    assert unit == "currency/month"
+    assert structured == {"quantity": "money", "currency": "EUR", "period": "month"}  # currency kept
+    conn.commit()
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("unit", "EUR"),  # not in KNOWN_UNITS
+        ("source_type", "hearsay"),
+        ("label", {"en": 3}),
+        ("label", "bare text"),
+        ("model_target", "euromod://FR/x/y/$z"),  # identity is never editable
+        ("parameter_key", "FR:x:y:$z"),
+        ("value", 0.5),  # values change only through a review decision
+    ],
+)
+def test_edit_parameter_refuses(conn, scratch_parameter, field, value):
+    with pytest.raises(psycopg.errors.RaiseException):
+        _edit(conn, scratch_parameter, field, value)
+    conn.rollback()
+
+
+def test_edit_parameter_refuses_an_unknown_parameter(conn):
+    with pytest.raises(psycopg.errors.RaiseException, match="not in the parameter store"):
+        _edit(conn, "euromod://FR/nope/def_const/$nope", "unit", "/1")
+    conn.rollback()
+
+
+def test_sql_unit_vocabulary_matches_known_units(conn):
+    """edit_parameter hard-codes the vocabulary; it must not drift from KNOWN_UNITS."""
+    source = conn.execute(
+        "SELECT prosrc FROM pg_proc WHERE proname = 'edit_parameter'"
+    ).fetchone()[0]
+    for unit in paramdb.KNOWN_UNITS:
+        assert f"'{unit}'" in source
+    for source_type in SourceType:
+        assert f"'{source_type.value}'" in source
 
 
 def test_decide_review_item_records_the_decision_and_updates_the_item(conn, scratch_target):

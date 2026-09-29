@@ -13,8 +13,15 @@ export const api = {
   saveDecision: (payload) => invoke('save_decision', { payload }),
   loadDecisions: (dbUrl, limit = 200) =>
     invoke('load_decisions', { payload: { db_url: dbUrl, limit } }),
-  // One file per country, into a folder the reviewer picks: { count, paths, canceled }.
-  exportAccepted: (dbUrl) => invoke('export_accepted', { payload: { db_url: dbUrl } }),
+  // The EUROMOD change set — metadata edits and accepted value changes only —
+  // one file per country, into a folder the reviewer picks: { count, paths, canceled }.
+  exportChanges: (dbUrl) => invoke('export_changes', { payload: { db_url: dbUrl } }),
+  // Metadata edits (params.edit_parameter, ADR 0005): unit, source_type or a
+  // {lang: text} field. Resolves { id } (null = already the store's value).
+  editParameter: (dbUrl, modelTarget, field, value, note = null) =>
+    invoke('edit_parameter', { payload: { db_url: dbUrl, model_target: modelTarget, field, value, note } }),
+  parameterEdits: (dbUrl, modelTarget) =>
+    invoke('parameter_edits', { payload: { db_url: dbUrl, model_target: modelTarget } }),
   dbStats: (dbUrl) => invoke('db_stats', { payload: { db_url: dbUrl } }),
   // Vector/hybrid modes encode the query on the worker; `notice` is set when
   // no worker was alive and the search fell back to full text.

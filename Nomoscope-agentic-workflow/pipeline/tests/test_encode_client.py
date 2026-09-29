@@ -102,7 +102,7 @@ def test_query_encoder_db_mode_degrades_to_fts_only(conn, marker, monkeypatch, c
     """WORKFLOW_ENCODER=db with no worker: vector leg disabled for the process, one note."""
     monkeypatch.setenv("WORKFLOW_ENCODER", "db")
     monkeypatch.setattr(query_encoder, "_disabled", False)
-    monkeypatch.setattr(encode_client, "encode_via_jobs", lambda url, q, timeout=60.0, poll=0.1: (_ for _ in ()).throw(TimeoutError("no worker alive")))
+    monkeypatch.setattr(encode_client, "encode_via_jobs", lambda url, q, timeout=60.0, poll=0.1, model_id=1: (_ for _ in ()).throw(TimeoutError("no worker alive")))
 
     assert query_encoder.encode(marker, DATABASE_URL) is None
     assert query_encoder._disabled is True

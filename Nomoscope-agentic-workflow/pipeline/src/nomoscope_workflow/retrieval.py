@@ -307,7 +307,9 @@ def retrieve(
     for hit in citation_fast_path(conn, country, lang, as_of, citations, cfg.retrieval_k):
         merged[hit.chunk_id] = hit
     query_vector = (
-        query_encoder.encode(query, cfg.database_url) if cfg.embedding_model_id != 99 else None
+        query_encoder.encode(query, cfg.database_url, cfg.embedding_model_id)
+        if cfg.embedding_model_id != 99
+        else None
     )
     for hit in hybrid_search(
         conn, country, lang, as_of, query, cfg.embedding_model_id, cfg.retrieval_k, query_vector

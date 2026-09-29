@@ -410,72 +410,79 @@ def _draft_value(draft: ProposalDraft):
     return draft.value_brackets if draft.value_brackets is not None else draft.value_scalar
 
 
+def frame_query(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> dict:
+    """The `frame` step's deterministic output: the search query and known citations.
+
+    Module-level so the retrieval evaluation (nomokrisis_eval, embedding cases
+    built from golden cases) searches with exactly the query a run would send.
+    """
+    info = record.information
+    labels = {**(info.short_label or {}), **(info.label or {})}
+    descriptions = info.description or {}
+    # Prefer law-language text for the query: the FTS leg of hybrid retrieval
+    # is language-specific, so an English-only record searches French law
+    # poorly. Translations live in params.parameter_texts (best-effort:
+    # no rows / no schema -> received text only, previous behaviour).
+    lang = retrieval.LANG_BY_COUNTRY.get(info.country, "en")
+    native: list[str] = []
+    if lang not in labels and lang not in descriptions:
+        try:
+            with paramdb.connect(cfg) as conn:
+                texts = translate.law_language_texts(conn, info.model_target, lang)
+            native = [t for f in ("short_label", "label", "description") if (t := texts.get(f))]
+        except Exception:
+            native = []
+    # Native texts REPLACE the received ones in the query rather than being
+    # appended: a mixed-language ~60-term query dilutes the BGE-M3 embedding
+    # and turns the OR'd FTS leg into noise.
+    parts = [_clean_query_text(p) for p in (native or [*labels.values(), *descriptions.values()])]
+    query = " ".join(dict.fromkeys(p for p in parts if p)) or info.model_target
+    # Country Report enrichment (acronym -> semantic): CR section headings
+    # translate EUROMOD codes into official native benefit/tax names
+    # ('tinto01_s' -> 'Contribution différentielle sur les hauts revenus').
+    # Context only — CR chunks are excluded from evidence retrieval.
+    # Probe with the identity tokens ALONE: label words match every fiscal
+    # section and drown the one heading that carries this parameter's code.
+    ident = retrieval.euromod_ident_tokens(info.model_target)
+    cr_terms: list[str] = []
+    cr_headings: list[str] = []
+    try:
+        if ident:
+            with retrieval.connect(cfg) as conn:
+                cr_hits = retrieval.country_report_search(
+                    conn, info.country, as_of, " ".join(ident), k=5
+                )
+            cr_terms = retrieval.cr_enrichment_terms(cr_hits, ident, query)
+            cr_headings = [h.citation for h in cr_hits if h.citation]
+    except Exception:  # no CR corpus / DB hiccup -> frame works as before
+        cr_terms = []
+    if cr_terms:
+        query = " ".join([query, *cr_terms])
+    citations: list[str] = []
+    for value in reversed(record.values):
+        for ref in value.references:
+            citations.extend(filter(None, [ref.title, ref.legal_unit_ref]))
+        if citations:
+            break
+    return {
+        "query": query,
+        "citations": list(dict.fromkeys(citations)),
+        "law_language_texts": len(native),
+        "cr_terms": cr_terms,
+        "cr_headings": cr_headings,
+    }
+
+
 def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
     """Assemble the workflow as a plain function; steps close over config, DB and tracer."""
     is_mock = cfg.model.startswith("mock")
 
     def frame(state: WorkflowState) -> dict:
         record = state["record"]
-        info = record.information
-        labels = {**(info.short_label or {}), **(info.label or {})}
-        descriptions = info.description or {}
-        # Prefer law-language text for the query: the FTS leg of hybrid retrieval
-        # is language-specific, so an English-only record searches French law
-        # poorly. Translations live in params.parameter_texts (best-effort:
-        # no rows / no schema -> received text only, previous behaviour).
-        lang = retrieval.LANG_BY_COUNTRY.get(info.country, "en")
-        native: list[str] = []
-        if lang not in labels and lang not in descriptions:
-            try:
-                with paramdb.connect(cfg) as conn:
-                    texts = translate.law_language_texts(conn, info.model_target, lang)
-                native = [t for f in ("short_label", "label", "description") if (t := texts.get(f))]
-            except Exception:
-                native = []
-        # Native texts REPLACE the received ones in the query rather than being
-        # appended: a mixed-language ~60-term query dilutes the BGE-M3 embedding
-        # and turns the OR'd FTS leg into noise.
-        parts = [_clean_query_text(p) for p in (native or [*labels.values(), *descriptions.values()])]
-        query = " ".join(dict.fromkeys(p for p in parts if p)) or info.model_target
-        # Country Report enrichment (acronym -> semantic): CR section headings
-        # translate EUROMOD codes into official native benefit/tax names
-        # ('tinto01_s' -> 'Contribution différentielle sur les hauts revenus').
-        # Context only — CR chunks are excluded from evidence retrieval.
-        # Probe with the identity tokens ALONE: label words match every fiscal
-        # section and drown the one heading that carries this parameter's code.
-        ident = retrieval.euromod_ident_tokens(info.model_target)
-        cr_terms: list[str] = []
-        cr_headings: list[str] = []
-        try:
-            if ident:
-                with retrieval.connect(cfg) as conn:
-                    cr_hits = retrieval.country_report_search(
-                        conn, info.country, state["as_of"], " ".join(ident), k=5
-                    )
-                cr_terms = retrieval.cr_enrichment_terms(cr_hits, ident, query)
-                cr_headings = [h.citation for h in cr_hits if h.citation]
-        except Exception:  # no CR corpus / DB hiccup -> frame works as before
-            cr_terms = []
-        if cr_terms:
-            query = " ".join([query, *cr_terms])
-        citations: list[str] = []
-        for value in reversed(record.values):
-            for ref in value.references:
-                citations.extend(filter(None, [ref.title, ref.legal_unit_ref]))
-            if citations:
-                break
-        with step_span(tracer, "frame", input_value={"model_target": info.model_target}) as span:
-            set_output(
-                span,
-                {
-                    "query": query,
-                    "citations": citations,
-                    "law_language_texts": len(native),
-                    "cr_terms": cr_terms,
-                    "cr_headings": cr_headings,
-                },
-            )
-        return {"query": query, "citations": list(dict.fromkeys(citations)), "attempts": 0}
+        framed = frame_query(cfg, record, state["as_of"])
+        with step_span(tracer, "frame", input_value={"model_target": record.information.model_target}) as span:
+            set_output(span, framed)
+        return {"query": framed["query"], "citations": framed["citations"], "attempts": 0}
 
     def retrieve(state: WorkflowState) -> dict:
         info = state["record"].information
