@@ -1284,7 +1284,12 @@ def _build_proposed_value(state: WorkflowState, cfg: WorkflowConfig) -> Paramete
             model=cfg.model,
             model_answer=model_answer,
             confidence=draft.confidence,
-            retrieval_trace=[h.model_copy(update={"content": ""}) for h in hits],
+            # only the hits the value cites; the item keeps the full trace
+            retrieval_trace=[
+                h.model_copy(update={"content": ""})
+                for h in hits
+                if h.chunk_id in {r.jrc_database_id for r in references}
+            ],
         ),
     )
 
