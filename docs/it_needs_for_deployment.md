@@ -157,20 +157,65 @@ no third-party dictionary is needed.
 
 ### 3.3 Sizing
 
-Today's pilot corpus (partial, 3 countries, ~70 instruments) is **228 MB**:
+**Recommended instance: 4 vCPU, 16 GB RAM, 100 GB SSD.** The figures below are measured on
+the development database (October 2026) and extrapolated to 27 countries; the load side is
+3 analysts plus one worker running one job at a time.
+
+#### What the pilot database holds today
+
+The five pilot countries, partially ingested: 277 instruments, 36 700 retrieval chunks,
+**862 MB** for the `legislation` database and 344 MB for `phoenix`.
 
 | Table | Size | Note |
 |---|---|---|
-| `chunks` | 64 MB | retrieval units + FTS index |
-| `unit_texts` | 57 MB | original + machine-translated text |
-| `embeddings` | 48 MB | 8 845 vectors, halfvec(1024) + HNSW |
-| `fetch_snapshots` | 17 MB | raw archived payloads (provenance) |
+| `embeddings` | 381 MB | halfvec(1024) vectors + HNSW. Five embedding models are stored for the model comparison; production keeps one |
+| `chunks` | 166 MB | retrieval units + FTS index |
+| `unit_texts` | 151 MB | original + machine-translated text + FTS index |
+| `fetch_snapshots` | 63 MB | raw archived payloads (provenance) |
+| `params.*` | 60 MB | parameter store, proposals, review queue (one queue item ≈ 50 KB, it carries the retrieval trace) |
 
-Extrapolating to the 27 countries fully ingested, with English translations and
-embeddings, we expect **70 GB**. **Provision 100 GB with room to grow**, and expect the
-vector index to want to sit in RAM: **8–16 GB RAM** on the instance is comfortable,
-4 vCPU is plenty. There is no high write throughput — ingestion is batch, the workflow is
-mostly reads.
+Per country: FR 13 300 chunks (188 acts), ES 9 800, LT 7 300, NL 6 000, IE 4 400. All-in,
+one chunk costs **~18 KB** on disk with a single embedding model (text, FTS, vector, HNSW,
+snapshot, structure); each additional embedding model adds ~5.5 KB per chunk.
+
+#### Extrapolation to 27 countries
+
+The corpus is citation-driven: "fully ingested" means every act the EUROMOD parameters
+cite, in every yearly version (archive-first keeps them all), with English translations.
+Translated chunks are already counted in the per-country figures above. FR, the most mature
+country, will roughly double once the tax and social-security codes are complete; ES grows
+faster because of 17 autonomous-community budget laws per year.
+
+| Component | Estimate |
+|---|---|
+| Legislation corpus, 27 countries × ~30 000 chunks, one embedding model | **~15 GB** |
+| Upper bound if whole codes are ingested instead of the cited acts | ~50 GB |
+| Yearly growth (only changed articles get a new version) | +10–15 % per year |
+| Parameter store, review queue, proposals, runs (~17 000 parameters, one run per year) | ~2 GB per year |
+| Phoenix traces (~0.2 MB per workflow run): one full annual pass plus evaluation runs | ~4–6 GB per year, set a retention policy |
+| WAL, vacuum headroom, HNSW reindex (needs twice the index while rebuilding) | × 2 |
+
+**Provision 100 GB** on SSD; a managed service can start at 50 GB with auto-grow. Nothing
+needs high IOPS — ingestion and embedding are batch writes, the workflow and the UI are
+reads.
+
+#### RAM: the working set, not the throughput
+
+The evidence query ranks vectors inside a country-scoped candidate set (an exact scan over
+that country's vectors), and the UI's semantic search walks the HNSW index with random
+access. Both want the vectors and the indexes in the page cache. At ~800 000 chunks that
+working set is about 2 GB of vectors, 2 GB of HNSW and 1 GB of FTS indexes. **8 GB works
+for the 15 GB corpus, 16 GB covers the upper bound** and lets the HNSW index build in memory
+after a bulk embedding. Suggested settings on a 16 GB instance: `shared_buffers = 4GB`,
+`effective_cache_size = 12GB`, `maintenance_work_mem = 2GB`, `work_mem = 64MB`,
+`max_parallel_maintenance_workers = 4`.
+
+#### CPU and connections
+
+Three analysts and one worker (one job at a time) hold fewer than 20 connections at any
+moment; the default `max_connections = 100` is fine. The only CPU-heavy work on the
+database is the HNSW index build after a bulk embed and tsvector generation on insert.
+**4 vCPU is enough**; 8 vCPU only matters if an index rebuild must never slow the analysts.
 
 ### 3.4 Backup
 
@@ -444,7 +489,9 @@ developer's laptop:
 
 Needs: **one container** (`arizephoenix/phoenix:latest`), ~1 GB RAM, its own
 database user on the `phoenix` DB, and two ports — 6006 (web UI + OTLP/HTTP) and 4317
-(OTLP/gRPC) — reachable from wherever the workflow runs.
+(OTLP/gRPC) — reachable from wherever the workflow runs. Trace storage grows by about
+0.2 MB per workflow run, i.e. 4–6 GB per year for a full annual pass over 27 countries plus
+the evaluation runs (§3.3); set a retention policy in Phoenix rather than sizing for it.
 
 Two caveats to plan for:
 
