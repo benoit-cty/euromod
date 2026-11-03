@@ -36,15 +36,15 @@ class EvalConfig:
 
 
 def load_eval_config() -> EvalConfig:
-    """Build the config from .env (repo root, then Nomokrisis-evaluation_pipeline/) and the process env."""
+    """Build the config from the repo-root .env (the one config file) and the process env."""
     load_dotenv(REPO_ROOT / ".env")
-    load_dotenv(EVAL_ROOT / ".env", override=True)
     return EvalConfig(
         database_url=_env(
             "EVAL_DATABASE_URL",
             _env("WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation"),
         ),
-        builder_model=_env("EVAL_BUILDER_MODEL", "anthropic/claude-fable-5"),
+        # Every model role falls back to WORKFLOW_MODEL (see the root .env.example).
+        builder_model=_env("EVAL_BUILDER_MODEL", "") or _env("WORKFLOW_MODEL", ""),
         critique_model=_env("EVAL_CRITIQUE_MODEL", ""),
         phoenix_project=_env("EVAL_PHOENIX_PROJECT", "nomokrisis-evaluation"),
     )

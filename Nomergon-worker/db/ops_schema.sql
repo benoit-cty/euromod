@@ -14,12 +14,13 @@ CREATE SCHEMA IF NOT EXISTS ops;
 --             nomergon/jobs.py); the UI only ever describes a job
 --   progress: the latest `@progress {json}` line the subprocess printed
 --   result:   job-type specific (encode: {"halfvec": "[...]"}; impact: the
---             report; workflow: {"item_ids": [...]})
+--             report; workflow: {"item_ids": [...]}; chat: the answer, its
+--             verified quotes, sources, web results and discoveries)
 CREATE TABLE IF NOT EXISTS ops.jobs (
     id               bigserial PRIMARY KEY,
     job_type         text NOT NULL CHECK (job_type IN (
                          'workflow', 'ingest', 'embed', 'translate', 'translate-params',
-                         'encode', 'eval', 'draft-golden', 'impact')),
+                         'encode', 'eval', 'draft-golden', 'impact', 'chat')),
     payload          jsonb NOT NULL DEFAULT '{}'::jsonb,
     priority         smallint NOT NULL DEFAULT 0,
     status           text NOT NULL DEFAULT 'queued' CHECK (status IN (
@@ -34,6 +35,24 @@ CREATE TABLE IF NOT EXISTS ops.jobs (
     result           jsonb,
     error            text
 );
+-- CREATE TABLE IF NOT EXISTS leaves an existing table's CHECK as it was: widen
+-- the job-type list of a database created before a type existed. A no-op once
+-- the list is current, so a worker that does not own the table (nomos_admin
+-- does, in a shared deployment) still starts; the admin applies this file
+-- once after an upgrade. Keep the list identical to the one above.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'ops.jobs'::regclass AND conname = 'jobs_job_type_check'
+      AND pg_get_constraintdef(oid) LIKE '%''chat''%'
+  ) THEN
+    ALTER TABLE ops.jobs DROP CONSTRAINT IF EXISTS jobs_job_type_check;
+    ALTER TABLE ops.jobs ADD CONSTRAINT jobs_job_type_check CHECK (job_type IN (
+        'workflow', 'ingest', 'embed', 'translate', 'translate-params',
+        'encode', 'eval', 'draft-golden', 'impact', 'chat'));
+  END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS jobs_queued_idx ON ops.jobs (priority DESC, id) WHERE status = 'queued';
 CREATE INDEX IF NOT EXISTS jobs_submitted_idx ON ops.jobs (submitted_by, submitted_at DESC);
 CREATE INDEX IF NOT EXISTS jobs_running_idx ON ops.jobs (worker_id) WHERE status = 'running';

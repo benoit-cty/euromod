@@ -99,7 +99,7 @@ def submit(
         typer.echo(f"invalid payload: {exc}", err=True)
         raise typer.Exit(2) from None
     if priority is None:
-        priority = jobs.ENCODE_PRIORITY if job_type == "encode" else 0
+        priority = {"encode": jobs.ENCODE_PRIORITY, "chat": jobs.CHAT_PRIORITY}.get(job_type, 0)
 
     cfg = _cfg()
     with _connect(cfg) as conn:

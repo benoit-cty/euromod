@@ -8,6 +8,7 @@
   uv run nomoscope-workflow init-param-db
   uv run nomoscope-workflow ingest-params ../../extracted_parameters/enriched/FR.enriched.json
   uv run nomoscope-workflow curate-params curation/FR.curation.yaml
+  uv run nomoscope-workflow chat request.json        # one RAG chat turn (rag-ui)
 
 Parameters are read from the params DB and queue items are written to
 params.review_queue: nothing runtime lives on disk (ADR 0004). Commands the
@@ -430,6 +431,31 @@ def translate_params(
         f"{stats['parameters']} parameter(s) translated, {stats['texts']} text rows written"
         + (f", {stats['mismatches']} mismatched model_targets skipped" if stats["mismatches"] else "")
     )
+
+
+@app.command()
+def chat(
+    request_file: Path = typer.Argument(..., exists=True, dir_okay=False, help="The chat job payload as JSON"),
+    model: str = typer.Option(None, "--model", help="Overrides the request's model"),
+) -> None:
+    """One assistant turn of the RAG chat (rag-ui), with search and web tools.
+
+    Tool calls print `@progress` lines; ends with `@result {answer, quotes, sources, …}`.
+    """
+    from . import chat as chat_mod
+    from .tracing import set_output, step_span
+
+    cfg = load_config()
+    request = chat_mod.ChatRequest.model_validate_json(request_file.read_text(encoding="utf-8"))
+    if model:
+        request.model = model
+    tracer = setup_tracing(cfg)
+    with step_span(tracer, "chat", "AGENT", {"question": request.messages[-1].content}) as span:
+        result = chat_mod.run_turn(cfg, request)
+        set_output(span, {"answer": result["answer"], "quotes": result["quotes"]})
+        context = span.get_span_context()
+        result["phoenix_trace_id"] = f"{context.trace_id:032x}" if context.is_valid else None
+    _result_line(result)
 
 
 @app.command()

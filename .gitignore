@@ -5,3 +5,4 @@ Nomotheca-RAG/ingest/models/*
 .env
 **/.quarto/
 Nomoscope-agentic-workflow/data/parameters/db/*.json
+Nomoscope-agentic-workflow/rag-ui/ui/src-tauri/target/*

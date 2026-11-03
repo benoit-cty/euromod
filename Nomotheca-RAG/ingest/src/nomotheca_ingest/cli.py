@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from datetime import date
 from typing import Annotated
@@ -465,18 +466,42 @@ def build_chunk_embeddings(
         typer.echo("@result " + json.dumps(result))
 
 
+def _translate_model(model: str | None) -> str:
+    """The translation model: --model, else EUROMOD_TRANSLATE_MODEL, else WORKFLOW_MODEL.
+
+    The root .env is only loaded once the workflow package is imported, after
+    typer has read its envvars — hence the second look here.
+    """
+    if model:
+        return model
+    try:
+        from nomoscope_workflow.config import load_config
+    except ImportError as exc:  # pragma: no cover - operator environment
+        raise typer.BadParameter("Install translation dependencies with: uv sync --extra translate") from exc
+    load_config()  # side effect: loads the repo-root .env
+    resolved = os.environ.get("EUROMOD_TRANSLATE_MODEL") or os.environ.get("WORKFLOW_MODEL")
+    if not resolved or resolved.startswith("mock/"):
+        raise typer.BadParameter(
+            "no translation model: pass --model or set EUROMOD_TRANSLATE_MODEL / WORKFLOW_MODEL "
+            "to a real provider model in the root .env (mock/ cannot translate)",
+            param_hint="--model",
+        )
+    return resolved
+
+
 @translate_app.command("run")
 def run_translations(
     database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
     model: Annotated[
-        str,
+        str | None,
         typer.Option(
             "--model",
             "-m",
             envvar="EUROMOD_TRANSLATE_MODEL",
-            help="Provider-prefixed model, e.g. anthropic/..., openai/..., openrouter/... (see nomoscope_workflow.llm).",
+            help="Provider-prefixed model (see nomoscope_workflow.llm); "
+            "default EUROMOD_TRANSLATE_MODEL, else WORKFLOW_MODEL, from the root .env.",
         ),
-    ] = "openrouter/google/gemma-4-31b-it:free",
+    ] = None,
     target_lang: Annotated[str, typer.Option("--target-lang", help="Target language (must exist in lang_fts_config).")] = DEFAULT_TARGET_LANG,
     limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
     request_timeout: Annotated[
@@ -496,7 +521,7 @@ def run_translations(
 ) -> None:
     """Translate every unit text version missing a target-language rendering."""
     timeout = None if request_timeout == 0 else request_timeout
-    backend = None if dry_run else LLMTranslationBackend(model, request_timeout=timeout)
+    backend = None if dry_run else LLMTranslationBackend(_translate_model(model), request_timeout=timeout)
     with psycopg.connect(database_url) as conn:
         if progress_json:
             total = count_texts_needing_translation(conn, target_lang=target_lang, limit=limit)

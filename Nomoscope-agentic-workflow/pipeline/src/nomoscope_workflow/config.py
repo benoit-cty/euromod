@@ -46,9 +46,12 @@ class WorkflowConfig:
 
 
 def load_config() -> WorkflowConfig:
-    """Build the config from .env (repo root, then Nomoscope-agentic-workflow/) and the process env."""
+    """Build the config from the repo-root .env (the one config file) and the process env.
+
+    The process environment wins, so the worker's per-job switches and a
+    container's env_file are never overridden by a stray file on disk.
+    """
     load_dotenv(WORKFLOW_ROOT.parent / ".env")
-    load_dotenv(WORKFLOW_ROOT / ".env", override=True)
     database_url = _env(
         "WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation"
     )

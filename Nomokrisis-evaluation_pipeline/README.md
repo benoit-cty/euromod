@@ -151,7 +151,7 @@ uv run nomokrisis-eval build-dataset docs/fr_country_report_2025.md --country FR
   (`golden_store.save_drafted_case`) — a review approved a specific value, not a case
   id. The reset is printed; act on it, or `--verified-only` silently drops the case from
   the next run.
-- Model: provider-prefixed, `anthropic/claude-fable-5` by default (`--model` /
+- Model: provider-prefixed, `EVAL_BUILDER_MODEL`, else `WORKFLOW_MODEL`, by default (`--model` /
   `EVAL_BUILDER_MODEL`); `mock/…` is refused — a mock cannot read the document, so its
   output would be a fabricated ground truth. The key lives on the worker (ADR 0004).
 
@@ -551,7 +551,7 @@ expandable per-case list with a failures-only filter. Exercised by the
 | Var | Default | |
 |---|---|---|
 | `EVAL_DATABASE_URL` | falls back to `WORKFLOW_DATABASE_URL`, then `postgresql://jrc:jrc@localhost:5434/legislation` | the golden set, the runs and the results |
-| `EVAL_BUILDER_MODEL` | `anthropic/claude-fable-5` | provider-prefixed drafting model (`mock/` refused) |
+| `EVAL_BUILDER_MODEL` | `WORKFLOW_MODEL` | provider-prefixed drafting model (`mock/` refused) |
 | `EVAL_CRITIQUE_MODEL` | _(empty — the model under test critiques itself)_ | pin one judge so `supportedness`/`critique_pass` are comparable across models |
 | `EVAL_PHOENIX_PROJECT` | `nomokrisis-evaluation` | Phoenix project for eval traces |
 

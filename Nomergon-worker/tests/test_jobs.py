@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -359,6 +360,32 @@ def test_impact_argv(cfg: WorkerConfig) -> None:
     assert jobs.package_dir("impact", cfg) == cfg.pipeline_dir
 
 
+# -------------------------------------------------------------------- chat --
+
+
+def test_chat_writes_the_conversation_to_a_scratch_file(cfg: WorkerConfig, tmp_path: Path) -> None:
+    messages = [
+        {"role": "user", "content": "Quel est le barème 2025 ?"},
+        {"role": "assistant", "content": "Voir [1].", "quotes": [{"chunk_id": "c1", "extract": "11 %"}]},
+        {"role": "user", "content": "Et pour 2026 ?"},
+    ]
+    argv = build("chat", {"messages": messages, "country": "FR", "as_of": "2026-01-01"}, cfg, scratch_dir=tmp_path)
+    assert argv == [sys.executable, "-m", "nomoscope_workflow.cli", "chat", str(tmp_path / "chat.json")]
+    written = json.loads((tmp_path / "chat.json").read_text(encoding="utf-8"))
+    assert written["messages"][1]["quotes"] == [{"chunk_id": "c1", "extract": "11 %"}]
+    assert written["country"] == "FR" and written["web"] is True
+    assert jobs.package_dir("chat", cfg) == cfg.pipeline_dir
+
+
+def test_chat_must_end_with_a_question() -> None:
+    with pytest.raises(ValueError, match="last message"):
+        jobs.parse_payload("chat", {"messages": [{"role": "assistant", "content": "hello"}]})
+    with pytest.raises(ValueError, match="last message"):
+        jobs.parse_payload("chat", {"messages": [{"role": "user", "content": "  "}]})
+    with pytest.raises(ValueError):
+        jobs.parse_payload("chat", {"messages": []})
+
+
 # ------------------------------------------------------------------ encode --
 
 
@@ -387,3 +414,16 @@ def test_result_per_job_type(cfg: WorkerConfig) -> None:
     impact = jobs.parse_payload("impact", {})
     assert jobs.extract_result("impact", impact, result_line=None, last_progress=None, stdout_tail=['{"total_kwh": 0.1}']) == {"total_kwh": 0.1}
     assert jobs.extract_result("translate-params", jobs.parse_payload("translate-params", {"country": "FR"}), result_line=None, last_progress=progress, stdout_tail=[]) is None
+    chat = jobs.parse_payload("chat", {"messages": [{"role": "user", "content": "q"}]})
+    assert jobs.extract_result("chat", chat, result_line={"answer": "a"}, last_progress=progress, stdout_tail=[]) == {"answer": "a"}
+
+
+def test_workflow_model_is_published_first_and_once() -> None:
+    from nomergon.config import published_models
+
+    assert published_models("azure_openai/gpt-5.6-sol", "jrc/mistral, azure_openai/gpt-5.6-sol,") == [
+        "azure_openai/gpt-5.6-sol",
+        "jrc/mistral",
+    ]
+    assert published_models("", "jrc/mistral") == ["jrc/mistral"]
+    assert published_models("", "") == []

@@ -16,3 +16,9 @@ ui/node_modules/
 ui/dist/
 ui/src-tauri/target/
 ui/src-tauri/gen/schemas/
+
+# rag-ui
+rag-ui/node_modules/
+rag-ui/dist/
+rag-ui/src-tauri/target/
+rag-ui/src-tauri/gen/schemas/

@@ -1,0 +1,21 @@
+[package]
+name = "nomoscope-rag-chat"
+version = "0.1.0"
+description = "Chat with the Nomotheca legislation corpus (search + web discovery), via the worker"
+edition = "2021"
+
+[lib]
+name = "rag_chat_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+postgres = { version = "0.19", features = ["with-serde_json-1"] }
+# used by the shared db.rs (Phoenix project ids)
+base64 = "0.22"

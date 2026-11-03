@@ -91,7 +91,7 @@ OpenFisca golden-set drafter (`nomokrisis-eval build-openfisca-dataset`), which
 re-derives the expected value from each parameter's `temporal_basis` rather than
 trusting the link's own year alignment.
 
-Configuration: see [../.env.example](../.env.example). Set `WORKFLOW_MODEL`
+Configuration: the repo-root `.env`, see [../../.env.example](../../.env.example). Set `WORKFLOW_MODEL`
 (e.g. `anthropic/claude-sonnet-5`) to use a real LLM. Traces land in Phoenix
 at http://localhost:6006 (project `nomoscope-agentic-workflow`).
 

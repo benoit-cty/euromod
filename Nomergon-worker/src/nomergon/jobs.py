@@ -31,10 +31,13 @@ JOB_TYPES = (
     "eval",
     "draft-golden",
     "impact",
+    "chat",
 )
 #: Job types answered in-process by the encode lane, never as a subprocess.
 IN_PROCESS_JOB_TYPES = ("encode",)
 ENCODE_PRIORITY = 100
+#: A chat turn is interactive: ahead of batches, behind the encode lane.
+CHAT_PRIORITY = 50
 
 
 class _Payload(BaseModel):
@@ -149,6 +152,34 @@ class ImpactPayload(_Payload):
     zone: str = ""
 
 
+class ChatMessage(_Payload):
+    role: Literal["user", "assistant"]
+    content: str
+    #: An earlier assistant turn's verified quotes (chunk ids the follow-up may name).
+    quotes: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ChatPayload(_Payload):
+    """One assistant turn of the RAG chat (rag-ui): the whole conversation so far."""
+
+    messages: list[ChatMessage] = Field(min_length=1)
+    #: Groups the turns of one conversation, so the UI can rebuild it from
+    #: ops.jobs instead of keeping a local copy.
+    conversation_id: str | None = None
+    country: str | None = None
+    as_of: str | None = None
+    model: str | None = None
+    web: bool = True
+
+    @model_validator(mode="after")
+    def _ends_with_a_question(self) -> ChatPayload:
+        last = self.messages[-1]
+        if last.role != "user" or not last.content.strip():
+            msg = "a chat job's last message must be a non-empty user message"
+            raise ValueError(msg)
+        return self
+
+
 PAYLOAD_MODELS: dict[str, type[_Payload]] = {
     "workflow": WorkflowPayload,
     "ingest": IngestPayload,
@@ -159,6 +190,7 @@ PAYLOAD_MODELS: dict[str, type[_Payload]] = {
     "eval": EvalPayload,
     "draft-golden": DraftGoldenPayload,
     "impact": ImpactPayload,
+    "chat": ChatPayload,
 }
 
 
@@ -176,7 +208,7 @@ def package_dir(job_type: str, cfg: WorkerConfig) -> Path:
     """The sub-project a job runs from (its cwd), so its relative paths resolve."""
     if job_type in ("ingest", "embed", "translate"):
         return cfg.ingest_dir
-    if job_type in ("workflow", "translate-params", "impact"):
+    if job_type in ("workflow", "translate-params", "impact", "chat"):
         return cfg.pipeline_dir
     if job_type in ("eval", "draft-golden"):
         return cfg.eval_dir
@@ -296,6 +328,12 @@ def build_command(
             if payload.zone:
                 argv += ["--zone", payload.zone]
             return argv
+        case "chat":
+            assert isinstance(payload, ChatPayload)
+            # The conversation goes through a file: it grows with every turn
+            # and a single argv string is capped at 128 KiB on Linux.
+            path = write_chat_request(payload, scratch_dir)
+            return _python(WORKFLOW_MODULE) + ["chat", str(path)]
         case "encode":
             msg = "encode jobs are answered in-process by the encode lane"
             raise ValueError(msg)
@@ -348,6 +386,18 @@ def write_document_text(text: str, scratch_dir: Path | None) -> Path:
         return Path(fh.name)
 
 
+def write_chat_request(payload: ChatPayload, scratch_dir: Path | None) -> Path:
+    """Write a chat job's payload where ``nomoscope-workflow chat`` reads it."""
+    text = payload.model_dump_json()
+    if scratch_dir is not None:
+        path = scratch_dir / "chat.json"
+        path.write_text(text, encoding="utf-8")
+        return path
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", prefix="nomergon-chat-", suffix=".json", delete=False) as fh:
+        fh.write(text)
+        return Path(fh.name)
+
+
 def _number(value: float) -> str:
     return str(int(value)) if float(value).is_integer() else str(value)
 
@@ -366,7 +416,7 @@ def extract_result(
     their report as a plain JSON line instead, so it is the last JSON line of
     stdout. ``embed`` and ``translate`` report their final progress.
     """
-    if job_type in ("workflow", "eval", "draft-golden"):
+    if job_type in ("workflow", "eval", "draft-golden", "chat"):
         return result_line
     if job_type in ("embed", "translate"):
         return last_progress

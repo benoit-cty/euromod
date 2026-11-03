@@ -111,11 +111,11 @@ def job_environment(cfg: WorkerConfig, job_id: int) -> dict[str, str]:
         }
     )
     if cfg.default_model:
-        # The worker's default LLM: what a job with no model runs on, and the
-        # critique model of every workflow run. It overrides a WORKFLOW_MODEL
-        # inherited from a .env — the published list is the authority on what
-        # runs here (free-text model strings hid the Azure mix-up for a month).
-        # An explicit WORKFLOW_CRITIQUE_MODEL is left to the operator.
+        # The worker's default LLM: what a job with no model runs on. It is
+        # WORKFLOW_MODEL itself when that is set (published first); otherwise
+        # the first of WORKER_MODELS, so a job never runs on a model the
+        # pickers do not show (free-text model strings hid the Azure mix-up for
+        # a month). WORKFLOW_CRITIQUE_MODEL is left to the operator.
         env["WORKFLOW_MODEL"] = cfg.default_model
     env.pop("VIRTUAL_ENV", None)
     return env

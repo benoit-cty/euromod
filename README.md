@@ -32,7 +32,7 @@ anywhere, slowly; API keys come from the repo-root `.env`):
 ```sh
 git clone XXXX
 cd XXXX
-cp Nomoscope-agentic-workflow/.env.example .env   # then set the keys the worker needs
+cp .env.example .env   # then set the keys the worker needs
 docker compose --profile gpu up -d                 # or --profile cpu
 ```
 

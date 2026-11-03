@@ -1,9 +1,8 @@
 """Environment-driven configuration for the worker.
 
 Every knob is an env var with a ``WORKER_`` prefix; ``.env`` is read from the
-repo root (and ``Nomoscope-agentic-workflow/.env``, which overrides it), the
-same two places the pipeline's ``load_config`` reads, so a developer's
-existing keys work unchanged when the worker runs on the host.
+repo root only — the one config file, the same one the packages read and the
+container gets through ``env_file`` — so the worker runs the same on the host.
 """
 
 from __future__ import annotations
@@ -62,7 +61,8 @@ class WorkerConfig:
 
     repo_root: Path
     database_url: str = DEFAULT_DATABASE_URL
-    #: Provider-prefixed LLM names this worker publishes; the first is the default.
+    #: Provider-prefixed LLM names this worker publishes; the first is the
+    #: default (WORKFLOW_MODEL, see ``published_models``).
     models: list[str] = field(default_factory=list)
     embedding_model_path: str = BGE_M3_MODEL
     poll_seconds: float = 1.0
@@ -102,14 +102,23 @@ def default_embedding_model_path(repo_root: Path) -> str:
     return BGE_M3_MODEL
 
 
+def published_models(workflow_model: str, worker_models: str) -> list[str]:
+    """What the pickers offer: WORKFLOW_MODEL first (the default), then WORKER_MODELS.
+
+    One place names the default model — WORKFLOW_MODEL in the root .env — and
+    the worker can never publish a list that leaves it out.
+    """
+    names = [workflow_model.strip()] + [n.strip() for n in worker_models.split(",")]
+    return list(dict.fromkeys(n for n in names if n))
+
+
 def load_config(repo_root: Path | None = None) -> WorkerConfig:
     """Build the config from ``.env`` files and the process environment."""
     root = repo_root or find_repo_root()
     load_dotenv(root / ".env")
-    load_dotenv(root / "Nomoscope-agentic-workflow" / ".env", override=True)
 
     database_url = _env("WORKER_DATABASE_URL", "") or _env("WORKFLOW_DATABASE_URL", DEFAULT_DATABASE_URL)
-    models = [name.strip() for name in _env("WORKER_MODELS", "").split(",") if name.strip()]
+    models = published_models(_env("WORKFLOW_MODEL", ""), _env("WORKER_MODELS", ""))
     return WorkerConfig(
         repo_root=root,
         database_url=database_url,

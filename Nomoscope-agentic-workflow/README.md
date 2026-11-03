@@ -12,7 +12,7 @@ Nomoscope-agentic-workflow/
 │                    (no data/ directory: the review queue is params.review_queue, the
 │                    decisions are params.review_decisions, runs are jobs the worker
 │                    executes — ADR 0004; the only file is the EUROMOD export)
-└── .env.example     all configuration knobs
+└── (configuration: the repo-root .env, template ../.env.example)
 ```
 
 ## Quick start
@@ -49,7 +49,7 @@ records materialized from it, so ingest first (`ingest-params` + `curate-params`
 see below) and reach for `run-targets` rather than adding a file by hand.
 
 Real LLM: add `--force --model anthropic/claude-sonnet-5` to either command
-(or `azure_openai/…`, `openai/…`, `openrouter/…`, `together/…` — see `.env.example`).
+(or `azure_openai/…`, `openai/…`, `openrouter/…`, `together/…` — see the repo-root `.env.example`).
 
 ## 1. Workflow, step by step
 

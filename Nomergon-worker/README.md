@@ -27,6 +27,7 @@ resubmits (embedding and translation resume by construction).
 | `eval` | `{"as_of": "…", "model": "…", "countries": [], "languages": [], "include_drafts": false, "notes": null}` or `{"resume": "<run_id>"}` | `nomokrisis_eval.cli run` / `resume` |
 | `draft-golden` | `{"source": "openfisca"\|"curated"\|"document", "country": "FR", …}` | `nomokrisis_eval.cli build-*-dataset` |
 | `impact` | `{"project": "", "since": null, "until": null, "zone": ""}` | `nomoscope_workflow.cli impact --json` |
+| `chat` | `{"messages": [{"role": "user", "content": "…"}], "conversation_id": "…", "country": "FR", "as_of": "2025-06-01", "model": null, "web": true}` | `nomoscope_workflow.cli chat <scratch>/chat.json` (priority 50; the RAG chat, `rag-ui`) |
 
 The binding table, with results per type, is
 [`.scratch/nomergon-worker/contracts.md`](../.scratch/nomergon-worker/contracts.md);
@@ -79,7 +80,7 @@ uv run nomergon init-db    # ops schema (idempotent; the worker does it at start
 WORKER_MODELS=mock/extractor uv run nomergon serve
 ```
 
-Same `.env` files as the pipeline (repo root, then `Nomoscope-agentic-workflow/.env`).
+The repo-root `.env`, like every package. The worker publishes `WORKFLOW_MODEL` first (the default) and then `WORKER_MODELS`; recreate the container after editing `.env` (`docker compose --profile gpu up -d worker`), a running one keeps the values it was created with.
 The local `Nomotheca-RAG/ingest/models/bge-m3` checkout is used when present,
 else `BAAI/bge-m3` from the hub. CUDA when torch sees a usable GPU (a wheel
 with no kernels for the card falls back to the CPU with a warning), else CPU.
@@ -145,7 +146,7 @@ failed or cancelled batch is simply resubmitted.
 | `WORKER_EVENT_RETENTION_DAYS` | `30` | `ops.job_events` pruning window (daily, and `nomergon prune-events`) |
 | `WORKER_ID` | `<hostname>-<pid>` | the worker's identity in `ops.workers` / `ops.jobs.worker_id` |
 | `NOMOS_REPO_ROOT` | walk up from the package | where the four subprojects live (the container sets `/app`) |
-| provider keys | — | `ANTHROPIC_API_KEY`, `AZURE_OPENAI_*`, `OPENROUTER_API_KEY`, `JRC_LLM_BASE_URL`/`JRC_LLM_API_KEY`, `TAVILY_API_KEY`, … as documented in `Nomoscope-agentic-workflow/.env.example`; the worker is the only process that holds them |
+| provider keys | — | `ANTHROPIC_API_KEY`, `AZURE_OPENAI_*`, `OPENROUTER_API_KEY`, `JRC_LLM_BASE_URL`/`JRC_LLM_API_KEY`, `TAVILY_API_KEY`, … as documented in the repo-root `.env.example`; the worker is the only process that holds them |
 
 Every child also gets `PYTHONUNBUFFERED=1`, `NOMOS_PYTHON=<the worker's
 interpreter>`, `WORKFLOW_ENCODER=db` and `WORKER_JOB_ID`, and runs from its
