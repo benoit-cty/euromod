@@ -9,6 +9,7 @@ reaches this factory.
 from __future__ import annotations
 
 import os
+import re
 from datetime import date
 
 from pydantic_ai import Agent
@@ -19,6 +20,37 @@ from . import prompts
 from .schema import CritiqueFindings, ParameterRecord, ProposalDraft, RetrievalHit
 
 ANTHROPIC_MAX_TOKENS = 8000
+
+#: Azure deployments of OpenAI's own GPT / o-series models. They go through the
+#: Responses API: on /chat/completions gpt-6-luna refuses function tools while
+#: reasoning is on — and PydanticAI's structured output IS a function tool, so
+#: every propose/critique/chat call failed (job 90, 3 Nov 2026). Other Azure
+#: deployments (Mistral, DeepSeek, …) are not served by /responses and stay on
+#: chat completions.
+_AZURE_RESPONSES_DEPLOYMENT = re.compile(r"^(gpt-|o\d)", re.IGNORECASE)
+
+
+def uses_responses_api(model: str) -> bool:
+    """Whether a provider-prefixed model is called through the Responses API."""
+    provider, _, name = model.partition("/")
+    if provider != "azure_openai":
+        return False
+    deployment = name or os.environ.get("AZURE_OPENAI_DEPLOYMENT", "")
+    return bool(_AZURE_RESPONSES_DEPLOYMENT.match(deployment))
+
+
+def model_settings(model: str, temperature: float | None = None) -> ModelSettings:
+    """The request settings every LLM call uses, in one place.
+
+    Reasoning models behind the Responses API reject `temperature` outright
+    ("Unsupported parameter"), so it is only sent where it is accepted.
+    """
+    settings: ModelSettings = {}
+    if temperature is not None and not uses_responses_api(model):
+        settings["temperature"] = temperature
+    if model.partition("/")[0] == "anthropic":
+        settings["max_tokens"] = ANTHROPIC_MAX_TOKENS
+    return settings
 
 
 def get_model(model: str):
@@ -50,6 +82,10 @@ def get_model(model: str):
                 "azure_openai/ needs a deployment name after the slash "
                 "(or AZURE_OPENAI_DEPLOYMENT as a default)"
             )
+        if uses_responses_api(model):
+            from pydantic_ai.models.openai import OpenAIResponsesModel
+
+            return OpenAIResponsesModel(deployment, provider=AzureProvider())
         return OpenAIChatModel(deployment, provider=AzureProvider())
     if provider == "openrouter":
         from pydantic_ai.models.openai import OpenAIChatModel
@@ -95,9 +131,7 @@ def run_agent(
     timeout: float | None = None,
 ):
     """One agent run: system + user prompt in, plain text or a schema instance out."""
-    settings: ModelSettings = {"temperature": temperature}
-    if model.partition("/")[0] == "anthropic":
-        settings["max_tokens"] = ANTHROPIC_MAX_TOKENS
+    settings = model_settings(model, temperature)
     if timeout is not None:
         settings["timeout"] = timeout
     agent = Agent(

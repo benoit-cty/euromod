@@ -53,3 +53,20 @@ def test_jrc_without_a_gateway_is_an_error(monkeypatch):
 def test_unknown_prefix_lists_jrc():
     with pytest.raises(ValueError, match="jrc/"):
         get_model("nope/x")
+
+
+def test_azure_gpt_deployments_use_the_responses_api_without_temperature(azure_env):
+    # gpt-6-luna refuses function tools on /chat/completions while reasoning is
+    # on, and refuses `temperature` on /responses (3 Nov 2026).
+    from nomoscope_workflow.llm import model_settings
+
+    assert type(get_model("azure_openai/gpt-6-luna")).__name__ == "OpenAIResponsesModel"
+    assert "temperature" not in model_settings("azure_openai/gpt-6-luna", 0.2)
+
+
+def test_other_azure_deployments_stay_on_chat_completions(azure_env):
+    from nomoscope_workflow.llm import model_settings
+
+    assert type(get_model("azure_openai/mistral-large-3")).__name__ == "OpenAIChatModel"
+    assert model_settings("azure_openai/mistral-large-3", 0.2) == {"temperature": 0.2}
+    assert model_settings("anthropic/claude-sonnet-5", 0.0)["max_tokens"] > 0

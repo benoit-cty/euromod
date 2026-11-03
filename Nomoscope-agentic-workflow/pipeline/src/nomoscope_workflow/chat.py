@@ -502,9 +502,7 @@ def run_turn(cfg: WorkflowConfig, request: ChatRequest) -> dict[str, Any]:
         settings: ModelSettings = {}
     else:
         model = llm.get_model(model_name)
-        settings = {"temperature": 0.2}
-        if model_name.partition("/")[0] == "anthropic":
-            settings["max_tokens"] = llm.ANTHROPIC_MAX_TOKENS
+        settings = llm.model_settings(model_name, temperature=0.2)
     agent = Agent(
         model,
         deps_type=ChatDeps,
