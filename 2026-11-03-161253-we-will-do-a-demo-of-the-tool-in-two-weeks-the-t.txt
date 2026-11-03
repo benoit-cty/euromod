@@ -1,0 +1,171 @@
+
+❯ <ide_opened_file>The user opened the file
+  /home/ben/Euromod/euromod/Nomokrisis-evaluation_pipeline/README.md in the
+  IDE. This may or may not be related to the current task.</ide_opened_file>
+
+❯ We will do a demo of the tool in two weeks. The team wants to display
+  performance metrics.
+  Not the one to evaluate the model that we already build but more the overall
+  performance on the French legislation.
+  > Performance : trouver un indice de performance : Comparer le modèle à
+  Euromod 2024, to show all the change with law for 2025, and compare with
+  Euromod 2025 and to OpenFisca FR for 2025. VAT could be complicated.
+
+  Can you imagine something like that ?
+  That mean processing all the parameters from France, maybe in 2025 as we
+  already ingest them.
+  Try to find them with our agentic framework.
+  Compare with what Euromod already have : how many match do we get ?
+  How many false negative : maybe it's Euromod that is wrong.
+
+  Are we ready for it or do we need more tuning ?
+
+● I'll check what we already have — FR parameters in the DB, recent eval
+  results, OpenFisca links, and whether the export includes 2024 — before
+  answering.
+
+  Ran 6 shell commands (ctrl+o to expand)
+
+● Still surveying the database: EUROMOD holds 192 FR value changes for 2025, and
+  the review queue is almost empty. Next I'm checking past eval runs and the
+  OpenFisca coverage.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● The FR golden set scores 64.7% on value correctness (91.4% on corpus-ready
+  cases), at about 15 s and 30k tokens per parameter. I'm now checking OpenFisca
+  coverage and how many of the 525 FR parameters for 2025 can be derived from
+  legislation.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Note: 248 of the 775 FR parameters are tco_fr (VAT/excise by COICOP), the part
+  the team expects to be hard. Reading run-country to see what a full-country
+  run produces.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The run-country job exists, but a full FR run has never happened since the
+  queue holds only one item. I'm checking which EUROMOD value the diff step
+  compares against, to see whether the test can actually catch a mismatch.
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● Key finding: the propose prompt shows the model record.values[-1], the latest
+  EUROMOD value (2025 or even 2026), so a naive run would be told the answer.
+  Checking how the eval avoids this leak.
+
+  Ran 6 shell commands (ctrl+o to expand)
+
+● The prompt pulls the latest stored value, which for FR is the 2026 row, so
+  neither the current eval nor run-country is blind. Next I'm measuring how
+  EUROMOD's 192 changed 2025 parameters overlap with OpenFisca links and policy
+  areas.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● VAT's 248 parameters are unchanged for 2025, so that's just a confirmation
+  check. The 206 parameters that did change are all outside VAT, and 71 of them
+  have OpenFisca links; next I'm checking whether the 2025 finance acts are
+  ingested and embedded.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● I think we can show this in two weeks, but not by just running the existing
+  commands. The pipeline can already process every French parameter (run-country
+  FR --year 2025). What's missing is a run where the agent doesn't see the
+  answer, and a scorer that compares the agent with EUROMOD and OpenFisca across
+  all parameters. Without those, the numbers won't hold up to a sceptical
+  audience.
+
+  What the database already gives us
+
+  - 775 FR parameters, of which 525 have a value in force in 2025.
+  - Between EUROMOD 2024 and 2025, 192 parameters got a new value row, 168 of
+    them with a different value from 2024. EUROMOD only writes a row when a
+    value changes, so the other ~333 stayed the same. (An interim figure of 206
+    I gave was a counting error.)
+  - VAT is easier than expected. The 248 tco_fr parameters had no changes in
+    2025, so the agent only has to confirm they're unchanged. I'd report VAT on
+    its own line so 248 easy confirmations don't inflate the main score.
+  - The changes are concentrated in housing benefits (29), sickness pay (18),
+    income-tax-related (17 + 12), family benefits (16 + 10 + 9) and social
+    assistance (15 + 12).
+  - OpenFisca: 71 of the 192 changed parameters have an OpenFisca link, but none
+    of the 135 FR links has been checked by a person yet.
+  - Last golden-set run (FR, 52 cases, 9 Sep): the value was right in 64.7% of
+    cases, and 91.4% when the legislation was in our corpus. 16 of the 52 cases
+    had no corpus. It took about 15 s and 30k tokens per parameter.
+
+  The index I'd suggest
+
+  The idea is to start from EUROMOD 2024, let the agent find the 2025 law on its
+  own, then compare its answer with EUROMOD 2025 and with OpenFisca 2025.
+
+  ┌─────────────────────┬────────────────────┬──────────────────────────────┐
+  │                     │ EUROMOD changed it │ EUROMOD kept it (~333 + VAT) │
+  │                     │        (192)       │                              │
+  ├─────────────────────┼────────────────────┼──────────────────────────────┤
+  │ Agent: changed,     │ change found ✅    │ —                            │
+  │ same value          │                    │                              │
+  ├─────────────────────┼────────────────────┼──────────────────────────────┤
+  │ Agent: changed,     │ wrong value        │ false alarm, or EUROMOD is   │
+  │ different value     │                    │ wrong → check OpenFisca      │
+  ├─────────────────────┼────────────────────┼──────────────────────────────┤
+  │ Agent: unchanged    │ missed change      │ confirmed ✅                 │
+  │                     │ (false negative)   │                              │
+  ├─────────────────────┼────────────────────┼──────────────────────────────┤
+  │ Agent: not found    │ corpus gap         │ corpus gap                   │
+  └─────────────────────┴────────────────────┴──────────────────────────────┘
+
+  The headline figures would be:
+  - coverage: the share of parameters where the agent gives an answer backed by
+    a quoted source;
+  - change recall: how many of the 192 changes it finds with the right value;
+  - precision: how many of its answers match;
+  - disagreements: for each one, who is right after checking against OpenFisca.
+
+  The best demo story is when the agent and OpenFisca agree and EUROMOD doesn't.
+  We already have one: EUROMOD's 2025 income-tax thresholds are 1 € below the
+  law, and the scoring is strict enough that this still shows up as a
+  difference. Cost, time and CO₂ come from the existing impact command.
+
+  What has to change first
+
+  1. The test isn't blind today. The prompt shows the agent the latest EUROMOD
+     value (prompts.py:137), which for FR is the 2026 row. For every parameter
+     that hasn't changed since 2024, that is already the right answer. We need a
+     "baseline 2024" mode that hides every value from 2025 onwards and compares
+     against the 2024 value. This also affects the existing eval scores; the
+     prompt says the value is out of date, but this would be worth fixing.
+  2. We need a scorer that covers all parameters, not just golden cases. It
+     would take the expected values from EUROMOD 2025 and OpenFisca 2025, reuse
+     the existing scoring, and store results in eval.*.
+  3. Mid-year changes. Housing benefits change in October and family benefits in
+     April. EUROMOD stores some of these as a weighted average for the year, so
+     the scorer must accept either the value on the reference date or that
+     average. Otherwise about 60 correct answers would count as misses.
+  4. Close corpus gaps. This is where the tuning time goes. In the golden set,
+     16 of 52 FR cases had no corpus, and they are mostly revaluation decrees,
+     orders and CNAF circulars. A first full run will list the acts the agent
+     couldn't find; we ingest them and run again.
+  5. Check the 71 OpenFisca links on changed parameters by hand before claiming
+     "EUROMOD is wrong" in front of the team.
+
+  Readiness and plan
+
+  - Not ready today; achievable in two weeks. A run over all FR parameters would
+    take 3–4 hours (about 20–25M prompt tokens), so it can run overnight on the
+    worker.
+    - Days 1–2: build items 1–3.
+    - Day 3: first full overnight run without VAT.
+    - Days 4–7: ingest the missing acts and check the OpenFisca links.
+    - Day 8: second run.
+    - Days 9–10: the dashboard.
+  - What to expect: the golden set was picked by hand, so the first full run
+    will score below the golden set's 65% (91% with corpus). Most misses should
+    be corpus gaps rather than model errors. The demo story becomes the second
+    run's improvement plus the cases where EUROMOD itself is wrong.
+
+  Should I start with items 1–3 (the blind baseline and the scorer)? They're the
+  prerequisite for everything else.
