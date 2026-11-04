@@ -25,8 +25,8 @@ from typing import Literal
 
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 
-#: The DILA id shapes the FR adapter can fetch.
-DILA_ID = re.compile(r"\b(?:JORFTEXT|LEGIARTI)\d{12}\b")
+#: The DILA id shapes the FR adapter can fetch (KALI: collective agreements).
+DILA_ID = re.compile(r"\b(?:JORFTEXT|LEGIARTI|KALITEXT|KALIARTI)\d{12}\b")
 
 #: A bare NOR (ministerial reference), which reviewers also paste.
 NOR = re.compile(r"\b[A-Z]{4}\d{7}[A-Z]\b")

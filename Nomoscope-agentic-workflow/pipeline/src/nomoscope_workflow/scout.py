@@ -77,12 +77,21 @@ _web_search_unavailable: str | None = None
 COUNTRY_SOURCES: dict[str, dict] = {
     "FR": {
         "domains": ["legifrance.gouv.fr"],
-        # JORF instruments (lois, décrets, arrêtés) and single consolidated
+        # JORF instruments (lois, décrets, arrêtés), single consolidated
         # code articles (LEGIARTI — where most rates actually live once
-        # codified) — deliberately not LEGITEXT: ingesting a whole code by
-        # accident is not a gap-fill.
-        "id_pattern": re.compile(r"\b(?:JORFTEXT|LEGIARTI)\d{12}\b"),
-        "act_kinds": "loi, décret or arrêté",
+        # codified) and collective agreements (KALITEXT/KALIARTI, Légifrance
+        # /conv_coll/ URLs — ADR 0006) — deliberately not LEGITEXT or KALICONT:
+        # ingesting a whole code or convention by accident is not a gap-fill.
+        "id_pattern": re.compile(r"\b(?:JORFTEXT|LEGIARTI|KALITEXT|KALIARTI)\d{12}\b"),
+        # The social partners, not the State, set the AGIRC-ARRCO, APEC and
+        # cadres' prévoyance rates: on the 3 Nov benchmark 14 of 34 FR misses
+        # asked for exactly those agreements, and the web search found their
+        # /conv_coll/ pages only for the id filter to drop them.
+        "act_kinds": (
+            "loi, décret or arrêté — or, for contributions the social partners set "
+            "(retraite complémentaire AGIRC-ARRCO, APEC, prévoyance des cadres), the "
+            "accord national interprofessionnel or its avenant"
+        ),
     },
     "ES": {
         # boe.es is both the official gazette and the consolidated-legislation
@@ -162,7 +171,9 @@ COUNTRY_SOURCES: dict[str, dict] = {
     },
 }
 
-SCOUT_SYSTEM = """You are a legal-sources librarian for {country} tax-benefit legislation.
+SCOUT_SYSTEM = """You are a legal-sources librarian for {country} tax-benefit legislation
+(collective agreements included: where the social partners set a rate, the agreement IS
+the legal text).
 A retrieval system searched a legislation database and could not find the legal text that
 sets the value of a policy parameter. Identify the official publication(s) that fix this
 parameter's value (the specific {act_kinds} or equivalent — many values are set by
@@ -197,7 +208,9 @@ ID_HINTS = {
     ),
     "FR": (
         "for France the JORFTEXT############ id shown in Légifrance JORF URLs, "
-        "or the LEGIARTI############ id of the consolidated code article"
+        "the LEGIARTI############ id of the consolidated code article, or for a "
+        "collective agreement the KALITEXT############ (agreement) or "
+        "KALIARTI############ (article) id of its Légifrance /conv_coll/id/ URL"
     ),
     "NL": (
         "for the Netherlands the BWBR####### identifier shown in wetten.overheid.nl "
@@ -215,11 +228,155 @@ ID_HINTS = {
 }
 
 
+#: Official publishers of administrative guidance, per country (ADR 0001). Some
+#: values are published by an administration, not in any act: the Cnav circular
+#: gives the year's ASPA/ASI resource ceilings after the 1 April revaluation, an
+#: Unédic circular the unemployment-benefit amounts, BOFiP the tax doctrine.
+#: Their documents carry no official id, so they are discovered by URL and enter
+#: as contributed documents with the kind fixed HERE, never chosen by the model.
+#: Every kind is a guidance kind: a web-discovered document is never granted
+#: evidence (Nomotheca-RAG/ingest/tests/test_routing.py checks each kind against
+#: the ingester's kinds table).
+#:
+#: `document` matches the URL of one document — not a listing or a news page —
+#: and names what the title and the validity date are read from, so nothing is
+#: guessed: no full date in the URL, no ingest.
+#:   title — format string over the match's groups
+#:   date  — groups dd + (mm | month, in the country's own words) + yyyy
+GUIDANCE_PUBLISHERS: dict[str, list[dict]] = {
+    "FR": [
+        {
+            "name": "Cnav",
+            "domain": "legislation.lassuranceretraite.fr",
+            "kind": "circulaire",
+            # …/Pdf/circulaire_cnav_2025_13_03042025.pdf = Circulaire Cnav 2025/13 du 03/04/2025
+            "document": re.compile(
+                r"https://legislation\.lassuranceretraite\.fr/(?:[\w/]+/)?Pdf/circulaire_cnav_"
+                r"(?P<year>\d{4})_(?P<num>\d+)_(?P<dd>\d{2})(?P<mm>\d{2})(?P<yyyy>\d{4})\.pdf",
+                re.IGNORECASE,
+            ),
+            "title": "Circulaire Cnav {year}/{num} du {dd}/{mm}/{yyyy}",
+        },
+        {
+            "name": "Unédic",
+            "domain": "unedic.org",
+            "kind": "circulaire",
+            # …/PRE-CIRC-Circulaire_n_2025-03_du_1er_avril_2025_uid_….pdf
+            "document": re.compile(
+                r"https://www\.unedic\.org/storage/uploads/[\d/]+/PRE-CIRC-Circulaire_n_"
+                r"(?P<year>\d{4})-(?P<num>\d+)_du_(?P<dd>\d{1,2})(?:er)?_(?P<month>[a-zéû]+)_(?P<yyyy>\d{4})"
+                r"[\w-]*\.pdf",
+                re.IGNORECASE,
+            ),
+            "title": "Circulaire Unédic n° {year}-{num} du {dd} {month} {yyyy}",
+        },
+        {
+            "name": "BOFiP",
+            "domain": "bofip.impots.gouv.fr",
+            "kind": "doctrine",
+            # …/bofip/2491-PGP.html/identifiant=BOI-IR-LIQ-20-20-10-20250414: the
+            # suffix is the date this version of the commentary was published.
+            "document": re.compile(
+                r"https://bofip\.impots\.gouv\.fr/bofip/\d+-PGP\.html/identifiant="
+                r"(?P<boi>BOI-[A-Z0-9-]+?)-(?P<yyyy>\d{4})(?P<mm>\d{2})(?P<dd>\d{2})(?![\d-])"
+            ),
+            "title": "{boi} du {dd}/{mm}/{yyyy}",
+        },
+    ],
+}
+
+#: Month names a publisher spells out in its URLs.
+_MONTHS = {
+    "FR": {
+        name: number
+        for number, name in enumerate(
+            ("janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet",
+             "aout", "septembre", "octobre", "novembre", "decembre"),
+            start=1,
+        )
+    },
+}
+
+#: At most this many guidance documents ingested per round (each is one PDF).
+GUIDANCE_MAX_INGEST = 2
+
+
+@dataclass(frozen=True)
+class GuidanceDocument:
+    """A publisher's document found by URL, with what the URL itself states."""
+
+    url: str
+    publisher: str
+    kind: str
+    title: str
+    valid_from: date
+
+
+def guidance_document(country: str, url: str) -> GuidanceDocument | None:
+    """The publisher document a result URL is, or None (a listing, a news page…)."""
+    for publisher in GUIDANCE_PUBLISHERS.get(country, []):
+        match = publisher["document"].match(url)
+        if not match:
+            continue
+        groups = match.groupdict()
+        if groups.get("mm"):
+            month = int(groups["mm"])
+        else:
+            plain = groups["month"].lower().translate(str.maketrans("éû", "eu"))
+            month = _MONTHS.get(country, {}).get(plain)
+            if month is None:
+                return None
+        try:
+            valid_from = date(int(groups["yyyy"]), month, int(groups["dd"]))
+        except ValueError:
+            return None
+        return GuidanceDocument(
+            url=canonical_url(url),
+            publisher=publisher["name"],
+            kind=publisher["kind"],
+            title=publisher["title"].format(**groups),
+            valid_from=valid_from,
+        )
+    return None
+
+
+def canonical_url(url: str) -> str:
+    """The contributed document's national_id for a URL.
+
+    A copy of `nomotheca_ingest.core.contributed.canonical_url` (the packages do
+    not import each other): lowercased scheme and host, no fragment, no trailing
+    slash — what the "already held" check must compare against.
+    """
+    from urllib.parse import urlsplit, urlunsplit
+
+    parts = urlsplit(url.strip())
+    path = parts.path.rstrip("/") or "/"
+    return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), path, parts.query, ""))
+
+
+def _publisher_listing(country: str) -> str:
+    """The publishers, for the scout prompt."""
+    publishers = GUIDANCE_PUBLISHERS.get(country)
+    if not publishers:
+        return ""
+    names = ", ".join(f"{p['name']} ({p['kind']}, {p['domain']})" for p in publishers)
+    return (
+        "\n\nSome values are published by an administration rather than in an act — for "
+        f"{country}: {names}. A resource ceiling or benefit amount revalued every year is often "
+        "stated only in such a circular. When that may be the case, ALSO return "
+        "guidance_queries: 1-2 short web-search queries for that document, in the "
+        "administration's own words (e.g. «circulaire Cnav 2025 plafonds ASPA ASI "
+        "revalorisation»). Plain words only — no site: operators."
+    )
+
+
 class ScoutSuggestion(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     search_queries: list[str] = Field(default_factory=list)
     instrument_ids: list[str] = Field(default_factory=list)
+    #: Searched on the country's GUIDANCE_PUBLISHERS domains only.
+    guidance_queries: list[str] = Field(default_factory=list)
     reasoning: str | None = None
 
 
@@ -359,6 +516,11 @@ def _ingest_instrument(cfg: WorkflowConfig, country: str, instrument_id: str) ->
     in the current directory; otherwise through `uv run` in the ingest package.
     """
     args = ["instrument", country.lower(), instrument_id, "--database-url", cfg.database_url]
+    return _run_ingest_cli(cfg, args, instrument_id)
+
+
+def _run_ingest_cli(cfg: WorkflowConfig, args: list[str], what: str) -> str | None:
+    """Run one Nomotheca CLI command; error text on failure."""
     env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
     env["PYTHONUNBUFFERED"] = "1"
     python = nomos_python()
@@ -373,7 +535,7 @@ def _ingest_instrument(cfg: WorkflowConfig, country: str, instrument_id: str) ->
         command, cwd=cwd, env=env, capture_output=True, text=True, timeout=INGEST_TIMEOUT
     )
     if proc.returncode != 0:
-        return _proc_failure(f"{instrument_id}: ingest", proc)
+        return _proc_failure(f"{what}: ingest", proc)
     return None
 
 
@@ -518,7 +680,8 @@ def run(
                 country=info.country,
                 id_hint=ID_HINTS.get(info.country, "exact official id"),
                 act_kinds=rules.get("act_kinds", "act, decree or order"),
-            ),
+            )
+            + _publisher_listing(info.country),
             (
                 f"Parameter: {info.model_target}\n"
                 f"Label: {(info.short_label or {}).get('en', '')} — {(info.label or {}).get('en', '')}\n"
@@ -568,6 +731,8 @@ def run(
                     progress(f"  [scout] ✗ {_web_search_unavailable}")
                     break
 
+    documents = _search_guidance(cfg, info.country, suggestion, result)
+
     result.candidate_ids = list(dict.fromkeys(ids))
     if len(result.candidate_ids) > 1 and titles:
         result.candidate_ids = _rank_candidates(cfg, info, result.candidate_ids, titles)
@@ -595,6 +760,7 @@ def run(
         else:
             result.errors.append(error)
             progress(f"  [scout] ✗ {error}")
+    _ingest_guidance(cfg, info.country, documents, result, set(attempted or ()))
     if not result.candidate_ids and not result.errors:
         progress("  [scout] no candidate instrument found for the stated needs")
     if result.ingested and cfg.embedding_model_id != 99:
@@ -613,6 +779,87 @@ def run(
         else:
             progress(f"  [scout] ✓ embeddings up to date ({time.monotonic() - started:.0f}s)")
     return result
+
+
+#: Words in the analyst's needs that point at a publisher's document rather than an act.
+_GUIDANCE_HINT = re.compile(r"(?i)circulaire|instruction|doctrine|BOFiP|BOI-|Cnav|Unédic|Unedic")
+
+
+def _search_guidance(
+    cfg: WorkflowConfig, country: str, suggestion: ScoutSuggestion, result: ScoutResult
+) -> list[GuidanceDocument]:
+    """Web-search the country's guidance publishers; their document URLs, in rank order.
+
+    Queries are the model's guidance_queries or, when it gave none but the
+    analyst's needs name a circular or doctrine, those needs verbatim. Results
+    are kept only when the URL is one document of a listed publisher.
+    """
+    publishers = GUIDANCE_PUBLISHERS.get(country)
+    if not publishers or cfg.scout != "tavily" or not cfg.tavily_api_key or _web_search_unavailable:
+        return []
+    queries = [q for q in suggestion.guidance_queries if q.strip()][:2]
+    if not queries:
+        queries = [n[:_NEED_CHARS] for n in result.needs if _GUIDANCE_HINT.search(n)][:1]
+    documents: dict[str, GuidanceDocument] = {}
+    domains = [p["domain"] for p in publishers]
+    for query in queries:
+        result.queries.append(query)
+        try:
+            hits = _tavily_search(cfg.tavily_api_key, query, domains)
+        except Exception as exc:
+            result.errors.append(f"tavily guidance search failed: {exc}")
+            continue
+        for hit in hits:
+            url = hit.get("url", "")
+            result.urls.append(url)
+            document = guidance_document(country, url)
+            if document is not None:
+                documents.setdefault(document.url, document)
+    return list(documents.values())
+
+
+def _ingest_guidance(
+    cfg: WorkflowConfig,
+    country: str,
+    documents: list[GuidanceDocument],
+    result: ScoutResult,
+    attempted: set[str],
+) -> None:
+    """Ingest the new guidance documents as contributed documents of their publisher's kind."""
+    if not documents:
+        return
+    urls = [d.url for d in documents]
+    result.candidate_ids += [u for u in urls if u not in result.candidate_ids]
+    known = _known_instruments(cfg, urls, {}) | attempted
+    fresh = [d for d in documents if d.url not in known][:GUIDANCE_MAX_INGEST]
+    progress(
+        f"  [scout] {len(documents)} guidance document(s) "
+        f"({', '.join(sorted({d.publisher for d in documents}))}), "
+        f"{len(documents) - len([d for d in documents if d.url not in known])} already in DB, "
+        f"{len(fresh)} to ingest"
+    )
+    for document in fresh:
+        progress(f"  [scout] ingesting {document.title} as {document.kind} (guidance)…")
+        args = [
+            "document", document.url,
+            "--database-url", cfg.database_url,
+            "--jurisdiction", country,
+            "--lang", retrieval.LANG_BY_COUNTRY.get(country, "en"),
+            "--title", document.title,
+            "--kind", document.kind,
+            "--valid-from", document.valid_from.isoformat(),
+            "--trigger", "cache_miss",
+        ]
+        try:
+            error = _run_ingest_cli(cfg, args, document.title)
+        except subprocess.TimeoutExpired:
+            error = f"{document.title}: ingest timed out after {INGEST_TIMEOUT}s"
+        if error is None:
+            result.ingested.append(document.url)
+            progress(f"  [scout] ✓ {document.title} ingested")
+        else:
+            result.errors.append(error)
+            progress(f"  [scout] ✗ {error}")
 
 
 def locate(
@@ -640,8 +887,20 @@ def locate(
             conn, info.country, regions.region_key(info.country, info.model_target)
         )
         lang = retrieval.LANG_BY_COUNTRY.get(retrieval.scope_codes(scope)[0], "en")
+        held = retrieval.instruments_of_chunks(conn, list(seen))
+        # Articles missing between two retrieved ones (AGIRC-ARRCO art. 36
+        # between 35 and 38) come first: they need no named source at all.
+        for hit in retrieval.gap_articles(conn, scope, lang, as_of, list(seen)):
+            if hit.chunk_id in seen:
+                continue
+            seen.add(hit.chunk_id)
+            hits.append(hit)
+            if hit.citation and hit.citation not in citations:
+                citations.append(hit.citation)
         for need in needs[:5]:
-            for hit in retrieval.locate_named_units(conn, scope, lang, as_of, need):
+            for hit in retrieval.locate_named_units(
+                conn, scope, lang, as_of, need, held_instrument_ids=held
+            ):
                 if hit.chunk_id in seen:
                     continue
                 seen.add(hit.chunk_id)

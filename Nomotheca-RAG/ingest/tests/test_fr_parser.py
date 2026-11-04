@@ -127,3 +127,36 @@ def _snapshot(ref: SourceRef) -> Snapshot:
         content_hash="0" * 64,
         raw_content=b"{}",
     )
+
+
+def test_a_jorf_circular_is_guidance_in_its_text_and_its_articles() -> None:
+    """ADR 0001: JORF publishes circulaires too; they must not load as evidence."""
+    import json
+
+    from nomotheca_ingest.core.ir import SourceTrustClass
+
+    text_ref = SourceRef(jurisdiction="FR", source_code="FR-LEGI", source_id="JORFTEXT000000604169", source_type="instrument")
+    text = parse_dila_json(
+        json.dumps({
+            "META": {
+                "META_COMMUN": {"ID": "JORFTEXT000000604169", "NATURE": "CIRCULAIRE"},
+                "META_SPEC": {"META_TEXTE_VERSION": {"TITREFULL": "Circulaire du 30 juin 2005"}},
+            }
+        }).encode(),
+        text_ref,
+        _snapshot(text_ref),
+    )
+    assert text.instruments[0].source_trust_class == SourceTrustClass.GUIDANCE
+
+    article_ref = SourceRef(jurisdiction="FR", source_code="FR-LEGI", source_id="JORFARTI000000604170", source_type="article")
+    article = parse_dila_json(
+        json.dumps({
+            "NUM": "1",
+            "META": {"META_SPEC": {"META_ARTICLE": {"DATE_DEBUT": "2005-07-01"}}},
+            "CONTEXTE": {"TEXTE": {"@cid": "JORFTEXT000000604169", "@nature": "CIRCULAIRE"}},
+            "BLOC_TEXTUEL": {"CONTENU": "<p>Texte.</p>"},
+        }).encode(),
+        article_ref,
+        _snapshot(article_ref),
+    )
+    assert article.instruments[0].source_trust_class == SourceTrustClass.GUIDANCE

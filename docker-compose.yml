@@ -39,8 +39,12 @@ x-worker: &worker
     WORKER_DATABASE_URL: postgresql://jrc:jrc@db:5432/legislation
     PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006
     PHOENIX_DATABASE_URL: postgresql://jrc:jrc@db:5432/phoenix
+    # Local copy of the DILA KALI dumps (collective agreements, ADR 0006): ~1.8 GB,
+    # kept current from the daily increments by `nomotheca_ingest.cli kali-sync`.
+    NOMOTHECA_KALI_DIR: /kali
   volumes:
     - hf-cache:/models
+    - kali-cache:/kali
   restart: unless-stopped
 
 services:
@@ -134,3 +138,4 @@ volumes:
   pgadmin-data:
   phoenix-data:
   hf-cache:
+  kali-cache:

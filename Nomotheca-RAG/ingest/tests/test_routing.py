@@ -337,3 +337,32 @@ def test_a_missing_browser_extra_skips_the_tier_even_on_a_403(monkeypatch) -> No
 
     assert resolver.resolve_legifrance_url(ELI_URL) is None
     assert route_url(ELI_URL).hint == ELI_HINT
+
+
+def test_every_scout_guidance_publisher_kind_is_a_guidance_kind() -> None:
+    """The scout ingests a publisher's documents unattended, with the kind it fixes.
+
+    ADR 0001: a web-discovered document must never be granted evidence. The kind
+    lives in the scout's `GUIDANCE_PUBLISHERS`; what it means lives here.
+    """
+    from nomotheca_ingest.core.contributed import trust_class_for
+    from nomotheca_ingest.core.ir import SourceTrustClass
+
+    scout = _scout_module()
+    if scout is None:
+        pytest.skip("no Nomoscope-agentic-workflow checkout next to this package")
+    tree = ast.parse(scout.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if getattr(getattr(node, "target", None), "id", "") == "GUIDANCE_PUBLISHERS":
+            table = node.value
+            break
+    else:
+        raise AssertionError(f"{scout} declares no GUIDANCE_PUBLISHERS")
+    kinds = []
+    for country, publishers in zip(table.keys, table.values):
+        for publisher in publishers.elts:
+            by_key = {key.value: value for key, value in zip(publisher.keys, publisher.values)}
+            kinds.append((country.value, by_key["kind"].value))
+    assert kinds
+    for country, kind in kinds:
+        assert trust_class_for(country, kind) == SourceTrustClass.GUIDANCE, (country, kind)

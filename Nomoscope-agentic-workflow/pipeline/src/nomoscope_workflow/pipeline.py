@@ -17,6 +17,7 @@ import math
 import operator
 import re
 import uuid
+from decimal import ROUND_HALF_UP, Decimal
 from datetime import date, datetime, timedelta, timezone
 from collections.abc import Iterable
 from typing import TypedDict
@@ -582,6 +583,9 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                         report.issues.append(
                             "supporting_extract is not a verbatim quote of the cited chunk"
                         )
+                        hint = _misquote_hint(hits, draft.citation_chunk_id, draft.supporting_extract)
+                        if hint:
+                            report.issues.append(hint)
                 else:
                     report.issues.append("citation_chunk_id missing or not among retrieved chunks")
 
@@ -1063,6 +1067,11 @@ def _resolve_chunk_by_extract(hits: list[RetrievalHit], extract: str) -> str | N
 #: verbatim from a retrieved chunk — that is what keeps a derived value inside
 #: the anti-hallucination contract.
 DERIVATION_CONSTANTS = frozenset({1.0, 2.0, 4.0, 12.0, 13.0, 52.0, 100.0, 365.0, 366.0, 1000.0})
+#: Most decimal places `round(x, n)` may keep. The precision is not a fact about
+#: the law the way a figure is: it is the rounding rule the text itself states —
+#: «Les taux ainsi appelés sont arrondis au centième» (AGIRC-ARRCO art. 36: 6,20 %
+#: × 127 % = 7,874 % → 7,87 %), «arrondi à l'euro le plus proche».
+DERIVATION_MAX_DIGITS = 8
 _DERIVATION_OPS = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
@@ -1075,7 +1084,9 @@ def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
     """Evaluate `expression` over named operands.
 
     Raises ValueError for anything but + - * / over operand names and
-    DERIVATION_CONSTANTS — no calls, no attributes, no other literals.
+    DERIVATION_CONSTANTS, plus `round(x, n)` with n an integer literal up to
+    DERIVATION_MAX_DIGITS — no other calls, no attributes, no other literals.
+    Rounding is half-up, as legal texts mean it (not Python's half-even).
     """
     try:
         tree = ast.parse(expression.strip(), mode="eval")
@@ -1105,7 +1116,28 @@ def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
         if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
             value = ev(node.operand)
             return -value if isinstance(node.op, ast.USub) else value
-        raise ValueError("only + - * / over operand names and calendar constants are allowed")
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "round"
+            and not node.keywords
+        ):
+            if len(node.args) != 2:
+                raise ValueError("round takes exactly (expression, digits)")
+            digits = node.args[1]
+            if not (
+                isinstance(digits, ast.Constant)
+                and type(digits.value) is int
+                and 0 <= digits.value <= DERIVATION_MAX_DIGITS
+            ):
+                raise ValueError(
+                    f"round's digits must be an integer literal from 0 to {DERIVATION_MAX_DIGITS}"
+                )
+            value = Decimal(repr(ev(node.args[0])))
+            return float(value.quantize(Decimal(1).scaleb(-digits.value), rounding=ROUND_HALF_UP))
+        raise ValueError(
+            "only + - * / and round(x, n) over operand names and calendar constants are allowed"
+        )
 
     try:
         return float(ev(tree))
@@ -1155,6 +1187,15 @@ def _derivation_summary(draft: ProposalDraft, hits: list[RetrievalHit]) -> str:
     return f"{draft.derivation} with " + ", ".join(parts)
 
 
+def _misquote_hint(hits: list[RetrievalHit], chunk_id: str, extract: str) -> str | None:
+    """The retry's feedback for a non-verbatim extract: what the chunk really says."""
+    content = next((h.content for h in hits if h.chunk_id == chunk_id), "")
+    passage = retrieval.closest_passage(content, extract or "")
+    if passage is None:
+        return None
+    return f"the cited chunk reads: «{passage}» — quote it exactly as written, without correcting it"
+
+
 def _check_derivation(
     draft: ProposalDraft,
     hits: list[RetrievalHit],
@@ -1192,6 +1233,9 @@ def _check_derivation(
         offsets.append(span)
         if span is None:
             issues.append(f"derivation: {where}'s extract is not a verbatim quote of its chunk")
+            hint = _misquote_hint(hits, op.citation_chunk_id, op.supporting_extract)
+            if hint:
+                issues.append(f"derivation: {where}: {hint}")
         elif not _extract_states(op.supporting_extract, op.value):
             issues.append(f"derivation: {where}'s extract does not state {op.value:g}")
     if issues:

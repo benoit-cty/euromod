@@ -47,9 +47,21 @@ HEADING_PATTERNS: dict[str, re.Pattern[str]] = {
     # Numbered paragraphs, the usual shape of a circular with no other markup:
     # '2.1.3 Calcul de l\'allocation'
     # The numbering stays inside `text` so the ltree label is the stable
-    # 'sec_2_1_3' rather than a slug of the wording.
-    "numbered": re.compile(r"^\s*(?P<text>(?P<number>\d+(?:\.\d+){0,4})\.?\s+\S.*?)\s*$"),
+    # 'sec_2_1_3' rather than a slug of the wording. A letter must follow the
+    # number: a table row is not a heading («19 212,03 € 1 601 €», the couple
+    # ceiling of Cnav circular 2025-13, became section 19 and was pruned with
+    # its figure).
+    "numbered": re.compile(
+        r"^\s*(?P<text>(?P<number>\d+(?:\.\d+){0,4})\.?\s+[^\W\d_].*?)\s*$"
+    ),
 }
+
+#: Patterns whose headings are body text, kept as their unit's first line. A
+#: numbered paragraph is a sentence of the document («2. Montant maximal de
+#: l'ASI lorsque le conjoint … ne bénéficie ni de l'ASI, ni de l'Aspa à compter
+#: du 1er avril 2025»), not a title: left out, it can be neither retrieved nor
+#: quoted. Markdown and HTML headings stay titles, kept in the citation only.
+BODY_HEADING_PATTERNS = frozenset({"numbered"})
 
 _LEADING_NUM_RE = re.compile(r"^(\d+(?:\.\d+)*)\.?\s")
 
@@ -182,6 +194,7 @@ def build_document(
     """
     jurisdiction = jurisdiction.upper()
     compiled = heading_pattern(pattern)
+    heading_is_body = any(compiled is HEADING_PATTERNS[name] for name in BODY_HEADING_PATTERNS)
     lines = text.splitlines()
     headings = find_headings(lines, compiled)
 
@@ -250,7 +263,8 @@ def build_document(
         ordinal = child_counts.get(parent_path, 0)
         child_counts[parent_path] = ordinal + 1
 
-        content = "\n".join(lines[heading.content_start : heading.content_end]).strip()
+        start = heading.line_idx if heading_is_body else heading.content_start
+        content = "\n".join(lines[start : heading.content_end]).strip()
         units.append(
             UnitIR(
                 unit_type=unit_types.get(heading.level, default_unit_type),

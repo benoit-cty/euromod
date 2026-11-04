@@ -342,6 +342,19 @@ def test_scout_fr_ids_still_exclude_whole_codes():
     assert pattern.findall("https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006069577") == []
 
 
+def test_scout_fr_keeps_collective_agreements_but_not_whole_conventions():
+    # ADR 0006: the AGIRC-ARRCO ANI is evidence; its /conv_coll/ ids used to be dropped.
+    from nomoscope_workflow.scout import COUNTRY_SOURCES
+
+    pattern = COUNTRY_SOURCES["FR"]["id_pattern"]
+    assert pattern.findall(
+        "https://www.legifrance.gouv.fr/conv_coll/id/KALIARTI000036731900"
+    ) == ["KALIARTI000036731900"]
+    assert pattern.findall(
+        "https://www.legifrance.gouv.fr/conv_coll/id/KALITEXT000036731682?idConteneur=KALICONT000046709421"
+    ) == ["KALITEXT000036731682"]
+
+
 def _adapter_url_source(adapter: Path) -> tuple[tuple[str, ...], str]:
     """The (domains, id_pattern source) one ingest adapter declares.
 
@@ -695,9 +708,10 @@ from nomoscope_workflow.pipeline import (  # noqa: E402
     DERIVATION_CONSTANTS,
     _check_derivation,
     _figures_in,
+    _misquote_hint,
     evaluate_derivation,
 )
-from nomoscope_workflow.retrieval import _article_tokens  # noqa: E402
+from nomoscope_workflow.retrieval import _article_tokens, closest_passage  # noqa: E402
 from nomoscope_workflow.schema import Operand  # noqa: E402
 
 AKW_TEXT = (
@@ -760,6 +774,21 @@ def test_derivation_allows_calendar_constants_only():
             evaluate_derivation(bad, {"a": 1.0, "b": 2.0})
 
 
+def test_derivation_rounds_where_the_text_says_so():
+    # AGIRC-ARRCO art. 36: «Les taux ainsi appelés sont arrondis au centième».
+    # 6,20 % × 127 % = 7,874 % -> 7,87 %; the 60 % employer share is 4,722 %.
+    called = evaluate_derivation("round(a * b, 4)", {"a": 0.062, "b": 1.27})
+    assert called == 0.0787
+    assert evaluate_derivation("round(a * b, 4) * c", {"a": 0.062, "b": 1.27, "c": 0.6}) == pytest.approx(0.04722)
+    # Half-up, as a legal text means it — Python's round(0.5) is 0.
+    assert evaluate_derivation("round(a, 0)", {"a": 0.5}) == 1.0
+    assert evaluate_derivation("round(a, 0)", {"a": 2.5}) == 3.0
+    # The precision is a literal, never a figure smuggled in by another route.
+    for bad in ("round(a, b)", "round(a, 1.5)", "round(a)", "round(a, 9)", "round(a, ndigits=2)", "round(a, -1)"):
+        with pytest.raises(ValueError):
+            evaluate_derivation(bad, {"a": 1.234, "b": 2.0})
+
+
 def test_derivation_rejects_an_operand_the_extract_does_not_state():
     hits = [_hit(chunk_id="akw", content=AKW_TEXT)]
     draft = _derived(operands=[
@@ -784,6 +813,38 @@ def test_derivation_rejects_a_paraphrased_operand_and_an_unretrieved_chunk():
     assert offsets == [None, None]
     assert any("not a verbatim quote" in i for i in issues)
     assert any("not retrieved" in i for i in issues)
+
+
+CSG_TEXT = (
+    "2° Sont assujetties à la contribution au taux de 8,3 % les pensions de retraite, et les "
+    "pensions d'invalidité. III.-Par dérogation aux I, II et III bis, sont assujettis"
+)
+
+
+def test_a_tidied_quote_is_answered_with_the_passage_it_tried_to_quote():
+    # 3 Nov full run: the model "corrected" la contribution into la contribution
+    # sociale, and the bare retry repeated the same quote.
+    tidied = "2° Sont assujetties à la contribution sociale au taux de 8,3 % les pensions de retraite, et les pensions d'invalidité."
+    assert closest_passage(CSG_TEXT, tidied) == (
+        "2° Sont assujetties à la contribution au taux de 8,3 % les pensions de retraite, et les "
+        "pensions d'invalidité."
+    )
+    assert closest_passage(CSG_TEXT, "Le taux forfaitaire est fixé à 12,8 %") is None
+    hint = _misquote_hint([_hit(chunk_id="csg", content=CSG_TEXT)], "csg", tidied)
+    assert hint.startswith("the cited chunk reads: «2° Sont assujetties à la contribution au taux")
+
+
+def test_a_paraphrased_operand_gets_the_same_hint():
+    hits = [_hit(chunk_id="akw", content=AKW_TEXT)]
+    draft = _derived(operands=[
+        Operand(name="a", value=347.83, citation_chunk_id="akw",
+                supporting_extract="b. 6 jaar of ouder en jonger dan 12 jaar: € 347,83"),
+        Operand(name="b", value=286.45, citation_chunk_id="akw",
+                supporting_extract="jonger is dan 6 jaar: € 286,45"),
+    ])
+    issues, _, _ = _check_derivation(draft, hits, _verify_in(hits))
+    assert issues[0] == "derivation: operand a's extract is not a verbatim quote of its chunk"
+    assert "«b. 6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83" in issues[1]
 
 
 def test_derivation_must_evaluate_to_the_proposed_value():
@@ -919,3 +980,85 @@ def test_run_parameter_with_enqueue_fails_when_the_queue_is_unreachable():
     cfg = _offline_cfg()
     with pytest.raises(Exception):
         run_parameter(cfg, setup_tracing(cfg), record, date(2025, 7, 1))
+
+
+def test_scout_reads_a_publisher_document_off_its_url():
+    from nomoscope_workflow.scout import guidance_document
+
+    cnav = guidance_document(
+        "FR", "https://legislation.lassuranceretraite.fr/Pdf/circulaire_cnav_2025_13_03042025.pdf"
+    )
+    assert (cnav.publisher, cnav.kind, cnav.title, cnav.valid_from) == (
+        "Cnav", "circulaire", "Circulaire Cnav 2025/13 du 03/04/2025", date(2025, 4, 3)
+    )
+    assert guidance_document(
+        "FR", "https://legislation.lassuranceretraite.fr/Documents/Circulaires/Pdf/circulaire_cnav_2026_11_03042026.pdf"
+    ).title == "Circulaire Cnav 2026/11 du 03/04/2026"
+    unedic = guidance_document(
+        "FR",
+        "https://www.unedic.org/storage/uploads/2025/04/08/"
+        "PRE-CIRC-Circulaire_n_2025-03_du_1er_avril_2025_uid_67f53cc00a07f.pdf",
+    )
+    assert (unedic.kind, unedic.valid_from) == ("circulaire", date(2025, 4, 1))
+    bofip = guidance_document(
+        "FR", "https://bofip.impots.gouv.fr/bofip/2491-PGP.html/identifiant=BOI-IR-LIQ-20-20-10-20250414"
+    )
+    assert (bofip.kind, bofip.title, bofip.valid_from) == (
+        "doctrine", "BOI-IR-LIQ-20-20-10 du 14/04/2025", date(2025, 4, 14)
+    )
+    # A listing, a news page, another country: not a document, nothing guessed.
+    assert guidance_document("FR", "https://www.unedic.org/la-reglementation/circulaires") is None
+    assert guidance_document(
+        "FR", "https://www.unedic.org/actualites/allocations-d-assurance-chomage-revalorisation-de-0-5"
+    ) is None
+    assert guidance_document(
+        "NL", "https://legislation.lassuranceretraite.fr/Pdf/circulaire_cnav_2025_13_03042025.pdf"
+    ) is None
+
+
+def test_scout_ingests_a_cnav_circular_as_guidance(monkeypatch):
+    """The ASI ceiling case: the analyst names the Cnav circular, the scout fetches it."""
+    from nomoscope_workflow import scout as scout_mod
+    from nomoscope_workflow.config import WorkflowConfig
+
+    url = "https://legislation.lassuranceretraite.fr/Pdf/circulaire_cnav_2025_13_03042025.pdf"
+    searched: list[tuple[str, list[str]]] = []
+    ran: list[list[str]] = []
+
+    def fake_search(api_key, query, domains):
+        searched.append((query, domains))
+        if "legislation.lassuranceretraite.fr" in domains:
+            return [
+                {"url": url, "title": "L'allocation supplémentaire d'invalidité - Circulaire Cnav"},
+                {"url": "https://www.unedic.org/la-reglementation/circulaires", "title": "Circulaires"},
+            ]
+        return []
+
+    monkeypatch.setattr(scout_mod, "_web_search_unavailable", None)
+    monkeypatch.setattr(scout_mod, "_tavily_search", fake_search)
+    monkeypatch.setattr(
+        scout_mod.llm,
+        "run_agent",
+        lambda *a, **k: scout_mod.ScoutSuggestion(
+            search_queries=["plafond ASI couple 2025"],
+            guidance_queries=["circulaire Cnav 2025 plafonds ASI revalorisation"],
+        ),
+    )
+    monkeypatch.setattr(scout_mod, "_known_instruments", lambda cfg, ids, rules: set())
+    monkeypatch.setattr(scout_mod, "_run_ingest_cli", lambda cfg, args, what: ran.append(args))
+    monkeypatch.setattr(scout_mod, "_build_embeddings", lambda cfg: None)
+
+    cfg = WorkflowConfig(database_url="postgresql://u@h/db", scout="tavily", tavily_api_key="k")
+    record = _record("scalar", "currency/year", 17000.0)
+    result = scout_mod.run(cfg, record, date(2025, 7, 1), needs=["Circulaire Cnav 2025-13 du 03/04/2025"])
+
+    assert searched[-1] == (
+        "circulaire Cnav 2025 plafonds ASI revalorisation",
+        ["legislation.lassuranceretraite.fr", "unedic.org", "bofip.impots.gouv.fr"],
+    )
+    assert result.ingested == [url]
+    assert ran == [[
+        "document", url, "--database-url", "postgresql://u@h/db", "--jurisdiction", "FR",
+        "--lang", "fr", "--title", "Circulaire Cnav 2025/13 du 03/04/2025", "--kind", "circulaire",
+        "--valid-from", "2025-04-03", "--trigger", "cache_miss",
+    ]]

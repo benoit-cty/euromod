@@ -8,8 +8,26 @@ from datetime import date
 from html import unescape
 from typing import Any
 
-from nomotheca_ingest.core.ir import InstrumentIR, ParsedDoc, Snapshot, SourceRef, TextIR, UnitIR, VersionIR
+from nomotheca_ingest.core.ir import (
+    InstrumentIR,
+    ParsedDoc,
+    Snapshot,
+    SourceRef,
+    SourceTrustClass,
+    TextIR,
+    UnitIR,
+    VersionIR,
+)
 
+
+#: instrument_type of every KALI text: the base agreement, its avenants and
+#: délibérations alike (the DILA nature — «Accord national interprofessionnel»,
+#: «Avenant» — is kept in metadata). Evidence like a law (ADR 0006).
+COLLECTIVE_AGREEMENT = "collective_agreement"
+
+#: DILA natures that are administrative guidance, not norms (ADR 0001). JORF
+#: publishes circulaires too, and before this every one loaded as evidence.
+GUIDANCE_NATURES = frozenset({"circulaire", "instruction"})
 
 TAG_RE = re.compile(r"<[^>]+>")
 SPACE_RE = re.compile(r"\s+")
@@ -23,11 +41,12 @@ def strip_html(value: str) -> str:
 def parse_dila_json(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
     """Parse archived DILA JSON bytes into a parsed document IR."""
     data = json.loads(payload.decode("utf-8"))
-    if ref.source_id.startswith("LEGIARTI") or ref.source_id.startswith("JORFARTI"):
+    # KALI (collective agreements) is the same DILA schema as LEGI and JORF.
+    if ref.source_id.startswith(("LEGIARTI", "JORFARTI", "KALIARTI")):
         return _parse_article(data, ref, snapshot)
-    if ref.source_id.startswith("JORFTEXT"):
+    if ref.source_id.startswith(("JORFTEXT", "KALITEXT")):
         return _parse_jorf_text(data, ref)
-    if ref.source_id.startswith("JORFSCTA"):
+    if ref.source_id.startswith(("JORFSCTA", "KALISCTA")):
         return _parse_jorf_section(data, ref)
     return ParsedDoc(ref=ref, metadata={"raw_type": _raw_type(data), "child_refs": _child_refs(data)})
 
@@ -37,16 +56,19 @@ def _parse_jorf_text(data: dict[str, Any], ref: SourceRef) -> ParsedDoc:
     meta_commun = _dig(data, "META", "META_COMMUN") or {}
     chronicle = _dig(data, "META", "META_SPEC", "META_TEXTE_CHRONICLE") or {}
     version = _dig(data, "META", "META_SPEC", "META_TEXTE_VERSION") or {}
+    nature = meta_commun.get("NATURE") or "loi"
+    kali = ref.source_id.startswith("KALI")
     instrument = InstrumentIR(
         jurisdiction=ref.jurisdiction,
         source_code=ref.source_code,
-        instrument_type=(meta_commun.get("NATURE") or "loi").lower(),
+        instrument_type=COLLECTIVE_AGREEMENT if kali else nature.lower(),
+        source_trust_class=_trust_class(nature),
         national_id=meta_commun.get("ID") or ref.source_id,
         eli=_eli_alias(meta_commun) or meta_commun.get("ID_ELI"),
         title={"fr": version.get("TITREFULL") or version.get("TITRE") or ref.source_id},
         adoption_date=_parse_date(chronicle.get("DATE_TEXTE")),
         publication_date=_parse_date(chronicle.get("DATE_PUBLI")),
-        metadata={"nor": chronicle.get("NOR"), "num": chronicle.get("NUM")},
+        metadata={"nor": chronicle.get("NOR"), "num": chronicle.get("NUM"), **({"nature": nature} if kali else {})},
     )
     return ParsedDoc(
         ref=ref,
@@ -77,7 +99,24 @@ def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> 
 
     article_number = str(data.get("NUM") or meta_article.get("NUM") or ref.source_id)
     code_cid = texte.get("@cid") or ref.metadata.get("instrument_id") or "UNKNOWN"
-    citation = _citation(code_cid, article_number)
+    kali = code_cid.startswith("KALITEXT")
+    title = _text_title(texte) or code_cid
+    # A KALI text has no short code name: the agreement's own title is what a
+    # reviewer recognises («Accord national interprofessionnel du 17 novembre
+    # 2017 relatif au régime AGIRC-ARRCO …, art. 37»).
+    # Its annexes restart the numbering (the ANI AGIRC-ARRCO has three art. 1er:
+    # the accord's, Annexe A's, Annexe B's), so an annex article is qualified by
+    # its annex in both the path and the citation, or the loader would fold them
+    # into one unit.
+    annex = _annex(texte) if kali else None
+    citation = (
+        f"{title}, {f'annexe {annex}, ' if annex else ''}art. {article_number}"
+        if kali
+        else _citation(code_cid, article_number)
+    )
+    path = f"art_{_path_token(article_number)}"
+    if annex:
+        path = f"annexe_{_path_token(annex)}_{path}"
     html = bloc.get("CONTENU") or ""
     content = strip_html(html)
     # Legifrance's NOTA is the article's application note — for a code article
@@ -95,10 +134,15 @@ def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> 
         html = f"{html}\n<p><strong>NOTA :</strong></p>\n{nota_html}"
     valid_from = _parse_date(meta_article.get("DATE_DEBUT")) or _parse_date(texte.get("@date_publi")) or date.min
     valid_to = _parse_date(meta_article.get("DATE_FIN"))
+    if valid_to is not None and valid_to <= valid_from:
+        # Replaced the day it took effect (KALI: the ANI AGIRC-ARRCO has four
+        # such REMPLACE versions dated 2019-01-01 → 2019-01-01). In force on no
+        # day, so there is nothing to load — skip it rather than fail the text.
+        return ParsedDoc(ref=ref, metadata={"raw_type": _raw_type(data), "skipped": "never_in_force"})
 
     unit = UnitIR(
         unit_type="article",
-        path=f"art_{_path_token(article_number)}",
+        path=path,
         citation=citation,
         ordinal=_ordinal(article_number),
         national_id=meta_commun.get("ID") or ref.source_id,
@@ -119,12 +163,23 @@ def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> 
     instrument = InstrumentIR(
         jurisdiction="FR",
         source_code=ref.source_code,
-        instrument_type="code" if code_cid.startswith("LEGITEXT") else "loi",
+        instrument_type=COLLECTIVE_AGREEMENT if kali else ("code" if code_cid.startswith("LEGITEXT") else "loi"),
+        # Every article re-asserts its text's class on upsert, so it must be
+        # derived the same way as the text's own.
+        source_trust_class=_trust_class(texte.get("@nature")),
         national_id=code_cid,
-        title={"fr": _text_title(texte) or code_cid},
+        title={"fr": title},
+        metadata={"nature": texte.get("@nature")} if kali else {},
         units=[unit],
     )
     return ParsedDoc(ref=ref, instruments=[instrument], metadata={"raw_type": _raw_type(data)})
+
+
+def _trust_class(nature: str | None) -> SourceTrustClass:
+    """Evidence for laws, decrees, orders and agreements; guidance for circulars."""
+    if (nature or "").strip().lower() in GUIDANCE_NATURES:
+        return SourceTrustClass.GUIDANCE
+    return SourceTrustClass.EVIDENCE
 
 
 def _child_refs(data: dict[str, Any]) -> list[dict[str, str]]:
@@ -141,6 +196,23 @@ def _child_refs(data: dict[str, Any]) -> list[dict[str, str]]:
                     "title": item.get("#text") or item.get("@num") or source_id,
                 })
     return children
+
+
+ANNEX_RE = re.compile(r"^Annexe\s+([0-9A-Za-z]+)\b")
+
+
+def _annex(texte: dict[str, Any]) -> str | None:
+    """The annex («Annexe A …») a KALI article sits in, read off its TM chain."""
+    levels = _as_list(texte.get("TM"))
+    while levels:
+        tm = levels[0]
+        # A heading renamed over time is a list of dated TITRE_TM.
+        for heading in _as_list(tm.get("TITRE_TM")):
+            match = ANNEX_RE.match(heading.get("#text") or "")
+            if match:
+                return match.group(1)
+        levels = _as_list(tm.get("TM"))
+    return None
 
 
 def _text_title(texte: dict[str, Any]) -> str | None:

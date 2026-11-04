@@ -16,6 +16,7 @@ job when WORKFLOW_ENCODER=db) and falls back to FTS-only when the encoder is una
 
 from __future__ import annotations
 
+import difflib
 import re
 from collections.abc import Sequence
 from datetime import date
@@ -391,6 +392,114 @@ LIMIT %(k)s
 """
 
 
+#: Most articles a gap may hold for `gap_articles` to fill it.
+GAP_MAX_ARTICLES = 3
+
+# An article's "series" is its path minus the article label — '' for the main
+# text, 'annexe_a_' for an annex — so an annex's art. 1er never fills a gap
+# between the agreement's own articles.
+_GAP_ARTICLES_SQL = f"""
+WITH {_LIVE_VERSION_CTE},
+held AS (
+  SELECT DISTINCT u.instrument_id, u.ordinal,
+         regexp_replace(u.path::text, 'art_[^.]*$', '') AS series
+  FROM chunks ch
+  JOIN unit_texts t          ON t.id = ch.unit_text_id
+  JOIN legal_unit_versions v ON v.id = t.version_id
+  JOIN legal_units u         ON u.id = v.legal_unit_id
+  WHERE ch.id = ANY(%(chunk_ids)s::uuid[]) AND u.path::text ~ '(^|[._])art_[^.]*$'
+),
+gaps AS (
+  SELECT instrument_id, series, ordinal AS lo,
+         lead(ordinal) OVER (PARTITION BY instrument_id, series ORDER BY ordinal) AS hi
+  FROM held
+)
+SELECT g.lo, u.id::text AS unit_id, ch.id::text AS chunk_id, u.citation, ch.context_header,
+       ch.content, t.lang, v.validity::text AS validity, v.version_status, i.source_trust_class,
+       NULL::float8 AS score
+FROM gaps g
+JOIN legal_units u         ON u.instrument_id = g.instrument_id
+                          AND regexp_replace(u.path::text, 'art_[^.]*$', '') = g.series
+                          AND u.path::text ~ '(^|[._])art_[^.]*$'
+                          AND u.ordinal > g.lo AND u.ordinal < g.hi
+JOIN instruments i         ON i.id = u.instrument_id
+JOIN legal_unit_versions v ON v.legal_unit_id = u.id
+JOIN live_version lv       ON lv.version_id = v.id
+JOIN unit_texts t          ON t.version_id = v.id
+JOIN chunks ch             ON ch.unit_text_id = t.id
+WHERE g.hi IS NOT NULL AND g.hi - g.lo <= %(max_gap)s + 1 AND t.lang = %(lang)s
+ORDER BY g.instrument_id, u.ordinal, ch.seq
+"""
+
+
+def gap_articles(
+    conn: psycopg.Connection,
+    scope: Scope,
+    lang: str,
+    as_of: date,
+    chunk_ids: list[str],
+    max_gap: int = GAP_MAX_ARTICLES,
+) -> list[RetrievalHit]:
+    """The articles missing between two retrieved articles of the same act.
+
+    Consecutive articles state one scheme together, and retrieval ranks them
+    one by one: on the 3 Nov benchmark the AGIRC-ARRCO rates were proposed with
+    arts. 34 (rate = point rate × call percentage), 35 (6,20 % / 17 %) and 38
+    (60 % employer) in hand — and not art. 36, the one line «Un pourcentage
+    d'appel, fixé à 127 %». Four rates came back not_found, each asking for that
+    percentage. A gap of at most `max_gap` articles between two held ones is
+    filled; a wider one is a different part of the act. Hits are "located":
+    looked up, not ranked.
+    """
+    if not chunk_ids:
+        return []
+    params = {
+        "jurisdictions": scope_codes(scope),
+        "as_of": as_of,
+        "chunk_ids": chunk_ids,
+        "lang": lang,
+        "max_gap": max_gap,
+    }
+    with conn.cursor(row_factory=dict_row) as cur:
+        rows = cur.execute(_GAP_ARTICLES_SQL, params).fetchall()
+    # The ordinal is coarse for code articles (D621-1 … D621-9 are all 621), so
+    # cap the gap by how many units it actually holds.
+    units_per_gap: dict[tuple, set[str]] = {}
+    for row in rows:
+        units_per_gap.setdefault((row["lo"], row["citation"].rsplit(",", 1)[0]), set()).add(row["unit_id"])
+    held = set(chunk_ids)
+    hits = []
+    for row in rows:
+        key = (row["lo"], row["citation"].rsplit(",", 1)[0])
+        if len(units_per_gap[key]) > max_gap or row["chunk_id"] in held:
+            continue
+        fields = {k: v for k, v in row.items() if k not in ("lo", "unit_id")}
+        hits.append(RetrievalHit(method="located", **fields))
+    return hits
+
+
+def instruments_of_chunks(conn: psycopg.Connection, chunk_ids: list[str], limit: int = 3) -> list[str]:
+    """The acts a set of retrieved chunks mostly comes from, most chunks first."""
+    if not chunk_ids:
+        return []
+    with conn.cursor(row_factory=dict_row) as cur:
+        rows = cur.execute(
+            """
+            SELECT u.instrument_id::text AS instrument_id
+            FROM chunks ch
+            JOIN unit_texts t          ON t.id = ch.unit_text_id
+            JOIN legal_unit_versions v ON v.id = t.version_id
+            JOIN legal_units u         ON u.id = v.legal_unit_id
+            WHERE ch.id = ANY(%(ids)s::uuid[])
+            GROUP BY u.instrument_id
+            ORDER BY count(*) DESC
+            LIMIT %(limit)s
+            """,
+            {"ids": chunk_ids, "limit": limit},
+        ).fetchall()
+    return [row["instrument_id"] for row in rows]
+
+
 def _article_tokens(need: str) -> list[str]:
     """Article numbers named in a need, spelled the way `legal_units.citation`
     spells them: «D. 633-3» -> «D633-3», «66.2» stays (the ES paragraph idiom is
@@ -417,6 +526,7 @@ def locate_named_units(
     as_of: date,
     need: str,
     k: int = 6,
+    held_instrument_ids: list[str] | None = None,
 ) -> list[RetrievalHit]:
     """Chunks of the source an analyst NAMED, looked up rather than ranked.
 
@@ -438,6 +548,14 @@ def locate_named_units(
        act alone (FTS), two chunks per act — «Finance Act 2024 … personal tax
        credit» finds s. 3 without knowing its number.
 
+    When the need names no act by title, step 3 searches inside the acts the
+    retrieved chunks already come from (``held_instrument_ids``): the analyst
+    who writes «l'article 34 dit que le taux résulte d'un pourcentage d'appel,
+    mais les extraits ne donnent pas ce pourcentage» is describing a gap INSIDE
+    the act it is reading — the AGIRC-ARRCO ANI, whose art. 36 («Un pourcentage
+    d'appel, fixé à 127 %») retrieval never ranked in (3 Nov benchmark, four
+    tscerpi rates not_found with arts. 34, 35 and 38 in hand).
+
     As-of and jurisdiction scoping are the retrieval CTE's; hits come back
     with method="located" so the trace shows they were not ranked in.
     """
@@ -448,6 +566,14 @@ def locate_named_units(
             _NAMED_INSTRUMENTS_SQL, {**base, "min_score": NAMED_ACT_MIN_SCORE}
         ).fetchall()
     act_ids = [act["instrument_id"] for act in acts] or None
+    search_acts = acts
+    if not acts and held_instrument_ids:
+        with conn.cursor(row_factory=dict_row) as cur:
+            search_acts = cur.execute(
+                "SELECT id::text AS instrument_id, title_search FROM instruments "
+                "WHERE id = ANY(%(ids)s::uuid[]) AND source_trust_class <> 'context'",
+                {"ids": held_instrument_ids},
+            ).fetchall()
     hits: dict[str, RetrievalHit] = {}
 
     def lookup(token: str, scoped: bool) -> None:
@@ -470,8 +596,8 @@ def locate_named_units(
             head = re.match(r"[A-Za-z]?\d+", token)
             if head and head.group(0) != token:
                 lookup(head.group(0), scoped=True)
-    if not hits and act_ids:
-        for act in acts:
+    if not hits and search_acts:
+        for act in search_acts:
             # The act's own title words match all of its chunks: search the
             # rest of the need — the article number, the concept, the year.
             # (A need that IS the title — «l'arrêté fixant le plafond de la
@@ -654,3 +780,29 @@ def verify_extract(
     if match:
         return (base + match.start(), base + match.end())
     return None
+
+
+def closest_passage(content: str, extract: str) -> str | None:
+    """The passage of a chunk that a non-verbatim extract was trying to quote.
+
+    Feedback for the retry, never a substitute for the check: models "tidy"
+    legal French (la contribution → la contribution sociale, a dropped «à
+    charge», an added closing »), and told only "not verbatim" they repeat the
+    same quote. The span runs from the first to the last stretch of 6+
+    characters the extract shares with the chunk, widened to whole words;
+    None when under half the extract matches or the matches are scattered.
+    """
+    if not extract.strip():
+        return None
+    matcher = difflib.SequenceMatcher(None, content, extract, autojunk=False)
+    blocks = [b for b in matcher.get_matching_blocks() if b.size >= 6]
+    if sum(b.size for b in blocks) < len(extract) / 2:
+        return None
+    start, end = blocks[0].a, blocks[-1].a + blocks[-1].size
+    if end - start > 2 * len(extract) + 100:
+        return None
+    while start > 0 and not content[start - 1].isspace():
+        start -= 1
+    while end < len(content) and not content[end].isspace():
+        end += 1
+    return content[start:end]

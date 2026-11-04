@@ -707,6 +707,27 @@ def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
     return ParameterRecord(information=information, values=values)
 
 
+def blind_record(record: ParameterRecord, before: date) -> ParameterRecord:
+    """The record as EUROMOD held it before `before`: a blind baseline.
+
+    Every value row starting on or after `before` is dropped and the last row
+    left is reopened (EUROMOD carries a value forward until a new row replaces
+    it), so the run sees exactly what an analyst updating from the previous
+    system year would. Without this the prompt's "current value", the frame's
+    known citations and the diff's routing are all read off the row the run is
+    supposed to find — the latest EUROMOD value is the answer.
+    """
+    blind = record.model_copy(deep=True)
+    blind.values = [v for v in blind.values if v.valid_from < before]
+    last = blind.values[-1] if blind.values else None
+    if last is not None and last.valid_to is not None and last.valid_to >= before - timedelta(days=1):
+        last.valid_to = None
+    confirmed = blind.information.last_confirmed_valid_on
+    if confirmed is not None and confirmed >= before:
+        blind.information.last_confirmed_valid_on = None
+    return blind
+
+
 def load_group_record(conn: psycopg.Connection, group_id: str) -> ParameterRecord:
     """Rebuild a bracket schedule as ONE Activity 1 record from params.parameter_groups.
 

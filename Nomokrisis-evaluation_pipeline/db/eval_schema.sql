@@ -282,6 +282,10 @@ ALTER TABLE eval.runs
     ADD COLUMN IF NOT EXISTS submitted_by text,
     ADD COLUMN IF NOT EXISTS finished_at  timestamptz;
 
+-- Blind baseline (benchmark runs): value rows starting on or after this date
+-- were hidden from the workflow. NULL = the run saw the whole record.
+ALTER TABLE eval.runs ADD COLUMN IF NOT EXISTS blind_before date;
+
 CREATE TABLE IF NOT EXISTS eval.run_cases (
     run_pk  bigint NOT NULL REFERENCES eval.runs(id) ON DELETE CASCADE,
     case_id text NOT NULL,

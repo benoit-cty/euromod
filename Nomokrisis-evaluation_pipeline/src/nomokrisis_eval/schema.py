@@ -27,6 +27,16 @@ class Expected(BaseModel):
         default_factory=list,
         description='Acceptable pinpoint citations, e.g. ["CGI, art. 197"]; any-of match',
     )
+    #: Other values that also score value_correct. A benchmark case built from a
+    #: mid-year change stores EUROMOD's weighted average as `value`
+    #: ("(59.87*9+60.59*3)/12#m") and the point value in force on the reference
+    #: date here: the law states the point value, never the average.
+    accept: list[list[Bracket] | bool | float | str] | None = None
+    #: A second, independent ground truth: the linked OpenFisca value for the
+    #: same date ({path, component, factor, value, validated}). Reported beside
+    #: the EUROMOD comparison, never folded into value_correct — OpenFisca
+    #: corroborates, it does not decide.
+    openfisca: dict | None = None
 
 
 #: How much work it takes to get from the legal text to the stored value.
@@ -295,6 +305,14 @@ class CaseResult(BaseModel):
     item_id: str | None = None
     proposed_value: object | None = None
     expected_value: object | None = None
+    #: value_correct came from Expected.accept rather than Expected.value.
+    value_alternative: bool = False
+    # Benchmark cases only (Expected.openfisca set): the linked OpenFisca value
+    # and whether the proposal / EUROMOD's own value agree with it. The pair is
+    # what tells a model error from a EUROMOD error when the two disagree.
+    openfisca_value: object | None = None
+    openfisca_agrees: bool | None = None
+    euromod_openfisca_agree: bool | None = None
 
     # Environmental impact of this case's LLM calls, from EcoLogits over the
     # Phoenix trace (nomoscope_workflow.impact). None for mock runs.
@@ -342,3 +360,7 @@ class RunManifest(BaseModel):
     git_commit: str | None = None
     countries: list[str] = Field(default_factory=list)
     notes: str | None = None
+    #: Blind baseline: every parameter value row starting on or after this date
+    #: is hidden from the workflow (`paramdb.blind_record`). None = the run saw
+    #: the whole record, as golden-set runs always have.
+    blind_before: date | None = None

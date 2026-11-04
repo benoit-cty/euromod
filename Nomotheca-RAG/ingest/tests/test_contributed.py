@@ -131,6 +131,8 @@ def test_the_hierarchy_of_norms_maps_to_exactly_two_trust_classes() -> None:
     assert trust_class_for("FR", "loi") == SourceTrustClass.EVIDENCE
     assert trust_class_for("FR", "decret") == SourceTrustClass.EVIDENCE
     assert trust_class_for("FR", "arrete") == SourceTrustClass.EVIDENCE
+    # A collective agreement is the source of truth for the rates it sets (ADR 0006).
+    assert trust_class_for("FR", "accord_collectif") == SourceTrustClass.EVIDENCE
     assert trust_class_for("FR", "circulaire") == SourceTrustClass.GUIDANCE
     assert trust_class_for("FR", "doctrine") == SourceTrustClass.GUIDANCE
     # "other" must never grant evidence-level trust by accident.
@@ -140,8 +142,9 @@ def test_the_hierarchy_of_norms_maps_to_exactly_two_trust_classes() -> None:
 
 def test_every_jurisdiction_offers_its_own_words_for_the_same_levels() -> None:
     """The kind list is one table, so the UI select and the mapping cannot drift."""
-    assert list(kinds_for("FR")) == ["loi", "decret", "arrete", "circulaire", "doctrine", "other"]
-    assert set(kinds_for("ES").values()) == set(NormLevel)
+    assert list(kinds_for("FR")) == ["loi", "decret", "arrete", "accord_collectif", "circulaire", "doctrine", "other"]
+    for jurisdiction in ("FR", "ES", "NL", "IE", "LT", "BE"):
+        assert set(kinds_for(jurisdiction).values()) == set(NormLevel), jurisdiction
     # An unknown jurisdiction still gets a usable, country-neutral list.
     assert "guidance" in kinds_for("BE")
 

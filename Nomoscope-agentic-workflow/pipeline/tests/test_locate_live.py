@@ -45,3 +45,35 @@ def test_named_sources_are_found_without_ranking(conn, country, need, expected):
         pytest.skip("the 2025 PSS arrêté is not ingested on this database")
     assert any(expected in (h.citation or "") for h in hits), [h.citation for h in hits]
     assert all(h.method == "located" for h in hits)
+
+
+def test_the_article_between_two_retrieved_ones_is_filled(conn):
+    """3 Nov benchmark: arts. 34, 35 and 38 of the AGIRC-ARRCO ANI in hand, art. 36
+    («Un pourcentage d'appel, fixé à 127 %») never ranked in — four rates not_found."""
+    held = [
+        row["id"]
+        for row in conn.execute(
+            """
+            SELECT c.id::text AS id FROM chunks c
+            JOIN unit_texts ut ON ut.id = c.unit_text_id
+            JOIN legal_unit_versions v ON v.id = ut.version_id
+            JOIN legal_units lu ON lu.id = v.legal_unit_id
+            JOIN instruments i ON i.id = lu.instrument_id
+            WHERE i.national_id = 'KALITEXT000036731682' AND ut.lang = 'fr'
+              AND lu.path::text IN ('art_34', 'art_35', 'art_38', 'annexe_a_art_6')
+              AND v.validity @> date '2025-07-01'
+            """
+        ).fetchall()
+    ]
+    if not held:
+        pytest.skip("the AGIRC-ARRCO ANI (KALI) is not ingested on this database")
+    scope = retrieval.jurisdiction_scope(conn, "FR", None)
+    (ani,) = retrieval.instruments_of_chunks(conn, held)
+    assert ani == conn.execute(
+        "SELECT id::text AS id FROM instruments WHERE national_id = 'KALITEXT000036731682'"
+    ).fetchone()["id"]
+    hits = retrieval.gap_articles(conn, scope, "fr", date(2025, 7, 1), held)
+    filled = [h.citation.rsplit(", ", 1)[-1] for h in hits]
+    assert filled == ["art. 36", "art. 37"]
+    assert any("127 %" in h.content for h in hits)
+    assert all(h.method == "located" for h in hits)

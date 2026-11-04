@@ -21,6 +21,8 @@ from nomotheca_ingest.core.embeddings import (
     build_embeddings,
     count_chunks_needing_embeddings,
 )
+from nomotheca_ingest.core.ir import Trigger
+from nomotheca_ingest.core.loader import LegislationLoader
 from nomotheca_ingest.core.pipeline import PipelineResult, run_database_ingest
 from nomotheca_ingest.core.translate import (
     DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS,
@@ -119,6 +121,40 @@ def reparse(
     )
 
 
+@app.command()
+def rechunk(
+    database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
+    jurisdiction: Annotated[
+        str | None, typer.Argument(help="Country code (ES includes its regions); all when omitted.")
+    ] = None,
+) -> None:
+    """Restore the chunks missing from the end of stored texts — no fetch, no parse.
+
+    Until 3 Nov 2026 re-loading a text over 6 000 chars deleted its last
+    chunk. This re-chunks every authentic text whose chunks stop short of its
+    content; run `embeddings build` afterwards for the restored chunks.
+    """
+    with psycopg.connect(database_url) as conn:
+        stats = LegislationLoader(conn).rechunk_truncated(jurisdiction.upper() if jurisdiction else None)
+    typer.echo(json.dumps({"texts": stats.texts, "chunks": stats.chunks}, indent=2))
+
+
+@app.command("kali-sync")
+def kali_sync() -> None:
+    """Bring the local copy of the DILA KALI dumps (collective agreements) up to date.
+
+    The first run downloads the global dump (~175 MB, ~1.8 GB extracted under
+    NOMOTHECA_KALI_DIR); later runs apply the daily increments. `instrument fr
+    KALITEXT…` syncs on its own when the copy is older than 12 h.
+    """
+    from nomotheca_ingest.countries.fr.kali import KaliStore
+
+    store = KaliStore()
+    report = store.sync()
+    typer.echo(json.dumps({"root": str(store.root), **report, "applied": store.state().get("applied")}))
+    typer.echo("@result " + json.dumps({"applied": store.state().get("applied")}))
+
+
 @app.command("country-report")
 def country_report(
     jurisdiction: str,
@@ -189,6 +225,10 @@ def document(
     progress_json: Annotated[
         bool, typer.Option("--progress-json", help="Emit '@progress {json}' lines for wrapping UIs.")
     ] = False,
+    trigger: Annotated[
+        Trigger,
+        typer.Option("--trigger", help="Why the run started: manual (a reviewer) or cache_miss (the scout)."),
+    ] = Trigger.MANUAL,
 ) -> None:
     """Ingest a document a reviewer found: a URL, a PDF, an HTML page, Markdown or text.
 
@@ -211,6 +251,7 @@ def document(
             file_path=file_path,
             implements=implements,
             progress=_document_progress(progress_json),
+            trigger=trigger,
         )
     except ValueError as exc:
         typer.echo(str(exc), err=True)

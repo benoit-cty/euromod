@@ -10,6 +10,8 @@
   uv run nomokrisis-eval selection-export ES --out es.json   # edit the JSON, then:
   uv run nomokrisis-eval selection-import es.json            # ... and rebuild
   uv run nomokrisis-eval run --as-of 2025-06-01 --model anthropic/claude-sonnet-5
+  uv run nomokrisis-eval run-benchmark FR --year 2025 --model mock/extractor --sample 20 --seed 1
+  uv run nomokrisis-eval benchmark-report <run-id>   # EUROMOD Y-1 -> Y change matrix, OpenFisca arbitration
   uv run nomokrisis-eval resume            # continue the last interrupted run
   uv run nomokrisis-eval list-runs
   uv run nomokrisis-eval report
@@ -36,6 +38,7 @@ from psycopg.rows import dict_row
 from nomoscope_workflow import paramdb
 from nomoscope_workflow.tracing import set_progress
 
+from . import benchmark
 from . import build_dataset as builder
 from . import curated_golden
 from . import db as evaldb
@@ -495,6 +498,109 @@ def run(
         _execute_and_report(conn, cfg, manifest, cases, [], verbose=verbose)
 
 
+@app.command("run-benchmark")
+def run_benchmark(
+    country: str = typer.Argument(..., help="ISO country code, e.g. FR"),
+    year: int = typer.Option(..., "--year", help="System year to find, starting blind from the year before"),
+    model: str = typer.Option(..., "--model", help="Provider-prefixed model, e.g. azure_openai/gpt-5.6-luna or mock/extractor"),
+    sample: int = typer.Option(None, "--sample", help="Run N parameters drawn at random"),
+    seed: int = typer.Option(None, "--seed", help="Seed for --sample (reproducible draw)"),
+    exclude_policy: list[str] = typer.Option(None, "--exclude-policy", help="Skip a whole policy, e.g. tco_fr"),
+    target: list[str] = typer.Option(None, "--target", help="Only these refs (model_target or group:<id>)"),
+    notes: str = typer.Option(None, "--notes"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Build and list the cases, run nothing"),
+    verbose: bool = typer.Option(
+        False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
+    ),
+) -> None:
+    """Every parameter of a country, updated blind from EUROMOD Y-1 and scored
+    against EUROMOD Y and OpenFisca Y (see `benchmark`).
+
+    A normal evaluation run with `blind_before` = 1 January of Y: resumable
+    with `nomokrisis-eval resume`, summarised with `benchmark-report`. Ends
+    with `@result {"run_id": …}`.
+    """
+    cfg = load_eval_config()
+    with evaldb.connect(cfg.database_url) as conn:
+        build = benchmark.build_cases(
+            conn, country, year, sample=sample, seed=seed,
+            exclude_policies=exclude_policy or None, targets=target or None,
+        )
+        routings = Counter(c.expected.routing.value for c in build.cases)
+        typer.echo(
+            f"{country.upper()} {year - 1} -> {year}: {len(build.cases)} case(s) "
+            f"({', '.join(f'{k} {v}' for k, v in sorted(routings.items()))}); "
+            f"{len(build.skipped)} skipped"
+        )
+        for reason, count in Counter(build.skipped.values()).most_common(8):
+            typer.echo(f"  skipped {count:>4}  {reason}")
+        if dry_run:
+            for case in build.cases:
+                exp = case.expected
+                typer.echo(
+                    f"  {case.parameter_target:<60} {exp.routing.value:<21} {exp.value!r}"
+                    + (f"  accept={exp.accept!r}" if exp.accept else "")
+                    + (f"  openfisca={exp.openfisca['value']!r}" if exp.openfisca else "")
+                )
+            return
+        if not build.cases:
+            raise typer.Exit(1)
+        manifest = start_run(
+            conn, cfg, build.cases, benchmark.anchor_date(year), model,
+            notes=notes or f"benchmark {country.upper()} {year - 1}->{year}",
+            blind_before=date(year, 1, 1),
+        )
+        typer.echo(
+            f"run {manifest.run_id}  model={manifest.model}  blind_before={manifest.blind_before}"
+            f"  cases={len(build.cases)}"
+        )
+        _execute_and_report(conn, cfg, manifest, build.cases, [], verbose=verbose)
+        _echo_benchmark(evaldb.load_results(conn, evaldb.load_run(conn, manifest.run_id)[0]))
+
+
+def _echo_benchmark(results: list[CaseResult]) -> None:
+    summary = benchmark.summarize_benchmark(results)
+    typer.echo("\nbenchmark")
+    for key, value in summary["headline"].items():
+        typer.echo(f"  {key:<38} {value}")
+    width = max(len(o) for o in benchmark.OUTCOMES)
+    typer.echo("\n  EUROMOD \\ workflow " + " ".join(f"{o:>{width}}" for o in benchmark.OUTCOMES))
+    for side, counts in summary["matrix"].items():
+        typer.echo(f"  {side:<18} " + " ".join(f"{counts.get(o, 0):>{width}}" for o in benchmark.OUTCOMES))
+    if summary["not_legislative"]:
+        typer.echo(f"  national team / derived: {summary['not_legislative']}")
+    if summary["arbitration"]:
+        typer.echo("\n  disagreements")
+        for who, count in sorted(summary["arbitration"].items(), key=lambda kv: -kv[1]):
+            typer.echo(f"    {count:>4}  {who}")
+    typer.echo("\n  per policy")
+    for policy, counts in summary["by_policy"].items():
+        typer.echo(
+            f"    {policy:<14} " + "  ".join(f"{k}={v}" for k, v in sorted(counts.items(), key=lambda kv: kv[0] != 'cases'))
+        )
+
+
+@app.command("benchmark-report")
+def benchmark_report(
+    run_id: str = typer.Argument(..., help="A run-benchmark run id"),
+) -> None:
+    """The change matrix, headline rates, OpenFisca arbitration and per-policy
+    breakdown of a benchmark run, from its stored results (no LLM)."""
+    cfg = load_eval_config()
+    with evaldb.connect(cfg.database_url) as conn:
+        loaded = evaldb.load_run(conn, run_id)
+        if loaded is None:
+            typer.echo(f"no evaluation run {run_id} in eval.runs")
+            raise typer.Exit(1)
+        run_pk, manifest = loaded
+        results = evaldb.load_results(conn, run_pk)
+    typer.echo(
+        f"run {manifest.run_id}  model={manifest.model}  blind_before={manifest.blind_before}"
+        f"  {len(results)} result(s)"
+    )
+    _echo_benchmark(results)
+
+
 @app.command("list-runs")
 def list_runs_cmd(
     limit: int = typer.Option(20, "--limit"),
@@ -540,7 +646,8 @@ def resume(
             raise typer.Exit(1) from exc
 
         current = golden_store.golden_set_hash(golden_store.load_cases(conn, verified_only=True))
-        if current != manifest.dataset_version:
+        # A benchmark run's cases come from the params DB, not the golden set.
+        if manifest.blind_before is None and current != manifest.dataset_version:
             typer.echo(
                 f"! golden set is {current} today, this run froze {manifest.dataset_version}; "
                 "replaying the run's frozen case list"

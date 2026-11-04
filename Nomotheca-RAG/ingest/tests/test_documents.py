@@ -87,6 +87,27 @@ def test_numbered_paragraphs_are_expressible_as_a_pattern() -> None:
     assert "3 925 EUR" in ir.units[1].versions[0].texts[0].content
 
 
+def test_a_numbered_table_row_is_not_a_heading_and_a_numbered_paragraph_is_text() -> None:
+    """Cnav circular 2025-13: the couple ceiling's figures and section 2's sentence survive."""
+    text = (
+        "1. Plafonds de ressources de l'ASI à compter du 1er avril 2025\n"
+        "Bénéficiaire Montant annuel Montant mensuel\n"
+        "Personne seule 10 978,30 € 914,85 €\n"
+        "Couple (bénéficiaire et son conjoint,\n"
+        "pacte civil de solidarité)\n"
+        "19 212,03 € 1 601 €\n"
+        "\n"
+        "2. Montant maximal de l'ASI lorsque le conjoint ne bénéficie ni de l'ASI, ni de l'Aspa\n"
+        "Le montant de l'allocation servie ne peut excéder le plafond.\n"
+    )
+    ir = _build(text, "numbered")
+
+    assert [u.path for u in ir.units] == ["sec_1", "sec_2"]
+    first, second = (u.versions[0].texts[0].content for u in ir.units)
+    assert "19 212,03 € 1 601 €" in first
+    assert second.startswith("2. Montant maximal de l'ASI lorsque le conjoint")
+
+
 def test_a_text_with_no_headings_is_one_unit() -> None:
     """An unstructured circular still enters the store, whole."""
     text = "Le montant journalier de l'allocation est porte a 31,97 EUR au 1er avril 2025.\n"

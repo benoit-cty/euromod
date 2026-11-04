@@ -299,10 +299,27 @@ def score_item(
         guidance_only=item.guidance_only,
     )
 
+    on_basis = _on_parameter_basis(proposed.value, item) if proposed is not None else None
     if expected.value is not None:
         result.value_correct = proposed is not None and values_equal(
-            _on_parameter_basis(proposed.value, item), expected.value, constants
+            on_basis, expected.value, constants
         )
+        if proposed is not None and not result.value_correct and expected.accept:
+            result.value_correct = result.value_alternative = any(
+                values_equal(on_basis, alternative, constants) for alternative in expected.accept
+            )
+
+    if expected.openfisca and expected.openfisca.get("value") is not None:
+        reference = expected.openfisca["value"]
+        if isinstance(reference, list):
+            reference = [Bracket.model_validate(b) for b in reference]
+        result.openfisca_value = _dump(reference)
+        if proposed is not None:
+            result.openfisca_agrees = values_equal(on_basis, reference, constants)
+        if expected.value is not None:
+            result.euromod_openfisca_agree = values_equal(
+                expected.value, reference, constants
+            ) or any(values_equal(a, reference, constants) for a in expected.accept or [])
 
     # The date leg is only meaningful when the pipeline is dating a change.
     # On an `unchanged` verdict `pipeline._unchanged_window` deliberately keeps
@@ -361,7 +378,7 @@ def score_item(
             result.rejected = True
             result.routing_correct = False
             if result.value_correct is not None:
-                result.value_correct = False
+                result.value_correct = result.value_alternative = False
             if result.date_correct is not None:
                 result.date_correct = False
     elif expected.value is not None:

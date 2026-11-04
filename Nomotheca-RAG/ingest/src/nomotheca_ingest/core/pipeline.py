@@ -32,9 +32,16 @@ def ingest_citation(jurisdiction: str, citation: str, as_of: date, http: Snapsho
     return _ingest_refs(adapter, refs, http)
 
 
-def default_source_code(jurisdiction: str) -> str:
-    """Return the sources.code an adapter fetches from when none is given."""
+def default_source_code(jurisdiction: str, national_id: str | None = None) -> str:
+    """Return the sources.code an adapter fetches from when none is given.
+
+    An adapter serving more than one base picks by id (FR: KALI ids are
+    FR-KALI, the rest FR-LEGI).
+    """
     adapter = get_adapter(jurisdiction)
+    by_id = getattr(adapter, "source_code_for", None)
+    if national_id and by_id is not None:
+        return by_id(national_id)
     return getattr(adapter, "default_source_code", f"{jurisdiction.upper()}-LEGI")
 
 
@@ -50,7 +57,7 @@ def ingest_instrument(
     adapter = get_adapter(jurisdiction)
     ref = SourceRef(
         jurisdiction=jurisdiction_code,
-        source_code=source_code or default_source_code(jurisdiction_code),
+        source_code=source_code or default_source_code(jurisdiction_code, national_id),
         source_id=national_id,
         source_type="instrument",
     )
@@ -72,7 +79,9 @@ def run_database_ingest(
 ) -> PipelineResult:
     """Fetch, parse, and load one instrument or citation into PostgreSQL."""
     jurisdiction_code = jurisdiction.upper()
-    resolved_source_code = source_code or default_source_code(jurisdiction_code)
+    resolved_source_code = source_code or default_source_code(
+        jurisdiction_code, identifier if mode == "instrument" else None
+    )
     with psycopg.connect(database_url) as conn:
         run_id = create_fetch_run(conn, resolved_source_code, skill_version, trigger, frozen_label)
         result = PipelineResult(run_id=run_id)

@@ -380,10 +380,53 @@ class LegislationLoader:
         whole run), and embeddings hang off chunk ids, staleness being decided
         by input_hash — so unchanged chunks keep the vectors they already have.
         Chunks past the end of a now-shorter text are dropped unless cited;
-        a cited leftover is retained and counted rather than deleted.
+        a cited leftover is retained and counted rather than deleted. "Past the
+        end" is any seq the new chunking did not produce, never `seq >= len`:
+        a lone chunk is seq 0 but a split text is seq 1..n, so the count-based
+        cut deleted the LAST chunk of every text over 6 000 chars (CGI art. 83
+        lost its 3°, 816 texts in all, from 1 Sep to 3 Nov 2026).
         """
         context_header = _context_header(instrument, unit, version, text.lang)
-        chunks = chunk_text(text.content, context_header)
+        self._write_chunks(text_id, chunk_text(text.content, context_header), stats)
+
+    def rechunk_truncated(self, jurisdiction: str | None = None) -> LoadStats:
+        """Re-chunk the stored authentic texts whose chunks stop short of the end.
+
+        Repairs the corpus left by the count-based cut in `_replace_chunks`
+        without a fetch or a parse: the text in `unit_texts.content` is whole,
+        only its last chunk is gone. The header is the one already stored on
+        the text's chunks, so the surviving chunks keep their ids and vectors;
+        the restored ones need `embeddings build`. `jurisdiction` takes a
+        country and its regions (ES covers ES-AR, ES-CN, ...).
+        """
+        stats = LoadStats()
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT ut.id, ut.content, min(c.context_header) AS context_header
+                FROM unit_texts ut
+                JOIN legal_unit_versions v ON v.id = ut.version_id
+                JOIN legal_units u ON u.id = v.legal_unit_id
+                JOIN instruments i ON i.id = u.instrument_id
+                JOIN jurisdictions j ON j.id = i.jurisdiction_id
+                JOIN chunks c ON c.unit_text_id = ut.id
+                WHERE ut.authenticity <> 'machine_translation'
+                  AND (%(cc)s::text IS NULL OR j.code = %(cc)s OR j.code LIKE %(cc)s || '-%%')
+                GROUP BY ut.id, ut.content
+                HAVING max(c.char_end) < length(ut.content)
+                """,
+                {"cc": jurisdiction},
+            )
+            rows = cur.fetchall()
+        with self.conn.transaction():
+            for text_id, content, context_header in rows:
+                self._write_chunks(text_id, chunk_text(content, context_header), stats)
+                stats.texts += 1
+        return stats
+
+    def _write_chunks(self, text_id: UUID, chunks: list, stats: LoadStats) -> None:
+        """Upsert one text's chunks and drop the seqs this chunking did not produce."""
+        seqs = [chunk.seq for chunk in chunks]
         with self.conn.cursor() as cur:
             for chunk in chunks:
                 cur.execute(
@@ -419,15 +462,15 @@ class LegislationLoader:
                 """
                 DELETE FROM chunks
                 WHERE unit_text_id = %s
-                  AND seq >= %s
+                  AND seq <> ALL(%s)
                   AND id NOT IN (SELECT cited_chunk_id FROM citation_registry
                                  WHERE cited_chunk_id IS NOT NULL)
                 """,
-                (text_id, len(chunks)),
+                (text_id, seqs),
             )
             cur.execute(
-                "SELECT count(*) FROM chunks WHERE unit_text_id = %s AND seq >= %s",
-                (text_id, len(chunks)),
+                "SELECT count(*) FROM chunks WHERE unit_text_id = %s AND seq <> ALL(%s)",
+                (text_id, seqs),
             )
             stats.retained_chunks += cur.fetchone()[0]
         stats.chunks += len(chunks)

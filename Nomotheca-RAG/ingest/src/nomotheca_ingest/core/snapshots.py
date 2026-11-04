@@ -50,21 +50,37 @@ class SnapshotClient:
         headers = {"User-Agent": self.user_agent, **(headers or {})}
         with httpx.Client(timeout=self.timeout_seconds, headers=headers, follow_redirects=True) as client:
             response = client.get(url)
-        content_hash = sha256(response.content).hexdigest()
+        return self._persist(
+            ref, str(response.url), response.status_code, response.headers.get("content-type"), response.content
+        )
+
+    def archive(self, ref: SourceRef, url: str, content: bytes, content_type: str) -> Snapshot:
+        """Persist bytes a source serves only in bulk, as a 200 snapshot at ``url``.
+
+        For sources with no per-document endpoint (KALI is published as dumps
+        only): the adapter reads the document out of its local copy and the
+        archive still holds exactly what the parser saw.
+        """
+        return self._persist(ref, url, 200, content_type, content)
+
+    def _persist(
+        self, ref: SourceRef, url: str, status_code: int, content_type: str | None, content: bytes
+    ) -> Snapshot:
+        content_hash = sha256(content).hexdigest()
         snapshot_id = self.store.write_snapshot(
             ref=ref,
-            url=str(response.url),
-            status_code=response.status_code,
-            content_type=response.headers.get("content-type"),
+            url=url,
+            status_code=status_code,
+            content_type=content_type,
             content_hash=content_hash,
-            content=response.content,
+            content=content,
         )
         return Snapshot(
             id=snapshot_id,
             source_code=ref.source_code,
-            url=str(response.url),
-            http_status=response.status_code,
-            content_type=response.headers.get("content-type"),
+            url=url,
+            http_status=status_code,
+            content_type=content_type,
             content_hash=content_hash,
-            raw_content=response.content,
+            raw_content=content,
         )

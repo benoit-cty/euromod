@@ -39,9 +39,9 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest) -> int:
                                critique_model, resolved_model, resolved_critique_model,
                                prompt_version, agent_version, eval_version,
                                dataset_version, git_commit, countries, notes,
-                               status, submitted_by, finished_at)
+                               status, submitted_by, finished_at, blind_before)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, coalesce(%s, current_user), %s)
+                %s, coalesce(%s, current_user), %s, %s)
         ON CONFLICT (run_id) DO UPDATE SET
             created_at = EXCLUDED.created_at,
             as_of = EXCLUDED.as_of,
@@ -59,7 +59,8 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest) -> int:
             countries = EXCLUDED.countries,
             notes = EXCLUDED.notes,
             status = EXCLUDED.status,
-            finished_at = EXCLUDED.finished_at
+            finished_at = EXCLUDED.finished_at,
+            blind_before = EXCLUDED.blind_before
         RETURNING id
         """,
         (
@@ -82,6 +83,7 @@ def insert_run(conn: psycopg.Connection, manifest: RunManifest) -> int:
             manifest.status,
             manifest.submitted_by,
             manifest.finished_at,
+            manifest.blind_before,
         ),
     ).fetchone()
     conn.commit()
@@ -235,6 +237,7 @@ def _manifest_from_row(row: dict) -> RunManifest:
         git_commit=row["git_commit"],
         countries=list(row["countries"] or []),
         notes=row["notes"],
+        blind_before=row.get("blind_before"),
     )
 
 

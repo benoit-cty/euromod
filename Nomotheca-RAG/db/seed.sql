@@ -82,6 +82,7 @@ INSERT INTO jurisdictions (code, parent_id, name, official_langs, metadata) VALU
 
 INSERT INTO sources (jurisdiction_id, code, name, base_url, id_system, supports_eli, supports_point_in_time, fetch_skill, terms) VALUES
   ((SELECT id FROM jurisdictions WHERE code = 'FR'), 'FR-LEGI',   'Légifrance / DILA (base LEGI)',            'https://www.legifrance.gouv.fr', 'legi',           true,  true,  'skills/fr-legifrance', '{"bulk": "DILA open-data dumps preferred over scraping (Anubis anti-bot)"}'),
+  ((SELECT id FROM jurisdictions WHERE code = 'FR'), 'FR-KALI',   'Légifrance / DILA (base KALI, conventions collectives)', 'https://www.legifrance.gouv.fr', 'kali', false, true, 'skills/fr-legifrance', '{"bulk": "DILA open-data dumps only (global + daily increments); collective agreements are evidence (ADR 0006)"}'),
   ((SELECT id FROM jurisdictions WHERE code = 'NL'), 'NL-BWB',    'wetten.overheid.nl (BWB)',                 'https://wetten.overheid.nl',     'bwb_juriconnect', false, true,  'skills/nl-bwb',        '{"note": "Juriconnect identifiers, geldigheidsdatum for point-in-time"}'),
   ((SELECT id FROM jurisdictions WHERE code = 'LT'), 'LT-TAR',    'e-seimas / Teisės aktų registras (TAR)',   'https://www.e-tar.lt',           'tar',            true,  true,  'skills/lt-tar',        '{"note": "suvestines redakcijos = dated consolidations"}'),
   ((SELECT id FROM jurisdictions WHERE code = 'ES'), 'ES-BOE',    'Boletín Oficial del Estado (consolidado)', 'https://www.boe.es',             'boe',            true,  true,  'skills/es-boe',        '{}'),

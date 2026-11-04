@@ -8,7 +8,7 @@ from datetime import date
 from .regions import region_key
 from .schema import ParameterRecord, ProposalDraft, RetrievalHit, income_year_for
 
-PROMPT_VERSION = "0.8.0"
+PROMPT_VERSION = "0.9.0"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -57,9 +57,12 @@ Rules:
   "a * 12 * b + c"), list every operand in `operands` with its own verbatim `supporting_extract`
   (checked character-for-character against its chunk, exactly like the main quote) and
   `citation_chunk_id`, and keep the main `supporting_extract`/`citation_chunk_id` on the operand
-  you consider primary. Only + - * / are allowed, and the only figures that may appear unquoted
-  are calendar constants (1, 2, 4, 12, 13, 52, 100, 365, 366, 1000): every other figure must be
-  an operand quoted from an extract. A stated value always wins over a derived one, and a figure
+  you consider primary. Only + - * / are allowed, plus round(x, n) when an extract states a
+  rounding rule (n decimal places of the value as you express it: «taux arrondis au centième»
+  on a /1 rate is round(a * b, 4); «arrondi à l'euro» is round(x, 0)) — apply it exactly where
+  the text applies it and nowhere else, never to the final result by habit. The only figures that may appear unquoted are calendar constants
+  (1, 2, 4, 12, 13, 52, 100, 365, 366, 1000): every other figure must be an operand quoted from
+  an extract. A stated value always wins over a derived one, and a figure
   you remember rather than quote is never an operand.
 - missing_sources: whenever you return found=false, OR the extracts only refer to a value fixed
   elsewhere ("dans la limite du plafond mentionné à l'article L. 241-3", "as prescribed by order"),

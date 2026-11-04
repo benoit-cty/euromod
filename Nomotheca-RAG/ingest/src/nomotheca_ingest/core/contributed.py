@@ -68,18 +68,24 @@ class NormLevel(StrEnum):
     STATUTE = "statute"
     GOVERNMENT_REGULATION = "government_regulation"
     MINISTERIAL_ORDER = "ministerial_order"
+    #: An agreement between the social partners (ANI, convention, CAO, convenio)
+    #: — the operative text for contributions such as AGIRC-ARRCO, APEC or a
+    #: CAO pension scheme, whose rates no statute states.
+    COLLECTIVE_AGREEMENT = "collective_agreement"
     ADMINISTRATIVE_GUIDANCE = "administrative_guidance"
     OTHER = "other"
 
 
 #: Source-trust class per level (ADR 0001). Everything with statute-level
-#: authority is evidence; guidance and — deliberately — "other" are guidance,
+#: authority is evidence, and so is a collective agreement (ADR 0006): where
+#: one sets a rate it is the source of truth like a law; guidance and — deliberately — "other" are guidance,
 #: so an unnamed document can never be granted evidence-level trust by
 #: accident.
 TRUST_CLASS_BY_LEVEL: dict[NormLevel, SourceTrustClass] = {
     NormLevel.STATUTE: SourceTrustClass.EVIDENCE,
     NormLevel.GOVERNMENT_REGULATION: SourceTrustClass.EVIDENCE,
     NormLevel.MINISTERIAL_ORDER: SourceTrustClass.EVIDENCE,
+    NormLevel.COLLECTIVE_AGREEMENT: SourceTrustClass.EVIDENCE,
     NormLevel.ADMINISTRATIVE_GUIDANCE: SourceTrustClass.GUIDANCE,
     NormLevel.OTHER: SourceTrustClass.GUIDANCE,
 }
@@ -92,6 +98,7 @@ KINDS_BY_JURISDICTION: dict[str, tuple[tuple[str, NormLevel], ...]] = {
         ("loi", NormLevel.STATUTE),
         ("decret", NormLevel.GOVERNMENT_REGULATION),
         ("arrete", NormLevel.MINISTERIAL_ORDER),
+        ("accord_collectif", NormLevel.COLLECTIVE_AGREEMENT),
         ("circulaire", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("doctrine", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("other", NormLevel.OTHER),
@@ -100,6 +107,7 @@ KINDS_BY_JURISDICTION: dict[str, tuple[tuple[str, NormLevel], ...]] = {
         ("ley", NormLevel.STATUTE),
         ("real_decreto", NormLevel.GOVERNMENT_REGULATION),
         ("orden", NormLevel.MINISTERIAL_ORDER),
+        ("convenio_colectivo", NormLevel.COLLECTIVE_AGREEMENT),
         ("circular", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("consulta_vinculante", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("other", NormLevel.OTHER),
@@ -108,6 +116,7 @@ KINDS_BY_JURISDICTION: dict[str, tuple[tuple[str, NormLevel], ...]] = {
         ("wet", NormLevel.STATUTE),
         ("algemene_maatregel_van_bestuur", NormLevel.GOVERNMENT_REGULATION),
         ("ministeriele_regeling", NormLevel.MINISTERIAL_ORDER),
+        ("cao", NormLevel.COLLECTIVE_AGREEMENT),
         ("beleidsregel", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("besluit", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("other", NormLevel.OTHER),
@@ -116,6 +125,7 @@ KINDS_BY_JURISDICTION: dict[str, tuple[tuple[str, NormLevel], ...]] = {
         ("act", NormLevel.STATUTE),
         ("statutory_instrument", NormLevel.GOVERNMENT_REGULATION),
         ("regulation", NormLevel.MINISTERIAL_ORDER),
+        ("employment_agreement", NormLevel.COLLECTIVE_AGREEMENT),
         ("tax_and_duty_manual", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("guidance", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("other", NormLevel.OTHER),
@@ -124,6 +134,7 @@ KINDS_BY_JURISDICTION: dict[str, tuple[tuple[str, NormLevel], ...]] = {
         ("istatymas", NormLevel.STATUTE),
         ("nutarimas", NormLevel.GOVERNMENT_REGULATION),
         ("isakymas", NormLevel.MINISTERIAL_ORDER),
+        ("kolektyvine_sutartis", NormLevel.COLLECTIVE_AGREEMENT),
         ("isaiskinimas", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("komentaras", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("other", NormLevel.OTHER),
@@ -132,6 +143,7 @@ KINDS_BY_JURISDICTION: dict[str, tuple[tuple[str, NormLevel], ...]] = {
         ("law", NormLevel.STATUTE),
         ("regulation", NormLevel.GOVERNMENT_REGULATION),
         ("ministerial_order", NormLevel.MINISTERIAL_ORDER),
+        ("collective_agreement", NormLevel.COLLECTIVE_AGREEMENT),
         ("guidance", NormLevel.ADMINISTRATIVE_GUIDANCE),
         ("other", NormLevel.OTHER),
     ),
@@ -527,6 +539,7 @@ def ingest_document(
     implements: str | None = None,
     max_items: int = 500,
     progress: Callable[[dict], None] | None = None,
+    trigger: Trigger = Trigger.MANUAL,
 ) -> DocumentResult:
     """Fetch or read one contributed document and load it into the store.
 
@@ -579,7 +592,7 @@ def ingest_document(
             fetch_skill="core/contributed",
             note="documents contributed by a reviewer from the validation UI or the CLI",
         )
-        run_id = create_fetch_run(conn, fields.source_code, SKILL_VERSION, Trigger.MANUAL)
+        run_id = create_fetch_run(conn, fields.source_code, SKILL_VERSION, trigger)
         result = DocumentResult(
             jurisdiction=fields.jurisdiction,
             source_code=fields.source_code,
@@ -626,7 +639,7 @@ def ingest_document(
                     run_id,
                     "succeeded",
                     {
-                        "trigger": Trigger.MANUAL.value,
+                        "trigger": trigger.value,
                         "national_id": document.national_id,
                         "already_present": True,
                         "implements": fields.implements,
@@ -648,7 +661,7 @@ def ingest_document(
                 run_id,
                 "succeeded",
                 {
-                    "trigger": Trigger.MANUAL.value,
+                    "trigger": trigger.value,
                     "national_id": document.national_id,
                     "kind": fields.kind,
                     "source_trust_class": fields.source_trust_class.value,
@@ -660,7 +673,7 @@ def ingest_document(
             )
         except Exception as exc:
             finish_fetch_run(
-                conn, run_id, "failed", {"trigger": Trigger.MANUAL.value, "error": str(exc)}
+                conn, run_id, "failed", {"trigger": trigger.value, "error": str(exc)}
             )
             raise
     return result

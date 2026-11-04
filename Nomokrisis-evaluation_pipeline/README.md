@@ -520,6 +520,43 @@ uv run nomokrisis-eval rescore <run-id> --write  # upsert the new scores into ev
 It replays against the run's **frozen** `eval.run_cases`, so the delta is the effect of
 the scoring change alone. To measure a golden-set change, start a new run.
 
+## Country benchmark (blind, every parameter)
+
+The golden set measures a model on hand-picked cases. The benchmark asks what a country
+team asks each year: starting from EUROMOD Y-1, does the workflow find what the law
+changed for Y — over **every** parameter of the country?
+
+```bash
+uv run nomokrisis-eval run-benchmark FR --year 2025 --model mock/extractor --dry-run    # list the cases
+uv run nomokrisis-eval run-benchmark FR --year 2025 --model azure_openai/gpt-5.6-luna --sample 20 --seed 1
+uv run nomokrisis-eval run-benchmark FR --year 2025 --model azure_openai/gpt-5.6-luna  # all (resume works)
+uv run nomokrisis-eval benchmark-report <run-id>
+```
+
+- **Blind.** The run's `blind_before` (1 January of Y, in `eval.runs`) hides every value
+  row from Y on (`paramdb.blind_record`): the prompt's current value, the frame's known
+  citations and the diff's routing all read EUROMOD Y-1. A golden-set run sees the whole
+  record — its prompt shows the latest EUROMOD value, which for an unchanged parameter
+  is already the answer.
+- **Cases are built, not stored** (`benchmark.build_cases`): one per parameter with a
+  value in force on 1 July Y, one per bracket schedule (its member constants are
+  skipped). `expected.value` = EUROMOD Y; `expected.routing` = changed / unchanged / new
+  against Y-1, or the pipeline's own `national_team_source` / `derived` short-circuit
+  (routing scored only). The frozen list lives in `eval.run_cases` like any run's.
+- **Mid-year changes.** EUROMOD stores `(59.87*9+60.59*3)/12#m`; the law states a point
+  value. The component in force on the reference date is in `expected.accept` and scores
+  `value_correct` with `value_alternative` set.
+- **OpenFisca arbitrates, never decides.** `expected.openfisca` is the linked OpenFisca
+  value on the same date (validated link first, then best score; income-year parameters
+  read 1 January of the income year). The result records `openfisca_agrees` (proposal)
+  and `euromod_openfisca_agree`; `benchmark-report` counts, for every disagreement
+  between workflow and EUROMOD, which side OpenFisca takes. Links are mostly unvalidated
+  suggestions — check one before calling EUROMOD wrong in public.
+
+`benchmark-report` prints the matrix (EUROMOD changed / kept × workflow same value /
+different value / kept Y-1 value / not found / rejected / error), coverage (answers
+backed by a verbatim quote), change recall, precision, and a per-policy breakdown.
+
 ## Does Phoenix help?
 
 Yes — and it's already running (`docker compose up -d`, http://localhost:6006). The

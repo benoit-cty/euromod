@@ -125,6 +125,7 @@ def start_run(
     as_of: date,
     model: str,
     notes: str | None = None,
+    blind_before: date | None = None,
 ) -> RunManifest:
     """Allocate a run id, insert the eval.runs row (`status='running'`,
     `submitted_by` = current_user, `dataset_version` = the golden set hash of
@@ -149,6 +150,7 @@ def start_run(
         git_commit=_git_commit(),
         countries=sorted({c.country for c in cases}),
         notes=notes,
+        blind_before=blind_before,
     )
     run_pk = evaldb.insert_run(conn, manifest)
     evaldb.freeze_run_cases(conn, run_pk, cases)
@@ -238,6 +240,8 @@ def execute_run(
         item: ReviewItem | None = None
         try:
             record = load_case_record(conn, case.parameter_target)
+            if manifest.blind_before is not None:
+                record = paramdb.blind_record(record, manifest.blind_before)
             if run_case is not None:
                 item = run_case(wf_cfg, tracer, record, case, manifest.as_of)
             else:

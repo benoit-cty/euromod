@@ -7,6 +7,7 @@ from datetime import date
 
 from nomotheca_ingest.countries.base import UrlSource
 from nomotheca_ingest.countries.fr.fetcher import fetch_direct_id
+from nomotheca_ingest.countries.fr.kali import fetch_kali
 from nomotheca_ingest.countries.fr.parser import parse_dila_json
 from nomotheca_ingest.countries.fr.resolver import (
     FrResolver,
@@ -16,7 +17,15 @@ from nomotheca_ingest.countries.fr.resolver import (
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
-DILA_ID = re.compile(r"\b(?:LEGI|JORF)(?:ARTI|TEXT|SCTA)\d{12}\b")
+DILA_ID = re.compile(r"\b(?:LEGI|JORF|KALI)(?:ARTI|TEXT|SCTA)\d{12}\b")
+
+#: sources.code of the collective-agreement base, picked by id (ADR 0006).
+KALI_SOURCE_CODE = "FR-KALI"
+
+WHOLE_CONVENTION_HINT = (
+    "that is a whole collective convention (KALICONT), hundreds of texts — paste "
+    "the agreement (KALITEXT...) or the article (KALIARTI...) instead"
+)
 
 WHOLE_CODE_HINT = (
     "that is a whole Legifrance code (LEGITEXT), not one document — paste the "
@@ -32,11 +41,15 @@ FR_URL_SOURCE = UrlSource(
     name="Legifrance",
     domains=("legifrance.gouv.fr",),
     # JORF texts and single consolidated code articles (LEGIARTI — where most
-    # rates live once codified).
-    id_pattern=re.compile(r"\b(?:JORFTEXT|LEGIARTI)\d{12}\b"),
+    # rates live once codified), and collective agreements (KALITEXT/KALIARTI,
+    # /conv_coll/id/… URLs — AGIRC-ARRCO, APEC: ADR 0006).
+    id_pattern=re.compile(r"\b(?:JORFTEXT|LEGIARTI|KALITEXT|KALIARTI)\d{12}\b"),
     # A whole code is two thousand articles, not a document. Same exclusion the
     # scout applies when harvesting ids.
-    refusals=((re.compile(r"\bLEGITEXT\d{12}\b"), WHOLE_CODE_HINT),),
+    refusals=(
+        (re.compile(r"\bLEGITEXT\d{12}\b"), WHOLE_CODE_HINT),
+        (re.compile(r"\bKALICONT\d{12}\b"), WHOLE_CONVENTION_HINT),
+    ),
     no_id_hint=ELI_HINT,
     # ELI URLs carry a NOR, not a DILA id (ADR 0002).
     resolve=resolve_legifrance_url,
@@ -58,8 +71,14 @@ class FrAdapter:
         """Resolve a French citation to exact DILA source identifiers."""
         return self._resolver.resolve(ref, as_of)
 
+    def source_code_for(self, national_id: str) -> str:
+        """KALI documents are their own source; everything else is LEGI/JORF."""
+        return KALI_SOURCE_CODE if national_id.startswith("KALI") else self.default_source_code
+
     def fetch(self, ref: SourceRef, http: SnapshotClient) -> Snapshot:
         """Fetch a French DILA document by direct identifier."""
+        if ref.source_id.startswith("KALI"):
+            return fetch_kali(ref, http)
         return fetch_direct_id(ref, http)
 
     def parse(self, snapshot_bytes: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
