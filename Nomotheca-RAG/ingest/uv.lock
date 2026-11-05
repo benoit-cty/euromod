@@ -890,6 +890,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+browser = [
+    { name = "playwright" },
+]
 embeddings = [
     { name = "sentence-transformers", extra = ["openvino"], marker = "extra == 'extra-28-nomotheca-legislation-ingest-embeddings'" },
     { name = "torch", version = "2.13.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-28-nomotheca-legislation-ingest-embeddings') or (extra == 'extra-28-nomotheca-legislation-ingest-embeddings' and extra == 'extra-28-nomotheca-legislation-ingest-embeddings-cuda')" },
@@ -910,6 +913,7 @@ translate = [
 requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "nomoscope-agentic-workflow", marker = "extra == 'translate'", editable = "../../Nomoscope-agentic-workflow/pipeline" },
+    { name = "playwright", marker = "extra == 'browser'", specifier = ">=1.47" },
     { name = "playwright", marker = "extra == 'legifrance'", specifier = ">=1.47" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pydantic", specifier = ">=2.8" },
@@ -923,7 +927,7 @@ requires-dist = [
     { name = "torch", marker = "extra == 'embeddings-cuda'", specifier = ">=2.13.0", index = "https://download.pytorch.org/whl/cu126", conflict = { package = "nomotheca-legislation-ingest", extra = "embeddings-cuda" } },
     { name = "typer", specifier = ">=0.12" },
 ]
-provides-extras = ["embeddings", "embeddings-cuda", "translate", "legifrance"]
+provides-extras = ["embeddings", "embeddings-cuda", "translate", "legifrance", "browser"]
 
 [[package]]
 name = "numpy"

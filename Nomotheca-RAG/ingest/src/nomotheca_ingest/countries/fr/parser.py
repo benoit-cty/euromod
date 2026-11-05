@@ -172,7 +172,33 @@ def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> 
         metadata={"nature": texte.get("@nature")} if kali else {},
         units=[unit],
     )
-    return ParsedDoc(ref=ref, instruments=[instrument], metadata={"raw_type": _raw_type(data)})
+    return ParsedDoc(
+        ref=ref,
+        instruments=[instrument],
+        metadata={"raw_type": _raw_type(data), "child_refs": _recent_versions(data, ref.source_id)},
+    )
+
+
+#: How far back an article's other versions are followed. DILA mints one id
+#: per version and an on-demand fetch gets the current one only: CGI art. 32
+#: was held solely as amended on 21 Feb 2026, so system year 2025 found no
+#: text at all — 30 FR code articles had no version in force on 1 July 2025.
+#: Every version in force on some day since this date is queued; CGI art. 32
+#: has 40 since 1950, so the window keeps the follow-ups to a handful.
+VERSION_HISTORY_FROM = date(2023, 1, 1)
+
+
+def _recent_versions(data: dict[str, Any], own_id: str) -> list[dict[str, str]]:
+    """The article's other versions in force on some day since VERSION_HISTORY_FROM."""
+    children: list[dict[str, str]] = []
+    for version in _as_list((data.get("VERSIONS") or {}).get("VERSION")):
+        link = version.get("LIEN_ART") or {}
+        source_id = link.get("@id")
+        ends = _parse_date(link.get("@fin"))
+        if not source_id or source_id == own_id or (ends is not None and ends <= VERSION_HISTORY_FROM):
+            continue
+        children.append({"source_id": source_id, "source_type": "article", "title": f"art. {link.get('@num') or ''} (version {link.get('@debut')})"})
+    return children
 
 
 def _trust_class(nature: str | None) -> SourceTrustClass:

@@ -469,6 +469,49 @@ def stored_content_hash(conn: psycopg.Connection, source_code: str, national_id:
     return row[0] if row else None
 
 
+#: The browser fetch_in_browser presents itself as.
+BROWSER_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
+
+
+def _expects_pdf(url: str) -> bool:
+    return urlsplit(url).path.lower().endswith(".pdf")
+
+
+def fetch_in_browser(url: str, timeout_ms: int = 60000) -> bytes | None:
+    """A PDF that answers a plain HTTP client with an HTML page, opened in Firefox.
+
+    sante.gouv.fr serves its Bulletin officiel PDFs (instructions DSS/2B/…,
+    the BMAF and the family-benefit ceilings) to a browser and a
+    «Vérification de sécurité» page to httpx; opened in Firefox the same URL
+    starts the download with no interaction. Optional (the ``browser``
+    extra: Playwright + ``playwright install firefox``); None when it is
+    absent, when no download starts, or when what arrives is not a PDF —
+    a page that wants a human is left to the human.
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception:
+        return None
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.firefox.launch(headless=True)
+            try:
+                context = browser.new_context(user_agent=BROWSER_USER_AGENT, accept_downloads=True)
+                page = context.new_page()
+                with page.expect_download(timeout=timeout_ms) as download:
+                    try:
+                        page.goto(url, timeout=timeout_ms)
+                    except Exception:
+                        pass  # Firefox aborts the navigation when the download starts
+                path = download.value.path()
+                raw = Path(path).read_bytes() if path else b""
+            finally:
+                browser.close()
+    except Exception:
+        return None
+    return raw if raw.startswith(b"%PDF") else None
+
+
 def read_input(url: str | None, file_path: str | None) -> SourceDocument:
     """Read a contributed document's bytes, however the reviewer named it.
 
@@ -490,12 +533,16 @@ def read_input(url: str | None, file_path: str | None) -> SourceDocument:
             response = client.get(url)
         response.raise_for_status()
         raw = response.content
+        content_type = response.headers.get("content-type")
+        origin = str(response.url)
+        if _expects_pdf(url) and not raw.startswith(b"%PDF"):
+            fetched = fetch_in_browser(url)
+            if fetched is not None:
+                raw, content_type = fetched, "application/pdf"
         return SourceDocument(
             raw=raw,
-            content_type=extract.content_type_for(
-                url, response.headers.get("content-type"), raw
-            ),
-            origin=str(response.url),
+            content_type=extract.content_type_for(url, content_type, raw),
+            origin=origin,
             national_id=national_id_for(raw, url),
         )
     path = Path(file_path)

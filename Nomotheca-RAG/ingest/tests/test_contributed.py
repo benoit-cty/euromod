@@ -449,3 +449,24 @@ def test_a_documents_identity_follows_its_bytes() -> None:
     assert document.content_hash == content_hash(MARKDOWN)
     assert document.national_id.endswith(document.content_hash)
     assert document.archived_as(uuid4()).content_hash == document.content_hash
+
+
+def test_a_pdf_url_answered_with_a_security_page_is_retried_in_a_browser(monkeypatch) -> None:
+    """sante.gouv.fr: httpx gets «Vérification de sécurité», Firefox gets the PDF."""
+    import httpx
+
+    from nomotheca_ingest.core import contributed
+
+    page = b"<html><title>V\xc3\xa9rification de s\xc3\xa9curit\xc3\xa9</title></html>"
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, content=page, headers={"content-type": "text/html"}))
+    real_client = httpx.Client
+    monkeypatch.setattr(httpx, "Client", lambda **kw: real_client(transport=transport, **kw))
+    calls: list[str] = []
+    monkeypatch.setattr(contributed, "fetch_in_browser", lambda url: calls.append(url) or b"%PDF-1.6 bulletin")
+
+    doc = contributed.read_input("https://sante.gouv.fr/fichiers/bo/2024/2024.34.sante.pdf", None)
+    assert calls and doc.raw.startswith(b"%PDF") and doc.content_type == "application/pdf"
+
+    calls.clear()
+    html = contributed.read_input("https://www.caf.fr/page.html", None)
+    assert not calls and html.raw == page  # an HTML page asked for as HTML is not retried

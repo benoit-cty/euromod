@@ -19,7 +19,7 @@ from __future__ import annotations
 import difflib
 import re
 from collections.abc import Sequence
-from datetime import date
+from datetime import date, timedelta
 
 import psycopg
 from psycopg.rows import dict_row
@@ -297,8 +297,14 @@ def retrieve(
     as_of: date,
     query: str,
     citations: list[str],
+    later_until: date | None = None,
 ) -> list[RetrievalHit]:
     """Citation fast path first, then hybrid; dedup by chunk_id, fast-path wins.
+
+    The articles the k hits send the reader to follow them (up to
+    CROSS_REF_MAX, see ``cross_referenced_articles``). With ``later_until``,
+    up to LATER_MAX_HITS versions that enter into force
+    after ``as_of`` and by that date follow the k hits (see ``later_in_year``).
 
     ``country`` is a jurisdiction scope (see ``jurisdiction_scope``); the
     law language is the country's, i.e. the scope's first code.
@@ -316,7 +322,54 @@ def retrieve(
         conn, country, lang, as_of, query, cfg.embedding_model_id, cfg.retrieval_k, query_vector
     ):
         merged.setdefault(hit.chunk_id, hit)
-    return list(merged.values())[: cfg.retrieval_k]
+    hits = list(merged.values())[: cfg.retrieval_k]
+    hits += cross_referenced_articles(conn, country, lang, as_of, [h.chunk_id for h in hits])
+    hits += implementing_acts(
+        conn, country, lang, as_of, [h.chunk_id for h in hits], query_vector, cfg.embedding_model_id
+    )
+    if later_until is not None and later_until > as_of:
+        hits += later_in_year(
+            conn, country, lang, as_of, later_until, query, cfg.embedding_model_id,
+            cfg.retrieval_k, query_vector, known={h.chunk_id for h in hits},
+        )
+    return hits
+
+
+#: How many later-in-the-year versions join the hits: enough for an order's
+#: amount article and its threshold article, few enough not to drown the
+#: versions in force on the reference date.
+LATER_MAX_HITS = 8
+
+
+def later_in_year(
+    conn: psycopg.Connection,
+    country: Scope,
+    lang: str,
+    as_of: date,
+    until: date,
+    query: str,
+    model_id: int,
+    k: int,
+    query_vector: str | None = None,
+    known: set[str] | frozenset[str] = frozenset(),
+) -> list[RetrievalHit]:
+    """Versions entering into force after `as_of` and on or before `until`.
+
+    A EUROMOD system year describes the whole year, and some of its values
+    are only published after the 1 July reference date: the 2025 chèque
+    énergie barème is the arrêté du 31 juillet 2025, in force from 2 August
+    yet applying «à compter du 1er janvier 2025». Filtered on 1 July, all
+    17 bhoey_fr parameters came back not_found with the arrêté in the corpus.
+    The same hybrid search runs at `until`; only versions starting after
+    `as_of` are kept, so nothing in force on the reference date is displaced.
+    """
+    hits = hybrid_search(conn, country, lang, until, query, model_id, k, query_vector)
+    later = [
+        hit.model_copy(update={"method": "later_in_year"})
+        for hit in hits
+        if hit.chunk_id not in known and (validity_start(hit.validity) or date.min) > as_of
+    ]
+    return later[:LATER_MAX_HITS]
 
 
 # ---------------------------------------------------------------------------
@@ -369,6 +422,42 @@ WHERE t.lang = %(lang)s
 ORDER BY score DESC, u.citation, ch.seq
 LIMIT %(k)s
 """
+
+#: How far back step 4 of locate_named_units looks for a recently enacted text.
+RECENT_LOOKBACK = timedelta(days=365)
+#: Step-4 chunks added even when the named act was found and is recent.
+RECENT_EXTRA = 3
+
+# Step 4: the need's words, any of them, ranked over the chunks of versions in
+# force on as_of that entered into force within RECENT_LOOKBACK of it.
+_RECENT_FTS_SQL = """
+WITH q AS (
+  SELECT to_tsquery(c.config, string_agg(quote_literal(l.lexeme), ' | ')) AS tq
+  FROM lang_fts_config c, unnest(to_tsvector(c.config, %(need)s)) AS l
+  WHERE c.lang = %(lang)s
+  GROUP BY c.config
+)
+SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
+       v.validity::text AS validity, v.version_status, i.source_trust_class,
+       ts_rank_cd(ch.tsv, q.tq, 1|32)::float8 AS score
+FROM q, chunks ch
+JOIN unit_texts t          ON t.id = ch.unit_text_id AND t.lang = %(lang)s
+JOIN legal_unit_versions v ON v.id = t.version_id
+JOIN legal_units u         ON u.id = v.legal_unit_id
+JOIN instruments i         ON i.id = u.instrument_id
+JOIN jurisdictions j       ON j.id = i.jurisdiction_id
+WHERE j.code = ANY(%(jurisdictions)s::text[]) AND i.source_trust_class <> 'context'
+  AND v.validity @> %(as_of)s::date AND lower(v.validity) >= %(since)s::date
+  AND ch.tsv @@ q.tq
+ORDER BY score DESC
+LIMIT %(k)s
+"""
+
+def _entered_since(validity: str | None, since: date) -> bool:
+    """Whether a '[2025-04-01,)' daterange starts on or after `since`."""
+    start = re.match(r"[\[(](\d{4}-\d{2}-\d{2})", validity or "")
+    return start is not None and date.fromisoformat(start.group(1)) >= since
+
 
 _NAMED_INSTRUMENT_FTS_SQL = f"""
 WITH {_LIVE_VERSION_CTE}
@@ -514,6 +603,349 @@ def _article_tokens(need: str) -> list[str]:
     return tokens
 
 
+#: «article R. 522-2», «articles L. 531-2 et L. 531-3», «art. D. 633-3»: a
+#: code article number as the text of a French code writes it.
+_CODE_ARTICLE_REF = re.compile(r"\b([LRD])\.?\s?(\d+(?:-\d+)+)\b")
+#: Explicit references followed per article (regulatory R./D. ones first:
+#: they carry the figures), and the most a call adds.
+CROSS_REF_PER_ARTICLE = 4
+CROSS_REF_MAX = 8
+
+_REF_CHUNKS_SQL = """
+SELECT ch.id::text AS chunk_id, ch.content, u.citation, i.id::text AS instrument_id,
+       i.instrument_type = 'code' AS is_code
+FROM chunks ch
+JOIN unit_texts t          ON t.id = ch.unit_text_id
+JOIN legal_unit_versions v ON v.id = t.version_id
+JOIN legal_units u         ON u.id = v.legal_unit_id
+JOIN instruments i         ON i.id = u.instrument_id
+WHERE ch.id = ANY(%(ids)s::uuid[])
+"""
+
+_SCOPE_CODES_SQL = """
+SELECT i.id::text AS instrument_id, lower(i.title->>%(lang)s) AS title
+FROM instruments i
+JOIN jurisdictions j ON j.id = i.jurisdiction_id
+WHERE i.instrument_type = 'code' AND j.code = ANY(%(jurisdictions)s::text[])
+  AND i.title ? %(lang)s
+"""
+
+# One query per hop for every (instrument, citation pattern) a hop looks up:
+# each pattern's first article version in force and its first chunk. Per
+# lookup, _NAMED_UNIT_SQL's corpus-wide live_version CTE cost 4–13 s a retrieve.
+_REFERENCED_UNITS_SQL = """
+WITH wanted AS (
+  SELECT * FROM unnest(%(instrument_ids)s::uuid[], %(patterns)s::text[]) WITH ORDINALITY AS w(instrument_id, pattern, ord)
+),
+unit AS (
+  SELECT DISTINCT ON (w.ord) w.ord, v.id AS version_id, u.citation, v.validity, v.version_status,
+         i.source_trust_class
+  FROM wanted w
+  JOIN legal_units u         ON u.instrument_id = w.instrument_id AND u.citation ~* w.pattern
+  JOIN instruments i         ON i.id = u.instrument_id
+  JOIN legal_unit_versions v ON v.legal_unit_id = u.id
+  WHERE v.validity @> %(as_of)s::date AND i.source_trust_class <> 'context'
+  ORDER BY w.ord, u.citation, lower(v.validity) DESC
+)
+SELECT DISTINCT ON (unit.ord) ch.id::text AS chunk_id, unit.citation, ch.context_header, ch.content,
+       t.lang, unit.validity::text AS validity, unit.version_status, unit.source_trust_class,
+       0.0::float8 AS score
+FROM unit
+JOIN unit_texts t ON t.version_id = unit.version_id AND t.lang = %(lang)s
+JOIN chunks ch    ON ch.unit_text_id = t.id
+ORDER BY unit.ord, ch.seq
+"""
+
+#: How far after an article number its code may be named: «l'article L. 531-3
+#: du code de la sécurité sociale», «des articles L. 531-2 et L. 531-3 du même code».
+_CODE_NAME_WINDOW = 80
+#: How far a list of article numbers may run before the code that closes it.
+_CODE_LIST_WINDOW = 600
+_ARTICLE_LIST_GAP = re.compile(r"(?:[\s,;.\-–]|et|[lrd]\.?\s?\d+(?:\s?-\s?\d+)*)*\s(?:du|de la)\s+")
+
+
+def _code_refs(content: str, own: str | None, codes: dict[str, str]) -> list[tuple[str, str]]:
+    """(code instrument id, article token) for each code article `content` names.
+
+    The code is the one named right after the number, in the same sentence
+    («… du code de la sécurité sociale»), the one named last for «du même code», else the
+    chunk's own code — an arrêté's bare article number has no code and is
+    skipped. At one position the longest title wins, so «code général des
+    impôts, annexe III» is not read as the CGI itself.
+    """
+    lowered = content.lower()
+    mentions = sorted(
+        ((m.start(), m.end(), iid) for iid, title in codes.items() for m in re.finditer(re.escape(title), lowered)),
+        key=lambda m: (m[0], m[0] - m[1]),  # at one position, the longest title first
+    )
+    refs: list[tuple[str, str]] = []
+    for match in _CODE_ARTICLE_REF.finditer(content):
+        tail = lowered[match.end() : match.end() + _CODE_NAME_WINDOW]
+        after = next(
+            (
+                iid
+                for start, _, iid in mentions
+                if match.end() <= start <= match.end() + _CODE_NAME_WINDOW
+                and lowered.endswith("du ", 0, start)
+                and ". " not in lowered[match.end() : start]
+            ),
+            None,
+        )
+        if after is None:
+            # «Articles L. 381-1, L. 545-1, R. 522-2, … D. 521-1 du code de la
+            # sécurité sociale» (instruction DSS/2B/2024/181): the code closes
+            # the list, past the window — nothing but article numbers between.
+            after = next(
+                (
+                    iid
+                    for start, _, iid in mentions
+                    if match.end() <= start <= match.end() + _CODE_LIST_WINDOW
+                    and _ARTICLE_LIST_GAP.fullmatch(lowered[match.end() : start])
+                ),
+                None,
+            )
+        if after is None and "même code" in tail:
+            after = next((iid for start, end, iid in reversed(mentions) if end <= match.start()), None)
+        instrument = after or own
+        if instrument is not None:
+            ref = (instrument, f"{match.group(1)}{match.group(2)}")
+            if ref not in refs:
+                refs.append(ref)
+    return refs
+
+
+def cross_referenced_articles(
+    conn: psycopg.Connection,
+    country: Scope,
+    lang: str,
+    as_of: date,
+    chunk_ids: list[str],
+) -> list[RetrievalHit]:
+    """The code articles a retrieved article sends the reader to.
+
+    A French code states a rule in its statutory part and its figures in the
+    regulatory part, chained by reference: the PAJE ceilings of the 2025
+    arrêté are increased per child «dans les conditions définies aux deuxième
+    et troisième alinéas de l'article R. 522-2» (R. 531-1), and L. 531-3,
+    which retrieval did rank, names neither — its implementing articles share
+    its chapter number (R. 531-*, D. 531-*). On the 3 Nov benchmark 11 bchyc
+    ceilings came back not_found holding the arrêté and L. 531-3 but not the
+    25 % / 30 % rule. Two hops, inside the same code: an L. article's first
+    same-chapter R. and D. articles plus the articles each retrieved article
+    names, then the articles those name. A non-code act's references count
+    when it names the code («l'article L. 531-3 du code de la sécurité
+    sociale» in the arrêté fixing the 2025 ceilings): on the 4 Nov run the
+    critique rejected four PAJE ceilings as using «the complément familial's
+    R. 522-2» because R. 531-1, the bridge, was never retrieved. Hits are
+    "located".
+    """
+    base = {"jurisdictions": scope_codes(country), "lang": lang, "as_of": as_of, "need": ""}
+    with conn.cursor(row_factory=dict_row) as cur:
+        codes = {r["instrument_id"]: r["title"] for r in cur.execute(_SCOPE_CODES_SQL, base).fetchall()}
+    found: dict[str, RetrievalHit] = {}
+    seen = set(chunk_ids)
+    frontier = list(chunk_ids)
+    for hop in range(2):
+        with conn.cursor(row_factory=dict_row) as cur:
+            rows = cur.execute(_REF_CHUNKS_SQL, {"ids": frontier}).fetchall()
+        rank = {chunk_id: i for i, chunk_id in enumerate(frontier)}
+        rows.sort(key=lambda r: rank[r["chunk_id"]])  # the best-ranked hit's references first
+        lookups: list[tuple[str, str]] = []
+        for row in rows:
+            own = (row["citation"] or "").rsplit("art. ", 1)[-1] if row["is_code"] else ""
+            refs = [
+                (iid, token)
+                for iid, token in _code_refs(row["content"] or "", row["instrument_id"] if row["is_code"] else None, codes)
+                if not (iid == row["instrument_id"] and token == own)
+            ]
+            refs.sort(key=lambda r: r[1][0] == "L")  # stable: R./D. first, text order kept
+            for iid, token in refs[:CROSS_REF_PER_ARTICLE]:
+                lookups.append((iid, _citation_pattern(token)))
+                # An L. article's implementing R./D. articles share its chapter
+                # number: L. 531-3 → R. 531-1, D. 531-1.
+                chapter = re.fullmatch(r"L(\d+)-\d+", token)
+                if hop == 0 and chapter and not row["is_code"]:
+                    lookups += [(iid, rf"art\. {kind}{chapter.group(1)}-1($|[^0-9])") for kind in ("R", "D")]
+            chapter = re.fullmatch(r"L(\d+)-\d+", own)
+            if hop == 0 and chapter:
+                lookups += [
+                    (row["instrument_id"], rf"art\. {kind}{chapter.group(1)}-1($|[^0-9])")
+                    for kind in ("R", "D")
+                ]
+        frontier = []
+        if lookups:
+            with conn.cursor(row_factory=dict_row) as cur:
+                hits = cur.execute(
+                    _REFERENCED_UNITS_SQL,
+                    {
+                        **base,
+                        "instrument_ids": [iid for iid, _ in lookups],
+                        "patterns": [pattern for _, pattern in lookups],
+                    },
+                ).fetchall()
+        else:
+            hits = []
+        for hit in hits:
+            if hit["chunk_id"] in seen:
+                continue
+            seen.add(hit["chunk_id"])
+            frontier.append(hit["chunk_id"])
+            found[hit["chunk_id"]] = RetrievalHit(method="located", **hit)
+            if len(found) >= CROSS_REF_MAX:
+                return list(found.values())
+        if not frontier:
+            break
+    return list(found.values())
+
+
+#: Code articles whose implementing acts are looked up (best-ranked first),
+#: acts kept per article, and the most a call adds; how far back an act's
+#: version may have entered into force. Twenty, not six: ranked on «RSA,
+#: increment per additional child», six family-benefit articles came first
+#: and CASF L. 262-2 — whose 2025 decree states 646,52 € — was the 16th
+#: ($bsa00_amt4 not_found, 5 Nov batch); the found chunks stay capped and
+#: in article order, and only the first IMPLEMENTING_NEAREST_ACTS acts bring
+#: their nearest chunks.
+IMPLEMENTING_ARTICLES = 20
+IMPLEMENTING_NEAREST_ACTS = 6
+IMPLEMENTING_PER_ARTICLE = 3  # the 2025 RSA decree and its Mayotte twin share a date
+IMPLEMENTING_MAX = 6
+IMPLEMENTING_LOOKBACK = timedelta(days=365)
+
+# Recent non-code act versions in scope with a chunk naming one of the article
+# numbers; which code each mention names is decided in Python (_code_refs).
+_IMPLEMENTING_SQL = """
+SELECT DISTINCT ON (ch.id) ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content,
+       t.lang, v.validity::text AS validity, v.version_status, i.source_trust_class,
+       0.0::float8 AS score, i.id::text AS instrument_id
+FROM legal_unit_versions v
+JOIN legal_units u   ON u.id = v.legal_unit_id
+JOIN instruments i   ON i.id = u.instrument_id
+JOIN jurisdictions j ON j.id = i.jurisdiction_id
+JOIN unit_texts t    ON t.version_id = v.id AND t.lang = %(lang)s
+JOIN chunks ch       ON ch.unit_text_id = t.id
+WHERE v.validity @> %(as_of)s::date AND lower(v.validity) >= %(since)s::date
+  AND i.instrument_type <> 'code' AND i.source_trust_class <> 'context'
+  AND j.code = ANY(%(jurisdictions)s::text[])
+  AND ch.content ~ ANY(%(patterns)s::text[])
+ORDER BY ch.id
+"""
+
+
+# The chunks of one act in force on as_of, nearest to the query vector first.
+_ACT_NEAREST_SQL = """
+SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
+       v.validity::text AS validity, v.version_status, i.source_trust_class, 0.0::float8 AS score
+FROM legal_units u
+JOIN instruments i         ON i.id = u.instrument_id
+JOIN legal_unit_versions v ON v.legal_unit_id = u.id
+JOIN unit_texts t          ON t.version_id = v.id AND t.lang = %(lang)s
+JOIN chunks ch             ON ch.unit_text_id = t.id
+JOIN embeddings e          ON e.chunk_id = ch.id AND e.model_id = %(model_id)s
+WHERE u.instrument_id = %(instrument_id)s::uuid AND v.validity @> %(as_of)s::date
+ORDER BY e.embedding <=> %(qvec)s::halfvec(1024)
+LIMIT %(k)s
+"""
+# Cosine distance of given chunks to the query vector.
+_CHUNK_DISTANCE_SQL = """
+SELECT e.chunk_id::text AS chunk_id, (e.embedding <=> %(qvec)s::halfvec(1024))::float8 AS d
+FROM embeddings e
+WHERE e.chunk_id = ANY(%(ids)s::uuid[]) AND e.model_id = %(model_id)s
+"""
+#: Further chunks of each implementing act, nearest to the query.
+IMPLEMENTING_NEAREST = 2
+
+
+def implementing_acts(
+    conn: psycopg.Connection,
+    country: Scope,
+    lang: str,
+    as_of: date,
+    chunk_ids: list[str],
+    query_vector: str | None = None,
+    model_id: int = 1,
+) -> list[RetrievalHit]:
+    """The recent acts that apply a retrieved code article: references followed backwards.
+
+    A code article says its figure is «fixé par décret» and the decree that
+    fixes this year's figure names the article: «Le montant forfaitaire …
+    mentionné à l'article L. 262-2 du code de l'action sociale et des
+    familles … est porté à 646,52 euros» (décret du 28 mars 2025). Ranked on
+    the RSA parameter's description, L. 262-2 came back and the decree did
+    not (4 Nov run, $bsa00_amt3 not_found). For the best-ranked code articles,
+    the non-code act versions in force on ``as_of``, entered into force in
+    the year before it, whose text names that article of that code; most
+    recent first, the best-ranked article's first, "located". With a query
+    vector, each act found also brings its IMPLEMENTING_NEAREST chunks
+    nearest to the query: an instruction names R. 522-2 in its «Textes de
+    référence» and states the complément familial ceilings three sections
+    on (DSS/2B/2024/181). Not later in the year: the arrêté of 26 December
+    2025 fixing the 2026 PAJE ceilings names L. 531-2 too.
+    """
+    base = {"jurisdictions": scope_codes(country), "lang": lang, "as_of": as_of}
+    with conn.cursor(row_factory=dict_row) as cur:
+        rows = cur.execute(_REF_CHUNKS_SQL, {"ids": chunk_ids}).fetchall()
+        codes = {r["instrument_id"]: r["title"] for r in cur.execute(_SCOPE_CODES_SQL, base).fetchall()}
+    rank = {chunk_id: i for i, chunk_id in enumerate(chunk_ids)}
+    articles: list[tuple[str, str]] = []
+    for row in sorted(rows, key=lambda r: rank[r["chunk_id"]]):
+        token = (row["citation"] or "").rsplit("art. ", 1)[-1]
+        article = (row["instrument_id"], token)
+        if row["is_code"] and re.fullmatch(r"[LRD]\d+(?:-\d+)+", token) and article not in articles:
+            articles.append(article)
+    articles = articles[:IMPLEMENTING_ARTICLES]
+    if not articles or not codes:
+        return []
+    patterns = sorted({rf"\m{t[0]}\.? ?{re.escape(t[1:])}($|[^0-9-])" for _, t in articles})
+    with conn.cursor(row_factory=dict_row) as cur:
+        candidates = cur.execute(
+            _IMPLEMENTING_SQL,
+            {**base, "since": as_of - IMPLEMENTING_LOOKBACK, "patterns": patterns},
+        ).fetchall()
+    candidates.sort(key=lambda r: r["validity"], reverse=True)  # '[2025-03-30,)' sorts by its start
+    named = [(row, set(_code_refs(row["content"] or "", None, codes))) for row in candidates]
+    matched: list[dict] = []
+    for article in articles:  # the best-ranked article's acts first
+        acts = [row for row, refs in named if article in refs]
+        matched += [row for row in acts[:IMPLEMENTING_PER_ARTICLE] if row not in matched]
+    if query_vector is not None and matched:
+        # Twenty articles name more acts than the caps keep: the nearest to
+        # the query win — the prime d'activité decree (L. 842-3, 19th
+        # article) over the family-benefit arrêtés of the first six.
+        with conn.cursor(row_factory=dict_row) as cur:
+            distance = {
+                r["chunk_id"]: r["d"]
+                for r in cur.execute(
+                    _CHUNK_DISTANCE_SQL,
+                    {"ids": [r["chunk_id"] for r in matched], "qvec": query_vector, "model_id": model_id},
+                ).fetchall()
+            }
+        matched.sort(key=lambda r: distance.get(r["chunk_id"], 2.0))
+    known = set(chunk_ids)
+    found: list[RetrievalHit] = []
+    instruments: list[str] = []
+    for row in matched:
+        # An act already retrieved still brings its nearest chunks: the
+        # instruction's «Textes de référence» chunk ranked, its ceilings did not.
+        if row["instrument_id"] not in instruments:
+            instruments.append(row["instrument_id"])
+        if row["chunk_id"] in known:
+            continue
+        known.add(row["chunk_id"])
+        found.append(RetrievalHit(method="located", **{c: v for c, v in row.items() if c != "instrument_id"}))
+    found = found[:IMPLEMENTING_MAX]
+    if query_vector is not None:
+        for instrument in instruments[:IMPLEMENTING_NEAREST_ACTS]:
+            params = {**base, "instrument_id": instrument, "qvec": query_vector, "model_id": model_id,
+                      "k": IMPLEMENTING_NEAREST + 1}
+            with conn.cursor(row_factory=dict_row) as cur:
+                near = [r for r in cur.execute(_ACT_NEAREST_SQL, params).fetchall() if r["chunk_id"] not in known]
+            for row in near[:IMPLEMENTING_NEAREST]:
+                known.add(row["chunk_id"])
+                found.append(RetrievalHit(method="located", **row))
+    return found
+
+
 def _citation_pattern(token: str) -> str:
     """POSIX regex matching `token` as a whole article number inside a citation."""
     return r"(^|[^0-9A-Za-z.])" + re.escape(token) + r"($|[^0-9A-Za-z.\-])"
@@ -555,6 +987,15 @@ def locate_named_units(
     the act it is reading — the AGIRC-ARRCO ANI, whose art. 36 («Un pourcentage
     d'appel, fixé à 127 %») retrieval never ranked in (3 Nov benchmark, four
     tscerpi rates not_found with arts. 34, 35 and 38 in hand).
+
+    4. nothing found that entered into force in the year before ``as_of``:
+       the need's words, any of them, ranked over the texts in force on
+       ``as_of`` that did. «l'arrêté portant revalorisation, au 1er
+       avril 2025, de la BMAF» names no title we hold — the amount is in an
+       instruction «relative à la revalorisation au 1er avril 2025 des
+       prestations familiales» (5 Nov re-run, every BMAF-based amount
+       not_found with the instruction in the corpus); this year's figure is
+       in this year's text.
 
     As-of and jurisdiction scoping are the retrieval CTE's; hits come back
     with method="located" so the trace shows they were not ranked in.
@@ -614,7 +1055,19 @@ def locate_named_units(
                     for row in rows:
                         hits.setdefault(row["chunk_id"], RetrievalHit(method="located", **row))
                     break
-    return list(hits.values())[:k]
+    since = as_of - RECENT_LOOKBACK
+    recent_found = any(_entered_since(h.validity, since) for h in hits.values())
+    found = list(hits.values())[:k]
+    params = {**base, "since": since, "k": k}
+    with conn.cursor(row_factory=dict_row) as cur:
+        recent = [r for r in cur.execute(_RECENT_FTS_SQL, params).fetchall() if r["chunk_id"] not in hits]
+    # Nothing recent found: this year's texts fill the slots. Something
+    # recent found: they still get RECENT_EXTRA slots of their own — the
+    # PAJE arrêté of December 2024 is recent, and the ceiling table of
+    # instruction DSS/2B/2024/181 the need asked for never came back.
+    room = k if not recent_found else RECENT_EXTRA
+    found += [RetrievalHit(method="located", **row) for row in recent[: max(0, min(room, k + RECENT_EXTRA - len(found)))]]
+    return found
 
 
 _CR_SEARCH_SQL = """
@@ -764,22 +1217,53 @@ def verify_extract(
     Returns (char_start, char_end) offsets into unit_texts.content — the
     anti-hallucination check: no offsets, no verified citation. Whitespace
     runs are treated as equivalent so line-wrapping differences don't fail
-    an otherwise verbatim quote.
+    an otherwise verbatim quote, and so is whitespace a PDF extraction put
+    between two letters of one word: DSS/2B/2025/38 reads «prestati ons»
+    (a split "ti" ligature), and every quote of its BMAF sentence failed on
+    the 5 Nov re-run with the right amount proposed. Between digits it is
+    never ignored: «25 %» must not match two table cells «2» and «5».
+    Punctuation at the quote's two ends is not part of the check either.
     """
     row = conn.execute(
         "SELECT content, char_start FROM chunks WHERE id = %s::uuid", (chunk_id,)
     ).fetchone()
     if row is None or not extract:
         return None
-    content, base = row["content"], row["char_start"] or 0
+    span = quote_span(row["content"], extract)
+    base = row["char_start"] or 0
+    return (base + span[0], base + span[1]) if span is not None else None
+
+
+def quote_span(content: str, extract: str) -> tuple[int, int] | None:
+    """Where `extract` sits in `content` under verify_extract's rules, else None."""
+    if not extract:
+        return None
     idx = content.find(extract)
     if idx >= 0:
-        return (base + idx, base + idx + len(extract))
-    pattern = re.compile(r"\s+".join(re.escape(part) for part in extract.split()))
-    match = pattern.search(content)
-    if match:
-        return (base + match.start(), base + match.end())
+        return (idx, idx + len(extract))
+    for quote in dict.fromkeys((extract, extract.strip(_QUOTE_EDGE_PUNCTUATION))):
+        if not quote.strip():
+            continue
+        pattern = re.compile(r"\s+".join(re.escape(part) for part in quote.split()))
+        match = pattern.search(content) or re.search(_split_word_pattern(quote), content)
+        if match:
+            return (match.start(), match.end())
     return None
+
+
+#: Punctuation a quote may end (or start) on that the text does not: the model
+#: closes «… deux personnes ; 3° A 16,5 %» on a full stop, or wraps it in «».
+#: Stripped from the ends only — every word in between must still match.
+_QUOTE_EDGE_PUNCTUATION = " \t\n.;:,«»\"“”'’"
+
+
+def _split_word_pattern(extract: str) -> str:
+    """`extract` as a regex in which whitespace may also fall between two letters."""
+    parts: list[str] = []
+    for word in extract.split():
+        letters = [re.escape(c) + (r"\s*" if c.isalpha() and n.isalpha() else "") for c, n in zip(word, word[1:])]
+        parts.append("".join(letters) + re.escape(word[-1]))
+    return r"\s+".join(parts)
 
 
 def closest_passage(content: str, extract: str) -> str | None:

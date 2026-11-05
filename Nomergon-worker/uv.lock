@@ -3,16 +3,16 @@ revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14' and extra != 'extra-15-nomergon-worker-cpu' and extra == 'extra-15-nomergon-worker-gpu'",
-    "python_full_version == '3.13.*' and extra != 'extra-15-nomergon-worker-cpu' and extra == 'extra-15-nomergon-worker-gpu'",
-    "python_full_version < '3.13' and extra != 'extra-15-nomergon-worker-cpu' and extra == 'extra-15-nomergon-worker-gpu'",
     "python_full_version >= '3.14' and sys_platform != 'darwin' and extra == 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
-    "python_full_version < '3.13' and sys_platform != 'darwin' and extra == 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
     "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
-    "python_full_version < '3.13' and sys_platform == 'darwin' and extra == 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
     "python_full_version >= '3.14' and extra != 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
+    "python_full_version == '3.13.*' and extra != 'extra-15-nomergon-worker-cpu' and extra == 'extra-15-nomergon-worker-gpu'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
+    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
     "python_full_version == '3.13.*' and extra != 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
+    "python_full_version < '3.13' and extra != 'extra-15-nomergon-worker-cpu' and extra == 'extra-15-nomergon-worker-gpu'",
+    "python_full_version < '3.13' and sys_platform != 'darwin' and extra == 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
+    "python_full_version < '3.13' and sys_platform == 'darwin' and extra == 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
     "python_full_version < '3.13' and extra != 'extra-15-nomergon-worker-cpu' and extra != 'extra-15-nomergon-worker-gpu'",
 ]
 conflicts = [[
@@ -1102,6 +1102,7 @@ translate = [
 requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "nomoscope-agentic-workflow", marker = "extra == 'translate'", editable = "../Nomoscope-agentic-workflow/pipeline" },
+    { name = "playwright", marker = "extra == 'browser'", specifier = ">=1.47" },
     { name = "playwright", marker = "extra == 'legifrance'", specifier = ">=1.47" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pydantic", specifier = ">=2.8" },
@@ -1115,7 +1116,7 @@ requires-dist = [
     { name = "torch", marker = "extra == 'embeddings-cuda'", specifier = ">=2.13.0", index = "https://download.pytorch.org/whl/cu126", conflict = { package = "nomotheca-legislation-ingest", extra = "embeddings-cuda" } },
     { name = "typer", specifier = ">=0.12" },
 ]
-provides-extras = ["embeddings", "embeddings-cuda", "translate", "legifrance"]
+provides-extras = ["embeddings", "embeddings-cuda", "translate", "legifrance", "browser"]
 
 [[package]]
 name = "numpy"

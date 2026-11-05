@@ -160,3 +160,40 @@ def test_an_empty_heading_keeps_its_place_when_it_has_text_below_it() -> None:
 
     assert set(by_path) == {"circulaire", "circulaire.chapitre_i", "circulaire.chapitre_i.article_1"}
     assert by_path["circulaire.chapitre_i"].is_container
+
+
+def test_table_rows_starting_with_a_count_stay_in_their_section() -> None:
+    """Caf EAJE barème 2025: «1 enfant 0,0619% 0,0516%» … is a table, not ten sections."""
+    rows = "".join(f"{n} enfant{'s' if n > 1 else ''} 0,0{n}% 0,0{n}%\n" for n in range(1, 11))
+    text = (
+        "1) Le barème selon le taux d'effort 2025 est maintenu comme suit :\n"
+        "Nombre d'enfants Accueil collectif et Micro-crèche Accueil familial ou parental\n"
+        + rows
+        + "2) Le plancher : son montant est revalorisé à 801 € pour l'année 2025.\n"
+        "3. Le plafond\n"
+        "Son montant est maintenu à 7 000 €.\n"
+    )
+    ir = _build(text, "numbered")
+
+    contents = [u.versions[0].texts[0].content for u in ir.units]
+    table = next(c for c in contents if "Accueil collectif" in c)
+    assert "1 enfant 0,01% 0,01%" in table and "10 enfants 0,010% 0,010%" in table
+    assert any("7 000 €" in c and "Accueil collectif" not in c for c in contents)
+
+
+def test_a_line_starting_with_a_date_or_a_year_is_not_a_section() -> None:
+    """DSS/2B/2024/181: the AF ceiling table stays under its title."""
+    text = (
+        "1. Plafonds de ressources applicables pour l'attribution des allocations familiales\n"
+        "Plafonds applicables du 1er janvier au\n"
+        "31 décembre 2025 (à comparer au revenu net catégoriel de l'année 2023)\n"
+        "2 enfants ≤ 78 565 ≤ 104 719 > 104 719\n"
+        "2024 des plafonds de ressources d'attribution de certaines prestations\n"
+        "2. Plafonds du complément familial\n"
+        "3 enfants 43 946 53 758\n"
+    )
+    ir = _build(text, "numbered")
+
+    assert [u.path for u in ir.units] == ["sec_1", "sec_2"]
+    first = ir.units[0].versions[0].texts[0].content
+    assert "allocations familiales" in first and "78 565" in first and "2024 des plafonds" in first

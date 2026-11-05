@@ -46,6 +46,13 @@ translate = [
 legifrance = [
   "playwright>=1.47",
 ]
+# Contributed PDFs a portal serves to a browser only (sante.gouv.fr's Bulletin
+# officiel answers httpx with a security-check page): contributed.fetch_in_browser
+# retries such a URL in headless Firefox. Same optional rule as above.
+#   uv sync --extra browser && uv run playwright install firefox
+browser = [
+  "playwright>=1.47",
+]
 
 [[tool.uv.index]]
 name = "pytorch_cpu"

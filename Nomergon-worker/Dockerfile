@@ -47,9 +47,11 @@ WORKDIR /app/Nomergon-worker
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --extra "${WORKER_VARIANT}"
 
-# Playwright's Chromium and its system libraries (Legifrance ELI tier 3).
+# Playwright's Chromium and its system libraries (Legifrance ELI tier 3), and
+# Firefox for contributed PDFs a portal serves to a browser only
+# (contributed.fetch_in_browser: sante.gouv.fr's Bulletin officiel).
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv run --frozen --no-dev playwright install --with-deps chromium \
+    uv run --frozen --no-dev playwright install --with-deps chromium firefox \
     && rm -rf /var/lib/apt/lists/*
 
 VOLUME ["/models"]

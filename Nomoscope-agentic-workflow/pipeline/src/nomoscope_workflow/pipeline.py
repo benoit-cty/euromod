@@ -183,6 +183,17 @@ def _clean_query_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip(" ,;:.-")
 
 
+def _later_until(record: ParameterRecord, as_of: date) -> date | None:
+    """How far past as_of retrieval looks for versions of the same system year.
+
+    Only for in-force parameters: an income-year parameter already retrieves
+    at 1 July of the following year (_retrieval_as_of).
+    """
+    if record.information.temporal_basis == TemporalBasis.INCOME_YEAR:
+        return None
+    return date(as_of.year, 12, 31)
+
+
 def _retrieval_as_of(record: ParameterRecord, as_of: date) -> date:
     """The date used to select in-force legislation versions.
 
@@ -510,7 +521,8 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                     conn, info.country, regions.region_key(info.country, info.model_target)
                 )
                 hits = retrieval.retrieve(
-                    conn, cfg, scope, retrieval_as_of, state["query"], state["citations"]
+                    conn, cfg, scope, retrieval_as_of, state["query"], state["citations"],
+                    later_until=_later_until(state["record"], state["as_of"]),
                 )
             span.set_attribute("retrieval.jurisdictions", json.dumps(scope))
             for i, hit in enumerate(hits):
@@ -564,15 +576,23 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
             else:
                 hit_ids = {h.chunk_id for h in hits}
                 if draft.citation_chunk_id not in hit_ids and draft.supporting_extract:
-                    resolved = _resolve_chunk_by_extract(hits, draft.supporting_extract)
+                    resolved = _resolve_chunk_id(hits, draft.citation_chunk_id, draft.supporting_extract)
                     if resolved is not None:
                         mech_notes.append(
                             f"citation_chunk_id {draft.citation_chunk_id!r} is not a retrieved "
                             f"chunk; resolved to {resolved} — the only retrieved chunk that "
-                            "contains the supporting_extract verbatim"
+                            "contains the supporting_extract verbatim or carries that citation"
                         )
                         draft.citation_chunk_id = resolved
                 if draft.citation_chunk_id in hit_ids and draft.supporting_extract:
+                    repointed = _repoint_misquoted(hits, draft.citation_chunk_id, draft.supporting_extract)
+                    if repointed is not None:
+                        mech_notes.append(
+                            f"citation_chunk_id {draft.citation_chunk_id!r} does not contain the "
+                            f"supporting_extract; re-pointed to {repointed}, the only retrieved "
+                            "chunk that does"
+                        )
+                        draft.citation_chunk_id = repointed
                     with retrieval.connect(cfg) as conn:
                         offsets = retrieval.verify_extract(
                             conn, draft.citation_chunk_id, draft.supporting_extract
@@ -608,6 +628,9 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                     else:
                         mech_notes.append(note)
                         report.issues.append(f"note: derived — {_derivation_summary(draft, hits)}")
+                        rounded = _round_like_held(info.unit, draft, _current_value(record, as_of))
+                        if rounded is not None:
+                            report.issues.append(rounded)
 
                 if info.temporal_basis == TemporalBasis.INCOME_YEAR:
                     # Publication after as_of is EXPECTED here (the finance act
@@ -732,12 +755,30 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                             f"another extract"
                         )
                 else:
+                    cited = next((h for h in hits if h.chunk_id == draft.citation_chunk_id), None)
+                    later = cited is not None and cited.method == "later_in_year"
+                    # A version entering into force later in the system year
+                    # may take effect after as_of: the year's value, not 1 July's.
+                    latest = date(as_of.year, 12, 31) if later else as_of
                     report.dates_consistent = draft.valid_from is not None and (
-                        draft.legal_status != "enacted_in_force" or draft.valid_from <= as_of
+                        draft.legal_status != "enacted_in_force" or draft.valid_from <= latest
                     )
                     if not report.dates_consistent:
                         report.issues.append(
                             "valid_from missing or inconsistent with legal_status/as_of"
+                        )
+                    elif later:
+                        version_start = retrieval.validity_start(cited.validity)
+                        mech_notes.append(
+                            f"the cited version enters into force on {version_start}, after the "
+                            f"reference date {as_of.isoformat()} but within system year "
+                            f"{as_of.year}, which the parameter describes as a whole: a valid_from "
+                            f"before that date is consistent when the text itself applies the value "
+                            f"from then (e.g. «à compter du 1er janvier {as_of.year}»)"
+                        )
+                        report.issues.append(
+                            f"note: cites a version in force from {version_start}, later in "
+                            f"system year {as_of.year} than the reference date"
                         )
 
                 report.values_sane = _values_sane(info.unit, draft)
@@ -764,8 +805,20 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 )
                 report.issues.extend(findings.issues)
                 report.citation_verified = report.citation_verified and findings.citation_supports_value
+                # Confirming the value EUROMOD already holds changes nothing,
+                # whatever date the proposal gives it: tscersi_rate2 (0.07) and
+                # tscer_red_coef2 (0.3233) were right and refused on the 5 Nov
+                # run for a valid_from the critique would have dated otherwise.
+                confirms_held = findings.citation_supports_value and _confirms_held(
+                    draft, _current_value(record, as_of)
+                )
+                if confirms_held and not findings.dates_consistent:
+                    report.issues.append(
+                        "note: the value is the one already held; the start-date objection "
+                        "does not block a confirmation"
+                    )
                 report.dates_consistent = report.dates_consistent and (
-                    findings.dates_consistent or income_year_dates_proven
+                    findings.dates_consistent or income_year_dates_proven or confirms_held
                 )
                 report.values_sane = report.values_sane and findings.values_sane
 
@@ -954,7 +1007,8 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
             input_value={"needs": last.needs, "round": last.round},
         ) as span:
             located_hits, citations = scout.locate(
-                cfg, record, state.get("retrieval_as_of", as_of), last.needs, known
+                cfg, record, state.get("retrieval_as_of", as_of), last.needs, known,
+                later_until=_later_until(record, as_of),
             )
             last.located = citations
             state["scout"] = scout.merge_results(state["scout_rounds"])
@@ -1057,16 +1111,53 @@ def _resolve_chunk_by_extract(hits: list[RetrievalHit], extract: str) -> str | N
     needle = extract.strip()
     if not needle:
         return None
-    matches = [h.chunk_id for h in hits if h.content and needle in h.content]
+    matches = [h.chunk_id for h in hits if h.content and retrieval.quote_span(h.content, needle)]
     return matches[0] if len(matches) == 1 else None
+
+
+def _repoint_misquoted(hits: list[RetrievalHit], cited: str, extract: str) -> str | None:
+    """A quote absent from the retrieved chunk it cites, found in ONE other: that chunk.
+
+    The model swaps ids between retrieved chunks: on the 5 Nov run «Taux plein
+    96,62 % 458,34» (instruction DSS/2B/2025/38) cited a chunk of R. 522-2,
+    and RSA's «128, 412 %» a Wallis-et-Futuna article — eleven right values
+    refused. The quote is still verified, against the chunk it now names.
+    """
+    current = next((h for h in hits if h.chunk_id == cited), None)
+    if current is None or not current.content or retrieval.quote_span(current.content, extract):
+        return None
+    resolved = _resolve_chunk_by_extract([h for h in hits if h.chunk_id != cited], extract)
+    return resolved
+
+
+def _resolve_chunk_id(hits: list[RetrievalHit], cited: str, extract: str) -> str | None:
+    """A cited id that is not a retrieved chunk: by its extract, else by its citation.
+
+    The model often writes the citation string in the id field («LEGITEXT…,
+    art. D622-7»), and then misquotes too (the 4 Nov $bhl_max_amt2 run dropped
+    the «e» of «1/ 730e»): resolving by the extract fails, the feedback said
+    only "not retrieved", and the retry never saw the passage. When exactly
+    one retrieved chunk carries that citation it is the chunk meant — the
+    extract is still verified against it, and a misquote now gets its hint.
+    """
+    resolved = _resolve_chunk_by_extract(hits, extract)
+    if resolved is not None:
+        return resolved
+    named = [h.chunk_id for h in hits if h.citation and h.citation == (cited or "").strip()]
+    return named[0] if len(named) == 1 else None
 
 
 #: Figures a derivation may use without quoting them: calendar and scaling
 #: constants (months, quarters, weeks, days in a year, percent, per mille).
+#: 3, 6 and 9 are the months either side of an April, July or October
+#: revaluation: a full-year average is (a * 3 + b * 9) / 12, and five
+#: derivations of the 5 Nov run were refused for the bare 3 alone.
 #: Everything else is a fact about the law and must be an operand quoted
 #: verbatim from a retrieved chunk — that is what keeps a derived value inside
 #: the anti-hallucination contract.
-DERIVATION_CONSTANTS = frozenset({1.0, 2.0, 4.0, 12.0, 13.0, 52.0, 100.0, 365.0, 366.0, 1000.0})
+DERIVATION_CONSTANTS = frozenset(
+    {1.0, 2.0, 3.0, 4.0, 6.0, 9.0, 12.0, 13.0, 52.0, 100.0, 365.0, 366.0, 1000.0}
+)
 #: Most decimal places `round(x, n)` may keep. The precision is not a fact about
 #: the law the way a figure is: it is the rounding rule the text itself states —
 #: «Les taux ainsi appelés sont arrondis au centième» (AGIRC-ARRCO art. 36: 6,20 %
@@ -1154,26 +1245,67 @@ def _figures_in(text: str) -> set[float]:
     decimal — both readings kept), «347,83»."""
     figures: set[float] = set()
     for raw in _FIGURE.findall(text):
-        compact = re.sub(r"[\s\u00a0\u202f]", "", raw)
-        for candidate in (
-            compact,
-            compact.replace(",", "."),
-            compact.replace(".", "").replace(",", "."),
-            compact.replace(",", ""),
-        ):
-            try:
-                figures.add(float(candidate))
-            except ValueError:
-                pass
+        for number in (raw, *_table_cells(raw)):
+            compact = re.sub(r"[\s\u00a0\u202f]", "", number)
+            for candidate in (
+                compact,
+                compact.replace(",", "."),
+                compact.replace(".", "").replace(",", "."),
+                compact.replace(",", ""),
+            ):
+                try:
+                    figures.add(float(candidate))
+                except ValueError:
+                    pass
+    lowered = text.lower()
+    figures.update(value for word, value in _NUMBER_WORDS.items() if re.search(rf"\b{word}\b", lowered))
     return figures
 
 
+def _table_cells(run: str) -> list[str]:
+    """A run of figures cut where one number visibly ends: «I 329,71 397,64
+    449,43 65,21» (a PDF table row, arrêté du 27 sept. 2019 art. 7) is four
+    amounts, not one. A number ends after its decimal part, or before a group
+    that is not three digits; «1 801,80» stays one number."""
+    cells: list[list[str]] = []
+    for token in re.split(r"[\s\u00a0\u202f]+", run):
+        joins = (
+            cells
+            and not re.search(r"[.,]\d+$", cells[-1][-1])
+            and re.fullmatch(r"\d{3}(?:[.,]\d+)?", token)
+        )
+        if joins:
+            cells[-1].append(token)
+        else:
+            cells.append([token])
+    return [" ".join(cell) for cell in cells] if len(cells) > 1 else []
+
+
+#: Numbers the law spells out: «dans la limite de trois fois ce plafond»
+#: (CSS D622-7) states the operand 3 of a derivation as surely as «3» would;
+#: two derivations of the 5 Nov run were refused for it.
+_NUMBER_WORDS = {
+    "deux": 2.0, "trois": 3.0, "quatre": 4.0, "cinq": 5.0, "six": 6.0, "sept": 7.0,
+    "huit": 8.0, "neuf": 9.0, "dix": 10.0, "onze": 11.0, "douze": 12.0,
+    "double": 2.0, "triple": 3.0, "moitié": 0.5, "quart": 0.25,
+    "two": 2.0, "three": 3.0, "four": 4.0, "five": 5.0, "half": 0.5, "twice": 2.0,
+}
+
+
 def _extract_states(extract: str, value: float) -> bool:
-    """Whether the extract states `value` — as such, or as a percentage (108 % for 1.08)."""
+    """Whether the extract states `value` — as such, or as a percentage (108 % for 1.08).
+
+    A multiplier above 1 is also stated by its increase: «majoré de 50 %» is
+    the 1.5 of a × 1.5 (four prime d'activité derivations of the 5 Nov batch
+    were refused for writing it so rather than a × (1 + 0.5)).
+    """
+    targets = [value, value * 100]
+    if value > 1 and re.search(r"major|augment|increase", extract, re.IGNORECASE):
+        targets.append((value - 1) * 100)
     return any(
         math.isclose(figure, target, rel_tol=1e-9, abs_tol=1e-9)
         for figure in _figures_in(extract)
-        for target in (value, value * 100)
+        for target in targets
     )
 
 
@@ -1196,6 +1328,20 @@ def _misquote_hint(hits: list[RetrievalHit], chunk_id: str, extract: str) -> str
     return f"the cited chunk reads: «{passage}» — quote it exactly as written, without correcting it"
 
 
+def _stating_passage(content: str, value: float, limit: int = 300) -> str | None:
+    """The first sentence of `content` that states `value`, for a retry's feedback.
+
+    Told only «operand b's extract does not state 730», the model quoted the
+    same sentence of CSS D. 622-7 again; the figure is in another one («égal
+    à 1/ 730e de la moyenne des revenus», $bhl_max_amt2, 5 Nov batch).
+    """
+    for sentence in re.split(r"(?<=[.;])\s+|\n+", content):
+        sentence = sentence.strip()
+        if sentence and _extract_states(sentence, value):
+            return sentence if len(sentence) <= limit else sentence[:limit] + "…"
+    return None
+
+
 def _check_derivation(
     draft: ProposalDraft,
     hits: list[RetrievalHit],
@@ -1210,8 +1356,15 @@ def _check_derivation(
     must evaluate to the proposed value. Returns (issues, operand offsets,
     note for the critique) — issues empty means verified.
     """
-    if draft.value_brackets is not None or draft.value_scalar is None:
-        return ["derivation: only a scalar value can be derived"], [], None
+    # A schedule derives one of its figures (the AGIRC-ARRCO CET share a * b,
+    # a threshold of 12 monthly ceilings): the result must be one of them.
+    figures = (
+        [f for band in draft.value_brackets for f in (band.threshold, band.rate, band.amount) if f is not None]
+        if draft.value_brackets is not None
+        else [draft.value_scalar] if draft.value_scalar is not None else []
+    )
+    if not figures:
+        return ["derivation: no value to derive"], [], None
     if not draft.operands:
         return ["derivation: no operands quoted"], [], None
     issues: list[str] = []
@@ -1226,9 +1379,18 @@ def _check_derivation(
             continue
         values[op.name] = op.value
         if op.citation_chunk_id not in hit_ids:
+            # Same rule as the main citation: a mistyped id (a citation
+            # string, a hex digit off) is resolved by the extract alone.
+            resolved = _resolve_chunk_id(hits, op.citation_chunk_id, op.supporting_extract)
+            if resolved is not None:
+                op.citation_chunk_id = resolved
+        if op.citation_chunk_id not in hit_ids:
             issues.append(f"derivation: {where} cites a chunk that was not retrieved")
             offsets.append(None)
             continue
+        repointed = _repoint_misquoted(hits, op.citation_chunk_id, op.supporting_extract)
+        if repointed is not None:
+            op.citation_chunk_id = repointed
         span = verify(op.citation_chunk_id, op.supporting_extract)
         offsets.append(span)
         if span is None:
@@ -1238,17 +1400,23 @@ def _check_derivation(
                 issues.append(f"derivation: {where}: {hint}")
         elif not _extract_states(op.supporting_extract, op.value):
             issues.append(f"derivation: {where}'s extract does not state {op.value:g}")
+            content = next((h.content for h in hits if h.chunk_id == op.citation_chunk_id), "")
+            stating = _stating_passage(content, op.value)
+            if stating:
+                issues.append(f"derivation: {where}: its chunk states {op.value:g} in «{stating}» — quote that")
     if issues:
         return issues, offsets, None
     try:
         result = evaluate_derivation(draft.derivation or "", values)
     except ValueError as exc:
         return [f"derivation: {exc}"], offsets, None
-    if not math.isclose(result, draft.value_scalar, rel_tol=1e-3, abs_tol=1e-6):
-        return [
-            f"derivation: {draft.derivation} evaluates to {result:g}, "
-            f"not the proposed {draft.value_scalar:g}"
-        ], offsets, None
+    if not any(math.isclose(result, f, rel_tol=1e-3, abs_tol=1e-6) for f in figures):
+        proposed = (
+            "any figure of the proposed schedule"
+            if draft.value_brackets is not None
+            else f"the proposed {draft.value_scalar:g}"
+        )
+        return [f"derivation: {draft.derivation} evaluates to {result:g}, not {proposed}"], offsets, None
     note = (
         f"derivation verified deterministically: {_derivation_summary(draft, hits)} = {result:g}; "
         "every operand extract is verbatim in its cited chunk and states its figure, so do NOT "
@@ -1258,17 +1426,85 @@ def _check_derivation(
     return [], offsets, note
 
 
+def _confirms_held(draft: ProposalDraft, held: ParameterValue | None) -> bool:
+    """Whether a scalar proposal is the value already held."""
+    value = held.value if held is not None else None
+    if draft.value_scalar is None or isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    return math.isclose(draft.value_scalar, float(value), rel_tol=1e-9, abs_tol=1e-12)
+
+
+def _held_digits(held: ParameterValue | None) -> int:
+    """Decimals of the amount EUROMOD holds: 0 for 51229, cents otherwise.
+
+    A float cannot tell 1343.40 from 1343.4, so one decimal reads as cents.
+    """
+    value = held.value if held is not None else None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return 2
+    return 0 if float(value).is_integer() else 2
+
+
+def _rate_digits(held: ParameterValue | None) -> int | None:
+    """Decimals of a `/1` rate EUROMOD holds, when four to eight; else None."""
+    value = held.value if held is not None else None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    digits = -Decimal(repr(float(value))).normalize().as_tuple().exponent
+    return digits if 4 <= digits <= 8 else None
+
+
+def _round_like_held(unit: str, draft: ProposalDraft, held: ParameterValue | None) -> str | None:
+    """Round a derived amount the way the published amount is: half-up, to the held precision.
+
+    The law states the operands, the administration publishes the rounded
+    result (the CAF's PAJE ceiling 29 169 × 1,8 = 52 504,2 is published as
+    52 504; RSA 646,52 × 1,8 = 1 163,736 is paid as 1 163,74), and the
+    rounding rule itself is rarely in the corpus. A `/1` rate held with four
+    or more decimals is rounded to as many (AGIRC-ARRCO art. 36: «arrondis au
+    centième», 12,954 % → 12,95 %, held 0.1295; three tscerpi rates of the
+    5 Nov run were 0.12954 / 0.047244); a coarser rate is left alone, since
+    0.0675 is a real change from a held 0.068. Returns the reviewer's note
+    when the value changed.
+    """
+    if draft.value_scalar is None:
+        return None
+    if unit == "/1":
+        digits = _rate_digits(held)
+        if digits is None:
+            return None
+    elif unit.startswith("currency"):
+        digits = _held_digits(held)
+    else:
+        return None
+    value = Decimal(repr(draft.value_scalar))
+    rounded = float(value.quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))
+    if rounded == draft.value_scalar:
+        return None
+    note = (
+        f"note: derived {draft.value_scalar:g} rounded half-up to {rounded:g}, "
+        f"{'whole units' if digits == 0 else f'{digits} decimals'} like the value held"
+    )
+    draft.value_scalar = rounded
+    return note
+
+
 def _values_sane(unit: str, draft: ProposalDraft) -> bool:
-    """Unit-range and bracket-order sanity."""
+    """Unit-range and bracket-order sanity.
+
+    The /1 range catches a percentage left unnormalised (11 for 0.11) — a
+    magnitude test, so a negative rate is in range: the housing-benefit
+    participation rate «Majoration par personne à charge -0,06%» is one.
+    """
     if draft.value_brackets is not None:
         thresholds = [b.threshold for b in draft.value_brackets]
         if thresholds != sorted(thresholds) or len(set(thresholds)) != len(thresholds):
             return False
         if unit == "/1":
-            return all(b.rate is None or 0.0 <= b.rate <= 1.0 for b in draft.value_brackets)
+            return all(b.rate is None or -1.0 <= b.rate <= 1.0 for b in draft.value_brackets)
         return True
     if draft.value_scalar is not None and unit == "/1":
-        return 0.0 <= draft.value_scalar <= 1.0
+        return -1.0 <= draft.value_scalar <= 1.0
     return draft.value_scalar is not None
 
 

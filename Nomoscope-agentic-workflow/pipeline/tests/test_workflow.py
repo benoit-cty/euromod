@@ -707,11 +707,13 @@ from nomoscope_workflow.paramdb import record_value  # noqa: E402
 from nomoscope_workflow.pipeline import (  # noqa: E402
     DERIVATION_CONSTANTS,
     _check_derivation,
+    _values_sane,
     _figures_in,
     _misquote_hint,
+    _round_like_held,
     evaluate_derivation,
 )
-from nomoscope_workflow.retrieval import _article_tokens, closest_passage  # noqa: E402
+from nomoscope_workflow.retrieval import _article_tokens, _code_refs, closest_passage  # noqa: E402
 from nomoscope_workflow.schema import Operand  # noqa: E402
 
 AKW_TEXT = (
@@ -798,7 +800,10 @@ def test_derivation_rejects_an_operand_the_extract_does_not_state():
                 supporting_extract="12 jaar en ouder, maar jonger is dan 18 jaar: € 409,21"),
     ])
     issues, _, _ = _check_derivation(draft, hits, _verify_in(hits))
-    assert issues == ["derivation: operand b's extract does not state 286.45"]
+    assert issues[0] == "derivation: operand b's extract does not state 286.45"
+    # The retry is shown where the chunk does state it (CSS D. 622-7's «1/ 730e»
+    # was a sentence away from the one the model quoted twice).
+    assert issues[1] == "derivation: operand b: its chunk states 286.45 in «jonger is dan 6 jaar: € 286,45» — quote that"
 
 
 def test_derivation_rejects_a_paraphrased_operand_and_an_unretrieved_chunk():
@@ -807,7 +812,7 @@ def test_derivation_rejects_a_paraphrased_operand_and_an_unretrieved_chunk():
         Operand(name="a", value=347.83, citation_chunk_id="akw",
                 supporting_extract="between 6 and 12 years: € 347,83"),
         Operand(name="b", value=286.45, citation_chunk_id="elsewhere",
-                supporting_extract="jonger is dan 6 jaar: € 286,45"),
+                supporting_extract="jonger dan 6 jaar: € 286,45"),
     ])
     issues, offsets, _ = _check_derivation(draft, hits, _verify_in(hits))
     assert offsets == [None, None]
@@ -858,6 +863,13 @@ def test_figures_are_read_in_every_european_spelling():
     assert 1801.80 in _figures_in("1.801,80 euros")
     assert 9139.0 in _figures_in("vermeerderd met € 9.139")  # Dutch thousands
     assert 2.1 in _figures_in("artikel 2.10") and 44000.0 in _figures_in("€44,000")
+
+
+def test_a_table_row_states_each_of_its_amounts():
+    # arrêté du 27 sept. 2019 art. 7, zone I: the PDF row is one run of digits
+    row = _figures_in("I 329,71 397,64 449,43 65,21 II")
+    assert {329.71, 397.64, 449.43, 65.21} <= row
+    assert 801.80 not in _figures_in("1 801,80 €")
 
 
 def test_record_value_prefers_the_ingested_scalar_for_percent_literals():
@@ -1062,3 +1074,196 @@ def test_scout_ingests_a_cnav_circular_as_guidance(monkeypatch):
         "--lang", "fr", "--title", "Circulaire Cnav 2025/13 du 03/04/2025", "--kind", "circulaire",
         "--valid-from", "2025-04-03", "--trigger", "cache_miss",
     ]]
+
+
+def test_a_mistyped_operand_chunk_id_is_resolved_by_its_extract():
+    # 3 Nov full run: 11 derivations rejected as "cites a chunk that was not
+    # retrieved" — the ids were a citation string or one hex digit off.
+    hits = [_hit(chunk_id="akw", content=AKW_TEXT)]
+    draft = _derived(operands=[
+        Operand(name="a", value=347.83, citation_chunk_id="JORFTEXT000051393086",
+                supporting_extract="6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83"),
+        Operand(name="b", value=286.45, citation_chunk_id="akw",
+                supporting_extract="jonger is dan 6 jaar: € 286,45"),
+    ])
+    issues, offsets, _ = _check_derivation(draft, hits, _verify_in(hits))
+    assert issues == [] and None not in offsets
+    assert draft.operands[0].citation_chunk_id == "akw"
+    # Not in any retrieved chunk: still refused, nothing guessed.
+    draft.operands[0].citation_chunk_id = "elsewhere"
+    draft.operands[0].supporting_extract = "between 6 and 12 years: € 347,83"
+    issues, _, _ = _check_derivation(draft, hits, _verify_in(hits))
+    assert any("not retrieved" in i for i in issues)
+
+
+def test_a_schedule_may_derive_one_of_its_figures():
+    # 3 Nov full run: five schedules with exactly EUROMOD's bands were rejected
+    # as "only a scalar value can be derived" (AGIRC-ARRCO CET share a * b).
+    text = "contribution d'équilibre technique, au taux de 0,35 % ... répartie à raison de 60 % à la charge des employeurs et 40 % à la charge des salariés"
+    hits = [_hit(chunk_id="ani", content=text)]
+    ops = [
+        Operand(name="a", value=0.0035, citation_chunk_id="ani", supporting_extract="au taux de 0,35 %"),
+        Operand(name="b", value=0.4, citation_chunk_id="ani", supporting_extract="40 % à la charge des salariés"),
+    ]
+    good = _derived(value_scalar=None, value_brackets=[Bracket(threshold=0.0, rate=0.0014)],
+                    derivation="a * b", operands=ops, supporting_extract="au taux de 0,35 %", citation_chunk_id="ani")
+    assert _check_derivation(good, hits, _verify_in(hits))[0] == []
+    wrong = good.model_copy(update={"value_brackets": [Bracket(threshold=0.0, rate=0.0035)]})
+    issues, _, _ = _check_derivation(wrong, hits, _verify_in(hits))
+    assert issues == ["derivation: a * b evaluates to 0.0014, not any figure of the proposed schedule"]
+
+
+def test_a_negative_rate_is_sane_and_an_unnormalised_percentage_is_not():
+    # «Majoration par personne à charge -0,06%» ($bho_Tf_rate8, 3 Nov run).
+    assert _values_sane("/1", ProposalDraft(found=True, value_scalar=-0.0006))
+    assert not _values_sane("/1", ProposalDraft(found=True, value_scalar=11.0))
+    assert not _values_sane("/1", ProposalDraft(found=True, value_scalar=-6.0))
+
+
+def test_a_derived_amount_is_rounded_like_the_amount_held():
+    # PAJE ceiling 29 169 × 1,8 = 52 504,2, published 52 504; RSA
+    # 646,52 × 1,8 = 1 163,736, paid 1 163,74 (4 Nov round-2 run).
+    def held(value):
+        return ParameterValue(value=value, valid_from=date(2024, 1, 1))
+
+    ceiling = ProposalDraft(found=True, value_scalar=52504.2)
+    assert "52504" in _round_like_held("currency", ceiling, held(51229.0))
+    assert ceiling.value_scalar == 52504
+    half = ProposalDraft(found=True, value_scalar=8750.5)
+    _round_like_held("currency", half, held(8546.0))
+    assert half.value_scalar == 8751
+    rsa = ProposalDraft(found=True, value_scalar=1163.736)
+    _round_like_held("currency", rsa, held(1143.28))
+    assert rsa.value_scalar == 1163.74
+    # Unknown precision: cents. Already at the precision: untouched.
+    loose = ProposalDraft(found=True, value_scalar=258.608)
+    _round_like_held("currency", loose, None)
+    assert loose.value_scalar == 258.61
+    assert _round_like_held("currency", ProposalDraft(found=True, value_scalar=52504.0), held(1.0)) is None
+    rate = ProposalDraft(found=True, value_scalar=0.0787)
+    assert _round_like_held("/1", rate, held(0.08)) is None and rate.value_scalar == 0.0787
+    # A rate held with four or more decimals: as many. A coarser one: untouched.
+    pi = ProposalDraft(found=True, value_scalar=0.12954)
+    assert _round_like_held("/1", pi, held(0.1295)) and pi.value_scalar == 0.1295
+    fine = ProposalDraft(found=True, value_scalar=0.047244)
+    _round_like_held("/1", fine, held(0.0472))
+    assert fine.value_scalar == 0.0472
+    coarse = ProposalDraft(found=True, value_scalar=0.0675)
+    assert _round_like_held("/1", coarse, held(0.068)) is None and coarse.value_scalar == 0.0675
+
+
+def test_an_article_number_belongs_to_the_code_named_after_it():
+    codes = {"css": "code de la sécurité sociale", "cgi": "code général des impôts",
+             "cgi3": "code général des impôts, annexe iii"}
+    text = (
+        "Le plafond prévu au dernier alinéa de l'article L. 531-2 du code de la sécurité sociale "
+        "et au premier alinéa de l'article L. 531-3 du même code. Voir l'article 46 quater-0 YE "
+        "et l'article R. 522-2. Article 1417 du code général des impôts, annexe III : D. 41-1."
+    )
+    # An order (no code of its own): a bare R. 522-2 has no code and is skipped.
+    assert _code_refs(text, None, codes) == [("css", "L531-2"), ("css", "L531-3")]
+    # A CSS article: its bare references are to itself.
+    assert ("css", "R522-2") in _code_refs(text, "css", codes)
+    assert _code_refs("l'article D. 41-1 du code général des impôts, annexe III", None, codes) == [("cgi3", "D41-1")]
+
+
+def test_a_version_entered_since_reads_the_range_start():
+    from nomoscope_workflow.retrieval import _entered_since
+
+    assert _entered_since("[2025-04-01,)", date(2024, 7, 1))
+    assert not _entered_since("[2006-01-01,)", date(2024, 7, 1))
+    assert not _entered_since(None, date(2024, 7, 1))
+
+
+def test_a_word_split_by_pdf_extraction_still_matches_but_digits_do_not():
+    import re as _re
+
+    from nomoscope_workflow.retrieval import _split_word_pattern
+
+    chunk = "en pourcentage duquel sont fixées les prestati ons \nfamiliales, est donc porté de 466,44 €"
+    assert _re.search(_split_word_pattern("sont fixées les prestations familiales, est donc"), chunk)
+    assert not _re.search(_split_word_pattern("sont fixées les prestataires familiales"), chunk)
+    assert not _re.search(_split_word_pattern("25 %"), "taux 2 5 %")
+    assert not _re.search(_split_word_pattern("466,44 €"), "46 6,44 €")
+
+
+def test_a_quote_ending_on_other_punctuation_than_the_text_still_verifies():
+    from unittest.mock import MagicMock
+
+    from nomoscope_workflow.retrieval import verify_extract
+
+    conn = MagicMock()
+    content = "2° A 16 % du montant forfaitaire calculé pour deux personnes lorsque le foyer se compose de deux personnes ; 3° A 16,5 %"
+    conn.execute.return_value.fetchone.return_value = {"content": content, "char_start": 0}
+    assert verify_extract(conn, "c", "2° A 16 % du montant forfaitaire calculé pour deux personnes lorsque le foyer se compose de deux personnes.")
+    assert verify_extract(conn, "c", "« 2° A 16 % du montant forfaitaire »")
+    assert verify_extract(conn, "c", "2° A 17 % du montant forfaitaire.") is None
+
+
+def test_months_either_side_of_a_mid_year_revaluation_may_appear_unquoted():
+    assert evaluate_derivation("(a * 3 + b * 9) / 12", {"a": 622.63, "b": 633.21}) == pytest.approx(630.565)
+
+
+def test_a_figure_spelt_out_in_words_is_stated():
+    from nomoscope_workflow.pipeline import _extract_states
+
+    assert _extract_states("dans la limite de trois fois ce plafond", 3.0)
+    assert _extract_states("égal à la moitié du montant du plafond annuel", 0.5)
+    assert not _extract_states("dans la limite de trois fois ce plafond", 4.0)
+
+
+def test_a_proposal_confirming_the_held_value_is_recognised():
+    from nomoscope_workflow.pipeline import _confirms_held
+    from nomoscope_workflow.schema import ParameterValue
+
+    held = ParameterValue(value=0.07, valid_from=date(2024, 1, 1))
+    assert _confirms_held(ProposalDraft(found=True, value_scalar=0.07), held)
+    assert not _confirms_held(ProposalDraft(found=True, value_scalar=0.06), held)
+    assert not _confirms_held(ProposalDraft(found=True, value_scalar=0.07), None)
+
+
+def test_a_list_of_articles_takes_the_code_named_at_its_end():
+    codes = {"css": "code de la sécurité sociale"}
+    text = (
+        "Textes de référence - Articles L. 381-1, L. 545-1, R. 522-2, R. 522-4, R. 531-1, "
+        "R. 543- 5, R. 755 -2, D. 521- 1, D. 521-2 et D. 521-3 du code de la sécurité sociale"
+    )
+    refs = _code_refs(text, None, codes)
+    assert ("css", "R522-2") in refs and ("css", "L381-1") in refs
+    # prose between the number and the code: not a list, no reference
+    assert _code_refs("l'article R. 522-2 dont il est question plus loin dans le code de la sécurité sociale", None, codes) == []
+
+
+def test_a_multiplier_is_stated_by_the_increase_it_applies():
+    from nomoscope_workflow.pipeline import _extract_states
+
+    assert _extract_states("est majoré de 50 % lorsque le foyer comporte deux personnes", 1.5)
+    assert not _extract_states("est fixé à 50 % du plafond", 1.5)  # no increase: 50 % is 0.5
+    assert not _extract_states("est majoré de 50 %", 1.3)
+
+
+def test_an_average_labelled_amount_is_proposed_as_the_amount_in_force():
+    from types import SimpleNamespace
+
+    from nomoscope_workflow.prompts import _average_note
+
+    fya = SimpleNamespace(label={"en": "Base amount - FYA"}, short_label=None, description={})
+    plain = SimpleNamespace(label={"en": "Base amount"}, short_label=None, description={})
+    held = SimpleNamespace(lineage=SimpleNamespace(model_answer="938.64"))
+    formula = SimpleNamespace(lineage=SimpleNamespace(model_answer="(498.39*9+514.64*3)/12#m"))
+    assert "IN FORCE" in _average_note(fya, held)
+    assert "IN FORCE" in _average_note(plain, formula)
+    assert _average_note(plain, held) == ""
+
+
+def test_a_quote_citing_the_wrong_retrieved_chunk_is_repointed_to_the_one_holding_it():
+    from nomoscope_workflow.pipeline import _repoint_misquoted
+
+    hits = [
+        RetrievalHit(chunk_id="r5222", citation="CSS R522-2", content="Le plafond est majoré de 25 %"),
+        RetrievalHit(chunk_id="dss", citation="DSS/2B/2025/38", content="PREPARE\nTaux plein 96,62 % 458,34"),
+        RetrievalHit(chunk_id="dss2", citation="DSS/2B/2025/38", content="CMG maximal 540,97"),
+    ]
+    assert _repoint_misquoted(hits, "r5222", "Taux plein 96,62 % 458,34") == "dss"
+    assert _repoint_misquoted(hits, "dss", "Taux plein 96,62 % 458,34") is None  # already right
+    assert _repoint_misquoted(hits, "r5222", "Taux plein 99 %") is None  # nowhere: the failure stands

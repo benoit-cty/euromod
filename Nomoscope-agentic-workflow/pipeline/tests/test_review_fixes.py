@@ -1,7 +1,7 @@
 """Regressions from the 2026-09-08 eval review (eval-20260908T143801Z…luna)."""
 
 from nomoscope_workflow.paramdb import normalise_value, percent_literal
-from nomoscope_workflow.pipeline import _resolve_chunk_by_extract
+from nomoscope_workflow.pipeline import _resolve_chunk_by_extract, _resolve_chunk_id
 from nomoscope_workflow.schema import RetrievalHit
 
 
@@ -40,3 +40,21 @@ def test_an_extract_present_in_two_chunks_does_not_resolve():
     assert _resolve_chunk_by_extract(hits, "excèdent 14 548 €") is None
     assert _resolve_chunk_by_extract(hits, "") is None
     assert _resolve_chunk_by_extract(hits, "not in any chunk") is None
+
+
+def test_a_citation_string_in_the_id_field_resolves_to_the_one_chunk_with_that_citation():
+    # 4 Nov $bhl_max_amt2: id «LEGITEXT000006073189, art. D622-7», extract
+    # «1/ 730 de» for the chunk's «1/ 730e de». Resolved, the extract check
+    # then fails on the right chunk and the retry is shown the passage.
+    d622 = RetrievalHit(
+        chunk_id="50001fd2", citation="LEGITEXT000006073189, art. D622-7",
+        content="égal à 1/ 730e de la moyenne",
+    )
+    other = RetrievalHit(chunk_id="dd6c8afa", citation="JORFTEXT000050854392, art. 1", content="3 925 euros")
+    hits = [other, d622]
+    assert _resolve_chunk_id(hits, "LEGITEXT000006073189, art. D622-7", "égal à 1/ 730 de") == "50001fd2"
+    assert _resolve_chunk_id(hits, "JORFTEXT000050854392", "3 925 euros") == "dd6c8afa"
+    assert _resolve_chunk_id(hits, "LEGITEXT000006073189, art. D622-8", "égal à 1/ 730 de") is None
+    # two versions of the article retrieved: no guess
+    assert _resolve_chunk_id([d622, d622.model_copy(update={"chunk_id": "4097b979"})],
+                             "LEGITEXT000006073189, art. D622-7", "égal à 1/ 730 de") is None

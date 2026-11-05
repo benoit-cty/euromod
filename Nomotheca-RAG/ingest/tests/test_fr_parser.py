@@ -160,3 +160,35 @@ def test_a_jorf_circular_is_guidance_in_its_text_and_its_articles() -> None:
         _snapshot(article_ref),
     )
     assert article.instruments[0].source_trust_class == SourceTrustClass.GUIDANCE
+
+
+def test_a_code_article_queues_its_recent_versions() -> None:
+    """CGI art. 32 was held only as amended on 21 Feb 2026, so a 1 July 2025
+    search found no version of it (3 Nov benchmark, $tinty_limmax)."""
+    ref = SourceRef(jurisdiction="FR", source_code="FR-LEGI", source_id="LEGIARTI000053544766", source_type="article")
+    doc = parse_dila_json(
+        """
+        {
+          "META": {
+            "META_COMMUN": {"ID": "LEGIARTI000053544766", "NATURE": "Article"},
+            "META_SPEC": {"META_ARTICLE": {"NUM": "32", "ETAT": "VIGUEUR", "DATE_DEBUT": "2026-02-21", "DATE_FIN": "2999-01-01"}}
+          },
+          "CONTEXTE": {"TEXTE": {"@cid": "LEGITEXT000006069577", "TITRE_TXT": [{"#text": "Code général des impôts"}]}},
+          "VERSIONS": {"VERSION": [
+            {"LIEN_ART": {"@debut": "1950-04-30", "@fin": "1998-04-22", "@id": "LEGIARTI000048103366", "@num": "32"}},
+            {"LIEN_ART": {"@debut": "2017-01-01", "@fin": "2023-04-15", "@id": "LEGIARTI000033817796", "@num": "32"}},
+            {"LIEN_ART": {"@debut": "2023-04-15", "@fin": "2026-02-21", "@id": "LEGIARTI000047431480", "@num": "32"}},
+            {"LIEN_ART": {"@debut": "2026-02-21", "@fin": "2999-01-01", "@id": "LEGIARTI000053544766", "@num": "32"}}
+          ]},
+          "BLOC_TEXTUEL": {"CONTENU": "<p>1. Par dérogation aux dispositions de l'article 31, lorsque le montant du revenu brut annuel n'excède pas 15 000 €</p>"}
+        }
+        """.encode(),
+        ref,
+        _snapshot(ref),
+    )
+    children = doc.metadata["child_refs"]
+    # In force on some day since 2023: the 2017 version (until 15 April 2023)
+    # and the 2023 one; never the article's own id, never the 1950 text.
+    assert [c["source_id"] for c in children] == ["LEGIARTI000033817796", "LEGIARTI000047431480"]
+    assert all(c["source_type"] == "article" for c in children)
+    assert [w.ref.source_id for w in FrAdapter().expand(doc)] == ["LEGIARTI000033817796", "LEGIARTI000047431480"]

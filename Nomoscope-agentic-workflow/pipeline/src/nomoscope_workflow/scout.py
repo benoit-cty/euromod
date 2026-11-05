@@ -868,6 +868,7 @@ def locate(
     as_of: date,
     needs: list[str],
     known_chunk_ids: Iterable[str],
+    later_until: date | None = None,
 ) -> tuple[list[RetrievalHit], list[str]]:
     """Look the analyst's named sources up in the corpus we already hold.
 
@@ -876,7 +877,9 @@ def locate(
     the chunks come from the database like any retrieved chunk and the
     verbatim-quote check still applies to whatever gets cited from them.
     Returns the new chunks (not already among `known_chunk_ids`) and the
-    citations they belong to, for the ScoutResult and the reviewer.
+    citations they belong to, for the ScoutResult and the reviewer. With
+    `later_until`, a named source whose version starts after `as_of` and by
+    that date is found too, as a "later_in_year" hit (retrieval.later_in_year).
     """
     info = record.information
     seen = set(known_chunk_ids)
@@ -889,8 +892,13 @@ def locate(
         lang = retrieval.LANG_BY_COUNTRY.get(retrieval.scope_codes(scope)[0], "en")
         held = retrieval.instruments_of_chunks(conn, list(seen))
         # Articles missing between two retrieved ones (AGIRC-ARRCO art. 36
-        # between 35 and 38) come first: they need no named source at all.
-        for hit in retrieval.gap_articles(conn, scope, lang, as_of, list(seen)):
+        # between 35 and 38), then the code articles the retrieved ones send
+        # the reader to (R. 531-1 → R. 522-2), come first: they need no named
+        # source at all.
+        for hit in [
+            *retrieval.gap_articles(conn, scope, lang, as_of, list(seen)),
+            *retrieval.cross_referenced_articles(conn, scope, lang, as_of, list(seen)),
+        ]:
             if hit.chunk_id in seen:
                 continue
             seen.add(hit.chunk_id)
@@ -898,9 +906,18 @@ def locate(
             if hit.citation and hit.citation not in citations:
                 citations.append(hit.citation)
         for need in needs[:5]:
-            for hit in retrieval.locate_named_units(
+            found = retrieval.locate_named_units(
                 conn, scope, lang, as_of, need, held_instrument_ids=held
-            ):
+            )
+            if later_until is not None and later_until > as_of:
+                found += [
+                    hit.model_copy(update={"method": "later_in_year"})
+                    for hit in retrieval.locate_named_units(
+                        conn, scope, lang, later_until, need, held_instrument_ids=held
+                    )
+                    if (retrieval.validity_start(hit.validity) or date.min) > as_of
+                ]
+            for hit in found:
                 if hit.chunk_id in seen:
                     continue
                 seen.add(hit.chunk_id)

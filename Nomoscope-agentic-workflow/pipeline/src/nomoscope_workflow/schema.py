@@ -150,8 +150,11 @@ class RetrievalHit(BaseModel):
     # article, pulled in so the whole article is visible (income-year checks).
     # "located": not ranked either — looked up by the article/act the analyst
     # named when it reported a missing source (retrieval.locate_named_units).
+    # "later_in_year": ranked like hybrid, but a version that enters into force
+    # after the reference date and within the system year (retrieval.later_in_year).
     method: Literal[
-        "citation", "fts", "vector", "hybrid", "country_report", "sibling", "located"
+        "citation", "fts", "vector", "hybrid", "country_report", "sibling", "located",
+        "later_in_year",
     ] = "hybrid"
     #: Read from the instrument the chunk belongs to. Defaults to evidence so
     #: hand-built and mock hits behave exactly as before this column existed.

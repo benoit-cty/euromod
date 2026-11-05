@@ -128,6 +128,71 @@ def find_headings(lines: list[str], pattern: str | re.Pattern[str]) -> list[Head
     return found
 
 
+_MONTHS = (
+    "janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre"
+    "|january|february|march|april|may|june|july|august|september|october|november|december"
+)
+_DATE_OR_YEAR = re.compile(rf"\s*(?:(?:[1-9]|[12]\d|3[01])(?:er)?\s+(?:{_MONTHS})\b|\d{{4,}}\s)", re.IGNORECASE)
+
+
+def _date_or_year(line: str) -> bool:
+    """A line that starts with a date («31 décembre 2025 (à comparer …)») or a
+    four-digit number (a title wrapped onto «2024 des plafonds …»): text, not
+    section 31 or section 2024."""
+    return _DATE_OR_YEAR.match(line) is not None
+
+
+#: Body text under a numbered heading below which it reads as a table row.
+TABLE_ROW_MAX_BODY = 40
+
+
+def drop_table_rows(headings: list[Heading], lines: list[str]) -> list[Heading]:
+    """Numbered "headings" that are table rows, folded back into the body.
+
+    A PDF table flattens to lines that start with a count and a word: «1
+    enfant 0,0619% 0,0516%», «2 enfants» … (the Caf EAJE barème 2025, the
+    PAJE annex of instruction DSS/2B/2025/38). Read as headings, each row
+    became a 25-character section of its own, cut off from the column
+    headers that say which rate is the crèche one — three crèche rates were
+    not_found with the barème in the corpus. A heading with almost no body
+    followed by one at the same depth is a row; so is the heading that
+    continues a run of rows with the same first word («10 enfants»). Only a
+    bare count is a row: «1. Objet» over one short sentence is a section.
+    A bare date or year is never a heading (DSS/2B/2024/181: «31 décembre
+    2025 (à comparer …)» headed the family-allowance ceiling table, cut off
+    from its «Plafonds de ressources … allocations familiales» title).
+    Rows stay in the text of the section around them.
+    """
+    def body(h: Heading) -> int:
+        return sum(len(line.strip()) for line in lines[h.content_start : h.content_end])
+
+    def word(h: Heading) -> str:
+        rest = _LEADING_NUM_RE.sub("", h.text, count=1).strip()
+        return rest.split()[0].lower()[:5] if rest else ""
+
+    def bare(h: Heading) -> bool:  # «1 enfant», not «1. Objet», «2.1 …» or «1) …»
+        return re.match(r"\s*\d+\s", lines[h.line_idx]) is not None
+
+    rows: set[int] = set()
+    for i, h in enumerate(headings):
+        if not bare(h):
+            continue
+        if _date_or_year(lines[h.line_idx]):
+            rows.add(i)
+            continue
+        nxt = headings[i + 1] if i + 1 < len(headings) else None
+        if (nxt is None or nxt.level <= h.level) and body(h) < TABLE_ROW_MAX_BODY:
+            rows.add(i)
+        elif i - 1 in rows and word(headings[i - 1]) == word(h):
+            rows.add(i)
+    if not rows:
+        return headings
+    kept = [h for i, h in enumerate(headings) if i not in rows]
+    for i, h in enumerate(kept):  # a kept heading's body runs to the next kept one
+        h.content_end = kept[i + 1].line_idx if i + 1 < len(kept) else len(lines)
+    return kept
+
+
 def slugify(text: str) -> str:
     """Fold a heading into an ltree-safe label."""
     numbering = _LEADING_NUM_RE.match(text)
@@ -197,6 +262,8 @@ def build_document(
     heading_is_body = any(compiled is HEADING_PATTERNS[name] for name in BODY_HEADING_PATTERNS)
     lines = text.splitlines()
     headings = find_headings(lines, compiled)
+    if heading_is_body:
+        headings = drop_table_rows(headings, lines)
 
     if title_from_heading:
         title = next((h.text for h in headings if h.level == 1), title)
@@ -233,7 +300,8 @@ def build_document(
 
     first_section = next((h for h in headings if h.level >= section_level), None)
     cutoff = first_section.line_idx if first_section else len(lines)
-    preamble = "\n".join(line for line in lines[:cutoff] if not compiled.match(line)).strip()
+    heading_lines = {h.line_idx for h in headings}  # not table rows (drop_table_rows)
+    preamble = "\n".join(line for i, line in enumerate(lines[:cutoff]) if i not in heading_lines).strip()
     if preamble:
         units.append(
             UnitIR(

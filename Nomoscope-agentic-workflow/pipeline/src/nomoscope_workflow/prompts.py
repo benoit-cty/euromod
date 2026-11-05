@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 
 from .regions import region_key
 from .schema import ParameterRecord, ProposalDraft, RetrievalHit, income_year_for
 
-PROMPT_VERSION = "0.9.0"
+PROMPT_VERSION = "0.12.0"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -47,8 +48,14 @@ Rules:
 - Several extracts may state this value for different periods (annual implementing acts are
   common): choose the one whose period covers the reference date. Never prefer an extract
   merely because it matches the current value — detecting a change IS the job.
+- Extracts marked "LATER IN THE SYSTEM YEAR" are versions entering into force after the reference
+  date but within the same year, which the EUROMOD system year describes as a whole. Prefer an
+  extract in force on the reference date. Use a later one when none of those states the value —
+  typically an implementing act published mid-year that sets the year's amounts, often
+  retroactively («à compter du 1er janvier 2025»). valid_from is then the date the text says the
+  value applies from, else the version's start.
 - Return found=false ONLY when no extract states a value for the described concept in force on the
-  reference date. Never guess a value that is not present in the extracts.
+  reference date (or, as above, later in the system year). Never guess a value that is not present in the extracts.
 - DERIVATION, used sparingly: when NO extract states the value itself but the extracts state
   everything it is computed from — a multiplier the law states as two amounts (the 6–11 age-band
   amount over the base amount), a threshold stated as a base plus a statutory increment, a
@@ -61,7 +68,8 @@ Rules:
   rounding rule (n decimal places of the value as you express it: «taux arrondis au centième»
   on a /1 rate is round(a * b, 4); «arrondi à l'euro» is round(x, 0)) — apply it exactly where
   the text applies it and nowhere else, never to the final result by habit. The only figures that may appear unquoted are calendar constants
-  (1, 2, 4, 12, 13, 52, 100, 365, 366, 1000): every other figure must be an operand quoted from
+  (1, 2, 3, 4, 6, 9, 12, 13, 52, 100, 365, 366, 1000 — 3, 6 and 9 as months either side of a
+  mid-year revaluation): every other figure must be an operand quoted from
   an extract. A stated value always wins over a derived one, and a figure
   you remember rather than quote is never an operand.
 - missing_sources: whenever you return found=false, OR the extracts only refer to a value fixed
@@ -88,7 +96,9 @@ each producing one boolean (true = the check passes):
    definition calls for and the formula is the right one (the right two amounts in a ratio, the
    right base plus the right increment) — NOT whether the value appears literally.
 2. dates_consistent — valid_from is compatible with the cited version's validity window
-   and the reference date. When the parameter block declares "Temporal basis: INCOME YEAR",
+   and the reference date. An extract marked "LATER IN THE SYSTEM YEAR" may set the value for
+   the whole system year: a valid_from before its version start is consistent when the text
+   applies the value from that date. When the parameter block declares "Temporal basis: INCOME YEAR",
    valid_from must instead be 1 January of the reference (income) year, and a version entering
    into force AFTER the income year is correct, not an inconsistency. A CONSOLIDATED code article
    (e.g. "CGI, art. 197") whose version is in force on 1 July of the year following the income year
@@ -128,7 +138,8 @@ def _hits_block(hits: list[RetrievalHit]) -> str:
         parts.append(
             f"[chunk_id: {hit.chunk_id}]\n"
             f"citation: {hit.citation} | validity: {hit.validity} | status: {hit.version_status} "
-            f"| lang: {hit.lang}\n"
+            f"| lang: {hit.lang}"
+            f"{' | LATER IN THE SYSTEM YEAR' if hit.method == 'later_in_year' else ''}\n"
             f"{hit.content}"
         )
     return "\n\n---\n\n".join(parts)
@@ -191,7 +202,33 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
         + (f" | threshold_unit: {info.threshold_unit}" if info.threshold_unit else "")
         + f"\nReference date (as_of): {as_of.isoformat()}"
         + temporal_note
+        + _average_note(info, current)
         + f"\nCurrent value: {json.dumps(current.model_dump(mode='json', include={'value', 'valid_from', 'valid_to'}), ensure_ascii=False) if current else 'none'}"
+    )
+
+
+_AVERAGE_WORDS = re.compile(r"\bFYA\b|weighted|average|moyenne", re.IGNORECASE)
+_WEIGHTED_FORMULA = re.compile(r"\(.*\*\s*\d+\s*\+.*\*\s*\d+\s*\)\s*/\s*12")
+
+
+def _average_note(info, current) -> str:
+    """Never average: propose the amount in force on the reference date.
+
+    EUROMOD labels many amounts "FYA" (full-year average) yet holds the April
+    amount (prime d'activité 949.82 = 633,21 × 1,5, family benefits), and
+    where it does hold «(a*9+b*3)/12» the scorer accepts the point value. On
+    the 5 Nov batch the model averaged the four prime d'activité amounts and
+    missed all four.
+    """
+    raw = (current.lineage.model_answer or "") if current is not None and current.lineage else ""
+    text = json.dumps([info.label, info.short_label, info.description], ensure_ascii=False)
+    if not (_AVERAGE_WORDS.search(text) or _WEIGHTED_FORMULA.search(raw)):
+        return ""
+    return (
+        "\nAveraging: propose the amount IN FORCE on the reference date, never a weighted average "
+        "of the year's amounts — even when the description says FYA, average or moyenne. EUROMOD "
+        "holds the amount in force (or forms its own average from it); a derivation over months "
+        "(× 3 / 12, × 9 / 12) is wrong for this parameter."
     )
 
 

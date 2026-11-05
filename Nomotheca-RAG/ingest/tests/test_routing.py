@@ -88,7 +88,12 @@ def test_a_whole_legifrance_code_is_refused_with_a_hint() -> None:
     assert outcome.hint == WHOLE_CODE_HINT
 
 
-def test_an_unresolvable_eli_url_says_what_to_do_next() -> None:
+def test_an_unresolvable_eli_url_says_what_to_do_next(monkeypatch) -> None:
+    # Without the optional browser tier: with Playwright installed (the
+    # ``browser`` extra too) Chromium may resolve the ELI and route it.
+    from nomotheca_ingest.countries.fr import resolver
+
+    monkeypatch.setattr(resolver, "browser_available", lambda: False)
     outcome = route_url(ELI_URL)
 
     assert outcome.kind == "refused"
