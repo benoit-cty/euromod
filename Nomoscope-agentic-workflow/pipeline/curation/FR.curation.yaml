@@ -86,6 +86,50 @@ temporal_basis:
       # Abattement personnes âgées / invalides (CGI art. 157 bis)
       - euromod://FR/tinty_fr/def_const/$tintadp_amt
 
+  - basis: start_of_year
+    note: >-
+      EUROMOD holds the value in force on 1 January of the system year for
+      these, where the benchmark's reference date is 1 July: a change during
+      the year first appears in the next system year. Evidence is EUROMOD's own
+      history against the law. `$tpr_threshold*` (CGI art. 1417, revised by
+      the finance act each June): 2024..2026 hold 6 530 / 6 843 / 6 966 for
+      threshold 4, the version in force on each 1 January, where 1 July 2025
+      already had 6 966. `$UB_dayfixamt` (ARE fixed part, revised each 1 July
+      by the Unédic board): 2024..2026 hold 12.95 / 13.11 / 13.18.
+      `$tscerui_rate1` (employer unemployment contribution): 4,05 % from
+      1 October 2017 is held from 2018, 4 % from 1 May 2025 from 2026 — 1 July
+      of the year before would give 4 % for 2018. `$bsawk_income_rate` (CSS
+      D. 843-3): 61 % from 5 October 2018 is held from 2019, and 2025 holds
+      61 % where 59,85 % applies from 31 March 2025.
+    targets:
+      - euromod://FR/tpr_fr/def_const/$tpr_threshold1
+      - euromod://FR/tpr_fr/def_const/$tpr_threshold2
+      - euromod://FR/tpr_fr/def_const/$tpr_threshold3
+      - euromod://FR/tpr_fr/def_const/$tpr_threshold4
+      - euromod://FR/tpr_fr/def_const/$tpr_threshold5
+      - euromod://FR/ConstDef_fr/def_const/$UB_dayfixamt
+      - euromod://FR/tscer_fr/def_const/$tscerui_rate1
+      - euromod://FR/bsawk_fr/def_const/$bsawk_income_rate
+
+source_type:
+  - type: national_team
+    note: >-
+      Values that are modelling choices or statistics, not legal figures, so
+      they route around the pipeline (`national_team_source`). The two
+      unemployment-benefit bounds of the 10 % deduction, `$tinty_dedub_uplim`
+      and `$tinty_dedbun_lowlim`, held the legal amounts until 2018 (12 308 /
+      947) and 0 since 2019: the model stopped applying a cap and a floor
+      specific to unemployment benefits (the export's description says so),
+      while CGI art. 83 still states 14 426 € for 2024 income. The income_year
+      flag above stays for the day they are switched back on. The property-tax
+      rates `$tpr_rate_baties` (0.3062 since 2019) and `$tpr_rate_nonbaties`
+      (0) are national averages of rates the communes vote, which no act states.
+    targets:
+      - euromod://FR/tinty_fr/def_const/$tinty_dedub_uplim
+      - euromod://FR/tinty_fr/def_const/$tinty_dedbun_lowlim
+      - euromod://FR/tpr_fr/def_const/$tpr_rate_baties
+      - euromod://FR/tpr_fr/def_const/$tpr_rate_nonbaties
+
 unit:
   - unit: "/1"
     note: >-
@@ -120,3 +164,13 @@ unit:
       the other export defects.
     targets:
       - euromod://FR/SetDefault_fr/def_const/$Minwage_hourly
+  - unit: "/100"
+    note: >-
+      Housing-benefit participation rates by RL band, held in percentage
+      points: EUROMOD's 0.45 / 0.68 are the «0,45 %» / «0,68 %» of the arrêté
+      du 27 septembre 2019 art. 14, where the "/1" unit made the proposer write
+      0.0045 and score a miss on a correct reading.
+    targets:
+      - euromod://FR/bhotn_fr/def_const/$bho_rl_rate1
+      - euromod://FR/bhotn_fr/def_const/$bho_rl_rate2
+      - euromod://FR/bhotn_fr/def_const/$bho_rl_rate3
