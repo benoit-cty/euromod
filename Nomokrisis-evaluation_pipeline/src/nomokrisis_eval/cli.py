@@ -681,6 +681,8 @@ def _result_line(result: CaseResult) -> str:
         )
     )
     flag = "  HALLUCINATION" if result.hallucination else ""
+    if result.euromod_discrepancy:
+        flag += f"  EUROMOD-OFF-THE-LAW({result.euromod_discrepancy})"
     return f"{(result.routing_actual or '?'):<11} {marks}{flag}"
 
 

@@ -44,6 +44,7 @@ from .schema import (
     SourceTrustClass,
     TemporalBasis,
     income_year_for,
+    start_of_year_as_of,
 )
 from .tracing import progress, set_output, step_span
 
@@ -187,10 +188,11 @@ def _later_until(record: ParameterRecord, as_of: date) -> date | None:
     """How far past as_of retrieval looks for versions of the same system year.
 
     Only for in-force parameters: an income-year parameter already retrieves
-    at 1 July of the following year (_retrieval_as_of).
+    at 1 July of the following year (_retrieval_as_of), and a start-of-year
+    one wants the value of 1 January.
     """
-    if record.information.temporal_basis == TemporalBasis.INCOME_YEAR:
-        return None
+    if record.information.temporal_basis in (TemporalBasis.INCOME_YEAR, TemporalBasis.START_OF_YEAR):
+        return None  # start_of_year: a change later in the year is next year's value
     return date(as_of.year, 12, 31)
 
 
@@ -206,6 +208,8 @@ def _retrieval_as_of(record: ParameterRecord, as_of: date) -> date:
     """
     if record.information.temporal_basis == TemporalBasis.INCOME_YEAR:
         return date(income_year_for(as_of.year) + 1, 7, 1)
+    if record.information.temporal_basis == TemporalBasis.START_OF_YEAR:
+        return start_of_year_as_of(as_of)
     return as_of
 
 
@@ -759,7 +763,9 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                     later = cited is not None and cited.method == "later_in_year"
                     # A version entering into force later in the system year
                     # may take effect after as_of: the year's value, not 1 July's.
-                    latest = date(as_of.year, 12, 31) if later else as_of
+                    # A start_of_year parameter is dated 1 January throughout.
+                    reference = state.get("retrieval_as_of", as_of)
+                    latest = date(as_of.year, 12, 31) if later else reference
                     report.dates_consistent = draft.valid_from is not None and (
                         draft.legal_status != "enacted_in_force" or draft.valid_from <= latest
                     )
@@ -1489,6 +1495,11 @@ def _round_like_held(unit: str, draft: ProposalDraft, held: ParameterValue | Non
     return note
 
 
+#: The magnitude range of a rate per unit: "/1" is a fraction, "/100" a rate
+#: held in percentage points (FR `$bho_rl_rate2` = 0.45 for 0,45 %).
+_RATE_BOUNDS = {"/1": (-1.0, 1.0), "/100": (-100.0, 100.0)}
+
+
 def _values_sane(unit: str, draft: ProposalDraft) -> bool:
     """Unit-range and bracket-order sanity.
 
@@ -1500,11 +1511,13 @@ def _values_sane(unit: str, draft: ProposalDraft) -> bool:
         thresholds = [b.threshold for b in draft.value_brackets]
         if thresholds != sorted(thresholds) or len(set(thresholds)) != len(thresholds):
             return False
-        if unit == "/1":
-            return all(b.rate is None or -1.0 <= b.rate <= 1.0 for b in draft.value_brackets)
+        if unit in _RATE_BOUNDS:
+            low, high = _RATE_BOUNDS[unit]
+            return all(b.rate is None or low <= b.rate <= high for b in draft.value_brackets)
         return True
-    if draft.value_scalar is not None and unit == "/1":
-        return -1.0 <= draft.value_scalar <= 1.0
+    if draft.value_scalar is not None and unit in _RATE_BOUNDS:
+        low, high = _RATE_BOUNDS[unit]
+        return low <= draft.value_scalar <= high
     return draft.value_scalar is not None
 
 

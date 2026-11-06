@@ -31,4 +31,11 @@ def dila_json_url(source_id: str) -> str:
 
 def fetch_direct_id(ref: SourceRef, http: SnapshotClient) -> Snapshot:
     """Fetch and archive a DILA JSON document by direct source id."""
-    return http.get(ref, dila_json_url(ref.source_id))
+    snapshot = http.get(ref, dila_json_url(ref.source_id))
+    if snapshot.http_status != 200:
+        # The mirror answers an id it does not hold with a plain-text 404
+        # «Not found.»; failing here keeps it from reaching the parser as an
+        # opaque JSONDecodeError (the scout's JORFTEXT000042694981, 5 Nov run).
+        msg = f"{ref.source_id} is not in the DILA mirror (HTTP {snapshot.http_status})"
+        raise RuntimeError(msg)
+    return snapshot

@@ -12,7 +12,7 @@
 
   // Mirrors paramdb.KNOWN_UNITS and schema.SourceType; the database refuses
   // anything else (a pytest keeps the SQL lists in step with the Python ones).
-  const UNITS = ['/1', 'ratio', 'currency', 'currency/hour', 'currency/day', 'currency/week', 'currency/month', 'currency/year'];
+  const UNITS = ['/1', '/100', 'ratio', 'currency', 'currency/hour', 'currency/day', 'currency/week', 'currency/month', 'currency/year'];
   const SOURCE_TYPES = [
     'legislation',
     'national_team',

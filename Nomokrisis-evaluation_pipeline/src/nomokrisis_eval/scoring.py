@@ -25,6 +25,15 @@ Pure functions only — no LLM judge in v1. KPI semantics follow
                     refused rather than guessed. Still scores False on value/date/
                     citation, but the flag keeps refusals distinguishable.
   retrieval_hit     the ground-truth citation appears in the retrieval trace (recall@k)
+  euromod_discrepancy  NOT a tolerance and never folded into value_correct: the
+                    proposal passed the critique with a verbatim extract, it
+                    differs from EUROMOD by exactly one unit of the held
+                    precision (one cent on a cents amount, one euro on a whole
+                    amount), and the figure is the law's — stated in the quoted
+                    extract ('stated') or a verified derivation ('derived').
+                    EUROMOD is then off the law, which is a finding the project
+                    exists to make (AF 151.81 vs the law's 151.80, the barème's
+                    11 496 vs 11 497), so it is reported as its own success.
 
 Value comparison never string-matches raw EUROMOD strings. Either side may be a
 raw value ("11496#y", the FYA average "(1766.92*10+1801.80*2)/12#m", the
@@ -46,6 +55,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from math import isclose
 
+from nomoscope_workflow.pipeline import _extract_states
 from nomoscope_workflow.schema import Bracket, ReviewItem, Routing
 
 from .schema import CaseResult, GoldenCase
@@ -374,6 +384,13 @@ def score_item(
         # `unchanged`. What the pipeline does not stand behind cannot be
         # credited on routing, value or date; the evidence legs above keep
         # scoring, since they describe the rejected proposal itself.
+        if (
+            result.value_correct is False
+            and verbatim
+            and result.critique_pass
+            and expected.value is not None
+        ):
+            result.euromod_discrepancy = law_vs_euromod(on_basis, expected.value, item, constants)
         if critique is not None and critique.verdict == "fail":
             result.rejected = True
             result.routing_correct = False
@@ -388,6 +405,73 @@ def score_item(
         result.abstained = item.routing == Routing.NOT_FOUND
 
     return result
+
+
+def _held_unit(value: float) -> float | None:
+    """One unit of the precision EUROMOD holds: 1 for a whole amount, 0.01 for cents.
+
+    None for anything finer (a rate held to 4 decimals): «one cent or one
+    euro off» is the only discrepancy this finding names.
+    """
+    if value == round(value):
+        return 1.0
+    if isclose(value, round(value, 2), rel_tol=0, abs_tol=1e-9):
+        return 0.01
+    return None
+
+
+def _one_unit_off(proposed, held, constants) -> tuple[float, float] | None:
+    """(proposed, held) magnitudes when they differ by exactly one held unit."""
+    p, h = normalise_value(proposed, constants), normalise_value(held, constants)
+    # A bare number is on the parameter's own basis (see _on_parameter_basis);
+    # two different stated periods would need a conversion that blurs the unit.
+    if p is None or h is None or (p.period and h.period and p.period != h.period):
+        return None
+    unit = _held_unit(h.magnitude)
+    if unit is None or not isclose(abs(p.magnitude - h.magnitude), unit, rel_tol=0, abs_tol=1e-7):
+        return None
+    return p.magnitude, h.magnitude
+
+
+def law_vs_euromod(proposed, held, item: ReviewItem, constants=None) -> str | None:
+    """'stated' / 'derived' when EUROMOD is one held unit off the law's figure, else None.
+
+    Called only on a proposal the critique passed with a verbatim extract.
+    Every figure where the proposal and EUROMOD part must be one unit apart,
+    and the proposal's figure must be the law's: in one of its quoted extracts
+    ('stated'), or the result of the derivation the critique verified
+    ('derived'). A bracket schedule must agree cell for cell elsewhere.
+    """
+    extracts = [
+        ref.supporting_extract
+        for ref in (item.proposed_value.references if item.proposed_value else [])
+        if ref.supporting_extract
+    ]
+
+    def basis(figure: float) -> str | None:
+        if any(_extract_states(extract, figure) for extract in extracts):
+            return "stated"
+        return "derived" if item.derivation else None
+
+    if isinstance(proposed, list) and isinstance(held, list):
+        if len(proposed) != len(held):
+            return None
+        bases: list[str] = []
+        for p, h in zip(proposed, held):
+            for field in ("threshold", "rate", "amount"):
+                pv, hv = getattr(p, field), getattr(h, field)
+                if _num_equal(pv, hv):
+                    continue
+                if pv is None or hv is None or _one_unit_off(pv, hv, constants) is None:
+                    return None
+                if (found := basis(pv)) is None:
+                    return None
+                bases.append(found)
+        if not bases:
+            return None
+        return "derived" if "derived" in bases else "stated"
+    pair = _one_unit_off(proposed, held, constants)
+    return basis(pair[0]) if pair else None
 
 
 _EUROMOD_PERIOD = re.compile(r"#([a-z])$")

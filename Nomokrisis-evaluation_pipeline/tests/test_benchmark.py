@@ -149,3 +149,20 @@ def test_matrix_cells():
 def test_policy_of_a_ref():
     assert benchmark._policy("euromod://FR/tco_fr/def_const/$tco_a_01222") == "tco_fr"
     assert benchmark._policy("group:FR:tinkt_fr:tin_schedule") == "tinkt_fr"
+
+
+def test_euromod_off_the_law_is_its_own_column_and_success():
+    rows = [
+        result("changed", proposed_value=1.0, value_correct=True, routing_actual="changed"),
+        result("changed", proposed_value=151.80, value_correct=False, routing_actual="changed",
+               euromod_discrepancy="stated"),
+        result("changed", proposed_value=1.0, value_correct=False, routing_actual="changed"),
+    ]
+    summary = benchmark.summarize_benchmark(rows)
+    assert summary["matrix"]["changed"] == {
+        "same value": 1, "EUROMOD off the law": 1, "different value": 1,
+    }
+    headline = summary["headline"]
+    assert headline["correct (same value, or routed around as expected)"] == "33.3% (1/3)"
+    assert headline["EUROMOD off the law (findings)"] == "1 (1 stated, 0 derived)"
+    assert headline["success (correct + findings)"] == "66.7% (2/3)"

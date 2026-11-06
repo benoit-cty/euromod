@@ -47,6 +47,7 @@ from nomoscope_workflow.schema import (
     Routing,
     TemporalBasis,
     income_year_for,
+    start_of_year_as_of,
 )
 from nomoscope_workflow import paramdb
 
@@ -366,6 +367,8 @@ def draft_case(
 
     income_year = record.information.temporal_basis == TemporalBasis.INCOME_YEAR
     target_date = date(income_year_for(as_of.year), 1, 1) if income_year else as_of
+    if record.information.temporal_basis == TemporalBasis.START_OF_YEAR:
+        target_date = start_of_year_as_of(as_of)
     factor = float(entry.get("factor", 1))
     component = entry.get("component", "value")
 

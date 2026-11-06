@@ -62,3 +62,10 @@ def test_text_shrunk_to_one_chunk_drops_the_split_ones(monkeypatch):
     table = _ChunkTable([1, 2, 3])
     _replace(table, "short", monkeypatch)
     assert table.seqs == {0}
+
+
+def test_an_empty_text_has_no_chunk():
+    # A (0, 0) chunk breaks chunks_check and fails the whole act's load.
+    from nomotheca_ingest.core.chunker import chunk_text
+
+    assert chunk_text("", "header") == []

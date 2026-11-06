@@ -255,10 +255,13 @@ _UNIT_SQL = (
 #: (the FR SMIC is legislated per hour and the export labels `$Minwage_hourly`
 #: per month) and `ratio` (a dimensionless multiplier such as NL's
 #: `$bfa_mult2` = 1.2143, which is not a fraction and fails the "/1" range
-#: check the critique applies).
+#: check the critique applies). "/100" is a rate held in percentage points
+#: (FR `$bho_rl_rate2` = 0.45 for 0,45 %): the export uses it, wrongly, for
+#: fractions too (see the overlay), so it is only ever set by curation.
 KNOWN_UNITS = frozenset(
     {
         "/1",
+        "/100",
         "currency",
         "currency/hour",
         "currency/day",
@@ -272,8 +275,8 @@ KNOWN_UNITS = frozenset(
 
 def _curated_unit_structured(unit: str) -> dict | None:
     """The structured view of a curated unit, matching what the export ships."""
-    if unit == "/1":
-        return {"quantity": "rate", "scale": "/1"}
+    if unit in ("/1", "/100"):
+        return {"quantity": "rate", "scale": unit}
     if unit == "ratio":
         return {"quantity": "ratio"}
     return structured_unit(unit, None)

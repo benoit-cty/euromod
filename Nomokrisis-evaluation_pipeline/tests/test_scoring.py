@@ -420,3 +420,45 @@ def test_a_proposal_backed_by_legislation_carries_no_guidance_flag() -> None:
     result = score_item(make_case(routing=Routing.UNCHANGED, value=0.45), make_item())
 
     assert result.guidance_only is False
+
+
+def _quoting(extract: str, value, **kwargs) -> ReviewItem:
+    item = make_item(routing=Routing.CHANGED, value=value, **kwargs)
+    item.proposed_value.references[0].supporting_extract = extract
+    return item
+
+
+def test_euromod_one_cent_off_the_stated_law_is_a_finding_not_a_match():
+    # AF, 2 children: the instruction states 151,80 €, EUROMOD holds 151.81.
+    case = make_case(routing=Routing.CHANGED, value=151.81)
+    result = score_item(case, _quoting("deux enfants : 151,80 €", 151.80))
+    assert result.value_correct is False
+    assert result.euromod_discrepancy == "stated"
+
+
+def test_euromod_one_euro_off_a_bracket_bound_is_a_finding():
+    held = [Bracket(threshold=0, rate=0), Bracket(threshold=11496, rate=0.11)]
+    law = [Bracket(threshold=0, rate=0), Bracket(threshold=11497, rate=0.11)]
+    item = _quoting("n'excédant pas 11 497 € ; 11 % pour la fraction", law)
+    result = score_item(make_case(routing=Routing.CHANGED, value=held), item)
+    assert result.value_correct is False
+    assert result.euromod_discrepancy == "stated"
+
+
+def test_no_finding_without_the_law_stating_the_figure_or_a_derivation():
+    case = make_case(routing=Routing.CHANGED, value=151.81)
+    result = score_item(case, _quoting("le montant est revalorisé", 151.80))
+    assert result.euromod_discrepancy is None
+    item = _quoting("le montant est revalorisé", 151.80)
+    item.derivation = "a * b with a = 474.37 (…), b = 0.32 (…)"
+    assert score_item(case, item).euromod_discrepancy == "derived"
+
+
+def test_no_finding_beyond_one_unit_or_on_a_rejected_proposal():
+    case = make_case(routing=Routing.CHANGED, value=151.81)
+    assert score_item(case, _quoting("151,79 €", 151.79)).euromod_discrepancy is None
+    rejected = _quoting("151,80 €", 151.80, verdict="fail")
+    assert score_item(case, rejected).euromod_discrepancy is None
+    # One cent on a rate is not a unit EUROMOD holds it in.
+    rate_case = make_case(routing=Routing.CHANGED, value=0.0405)
+    assert score_item(rate_case, _quoting("4,04 %", 0.0404)).euromod_discrepancy is None

@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS params.parameters (
     -- `docker compose down -v` and invisible to review):
     --   uv run nomoscope-workflow curate-params curation/<CC>.curation.yaml
     temporal_basis          text NOT NULL DEFAULT 'in_force'
-                            CHECK (temporal_basis IN ('in_force', 'income_year')),
+                            CHECK (temporal_basis IN ('in_force', 'income_year', 'start_of_year')),
     source_file             text NOT NULL,             -- provenance of the ingest
     ingested_at             timestamptz NOT NULL DEFAULT now()
 );
@@ -72,6 +72,10 @@ CREATE TABLE IF NOT EXISTS params.parameters (
 -- (CREATE TABLE IF NOT EXISTS does not add columns to an existing table).
 ALTER TABLE params.parameters ADD COLUMN IF NOT EXISTS parameter_key text;
 ALTER TABLE params.parameters ADD COLUMN IF NOT EXISTS temporal_basis text NOT NULL DEFAULT 'in_force';
+-- 'start_of_year' (Nov 2026): EUROMOD Y holds the value in force in Y-1.
+ALTER TABLE params.parameters DROP CONSTRAINT IF EXISTS parameters_temporal_basis_check;
+ALTER TABLE params.parameters ADD CONSTRAINT parameters_temporal_basis_check
+    CHECK (temporal_basis IN ('in_force', 'income_year', 'start_of_year'));
 CREATE INDEX IF NOT EXISTS parameters_country_idx ON params.parameters (country);
 CREATE INDEX IF NOT EXISTS parameters_policy_idx  ON params.parameters (country, policy);
 CREATE UNIQUE INDEX IF NOT EXISTS parameters_key_idx ON params.parameters (parameter_key)
@@ -539,6 +543,7 @@ LANGUAGE sql IMMUTABLE
 AS $$
     SELECT CASE
         WHEN p_unit = '/1' THEN '{"quantity": "rate", "scale": "/1"}'::jsonb
+        WHEN p_unit = '/100' THEN '{"quantity": "rate", "scale": "/100"}'::jsonb
         WHEN p_unit = 'ratio' THEN '{"quantity": "ratio"}'::jsonb
         WHEN p_unit LIKE '%/%' THEN jsonb_build_object(
             'quantity', CASE split_part(p_unit, '/', 1) WHEN 'currency' THEN 'money'
@@ -580,7 +585,7 @@ BEGIN
         -- a rate or ratio is dimensionless, so nothing carries over.
         UPDATE params.parameters
            SET unit = p_value #>> '{}',
-               unit_structured = CASE WHEN p_value #>> '{}' IN ('/1', 'ratio')
+               unit_structured = CASE WHEN p_value #>> '{}' IN ('/1', '/100', 'ratio')
                    THEN params.unit_structured_for(p_value #>> '{}')
                    ELSE nullif(coalesce(unit_structured - 'quantity' - 'period' - 'scale', '{}'::jsonb)
                                || coalesce(params.unit_structured_for(p_value #>> '{}'), '{}'::jsonb),
@@ -629,7 +634,7 @@ BEGIN
         RAISE EXCEPTION 'parameter % is not in the parameter store', p_model_target;
     END IF;
     IF p_field = 'unit' AND (jsonb_typeof(p_value) IS DISTINCT FROM 'string' OR p_value #>> '{}' NOT IN
-       ('/1', 'currency', 'currency/hour', 'currency/day', 'currency/week',
+       ('/1', '/100', 'currency', 'currency/hour', 'currency/day', 'currency/week',
         'currency/month', 'currency/year', 'ratio')) THEN
         RAISE EXCEPTION 'unknown unit %', p_value;
     END IF;

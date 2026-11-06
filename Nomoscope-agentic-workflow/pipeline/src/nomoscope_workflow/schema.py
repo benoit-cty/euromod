@@ -28,10 +28,17 @@ class TemporalBasis(StrEnum):
       published during or after that income year, and valid_from is back-dated
       to the income year start (the OpenFisca convention), so retrieval must
       look for versions consolidated later than the income year itself.
+    start_of_year: EUROMOD system year Y holds the value in force on 1 January
+      of Y, not the mid-year one — see `start_of_year_as_of`. A change later in
+      the year is the next system year's. FR `$tpr_threshold*` (CGI art. 1417,
+      revised each June: 2024..2026 hold 6 530 / 6 843 / 6 966), `$UB_dayfixamt`
+      (revised each 1 July: 12.95 / 13.11 / 13.18), `$tscerui_rate1` (4,05 %
+      from October 2017 held from 2018, 4 % from May 2025 held from 2026).
     """
 
     IN_FORCE = "in_force"
     INCOME_YEAR = "income_year"
+    START_OF_YEAR = "start_of_year"
 
 
 #: System-year → income-year offset for `temporal_basis: income_year`.
@@ -53,6 +60,16 @@ def income_year_for(system_year: int) -> int:
     together — do not re-derive `as_of.year ± 1` at a call site.
     """
     return system_year + INCOME_YEAR_OFFSET
+
+
+def start_of_year_as_of(as_of: date) -> date:
+    """The reference date of a `start_of_year` parameter: 1 January of the system year.
+
+    The single place it is decided, like `income_year_for`: retrieval, the
+    critique's date check, the prompt and a golden case's OpenFisca date all
+    read it from here.
+    """
+    return date(as_of.year, 1, 1)
 
 
 class SourceType(StrEnum):

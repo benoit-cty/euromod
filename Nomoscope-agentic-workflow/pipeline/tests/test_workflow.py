@@ -168,6 +168,17 @@ def test_income_year_shifts_retrieval_date():
     assert _retrieval_as_of(in_force, date(2025, 6, 1)) == date(2025, 6, 1)
 
 
+def test_start_of_year_retrieves_on_1_january_and_ignores_later_versions():
+    # $tpr_threshold4: CGI 1417 is revised each June; EUROMOD 2025 holds 6 843,
+    # the version in force on 1 January 2025, not the 6 966 of 19 June.
+    from nomoscope_workflow.pipeline import _later_until
+
+    threshold = _record("scalar", "currency", 6843, temporal_basis=TemporalBasis.START_OF_YEAR)
+    assert _retrieval_as_of(threshold, date(2025, 7, 1)) == date(2025, 1, 1)
+    assert _later_until(threshold, date(2025, 7, 1)) is None
+    assert _later_until(_record("scalar", "currency", 1.0), date(2025, 7, 1)) == date(2025, 12, 31)
+
+
 def test_income_year_mock_backdates_valid_from_to_income_year_start():
     record = _record(
         "bracket_schedule", "/1", [Bracket(threshold=0, rate=0.0)],
@@ -1118,6 +1129,12 @@ def test_a_negative_rate_is_sane_and_an_unnormalised_percentage_is_not():
     assert _values_sane("/1", ProposalDraft(found=True, value_scalar=-0.0006))
     assert not _values_sane("/1", ProposalDraft(found=True, value_scalar=11.0))
     assert not _values_sane("/1", ProposalDraft(found=True, value_scalar=-6.0))
+
+
+def test_a_rate_in_percentage_points_is_sane_under_unit_per_hundred():
+    # $bho_rl_rate2 holds 0.45 for «0,45 %».
+    assert _values_sane("/100", ProposalDraft(found=True, value_scalar=0.45))
+    assert not _values_sane("/100", ProposalDraft(found=True, value_scalar=450.0))
 
 
 def test_a_derived_amount_is_rounded_like_the_amount_held():

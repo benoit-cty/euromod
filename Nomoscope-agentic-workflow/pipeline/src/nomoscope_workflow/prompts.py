@@ -7,9 +7,15 @@ import re
 from datetime import date
 
 from .regions import region_key
-from .schema import ParameterRecord, ProposalDraft, RetrievalHit, income_year_for
+from .schema import (
+    ParameterRecord,
+    ProposalDraft,
+    RetrievalHit,
+    income_year_for,
+    start_of_year_as_of,
+)
 
-PROMPT_VERSION = "0.12.0"
+PROMPT_VERSION = "0.13.0"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -30,7 +36,8 @@ Rules:
   contain the value. It is checked character-for-character against the source; paraphrase = rejection.
 - citation_chunk_id MUST be the chunk_id of the extract you quoted.
 - Normalise units: percentages become decimal fractions when the parameter unit is "/1"
-  (11 % -> 0.11); durations in months become decimal years only if the unit says so.
+  (11 % -> 0.11) and stay percentage points when it is "/100" (0,45 % -> 0.45); durations in
+  months become decimal years only if the unit says so.
 - Bracket schedules: ordered ascending, each band carries its LOWER threshold plus rate (or amount);
   the first band starts at threshold 0; the last band runs to infinity.
 - A band boundary is ONE figure with two names. Statute states a progressive schedule as the
@@ -45,6 +52,8 @@ Rules:
   EXCEPTION — when the parameter block declares "Temporal basis: INCOME YEAR", valid_from MUST be
   1 January of the reference year (the income year), NOT the act's publication or in-force date:
   such acts are published after the income year yet apply retroactively to its income.
+  When it declares "Temporal basis: START OF YEAR", the reference date is 1 January of the
+  system year: propose the value in force on that day, not a later one.
 - Several extracts may state this value for different periods (annual implementing acts are
   common): choose the one whose period covers the reference date. Never prefer an extract
   merely because it matches the current value — detecting a change IS the job.
@@ -90,7 +99,7 @@ You are a sceptical reviewer of a proposed policy-parameter update. You get the 
 definition, the proposal, and the legal extracts it was based on. Perform EXACTLY three checks,
 each producing one boolean (true = the check passes):
 1. citation_supports_value — the quoted extract states the proposed value
-   (after unit normalisation, e.g. 11 % -> 0.11 for unit "/1"). When the proposal carries a
+   (after unit normalisation, e.g. 11 % -> 0.11 for unit "/1", 0,45 % -> 0.45 for "/100"). When the proposal carries a
    `derivation`, the deterministic pre-checks have already verified every operand quote and the
    arithmetic; your check is then whether the operands are the figures the parameter's
    definition calls for and the formula is the right one (the right two amounts in a ratio, the
@@ -98,7 +107,10 @@ each producing one boolean (true = the check passes):
 2. dates_consistent — valid_from is compatible with the cited version's validity window
    and the reference date. An extract marked "LATER IN THE SYSTEM YEAR" may set the value for
    the whole system year: a valid_from before its version start is consistent when the text
-   applies the value from that date. When the parameter block declares "Temporal basis: INCOME YEAR",
+   applies the value from that date. When the parameter block declares "Temporal basis: START OF
+   YEAR", the reference date is 1 January of the system year: a value entering into force later
+   that year is the wrong one, an old valid_from is fine. When the
+   parameter block declares "Temporal basis: INCOME YEAR",
    valid_from must instead be 1 January of the reference (income) year, and a version entering
    into force AFTER the income year is correct, not an inconsistency. A CONSOLIDATED code article
    (e.g. "CGI, art. 197") whose version is in force on 1 July of the year following the income year
@@ -112,7 +124,7 @@ each producing one boolean (true = the check passes):
    to the income year (e.g. "la contribution mentionnée au I de l'article 224 … due au titre
    de l'imposition des revenus de l'année N") each prove the vintage regardless of enactment
    date — never require the value and the year to appear in a single extract.
-3. values_sane — units plausible (rates in [0,1] for unit "/1"), bracket thresholds strictly
+3. values_sane — units plausible (rates in [0,1] for unit "/1", percentage points for "/100"), bracket thresholds strictly
    ascending, no absurd magnitude versus the current value.
 
 Output procedure — follow it literally:
@@ -180,6 +192,15 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
             f"names no year. Do NOT require a single extract to contain both the value and the "
             f"year: one extract stating the value plus another extract of the same act naming "
             f"income year {year} is sufficient evidence to propose the value."
+        )
+    elif info.temporal_basis == "start_of_year":
+        reference = start_of_year_as_of(as_of)
+        temporal_note = (
+            f"\nTemporal basis: START OF YEAR — EUROMOD system year {as_of.year} holds the value in "
+            f"force on {reference.isoformat()}, not the mid-year one. The reference date is "
+            f"{reference.isoformat()}: propose the value in force on that day, with its own "
+            f"valid_from (which may be years earlier); a version entering into force later in "
+            f"{as_of.year} is the NEXT system year's value, not this one's."
         )
     # A regional (autonomous-community) parameter: retrieval is already scoped
     # to state law plus that community's law (ADR 0003); the model is told so,

@@ -17,7 +17,14 @@ class ChunkIR:
 
 
 def chunk_text(content: str, context_header: str, max_chars: int = 6_000) -> list[ChunkIR]:
-    """Split text into newline-aware chunks while preserving character offsets."""
+    """Split text into newline-aware chunks while preserving character offsets.
+
+    An empty text (an abrogated article, a heading-only unit) has no chunk:
+    a (0, 0) chunk breaks `chunks_check` and fails the whole act's load (the
+    scout's ingests of loi 84-53 and of several KALI conventions in the 5 Nov run).
+    """
+    if not content:
+        return []
     if len(content) <= max_chars:
         return [ChunkIR(seq=0, char_start=0, char_end=len(content), content=content, context_header=context_header)]
 

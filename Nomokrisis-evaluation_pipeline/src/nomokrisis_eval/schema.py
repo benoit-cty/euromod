@@ -307,6 +307,10 @@ class CaseResult(BaseModel):
     expected_value: object | None = None
     #: value_correct came from Expected.accept rather than Expected.value.
     value_alternative: bool = False
+    #: 'stated' / 'derived' when value_correct is False because EUROMOD is one
+    #: cent or one euro off the figure the law states (scoring.law_vs_euromod).
+    #: A finding, reported as its own success; value_correct stays strict.
+    euromod_discrepancy: str | None = None
     # Benchmark cases only (Expected.openfisca set): the linked OpenFisca value
     # and whether the proposal / EUROMOD's own value agree with it. The pair is
     # what tells a model error from a EUROMOD error when the two disagree.

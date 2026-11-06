@@ -43,6 +43,7 @@ from nomoscope_workflow.schema import (
     SourceType,
     TemporalBasis,
     income_year_for,
+    start_of_year_as_of,
 )
 
 from .openfisca_golden import db_constants, external_parameter, schedule_at, value_at
@@ -175,11 +176,12 @@ def openfisca_reference(
     external = external_parameter(conn, info.country, path)
     if external is None:
         return None
-    on = (
-        date(income_year_for(as_of.year), 1, 1)
-        if info.temporal_basis == TemporalBasis.INCOME_YEAR
-        else as_of
-    )
+    if info.temporal_basis == TemporalBasis.INCOME_YEAR:
+        on = date(income_year_for(as_of.year), 1, 1)
+    elif info.temporal_basis == TemporalBasis.START_OF_YEAR:
+        on = start_of_year_as_of(as_of)
+    else:
+        on = as_of
     if component == "brackets":
         schedule, source_date = schedule_at(conn, external["id"], on)
         value = [b.model_dump(exclude_none=True) for b in schedule] if schedule else None
@@ -325,7 +327,13 @@ def _policy(ref: str) -> str:
 EUROMOD_CHANGED, EUROMOD_KEPT, NOT_LEGISLATIVE = "changed", "kept", "not_legislative"
 
 #: What the workflow answered (the columns).
-OUTCOMES = ("same value", "different value", "kept Y-1 value", "not found", "rejected", "error")
+#: "EUROMOD off the law": EUROMOD is one cent or one euro off the figure the
+#: law states and the workflow proposed the law's (scoring.law_vs_euromod) —
+#: a finding, counted as a success beside "same value", never merged into it.
+OUTCOMES = (
+    "same value", "EUROMOD off the law", "different value", "kept Y-1 value",
+    "not found", "rejected", "error",
+)
 
 
 def euromod_side(result: CaseResult) -> str:
@@ -350,6 +358,8 @@ def outcome(result: CaseResult) -> str:
         return "not found"
     if result.value_correct:
         return "same value"
+    if result.euromod_discrepancy:
+        return "EUROMOD off the law"
     if result.routing_actual == Routing.UNCHANGED:
         return "kept Y-1 value"
     return "different value"
@@ -398,12 +408,31 @@ def summarize_benchmark(results: list[CaseResult]) -> dict:
 
     changed, kept = matrix[EUROMOD_CHANGED], matrix[EUROMOD_KEPT]
     scored = [r for r in results if euromod_side(r) != NOT_LEGISLATIVE]
-    answered = [r for r in scored if outcome(r) in ("same value", "different value", "kept Y-1 value")]
+    answered = [
+        r for r in scored
+        if outcome(r) in ("same value", "EUROMOD off the law", "different value", "kept Y-1 value")
+    ]
+    findings = [r for r in results if outcome(r) == "EUROMOD off the law"]
+    # A national_team_source / derived parameter has no value to match: routed
+    # around as expected, the workflow did exactly what it should.
+    correct = sum(
+        1 for r in results
+        if r.value_correct or (euromod_side(r) == NOT_LEGISLATIVE and r.routing_correct)
+    )
     mid_year = [r for r in scored if "mid_year_change" in r.hazards]
     with_openfisca = [r for r in scored if r.openfisca_value is not None]
     headline = {
         "parameters": len(results),
         "legislative": len(scored),
+        "correct (same value, or routed around as expected)": _pct(correct, len(results)),
+        # 'derived' rests on the derivation's rounding as well as on quoted
+        # operands, so the two kinds stay countable apart.
+        "EUROMOD off the law (findings)": (
+            f"{len(findings)} ("
+            f"{sum(1 for r in findings if r.euromod_discrepancy == 'stated')} stated, "
+            f"{sum(1 for r in findings if r.euromod_discrepancy == 'derived')} derived)"
+        ),
+        "success (correct + findings)": _pct(correct + len(findings), len(results)),
         "coverage": _pct(len(answered), len(scored)),
         "change recall": _pct(changed["same value"], sum(changed.values())),
         "precision": _pct(sum(1 for r in answered if r.value_correct), len(answered)),
