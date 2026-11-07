@@ -273,7 +273,12 @@ def _brackets_equal(a: Bracket, b: Bracket) -> bool:
     def eq(x: float | None, y: float | None) -> bool:
         return _num_equal(x, y)
 
-    return eq(a.threshold, b.threshold) and eq(a.rate, b.rate) and eq(a.amount, b.amount)
+    # A band with no rate and a band at 0 % both tax nothing: the CEHR's first
+    # band has no rate member in EUROMOD (assembled as `rate: null`), and a
+    # proposal stating «0 %» for it was scored a wrong schedule (7 Nov batch).
+    rate_a = 0.0 if a.rate is None else a.rate
+    rate_b = 0.0 if b.rate is None else b.rate
+    return eq(a.threshold, b.threshold) and eq(rate_a, rate_b) and eq(a.amount, b.amount)
 
 
 def score_item(

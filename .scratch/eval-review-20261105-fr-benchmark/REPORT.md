@@ -1,114 +1,145 @@
-# FR 2025 benchmark: improvements of 3–6 Nov 2026
+# FR 2025 benchmark: improvements of 3–7 Nov 2026
 
 Status: ready-for-human
-Run measured: `eval-20261105T212046Z-gpt-6-luna-c79352` (agent 0.8.3, prompt 0.12.0, model `azure_openai/gpt-6-luna`, critique `gpt-6.1-sol`), finished 6 Nov 2026 02:40.
-Benchmark: blind EUROMOD 2024 → 2025 over every FR parameter with a value in force on 1 July 2025. That is 345 cases: 169 changed, 156 unchanged, 19 new, 1 derived. A case counts as a success when the proposed value equals the value EUROMOD holds for 2025 (`value_correct`).
+Last full run: `eval-20261106T111405Z-gpt-6-luna-5565d9` (agent 0.9.1, model `azure_openai/gpt-6-luna`, critique `gpt-6.1-sol`).
+Later batches on the cases that run got wrong: `eval-20261106T161223Z-…-2e6f83` (13 contribution cases) and `eval-20261107T093927Z-…-93cdcd` (agent 0.9.2, 30 cases: RSA, prime d'activité, all schedules).
+Benchmark: blind EUROMOD 2024 → 2025 over every FR parameter with a value in force on 1 July 2025. That is 345 cases.
 
 ## Headline
 
-**247 / 345 = 71.6 %**, up from 136 (39.4 %) at the start of this series and from 218 (63.2 %) on the previous full run.
+**Success 270 / 345 = 78.3 %** on the last full run (0.9.1). That is 252 values equal to EUROMOD's plus **18 findings** where EUROMOD is off the law. The findings are counted as successes and reported separately, with no tolerance (see below).
 
-| run | agent | correct | score |
-|---|---|---|---|
-| `…e1ed27` (3 Nov) | 0.3.0 | 136 | 39.4 % |
-| `…5c7ac3` (4 Nov) | 0.5.0 | 177 | 51.3 % |
-| `…1d8bee` (5 Nov) | 0.6.1 | 178 | 51.6 % |
-| `…975e37` (5 Nov) | 0.7.0 + corpus additions | 207 | 60.0 % |
-| `…0ca32d` (5 Nov) | 0.8.0 | 218 | 63.2 % |
-| **`…c79352` (6 Nov)** | **0.8.3** | **247** | **71.6 %** |
+Adding the batch results on the failing cases gives **about 279 / 345 ≈ 80.9 %**. That is a projection, not a measurement:
+- full run: 270;
+- the 0.9.2 batch: +6 net (15/30 against 9/30 for the same cases in the full run);
+- the contribution batch: +3, of which APEC is 2 and `tscerpi_rate7` is 1.
 
-| metric | 0.8.0 | 0.8.3 |
-|---|---|---|
-| coverage (a value was proposed) | 78.5 % | 85.5 % (294/344) |
-| precision (proposed values that are right) | 80.7 % | 84.0 % |
-| change recall | 55.9 % (105/188) | 69.1 % (130/188) |
-| unchanged values confirmed | 72.4 % (113/156) | 75.0 % (117/156) |
-| verbatim extracts | 100 % | 100 % |
-| hallucination | 0 % | 0 % |
+The runs vary by about ±5 cases. A full run on 0.9.2 is what confirms 80 %.
 
-Against 0.8.0, 35 cases were gained and 6 lost. I checked the regressions: `bsa00_amt2/3` are composition mistakes by the model (lone-parent rates instead of couple rates, one extra child), and the critique caught both. The other four (`bunmt_bonus1/6`, `UB_QperMin`, `tsceepi_rate11`) were right in the previous run. These are run-to-run LLM variance, not a defect of the new code. Expect about ±5 cases of noise between two runs of the same agent.
+| run | agent | correct | findings | success |
+|---|---|---|---|---|
+| `…e1ed27` (3 Nov) | 0.3.0 | 136 | — | 39.4 % |
+| `…5c7ac3` (4 Nov) | 0.5.0 | 177 | — | 51.3 % |
+| `…0ca32d` (5 Nov) | 0.8.0 | 218 | — | 63.2 % |
+| `…c79352` (6 Nov) | 0.8.3 | 248 | not scored | 71.9 % |
+| **`…5565d9` (6 Nov)** | **0.9.1** | **252** | **18** | **78.3 %** |
+| batches, projected | 0.9.2 | | | ≈ 80.9 % |
 
-Note on attribution: agent 0.8.2 was measured only on a 42-case batch (16 gained, all of which had failed in 0.8.0). Its full run was stopped for 0.8.3, so the 0.8.0 → 0.8.3 gain covers both versions.
+Runs before 0.9.0 were scored before the findings rule existed and were not re-scored, so their score is the "correct" column alone.
 
-## What was changed
+0.9.1 full-run metrics:
+- coverage (a value was proposed): 83.5 %
+- precision (proposed values that are right): 87.0 %
+- change recall: 66.5 %
+- unchanged values confirmed: 80.3 %
+- verbatim extracts: 100 % in what reaches the queue
+- hallucination: 1 %, three non-verbatim quotes, all caught by the extract check and scored as rejected
+- errors: 1, an Azure 429
+
+Against 0.8.3, 40 cases were gained and 18 lost. The losses are model variance: an operand quote one word off, the old 622,63 base, a wrong multiplier. The same families gained cases elsewhere.
+
+### Findings: EUROMOD off the law
+When the proposal passed the critique on a verbatim extract, and every figure where it parts from EUROMOD is exactly one unit of the held precision, the case is a **finding**. That means 0,01 on a cents amount or 1 on a whole one, never a rate. A finding is either stated in the extract or derived by a verified derivation.
+
+`value_correct` stays False and there is no tolerance. The report gives findings their own column, and the `success` line adds them to the correct answers.
+
+The 18 findings of 0.9.1 include:
+- AF 151,81 against the law's 151,80;
+- the barème's 11 496 against 11 497;
+- PAJE ceilings one euro off;
+- RSA amounts one cent off (`amt7`, `amt10`);
+- prime de Noël amounts (`bonus_amt5`).
+
+They are for the EUROMOD economists team.
+
+## What changed in 0.9.x (6–7 Nov)
+
+### Corpus: sources the contribution cases needed
+- **ANI APEC du 12 juillet 2011:** the signed PDF is a scan, and there is no OCR, so a Markdown transcription was contributed as a collective agreement (evidence). Art. 14 states 0,036 / 0,024 pour 100. The APEC cases (`tsceeui_rate2`, `tscerui_rate2`) went from not_found to correct.
+- **Agirc-Arrco circulars «Paramètres 2025» (2024-18-DRJ) and «Paramètres 2026» (2025-16-SG-DRJ)**, as guidance. They state the tranche rates, CEG, CET and APEC.
+- **AGS brève of 17 Dec 2025** (guidance). It states only the 2026 rate, so `tscerwgf_rate` correctly stays not_found: it needs an AGS source dated 2025.
+- **A `.pdf` URL that no browser can fetch is refused** instead of ingesting the HTML page in its place. The AGS 2025 PDF had been ingested as the press-release listing.
+
+### 0.9.2 (measured on the 30-case batch)
+- **Derivations: the arithmetic decides the value** (`pipeline._round_like_held`). The check accepted a result within 0.1 % of the typed figure, and RSA 646,52 × (1,28412 + 2 × 0,42804) = 1 383,68 was typed and kept as 1 383,28. The verified result is now rounded like the held value. → `bsa00_amt9` is correct.
+- **One more attempt when the only objection is a misquote** (`pipeline._misquoted_only`). The attempt after `locate` was the last one, and «calculé pour trois personnes ou plus lorsque» was refused with the exact passage in hand. → RSA forfait logement `hp_amt2`, `hp_amt4`, `hp_amt5` and prime d'activité `bsawk_hp_amt5` are correct. The verbatim check is unchanged.
+- **Schedules are searched in the law's language** (`paramdb._group_texts`). A group now composes a French label and description from its members' French texts. In English, the AGIRC-ARRCO schedule never reached the circular. → `tscee:tsc_schedule` (7,30 % / 0,40 %) and `tsceesi_rate_schedule` are correct.
+- **Footnotes are no longer sections** (`documents.drop_table_rows`). Bare numbers that start over are footnotes. Circular 2024-18 reads 1 | 1 2 3 | 1, and its 2025 rate table was a "section" headed by a footnote. Only the two Agirc-Arrco circulars were reparsed (see the decision below).
+- **Scoring: a band with no rate equals a 0 % band.** EUROMOD's CEHR first band has no rate member, and a proposal stating 0 % for it scored as a wrong schedule. Re-scoring the full run changes nothing; the batch gains `tinto_schedule`.
+
+### Not yet measured
+- **Articles of the same act that name a retrieved one** (`retrieval._same_act_citing`). ANI AGIRC-ARRCO art. 36, «un pourcentage d'appel, fixé à 127 %, est appliqué aux taux visés à l'article 35», was never retrieved with art. 35. Without it the model refuses the AGIRC-ARRCO schedules (`ConstDef:tsc_schedule`, `_2`, `_3`): it has the calling rates but not the call rate or the split. Art. 35 now brings art. 36. This was added after the batch started.
+
+### 0.9.2 batch, case by case (30 cases that failed or were findings in the full run)
+
+| outcome | cases |
+|---|---|
+| gained (7, +1 after re-scoring) | `bsa00_amt9`, `bsa00_hp_amt2/4/5`, `bsawk_hp_amt5`, `tscee:tsc_schedule`, `tsceesi_rate_schedule`, `tinto_schedule` (re-score) |
+| kept | `amt7`, `amt10`, `bonus_amt5` (findings), `bonus_amt2` (now exact), `tin_schedule` (finding), `tinto_schedule_2`, `tscee:tsc_schedule_2` |
+| lost (1) | `ConstDef:tsc_schedule_3` (CET employee 0,14 %): the model would not derive it from the overall 0,35 % and the circular was not retrieved. Variance on a fragile case; the not-yet-measured art. 36 change targets it |
+| still failing | prime d'activité `bsawk_hp_amt3/4`, `bsawk_minamt1/3/5` (not found, see below); `bsa00_amt8` (wrong composition); `bsa00_hp_amt3` (operand quote again); AGIRC-ARRCO `tsc_schedule/_2`; self-employed and farmers' schedules |
+
+## What changed up to 0.8.3 (3–6 Nov)
 
 ### Retrieval: getting the act that states this year's figure into view
-- **Implementing acts (references followed backwards)** (`retrieval.implementing_acts`):
-  - A code article that says «fixé par décret» now brings the recent non-code acts that name it: CASF L. 262-2 → the décret du 28 mars 2025 (RSA 646,52 €), CSS L. 842-3 → the prime d'activité decree (633,21 €), R. 522-2 → instruction DSS/2B/2024/181.
-  - These include acts that name the article inside a list closed by the code's name.
-  - Only acts in force on the reference date and entered into force in the year before it are taken.
-  - Each act also brings its two chunks nearest to the query.
-  - *0.8.3:* the 20 best-ranked code articles are looked at instead of 6, and the acts are ranked by distance to the query before the cap of 6. With retrieval order alone, six family-benefit articles filled the cap and L. 262-2 was 16th.
-- **Recent texts for a named need** (`locate_named_units`): after a not_found, the need's words are also searched over texts entered into force in the last year. For example, «l'arrêté portant revalorisation de la BMAF» matched the 2005 decree by title, while the 2025 amount is in DSS/2B/2025/38.
-- **Code lists**: «Articles L. 381-1, …, R. 522-2 … du code de la sécurité sociale» is read as references to each article, including across line breaks.
+- **Implementing acts, with references followed backwards** (`retrieval.implementing_acts`). A code article that says «fixé par décret» brings the recent non-code acts that name it:
+  - CASF L. 262-2 → the décret du 28 mars 2025 (RSA 646,52 €);
+  - CSS L. 842-3 → the prime d'activité decree (633,21 €);
+  - R. 522-2 → instruction DSS/2B/2024/181.
+  
+  This includes acts that name the article in a list closed by the code's name. The 20 best-ranked code articles are looked at, the acts are ranked by distance to the query, and each act also brings its two chunks nearest to the query.
+- **Recent texts for a named need** (`locate_named_units`): after a not_found, the need's words are also searched over texts that entered into force in the last year.
+- **Code lists** («Articles L. 381-1, …, R. 522-2 … du code de la sécurité sociale») are read as references to each article.
 
-### Corpus: documents the benchmark needed and Legifrance does not hold
-Added as **guidance** (citable, shown as guidance on every proposal):
-- Instruction DSS/2B/2025/38 (BMAF and the April 2025 revaluations).
-- Instruction DSS/2B/2024/181 (family-benefit ceilings for 2025).
-- The CAF EAJE barème 2025.
-- The CSG instruction of 4 Dec 2024.
-
-Added as **evidence**: CSS D. 843-1.
-
-Supporting changes:
-- **Contributed PDFs:** they are split without turning table rows or dates into headings (`documents.drop_table_rows`).
-- **Bulletin officiel:** a `.pdf` URL that answers a script with an HTML page is retried once in headless Firefox (`contributed.fetch_in_browser`). This is how the Bulletin officiel of sante.gouv.fr was fetched, with no captcha solving. The worker image installs Firefox, but **the image still has to be rebuilt** (`docker compose --profile gpu up -d --no-deps --build worker`).
+### Corpus
+- **Guidance:** DSS/2B/2025/38 (BMAF and the April 2025 revaluations), DSS/2B/2024/181 (family-benefit ceilings for 2025), the CAF EAJE barème 2025, and the CSG instruction of 4 Dec 2024.
+- **Evidence:** CSS D. 843-1.
+- **PDF splitting:** table rows and dates are no longer turned into headings.
+- **Bulletin officiel:** a `.pdf` URL that answers a script with HTML is retried once in headless Firefox.
 
 ### Verification: fewer right values refused, same anti-hallucination guarantee
-The extract is still checked character-for-character against the chunk it points to.
-- **Re-pointing a quote:** when the model cites a retrieved chunk that does not hold its quote, the citation is moved to the one retrieved chunk that does. A citation string or a corrupted UUID written in the id field is resolved by the extract. Eleven right values of the 5 Nov run had been refused for swapped ids.
-- **PDF artefacts in quotes:** whitespace runs are equivalent, a split ligature («prestati ons») is tolerated between letters only, and punctuation at the two ends of a quote is ignored.
-- **Derivations** (a value computed from quoted operands):
-  - Numbers the law spells out are accepted («trois fois», «la moitié»).
-  - «majoré de 50 %» states a multiplier of 1.5.
-  - The months 3, 6 and 9 are allowed as constants.
-  - Rates are rounded like the value held (12,954 % → 0.1295).
-  - *0.8.3:* a PDF table row «I 329,71 397,64 449,43 65,21» now states each of its four amounts. It used to be read as one number, which refused the housing-benefit rent ceilings.
-  - *0.8.3:* when an operand's extract misses its figure, the retry is shown the chunk's sentence that does state it («1/ 730e», CSS D. 622-7).
-- **Confirming the held value:** when the proposed value equals EUROMOD's and the citation is accepted, a start-date objection becomes a note. The start date of an unchanged value changes nothing in the export.
-- **"FYA" amounts:** these are proposed as the amount in force, never averaged. This gained the prime d'activité amounts: 949,82 = 633,21 × 1,5.
+- **A quote that sits in another retrieved chunk** is re-pointed to the one retrieved chunk that holds it. A citation string or a corrupted UUID in the id field is resolved by the extract.
+- **PDF artefacts are tolerated:** whitespace runs, a split ligature between letters, and punctuation at a quote's ends.
+- **Derivations:**
+  - numbers the law spells out are accepted;
+  - «majoré de 50 %» states 1.5;
+  - the months 3, 6 and 9 are allowed constants;
+  - rates are rounded like the value held;
+  - a PDF table row states each of its amounts;
+  - the retry is shown the sentence stating a missed figure.
+- **Confirming the held value:** a start-date objection becomes a note.
+- **"FYA" amounts** are proposed as the amount in force, never averaged.
 
-## What still fails (98 cases)
+## What still fails (about 66 cases after the batches)
 
 | bucket | cases | what it is | lever |
 |---|---|---|---|
-| Rounding / boundary offsets | 19 | ±0.01 € or ±1 € from EUROMOD; the legal figure is right. Examples: AF amounts (151.80 vs 151.81), PAJE ceilings (36 622 vs 36 621), décote limits (1 965 vs 1 964), the income-tax barème held as "up to" bounds (11 496 vs the law's 11 497) | scoring decision |
-| EUROMOD conventions or stale values | 23 | Values that follow a model convention, not the 2025 law:<br>• `tpr_threshold1–5` lag a year<br>• `bho_rl_rate2/3` held in percent points (0.45 for 0.45 %)<br>• `tscsesi_*` rates are EUROMOD aggregates of several contributions<br>• `bsawk_income_rate` 0.61 while the law says 59,85 % since April 2025<br>• `UB_dayfixamt` 13.11 while 13.18 applies from 1 July<br>• `tinty_dedub_uplim` 0, switched off in the model<br>• `RetAge_min` 62.5 | curation or scoring decision |
-| Not found | 38 | Mostly social contributions: AGIRC-ARRCO / CSG schedules, farmers' and self-employed rates, unemployment rates. Also the prime de fin d'année (`bunmt_bonus*`, 5), ASF (`bchor_amt1/2`), `bhl_max_amt1/2`, `tpr` rates, `tinrt_cdhr` | corpus, retrieval |
-| Model reasoning errors | 16 | The wrong household scale for the RSA (`bsa00_amt2/3/8`), an old BMAF (`bched_amt2`), the 2025 PSS where the N−2 PSS applies (`bchlg_thres1`), a Mayotte amount (`bunmt_bonus5`), the employer share instead of the employee share (`tsceepi_rate11`), a wrong start date (`tscer_red_coef2`), … | pipeline |
-| Right value rejected by the critique | 2 | `UB_QperMin` (130 days vs 6 months), `tscerho_rate2` | pipeline |
+| EUROMOD conventions or stale values | ~23 | Unchanged from the 0.8.3 review: `tpr_threshold*` lag a year, `bho_rl_rate2/3` are held in points, `tscsesi_*` are aggregates, `bsawk_income_rate`, `UB_dayfixamt`, `tinty_dedub_uplim` (switched off). New: the **2025 self-employed reform is not modelled**. D633-3 says 0,72 % (EUROMOD 0,60 % until 2026). D635-7 says 8,1 / 9,1 % up to 1 / 4 PSS, where EUROMOD keeps 7 / 8 % up to an RCI ceiling of 43 891 (`sched_schedule_3`, `tscsepi_schedule`, `tscsepi_uplim`). These are findings bigger than one unit, so they don't count | report to the EUROMOD team; or a curation decision |
+| Prime d'activité scale | 5 | The model refuses to apply the D843-1 uplifts (+50 %, +30 %, +40 %) to the 633,21 € base. It wrongly reads them as RSA-only, or lacks the 633,21 € decree in its hits. `minamt4` and `hp_amt5` succeed with the same evidence | prompt: say that D843-1 is the prime d'activité scale; make sure the décret naming L. 842-3 is always retrieved with D843-1 |
+| AGIRC-ARRCO schedules | 3 | The circular is not retrieved for the schedules, and ANI art. 36 was missing | the art. 36 change (to measure); the circular's table chunk still ranks low in the vector leg |
+| Contributions with no source | ~6 | AGS for 2025 (`tscerwgf_rate`); employee rates of 0 % that no text states (`tsceeui_rate1`); FNAL `tscerho_*`; farmers' vieillesse `sched_schedule` | corpus: an AGS release dated 2025, Urssaf barèmes as a guidance publisher |
+| Model reasoning errors | ~12 | `bsa00_amt8` (lone-parent coefficients for a couple), `bched_amt2`, `bchlg_thres1`, `tscer_red_coef2`, … | variance; two proposals per case |
+| Other not found | ~17 | prime de fin d'année variants, ASF, `bhl_max_amt1/2`, … | as in the 0.8.3 review |
 
-Ceiling with the pipeline alone: if every not-found and reasoning error were fixed, the score would reach about 86 %. Realistically, a third to a half of those 56 cases are reachable soon, which gives **about 76–79 %**.
+## Decisions and steps for you
 
-**Reaching 80 % needs a decision on the first two buckets** (42 cases). The pipeline is not wrong there. EUROMOD holds a value that is not the figure the law states.
-
-## What can still be done, by expected gain
-
-1. **Scoring: accept one unit of the held precision** (+19, giving about 77 %).
-   - What: ±0.01 when EUROMOD holds cents, ±1 when it holds whole euros. The bound would be read off the held value.
-   - Trade-off: CLAUDE.md keeps the tolerance at 1e-6 on purpose, so that the barème's 1-euro erratum scores as a difference. This option gives that up.
-   - Alternative: report both numbers, strict and one-unit.
-2. **Curation: record the conventions in the parameter metadata** (+up to 23).
-   - What: add a `lag_years` / "held as previous year" flag (`tpr_threshold*`), a percent-points unit (`bho_rl_rate*`), and a "sum of components" note for the aggregated contribution rates.
-   - Where: the overlay in `curation/FR.curation.yaml`, re-applied by `curate-params`.
-   - The pipeline and the scorer can then follow them instead of failing on them.
-   - Stale values (`bsawk_income_rate`, `UB_dayfixamt`) are findings for the EUROMOD team, not pipeline failures.
-3. **Corpus: social contributions** (most of the 38 not-found).
-   - Add the Urssaf barèmes and the Agirc-Arrco annual circular as guidance publishers in `scout.GUIDANCE_PUBLISHERS`, or ingest them once as contributed documents.
-   - Check that the 2025 décret for the prime de fin d'année is held. It is published in December, so it reaches a system-year run through `later_in_year`.
-4. **Pipeline: household-composition arithmetic.**
-   - The RSA and prime d'activité scales (R. 262-1 / D. 843-1: +50 % for the second person, +30 %, +40 % from the third) are where the model miscounts.
-   - A worked example in the proposer prompt, or a check that the derivation's multiplier matches the household described by the label, would target `bsa00_amt2/3/8` and their prime d'activité twins.
-5. **Variance.**
-   - About ±5 cases move between two runs of the same agent.
-   - Two proposals per case, keeping the one the critique accepts, or a second attempt on a disagreement, would remove most of it, at roughly twice the LLM cost.
+1. **Run the full benchmark on 0.9.2.** That confirms the projected 80 % and measures the art. 36 change. It's a billed run of about 3–4 h, one at a time on the GPU.
+2. **Reparse the other contributed documents with the footnote rule?** 23 documents change: Cnav circulars, Unédic 2025-03, DSS/2B/2025/38 (3 → 1 unit) and DSS/2B/2024/181. The rule mostly removes junk sections such as «§2 trimestres (en moyenne …)», but it re-chunks texts that passing RSA, family and pension cases quote. If you agree:
+   - run `cli reparse-documents -j FR` then `nomergon submit embed --wait`, before the full run, so that the run measures the effect.
+3. **AGS rate for 2025:** save the AGS release that followed the board of 2 Dec 2024 or of 18 June 2025. ags-garantie-salaires.org does not serve it to a script; I'll ingest it.
+4. **The golden set (separate from the benchmark)** was reviewed on 7 Nov with what the benchmark taught us: 59 FR cases now, 40 of them reset to `verified: false`. See `Nomokrisis-evaluation_pipeline/golden_set_FR.md`.
+   - It added citations to 18 cases that are now answerable.
+   - It corrected two wrong expectations: `tinty_dedub_uplim` (national team) and `tscsepi_uplim` (47 100, not 43 891).
+   - It added seven curated cases: a collective agreement, AGIRC-ARRCO arithmetic, the first ready derivations, a later-in-year act, `start_of_year`, and a one-cent finding.
+   - The builder now takes `exclude: true` per entry and `fill_from_links: false` in the header.
+   - Re-verify the reset cases in the UI's Golden set tab.
 
 ## Housekeeping
 
-- **Nothing is committed.** The working tree holds all changes: pipeline, ingest, worker Dockerfile, tests and CLAUDE.md.
+- **Nothing is committed.** The working tree holds all changes: pipeline, ingest, eval, tests, CLAUDE.md and `golden_set_FR.md`.
 - **Tests:**
-  - Pipeline: 155 passed, with `test_encode_client.py::test_no_worker_is_a_timeout` deselected.
-  - Ingest: 253 passed.
-- **Worker image:** it has to be rebuilt for Firefox, using `--no-deps` so the database is not restarted.
-- **Run 71** (`…861a6b`, agent 0.8.2, stopped at case 9) is still marked `running` in `eval.runs`. Ignore it.
+  - Pipeline: 162 passed. `test_encode_client.py::test_no_worker_is_a_timeout` fails whenever the worker is up, as before.
+  - Ingest: 260 passed.
+  - Eval: 96 passed.
+- **Agent version** is now 0.9.2. The 30-case batch started before the bump, so `eval.runs` records it as 0.9.1. It did run the four 0.9.2 changes listed under "0.9.2 (measured)".
+- **Run 71** (`…861a6b`, stopped at case 9) is still marked `running` in `eval.runs`. Ignore it.

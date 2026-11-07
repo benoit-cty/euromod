@@ -721,6 +721,7 @@ from nomoscope_workflow.pipeline import (  # noqa: E402
     _values_sane,
     _figures_in,
     _misquote_hint,
+    _misquoted_only,
     _round_like_held,
     evaluate_derivation,
 )
@@ -1169,6 +1170,38 @@ def test_a_derived_amount_is_rounded_like_the_amount_held():
     assert _round_like_held("/1", coarse, held(0.068)) is None and coarse.value_scalar == 0.0675
 
 
+def test_the_derivation_result_is_rounded_not_the_typed_figure():
+    # $bsa00_amt9: 646,52 × (1,28412 + 2 × 0,42804) = 1 383,682, typed 1 383,28
+    # and accepted by the 0.1 % check (5 Nov full run).
+    held = ParameterValue(value=1357.7, valid_from=date(2024, 1, 1))
+    typo = ProposalDraft(found=True, value_scalar=1383.28)
+    note = _round_like_held("currency", typo, held, 646.52 * (1.28412 + 2 * 0.42804))
+    assert typo.value_scalar == 1383.68 and "the proposal said 1383.28" in note
+    exact = ProposalDraft(found=True, value_scalar=276.74)
+    assert _round_like_held("currency", exact, held, 0.42804 * 646.52) is None
+    # No precision to round to: the typed figure stands.
+    coarse = ProposalDraft(found=True, value_scalar=0.0675)
+    assert _round_like_held("/1", coarse, ParameterValue(value=0.068, valid_from=date(2024, 1, 1)), 0.06752) is None
+    assert coarse.value_scalar == 0.0675
+
+
+def test_a_misquote_alone_earns_the_extra_attempt():
+    assert _misquoted_only([
+        "derivation: operand d's extract is not a verbatim quote of its chunk",
+        "derivation: operand d: the cited chunk reads: «3° A 16,5 % du montant forfaitaire» — quote it exactly",
+        "note: derived — a * b",
+    ])
+    assert _misquoted_only([
+        "supporting_extract is not a verbatim quote of the cited chunk",
+        "the cited chunk reads: «… 0,72 % …» — quote it exactly as written, without correcting it",
+    ])
+    assert not _misquoted_only([
+        "supporting_extract is not a verbatim quote of the cited chunk",
+        "citation_supports_value: the cited amendment does not state the first-band rate",
+    ])
+    assert not _misquoted_only(["note: derived — a * b"])
+
+
 def test_an_article_number_belongs_to_the_code_named_after_it():
     codes = {"css": "code de la sécurité sociale", "cgi": "code général des impôts",
              "cgi3": "code général des impôts, annexe iii"}
@@ -1310,3 +1343,43 @@ def test_a_law_language_query_keeps_the_names_in_quotes_and_parentheses():
     assert "Revenu de Solidarité Active" in query
     assert "Calculate" not in query and "2.52" not in query
     assert "Revenu" not in _clean_query_text(text)  # an English record drops spans as before
+
+
+def test_an_agreement_article_brings_the_nearest_article_that_names_it():
+    # ANI AGIRC-ARRCO art. 36 «… appliqué aux taux visés à l'article 35» —
+    # art. 35 retrieved, art. 36 not, the schedules not_found (7 Nov batch).
+    from datetime import date as _date
+
+    from nomoscope_workflow.retrieval import _same_act_citing
+
+    ani = "Accord national interprofessionnel du 17 novembre 2017, art. "
+
+    class _Conn:
+        def cursor(self, row_factory=None):
+            return self
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def execute(self, sql, params):
+            return self
+
+        def fetchall(self):
+            def hit(n, content):
+                return {"ord": 1, "chunk_id": f"c{n}", "citation": f"{ani}{n}", "context_header": "",
+                        "content": content, "lang": "fr", "validity": "[2019-01-01,)",
+                        "version_status": "in_force", "source_trust_class": "evidence", "score": 0.0}
+            return [
+                hit(13, "les taux fixés à l'article 35 et à l'article 36"),
+                hit(49, "selon l'article 35"),
+                hit(36, "Un pourcentage d'appel, fixé à 127 %, est appliqué aux taux visés à l'article 35."),
+                hit(60, "l'article 35 de la loi n° 2020-1 ne s'applique pas"),
+            ]
+
+    rows = [{"chunk_id": "c35", "citation": f"{ani}35", "instrument_id": "i", "valid_from": _date(2019, 1, 1),
+             "content": "taux de calcul des points"}]
+    found = _same_act_citing(_Conn(), "fr", rows, {"c35"})
+    assert [h.citation.rsplit(" ", 1)[-1] for h in found] == ["36", "49"]

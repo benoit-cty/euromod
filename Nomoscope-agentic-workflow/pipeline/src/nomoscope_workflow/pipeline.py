@@ -474,7 +474,11 @@ def frame_query(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> di
     # no rows / no schema -> received text only, previous behaviour).
     lang = retrieval.LANG_BY_COUNTRY.get(info.country, "en")
     native: list[str] = []
-    if lang not in labels and lang not in descriptions:
+    if lang in descriptions:
+        # An assembled schedule carries its members' law-language texts
+        # (paramdb._group_texts): search with those alone.
+        native = [t for t in (labels.get(lang), descriptions[lang]) if t]
+    elif lang not in labels:
         try:
             with paramdb.connect(cfg) as conn:
                 texts = translate.law_language_texts(conn, info.model_target, lang)
@@ -669,7 +673,12 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                     else:
                         mech_notes.append(note)
                         report.issues.append(f"note: derived — {_derivation_summary(draft, hits)}")
-                        rounded = _round_like_held(info.unit, draft, _current_value(record, as_of))
+                        result = (
+                            evaluate_derivation(draft.derivation, {op.name: op.value for op in draft.operands})
+                            if draft.value_brackets is None
+                            else None
+                        )
+                        rounded = _round_like_held(info.unit, draft, _current_value(record, as_of), result)
                         if rounded is not None:
                             report.issues.append(rounded)
 
@@ -976,7 +985,10 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
             and not report.provisional
             and draft is not None
             and draft.found
-            and state.get("attempts", 0) < MAX_PROPOSAL_ATTEMPTS
+            and (
+                state.get("attempts", 0) < MAX_PROPOSAL_ATTEMPTS
+                or (state.get("attempts", 0) < MAX_PROPOSAL_ATTEMPTS + 1 and _misquoted_only(report.issues))
+            )
             and not is_mock  # the mock extractor is deterministic; retrying can't help
         )
 
@@ -1362,6 +1374,28 @@ def _derivation_summary(draft: ProposalDraft, hits: list[RetrievalHit]) -> str:
     return f"{draft.derivation} with " + ", ".join(parts)
 
 
+_MISQUOTE_ISSUE = re.compile(
+    r"supporting_extract is not a verbatim quote of the cited chunk$"
+    r"|the cited chunk reads: «"
+    r"|derivation: operand \w+'s extract is not a verbatim quote of its chunk$"
+    r"|derivation: operand \w+: the cited chunk reads: «"
+)
+
+
+def _misquoted_only(issues: list[str]) -> bool:
+    """Whether a failed critique objects to nothing but a misquote.
+
+    Such a proposal earns one attempt past MAX_PROPOSAL_ATTEMPTS: its
+    feedback quotes the passage it tried to copy, and the attempt after
+    `locate` is otherwise the last — RSA forfait logement «calculé pour
+    trois personnes ou plus lorsque …» for «… pour trois personnes lorsque
+    …» was refused with the right passage in hand ($bsa00_hp_amt5, 5 Nov).
+    The extract check itself is unchanged.
+    """
+    objections = [i for i in issues if not i.startswith("note:")]
+    return bool(objections) and all(_MISQUOTE_ISSUE.match(i) for i in objections)
+
+
 def _misquote_hint(hits: list[RetrievalHit], chunk_id: str, extract: str) -> str | None:
     """The retry's feedback for a non-verbatim extract: what the chunk really says."""
     content = next((h.content for h in hits if h.chunk_id == chunk_id), "")
@@ -1497,7 +1531,9 @@ def _rate_digits(held: ParameterValue | None) -> int | None:
     return digits if 4 <= digits <= 8 else None
 
 
-def _round_like_held(unit: str, draft: ProposalDraft, held: ParameterValue | None) -> str | None:
+def _round_like_held(
+    unit: str, draft: ProposalDraft, held: ParameterValue | None, derived: float | None = None
+) -> str | None:
     """Round a derived amount the way the published amount is: half-up, to the held precision.
 
     The law states the operands, the administration publishes the rounded
@@ -1509,6 +1545,12 @@ def _round_like_held(unit: str, draft: ProposalDraft, held: ParameterValue | Non
     5 Nov run were 0.12954 / 0.047244); a coarser rate is left alone, since
     0.0675 is a real change from a held 0.068. Returns the reviewer's note
     when the value changed.
+
+    With `derived`, the verified derivation's own result is rounded, not the
+    figure the model typed: the check accepts a result within 0.1 % of it,
+    and RSA 646,52 × (1,28412 + 2 × 0,42804) = 1 383,68 was proposed as
+    1 383,28 (5 Nov full run, $bsa00_amt9). Without a precision to round to,
+    the typed figure stands.
     """
     if draft.value_scalar is None:
         return None
@@ -1520,14 +1562,18 @@ def _round_like_held(unit: str, draft: ProposalDraft, held: ParameterValue | Non
         digits = _held_digits(held)
     else:
         return None
-    value = Decimal(repr(draft.value_scalar))
+    source = draft.value_scalar if derived is None else derived
+    value = Decimal(repr(source))
     rounded = float(value.quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))
     if rounded == draft.value_scalar:
         return None
     note = (
-        f"note: derived {draft.value_scalar:g} rounded half-up to {rounded:g}, "
+        f"note: derived {source:g} rounded half-up to {rounded:g}, "
         f"{'whole units' if digits == 0 else f'{digits} decimals'} like the value held"
     )
+    typed = Decimal(repr(draft.value_scalar)).quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP)
+    if float(typed) != rounded:
+        note += f" (the proposal said {draft.value_scalar:g})"
     draft.value_scalar = rounded
     return note
 

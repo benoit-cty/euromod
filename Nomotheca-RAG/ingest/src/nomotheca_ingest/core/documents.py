@@ -166,6 +166,12 @@ def drop_table_rows(headings: list[Heading], lines: list[str]) -> list[Heading]:
     (DSS/2B/2025/38: «0 à 3 ans 3 à 6 ans» headed six CMG tables; the six
     "sections" shared one citation, the loader kept the first, and the ASF,
     complément familial and ARS amounts under the third were lost).
+    Bare numbers that start over are footnotes, not sections: only a first
+    run reaching 2 numbers sections, every later run and a lone «1» are notes
+    (Agirc-Arrco circular 2024-18 reads 1 | 1 2 3 | 1 — «1 Plafond de
+    sécurité sociale.», the rate table's notes, «1 Ce qui correspond pour
+    2025 …» — and its 2025 rate table became a "section 1" opening on a
+    footnote, which the vector leg never ranked for the schedule it states).
     Rows stay in the text of the section around them.
     """
     def body(h: Heading) -> int:
@@ -179,6 +185,16 @@ def drop_table_rows(headings: list[Heading], lines: list[str]) -> list[Heading]:
         return re.match(r"\s*\d+\s", lines[h.line_idx]) is not None
 
     rows: set[int] = set()
+    runs: list[list[tuple[int, int]]] = []  # (heading index, number) per run of bare numbers
+    for i, h in enumerate(headings):
+        if bare(h):
+            n = int(lines[h.line_idx].split()[0])
+            if not runs or n <= runs[-1][-1][1]:
+                runs.append([])
+            runs[-1].append((i, n))
+    for k, run in enumerate(runs):
+        if k > 0 or max(n for _, n in run) < 2:
+            rows.update(i for i, _ in run)
     seen_texts: set[str] = set()
     for i, h in enumerate(headings):
         repeated = h.text in seen_texts

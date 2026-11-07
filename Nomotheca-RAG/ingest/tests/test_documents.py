@@ -223,3 +223,38 @@ def test_two_headings_alike_get_two_citations() -> None:
 
     citations = [u.citation for u in ir.units]
     assert len(citations) == len(set(citations)) == 3
+
+
+def test_footnote_numbers_that_start_over_are_not_sections() -> None:
+    """Agirc-Arrco circular 2024-18 reads 1 | 1 2 3 | 1: its footnotes cut the
+    2025 rate table into a section opening on «1 Plafond de sécurité sociale.»."""
+    text = (
+        "Paramètres Agirc-Arrco au 1er janvier 2025\n"
+        "Par mois 3 925 € 3 925 € 31 400 €\n"
+        "1 Plafond de sécurité sociale.\n"
+        "Taux sur les tranches 1 et 2 des salaires\n"
+        "Tranche 1 (≤ 1 PSS) 6,20 %1 3,72 %2 2,48 %2 7,87 % 4,72 % 3,15 %\n"
+        "1 Taux de cotisations : il correspond à 127% du taux de calcul des points\n"
+        "2 Sauf obligation née antérieurement au 2 janvier 1993.\n"
+        "3 Sauf dispositions particulières applicables dans l'entreprise.\n"
+        "1 Ce qui correspond pour 2025 à une limite de 188 400 € par an.\n"
+    )
+    ir = _build(text, "numbered")
+
+    assert len(ir.units) == 1
+    content = ir.units[0].versions[0].texts[0].content
+    assert "Paramètres Agirc-Arrco" in content and "3,15 %" in content and "188 400" in content
+
+
+def test_numbered_sections_keep_their_place_before_a_footnote_run() -> None:
+    text = (
+        "1 Objet de la circulaire et champ d'application\n"
+        "Le présent texte précise les montants applicables.\n"
+        "2 Montants revalorisés au 1er avril\n"
+        "Le montant forfaitaire mensuel est porté à 646,52 € à compter du 1er avril 2025.\n"
+        "1 Décret du 28 mars 2025.\n"
+    )
+    ir = _build(text, "numbered")
+
+    assert [u.path for u in ir.units] == ["sec_1", "sec_2"]
+    assert "Décret du 28 mars" in ir.units[1].versions[0].texts[0].content

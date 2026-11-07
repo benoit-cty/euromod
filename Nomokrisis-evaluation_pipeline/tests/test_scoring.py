@@ -177,6 +177,13 @@ def test_bracket_comparison():
     )
 
 
+def test_a_band_without_rate_equals_a_zero_rate_band():
+    # CEHR: EUROMOD's first band has no rate member; «0 %» proposed for it is right.
+    expected = [Bracket(threshold=0), Bracket(threshold=250000, rate=0.03)]
+    assert values_equal([Bracket(threshold=0, rate=0.0), Bracket(threshold=250000, rate=0.03)], expected)
+    assert not values_equal([Bracket(threshold=0, rate=0.01), Bracket(threshold=250000, rate=0.03)], expected)
+
+
 def test_unscored_kpis_are_none():
     case = make_case(routing=Routing.NOT_FOUND)  # no expected value/date/citations
     r = score_item(case, make_item(routing=Routing.NOT_FOUND, with_proposal=False))

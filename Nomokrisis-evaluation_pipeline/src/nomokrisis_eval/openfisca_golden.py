@@ -602,7 +602,13 @@ def build_dataset(
     """
     country = (header.get("country") or country).upper()
     language = (header.get("language") or language).lower()
-    entries = list(entries)
+    # `exclude: true` keeps a parameter out of the set, top-up included: its
+    # OpenFisca series is stale (FR's RCI ceiling, abolished by the 2025
+    # self-employed reform, is still `montant_du_plafond_rci`). A header with
+    # `fill_from_links: false` is a selection that names every case itself.
+    excluded = [e for e in entries if e.get("exclude")]
+    entries = [e for e in entries if not e.get("exclude")]
+    fill_from_links = fill_from_links and header.get("fill_from_links", True)
     outcomes: list[DraftOutcome] = []
     written = 0
     constants = db_constants(conn, country, as_of)
@@ -627,7 +633,7 @@ def build_dataset(
         # Ask for more than the shortfall: entries drop out on formula values
         # and missing change points, and a short golden set is the failure mode
         # that matters here.
-        exclude = {e["model_target"] for e in entries if e.get("model_target")}
+        exclude = {e["model_target"] for e in [*entries, *excluded] if e.get("model_target")}
         extra = entries_from_links(conn, country, as_of, (limit - written) * 3, exclude, kind=kind)
         drain(extra)
     _retire_skipped(conn, outcomes, as_of, country)

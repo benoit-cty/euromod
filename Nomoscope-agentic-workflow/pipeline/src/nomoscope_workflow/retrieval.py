@@ -814,6 +814,32 @@ _OTHER_ACT_AFTER = re.compile(
 )
 SAME_ACT_PER_ARTICLE = 3
 SAME_ACT_MAX = 6
+#: Backwards: the retrieved articles whose citing articles are looked up
+#: (best-ranked first), citing articles kept per article, and the most added.
+SAME_ACT_CITED = 10
+SAME_ACT_CITING_PER_ARTICLE = 2
+SAME_ACT_CITING_MAX = 4
+
+# Per (act, article) lookup: the act's other articles in force on the date the
+# cited article's version starts whose text names it; which mentions are
+# really to this act is decided in Python (_same_act_refs).
+_SAME_ACT_CITING_SQL = """
+WITH wanted AS (
+  SELECT * FROM unnest(%(instrument_ids)s::uuid[], %(patterns)s::text[], %(dates)s::date[], %(owns)s::text[])
+         WITH ORDINALITY AS w(instrument_id, pattern, at, own, ord)
+)
+SELECT DISTINCT ON (w.ord, ch.id) w.ord, ch.id::text AS chunk_id, u.citation, ch.context_header,
+       ch.content, t.lang, v.validity::text AS validity, v.version_status, i.source_trust_class,
+       0.0::float8 AS score
+FROM wanted w
+JOIN legal_units u         ON u.instrument_id = w.instrument_id AND u.citation <> w.own
+JOIN instruments i         ON i.id = u.instrument_id
+JOIN legal_unit_versions v ON v.legal_unit_id = u.id AND v.validity @> w.at
+JOIN unit_texts t          ON t.version_id = v.id AND t.lang = %(lang)s
+JOIN chunks ch             ON ch.unit_text_id = t.id
+WHERE i.instrument_type <> 'code' AND i.source_trust_class <> 'context' AND ch.content ~* w.pattern
+ORDER BY w.ord, ch.id
+"""
 
 # Per (act, article) lookup: its version in force on the date the citing
 # article's version starts, and that version's first chunk.
@@ -908,6 +934,65 @@ def same_act_articles(conn: psycopg.Connection, lang: str, chunk_ids: list[str])
         seen.add(hit["chunk_id"])
         found.append(RetrievalHit(method="located", **hit))
         if len(found) >= SAME_ACT_MAX:
+            break
+    return found + _same_act_citing(conn, lang, rows, seen)
+
+
+def _same_act_citing(conn: psycopg.Connection, lang: str, rows: list[dict], seen: set[str]) -> list[RetrievalHit]:
+    """The articles of the same act that name a retrieved one: references followed backwards.
+
+    The agreement states the rule where the article it modifies is not:
+    «Un pourcentage d'appel, fixé à 127 %, est appliqué aux taux visés à
+    l'article 35» (ANI AGIRC-ARRCO du 17 novembre 2017, art. 36). Art. 35 was
+    retrieved, art. 36 was not, and the AGIRC-ARRCO schedules came back
+    not_found for want of the call rate (7 Nov batch). Codes are left out:
+    their articles are numbered L./R./D. and followed by
+    ``cross_referenced_articles``.
+    """
+    lookups: list[tuple[str, str, date, str, str]] = []
+    for row in rows[:SAME_ACT_CITED]:
+        own = (row["citation"] or "").rsplit("art. ", 1)[-1]
+        number = re.fullmatch(r"(\d+)(?:\s?er)?", own)
+        if number is None:
+            continue
+        token = number.group(1)
+        lookup = (row["instrument_id"], rf"\marticles?\s+{token}(\s?er)?\M", row["valid_from"], row["citation"], token)
+        if lookup not in lookups:
+            lookups.append(lookup)
+    if not lookups:
+        return []
+    with conn.cursor(row_factory=dict_row) as cur:
+        hits = cur.execute(
+            _SAME_ACT_CITING_SQL,
+            {
+                "lang": lang,
+                "instrument_ids": [l[0] for l in lookups],
+                "patterns": [l[1] for l in lookups],
+                "dates": [l[2] for l in lookups],
+                "owns": [l[3] for l in lookups],
+            },
+        ).fetchall()
+    def distance(hit: dict) -> tuple[int, int]:
+        # Nearest article first: the rule for art. 35 sits in art. 36, not in
+        # art. 13 or 49, which name it too.
+        number = re.search(r"art\. (\d+)", hit["citation"] or "")
+        cited = int(lookups[hit["ord"] - 1][4])
+        return hit["ord"], abs(int(number.group(1)) - cited) if number else 10_000
+
+    hits.sort(key=distance)
+    found: list[RetrievalHit] = []
+    kept: dict[int, int] = {}
+    for hit in hits:
+        ord_ = hit.pop("ord")
+        token = lookups[ord_ - 1][4]
+        if hit["chunk_id"] in seen or token not in _same_act_refs(hit["content"] or ""):
+            continue
+        if kept.get(ord_, 0) >= SAME_ACT_CITING_PER_ARTICLE:
+            continue
+        kept[ord_] = kept.get(ord_, 0) + 1
+        seen.add(hit["chunk_id"])
+        found.append(RetrievalHit(method="located", **hit))
+        if len(found) >= SAME_ACT_CITING_MAX:
             break
     return found
 

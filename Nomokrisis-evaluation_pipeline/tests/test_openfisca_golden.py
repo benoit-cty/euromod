@@ -148,3 +148,36 @@ def test_routing_refuses_to_guess_on_ambiguous_formulas():
 
     routing, reason = route_against_current(_current(None), 5.0)
     assert routing is None and "no scalar and no raw string" in reason
+
+
+def test_an_excluded_entry_is_neither_drafted_nor_topped_up(monkeypatch):
+    # FR's RCI ceiling: OpenFisca still holds the plafond the 2025 reform
+    # abolished, so the selection excludes it and the link top-up must too.
+    from types import SimpleNamespace
+
+    from nomokrisis_eval import openfisca_golden as og
+
+    drafted: list[str] = []
+    asked: dict = {}
+
+    def draft_case(conn, entry, *args, **kwargs):
+        drafted.append(entry["model_target"])
+        return og.DraftOutcome(entry=entry, case=SimpleNamespace())
+
+    def links(conn, country, as_of, limit, exclude, kind="openfisca"):
+        asked["exclude"] = set(exclude)
+        return []
+
+    monkeypatch.setattr(og, "db_constants", lambda *a: {})
+    monkeypatch.setattr(og, "draft_case", draft_case)
+    monkeypatch.setattr(og, "save_drafted_case", lambda *a: False)
+    monkeypatch.setattr(og, "entries_from_links", links)
+    monkeypatch.setattr(og, "_retire_skipped", lambda *a: None)
+    entries = [{"model_target": "a"}, {"model_target": "rci", "exclude": True}]
+
+    og.build_dataset(None, {"country": "FR"}, entries, date(2025, 6, 1))
+    assert drafted == ["a"] and asked["exclude"] == {"a", "rci"}
+
+    asked.clear()
+    og.build_dataset(None, {"country": "FR", "fill_from_links": False}, entries, date(2025, 6, 1))
+    assert asked == {}

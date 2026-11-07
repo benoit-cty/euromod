@@ -25,6 +25,7 @@ import psycopg
 import yaml
 
 from .config import WorkflowConfig
+from .retrieval import LANG_BY_COUNTRY
 from .schema import (
     Bracket,
     LegalStatus,
@@ -828,7 +829,7 @@ def load_group_record(conn: psycopg.Connection, group_id: str) -> ParameterRecor
         f"band {band_index} {role}={bands[band_index][role][0]}"
         for band_index in ordered for role in sorted(bands[band_index])
     )
-    label, description = _group_texts(conn, bands, ordered, group_id)
+    label, description = _group_texts(conn, bands, ordered, group_id, LANG_BY_COUNTRY.get(country, "en"))
     information = ParameterInformation(
         country=country,
         model_target=f"euromod://{country}/{policy}/group/{group_id.rsplit(':', 1)[-1]}",
@@ -847,7 +848,7 @@ def load_group_record(conn: psycopg.Connection, group_id: str) -> ParameterRecor
 
 
 def _group_texts(
-    conn: psycopg.Connection, bands: dict, ordered: list[int], group_id: str
+    conn: psycopg.Connection, bands: dict, ordered: list[int], group_id: str, lang: str = "en"
 ) -> tuple[dict[str, str] | None, dict[str, str] | None]:
     """A label and description for the assembled schedule, from its members.
 
@@ -859,16 +860,25 @@ def _group_texts(
     rate 1"), so the schedule's label is the first band's label with its
     ordinal stripped, and the description lists every band's label and
     description once — the same words a human would search for.
+
+    The members' law-language texts (params.parameter_texts, manual >
+    openfisca > MT) give the schedule a `lang` label and description too, and
+    the frame step searches with those: the English composition of the FR
+    AGIRC-ARRCO schedule never reached the circular stating «3,15 % … 8,64 %»
+    in the vector leg's top 50, while each member's French text names it.
     """
     labels: list[str] = []
     descriptions: list[str] = []
+    native_labels: list[str] = []
+    native_descriptions: list[str] = []
     for band_index in ordered:
         for role in ("rate", "upper_threshold"):
             if role not in bands[band_index]:
                 continue
+            target = bands[band_index][role][0]
             row = conn.execute(
                 "SELECT label, description FROM params.parameters WHERE model_target = %s",
-                (bands[band_index][role][0],),
+                (target,),
             ).fetchone()
             if row is None:
                 continue
@@ -876,12 +886,31 @@ def _group_texts(
                 text = (source or {}).get("en") if isinstance(source, dict) else None
                 if text and text not in sink:
                     sink.append(text)
+            if lang == "en":
+                continue
+            for field, content in conn.execute(
+                """
+                SELECT DISTINCT ON (field) field, content
+                FROM params.parameter_texts t
+                JOIN params.parameters p ON p.id = t.parameter_id
+                WHERE p.model_target = %s AND t.lang = %s AND field IN ('label', 'description')
+                ORDER BY field,
+                         CASE origin WHEN 'manual' THEN 0 WHEN 'openfisca' THEN 1 ELSE 2 END
+                """,
+                (target, lang),
+            ).fetchall():
+                sink = native_labels if field == "label" else native_descriptions
+                if content not in sink:
+                    sink.append(content)
     if not labels:
         return None, None
     # "Capital income taxation: national rate 1" -> "Capital income taxation: national rate"
     head = re.sub(r"\s*\d+\s*$", "", labels[0]).strip(" :-") or labels[0]
     label = {"en": f"{head} schedule ({group_id.rsplit(':', 1)[-1]})"}
-    description = {"en": " ".join([*labels, *descriptions])} if labels or descriptions else None
+    description = {"en": " ".join([*labels, *descriptions])}
+    if native_labels:
+        label[lang] = native_labels[0]
+        description[lang] = " ".join([*native_labels, *native_descriptions])
     return label, description
 
 
