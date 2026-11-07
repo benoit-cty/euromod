@@ -69,3 +69,37 @@ def test_an_empty_text_has_no_chunk():
     from nomotheca_ingest.core.chunker import chunk_text
 
     assert chunk_text("", "header") == []
+
+
+class _LaterVersion:
+    """One already-loaded version of the unit, starting on `later`."""
+
+    def __init__(self, later) -> None:
+        self.later = later
+
+    def cursor(self):
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def execute(self, sql: str, params) -> None:
+        pass
+
+    def fetchone(self):
+        return (self.later,)
+
+
+def test_a_closed_version_ends_where_a_loaded_later_one_begins():
+    # LEGIARTI000055033254 [2025-01-01, 2027-01-01) over a version held since
+    # 31 Oct 2026: the overlap failed the scout's ingest of the whole act.
+    from datetime import date
+
+    version = SimpleNamespace(valid_from=date(2025, 1, 1), valid_to=date(2027, 1, 1))
+    upper = LegislationLoader(_LaterVersion(date(2026, 10, 31)))._chain_versions("u", version)
+    assert upper == date(2026, 10, 31)
+    upper = LegislationLoader(_LaterVersion(None))._chain_versions("u", version)
+    assert upper == date(2027, 1, 1)

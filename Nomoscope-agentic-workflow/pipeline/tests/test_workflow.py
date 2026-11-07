@@ -1284,3 +1284,29 @@ def test_a_quote_citing_the_wrong_retrieved_chunk_is_repointed_to_the_one_holdin
     assert _repoint_misquoted(hits, "r5222", "Taux plein 96,62 % 458,34") == "dss"
     assert _repoint_misquoted(hits, "dss", "Taux plein 96,62 % 458,34") is None  # already right
     assert _repoint_misquoted(hits, "r5222", "Taux plein 99 %") is None  # nowhere: the failure stands
+
+
+def test_an_article_naming_another_of_its_own_act_is_followed():
+    from nomoscope_workflow.retrieval import _same_act_refs
+
+    # Décret n° 2025-1212 art. 2 states the amount, art. 1 whom it is for.
+    assert _same_act_refs("Le montant de l'aide mentionnée à l'article 1 er est égal à 152,45 euros.") == ["1"]
+    assert _same_act_refs("l'article 2 du présent décret") == ["2"]
+    assert _same_act_refs("au titre de l'article 3 de la loi n° 2008-1249") == []
+    assert _same_act_refs("l'article 197 du code général des impôts") == []
+    assert _same_act_refs("l'article L. 262-2 du code de l'action sociale") == []
+
+
+def test_a_law_language_query_keeps_the_names_in_quotes_and_parentheses():
+    from nomoscope_workflow.pipeline import _clean_query_text
+
+    text = (
+        "Le montant de la « prime de fin d’année » (également appelée prime exceptionnelle de Noël) "
+        "versé aux bénéficiaires du RSA (Revenu de Solidarité Active), commentaire « Calculate end of year bonus » "
+        "(Table 2.52)"
+    )
+    query = _clean_query_text(text, "fr")
+    assert "prime de fin d’année" in query and "prime exceptionnelle de Noël" in query
+    assert "Revenu de Solidarité Active" in query
+    assert "Calculate" not in query and "2.52" not in query
+    assert "Revenu" not in _clean_query_text(text)  # an English record drops spans as before

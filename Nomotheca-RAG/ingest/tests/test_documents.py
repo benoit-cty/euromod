@@ -197,3 +197,29 @@ def test_a_line_starting_with_a_date_or_a_year_is_not_a_section() -> None:
     assert [u.path for u in ir.units] == ["sec_1", "sec_2"]
     first = ir.units[0].versions[0].texts[0].content
     assert "allocations familiales" in first and "78 565" in first and "2024 des plafonds" in first
+
+
+def test_a_repeated_column_header_is_not_a_section_and_citations_stay_unique() -> None:
+    """DSS/2B/2025/38: «0 à 3 ans 3 à 6 ans» headed six CMG tables; sharing one
+    citation, they became one unit and the ASF amounts after them were lost."""
+    table = "0 à 3 ans 3 à 6 ans 0 à 3 ans 3 à 6 ans\nCMG maximal 178,58 % 847,13 423,57\n" + "suite du tableau\n" * 3
+    text = (
+        "1 Le coefficient de revalorisation retenu correspond à l'inflation.\n"
+        + table
+        + table
+        + "III.2 Allocation de soutien familial\nTaux partiel 42,20% 200,18\n"
+        "5 Complément pour frais\nComplément forfaitaire pour frais 27,19 % 128,98\n"
+    )
+    ir = _build(text, "numbered")
+
+    citations = [u.citation for u in ir.units]
+    assert len(citations) == len(set(citations))
+    assert not any("0 à 3 ans" in c for c in citations)
+    assert any("200,18" in u.versions[0].texts[0].content for u in ir.units)
+
+
+def test_two_headings_alike_get_two_citations() -> None:
+    ir = _build("1. Objet\nPremier objet du texte.\n2. Champ\nDu texte.\n1. Objet\nSecond objet, en annexe.\n", "numbered")
+
+    citations = [u.citation for u in ir.units]
+    assert len(citations) == len(set(citations)) == 3

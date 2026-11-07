@@ -161,6 +161,11 @@ def drop_table_rows(headings: list[Heading], lines: list[str]) -> list[Heading]:
     A bare date or year is never a heading (DSS/2B/2024/181: «31 décembre
     2025 (à comparer …)» headed the family-allowance ceiling table, cut off
     from its «Plafonds de ressources … allocations familiales» title).
+    A section numbered 0 does not exist, and a heading that repeats an
+    earlier one word for word is a table's column header printed again
+    (DSS/2B/2025/38: «0 à 3 ans 3 à 6 ans» headed six CMG tables; the six
+    "sections" shared one citation, the loader kept the first, and the ASF,
+    complément familial and ARS amounts under the third were lost).
     Rows stay in the text of the section around them.
     """
     def body(h: Heading) -> int:
@@ -174,7 +179,13 @@ def drop_table_rows(headings: list[Heading], lines: list[str]) -> list[Heading]:
         return re.match(r"\s*\d+\s", lines[h.line_idx]) is not None
 
     rows: set[int] = set()
+    seen_texts: set[str] = set()
     for i, h in enumerate(headings):
+        repeated = h.text in seen_texts
+        seen_texts.add(h.text)
+        if re.match(r"\s*0+(?:\.0+)*\.?\s", lines[h.line_idx]) or (repeated and bare(h)):
+            rows.add(i)
+            continue
         if not bare(h):
             continue
         if _date_or_year(lines[h.line_idx]):
@@ -295,6 +306,7 @@ def build_document(
 
     units: list[UnitIR] = []
     used_paths: set[str] = set()
+    used_citations: set[str] = set()
     stack: list[tuple[int, str]] = []          # (level, path) ancestor stack
     child_counts: dict[str | None, int] = {}
 
@@ -331,13 +343,24 @@ def build_document(
         ordinal = child_counts.get(parent_path, 0)
         child_counts[parent_path] = ordinal + 1
 
+        # The loader matches a unit by its citation, so two headings that read
+        # alike (or alike in their first 200 characters) would share one unit
+        # and keep only the first text.
+        citation = f"{citation_prefix}, \u00a7{heading.text}"[:200]
+        n = 2
+        while citation in used_citations:
+            suffix = f" ({n})"
+            citation = f"{citation_prefix}, \u00a7{heading.text}"[: 200 - len(suffix)] + suffix
+            n += 1
+        used_citations.add(citation)
+
         start = heading.line_idx if heading_is_body else heading.content_start
         content = "\n".join(lines[start : heading.content_end]).strip()
         units.append(
             UnitIR(
                 unit_type=unit_types.get(heading.level, default_unit_type),
                 path=path,
-                citation=f"{citation_prefix}, \u00a7{heading.text}"[:200],
+                citation=citation,
                 ordinal=ordinal,
                 parent_path=parent_path,
                 versions=make_version(content),

@@ -470,3 +470,19 @@ def test_a_pdf_url_answered_with_a_security_page_is_retried_in_a_browser(monkeyp
     calls.clear()
     html = contributed.read_input("https://www.caf.fr/page.html", None)
     assert not calls and html.raw == page  # an HTML page asked for as HTML is not retried
+
+
+def test_a_pdf_url_no_browser_can_fetch_is_refused(monkeypatch) -> None:
+    """AGS: the 2025 rate PDF answered with the press-release listing page."""
+    import httpx
+
+    from nomotheca_ingest.core import contributed
+
+    page = b"<html><title>Communiqu\xc3\xa9s de presse</title></html>"
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, content=page, headers={"content-type": "text/html"}))
+    real_client = httpx.Client
+    monkeypatch.setattr(httpx, "Client", lambda **kw: real_client(transport=transport, **kw))
+    monkeypatch.setattr(contributed, "fetch_in_browser", lambda url: None)
+
+    with pytest.raises(ValueError, match="not the PDF"):
+        contributed.read_input("https://ags-garantie-salaires.org/files/ags/2024/CP.pdf", None)

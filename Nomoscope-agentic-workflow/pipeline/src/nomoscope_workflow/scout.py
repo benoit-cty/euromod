@@ -898,6 +898,7 @@ def locate(
         for hit in [
             *retrieval.gap_articles(conn, scope, lang, as_of, list(seen)),
             *retrieval.cross_referenced_articles(conn, scope, lang, as_of, list(seen)),
+            *retrieval.same_act_articles(conn, lang, list(seen)),
         ]:
             if hit.chunk_id in seen:
                 continue

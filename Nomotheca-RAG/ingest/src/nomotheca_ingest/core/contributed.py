@@ -537,8 +537,12 @@ def read_input(url: str | None, file_path: str | None) -> SourceDocument:
         origin = str(response.url)
         if _expects_pdf(url) and not raw.startswith(b"%PDF"):
             fetched = fetch_in_browser(url)
-            if fetched is not None:
-                raw, content_type = fetched, "application/pdf"
+            if fetched is None:
+                # Never the page in its place: the AGS 2025 rate PDF answered
+                # with the press-release listing, ingested as the release.
+                msg = f"{url} answers with an HTML page, not the PDF; download it and contribute the file"
+                raise ValueError(msg)
+            raw, content_type = fetched, "application/pdf"
         return SourceDocument(
             raw=raw,
             content_type=extract.content_type_for(url, content_type, raw),
@@ -724,3 +728,77 @@ def ingest_document(
             )
             raise
     return result
+
+
+def reparse_documents(
+    database_url: str,
+    *,
+    jurisdiction: str | None = None,
+    title_like: str | None = None,
+    progress: Callable[[dict], None] | None = None,
+) -> list[tuple[str, int, int]]:
+    """Re-parse stored contributed documents from their archived bytes.
+
+    A parser fix used to mean deleting the instrument and ingesting it again,
+    refetching a page that may now want a browser (the Bulletin officiel) or
+    be gone. The snapshot holds the bytes and the instrument holds the
+    reviewer's declaration, so both are read back, the units are replaced and
+    the instrument row (its id, class and kind) stays. Changed texts lose
+    their vectors: run `embeddings build` after. Returns (title, units
+    before, units after) per document.
+    """
+    report = progress or (lambda event: None)
+    done: list[tuple[str, int, int]] = []
+    with psycopg.connect(database_url) as conn:
+        rows = conn.execute(
+            """
+            SELECT i.id, j.code, i.national_id, i.title, i.metadata,
+                   (SELECT min(lower(v.validity)) FROM legal_units u
+                      JOIN legal_unit_versions v ON v.legal_unit_id = u.id
+                     WHERE u.instrument_id = i.id),
+                   (SELECT t.national_id FROM instrument_relations r
+                      JOIN instruments t ON t.id = r.to_instrument_id
+                     WHERE r.from_instrument_id = i.id AND r.relation_type = %(implements)s LIMIT 1),
+                   (SELECT count(*) FROM legal_units u WHERE u.instrument_id = i.id)
+            FROM instruments i JOIN jurisdictions j ON j.id = i.jurisdiction_id
+            WHERE i.metadata ->> 'contributed' = 'true'
+              AND (%(jurisdiction)s::text IS NULL OR j.code = %(jurisdiction)s)
+              AND (%(title_like)s::text IS NULL OR i.title::text ILIKE %(title_like)s)
+            ORDER BY i.created_at
+            """,
+            {"implements": IMPLEMENTS_RELATION, "jurisdiction": jurisdiction, "title_like": title_like},
+        ).fetchall()
+        for iid, code, national_id, titles, meta, valid_from, implements, before in rows:
+            lang, title = next(iter(titles.items()))
+            snap = conn.execute(
+                "SELECT id, raw_content, content_type FROM fetch_snapshots "
+                "WHERE content_hash = %s AND raw_content IS NOT NULL ORDER BY retrieved_at DESC LIMIT 1",
+                (meta.get("content_hash"),),
+            ).fetchone()
+            if snap is None or valid_from is None:
+                report({"phase": "skipped", "detail": f"{title}: no snapshot or no version"})
+                continue
+            fields = ContributedFields(
+                jurisdiction=code, lang=lang, title=title, kind=meta["kind"],
+                valid_from=valid_from, implements=implements,
+            )
+            document = SourceDocument(
+                raw=bytes(snap[1]),
+                content_type=meta.get("content_type") or snap[2],
+                origin=meta.get("origin") or national_id,
+                national_id=national_id,
+                snapshot_id=snap[0],
+            )
+            doc = parse_document(document, fields)
+            with conn.transaction():
+                conn.execute(
+                    "DELETE FROM legal_unit_versions v USING legal_units u "
+                    "WHERE v.legal_unit_id = u.id AND u.instrument_id = %s",
+                    (iid,),
+                )
+                conn.execute("DELETE FROM legal_units WHERE instrument_id = %s", (iid,))
+                LegislationLoader(conn).load(doc)
+            after = sum(1 for unit in doc.instruments[0].units)
+            report({"phase": "reparsed", "detail": f"{title}: {before} -> {after} units"})
+            done.append((title, before, after))
+    return done

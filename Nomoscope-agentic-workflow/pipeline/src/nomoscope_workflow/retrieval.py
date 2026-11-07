@@ -302,7 +302,8 @@ def retrieve(
     """Citation fast path first, then hybrid; dedup by chunk_id, fast-path wins.
 
     The articles the k hits send the reader to follow them (up to
-    CROSS_REF_MAX, see ``cross_referenced_articles``). With ``later_until``,
+    CROSS_REF_MAX, see ``cross_referenced_articles``), and so do the articles
+    of the same act they name (``same_act_articles``). With ``later_until``,
     up to LATER_MAX_HITS versions that enter into force
     after ``as_of`` and by that date follow the k hits (see ``later_in_year``).
 
@@ -332,6 +333,7 @@ def retrieve(
             conn, country, lang, as_of, later_until, query, cfg.embedding_model_id,
             cfg.retrieval_k, query_vector, known={h.chunk_id for h in hits},
         )
+    hits += same_act_articles(conn, lang, [h.chunk_id for h in hits])
     return hits
 
 
@@ -339,6 +341,7 @@ def retrieve(
 #: amount article and its threshold article, few enough not to drown the
 #: versions in force on the reference date.
 LATER_MAX_HITS = 8
+LATER_DEPTH = 4
 
 
 def later_in_year(
@@ -360,10 +363,13 @@ def later_in_year(
     énergie barème is the arrêté du 31 juillet 2025, in force from 2 August
     yet applying «à compter du 1er janvier 2025». Filtered on 1 July, all
     17 bhoey_fr parameters came back not_found with the arrêté in the corpus.
-    The same hybrid search runs at `until`; only versions starting after
-    `as_of` are kept, so nothing in force on the reference date is displaced.
+    The same hybrid search runs at `until`, LATER_DEPTH times deeper; only
+    versions starting after `as_of` are kept, so nothing in force on the
+    reference date is displaced. Deeper, because a December act competes
+    with every text in force: at k the 2025 prime-de-Noël décret (in force
+    14 December) was never among the hits, the RSA decrees always were.
     """
-    hits = hybrid_search(conn, country, lang, until, query, model_id, k, query_vector)
+    hits = hybrid_search(conn, country, lang, until, query, model_id, k * LATER_DEPTH, query_vector)
     later = [
         hit.model_copy(update={"method": "later_in_year"})
         for hit in hits
@@ -796,6 +802,114 @@ def cross_referenced_articles(
         if not frontier:
             break
     return list(found.values())
+
+
+#: «l'article 1er», «aux articles 3 et 4», «à l'article 2 du présent décret»:
+#: an article of the act itself. A number followed by another act («de la loi
+#: du …», «du code …») is that act's, and skipped.
+_SAME_ACT_REF = re.compile(r"\barticles?\s+(\d+)(?:\s?er)?\b(?!\s*[-.]\d)", re.IGNORECASE)
+_OTHER_ACT_AFTER = re.compile(
+    r"^\s*(?:,\s*)?(?:du|de la|de l'|de l’|des)\s+(?!présente?\b|même décret|même arrêté)",
+    re.IGNORECASE,
+)
+SAME_ACT_PER_ARTICLE = 3
+SAME_ACT_MAX = 6
+
+# Per (act, article) lookup: its version in force on the date the citing
+# article's version starts, and that version's first chunk.
+_SAME_ACT_UNITS_SQL = """
+WITH wanted AS (
+  SELECT * FROM unnest(%(instrument_ids)s::uuid[], %(patterns)s::text[], %(dates)s::date[])
+         WITH ORDINALITY AS w(instrument_id, pattern, at, ord)
+),
+unit AS (
+  SELECT DISTINCT ON (w.ord) w.ord, v.id AS version_id, u.citation, v.validity, v.version_status,
+         i.source_trust_class
+  FROM wanted w
+  JOIN legal_units u         ON u.instrument_id = w.instrument_id AND u.citation ~ w.pattern
+  JOIN instruments i         ON i.id = u.instrument_id
+  JOIN legal_unit_versions v ON v.legal_unit_id = u.id
+  WHERE v.validity @> w.at AND i.source_trust_class <> 'context'
+  ORDER BY w.ord, lower(v.validity) DESC
+)
+SELECT DISTINCT ON (unit.ord) ch.id::text AS chunk_id, unit.citation, ch.context_header, ch.content,
+       t.lang, unit.validity::text AS validity, unit.version_status, unit.source_trust_class,
+       0.0::float8 AS score
+FROM unit
+JOIN unit_texts t ON t.version_id = unit.version_id AND t.lang = %(lang)s
+JOIN chunks ch    ON ch.unit_text_id = t.id
+ORDER BY unit.ord, ch.seq
+"""
+
+_CITING_CHUNKS_SQL = """
+SELECT ch.id::text AS chunk_id, ch.content, u.citation, u.instrument_id::text AS instrument_id,
+       lower(v.validity) AS valid_from
+FROM chunks ch
+JOIN unit_texts t          ON t.id = ch.unit_text_id
+JOIN legal_unit_versions v ON v.id = t.version_id
+JOIN legal_units u         ON u.id = v.legal_unit_id
+WHERE ch.id = ANY(%(ids)s::uuid[])
+"""
+
+
+def _same_act_refs(content: str) -> list[str]:
+    """Article numbers `content` names in its own act, in text order."""
+    refs: list[str] = []
+    for match in _SAME_ACT_REF.finditer(content):
+        if _OTHER_ACT_AFTER.match(content[match.end() : match.end() + 40]):
+            continue
+        if match.group(1) not in refs:
+            refs.append(match.group(1))
+    return refs
+
+
+def same_act_articles(conn: psycopg.Connection, lang: str, chunk_ids: list[str]) -> list[RetrievalHit]:
+    """The articles of the same act a retrieved article refers to.
+
+    A décret states the amount in one article and whom it is for in another:
+    «Le montant de l'aide mentionnée à l'article 1er est égal à 152,45 euros»
+    (décret n° 2025-1212, art. 2) — art. 1 lists the ASS among the
+    allocations. On the 6 Nov batch art. 2 was retrieved and art. 1 was not,
+    and all four prime-de-Noël amounts came back not_found, the model unable
+    to tie 152,45 € to the ASS. The referenced article is read in its version
+    in force when the citing one starts: art. 1 enters into force with art. 2,
+    in December, after the reference date. Hits are "located".
+    """
+    if not chunk_ids:
+        return []
+    with conn.cursor(row_factory=dict_row) as cur:
+        rows = cur.execute(_CITING_CHUNKS_SQL, {"ids": chunk_ids}).fetchall()
+    rank = {chunk_id: i for i, chunk_id in enumerate(chunk_ids)}
+    rows.sort(key=lambda r: rank[r["chunk_id"]])
+    lookups: list[tuple[str, str, date]] = []
+    for row in rows:
+        own = (row["citation"] or "").rsplit("art. ", 1)[-1]
+        for token in [t for t in _same_act_refs(row["content"] or "") if t != own][:SAME_ACT_PER_ARTICLE]:
+            lookup = (row["instrument_id"], rf"art\. {token}($|[^0-9A-Za-z])", row["valid_from"])
+            if lookup not in lookups:
+                lookups.append(lookup)
+    if not lookups:
+        return []
+    with conn.cursor(row_factory=dict_row) as cur:
+        hits = cur.execute(
+            _SAME_ACT_UNITS_SQL,
+            {
+                "lang": lang,
+                "instrument_ids": [l[0] for l in lookups],
+                "patterns": [l[1] for l in lookups],
+                "dates": [l[2] for l in lookups],
+            },
+        ).fetchall()
+    seen = set(chunk_ids)
+    found: list[RetrievalHit] = []
+    for hit in hits:
+        if hit["chunk_id"] in seen:
+            continue
+        seen.add(hit["chunk_id"])
+        found.append(RetrievalHit(method="located", **hit))
+        if len(found) >= SAME_ACT_MAX:
+            break
+    return found
 
 
 #: Code articles whose implementing acts are looked up (best-ranked first),

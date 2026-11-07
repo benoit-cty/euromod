@@ -249,8 +249,11 @@ class LegislationLoader:
         version ends where the newer begins.
 
         Returns the upper bound to use for the incoming version: its own
-        valid_to, or the start of an already-loaded later version when it is
-        open-ended.
+        valid_to or the start of an already-loaded later version, whichever
+        comes first. A closed version can reach past a later one already held
+        (KALI's 2019-2023 text over a 2022 amendment, a LEGI version «jusqu'au
+        1er janvier 2027» over one in force since 31 Oct 2026), and the
+        no-overlap constraint then failed the whole act's load.
         """
         with self.conn.cursor() as cur:
             cur.execute(
@@ -265,15 +268,18 @@ class LegislationLoader:
                 """,
                 {"unit": unit_id, "from": version.valid_from},
             )
-            if version.valid_to is not None:
-                return version.valid_to
             cur.execute(
                 "SELECT min(lower(validity)) FROM legal_unit_versions "
                 "WHERE legal_unit_id = %s AND lower(validity) > %s",
                 (unit_id, version.valid_from),
             )
             row = cur.fetchone()
-        return row[0] if row else None
+        next_start = row[0] if row else None
+        if version.valid_to is None:
+            return next_start
+        if next_start is None:
+            return version.valid_to
+        return min(version.valid_to, next_start)
 
     def _upsert_version(self, unit_id: UUID, version: VersionIR) -> UUID:
         """Insert a legal unit version unless its source version already exists."""

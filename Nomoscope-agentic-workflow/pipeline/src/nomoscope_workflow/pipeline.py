@@ -177,8 +177,41 @@ _QUERY_NOISE = (
 )
 
 
-def _clean_query_text(text: str) -> str:
-    """Strip EUROMOD-side noise from a label/description before it becomes a query."""
+#: An English EUROMOD comment quoted inside a translated text: «Calculate end
+#: of year bonus», «Fix amount».
+_ENGLISH_SPAN = re.compile(
+    r"\b(?:the|of|and|for|per|with|amount|calculate|fix(?:ed)?|year|bonus|benefit|rate|see)\b", re.IGNORECASE
+)
+_QUOTED_SPAN = re.compile(r"«([^»]*)»")
+_PAREN_SPAN = re.compile(r"\(([^()]*)\)")
+
+
+def _keep_span(match: re.Match[str]) -> str:
+    """A quoted or parenthesised span of a law-language text, unless it is noise.
+
+    In the French translations the quotes and parentheses hold the benefit's
+    own name: «prime de fin d'année», «(Prime de fin d'année, également
+    appelée prime exceptionnelle de Noël)», «(Revenu de Solidarité Active)».
+    Dropped whole, the $bunmt_bonus1 query read «le montant forfaitaire de
+    base annuel de la pour un bénéficiaire seul», and décret n° 2025-1212
+    ranked 80th. An English EUROMOD comment, or a span left with no word
+    («(Table 2.52)»), is still dropped.
+    """
+    inner = match.group(1)
+    if _ENGLISH_SPAN.search(inner) and not re.search(r"[À-ÿ]", inner):
+        return " "
+    return f" {inner} "
+
+
+def _clean_query_text(text: str, lang: str = "en") -> str:
+    """Strip EUROMOD-side noise from a label/description before it becomes a query.
+
+    In a law-language text other than English, quoted and parenthesised spans
+    keep their content (see `_keep_span`); an English record drops them.
+    """
+    if lang != "en":
+        text = _QUOTED_SPAN.sub(_keep_span, text)
+        text = _PAREN_SPAN.sub(_keep_span, text)
     for pattern in _QUERY_NOISE:
         text = pattern.sub(" ", text)
     return re.sub(r"\s+", " ", text).strip(" ,;:.-")
@@ -451,7 +484,11 @@ def frame_query(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> di
     # Native texts REPLACE the received ones in the query rather than being
     # appended: a mixed-language ~60-term query dilutes the BGE-M3 embedding
     # and turns the OR'd FTS leg into noise.
-    parts = [_clean_query_text(p) for p in (native or [*labels.values(), *descriptions.values()])]
+    parts = (
+        [_clean_query_text(p, lang) for p in native]
+        if native
+        else [_clean_query_text(p) for p in [*labels.values(), *descriptions.values()]]
+    )
     query = " ".join(dict.fromkeys(p for p in parts if p)) or info.model_target
     # Country Report enrichment (acronym -> semantic): CR section headings
     # translate EUROMOD codes into official native benefit/tax names

@@ -88,6 +88,30 @@ def citation(
     _print_result(result)
 
 
+@app.command("reparse-documents")
+def reparse_documents_cmd(
+    database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
+    jurisdiction: Annotated[str | None, typer.Option("--jurisdiction", "-j")] = None,
+    title_like: Annotated[
+        str | None, typer.Option("--title-like", help="SQL ILIKE filter on the title, e.g. %Cnav 2025%.")
+    ] = None,
+) -> None:
+    """Re-parse contributed documents from their stored bytes — no fetch.
+
+    The units are replaced, the instrument and the reviewer's declaration
+    stay. Run `embeddings build` afterwards.
+    """
+    from nomotheca_ingest.core.contributed import reparse_documents
+
+    done = reparse_documents(
+        database_url,
+        jurisdiction=jurisdiction.upper() if jurisdiction else None,
+        title_like=title_like,
+        progress=lambda event: typer.echo(f"{event['phase']}: {event['detail']}"),
+    )
+    typer.echo(json.dumps({"documents": len(done)}))
+
+
 @app.command()
 def reparse(
     jurisdiction: str,
