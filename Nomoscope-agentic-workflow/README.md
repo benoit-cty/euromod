@@ -428,3 +428,15 @@ Decision rationale in [observability.md](observability.md). Implementation
 cd Nomoscope-agentic-workflow/pipeline && uv run --with pytest pytest   # mock extraction, diff, queue
 cd Nomoscope-agentic-workflow/ui/src-tauri && cargo test                # decision/export round-trip
 ```
+
+## 8. Tolerance
+
+**1. The scorer's comparison allowed a few cents on large amounts.** EUROMOD's value and the proposed value are compared with a relative tolerance of 1e-9, to absorbs the computer's rounding noise. One cent on 1 000 000 € still counts as different.
+
+**2. The derivation check allowed 0.1 %.** When no text states the value directly, the model computes it from quoted figures (for example French RSA 646,52 × 1,8) and also types the result. The check accepts the typed figure if it is within 0.1 % of the actual arithmetic. Two cases let the typed figure through:
+- **A rate or ratio with no precision to round to:** the typed figure was kept. Now the computed result is proposed.
+- **A schedule:** its figures are never replaced, so a band rate 0.1 % off its own arithmetic could reach the queue. Now the schedule must contain the computed result exactly. If the law rounds, the model has to write the rounding into the formula (for example "rounded to the hundredth").
+
+**What remains, and why it isn't tolerance:**
+- **Findings.** When EUROMOD is exactly one cent or one euro off the law (AF 151,81 vs 151,80), the case is never marked correct. It's reported in its own "EUROMOD off the law" column. Only the "success" line adds findings to correct answers, as you asked earlier. A difference of two units or more isn't even a finding; it's a wrong value.
+- **Rounding a computed amount to the precision EUROMOD holds.** If EUROMOD holds whole euros, 29 169 × 1,8 = 52 504,2 is proposed as 52 504. This uses only how many decimals EUROMOD writes, never EUROMOD's value. The reviewer sees a note on every case where it happens.
