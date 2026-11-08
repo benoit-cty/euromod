@@ -1434,7 +1434,11 @@ def _check_derivation(
     note for the critique) — issues empty means verified.
     """
     # A schedule derives one of its figures (the AGIRC-ARRCO CET share a * b,
-    # a threshold of 12 monthly ceilings): the result must be one of them.
+    # a threshold of 12 monthly ceilings): the result must be one of them,
+    # exactly — a schedule's figures are not replaced by the result, so a
+    # figure 0.1 % off its own arithmetic would reach the queue (round(x, n)
+    # states a rounding). A scalar's typed figure may be 0.1 % off: the
+    # result replaces it (_round_like_held).
     figures = (
         [f for band in draft.value_brackets for f in (band.threshold, band.rate, band.amount) if f is not None]
         if draft.value_brackets is not None
@@ -1487,7 +1491,8 @@ def _check_derivation(
         result = evaluate_derivation(draft.derivation or "", values)
     except ValueError as exc:
         return [f"derivation: {exc}"], offsets, None
-    if not any(math.isclose(result, f, rel_tol=1e-3, abs_tol=1e-6) for f in figures):
+    rel_tol = 1e-9 if draft.value_brackets is not None else 1e-3
+    if not any(math.isclose(result, f, rel_tol=rel_tol, abs_tol=1e-12) for f in figures):
         proposed = (
             "any figure of the proposed schedule"
             if draft.value_brackets is not None
@@ -1550,18 +1555,22 @@ def _round_like_held(
     figure the model typed: the check accepts a result within 0.1 % of it,
     and RSA 646,52 × (1,28412 + 2 × 0,42804) = 1 383,68 was proposed as
     1 383,28 (5 Nov full run, $bsa00_amt9). Without a precision to round to,
-    the typed figure stands.
+    the result itself is proposed: the typed figure never stands.
     """
     if draft.value_scalar is None:
         return None
     if unit == "/1":
         digits = _rate_digits(held)
-        if digits is None:
-            return None
     elif unit.startswith("currency"):
         digits = _held_digits(held)
     else:
-        return None
+        digits = None
+    if digits is None:
+        if derived is None or derived == draft.value_scalar:
+            return None
+        note = f"note: derived {derived:g} proposed (the proposal said {draft.value_scalar:g})"
+        draft.value_scalar = derived
+        return note
     source = draft.value_scalar if derived is None else derived
     value = Decimal(repr(source))
     rounded = float(value.quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))

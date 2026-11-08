@@ -443,6 +443,14 @@ def test_euromod_one_cent_off_the_stated_law_is_a_finding_not_a_match():
     assert result.euromod_discrepancy == "stated"
 
 
+def test_a_few_cents_on_a_large_amount_are_not_equal():
+    # 1e-6 relative used to equate 52 504,00 and 52 504,05; only float noise is tolerated.
+    assert not values_equal(52504.05, 52504.0)
+    assert not values_equal(1_000_000.01, 1_000_000.0)
+    assert values_equal("747#m", "8964#y")
+    assert values_equal(0.1 + 0.2, 0.3)
+
+
 def test_euromod_one_euro_off_a_bracket_bound_is_a_finding():
     held = [Bracket(threshold=0, rate=0), Bracket(threshold=11496, rate=0.11)]
     law = [Bracket(threshold=0, rate=0), Bracket(threshold=11497, rate=0.11)]

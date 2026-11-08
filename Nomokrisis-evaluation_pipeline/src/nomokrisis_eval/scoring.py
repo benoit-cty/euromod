@@ -42,9 +42,10 @@ evaluated, percent literals divided ('4.1%' is the same rate as 0.041 — EUROMO
 spells some rates that way, OpenFisca never does), $constants resolved against a
 caller-supplied map, the period suffix
 converted to the monthly basis when the two sides state different periods. The
-tolerance is relative 1e-6: wide enough for float noise and period conversion,
-tight enough that a 1 € discrepancy on a 11 496 € threshold (the FR 2025 barème
-erratum, ~9e-5 relative) still scores as a difference.
+tolerance is relative 1e-9: float noise and period conversion only. It was 1e-6,
+which let a few cents through on a large amount (0,05 € on 52 504 €); there is
+no tolerance between EUROMOD and the law — a one-unit difference is a finding
+(`law_vs_euromod`), never a match.
 """
 
 from __future__ import annotations
@@ -136,9 +137,9 @@ _CONST_RE = re.compile(r"\$([A-Za-z_]\w*)")
 _ALLOWED_BINOPS = (ast.Add, ast.Sub, ast.Mult, ast.Div)
 _ALLOWED_UNARY = (ast.UAdd, ast.USub)
 
-#: Relative tolerance for normalised comparisons. Must stay below ~9e-5 so the
-#: FR 2025 barème's 1-€-below-the-law thresholds keep scoring as differences.
-_REL_TOL = 1e-6
+#: Relative tolerance for normalised comparisons: float noise only. One cent
+#: on the largest FR amounts (~1e6 €) is 1e-8 relative, so 1e-9 never hides it.
+_REL_TOL = 1e-9
 
 
 @dataclass(frozen=True)

@@ -1123,6 +1123,10 @@ def test_a_schedule_may_derive_one_of_its_figures():
     wrong = good.model_copy(update={"value_brackets": [Bracket(threshold=0.0, rate=0.0035)]})
     issues, _, _ = _check_derivation(wrong, hits, _verify_in(hits))
     assert issues == ["derivation: a * b evaluates to 0.0014, not any figure of the proposed schedule"]
+    # A schedule's figure is not replaced by the result, so no 0.1 % slack:
+    # 0.00140 is 0,14 %, 0.001401 is not what the law computes.
+    near = good.model_copy(update={"value_brackets": [Bracket(threshold=0.0, rate=0.001401)]})
+    assert _check_derivation(near, hits, _verify_in(hits))[0] != []
 
 
 def test_a_negative_rate_is_sane_and_an_unnormalised_percentage_is_not():
@@ -1179,10 +1183,17 @@ def test_the_derivation_result_is_rounded_not_the_typed_figure():
     assert typo.value_scalar == 1383.68 and "the proposal said 1383.28" in note
     exact = ProposalDraft(found=True, value_scalar=276.74)
     assert _round_like_held("currency", exact, held, 0.42804 * 646.52) is None
-    # No precision to round to: the typed figure stands.
+    # No precision to round to: the derivation's result is proposed, never the
+    # typed figure 0.1 % away from it.
     coarse = ProposalDraft(found=True, value_scalar=0.0675)
-    assert _round_like_held("/1", coarse, ParameterValue(value=0.068, valid_from=date(2024, 1, 1)), 0.06752) is None
-    assert coarse.value_scalar == 0.0675
+    note = _round_like_held("/1", coarse, ParameterValue(value=0.068, valid_from=date(2024, 1, 1)), 0.06752)
+    assert coarse.value_scalar == 0.06752 and "the proposal said 0.0675" in note
+    ratio = ProposalDraft(found=True, value_scalar=1.2142)
+    _round_like_held("ratio", ratio, None, 347.83 / 286.45)
+    assert ratio.value_scalar == 347.83 / 286.45
+    # Not derived, no precision: nothing to change.
+    assert _round_like_held("/1", ProposalDraft(found=True, value_scalar=0.0675),
+                            ParameterValue(value=0.068, valid_from=date(2024, 1, 1))) is None
 
 
 def test_a_misquote_alone_earns_the_extra_attempt():
