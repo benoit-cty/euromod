@@ -234,3 +234,80 @@ def test_an_act_without_consolidations_falls_back_to_its_own_text():
     assert [u.citation for u in instrument.units] == ["XV-46 1 straipsnis", "XV-46 2 straipsnis"]
     assert instrument.units[1].versions[0].valid_from == date(2025, 1, 1)
     assert instrument.units[1].versions[0].valid_to is None
+
+
+def test_a_government_resolution_splits_into_points_cited_by_date_and_number():
+    # Resolutions and orders have no straipsniai: the year's amount is a numbered
+    # point. Split on articles alone, the 2025 minimum-wage resolution loaded as
+    # an empty shell and every MMA-based parameter was not_found.
+    orig_ref = _ref("3ce10ac065fc11efafbb8694c098bac5/orig", "consolidation")
+    row = {
+        "dokumento_id": "3ce10ac065fc11efafbb8694c098bac5",
+        "rusis": "Nutarimas",
+        "atv_dok_nr": "709",
+        "pavadinimas": "Dėl 2025 metais taikomo minimaliojo darbo užmokesčio",
+        "isigalioja": "2024-08-30",
+        "negalioja": None,
+        "tekstas_lt": (
+            "Lietuvos Respublikos Vyriausybė\n\xa0\nnutarimas\nDĖL 2025 METAIS TAIKOMO MINIMALIOJO DARBO UŽMOKESČIO\n"
+            "\xa0\n2024 m. rugpjūčio 28 d. Nr. 709\nVilnius\n\n\n\n"
+            "Vadovaudamasi Lietuvos Respublikos darbo kodekso 141 straipsnio 3, 4 dalimis, "
+            "Lietuvos Respublikos Vyriausybė nutaria:\n\n\n\n"
+            "1. Patvirtinti 2025 metais taikomą minimalųjį valandinį atlygį – 6,35 euro ir "
+            "minimaliąją mėnesinę algą – 1038 eurus.\n\n\n\n"
+            "2. Rekomenduoti socialiniams partneriams nustatyti didesnius dydžius.\n"
+            "2.1. Papunktis lieka 2 punkte.\n\n"
+            "Ministrė Pirmininkė Ingrida Šimonytė\n"
+            "PRIEDAS\n1. Priedo punktas lieka 2 punkte.\n"
+        ),
+    }
+    doc = parse_tar_json(json.dumps({"_data": [row]}).encode(), orig_ref, _snapshot(orig_ref))
+    (instrument,) = doc.instruments
+    assert instrument.instrument_type == "nutarimas"
+    # «Nr. 709» is not unique across the register: the act keeps its dokumento_id.
+    assert instrument.national_id == "3ce10ac065fc11efafbb8694c098bac5"
+    assert instrument.title["lt"] == "Dėl 2025 metais taikomo minimaliojo darbo užmokesčio"
+    assert [u.citation for u in instrument.units] == [
+        "2024 m. rugpjūčio 28 d. nutarimas Nr. 709 preambulė",
+        "2024 m. rugpjūčio 28 d. nutarimas Nr. 709 1 punktas",
+        "2024 m. rugpjūčio 28 d. nutarimas Nr. 709 2 punktas",
+    ]
+    preamble, point1, point2 = instrument.units
+    assert "darbo kodekso 141 straipsnio" in preamble.versions[0].texts[0].content
+    assert point1.unit_type == "punktas"
+    assert point1.versions[0].texts[0].content.startswith("1. Patvirtinti")
+    assert "1038 eurus" in point1.versions[0].texts[0].content
+    assert point1.versions[0].valid_from == date(2024, 8, 30)
+    assert "Priedo punktas" in point2.versions[0].texts[0].content
+
+
+def test_the_document_row_of_a_resolution_agrees_with_its_text_on_identity():
+    # Both payloads must give the same national_id, or the loader inserts two
+    # instruments and trips the unique eli constraint.
+    ref = _ref("3ce10ac065fc11efafbb8694c098bac5", "instrument")
+    row = {"dokumento_id": "3ce10ac065fc11efafbb8694c098bac5", "rusis": "Nutarimas", "atv_dok_nr": "709"}
+    doc = parse_tar_json(json.dumps({"_data": [row]}).encode(), ref, _snapshot(ref))
+    assert doc.instruments[0].national_id == "3ce10ac065fc11efafbb8694c098bac5"
+    assert doc.instruments[0].instrument_type == "nutarimas"
+
+
+def test_a_consolidated_order_reads_its_kind_from_the_header():
+    ref = _ref("51e270f4ae6111ef90b5ee8931e5ce5e/xYz", "consolidation")
+    row = {
+        "dokumento_id": "51e270f4ae6111ef90b5ee8931e5ce5e",
+        "galioja_nuo": "2025-01-01T00:00:00",
+        "tekstas_lt": (
+            "LIETUVOS RESPUBLIKOS SOCIALINĖS APSAUGOS IR DARBO MINISTRAS\nĮSAKYMAS\n"
+            "DĖL 2025 METŲ MINIMALIŲ VARTOJIMO POREIKIŲ DYDŽIO PATVIRTINIMO\n"
+            "2024 m. lapkričio 29 d. Nr. A1-835\nVilnius\n"
+            "Patvirtinu 2025 metų minimalių vartojimo poreikių dydį – 450 eurų.\n"
+        ),
+    }
+    doc = parse_tar_json(json.dumps({"_data": [row]}).encode(), ref, _snapshot(ref))
+    (instrument,) = doc.instruments
+    assert instrument.instrument_type == "isakymas"
+    assert instrument.national_id == "51e270f4ae6111ef90b5ee8931e5ce5e"
+    assert instrument.title["lt"] == "DĖL 2025 METŲ MINIMALIŲ VARTOJIMO POREIKIŲ DYDŽIO PATVIRTINIMO"
+    (unit,) = instrument.units
+    assert unit.citation == "2024 m. lapkričio 29 d. įsakymas Nr. A1-835"
+    assert "450 eurų" in unit.versions[0].texts[0].content

@@ -139,6 +139,7 @@ unit:
       - euromod://LT/ConstDef_lt/def_const/$bchmp_twins_coef  # n/a,4
       - euromod://LT/ConstDef_lt/def_const/$bchnm_coef  # n/a,0.79,1.32,1.54,1.75 — child benefit: multiple of BSB
       - euromod://LT/ConstDef_lt/def_const/$bmaed_coef  # n/a,4,6
+      - euromod://LT/ConstDef_lt/def_const/$bmact_MaxLim  # 3.2,2 — benefit ceiling: multiple of AMS (2026-11-08 benchmark: 2.0 refused by the /1 range check)
       - euromod://LT/ConstDef_lt/def_const/$bmaprnc_coef  # 2,6.43
       - euromod://LT/ConstDef_lt/def_const/$bsa00_all_coef  # n/a,1.1
       - euromod://LT/ConstDef_lt/def_const/$bsa00_single12m_coef  # n/a,1.2

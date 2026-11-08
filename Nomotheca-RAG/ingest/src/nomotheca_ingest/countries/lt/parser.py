@@ -3,13 +3,15 @@
 Three payload shapes, distinguished by the source id (see ``fetcher.py``):
 an act's ``Dokumentas`` row, an act's consolidation index (``Suvestine`` rows
 without text), and one dated consolidation whose ``tekstas_lt`` is the full
-consolidated act split here into per-article (straipsnis) units.
+consolidated act split here into per-article (straipsnis) units — or, for a
+resolution or an order, which have no articles, into its numbered points (punktai).
 """
 
 from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -38,6 +40,13 @@ CHAPTER_RE = re.compile(r"^([IVXLC]+(?:-[IVXLC]+)*)\s+SKYRIUS\s*$", re.MULTILINE
 # Anchoring on that line skips both gazette numbers (Žin. 2002, Nr. 73-3085) and
 # "Nauja redakcija" notes citing amending acts (Nr. XI-1772, ...), which appear first.
 OFFICIAL_NR_RE = re.compile(r"^\d{4}\s+m\..*?\bNr\.\s*([A-Z]+(?:-\d+)+)\b", re.MULTILINE)
+# The same enactment line for any act: date, then whatever number it carries ("709", "A1-835").
+ENACTMENT_RE = re.compile(r"^(\d{4}\s+m\.\s+\S+\s+\d{1,2}\s+d\.)\s+Nr\.\s*(\S+)", re.MULTILINE)
+# A top-level point of a resolution or an order: "1. Patvirtinti …" (not "1.1." nor "1)").
+POINT_RE = re.compile(r"^(\d+)\.[ \t\xa0]+(?=\S)", re.MULTILINE)
+# Header words naming an act that is not a law; each is a line of its own.
+ACT_KINDS = frozenset({"nutarimas", "įsakymas", "sprendimas", "potvarkis"})
+NON_LAW_TYPES = frozenset({"nutarimas", "isakymas", "sprendimas", "potvarkis"})
 
 
 def parse_tar_json(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
@@ -59,11 +68,12 @@ def _parse_document(rows: list[dict[str, Any]], ref: SourceRef) -> ParsedDoc:
         raise ValueError(msg)
     row = rows[0]
     dokumento_id = row.get("dokumento_id") or ref.source_id
-    national_id, _ = _act_identity(dokumento_id, row.get("atv_dok_nr"))
+    instrument_type = _instrument_type(row.get("rusis"))
+    national_id, _ = _act_identity(dokumento_id, row.get("atv_dok_nr"), instrument_type)
     instrument = InstrumentIR(
         jurisdiction=ref.jurisdiction,
         source_code=ref.source_code,
-        instrument_type=_instrument_type(row.get("rusis")),
+        instrument_type=instrument_type,
         national_id=national_id,
         eli=row.get("nuoroda"),
         title={"lt": row.get("pavadinimas") or dokumento_id},
@@ -137,42 +147,58 @@ def _parse_consolidation(rows: list[dict[str, Any]], ref: SourceRef, snapshot: S
     # half-open, so the exclusive end is the following day.
     valid_to = valid_to_inclusive + timedelta(days=1) if valid_to_inclusive else None
 
-    national_id, short_citation = _act_identity(dokumento_id, _header_official_nr(text))
+    # A Dokumentas row (``/orig``) says what the act is; a Suvestinė row does not,
+    # and its header does ("nutarimas", "įsakymas" on a line of their own).
+    instrument_type = _instrument_type(row.get("rusis") or _header_kind(text))
+    national_id, short_citation = _act_identity(dokumento_id, _header_official_nr(text), instrument_type)
+    if instrument_type in NON_LAW_TYPES:
+        short_citation = _header_enactment(text) or short_citation
     units = [
-        _article_unit(
-            number=number,
-            heading=heading,
-            body=body,
-            chapter=chapter,
+        _section_unit(
+            section,
             act_nr=national_id,
             short_citation=short_citation,
-            source_version_id=f"{ref.source_id}/str_{_path_token(number)}",
+            source_version_id=f"{ref.source_id}/{section.path}",
             valid_from=valid_from,
             valid_to=valid_to,
             snapshot=snapshot,
             ordinal=ordinal,
         )
-        for ordinal, (number, heading, body, chapter) in enumerate(_split_articles(text), start=1)
+        for ordinal, section in enumerate(_split_sections(text), start=1)
     ]
+    if instrument_type in NON_LAW_TYPES:
+        # Its header opens with the issuer («LIETUVOS RESPUBLIKOS VYRIAUSYBĖ»), not a title.
+        title = row.get("pavadinimas") or _header_subject(text) or dokumento_id
+    else:
+        title = _header_title(text) or row.get("pavadinimas") or dokumento_id
     instrument = InstrumentIR(
         jurisdiction=ref.jurisdiction,
         source_code=ref.source_code,
-        instrument_type="istatymas",
+        instrument_type=instrument_type,
         national_id=national_id,
         eli=f"https://e-tar.lt/portal/lt/legalAct/{dokumento_id}",
-        title={"lt": _header_title(text) or dokumento_id},
+        title={"lt": title},
         units=units,
         metadata={"dokumento_id": dokumento_id, "suvestines_id": row.get("suvestines_id")},
     )
     return ParsedDoc(ref=ref, instruments=[instrument], metadata={"articles": len(units)})
 
 
-def _article_unit(
+@dataclass(frozen=True)
+class _Section:
+    """One citable piece of an act: a straipsnis, a punktas, a preamble, or the whole text."""
+
+    unit_type: str
+    path: str
+    label: str  # appended to the act's short citation; "" for the whole text
+    content: str
+    number: str | None = None
+    chapter: str | None = None
+
+
+def _section_unit(
+    section: _Section,
     *,
-    number: str,
-    heading: str,
-    body: str,
-    chapter: str | None,
     act_nr: str,
     short_citation: str,
     source_version_id: str,
@@ -181,15 +207,15 @@ def _article_unit(
     snapshot: Snapshot,
     ordinal: int,
 ) -> UnitIR:
-    """Build the IR for one straipsnis of one dated consolidation."""
-    citation = f"{short_citation} {number} straipsnis"
+    """Build the IR for one section of one dated consolidation."""
+    citation = f"{short_citation} {section.label}".strip()
     return UnitIR(
-        unit_type="straipsnis",
-        path=f"str_{_path_token(number)}",
+        unit_type=section.unit_type,
+        path=section.path,
         citation=citation,
         ordinal=ordinal,
-        national_id=f"{act_nr}-{number}",
-        metadata={"skyrius": chapter} if chapter else {},
+        national_id=f"{act_nr}-{section.number}" if section.number else f"{act_nr}-{section.path}",
+        metadata={"skyrius": section.chapter} if section.chapter else {},
         versions=[
             VersionIR(
                 valid_from=valid_from,
@@ -197,17 +223,35 @@ def _article_unit(
                 source_version_id=source_version_id,
                 citation_label=citation,
                 fetch_snapshot_id=snapshot.id,
-                texts=[TextIR(lang="lt", content=f"{number} straipsnis. {heading}\n{body}".strip())],
+                texts=[TextIR(lang="lt", content=section.content)],
             )
         ],
     )
 
 
-def _split_articles(text: str) -> list[tuple[str, str, str, str | None]]:
-    """Split a consolidated act text into (number, heading, body, chapter) tuples."""
+def _split_sections(text: str) -> list[_Section]:
+    """Split an act text into its straipsniai — or, for a resolution or an order,
+    which have none, into its numbered punktai, else into one whole-text unit.
+
+    A Government resolution states the year's amount in a point («1. Patvirtinti
+    2025 metais taikomą … minimaliąją mėnesinę algą – 1038 eurus.»); split on
+    articles alone it had no unit, and the instrument loaded as an empty shell.
+    """
+    articles = _split_articles(text)
+    if articles:
+        return articles
+    points = _split_points(text)
+    if points:
+        return points
+    content = _normalize_space(text)
+    return [_Section("tekstas", "tekstas", "", content)] if content else []
+
+
+def _split_articles(text: str) -> list[_Section]:
+    """Split a consolidated act text into its straipsniai."""
     chapters = [(match.start(), match.group(1)) for match in CHAPTER_RE.finditer(text)]
     matches = list(ARTICLE_RE.finditer(text))
-    articles: list[tuple[str, str, str, str | None]] = []
+    articles: list[_Section] = []
     for index, match in enumerate(matches):
         end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
         body = _normalize_space(text[match.end() : end])
@@ -215,21 +259,67 @@ def _split_articles(text: str) -> list[tuple[str, str, str, str | None]]:
         for position, label in chapters:
             if position < match.start():
                 chapter = label
-        articles.append((match.group(1), match.group(2).strip(), body, chapter))
+        number, heading = match.group(1), match.group(2).strip()
+        articles.append(
+            _Section(
+                unit_type="straipsnis",
+                path=f"str_{_path_token(number)}",
+                label=f"{number} straipsnis",
+                content=f"{number} straipsnis. {heading}\n{body}".strip(),
+                number=number,
+                chapter=chapter,
+            )
+        )
     return articles
 
 
-def _act_identity(dokumento_id: str, official_nr: str | None) -> tuple[str, str]:
+def _split_points(text: str) -> list[_Section]:
+    """Split a resolution's or an order's text into its top-level numbered points.
+
+    Only the first run 1, 2, 3, … counts: a number out of sequence (an annex
+    numbering its own points from 1, a "2.1." sub-point) stays in the body of the
+    point before it, so every punktas citation is unique. The text before point 1
+    (issuer, title, date and number, the legal basis «Vadovaudamasi … nutaria:»)
+    is its own preamble unit.
+    """
+    starts: list[re.Match[str]] = []
+    for match in POINT_RE.finditer(text):
+        if int(match.group(1)) == len(starts) + 1:
+            starts.append(match)
+    if not starts:
+        return []
+    sections: list[_Section] = []
+    preamble = _normalize_space(text[: starts[0].start()])
+    if preamble:
+        sections.append(_Section("preambule", "preambule", "preambulė", preamble))
+    for index, match in enumerate(starts):
+        end = starts[index + 1].start() if index + 1 < len(starts) else len(text)
+        number = match.group(1)
+        sections.append(
+            _Section(
+                unit_type="punktas",
+                path=f"pkt_{number}",
+                label=f"{number} punktas",
+                content=_normalize_space(text[match.start() : end]),
+                number=number,
+            )
+        )
+    return sections
+
+
+def _act_identity(dokumento_id: str, official_nr: str | None, instrument_type: str = "istatymas") -> tuple[str, str]:
     """Return (official number, short citation label) for an act.
 
     For known acts the curated number always wins: the document row and each
     consolidation must resolve to the same national_id or the loader inserts
-    duplicate instruments (and trips the unique eli constraint).
+    duplicate instruments (and trips the unique eli constraint). Only a law's
+    number (IX-1007) is unique across the register: a resolution's «Nr. 709» or
+    a ministry's «Nr. V-524» is not, so any other act keeps its dokumento_id.
     """
     known = KNOWN_ACTS.get(dokumento_id)
     if known:
         return known
-    number = official_nr or dokumento_id
+    number = (None if instrument_type in NON_LAW_TYPES else official_nr) or dokumento_id
     return (number, number)
 
 
@@ -237,6 +327,39 @@ def _header_official_nr(text: str) -> str | None:
     """Extract the official act number (e.g. IX-1007) from a consolidation header."""
     match = OFFICIAL_NR_RE.search(text[:2000])
     return match.group(1) if match else None
+
+
+def _header_kind(text: str) -> str | None:
+    """Read the act kind from the header line that names it ("nutarimas", "ĮSAKYMAS")."""
+    for line in text.splitlines()[:40]:
+        word = line.replace("\xa0", " ").strip().lower()
+        if word in ACT_KINDS:
+            return word
+    return None
+
+
+def _header_enactment(text: str) -> str | None:
+    """Cite a resolution or an order as Lithuanian lawyers do: «2024 m. rugpjūčio 28 d. nutarimas Nr. 709»."""
+    match = ENACTMENT_RE.search(text[:2000])
+    kind = _header_kind(text)
+    if not match or not kind:
+        return None
+    return f"{match.group(1)} {kind} Nr. {match.group(2)}"
+
+
+def _header_subject(text: str) -> str | None:
+    """The «DĖL …» title of a resolution or an order, which may run over several
+    lines and be in mixed case («DĖL socialinės paramos … rodiklių / DYDŽIŲ PATVIRTINIMO»)."""
+    lines = [line.replace("\xa0", " ").strip() for line in text.splitlines()[:40]]
+    for index, line in enumerate(lines):
+        if line.upper().startswith("DĖL "):
+            title = [line]
+            for following in lines[index + 1 :]:
+                if not following or ENACTMENT_RE.match(following):
+                    break
+                title.append(following)
+            return " ".join(title)
+    return None
 
 
 def _header_title(text: str) -> str | None:
