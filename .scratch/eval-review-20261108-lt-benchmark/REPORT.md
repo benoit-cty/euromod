@@ -31,7 +31,7 @@ The headline is carried by unchanged values. Of the 18 values that changed in 20
 
 The scout also burned attempts on e-seimas `TAP/TAD` ids (Seimas drafts). TAR's open data does not serve them (`TAR returned no Suvestine row`), so every one fails.
 
-## Fixes applied (not committed)
+## Fixes applied
 
 - `Nomotheca-RAG/ingest/src/nomotheca_ingest/countries/lt/parser.py`:
   - An act with no articles is split into its top-level points, with its preamble as its own unit, or into one whole-text unit.
