@@ -1,5 +1,5 @@
 <script>
-  // A small inline icon set (stroke icons on a 24-unit grid) so the sidebar
+  // A small inline icon set (stroke icons on a 24-unit grid) so the tabs
   // and buttons read at a glance. No icon font, no network: the app is a
   // desktop window and must render offline.
   let { name, size = 18 } = $props();

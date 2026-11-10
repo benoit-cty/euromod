@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test src/lib/*.test.js",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "install-desktop-entry": "sh scripts/install-desktop-entry.sh"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.9.1",

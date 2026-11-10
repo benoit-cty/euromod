@@ -188,7 +188,12 @@
 </div>
 
 <style>
-  .home { display: flex; flex-direction: column; gap: 1rem; overflow: auto; max-width: 72rem; }
+  .home { display: flex; flex-direction: column; gap: 1rem; overflow: auto; }
+  /* The brand star shows through the Overview's panels. */
+  .home :global(.panel), .tile {
+    background: var(--panel-glass);
+    backdrop-filter: blur(3px);
+  }
   .hero {
     display: flex;
     align-items: center;
@@ -197,7 +202,8 @@
     flex-wrap: wrap;
     padding: 1.4rem 1.6rem;
     border-radius: var(--radius);
-    background: linear-gradient(120deg, var(--accent-soft), var(--panel));
+    background: linear-gradient(120deg, var(--accent-soft-glass), var(--panel-glass));
+    backdrop-filter: blur(3px);
     border: 1px solid var(--border);
   }
   .hero h2 { font-size: 1.3rem; margin: 0 0 0.25rem; }
@@ -210,7 +216,6 @@
     padding: 1rem 1.1rem;
     border-radius: var(--radius);
     border: 1px solid var(--border);
-    background: var(--panel);
     box-shadow: var(--shadow);
     text-align: left;
   }

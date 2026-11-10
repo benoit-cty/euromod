@@ -20,7 +20,7 @@ resubmits (embedding and translation resume by construction).
 |---|---|---|
 | `workflow` | `{"targets": [...], "year": 2025, "model": null, "force": false}` | `nomoscope_workflow.cli run-targets …` |
 | `ingest` | `{"command": "instrument"\|"citation"\|"document"\|"route", "args": [...]}` | `nomotheca_ingest.cli <command> <args…> --database-url …` |
-| `embed` | `{"model_id": 1, "batch_size": 16, "limit": null, "dry_run": false}` | `nomotheca_ingest.cli embeddings build --backend torch …` |
+| `embed` | `{"model_id": 1, "batch_size": 16, "limit": null, "dry_run": false, "precision": "auto", "authentic_only": false}` (embeds only chunks with no vector for `model_id`; `uv run nomergon submit embed --wait`) | `nomotheca_ingest.cli embeddings build --backend torch …` |
 | `translate` | `{"model": "…", "target_lang": "en", "limit": null, "request_timeout": 120, "dry_run": false}` | `nomotheca_ingest.cli translate run …` |
 | `translate-params` | `{"country": "FR", "lang": "fr", "model": "…", "batch_size": 20, "limit": null, "force": false}` | `nomoscope_workflow.cli translate-params …` |
 | `encode` | `{"query": "…"}` or `{"query": "…", "sentences": [...]}` | in-process (priority 100) |

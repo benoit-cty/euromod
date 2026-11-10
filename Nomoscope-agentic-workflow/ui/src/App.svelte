@@ -12,6 +12,7 @@
   import ParamsTab from './lib/components/ParamsTab.svelte';
   import ImpactTab from './lib/components/ImpactTab.svelte';
   import JobsTab from './lib/components/JobsTab.svelte';
+  import brandBackground from './assets/brand_background_EUROMOD.jpg';
 
   // The UI is remote (ADR 0004): its one credential is the database login,
   // and `reviewer` is that login's current_user as the server sees it.
@@ -46,7 +47,7 @@
   let dark = $state(stored('theme') === 'dark');
   // Expert tools (golden set, evaluation, impact, jobs) are for the people
   // who build and measure the pipeline; a reviewer never needs them, so they
-  // stay out of the sidebar until asked for.
+  // stay out of the tab strip until asked for.
   let expert = $state(stored('expert') === '1');
   // Component instances, for the page-aware Refresh button below.
   let homePage = $state(null);
@@ -98,7 +99,7 @@
   });
 
   // Leaving expert mode while on an expert page would leave a page with no
-  // sidebar entry: go home instead.
+  // tab: go home instead.
   $effect(() => {
     if (!expert && page.expert) tab = 'home';
   });
@@ -237,85 +238,101 @@
 
 {#snippet navItem(p)}
   <button
-    class="nav-item"
+    class="tab"
     class:active={tab === p.id}
-    aria-current={tab === p.id ? 'page' : undefined}
+    class:expert={p.expert}
+    role="tab"
+    aria-selected={tab === p.id}
+    title={p.intro}
     onclick={() => go(p.id)}
   >
-    <Icon name={p.icon} />
-    <span class="nav-label">{p.label}</span>
+    {p.label}
     {#if p.id === 'review' && pendingCount}<span class="count">{pendingCount}</span>{/if}
     {#if p.id === 'params' && paramsRunning}<span class="running-dot" title="a check is running">●</span>{/if}
   </button>
 {/snippet}
 
 <div class="app">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="logo">N</div>
-      <div>
-        <div class="brand-name">Nómos</div>
-        <div class="brand-sub">EUROMOD parameter review</div>
-      </div>
-    </div>
-
-    <nav>
+  <!-- EUROMOD's own layout: a tab strip under the logo, a ribbon of grouped
+       commands, the brand star behind the pages, a status bar at the foot. -->
+  <header class="tabstrip">
+    <div class="logo" title="Nómos: EUROMOD parameter review">N</div>
+    <nav role="tablist">
       {#each PAGES.filter((p) => !p.expert) as p (p.id)}{@render navItem(p)}{/each}
       {#if expert}
-        <div class="nav-section">Expert tools</div>
         {#each PAGES.filter((p) => p.expert) as p (p.id)}{@render navItem(p)}{/each}
       {/if}
     </nav>
+  </header>
 
-    <div class="sidebar-foot">
-      <div
-        class="worker"
-        title={workerAlive
-          ? 'The worker that runs checks, searches and imports is online.'
-          : workerAlive === false
-            ? 'No worker is running: submitted work waits in the queue until one starts.'
-            : 'Worker status unknown'}
-      >
-        <span class="dot" class:on={workerAlive} class:off={workerAlive === false}></span>
-        {workerAlive ? 'Worker online' : workerAlive === false ? 'Worker offline' : 'Worker …'}
+  <div class="ribbon">
+    <div class="group">
+      <div class="cmds">
+        <button
+          class="big-cmd"
+          onclick={exportChanges}
+          title="Writes only what changed (accepted values and corrected parameters), one file per country, into a folder you pick."
+        >
+          <Icon name="download" size={24} />
+          <span>Export</span>
+        </button>
+        <button
+          class="big-cmd"
+          onclick={reloadActive}
+          disabled={!reloaders[tab]}
+          title="Reload this page’s data"
+        >
+          <Icon name="refresh" size={24} />
+          <span>Refresh</span>
+        </button>
       </div>
-      <div class="who" title="Your database login: every decision and job is recorded under it.">
-        Signed in as <strong>{config.reviewer ?? '—'}</strong>
-      </div>
-      <label class="toggle">
-        <input type="checkbox" bind:checked={expert} />
-        <span>Show expert tools</span>
-      </label>
-      <button class="ghost theme" onclick={() => (dark = !dark)}>
-        <Icon name={dark ? 'sun' : 'moon'} size={16} />
-        {dark ? 'Light theme' : 'Dark theme'}
-      </button>
+      <div class="group-label">General</div>
     </div>
-  </aside>
-
-  <div class="content">
-    <header class="topbar">
-      <div class="title">
-        <h1>{page.label}</h1>
-        <p class="page-intro">{page.intro}</p>
+    <div class="group page-group">
+      <div class="cmds col">
+        <strong>{page.label}</strong>
+        <span class="page-intro">{page.intro}</span>
       </div>
-      <div class="actions">
-        {#if reloaders[tab]}
-          <button class="ghost" onclick={reloadActive} title="Reload this page’s data">
-            <Icon name="refresh" size={16} /> Refresh
-          </button>
-        {/if}
-        {#if tab === 'review' || tab === 'home'}
-          <button
-            onclick={exportChanges}
-            title="Writes only what changed (accepted values and corrected parameters), one file per country, into a folder you pick."
-          >
-            <Icon name="download" size={16} /> Export for EUROMOD…
-          </button>
-        {/if}
+      <div class="group-label">Page</div>
+    </div>
+    <div class="group">
+      <div class="cmds col">
+        <label class="inline">
+          Theme:
+          <select value={dark ? 'dark' : 'light'} onchange={(e) => (dark = e.currentTarget.value === 'dark')}>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+        <label class="inline toggle">
+          <input type="checkbox" bind:checked={expert} />
+          <Icon name="tools" size={15} /> Show expert tools
+        </label>
       </div>
-    </header>
+      <div class="group-label">Display</div>
+    </div>
+    <div class="group">
+      <div class="cmds col">
+        <div
+          class="inline"
+          title={workerAlive
+            ? 'The worker that runs checks, searches and imports is online.'
+            : workerAlive === false
+              ? 'No worker is running: submitted work waits in the queue until one starts.'
+              : 'Worker status unknown'}
+        >
+          <span class="dot" class:on={workerAlive} class:off={workerAlive === false}></span>
+          {workerAlive ? 'Worker online' : workerAlive === false ? 'Worker offline' : 'Worker …'}
+        </div>
+        <div class="inline" title="Your database login: every decision and job is recorded under it.">
+          Signed in as <strong>{config.reviewer ?? '—'}</strong>
+        </div>
+      </div>
+      <div class="group-label">Connection</div>
+    </div>
+  </div>
 
+  <div class="content" style:--brand-bg={`url(${brandBackground})`}>
     {#if error}
       <div class="callout err banner">
         <span>{error}</span>
@@ -398,49 +415,55 @@
       </main>
     {/if}
   </div>
+
+  <footer class="statusbar">
+    <span>{pendingCount ? `${pendingCount} proposal(s) waiting for review` : 'Ready'}</span>
+    <span class="muted">{config.reviewer ? `Signed in as ${config.reviewer}` : 'Not connected'}</span>
+  </footer>
 </div>
 
 <style>
-  .app { display: flex; height: 100vh; }
-  .sidebar {
-    width: 228px;
-    flex: none;
-    background: var(--sidebar);
-    border-right: 1px solid var(--border);
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* --- Tab strip (EUROMOD: logo disc, then light-blue tabs) --- */
+  .tabstrip {
     display: flex;
-    flex-direction: column;
-    padding: 1rem 0.7rem;
-    gap: 1.2rem;
+    align-items: flex-end;
+    gap: 0.6rem;
+    background: var(--strip);
+    padding: 0.35rem 0.5rem 0;
+    flex: none;
   }
-  .brand { display: flex; align-items: center; gap: 0.6rem; padding: 0 0.4rem; }
   .logo {
-    width: 2.1rem;
-    height: 2.1rem;
-    border-radius: 10px;
-    background: var(--accent);
+    width: 2.6rem;
+    height: 2.6rem;
+    margin-bottom: 0.25rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #4f72c9, #1f3d8f);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px var(--border-strong);
     color: #fff;
     display: grid;
     place-items: center;
+    font-size: 1.35rem;
     font-weight: 700;
-    font-size: 1.1rem;
+    flex: none;
   }
-  .brand-name { font-weight: 700; font-size: 1.05rem; }
-  .brand-sub { color: var(--muted); font-size: 0.75rem; }
-  nav { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: auto; }
-  .nav-item {
-    justify-content: flex-start;
-    gap: 0.65rem;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    padding: 0.55rem 0.7rem;
-    border-radius: 8px;
-    width: 100%;
-    text-align: left;
+  nav { display: flex; gap: 3px; overflow-x: auto; min-width: 0; }
+  .tab {
+    border: 1px solid var(--border-strong);
+    border-bottom: 0;
+    border-radius: 10px 10px 0 0;
+    background: var(--tab);
+    color: var(--text);
+    padding: 0.5rem 1rem;
+    box-shadow: none;
+    white-space: nowrap;
+    flex: none;
   }
-  .nav-item:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
-  .nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-  .nav-label { flex: 1; }
+  .tab:hover:not(:disabled) { background: var(--tab-hover); border-color: var(--border-strong); box-shadow: none; }
+  .tab.active { background: var(--panel); position: relative; top: 1px; padding-bottom: calc(0.5rem + 1px); }
+  .tab.expert { font-style: italic; }
   .count {
     background: var(--accent);
     color: #fff;
@@ -451,39 +474,76 @@
     min-width: 1.4rem;
     text-align: center;
   }
-  .nav-section {
-    margin: 1rem 0.7rem 0.3rem;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--muted);
-    font-weight: 600;
-  }
   .running-dot { color: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.25; } }
 
-  .sidebar-foot {
+  /* --- Ribbon: groups of commands, each captioned underneath --- */
+  .ribbon {
+    display: flex;
+    flex: none;
+    background: var(--panel);
+    border-top: 1px solid var(--border-strong);
+    border-bottom: 1px solid var(--border-strong);
+    overflow-x: auto;
+    font-size: 0.9rem;
+  }
+  .group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.8rem 0.4rem 0;
-    border-top: 1px solid var(--border);
-    font-size: 0.85rem;
-    color: var(--muted);
+    border-right: 1px solid var(--border-strong);
+    flex: none;
   }
-  .worker { display: flex; align-items: center; gap: 0.45rem; }
+  .group.page-group { flex: 1 1 18rem; min-width: 14rem; }
+  .cmds { flex: 1; display: flex; gap: 0.3rem; padding: 0.4rem 0.6rem; align-items: stretch; }
+  .cmds.col { flex-direction: column; gap: 0.35rem; justify-content: center; }
+  .group-label {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text);
+    border-top: 1px solid var(--border-strong);
+    padding: 0.05rem 0.5rem 0.1rem;
+  }
+  .big-cmd {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 5px;
+    min-width: 4rem;
+    background: transparent;
+    border-color: transparent;
+  }
+  /* EUROMOD ribbon buttons: flat until hovered, then a border and a 1px shadow. */
+  .big-cmd:hover:not(:disabled) { border-color: var(--border-strong); }
+  .page-intro { color: var(--muted); font-size: 0.85rem; }
+  .inline { display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; color: var(--muted); }
+  .inline strong { color: var(--text); }
+  .inline select { padding: 0.2rem 0.4rem; }
+  .toggle { cursor: pointer; }
   .dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--border-strong); }
   .dot.on { background: var(--ok); }
   .dot.off { background: var(--err); }
-  .who strong { color: var(--text); }
-  .toggle { display: flex; align-items: center; gap: 0.45rem; cursor: pointer; }
-  .theme { justify-content: flex-start; padding: 0.3rem 0; font-size: 0.85rem; }
 
-  .content { flex: 1; display: flex; flex-direction: column; min-width: 0; padding: 1.1rem 1.4rem; gap: 0.9rem; }
-  .topbar { display: flex; align-items: flex-start; gap: 1rem; }
-  .title { flex: 1; min-width: 0; }
-  .title h1 { margin-bottom: 0.15rem; }
-  .actions { display: flex; gap: 0.5rem; flex: none; }
+  /* --- Content over the brand star --- */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 1rem 1.2rem;
+    gap: 0.9rem;
+    position: relative;
+    isolation: isolate;
+    background: var(--bg);
+  }
+  .content::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--brand-bg) right center / auto 100% no-repeat;
+    opacity: var(--brand-opacity);
+    pointer-events: none;
+  }
   .banner { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.5rem 0.9rem; }
   .banner button { padding: 0.2rem; }
 
@@ -497,11 +557,20 @@
   /* display:grid/flex above would override the hidden attribute's default */
   main[hidden] { display: none; }
 
+  /* --- Status bar --- */
+  .statusbar {
+    flex: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.78rem;
+    background: var(--panel);
+    border-top: 1px solid var(--border-strong);
+  }
+
   @media (max-width: 1000px) {
-    .sidebar { width: 64px; padding: 1rem 0.4rem; }
-    .brand > div:last-child, .nav-label, .nav-section, .sidebar-foot { display: none; }
-    .nav-item { justify-content: center; position: relative; }
-    .count { position: absolute; top: 2px; right: 2px; font-size: 0.65rem; }
+    .page-group { display: none; }
     main.split { grid-template-columns: 1fr; overflow: auto; }
   }
 </style>

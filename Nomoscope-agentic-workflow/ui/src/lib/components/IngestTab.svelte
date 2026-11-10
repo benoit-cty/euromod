@@ -709,6 +709,6 @@
   .progressbox { display: flex; flex-direction: column; gap: 0.3rem; }
   .pstatus { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pstatus .perr { color: var(--err); }
-  .spinner.light { border-color: rgba(255, 255, 255, 0.4); border-top-color: #fff; }
+  .spinner.light { border-color: var(--border-strong); border-top-color: var(--text-bright); }
   @media (max-width: 700px) { .wide { grid-column: auto; } }
 </style>

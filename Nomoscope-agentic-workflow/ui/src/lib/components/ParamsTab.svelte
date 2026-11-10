@@ -624,5 +624,5 @@
   .progressbox { display: flex; flex-direction: column; gap: 0.4rem; }
   .pstatus { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pstatus.stale { color: var(--err); }
-  .spinner.light { border-color: rgba(255, 255, 255, 0.4); border-top-color: #fff; }
+  .spinner.light { border-color: var(--border-strong); border-top-color: var(--text-bright); }
 </style>
