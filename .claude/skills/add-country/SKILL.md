@@ -58,7 +58,7 @@ cd Nomotheca-RAG/ingest
 uv run python -m nomotheca_ingest.cli instrument <cc> <national-or-source-id> -d postgresql://jrc:jrc@localhost:5434/legislation
 ```
 
-Then check in SQL: instruments/units/versions/texts/chunks counts, a point-in-time query (`WHERE validity @> '<date>'`) returning the value your canary fact predicts, and `chunks.context_header` looking sane. Optionally ingest the Country Report (`cli country-report <cc> <path-to-md>` — fully generic, needs only the markdown; keep parameter codes in headings, the CR search enrichment depends on them) and build embeddings (`uv sync --extra embeddings`, then `cli embeddings build`).
+Then check in SQL: instruments/units/versions/texts/chunks counts, a point-in-time query (`WHERE validity @> '<date>'`) returning the value your canary fact predicts, and `chunks.context_header` looking sane. Optionally ingest the Country Report (`cli country-report <cc> <path-to-md>` — fully generic, needs only the markdown; keep parameter codes in headings, the CR search enrichment depends on them) and build embeddings (submit an `embed` job: `cd Nomergon-worker && uv run nomergon submit embed --wait`; `cli embeddings build` is the manual fallback).
 
 ## Step 5 — Register the country with the Nomoscope scout
 

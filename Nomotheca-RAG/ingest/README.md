@@ -153,6 +153,22 @@ models are provider-prefixed strings (`anthropic/...`, `openai/...`,
 `azure_openai/...`, `openrouter/...`, `together/...`) and API keys are read from
 the environment / repo `.env` files.
 
+> **Normal path: submit a `translate` job to the worker.** Only the worker holds the
+> model keys (ADR 0004), and it publishes the models you may pick (`WORKER_MODELS`).
+> The job is idempotent: it translates only the versions that have no English text yet.
+>
+> ```bash
+> cd Nomergon-worker
+> uv run nomergon submit translate --wait --payload '{"model": "azure_openai/gpt-6-luna", "target_lang": "en", "dry_run": true}'   # count first
+> uv run nomergon submit translate --wait --payload '{"model": "azure_openai/gpt-6-luna", "target_lang": "en"}'
+> uv run nomergon events <job-id> --follow
+> ```
+>
+> Payload: `model` (required), `target_lang`, `limit`, `request_timeout`, `dry_run`.
+> Follow it with an `embed` job (see "Build embeddings") to vectorize the new chunks.
+> The command below is the manual path (no worker, debugging); it needs the keys in
+> your own `.env`.
+
 ```bash
 cd Nomotheca-RAG/ingest
 uv sync --extra embeddings --extra translate   # uv sync installs exactly the listed extras
@@ -198,6 +214,28 @@ text, so the workflow's income-year proof can read it and a reviewer can tell
 note from norm.
 
 ## Build embeddings
+
+> **Normal path: submit an `embed` job to the worker.** The worker
+> (`Nomergon-worker`, ADR 0004) owns the GPU and the model, and it embeds only the
+> chunks that have no vector yet for the chosen model, so the same job fills "the
+> missing vectors" after any ingest, `reparse`, `rechunk` or translation:
+>
+> ```bash
+> docker compose --profile gpu up -d          # or --profile cpu; once
+> cd Nomergon-worker
+> uv run nomergon submit embed --wait --payload '{"dry_run": true}'   # count what is missing
+> uv run nomergon submit embed --wait                                  # embed it (BGE-M3)
+> uv run nomergon events <job-id> --follow                             # progress, if not --wait
+> ```
+>
+> Payload: `model_id` (registry id, default 1), `batch_size`, `limit`, `dry_run`,
+> `precision`, `authentic_only`. The UI's Jobs page submits the same job. Do not run
+> the manual commands below while the worker is embedding or an eval is running: they
+> share one GPU and can run out of memory.
+>
+> The rest of this section is the **manual path** (the CLI the worker itself runs):
+> for a machine with no worker, for debugging, and for model-comparison builds with
+> options the payload does not expose (`--in-force-on`, `--encode-batch-size`).
 
 Ingestion writes `chunks` synchronously. Vector embeddings are derived afterward with
 the local BGE-M3 worker command. On an Intel Core Ultra 7 265H, prefer OpenVINO

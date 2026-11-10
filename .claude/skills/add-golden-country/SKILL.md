@@ -68,7 +68,7 @@ grep -n "\"$CC\"" ../Nomoscope-agentic-workflow/pipeline/src/nomoscope_workflow/
 | check | if missing |
 |---|---|
 | acts ingested | stop: run the `add-country` skill / `nomotheca_ingest.cli <cc> instrument …` first |
-| chunks embedded | `nomotheca_ingest.cli embeddings build` (see CLAUDE.md); a case over unembedded text is a retrieval miss by construction |
+| chunks embedded | `cd Nomergon-worker && uv run nomergon submit embed --wait` (an `embed` job; see CLAUDE.md); a case over unembedded text is a retrieval miss by construction |
 | `en` chunks ≈ native chunks | translation not run — does not block the set, but record it under *Prerequisites and gaps*: the English query leg has nothing to hit |
 | `params.parameters` rows | `nomoscope-workflow ingest-params ../../extracted_parameters/enriched/<CC>.enriched.json` |
 | curation overlay | written in §4 — every country needs one for the `national_team_source` trap |
