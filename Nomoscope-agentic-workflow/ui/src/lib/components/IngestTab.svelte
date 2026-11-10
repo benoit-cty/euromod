@@ -5,11 +5,21 @@
   import { onMount } from 'svelte';
   import { api } from '../api.js';
   import { submitAndFollow, summarize } from '../jobs.js';
+  import { countryName, humanize } from '../labels.js';
+  import Icon from './Icon.svelte';
+
+  const ACTIONS = {
+    document: { run: 'Add this document', title: 'A document or web page', blurb: 'A circular, decree, guidance page or PDF you found.' },
+    ingestion: { run: 'Import this law', title: 'An official law', blurb: 'From the national legal portal, by its reference.' },
+    embeddings: { run: 'Make texts searchable', title: 'Make new texts searchable', blurb: 'Index texts added recently so the assistant can find them.' },
+    translation: { run: 'Translate', title: 'Translate texts', blurb: 'Add English versions of texts that only exist in the national language.' },
+  };
 
   let { dbUrl = '' } = $props();
 
   let url = $state(''); // seeded from dbUrl by the $effect below once config loads
-  let sub = $state('ingestion'); // ingestion | document | embeddings | translation
+  // What the reviewer is adding. A found document is the common case, so it comes first.
+  let sub = $state('document'); // document | ingestion | embeddings | translation
 
   // --- ingestion form ---
   let ingMode = $state('instrument'); // instrument | citation
@@ -24,7 +34,7 @@
   // A reviewer pastes a URL or picks a file and states what the document is.
   // The class is never stated: it follows from the kind (ADR 0001).
   let docSource = $state('');          // URL or file path (on the worker's host)
-  let docJurisdiction = $state('fr');
+  let docJurisdiction = $state('FR'); // the store's codes, as the select offers them
   let docLang = $state('fr');
   let docTitle = $state('');
   let docKind = $state('circulaire');
@@ -364,313 +374,341 @@
     return m ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`;
   }
 </script>
-
-<section class="panel ingest">
-  <div class="row">
-    <label class="grow">
-      Database URL
-      <input bind:value={url} class="mono" />
-    </label>
+<section class="ingest">
+  <div class="choices">
+    {#each ['document', 'ingestion'] as key}
+      <button class="choice" class:active={sub === key} onclick={() => (sub = key)} disabled={running}>
+        <span class="choice-icon"><Icon name={key === 'document' ? 'plus' : 'book'} size={20} /></span>
+        <span class="choice-text">
+          <strong>{ACTIONS[key].title}</strong>
+          <span class="muted small">{ACTIONS[key].blurb}</span>
+        </span>
+      </button>
+    {/each}
+  </div>
+  <div class="maintenance">
+    <span class="muted small">Maintenance:</span>
+    {#each ['embeddings', 'translation'] as key}
+      <button class="ghost small" class:on={sub === key} onclick={() => (sub = key)} disabled={running}>
+        {ACTIONS[key].title}
+      </button>
+    {/each}
+    <div class="spacer"></div>
     {#if workerAlive === false}
-      <span class="badge fail" title="ops.workers heartbeat stale">no worker alive</span>
-    {:else if workerAlive}
-      <span class="badge pass">worker alive</span>
+      <span class="badge fail" title="No worker heartbeat: work will wait until one starts">worker offline</span>
     {/if}
   </div>
 
-  <nav class="subtabs">
-    <button class:primary={sub === 'ingestion'} onclick={() => (sub = 'ingestion')}>Ingestion</button>
-    <button class:primary={sub === 'document'} onclick={() => (sub = 'document')}>Contributed document</button>
-    <button class:primary={sub === 'embeddings'} onclick={() => (sub = 'embeddings')}>Embeddings</button>
-    <button class:primary={sub === 'translation'} onclick={() => (sub = 'translation')}>Translation</button>
-  </nav>
-
-  {#if sub === 'ingestion'}
-    <p class="muted">Resolve and load a national instrument or a point-in-time citation into the corpus.</p>
-    <div class="grid">
-      <label>
-        Mode
-        <select bind:value={ingMode}>
-          <option value="instrument">Instrument (known national id)</option>
-          <option value="citation">Citation (resolve at date)</option>
-        </select>
-      </label>
-      <label>
-        Jurisdiction
-        <input bind:value={jurisdiction} placeholder="fr" />
-      </label>
-      {#if ingMode === 'instrument'}
-        <label class="grow">
-          National id
-          <input bind:value={nationalId} placeholder="e.g. JORFTEXT000…" />
+  <div class="panel form">
+    {#if sub === 'ingestion'}
+      <p class="muted">
+        Give the law’s official reference; the importer fetches it from the national portal with all its
+        articles and versions.
+      </p>
+      <div class="grid">
+        <label class="field">
+          Country
+          <select bind:value={jurisdiction}>
+            {#each jurisdictions as code (code)}
+              <option value={code.toLowerCase()}>{countryName(code)}</option>
+            {/each}
+          </select>
         </label>
-      {:else}
-        <label class="grow">
-          Citation
-          <input bind:value={citationText} placeholder="e.g. CGI art. 197" />
+        <label class="field">
+          I know its
+          <select bind:value={ingMode}>
+            <option value="instrument">official identifier</option>
+            <option value="citation">citation (e.g. “CGI art. 197”)</option>
+          </select>
         </label>
-        <label>
-          As of
-          <input type="date" bind:value={asOf} />
-        </label>
-      {/if}
-      <label>
-        Source code (opt.)
-        <input bind:value={sourceCode} placeholder="e.g. legifrance" />
-      </label>
-      <label>
-        Max items
-        <input type="number" min="1" bind:value={maxItems} />
-      </label>
-    </div>
-  {:else if sub === 'document'}
-    <p class="muted">
-      Add a document you found — a circular, an arrêté, a doctrine page — as a URL or a file
-      (PDF, HTML, Markdown, text). Its trust class follows from the kind you state; a URL on a
-      known official portal is ingested by that country's adapter instead. The worker fetches
-      it, so a file path must be one the worker's host can read.
-    </p>
-    <div class="row">
-      <label class="grow">
-        URL or file path
+        {#if ingMode === 'instrument'}
+          <label class="field wide">
+            Official identifier
+            <input bind:value={nationalId} placeholder="e.g. JORFTEXT000051168007" />
+          </label>
+        {:else}
+          <label class="field wide">
+            Citation
+            <input bind:value={citationText} placeholder="e.g. CGI art. 197" />
+          </label>
+          <label class="field">
+            Version in force on
+            <input type="date" bind:value={asOf} />
+          </label>
+        {/if}
+      </div>
+      <details class="more">
+        <summary>Advanced <span class="hint">source code, item limit</span></summary>
+        <div class="body grid">
+          <label class="field">
+            Source code
+            <input bind:value={sourceCode} placeholder="e.g. legifrance" />
+          </label>
+          <label class="field">
+            Max items
+            <input type="number" min="1" bind:value={maxItems} />
+          </label>
+        </div>
+      </details>
+    {:else if sub === 'document'}
+      <p class="muted">
+        Paste a link (or a file path on the worker’s machine): PDF, web page, Markdown or text. We check it
+        first. If it is on an official legal portal, it is imported as a law instead.
+      </p>
+      <div class="row">
         <input
+          class="grow mono"
           bind:value={docSource}
           onchange={precheckSource}
-          placeholder="https://… or /data/contributed/circulaire.pdf"
-          class="mono"
+          placeholder="https://…"
         />
-      </label>
-      <button onclick={precheckSource} disabled={running || !docSource.trim()}>
-        {routing ? 'Checking…' : 'Check'}
-      </button>
-    </div>
-
-    {#if routeOutcome?.outcome === 'adapter'}
-      <p class="notice">
-        Recognised as {routeOutcome.source}, switching to the legislation ingester:
-        <span class="mono">{routeOutcome.jurisdiction} {routeOutcome.national_id}</span>
-        {#if routeOutcome.resolved_by && routeOutcome.resolved_by !== 'url'}
-          <span class="muted"> (resolved via {routeOutcome.resolved_by})</span>
-        {/if}
-      </p>
-    {:else if routeOutcome?.outcome === 'refused'}
-      <p class="error">{routeOutcome.hint}</p>
-    {/if}
-
-    {#if !switchingToAdapter}
-      <div class="grid">
-        <label>
-          Jurisdiction
-          <select bind:value={docJurisdiction} onchange={onJurisdictionChange}>
-            {#each jurisdictions as code (code)}
-              <option value={code}>{code}</option>
-            {/each}
-          </select>
-        </label>
-        <label>
-          Language
-          <select bind:value={docLang}>
-            {#each languages as code (code)}
-              <option value={code}>{code}</option>
-            {/each}
-          </select>
-        </label>
-        <label class="grow">
-          Title
-          <input bind:value={docTitle} placeholder="Circulaire Unédic n° 2025-01" />
-        </label>
-        <label>
-          Kind
-          <select bind:value={docKind}>
-            {#each Object.entries(docKinds) as [label, kind] (label)}
-              <option value={label}>{label} ({kind.source_trust_class})</option>
-            {/each}
-          </select>
-        </label>
-        <label>
-          In force from
-          <input type="date" bind:value={docValidFrom} />
-        </label>
-        <div class="trust">
-          <span class="badge {docTrustClass}">{docTrustClass}</span>
-          <span class="muted">derived from the kind</span>
-        </div>
+        <button onclick={precheckSource} disabled={running || !docSource.trim()}>
+          {#if routing}<span class="spinner"></span> Checking…{:else}Check{/if}
+        </button>
       </div>
 
-      <div class="row">
-        <label class="grow">
-          Implements (optional)
-          <input
-            bind:value={implementsQuery}
-            oninput={searchInstruments}
-            placeholder="search an ingested instrument by title or national id"
-          />
-        </label>
-        <span class="muted">
-          {docImplements ? `linked to ${docImplements}` : 'none'} — the statute can be ingested
-          from the Ingestion sub-tab.
-        </span>
-        {#if docImplements}
-          <button onclick={() => (docImplements = '')}>Clear</button>
-        {/if}
-      </div>
-      {#if implementsResults.length}
-        <div class="results">
-          {#each implementsResults as instrument (instrument.national_id)}
-            <button
-              class="result"
-              class:chosen={docImplements === instrument.national_id}
-              onclick={() => {
-                docImplements = instrument.national_id;
-                implementsResults = [];
-              }}
-            >
-              <span class="mono">{instrument.national_id}</span>
-              <span class="muted"> {instrument.instrument_type} — {instrument.title ?? ''}</span>
-            </button>
-          {/each}
-        </div>
+      {#if routeOutcome?.outcome === 'adapter'}
+        <p class="callout ok">
+          Recognised as an official text from {routeOutcome.source}: it will be imported as a law
+          (<span class="mono">{routeOutcome.jurisdiction} {routeOutcome.national_id}</span>).
+        </p>
+      {:else if routeOutcome?.outcome === 'refused'}
+        <p class="callout err">{routeOutcome.hint}</p>
       {/if}
-    {/if}
-  {:else if sub === 'embeddings'}
-    <p class="muted">
-      Build BGE-M3 vectors for chunks missing fresh embeddings, on the worker's GPU (or CPU
-      when it has none — the worker decides).
-    </p>
-    <div class="grid">
-      <label>
-        Model id
-        <input type="number" min="1" bind:value={modelId} />
-      </label>
-      <label>
-        Batch size
-        <input type="number" min="1" bind:value={batchSize} />
-      </label>
-      <label>
-        Limit (opt.)
-        <input type="number" min="1" bind:value={embLimit} placeholder="all" />
-      </label>
-      <label class="check">
-        <input type="checkbox" bind:checked={embDryRun} />
-        Dry run (count only)
-      </label>
-    </div>
-  {:else}
-    <p class="muted">Machine-translate unit texts missing a target-language rendering with an LLM served by the worker.</p>
-    <div class="grid">
-      <label class="grow">
-        Model
-        <select bind:value={model} disabled={!models.length}>
-          {#each models as m (m.model)}
-            <option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>
-          {:else}
-            <option value="">no model published by the worker</option>
-          {/each}
-        </select>
-      </label>
-      <label>
-        Target lang
-        <input bind:value={targetLang} placeholder="en" />
-      </label>
-      <label>
-        Request timeout (s)
-        <input type="number" min="1" bind:value={requestTimeout} />
-      </label>
-      <label>
-        Limit (opt.)
-        <input type="number" min="1" bind:value={trLimit} placeholder="all" />
-      </label>
-      <label class="check">
-        <input type="checkbox" bind:checked={trDryRun} />
-        Dry run (count only)
-      </label>
-    </div>
-  {/if}
 
-  <div class="row runbar">
-    <button class="primary" onclick={run} disabled={running || (sub === 'document' && !docReady)}>
-      {running ? 'Running…' : 'Run'}
-    </button>
-    <button onclick={stop} disabled={!running || jobId == null}>Cancel</button>
-    {#if jobId != null}<span class="muted mono">job #{jobId}</span>{/if}
-    {#if summary}<span class="muted">{summary}</span>{/if}
-  </div>
+      {#if !switchingToAdapter}
+        <div class="grid">
+          <label class="field wide">
+            Title
+            <input bind:value={docTitle} placeholder="Circulaire Unédic n° 2025-01" />
+          </label>
+          <label class="field">
+            Country
+            <select bind:value={docJurisdiction} onchange={onJurisdictionChange}>
+              {#each jurisdictions as code (code)}
+                <option value={code}>{countryName(code)}</option>
+              {/each}
+            </select>
+          </label>
+          <label class="field">
+            Language
+            <select bind:value={docLang}>
+              {#each languages as code (code)}
+                <option value={code}>{code}</option>
+              {/each}
+            </select>
+          </label>
+          <label class="field">
+            What is it?
+            <select bind:value={docKind}>
+              {#each Object.keys(docKinds) as label (label)}
+                <option value={label}>{humanize(label)}</option>
+              {:else}
+                <option value="">waiting for the worker…</option>
+              {/each}
+            </select>
+          </label>
+          <label class="field">
+            In force from
+            <input type="date" bind:value={docValidFrom} />
+          </label>
+        </div>
+        {#if docTrustClass}
+          <p class="small trust">
+            <span class="badge {docTrustClass}">{docTrustClass === 'evidence' ? 'Legislation' : humanize(docTrustClass)}</span>
+            <span class="muted">
+              {docTrustClass === 'evidence'
+                ? 'Will be treated as legislation.'
+                : docTrustClass === 'guidance'
+                  ? 'Will be citable, but always shown as guidance rather than law.'
+                  : 'Background only: never cited as evidence.'}
+              This follows from “What is it?”.
+            </span>
+          </p>
+        {/if}
 
-  {#if progress}
-    <div class="progressbox">
-      <div class="bar"><div class="fill" style="width: {pct}%"></div></div>
-      <div class="pstatus muted">
-        {progress.done}/{progress.total} ({pct}%)
-        {#if progress.failed}<span class="perr"> · {progress.failed} failed</span>{/if}
-        {#if running} · {fmtElapsed(elapsed)}{/if}
-        {#if progress.detail} · {progress.detail}{/if}
-      </div>
-    </div>
-  {:else if running}
-    <div class="progressbox">
-      <div class="bar indeterminate"><div class="fill"></div></div>
-      <div class="pstatus muted">Working… {fmtElapsed(elapsed)}</div>
-    </div>
-  {/if}
-
-  {#if error}<p class="error">{error}</p>{/if}
-
-  <div class="log" bind:this={logEl}>
-    {#each logLines as l, i (i)}
-      <div class="line {l.stream}"><span class="mono">{l.line}</span></div>
+        <details class="more">
+          <summary>
+            Link to the law it implements
+            <span class="hint">{docImplements ? `linked to ${docImplements}` : 'optional'}</span>
+          </summary>
+          <div class="body">
+            <div class="row">
+              <input
+                class="grow"
+                bind:value={implementsQuery}
+                oninput={searchInstruments}
+                placeholder="search a law in the library by title or identifier"
+              />
+              {#if docImplements}<button onclick={() => (docImplements = '')}>Clear</button>{/if}
+            </div>
+            {#if implementsResults.length}
+              <div class="results">
+                {#each implementsResults as instrument (instrument.national_id)}
+                  <button
+                    class="result"
+                    class:chosen={docImplements === instrument.national_id}
+                    onclick={() => {
+                      docImplements = instrument.national_id;
+                      implementsResults = [];
+                    }}
+                  >
+                    <span>{instrument.title ?? instrument.national_id}</span>
+                    <span class="muted mono small">{instrument.national_id} · {instrument.instrument_type}</span>
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        </details>
+      {/if}
+    {:else if sub === 'embeddings'}
+      <p class="muted">
+        Index the texts that are not searchable yet. Runs on the worker; needed after any import (adding a
+        document does it for you).
+      </p>
+      <details class="more">
+        <summary>Advanced <span class="hint">model, batch size, limit</span></summary>
+        <div class="body grid">
+          <label class="field">
+            Model id
+            <input type="number" min="1" bind:value={modelId} />
+          </label>
+          <label class="field">
+            Batch size
+            <input type="number" min="1" bind:value={batchSize} />
+          </label>
+          <label class="field">
+            Limit
+            <input type="number" min="1" bind:value={embLimit} placeholder="all" />
+          </label>
+          <label class="field check">
+            <input type="checkbox" bind:checked={embDryRun} />
+            Only count, change nothing
+          </label>
+        </div>
+      </details>
     {:else}
-      <div class="muted empty">Output will appear here when you run a job.</div>
-    {/each}
+      <p class="muted">Machine-translate texts that have no version in the target language yet.</p>
+      <div class="grid">
+        <label class="field wide">
+          Language model
+          <select bind:value={model} disabled={!models.length}>
+            {#each models as m (m.model)}
+              <option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>
+            {:else}
+              <option value="">no model available</option>
+            {/each}
+          </select>
+        </label>
+        <label class="field">
+          Into
+          <input bind:value={targetLang} placeholder="en" />
+        </label>
+      </div>
+      <details class="more">
+        <summary>Advanced <span class="hint">timeout, limit</span></summary>
+        <div class="body grid">
+          <label class="field">
+            Request timeout (s)
+            <input type="number" min="1" bind:value={requestTimeout} />
+          </label>
+          <label class="field">
+            Limit
+            <input type="number" min="1" bind:value={trLimit} placeholder="all" />
+          </label>
+          <label class="field check">
+            <input type="checkbox" bind:checked={trDryRun} />
+            Only count, change nothing
+          </label>
+        </div>
+      </details>
+    {/if}
+
+    <div class="runbar">
+      <button class="primary big" onclick={run} disabled={running || (sub === 'document' && !docReady)}>
+        {#if running}<span class="spinner light"></span> Working… {fmtElapsed(elapsed)}{:else}{ACTIONS[sub].run}{/if}
+      </button>
+      {#if running}<button onclick={stop} disabled={jobId == null}>Cancel</button>{/if}
+      {#if sub === 'document' && !docReady && !running && !switchingToAdapter}
+        <span class="muted small">Fill in the link, title, kind and date first.</span>
+      {/if}
+    </div>
+
+    {#if progress}
+      <div class="progressbox">
+        <div class="bar"><div class="fill" style="width: {pct}%"></div></div>
+        <div class="pstatus muted small">
+          {progress.done} of {progress.total} ({pct}%)
+          {#if progress.failed}<span class="perr"> · {progress.failed} failed</span>{/if}
+          {#if progress.detail} · {progress.detail}{/if}
+        </div>
+      </div>
+    {:else if running}
+      <div class="bar indeterminate"><div class="fill"></div></div>
+    {/if}
+
+    {#if summary}<p class="callout {summary.startsWith('Finished') ? 'ok' : summary.startsWith('Failed') ? 'err' : ''}">{summary}</p>{/if}
+    {#if error}<p class="callout err">{error}</p>{/if}
+
+    {#if logLines.length}
+      <details class="more">
+        <summary>Technical log <span class="hint">{jobId != null ? `job #${jobId} · ` : ''}{logLines.length} lines</span></summary>
+        <div class="body">
+          <div class="joblog" bind:this={logEl}>
+            {#each logLines as l, i (i)}
+              <div class="line {l.stream}"><span class="mono">{l.line}</span></div>
+            {/each}
+          </div>
+        </div>
+      </details>
+    {/if}
   </div>
 </section>
 
 <style>
-  .ingest { overflow: auto; display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
-  .row { display: flex; gap: 0.5rem; align-items: end; flex-wrap: wrap; }
+  .ingest { overflow: auto; display: flex; flex-direction: column; gap: 0.9rem; min-height: 0; max-width: 60rem; }
+  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.8rem; }
+  .choice {
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    background: var(--panel);
+    text-align: left;
+    box-shadow: var(--shadow);
+  }
+  .choice.active { border-color: var(--accent); background: var(--accent-soft); }
+  .choice-icon {
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 9px;
+    background: var(--panel-2);
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .choice-text { display: flex; flex-direction: column; gap: 0.15rem; }
+  .maintenance { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+  .maintenance .on { background: var(--accent-soft); color: var(--accent); }
+  .spacer { flex: 1; }
+  .form { display: flex; flex-direction: column; gap: 0.9rem; }
+  .form > p.muted { margin: 0; }
+  .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
   .grow { flex: 1; min-width: 16rem; }
-  label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }
-  label input, label select { width: 100%; }
-  label.check { flex-direction: row; align-items: center; gap: 0.4rem; }
-  label.check input { width: auto; }
-  .subtabs { display: flex; gap: 0.3rem; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.6rem; align-items: end; }
-  .runbar { align-items: center; }
-  .error { color: var(--err); }
-  .notice { color: var(--accent); margin: 0; }
-  .trust { display: flex; align-items: center; gap: 0.4rem; padding-bottom: 0.3rem; }
-  /* .badge lives in styles.css: the same class marker everywhere it appears. */
-  .results { display: flex; flex-direction: column; gap: 0.2rem; max-height: 12rem; overflow: auto; }
-  .result { text-align: left; background: var(--panel-2); border: 1px solid var(--border); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.7rem; align-items: end; }
+  .wide { grid-column: span 2; }
+  .trust { display: flex; align-items: center; gap: 0.5rem; margin: 0; }
+  .results { display: flex; flex-direction: column; gap: 0.25rem; max-height: 14rem; overflow: auto; }
+  .result { flex-direction: column; align-items: flex-start; gap: 0.1rem; text-align: left; background: var(--panel-2); border-color: transparent; }
   .result.chosen { border-color: var(--accent); }
+  .runbar { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
   .progressbox { display: flex; flex-direction: column; gap: 0.3rem; }
-  .bar {
-    height: 8px;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .bar .fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
-  .bar.indeterminate .fill { width: 30%; animation: bar-slide 1.2s ease-in-out infinite; }
-  @keyframes bar-slide {
-    from { margin-left: -30%; }
-    to { margin-left: 100%; }
-  }
-  .pstatus { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pstatus { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pstatus .perr { color: var(--err); }
-  .log {
-    flex: 1;
-    min-height: 12rem;
-    overflow: auto;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.6rem 0.8rem;
-    font-size: 0.85rem;
-    line-height: 1.4;
-  }
-  .log .line { white-space: pre-wrap; word-break: break-word; }
-  .log .line.stderr .mono { color: var(--err); }
-  .log .line.system .mono { color: var(--accent); }
-  .log .empty { padding: 0.2rem 0; }
+  .spinner.light { border-color: rgba(255, 255, 255, 0.4); border-top-color: #fff; }
+  @media (max-width: 700px) { .wide { grid-column: auto; } }
 </style>

@@ -1,6 +1,8 @@
 <script>
   // Renders one value envelope (scalar or bracket schedule); when `other` is
   // given, bracket cells that differ from it are highlighted.
+  import { humanize } from '../labels.js';
+
   let { title, value, other = null, unit = '' } = $props();
 
   const isBrackets = $derived(Array.isArray(value?.value));
@@ -10,6 +12,15 @@
     const a = value.value[index]?.[key];
     const b = other.value[index]?.[key];
     return JSON.stringify(a) !== JSON.stringify(b);
+  }
+
+  // EUROMOD rates are fractions (`/1`, 0.2 = 20 %) or points (`/100`); say it
+  // the way the law does, next to the stored figure.
+  function unitHint(x) {
+    if (typeof x !== 'number') return '';
+    if (unit === '/1') return `= ${+(x * 100).toFixed(6)} %`;
+    if (unit === '/100') return `= ${x} %`;
+    return '';
   }
 
   function fmt(x) {
@@ -40,15 +51,17 @@
       </table>
     {:else}
       <div class="scalar" class:diff={other && JSON.stringify(other.value) !== JSON.stringify(value.value)}>
-        {fmt(value.value)} <span class="muted">{unit}</span>
+        {fmt(value.value)}
+        {#if unitHint(value.value)}<span class="muted hint">{unitHint(value.value)}</span>
+        {:else}<span class="muted">{unit}</span>{/if}
       </div>
     {/if}
     <dl>
-      <dt>valid</dt>
-      <dd>{value.valid_from} → {value.valid_to ?? 'open'}</dd>
-      {#if value.legal_status}<dt>legal status</dt><dd>{value.legal_status}</dd>{/if}
-      {#if value.source_type}<dt>source</dt><dd>{value.source_type}</dd>{/if}
-      {#if value.official_journal_date}<dt>OJ date</dt><dd>{value.official_journal_date}</dd>{/if}
+      <dt>Valid</dt>
+      <dd>{value.valid_from ?? '—'} → {value.valid_to ?? 'open-ended'}</dd>
+      {#if value.legal_status}<dt>Status</dt><dd>{humanize(value.legal_status)}</dd>{/if}
+      {#if value.source_type}<dt>Source</dt><dd>{humanize(value.source_type)}</dd>{/if}
+      {#if value.official_journal_date}<dt>Published</dt><dd>{value.official_journal_date}</dd>{/if}
     </dl>
   {/if}
 </div>
@@ -56,9 +69,10 @@
 <style>
   .value-view { flex: 1; min-width: 14rem; }
   .scalar { font-size: 1.6rem; font-weight: 600; padding: 0.3rem 0; }
+  .scalar .hint { font-size: 1rem; font-weight: 500; }
   .diff { background: var(--warn-soft); color: var(--warn); border-radius: 4px; }
   td.diff { font-weight: 600; }
-  dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.7rem; margin: 0.5rem 0 0; }
+  dl { font-size: 0.88rem; display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.7rem; margin: 0.5rem 0 0; }
   dt { color: var(--muted); }
   dd { margin: 0; }
 </style>

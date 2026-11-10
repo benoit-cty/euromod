@@ -6,6 +6,8 @@
   import { api } from '../api.js';
   import ParameterEditor from './ParameterEditor.svelte';
   import { submitAndFollow, summarize } from '../jobs.js';
+  import { countryName, routingLabel, humanize } from '../labels.js';
+  import Icon from './Icon.svelte';
 
   // The component stays mounted (hidden) while other tabs are shown, so a
   // launched run keeps streaming; `active` re-triggers the log auto-scroll on
@@ -323,99 +325,55 @@
     if (jobId != null) await api.cancelJob(dbUrl, jobId);
   }
 </script>
-
 <section class="panel params">
   <div class="row filters">
-    <label>
-      Country
-      <select bind:value={country} onchange={() => (policy = '')}>
-        <option value="">all</option>
-        {#each countries as c (c)}<option value={c}>{c}</option>{/each}
-      </select>
-    </label>
-    <label>
-      Policy
-      <select bind:value={policy}>
-        <option value="">all</option>
-        {#each policies as p (p)}<option value={p}>{p}</option>{/each}
-      </select>
-    </label>
-    <label>
-      Group
-      <select bind:value={group}>
-        <option value="">all</option>
-        {#each groups as g (g.id)}<option value={g.id}>{g.id} ({g.kind})</option>{/each}
-      </select>
-    </label>
-    <label>
-      Agent runs
-      <select bind:value={runState}>
-        <option value="">all</option>
-        <option value="never">never run</option>
-        <option value="ran">has a run</option>
-        <option value="changed">routing: changed</option>
-        <option value="not_found">routing: not found</option>
-        <option value="provisional">routing: provisional</option>
-        <option value="derived">routing: derived</option>
-        <option value="pass">critique: pass</option>
-        <option value="fail">critique: fail</option>
-      </select>
-    </label>
-    <label class="grow">
-      Search
-      <input bind:value={search} placeholder="name, label, description, model_target…" />
-    </label>
-    <button onclick={refresh} disabled={loading}>{loading ? 'Loading…' : 'Reload'}</button>
+    <input class="grow search" bind:value={search} placeholder="Search by name, label or description…" />
+    <select bind:value={country} onchange={() => (policy = '')} title="Country">
+      <option value="">All countries</option>
+      {#each countries as c (c)}<option value={c}>{countryName(c)}</option>{/each}
+    </select>
+    <select bind:value={runState} title="Last check by the assistant">
+      <option value="">Any check status</option>
+      <option value="never">Never checked</option>
+      <option value="ran">Checked at least once</option>
+      <option value="changed">Change proposed</option>
+      <option value="not_found">Not found</option>
+      <option value="provisional">Needs newer law</option>
+      <option value="derived">Calculated</option>
+      <option value="pass">Checks passed</option>
+      <option value="fail">Checks failed</option>
+    </select>
+    <details class="morefilters">
+      <summary>More filters{policy || group ? ' •' : ''}</summary>
+      <div class="morefilters-body">
+        <label class="field">
+          Policy
+          <select bind:value={policy}>
+            <option value="">all</option>
+            {#each policies as p (p)}<option value={p}>{p}</option>{/each}
+          </select>
+        </label>
+        <label class="field">
+          Schedule / group
+          <select bind:value={group}>
+            <option value="">all</option>
+            {#each groups as g (g.id)}<option value={g.id}>{g.id} ({g.kind})</option>{/each}
+          </select>
+        </label>
+      </div>
+    </details>
   </div>
 
-  <div class="row runbar">
-    <span class="muted count">
-      {filtered.length} of {params.length} shown · {selectedTargets.length} selected
-    </span>
-    <div class="spacer"></div>
-    <label>
-      System year
-      <select bind:value={systemYear} disabled={!availableYears.length}>
-        {#each availableYears as year}
-          <option value={year}>{year}</option>
-        {/each}
-      </select>
-    </label>
-    <label>
-      Model
-      <select bind:value={model} class="mono">
-        <option value="">worker default</option>
-        {#each models as m (m.model)}
-          <option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>
-        {/each}
-      </select>
-    </label>
-    <label class="check">
-      <input type="checkbox" bind:checked={force} />
-      Force (overwrite reviewed)
-    </label>
-    <button class="primary" onclick={runSelected} disabled={running || !selectedTargets.length || !systemYear}>
-      {running ? `Running… ${fmtDur(now - startedAt)}` : `Run agentic update (${selectedTargets.length})`}
-    </button>
-    <button onclick={stop} disabled={!running || jobId == null}>Cancel</button>
-    {#if jobId != null}<span class="muted mono count">job #{jobId}</span>{/if}
-    {#if workerAlive === false}<span class="badge fail" title="ops.workers heartbeat stale">no worker alive</span>{/if}
-  </div>
-
-  {#if error}<p class="error">{error}</p>{/if}
-  {#if summary}<p class="muted">{summary}</p>{/if}
+  {#if error}<p class="callout err">{error}</p>{/if}
 
   <div class="tablebox">
     <table>
       <thead>
         <tr>
-          <th class="pick"><input class="bigcheck" type="checkbox" checked={allFilteredSelected} onchange={toggleAll} title="select all filtered" /></th>
-          <th>CC</th>
+          <th class="pick"><input class="bigcheck" type="checkbox" checked={allFilteredSelected} onchange={toggleAll} title="Select all shown" /></th>
           <th>Parameter</th>
-          <th>Policy</th>
-          <th>Type</th>
-          <th>Current value</th>
-          <th>Last agent run</th>
+          <th>Value in EUROMOD</th>
+          <th>Last check</th>
           <th></th>
         </tr>
       </thead>
@@ -423,6 +381,7 @@
         {#each filtered as p (p.model_target)}
           <tr
             class:expandedrow={expanded === p.model_target}
+            class:picked={!!selected[p.model_target]}
             onclick={() => (expanded = expanded === p.model_target ? null : p.model_target)}
           >
             <td class="pick" onclick={(e) => e.stopPropagation()}>
@@ -433,44 +392,37 @@
                 onchange={() => toggle(p.model_target)}
               />
             </td>
-            <td>{p.country}</td>
             <td>
-              <span class="mono">{p.name ?? p.model_target}</span>
-              {#if group}
-                {@const m = membership(p, group)}
-                <span class="badge">band {m.index}{m.role ? ` · ${m.role}` : ''}</span>
-              {/if}
-              {#if p.edit_count}<span class="badge" title="metadata edited in the UI — part of the next EUROMOD export">edited</span>{/if}
-              {#if p.label}<div class="muted small">{p.label}</div>{/if}
-            </td>
-            <td class="mono">{p.policy ?? '—'}</td>
-            <td>
-              {p.value_type}
-              {#if p.unit}<span class="muted small"> · {p.unit}</span>{/if}
+              <div class="pname">
+                {p.label ?? p.name ?? p.model_target}
+                {#if p.edit_count}<span class="badge new" title="Corrected in this app: part of the next EUROMOD export">corrected</span>{/if}
+                {#if group}
+                  {@const m = membership(p, group)}
+                  <span class="badge">band {m.index}{m.role ? ` · ${humanize(m.role)}` : ''}</span>
+                {/if}
+              </div>
+              <div class="muted small">
+                {countryName(p.country)}{#if p.label}{' · '}<span class="mono">{p.name ?? p.model_target}</span>{/if}
+              </div>
             </td>
             <td>
               <span class="mono">{fmtValue(p)}</span>
+              {#if p.unit}<span class="muted small"> {p.unit}</span>{/if}
               {#if p.current_valid_from}<div class="muted small">since {p.current_valid_from}</div>{/if}
             </td>
             <td>
               {#if p.last_run_id}
-                <span class="badge {p.last_routing}">{p.last_routing ?? '?'}</span>
-                {#if p.last_verdict}<span class="badge {p.last_verdict}">{p.last_verdict}</span>{/if}
-                <div class="muted small">as of {p.last_as_of} · {p.last_model}</div>
+                {@const r = routingLabel(p.last_routing)}
+                <span class="badge {p.last_routing}" title={r.hint}>{r.label}</span>
+                {#if p.last_verdict === 'fail'}<span class="flag" title="The automatic checks found a problem">⚠</span>{/if}
+                <div class="muted small">for {p.last_as_of?.slice(0, 4) ?? '—'}</div>
               {:else}
-                <span class="muted">never</span>
+                <span class="muted">Never checked</span>
               {/if}
             </td>
             <td class="actions" onclick={(e) => e.stopPropagation()}>
-              {#if p.last_trace_id}
-                <button
-                  class="link"
-                  title="Open the agent trace in Phoenix"
-                  onclick={() => api.openExternal(traceUrl(p))}
-                >Trace ↗</button>
-              {/if}
               {#if p.last_item_id && onopenitem}
-                <button class="link" title="Open in the review queue" onclick={() => onopenitem(p.last_item_id)}>
+                <button class="link" title="Open in Review" onclick={() => onopenitem(p.last_item_id)}>
                   Review →
                 </button>
               {/if}
@@ -479,35 +431,48 @@
           {#if expanded === p.model_target}
             <tr class="detail">
               <td></td>
-              <td colspan="7">
-                <div class="mono muted">{p.model_target}</div>
+              <td colspan="4">
                 {#if p.description}<p>{p.description}</p>{/if}
-                {#if p.category}<div class="muted small">classification: {p.category}</div>{/if}
-                {#if p.groups?.length}
-                  <div class="muted small">
-                    groups: {p.groups.map((g) => `${g.id} (${g.kind}, band ${g.index}${g.role ? ` · ${g.role}` : ''})`).join(', ')}
-                  </div>
-                {/if}
-                {#if p.current_source_type === 'national_team'}
-                  <div class="muted small">national-team source — routed around the pipeline</div>
-                {/if}
-                {#if p.last_run_id}
-                  <div class="muted small">
-                    run {p.last_run_id}
-                    {#if p.last_finished_at}· finished {p.last_finished_at}{/if}
-                    {#if p.last_trace_id}· trace <span class="mono">{p.last_trace_id}</span>{/if}
-                  </div>
-                {/if}
+                <dl class="facts">
+                  <dt>Identifier</dt><dd class="mono">{p.model_target}</dd>
+                  {#if p.policy}<dt>Policy</dt><dd class="mono">{p.policy}</dd>{/if}
+                  <dt>Type</dt><dd>{p.value_type}{p.unit ? ` · ${p.unit}` : ''}</dd>
+                  {#if p.category}<dt>Classification</dt><dd>{p.category}</dd>{/if}
+                  {#if p.groups?.length}
+                    <dt>Groups</dt>
+                    <dd>{p.groups.map((g) => `${g.id} (${g.kind}, band ${g.index}${g.role ? ` · ${g.role}` : ''})`).join(', ')}</dd>
+                  {/if}
+                  {#if p.current_source_type === 'national_team'}
+                    <dt>Source</dt><dd>National team: not checked against legislation</dd>
+                  {/if}
+                  {#if p.last_run_id}
+                    <dt>Last check</dt>
+                    <dd>
+                      {p.last_model}{#if p.last_finished_at} · {p.last_finished_at}{/if}
+                      {#if p.last_trace_id}
+                        · <button class="link" title="Open the agent trace in Phoenix" onclick={() => api.openExternal(traceUrl(p))}>trace ↗</button>
+                      {/if}
+                    </dd>
+                  {/if}
+                </dl>
                 <ParameterEditor {dbUrl} param={p} onsaved={refresh} />
               </td>
             </tr>
           {/if}
         {:else}
           <tr>
-            <td colspan="8" class="muted empty">
-              {params.length
-                ? 'No parameters match the filters.'
-                : 'No parameters in the DB — run `nomoscope-workflow ingest-params` first.'}
+            <td colspan="5">
+              <div class="empty-state">
+                {#if loading}
+                  <span><span class="spinner"></span> Loading parameters…</span>
+                {:else if params.length}
+                  <span class="big">No parameter matches</span>
+                  <span>Try clearing the search or filters.</span>
+                {:else}
+                  <span class="big">No parameters loaded</span>
+                  <span>Run <code>nomoscope-workflow ingest-params</code> first.</span>
+                {/if}
+              </div>
             </td>
           </tr>
         {/each}
@@ -515,122 +480,149 @@
     </table>
   </div>
 
-  {#if running || progress}
-    <div class="progressbox">
-      {#if progress}
-        <div class="bar"><div class="fill" style="width: {pct}%"></div></div>
+  <div class="runbar" class:active={selectedTargets.length || running}>
+    <span class="count">
+      {#if selectedTargets.length}
+        <strong>{selectedTargets.length}</strong> selected
+        <button class="link" onclick={() => (selected = {})} disabled={running}>clear</button>
       {:else}
-        <div class="bar indeterminate"><div class="fill"></div></div>
+        <span class="muted">{filtered.length} of {params.length} shown. Tick parameters to check them.</span>
       {/if}
-      <div class="pstatus small" class:stale={running && now - lastLogAt > 60000}>
-        {#if running}<span class="spinner"></span>{/if}
-        {#if progress}
-          {progress.done}/{progress.total} ({pct}%)
-          {#if progress.current} · <span class="mono">{progress.current}</span>{/if}
-          {#if progress.detail} · {progress.detail}{/if}
-        {:else}
-          Starting…
-        {/if}
-        {#if running} · {fmtDur(now - startedAt)} · last output {fmtDur(now - lastLogAt)} ago{/if}
+    </span>
+    <div class="spacer"></div>
+    {#if workerAlive === false}
+      <span class="badge fail" title="No worker heartbeat: the check will wait until one starts">worker offline</span>
+    {/if}
+    <label class="field inline">
+      Year
+      <select bind:value={systemYear} disabled={!availableYears.length}>
+        {#each availableYears as year}
+          <option value={year}>{year}</option>
+        {/each}
+      </select>
+    </label>
+    <details class="runopts">
+      <summary title="Model and overwrite options">Options</summary>
+      <div class="runopts-body">
+        <label class="field">
+          Language model
+          <select bind:value={model} class="mono">
+            <option value="">Default</option>
+            {#each models as m (m.model)}
+              <option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>
+            {/each}
+          </select>
+        </label>
+        <label class="field check">
+          <input type="checkbox" bind:checked={force} />
+          Re-check items already reviewed
+        </label>
       </div>
-    </div>
-  {/if}
-  {#if logLines.length || running}
-    <div class="log" bind:this={logEl}>
-      {#each logLines as l, i (i)}
-        <div class="line {l.stream}"><span class="mono">{l.line}</span></div>
-      {/each}
+    </details>
+    {#if running}
+      <button onclick={stop} disabled={jobId == null}>Cancel</button>
+    {/if}
+    <button class="primary" onclick={runSelected} disabled={running || !selectedTargets.length || !systemYear}>
+      {#if running}<span class="spinner light"></span> Checking… {fmtDur(now - startedAt)}
+      {:else}<Icon name="sparkle" size={16} /> Check with the assistant{/if}
+    </button>
+  </div>
+
+  {#if running || progress || summary}
+    <div class="progressbox">
+      {#if running || progress}
+        {#if progress}
+          <div class="bar"><div class="fill" style="width: {pct}%"></div></div>
+        {:else}
+          <div class="bar indeterminate"><div class="fill"></div></div>
+        {/if}
+        <div class="pstatus small" class:stale={running && now - lastLogAt > 60000}>
+          {#if progress}
+            {progress.done} of {progress.total} done
+            {#if progress.current} · now: <span class="mono">{progress.current}</span>{/if}
+          {:else}
+            Starting…
+          {/if}
+          {#if running && now - lastLogAt > 60000} · no news for {fmtDur(now - lastLogAt)}{/if}
+        </div>
+      {/if}
+      {#if summary}
+        <p class="small">{summary} {#if !running}Results are in <button class="link" onclick={() => onopenitem?.(null)}>Review</button>.{/if}</p>
+      {/if}
+      {#if logLines.length}
+        <details class="more">
+          <summary>Technical log <span class="hint">{jobId != null ? `job #${jobId} · ` : ''}{logLines.length} lines</span></summary>
+          <div class="body">
+            <div class="joblog" bind:this={logEl}>
+              {#each logLines as l, i (i)}
+                <div class="line {l.stream}"><span class="mono">{l.line}</span></div>
+              {/each}
+            </div>
+          </div>
+        </details>
+      {/if}
     </div>
   {/if}
 </section>
 
 <style>
-  .params { display: flex; flex-direction: column; gap: 0.7rem; min-height: 0; overflow: hidden; }
-  .row { display: flex; gap: 0.6rem; align-items: end; flex-wrap: wrap; }
+  .params { display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; overflow: hidden; }
+  .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
   .grow { flex: 1; min-width: 14rem; }
   .spacer { flex: 1; }
-  label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }
-  label input, label select { width: 100%; }
-  label.check { flex-direction: row; align-items: center; gap: 0.4rem; }
-  label.check input { width: auto; }
-  .runbar { align-items: end; }
-  .count { align-self: center; white-space: nowrap; }
-  .error { color: var(--err); margin: 0; }
-  .tablebox { flex: 1; min-height: 10rem; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    position: sticky;
-    top: 0;
-    background: var(--panel-2);
-    text-align: left;
-    padding: 0.4rem 0.6rem;
-    z-index: 1;
-  }
-  tbody td { padding: 0.35rem 0.6rem; border-top: 1px solid var(--border); vertical-align: top; }
-  /* wide, easy-to-hit selection column */
-  th.pick, td.pick { width: 2.6rem; text-align: center; padding-left: 0.3rem; padding-right: 0.3rem; }
-  input.bigcheck {
-    width: 1.6rem;
-    height: 1.6rem;
-    margin: 0;
-    cursor: pointer;
-    accent-color: var(--accent);
-  }
-  tbody tr { cursor: pointer; }
-  tbody tr.detail, tbody tr.detail td { cursor: default; }
-  tr.expandedrow td { border-bottom: none; }
-  tr.detail td { border-top: none; padding-top: 0; }
-  tr.detail p { margin: 0.3rem 0; }
-  .small { font-size: 0.8rem; }
-  .actions { white-space: nowrap; }
-  button.link {
-    background: none;
-    border: none;
-    color: var(--accent);
-    cursor: pointer;
-    padding: 0 0.2rem;
-    font-size: 0.85rem;
-  }
-  .progressbox { display: flex; flex-direction: column; gap: 0.3rem; }
-  .bar {
-    height: 8px;
-    background: var(--panel-2);
+  .morefilters > summary, .runopts > summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; white-space: nowrap; }
+  .morefilters { position: relative; }
+  .morefilters-body, .runopts-body {
+    position: absolute;
+    z-index: 5;
+    margin-top: 0.4rem;
+    background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 999px;
-    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-width: 18rem;
   }
-  .bar .fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
-  .bar.indeterminate .fill { width: 30%; animation: bar-slide 1.2s ease-in-out infinite; }
-  @keyframes bar-slide {
-    from { margin-left: -30%; }
-    to { margin-left: 100%; }
+  .morefilters-body { right: 0; }
+  .runopts { position: relative; }
+  .runopts-body { bottom: 2.2rem; right: 0; }
+  .tablebox { flex: 1; min-height: 10rem; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+  thead th { background: var(--panel-2); z-index: 1; }
+  tbody td { vertical-align: top; }
+  /* wide, easy-to-hit selection column */
+  th.pick, td.pick { width: 2.8rem; text-align: center; padding-left: 0.3rem; padding-right: 0.3rem; }
+  input.bigcheck { width: 1.25rem; height: 1.25rem; margin: 0; cursor: pointer; accent-color: var(--accent); }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover td { background: var(--panel-2); }
+  tbody tr.picked td { background: var(--accent-soft); }
+  tbody tr.detail, tbody tr.detail td, tbody tr.detail:hover td { cursor: default; background: var(--panel); }
+  tr.expandedrow td { border-bottom: none; }
+  tr.detail td { padding-top: 0; }
+  tr.detail p { margin: 0.2rem 0 0.5rem; }
+  .pname { font-weight: 600; display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+  .flag { color: var(--warn); margin-left: 0.2rem; }
+  .facts { display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 0.9rem; margin: 0 0 0.6rem; font-size: 0.88rem; }
+  .facts dt { color: var(--muted); }
+  .facts dd { margin: 0; }
+  .actions { white-space: nowrap; text-align: right; }
+  .runbar {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    background: var(--panel-2);
   }
+  .runbar.active { background: var(--accent-soft); }
+  .inline { flex-direction: row; align-items: center; gap: 0.4rem; }
+  .inline select { width: auto; }
+  .count { display: inline-flex; gap: 0.5rem; align-items: center; }
+  .progressbox { display: flex; flex-direction: column; gap: 0.4rem; }
   .pstatus { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pstatus.stale { color: var(--err); }
-  .spinner {
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 0.2rem;
-    width: 0.7rem;
-    height: 0.7rem;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .log {
-    max-height: 11rem;
-    min-height: 4rem;
-    overflow: auto;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.5rem 0.7rem;
-    font-size: 0.85rem;
-    line-height: 1.4;
-  }
-  .log .line { white-space: pre-wrap; word-break: break-word; }
-  .log .line.stderr .mono { color: var(--err); }
-  .log .line.system .mono { color: var(--accent); }
+  .spinner.light { border-color: rgba(255, 255, 255, 0.4); border-top-color: #fff; }
 </style>
