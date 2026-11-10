@@ -16,14 +16,19 @@ country: FR
 temporal_basis:
   - basis: income_year
     note: >-
-      French income tax is assessed in year Y on the income of year Y-1
-      («impôt 2025 sur les revenus 2024»), and its schedule is enacted by the
-      finance act voted at the end of the income year (the barème for income
-      2024 sits in LOI 2025-127 du 14 février 2025). So an `income_year`
-      parameter under EUROMOD system year Y states the value for income year
-      Y-1, and retrieval, the expected `valid_from` and the critique's
-      budget-act window all shift with it — the mapping itself lives in
-      `schema.income_year_for`, not here. Deliberately NOT set on CSG/CRDS,
+      EUROMOD system year Y holds the income-tax schedule enacted by the
+      finance act for Y and applies it to the incomes of Y: FR_2025 holds the
+      barème of LOI 2025-127 du 14 février 2025 (the PLF 2025) and computes
+      tax on 2025 incomes. French law labels that same barème by the income it
+      is legally assessed on, one year earlier («impôt 2025 sur les revenus
+      2024»), and so does OpenFisca, which files it under 2024. `income_year`
+      is therefore a rule for finding the text, not a statement about which
+      incomes EUROMOD taxes: for system year Y the value is in the act the law
+      labels "income Y-1", and retrieval, the expected `valid_from` and the
+      critique's budget-act window all shift with it — the mapping itself
+      lives in `schema.income_year_for`, not here. Evidence: `$tin_upthres1`
+      2022..2026 = 10 225 / 10 777 / 11 294 / 11 496 / 11 600, the barèmes of
+      LF 2022..2026 (OpenFisca 2021..2025). Deliberately NOT set on CSG/CRDS,
       which are withheld at source and follow `in_force`.
     targets:
       # Barème: marginal rates and band boundaries (CGI art. 197, I-1)
@@ -120,7 +125,8 @@ source_type:
       and `$tinty_dedbun_lowlim`, held the legal amounts until 2018 (12 308 /
       947) and 0 since 2019: the model stopped applying a cap and a floor
       specific to unemployment benefits (the export's description says so),
-      while CGI art. 83 still states 14 426 € for 2024 income. The income_year
+      while CGI art. 83 still states 14 426 € for system year 2025 (2024
+      income in the law's wording). The income_year
       flag above stays for the day they are switched back on. The property-tax
       rates `$tpr_rate_baties` (0.3062 since 2019) and `$tpr_rate_nonbaties`
       (0) are national averages of rates the communes vote, which no act states.
