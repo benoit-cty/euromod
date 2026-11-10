@@ -1,0 +1,340 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="Arial, 'Helvetica Neue', Helvetica, sans-serif">
+  <title>Nómos — architecture</title>
+  <!-- Palette: Nomoscope-agentic-workflow/ui/src/styles.css (EUROMOD's own EM_UI values).
+       Colour carries meaning: blue = law & data, purple = GPU, amber = LLM,
+       green = human decision, red = observability. -->
+  <defs>
+    <style>
+      .title   { font-size: 30px; font-weight: 400; fill: #fff; }
+      .sub     { font-size: 16px; fill: rgb(214,226,240); }
+      .h       { font-size: 17px; font-weight: 700; fill: #000; }
+      .hw      { font-size: 17px; font-weight: 700; fill: #fff; }
+      .h2      { font-size: 15px; font-weight: 700; fill: #000; }
+      .tag     { font-size: 11px; font-weight: 600; fill: rgb(90,96,102); letter-spacing: .04em; }
+      .t       { font-size: 13px; fill: #1a1a1a; }
+      .s       { font-size: 12px; fill: rgb(90,96,102); }
+      .lbl     { font-size: 11.5px; fill: rgb(90,96,102);  }
+      .mono    { font-family: 'Fira Mono', ui-monospace, Consolas, monospace; font-size: 12px; }
+      .chip    { font-size: 12px; font-weight: 600; }
+      .cc      { font-size: 11px; font-weight: 700; fill: #fff; }
+    </style>
+    <marker id="aBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(0,68,148)"/></marker>
+    <marker id="aCyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(21,156,228)"/></marker>
+    <marker id="aAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(176,90,0)"/></marker>
+    <marker id="aRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(198,40,40)"/></marker>
+    <marker id="aGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(46,125,50)"/></marker>
+    <marker id="aGrey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="rgb(148,167,175)"/></marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="900" fill="#fff"/>
+  <rect width="1600" height="100" fill="rgb(0,68,148)"/>
+  <rect y="100" width="1600" height="5" fill="rgb(255,214,23)"/>
+
+  <!-- Title -->
+  <text x="40" y="52" class="title">Nómos — reading the law to update EUROMOD parameters</text>
+  <text x="40" y="82" class="sub">Multilingual retrieval over the legislation of 5 member states · agentic proposals · human validation · evaluation against a golden set</text>
+  <g transform="translate(1440,30)">
+    <rect width="125" height="44" fill="#fff" stroke="rgb(199,208,211)"/>
+    <text x="62.5" y="19" text-anchor="middle" class="tag">PILOT COUNTRIES</text>
+    <text x="62.5" y="36" text-anchor="middle" class="chip" fill="rgb(0,68,148)">FR · NL · LT · ES · IE</text>
+  </g>
+
+  <!-- ============ LEFT: SOURCES ============ -->
+  <g>
+    <rect x="30" y="125" width="270" height="415" fill="rgb(234,243,255)" stroke="rgb(0,68,148)" stroke-width="1.5"/>
+  </g>
+  <text x="45" y="152" class="h">Official sources</text>
+  <text x="45" y="170" class="tag">REACHED BY THE WORKER ONLY</text>
+
+  <g class="t">
+    <rect x="45" y="186" width="28" height="18" fill="rgb(0,68,148)"/><text x="59" y="199" text-anchor="middle" class="cc">FR</text>
+    <text x="82" y="200">Légifrance / DILA — LEGI, KALI</text>
+    <rect x="45" y="212" width="28" height="18" fill="rgb(0,68,148)"/><text x="59" y="225" text-anchor="middle" class="cc">NL</text>
+    <text x="82" y="226">wetten.overheid.nl (BWB)</text>
+    <rect x="45" y="238" width="28" height="18" fill="rgb(0,68,148)"/><text x="59" y="251" text-anchor="middle" class="cc">LT</text>
+    <text x="82" y="252">e-TAR legal register</text>
+    <rect x="45" y="264" width="28" height="18" fill="rgb(0,68,148)"/><text x="59" y="277" text-anchor="middle" class="cc">ES</text>
+    <text x="82" y="278">BOE + autonomous regions</text>
+    <rect x="45" y="290" width="28" height="18" fill="rgb(0,68,148)"/><text x="59" y="303" text-anchor="middle" class="cc">IE</text>
+    <text x="82" y="304">Irish Statute Book</text>
+  </g>
+
+  <line x1="45" y1="325" x2="285" y2="325" stroke="rgb(199,208,211)"/>
+  <text x="45" y="347" class="h2">Published guidance</text>
+  <text x="45" y="366" class="t">circulars, tax doctrine (Cnav, BOFiP…)</text>
+  <text x="45" y="383" class="s">citable, but always shown as “guidance”</text>
+
+  <line x1="45" y1="400" x2="285" y2="400" stroke="rgb(199,208,211)"/>
+  <text x="45" y="422" class="h2">Web search</text>
+  <text x="45" y="441" class="t">official portals, when an act</text>
+  <text x="45" y="458" class="t">is missing from the corpus</text>
+  <text x="45" y="475" class="s">a lead to ingest, never a citation</text>
+
+  <rect x="45" y="492" width="240" height="34" fill="#fff" stroke="rgb(199,208,211)"/>
+  <text x="165" y="507" text-anchor="middle" class="s">archive-first: every byte fetched</text>
+  <text x="165" y="521" text-anchor="middle" class="s">is kept as a snapshot</text>
+
+  <!-- ============ LEFT BOTTOM: EUROMOD INPUTS ============ -->
+  <g>
+    <rect x="30" y="600" width="270" height="215" fill="rgb(240,240,240)" stroke="rgb(199,208,211)" stroke-width="1.5"/>
+  </g>
+  <text x="45" y="627" class="h">EUROMOD inputs</text>
+  <text x="45" y="645" class="tag">VERSIONED IN GIT</text>
+  <text x="45" y="670" class="t">• parameter export of the model</text>
+  <text x="56" y="686" class="s">the values to be checked</text>
+  <text x="45" y="710" class="t">• curation overlays (units, dates…)</text>
+  <text x="45" y="734" class="t">• Country Reports</text>
+  <text x="56" y="750" class="s">context for search — never evidence</text>
+  <text x="45" y="774" class="t">• OpenFisca parameters</text>
+  <text x="56" y="790" class="s">corroborate — never cited as proof</text>
+
+  <!-- ============ CENTRE: WORKER ============ -->
+  <g>
+    <rect x="340" y="125" width="740" height="415" fill="#fff" stroke="rgb(0,68,148)" stroke-width="2"/>
+  </g>
+  <path d="M340,125 h740 v37 h-740 z" fill="rgb(0,68,148)"/>
+  <text x="356" y="150" class="hw">Nomergon · the worker</text>
+  <text x="1066" y="150" text-anchor="end" font-size="12.5" fill="#fff">the only process with the GPU, the model keys and internet access</text>
+
+  <!-- Card A: ingest -->
+  <rect x="355" y="175" width="230" height="150" fill="rgb(234,243,255)" stroke="rgb(0,68,148)"/>
+  <text x="368" y="197" class="tag" fill="rgb(0,68,148)">1 · NOMOTHECA</text>
+  <text x="368" y="217" class="h2">Ingest the law</text>
+  <text x="368" y="238" class="mono" fill="rgb(0,68,148)">fetch › snapshot › parse</text>
+  <text x="368" y="254" class="mono" fill="rgb(0,68,148)">› chunk › load</text>
+  <text x="368" y="276" class="t">shared core + one adapter</text>
+  <text x="368" y="292" class="t">per country</text>
+  <text x="368" y="314" class="s">every version of every article, dated</text>
+
+  <!-- Card B: embeddings on GPU -->
+  <rect x="600" y="175" width="230" height="150" fill="rgb(240,234,252)" stroke="rgb(90,47,168)"/>
+  <text x="613" y="197" class="tag" fill="rgb(90,47,168)">2 · EMBEDDINGS</text>
+  <rect x="776" y="185" width="42" height="18" fill="rgb(90,47,168)"/><text x="797" y="198" text-anchor="middle" class="cc">GPU</text>
+  <text x="613" y="217" class="h2">Turn text into vectors</text>
+  <text x="613" y="238" class="t">BGE-M3, multilingual model</text>
+  <text x="613" y="254" class="t">on an NVIDIA GPU (CUDA)</text>
+  <text x="613" y="276" class="t">search by meaning, in any</text>
+  <text x="613" y="292" class="t">of the 5 languages</text>
+  <text x="613" y="314" class="s">warm encoder for live UI search</text>
+
+  <!-- Card C: translation -->
+  <rect x="845" y="175" width="220" height="150" fill="rgb(255,240,220)" stroke="rgb(176,90,0)"/>
+  <text x="858" y="197" class="tag" fill="rgb(176,90,0)">3 · TRANSLATION</text>
+  <rect x="1015" y="185" width="40" height="18" fill="rgb(176,90,0)"/><text x="1035" y="198" text-anchor="middle" class="cc">LLM</text>
+  <text x="858" y="217" class="h2">Translate to English</text>
+  <text x="858" y="238" class="t">a small, cheap LLM</text>
+  <text x="858" y="254" class="t">translates FR · NL · LT · ES</text>
+  <text x="858" y="276" class="t">so every analyst can read</text>
+  <text x="858" y="292" class="t">the law behind a value</text>
+  <text x="858" y="314" class="s">batch job, run overnight</text>
+
+  <!-- Card D: agentic workflow -->
+  <rect x="355" y="338" width="470" height="188" fill="rgb(234,243,255)" stroke="rgb(0,68,148)"/>
+  <text x="368" y="360" class="tag" fill="rgb(0,68,148)">4 · NOMOSCOPE</text>
+  <text x="368" y="380" class="h2">Agentic search &amp; proposal</text>
+  <text x="811" y="380" text-anchor="end" class="s">one run per country × parameter × year</text>
+  <!-- pipeline chips -->
+  <g class="mono" text-anchor="middle">
+    <rect x="368" y="392" width="64" height="26" fill="#fff" stroke="rgb(0,68,148)"/><text x="400" y="409" fill="rgb(0,68,148)">frame</text>
+    <rect x="442" y="392" width="72" height="26" fill="#fff" stroke="rgb(0,68,148)"/><text x="478" y="409" fill="rgb(0,68,148)">retrieve</text>
+    <rect x="524" y="392" width="70" height="26" fill="rgb(255,240,220)" stroke="rgb(176,90,0)"/><text x="559" y="409" fill="rgb(176,90,0)">propose</text>
+    <rect x="604" y="392" width="72" height="26" fill="rgb(255,240,220)" stroke="rgb(176,90,0)"/><text x="640" y="409" fill="rgb(176,90,0)">critique</text>
+    <rect x="686" y="392" width="48" height="26" fill="#fff" stroke="rgb(0,68,148)"/><text x="710" y="409" fill="rgb(0,68,148)">diff</text>
+    <rect x="744" y="392" width="68" height="26" fill="#fff" stroke="rgb(0,68,148)"/><text x="778" y="409" fill="rgb(0,68,148)">enqueue</text>
+  </g>
+  <g fill="rgb(90,96,102)" font-size="12" text-anchor="middle">
+    <text x="437" y="409">›</text><text x="519" y="409">›</text><text x="599" y="409">›</text><text x="681" y="409">›</text><text x="739" y="409">›</text>
+  </g>
+  <text x="368" y="442" class="t"><tspan font-weight="700">retrieve</tspan> — hybrid search: vectors + full text + cross-references</text>
+  <text x="368" y="460" class="t"><tspan font-weight="700" fill="rgb(176,90,0)">propose · critique</tspan> — LLM with structured output (PydanticAI)</text>
+  <text x="368" y="478" class="t"><tspan font-weight="700">scout</tspan> — act missing? search the web, ingest it, retry</text>
+  <rect x="368" y="490" width="444" height="25" fill="rgb(226,243,226)" stroke="rgb(46,125,50)"/>
+  <path d="M398,503 l4,4 l8,-9" fill="none" stroke="rgb(46,125,50)" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"/>
+  <text x="598" y="507" text-anchor="middle" font-size="12.5" font-weight="700" fill="rgb(46,125,50)">every value quoted character-for-character from the law</text>
+
+  <!-- Card E: evaluation -->
+  <rect x="840" y="338" width="225" height="188" fill="rgb(240,240,240)" stroke="rgb(148,167,175)"/>
+  <text x="853" y="360" class="tag">5 · NOMOKRISIS</text>
+  <text x="853" y="380" class="h2">Evaluate</text>
+  <text x="853" y="402" class="t">golden set of verified cases</text>
+  <text x="853" y="420" class="t">deterministic scoring —</text>
+  <text x="853" y="436" class="t">no LLM judges the LLM</text>
+  <text x="853" y="458" class="t">compares models, prompts</text>
+  <text x="853" y="474" class="t">and languages</text>
+  <text x="853" y="498" class="s">and flags where EUROMOD</text>
+  <text x="853" y="513" class="s">departs from the law</text>
+
+  <!-- ============ CENTRE BOTTOM: DATABASE ============ -->
+  <g>
+    <rect x="340" y="600" width="740" height="215" fill="rgb(222,240,248)" stroke="rgb(0,68,148)" stroke-width="2"/>
+  </g>
+  <text x="356" y="626" class="h">One PostgreSQL 17 + pgvector</text>
+  <text x="1066" y="626" text-anchor="end" class="s">everything runtime is a row — nothing is a file</text>
+
+  <!-- cylinders: x, label, lines -->
+  <g>
+    <!-- legislation -->
+    <path d="M355,655 v128 a67,10 0 0 0 134,0 v-128" fill="#fff" stroke="rgb(0,68,148)"/>
+    <ellipse cx="422" cy="655" rx="67" ry="10" fill="rgb(234,243,255)" stroke="rgb(0,68,148)"/>
+    <text x="422" y="684" text-anchor="middle" class="h2" fill="rgb(0,68,148)">legislation</text>
+    <text x="422" y="705" text-anchor="middle" class="s">acts &amp; dated versions</text>
+    <text x="422" y="721" text-anchor="middle" class="s">text chunks</text>
+    <text x="422" y="737" text-anchor="middle" class="s">vectors · translations</text>
+    <text x="422" y="753" text-anchor="middle" class="s">trust class per act</text>
+    <!-- eval -->
+    <path d="M499,655 v128 a67,10 0 0 0 134,0 v-128" fill="#fff" stroke="rgb(148,167,175)"/>
+    <ellipse cx="566" cy="655" rx="67" ry="10" fill="rgb(240,240,240)" stroke="rgb(148,167,175)"/>
+    <text x="566" y="684" text-anchor="middle" class="h2">eval</text>
+    <text x="566" y="705" text-anchor="middle" class="s">golden cases</text>
+    <text x="566" y="721" text-anchor="middle" class="s">runs &amp; scores</text>
+    <text x="566" y="737" text-anchor="middle" class="s">per model</text>
+    <text x="566" y="753" text-anchor="middle" class="s">per language</text>
+    <!-- phoenix -->
+    <path d="M643,655 v128 a67,10 0 0 0 134,0 v-128" fill="#fff" stroke="rgb(198,40,40)"/>
+    <ellipse cx="710" cy="655" rx="67" ry="10" fill="rgb(253,230,228)" stroke="rgb(198,40,40)"/>
+    <text x="710" y="684" text-anchor="middle" class="h2" fill="rgb(198,40,40)">phoenix</text>
+    <text x="710" y="705" text-anchor="middle" class="s">LLM traces</text>
+    <text x="710" y="721" text-anchor="middle" class="s">prompts &amp; answers</text>
+    <text x="710" y="737" text-anchor="middle" class="s">tokens · latency</text>
+    <!-- params -->
+    <path d="M787,655 v128 a67,10 0 0 0 134,0 v-128" fill="#fff" stroke="rgb(46,125,50)"/>
+    <ellipse cx="854" cy="655" rx="67" ry="10" fill="rgb(226,243,226)" stroke="rgb(46,125,50)"/>
+    <text x="854" y="684" text-anchor="middle" class="h2" fill="rgb(46,125,50)">params</text>
+    <text x="854" y="705" text-anchor="middle" class="s">parameters</text>
+    <text x="854" y="721" text-anchor="middle" class="s">review queue</text>
+    <text x="854" y="737" text-anchor="middle" class="s">human decisions</text>
+    <text x="854" y="753" text-anchor="middle" class="s">(append-only audit)</text>
+    <!-- ops -->
+    <path d="M931,655 v128 a67,10 0 0 0 134,0 v-128" fill="#fff" stroke="rgb(21,156,228)" stroke-width="1.6"/>
+    <ellipse cx="998" cy="655" rx="67" ry="10" fill="rgb(242,252,255)" stroke="rgb(21,156,228)" stroke-width="1.6"/>
+    <text x="998" y="684" text-anchor="middle" class="h2" fill="rgb(21,156,228)">ops</text>
+    <text x="998" y="705" text-anchor="middle" class="s">jobs</text>
+    <text x="998" y="721" text-anchor="middle" class="s">job events &amp; logs</text>
+    <text x="998" y="737" text-anchor="middle" class="s">available models</text>
+    <text x="998" y="760" text-anchor="middle" font-size="12" font-weight="700" fill="rgb(21,156,228)">async job queue</text>
+  </g>
+
+  <!-- ============ RIGHT: LLM endpoints ============ -->
+  <g>
+    <rect x="1160" y="125" width="410" height="120" fill="rgb(255,240,220)" stroke="rgb(176,90,0)" stroke-width="1.5"/>
+  </g>
+  <text x="1175" y="151" class="h">LLM endpoints — any provider</text>
+  <text x="1175" y="174" class="t">Azure OpenAI · JRC gateway · OpenRouter</text>
+  <text x="1175" y="192" class="t">Anthropic · Together · mock (offline tests)</text>
+  <text x="1175" y="216" class="s">swappable by configuration: Activity 5 compares models</text>
+  <text x="1175" y="233" class="s">API keys live on the worker, never on a workstation</text>
+
+  <!-- ============ RIGHT: Phoenix ============ -->
+  <g>
+    <rect x="1160" y="265" width="410" height="115" fill="rgb(253,230,228)" stroke="rgb(198,40,40)" stroke-width="1.5"/>
+  </g>
+  <text x="1175" y="291" class="h">Arize Phoenix — observability</text>
+  <text x="1175" y="314" class="t">every LLM call traced (OpenTelemetry)</text>
+  <text x="1175" y="332" class="t">prompts, answers, tokens, latency, errors</text>
+  <text x="1175" y="356" class="s">“why did this run fail?” — open its trace</text>
+  <text x="1175" y="371" class="s">storage: the phoenix database, same Postgres</text>
+
+  <!-- ============ RIGHT: Analyst workstation ============ -->
+  <g>
+    <rect x="1160" y="420" width="410" height="282" fill="rgb(226,243,226)" stroke="rgb(46,125,50)" stroke-width="1.5"/>
+  </g>
+  <text x="1175" y="446" class="h">Analyst workstation</text>
+  <text x="1555" y="446" text-anchor="end" class="tag" fill="rgb(46,125,50)">EXECUTES NOTHING</text>
+
+  <rect x="1175" y="460" width="185" height="160" fill="#fff" stroke="rgb(46,125,50)"/>
+  <text x="1188" y="482" class="h2">Validation UI</text>
+  <text x="1188" y="498" class="s">Tauri + Svelte desktop app</text>
+  <text x="1188" y="521" class="t">proposal side by side</text>
+  <text x="1188" y="537" class="t">with the law extract</text>
+  <text x="1188" y="559" class="t" font-weight="700" fill="rgb(46,125,50)">Accept · Reject · Edit</text>
+  <text x="1188" y="582" class="s">launches every job:</text>
+  <text x="1188" y="597" class="s">ingest, embed, run, evaluate</text>
+  <text x="1188" y="612" class="s">one DB login per analyst</text>
+
+  <rect x="1372" y="460" width="183" height="160" fill="#fff" stroke="rgb(46,125,50)"/>
+  <text x="1385" y="482" class="h2">RAG chat</text>
+  <text x="1385" y="498" class="s">Tauri + Svelte desktop app</text>
+  <text x="1385" y="521" class="t">ask the corpus a</text>
+  <text x="1385" y="537" class="t">question in plain words</text>
+  <text x="1385" y="559" class="t">answers with quotes</text>
+  <text x="1385" y="575" class="t">verified in the law</text>
+  <text x="1385" y="597" class="s">act missing? one click</text>
+  <text x="1385" y="612" class="s">to ingest it</text>
+
+  <!-- human -->
+  <g transform="translate(1188,642)" fill="rgb(46,125,50)">
+    <circle cx="10" cy="7" r="7"/>
+    <path d="M-1,32 v-10 a11,9 0 0 1 22,0 v10 z"/>
+  </g>
+  <text x="1222" y="657" class="t" font-weight="700">A human decides.</text>
+  <text x="1222" y="675" class="s">Nothing reaches EUROMOD without an explicit Accept;</text>
+  <text x="1222" y="690" class="s">every decision is kept with its reviewer and date.</text>
+
+  <!-- ============ RIGHT: export ============ -->
+  <g>
+    <rect x="1160" y="740" width="410" height="75" fill="#fff" stroke="rgb(46,125,50)" stroke-width="2"/>
+  </g>
+  <text x="1175" y="765" class="h">Export to EUROMOD</text>
+  <text x="1175" y="786" class="t">one change set per country (JSON)</text>
+  <text x="1175" y="803" class="s">accepted values + metadata corrections only</text>
+
+  <!-- ============ ARROWS ============ -->
+  <!-- sources -> ingest -->
+  <line x1="300" y1="250" x2="352" y2="250" stroke="rgb(0,68,148)" stroke-width="2" marker-end="url(#aBlue)"/>
+  <text x="320" y="242" text-anchor="middle" class="lbl">fetch</text>
+  <!-- web search <-> scout -->
+  <line x1="300" y1="470" x2="352" y2="470" stroke="rgb(0,68,148)" stroke-width="2" stroke-dasharray="5 3" marker-start="url(#aBlue)" marker-end="url(#aBlue)"/>
+  <text x="320" y="462" text-anchor="middle" class="lbl">search</text>
+  <!-- inputs -> db -->
+  <line x1="300" y1="707" x2="337" y2="707" stroke="rgb(148,167,175)" stroke-width="2" marker-end="url(#aGrey)"/>
+  <text x="318" y="699" text-anchor="middle" class="lbl">load</text>
+
+  <!-- worker <-> LLM -->
+  <line x1="1080" y1="190" x2="1157" y2="190" stroke="rgb(176,90,0)" stroke-width="2" marker-start="url(#aAmber)" marker-end="url(#aAmber)"/>
+  <text x="1119" y="182" text-anchor="middle" class="lbl">prompts</text>
+  <!-- worker -> phoenix -->
+  <line x1="1080" y1="322" x2="1157" y2="322" stroke="rgb(198,40,40)" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#aRed)"/>
+  <text x="1119" y="314" text-anchor="middle" class="lbl">traces</text>
+
+  <!-- worker <-> db: legislation -->
+  <line x1="422" y1="543" x2="422" y2="597" stroke="rgb(0,68,148)" stroke-width="2" marker-start="url(#aBlue)" marker-end="url(#aBlue)"/>
+  <text x="432" y="566" class="lbl">texts, chunks, vectors,</text>
+  <text x="432" y="580" class="lbl">translations · hybrid search</text>
+  <!-- worker -> params -->
+  <line x1="854" y1="543" x2="854" y2="597" stroke="rgb(46,125,50)" stroke-width="2" marker-end="url(#aGreen)"/>
+  <text x="844" y="566" text-anchor="end" class="lbl">proposals with</text>
+  <text x="844" y="580" text-anchor="end" class="lbl">citations › review queue</text>
+  <!-- worker <-> ops (async) -->
+  <line x1="998" y1="597" x2="998" y2="543" stroke="rgb(21,156,228)" stroke-width="2.4" marker-start="url(#aCyan)" marker-end="url(#aCyan)"/>
+  <circle cx="1018" cy="562" r="8" fill="rgb(21,156,228)"/><text x="1018" y="566" text-anchor="middle" class="cc">2</text>
+  <text x="1031" y="566" class="lbl">claim job</text>
+  <circle cx="1018" cy="582" r="8" fill="rgb(21,156,228)"/><text x="1018" y="586" text-anchor="middle" class="cc">3</text>
+  <text x="1031" y="586" class="lbl">log, result</text>
+
+  <!-- UI <-> ops (async) -->
+  <line x1="1157" y1="650" x2="1068" y2="676" stroke="rgb(21,156,228)" stroke-width="2.4" marker-end="url(#aCyan)"/>
+  <circle cx="1092" cy="645" r="8" fill="rgb(21,156,228)"/><text x="1092" y="649" text-anchor="middle" class="cc">1</text>
+  <text x="1104" y="649" class="lbl">submit</text>
+  <line x1="1068" y1="740" x2="1157" y2="716" stroke="rgb(21,156,228)" stroke-width="2.4" stroke-dasharray="5 3" marker-end="url(#aCyan)"/>
+  <circle cx="1092" cy="752" r="8" fill="rgb(21,156,228)"/><text x="1092" y="756" text-anchor="middle" class="cc">4</text>
+  <text x="1104" y="756" class="lbl">poll</text>
+
+  <!-- workstation -> export -->
+  <line x1="1365" y1="702" x2="1365" y2="737" stroke="rgb(46,125,50)" stroke-width="2.4" marker-end="url(#aGreen)"/>
+  <text x="1375" y="724" class="lbl">accepted values only</text>
+
+  <!-- ============ FOOTER: principles ============ -->
+  <g class="chip" text-anchor="middle">
+    <rect x="30" y="840" width="292" height="40" fill="rgb(226,243,226)" stroke="rgb(46,125,50)"/>
+    <text x="176" y="865" fill="rgb(46,125,50)">Every value quoted verbatim from the law</text>
+    <rect x="334" y="840" width="292" height="40" fill="rgb(226,243,226)" stroke="rgb(46,125,50)"/>
+    <text x="480" y="865" fill="rgb(46,125,50)">Human-gated, export-first</text>
+    <rect x="638" y="840" width="292" height="40" fill="rgb(242,252,255)" stroke="rgb(21,156,228)"/>
+    <text x="784" y="865" fill="rgb(21,156,228)">UI runs nothing · the worker runs all</text>
+    <rect x="942" y="840" width="292" height="40" fill="rgb(255,240,220)" stroke="rgb(176,90,0)"/>
+    <text x="1088" y="865" fill="rgb(176,90,0)">Any LLM, scored on the same golden set</text>
+    <rect x="1246" y="840" width="324" height="40" fill="rgb(234,243,255)" stroke="rgb(0,68,148)"/>
+    <text x="1408" y="865" fill="rgb(0,68,148)">One database · every step traceable</text>
+  </g>
+</svg>

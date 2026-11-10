@@ -1,0 +1,204 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" font-family="Arial, 'Helvetica Neue', Helvetica, sans-serif">
+  <title>Nómos — architecture (light)</title>
+  <!-- Palette: Nomoscope-agentic-workflow/ui/src/styles.css. Blue = law & data, purple = GPU,
+       amber = LLM, green = human decision, cyan = asynchronous jobs, red = observability.
+       Nomergon (the worker) runs Nomotheca, Nomoscope and Nomokrisis as subprocesses;
+       the databases and the LLM endpoints sit outside it. -->
+  <defs>
+    <style>
+      .title { font-size: 32px; font-weight: 400; fill: #fff; }
+      .sub   { font-size: 17px; fill: rgb(214,226,240); }
+      .h     { font-size: 22px; font-weight: 700; fill: #000; }
+      .h2    { font-size: 17px; font-weight: 700; fill: #000; }
+      .tag   { font-size: 12px; font-weight: 600; fill: rgb(90,96,102); letter-spacing: .05em; }
+      .t     { font-size: 15px; fill: #1a1a1a; }
+      .s     { font-size: 13.5px; fill: rgb(90,96,102); }
+      .lbl   { font-size: 13px; fill: rgb(90,96,102);  }
+      .cc    { font-size: 12px; font-weight: 700; fill: #fff; }
+      .w     { fill: #fff; }
+    </style>
+    <marker id="aBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(0,68,148)"/></marker>
+    <marker id="aCyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(21,156,228)"/></marker>
+    <marker id="aAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(176,90,0)"/></marker>
+    <marker id="aRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(198,40,40)"/></marker>
+    <marker id="aGrey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(148,167,175)"/></marker>
+    <marker id="aGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="rgb(46,125,50)"/></marker>
+  </defs>
+
+  <rect width="1600" height="900" fill="#fff"/>
+  <rect width="1600" height="96" fill="rgb(0,68,148)"/>
+  <rect y="96" width="1600" height="5" fill="rgb(255,214,23)"/>
+  <text x="40" y="52" class="title">Nómos — from the law to EUROMOD parameters</text>
+  <text x="40" y="80" class="sub">An AI proposes, quoting the law word for word · an analyst decides</text>
+
+  <!-- ===== Top: LLM endpoints + phoenix (outside the worker) ===== -->
+  <g><rect x="400" y="116" width="440" height="62" fill="rgb(255,240,220)" stroke="rgb(176,90,0)" stroke-width="1.5"/></g>
+  <text x="420" y="142" class="h2">LLM endpoints — any provider</text>
+  <text x="420" y="164" class="s">Azure OpenAI · JRC gateway · OpenRouter · Anthropic</text>
+
+  <g>
+    <path d="M880,122 v52 a130,10 0 0 0 260,0 v-52" fill="rgb(253,230,228)" stroke="rgb(198,40,40)" stroke-width="1.5"/>
+    <ellipse cx="1010" cy="122" rx="130" ry="10" fill="#fff" stroke="rgb(198,40,40)" stroke-width="1.5"/>
+  </g>
+  <text x="1010" y="153" text-anchor="middle" font-size="19" font-weight="700" fill="rgb(198,40,40)">Traceability</text>
+  <text x="1010" y="173" text-anchor="middle" font-size="13" fill="rgb(90,96,102)">every LLM call traced</text>
+
+  <!-- ===== The law ===== -->
+  <g><rect x="40" y="210" width="210" height="310" fill="rgb(234,243,255)" stroke="rgb(0,68,148)" stroke-width="1.5"/></g>
+  <text x="60" y="248" class="h">The law</text>
+  <g>
+    <rect x="60" y="270" width="34" height="22" fill="rgb(0,68,148)"/><text x="77" y="286" text-anchor="middle" class="cc">FR</text>
+    <rect x="60" y="302" width="34" height="22" fill="rgb(0,68,148)"/><text x="77" y="318" text-anchor="middle" class="cc">NL</text>
+    <rect x="60" y="334" width="34" height="22" fill="rgb(0,68,148)"/><text x="77" y="350" text-anchor="middle" class="cc">LT</text>
+    <rect x="60" y="366" width="34" height="22" fill="rgb(0,68,148)"/><text x="77" y="382" text-anchor="middle" class="cc">ES</text>
+    <rect x="60" y="398" width="34" height="22" fill="rgb(0,68,148)"/><text x="77" y="414" text-anchor="middle" class="cc">IE</text>
+    <text x="106" y="286" class="t">Légifrance</text>
+    <text x="106" y="318" class="t">wetten.nl</text>
+    <text x="106" y="350" class="t">e-TAR</text>
+    <text x="106" y="382" class="t">BOE</text>
+    <text x="106" y="414" class="t">Statute Book</text>
+  </g>
+  <text x="60" y="458" class="s">official portals</text>
+  <text x="60" y="478" class="s">+ published guidance</text>
+  <text x="60" y="504" class="s">in 5 languages</text>
+
+  <!-- ===== Nomergon: the worker frame ===== -->
+  <g><rect x="290" y="210" width="850" height="310" fill="rgb(242,247,252)" stroke="rgb(0,68,148)" stroke-width="2.5"/></g>
+  <path d="M290,210 h850 v38 h-850 z" fill="rgb(0,68,148)"/>
+  <text x="308" y="238" font-size="19" font-weight="700" class="w">Nomergon · the worker</text>
+  <text x="1124" y="237" text-anchor="end" font-size="13.5" class="w">runs every job in the background · the only one with the GPU, model keys, internet</text>
+
+  <!-- Nomotheca -->
+  <rect x="305" y="262" width="270" height="245" fill="#fff" stroke="rgb(0,68,148)" stroke-width="1.5"/>
+  <text x="321" y="290" class="h" fill="rgb(0,68,148)">Nomotheca</text>
+  <text x="321" y="308" class="tag">BUILDS THE LIBRARY</text>
+  <rect x="318" y="320" width="244" height="54" fill="rgb(234,243,255)" stroke="rgb(0,68,148)"/>
+  <text x="332" y="343" class="h2">Ingest</text>
+  <text x="332" y="363" class="s">fetch · parse · chunk</text>
+  <rect x="318" y="382" width="244" height="54" fill="rgb(240,234,252)" stroke="rgb(90,47,168)"/>
+  <text x="332" y="405" class="h2">Embed</text>
+  <rect x="504" y="390" width="46" height="20" fill="rgb(90,47,168)"/><text x="527" y="404" text-anchor="middle" class="cc">GPU</text>
+  <text x="332" y="425" class="s">search by meaning</text>
+  <rect x="318" y="444" width="244" height="54" fill="rgb(255,240,220)" stroke="rgb(176,90,0)"/>
+  <text x="332" y="467" class="h2">Translate</text>
+  <rect x="504" y="452" width="46" height="20" fill="rgb(176,90,0)"/><text x="527" y="466" text-anchor="middle" class="cc">LLM</text>
+  <text x="332" y="487" class="s">small model, into English</text>
+
+  <!-- Nomoscope -->
+  <rect x="590" y="262" width="270" height="245" fill="rgb(234,243,255)" stroke="rgb(0,68,148)" stroke-width="1.5"/>
+  <text x="606" y="290" class="h" fill="rgb(0,68,148)">Nomoscope</text>
+  <rect x="800" y="274" width="46" height="20" fill="rgb(176,90,0)"/><text x="823" y="288" text-anchor="middle" class="cc">LLM</text>
+  <text x="606" y="308" class="tag">AGENTIC SEARCH</text>
+  <text x="606" y="344" class="t">retrieve › <tspan fill="rgb(176,90,0)" font-weight="700">propose</tspan> ›</text>
+  <text x="606" y="368" class="t"><tspan fill="rgb(176,90,0)" font-weight="700">critique</tspan> › queue</text>
+  <text x="606" y="400" class="s">missing act? search the web</text>
+  <rect x="604" y="430" width="242" height="60" fill="rgb(226,243,226)" stroke="rgb(46,125,50)"/>
+  <path d="M617,460 l5,5 l10,-11" fill="none" stroke="rgb(46,125,50)" stroke-width="2.4" stroke-linecap="square" stroke-linejoin="miter"/>
+  <text x="642" y="455" font-size="14" font-weight="700" fill="rgb(46,125,50)">every value quoted</text>
+  <text x="642" y="475" font-size="14" font-weight="700" fill="rgb(46,125,50)">verbatim from the law</text>
+
+  <!-- Nomokrisis -->
+  <rect x="875" y="262" width="250" height="245" fill="rgb(240,240,240)" stroke="rgb(148,167,175)" stroke-width="1.5"/>
+  <text x="891" y="290" class="h">Nomokrisis</text>
+  <text x="891" y="308" class="tag">EVALUATION</text>
+  <text x="891" y="344" class="t">scores each model</text>
+  <text x="891" y="368" class="t">on a verified golden set</text>
+  <text x="891" y="400" class="s">no LLM judges the LLM</text>
+  <rect x="889" y="430" width="222" height="60" fill="#fff" stroke="rgb(148,167,175)"/>
+  <text x="903" y="455" font-size="14" font-weight="700" fill="#1a1a1a">flags where EUROMOD</text>
+  <text x="903" y="475" font-size="14" font-weight="700" fill="#1a1a1a">departs from the law</text>
+
+  <!-- ===== Nómos app ===== -->
+  <g><rect x="1200" y="210" width="360" height="310" fill="rgb(226,243,226)" stroke="rgb(46,125,50)" stroke-width="2"/></g>
+  <text x="1220" y="252" font-size="30" font-weight="700" fill="rgb(46,125,50)">Nómos</text>
+  <text x="1540" y="250" text-anchor="end" class="tag" fill="rgb(46,125,50)">DESKTOP APP</text>
+  <text x="1220" y="286" class="t">each proposal next to its law extract</text>
+  <text x="1220" y="316" font-size="17" font-weight="700" fill="rgb(46,125,50)">Accept · Reject · Edit</text>
+  <rect x="1216" y="336" width="328" height="54" fill="#fff" stroke="rgb(46,125,50)"/>
+  <text x="1232" y="359" class="h2">RAG chat</text>
+  <text x="1232" y="379" class="s">ask the law a question, get verified quotes</text>
+  <g transform="translate(1224,420)" fill="rgb(46,125,50)">
+    <circle cx="10" cy="7" r="7"/>
+    <path d="M-1,32 v-10 a11,9 0 0 1 22,0 v10 z"/>
+  </g>
+  <text x="1260" y="436" class="t" font-weight="700">The analyst decides</text>
+  <text x="1260" y="456" class="s">the app itself runs nothing:</text>
+  <text x="1260" y="474" class="s">it submits jobs to the worker</text>
+
+  <!-- ===== nomos database (wide) ===== -->
+  <g>
+    <path d="M290,610 v150 a425,20 0 0 0 850,0 v-150" fill="rgb(222,240,248)" stroke="rgb(0,68,148)" stroke-width="2"/>
+    <ellipse cx="715" cy="610" rx="425" ry="20" fill="rgb(234,243,255)" stroke="rgb(0,68,148)" stroke-width="2"/>
+  </g>
+  <text x="320" y="690" font-size="32" font-weight="700" fill="rgb(0,68,148)">Database</text>
+  <text x="320" y="716" class="s">PostgreSQL + pgvector</text>
+  <g text-anchor="middle">
+    <rect x="490" y="652" width="148" height="76" fill="#fff" stroke="rgb(0,68,148)"/>
+    <text x="564" y="686" class="h2" fill="rgb(0,68,148)">law</text>
+    <text x="564" y="708" class="s">texts &amp; vectors</text>
+    <rect x="650" y="652" width="148" height="76" fill="#fff" stroke="rgb(148,167,175)"/>
+    <text x="724" y="686" class="h2">parameters</text>
+    <text x="724" y="708" class="s">EUROMOD values</text>
+    <rect x="810" y="652" width="148" height="76" fill="#fff" stroke="rgb(46,125,50)"/>
+    <text x="884" y="686" class="h2" fill="rgb(46,125,50)">reviews</text>
+    <text x="884" y="708" class="s">proposals &amp; decisions</text>
+    <rect x="970" y="652" width="148" height="76" fill="rgb(242,252,255)" stroke="rgb(21,156,228)" stroke-width="1.6"/>
+    <text x="1044" y="686" class="h2" fill="rgb(21,156,228)">job queue</text>
+    <text x="1044" y="708" class="s">asynchronous</text>
+  </g>
+
+  <!-- ===== EUROMOD export ===== -->
+  <g><rect x="1200" y="780" width="360" height="80" fill="#fff" stroke="rgb(46,125,50)" stroke-width="2"/></g>
+  <text x="1220" y="812" class="h2">EUROMOD</text>
+  <text x="1220" y="837" class="s">change set: accepted values only</text>
+
+  <!-- legend -->
+  <g font-size="13" fill="rgb(90,96,102)">
+    <rect x="300" y="836" width="14" height="14" fill="rgb(0,68,148)"/><text x="322" y="848">law &amp; data</text>
+    <rect x="420" y="836" width="14" height="14" fill="rgb(90,47,168)"/><text x="442" y="848">GPU</text>
+    <rect x="500" y="836" width="14" height="14" fill="rgb(176,90,0)"/><text x="522" y="848">LLM</text>
+    <rect x="580" y="836" width="14" height="14" fill="rgb(21,156,228)"/><text x="602" y="848">asynchronous jobs</text>
+    <rect x="740" y="836" width="14" height="14" fill="rgb(46,125,50)"/><text x="762" y="848">human decision</text>
+    <rect x="890" y="836" width="14" height="14" fill="rgb(198,40,40)"/><text x="912" y="848">observability</text>
+  </g>
+  <!-- ===== EUROMOD parameters (input) ===== -->
+  <rect x="40" y="620" width="210" height="140" fill="rgb(240,240,240)" stroke="rgb(148,167,175)" stroke-width="1.5"/>
+  <text x="60" y="652" class="h2">EUROMOD</text>
+  <text x="60" y="676" class="t">parameters export</text>
+  <text x="60" y="700" class="s">the values to check,</text>
+  <text x="60" y="718" class="s">year by year</text>
+  <text x="60" y="744" class="s">+ curation (units, dates)</text>
+  <line x1="250" y1="690" x2="287" y2="690" stroke="rgb(148,167,175)" stroke-width="2.5" marker-end="url(#aGrey)"/>
+  <text x="268" y="680" text-anchor="middle" class="lbl">load</text>
+
+  <!-- ===== Web search API (outside the worker) ===== -->
+  <rect x="40" y="116" width="320" height="62" fill="#fff" stroke="rgb(0,68,148)" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="60" y="142" class="h2">Web search API (Tavily)</text>
+  <text x="60" y="164" class="s">official portals only · leads, not proof</text>
+  <path d="M200,179 V196 H330 V207" fill="none" stroke="rgb(0,68,148)" stroke-width="2.5" stroke-dasharray="5 3" marker-end="url(#aBlue)"/>
+
+
+  <!-- ===== Arrows ===== -->
+  <!-- law -> Nomotheca -->
+  <line x1="250" y1="410" x2="315" y2="410" stroke="rgb(0,68,148)" stroke-width="2.5" marker-end="url(#aBlue)"/>
+  <text x="270" y="400" text-anchor="middle" class="lbl">fetch</text>
+  <!-- worker <-> LLM, worker -> phoenix -->
+  <line x1="620" y1="181" x2="620" y2="207" stroke="rgb(176,90,0)" stroke-width="2.5" marker-start="url(#aAmber)" marker-end="url(#aAmber)"/>
+  <line x1="1010" y1="207" x2="1010" y2="189" stroke="rgb(198,40,40)" stroke-width="2.5" stroke-dasharray="5 3" marker-end="url(#aRed)"/>
+  <!-- bricks <-> nomos -->
+  <line x1="440" y1="523" x2="440" y2="587" stroke="rgb(0,68,148)" stroke-width="2.5" marker-start="url(#aBlue)" marker-end="url(#aBlue)"/>
+  <text x="452" y="560" class="lbl">writes the law</text>
+  <line x1="725" y1="523" x2="725" y2="589" stroke="rgb(0,68,148)" stroke-width="2.5" marker-start="url(#aBlue)" marker-end="url(#aBlue)"/>
+  <text x="737" y="560" class="lbl">reads law · writes proposals</text>
+  <line x1="1044" y1="589" x2="1044" y2="523" stroke="rgb(21,156,228)" stroke-width="2.5" marker-start="url(#aCyan)" marker-end="url(#aCyan)"/>
+  <text x="1056" y="560" class="lbl">claims jobs</text>
+
+  <!-- app <-> nomos -->
+  <path d="M1270,523 V680 H1143" fill="none" stroke="rgb(46,125,50)" stroke-width="2.5" marker-start="url(#aGreen)" marker-end="url(#aGreen)"/>
+  <text x="1282" y="600" class="lbl">reviews</text>
+  <path d="M1380,523 V735 H1143" fill="none" stroke="rgb(21,156,228)" stroke-width="2.5" marker-end="url(#aCyan)"/>
+  <text x="1392" y="600" class="lbl">submits jobs</text>
+  <!-- app -> EUROMOD -->
+  <path d="M1510,523 V777" fill="none" stroke="rgb(46,125,50)" stroke-width="2.5" marker-end="url(#aGreen)"/>
+  <text x="1500" y="680" text-anchor="end" class="lbl">export</text>
+</svg>
