@@ -87,11 +87,12 @@
 {/if}
 
 <style>
-  h3 { font-size: 0.9rem; margin: 0.8rem 0 0.4rem; }
+  h3 { margin: 0.8rem 0 0.4rem; }
   .disc, .web {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
     padding: 0.5rem 0.7rem;
     margin-bottom: 0.5rem;
   }

@@ -107,9 +107,10 @@
     margin-left: auto;
     max-width: 80%;
     width: fit-content;
-    background: var(--accent-soft);
+    background: var(--header-bg);
+    border: 1px solid var(--border-strong);
     padding: 0.5rem 0.8rem;
-    border-radius: 12px 12px 2px 12px;
+    border-radius: 10px 10px 2px 10px;
     white-space: pre-wrap;
   }
   .answer {
@@ -117,23 +118,18 @@
     max-width: 92%;
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 12px 12px 12px 2px;
+    border-radius: 10px 10px 10px 2px;
+    box-shadow: var(--shadow);
     padding: 0.55rem 0.85rem;
   }
-  .selected .answer { border-color: var(--accent); }
+  .selected .answer { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .steps { margin-bottom: 0.35rem; }
   .step { display: flex; gap: 0.4rem; color: var(--muted); }
   .step.done .dot { color: var(--ok); }
   .status { display: flex; align-items: center; gap: 0.5rem; }
-  .spinner {
-    width: 0.8rem; height: 0.8rem; border-radius: 50%;
-    border: 2px solid var(--border); border-top-color: var(--accent);
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
   .quotes { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem; }
   .qchip { padding: 0.05rem 0.5rem; border-radius: 999px; font-size: 0.82em; }
-  .qchip.on { background: var(--accent-soft); border-color: var(--accent); }
+  .qchip.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
   .qchip.bad { color: var(--err); }
   .foot { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 0.4rem; }
 </style>

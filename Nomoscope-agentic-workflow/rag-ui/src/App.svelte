@@ -9,9 +9,11 @@
   import { applyStep, buildMessages, CHAT_PRIORITY, COUNTRIES, newConversationId, todayIso } from './lib/chat.js';
   import { submitAndFollow } from './lib/jobs.js';
   import ChunkCard from './lib/components/ChunkCard.svelte';
+  import Icon from './lib/components/Icon.svelte';
   import SearchPanel from './lib/components/SearchPanel.svelte';
   import Turn from './lib/components/Turn.svelte';
   import WebPanel from './lib/components/WebPanel.svelte';
+  import brandBackground from './assets/brand_background_EUROMOD.jpg';
 
   let config = $state({ db_url: '', user: null, db_error: null });
   let worker = $state({ alive: null, models: [] });
@@ -201,173 +203,399 @@
 </script>
 
 <div class="app">
-  <header class="top">
-    <h1>Nomoscope <span class="muted">RAG chat</span></h1>
-    <label>Country
-      <select bind:value={country}>
-        <option value="">all</option>
-        {#each COUNTRIES as c}<option value={c}>{c}</option>{/each}
-      </select>
-    </label>
-    <label>In force on <input type="date" bind:value={asOf} /></label>
-    <label>Model
-      <select bind:value={model} disabled={!llmModels.length}>
-        {#if !llmModels.length}<option value="">worker default</option>{/if}
-        {#each llmModels as m (m.model)}<option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>{/each}
-      </select>
-    </label>
-    <label class="check"><input type="checkbox" bind:checked={web} /> Web search</label>
-    <span class="spacer"></span>
-    <span class="badge {worker.alive ? 'ok' : worker.alive === false ? 'err' : ''}" title="ops.workers heartbeat">
-      worker {worker.alive ? 'online' : worker.alive === false ? 'offline' : '…'}
-    </span>
-    {#if config.user}<span class="muted small">{config.user}</span>{/if}
-    <button onclick={() => (showHistory = !showHistory)}>History</button>
-    <button onclick={newChat} disabled={busy}>New chat</button>
-    <button onclick={() => (dark = !dark)} title="Toggle theme">{dark ? '☀' : '☾'}</button>
+  <!-- The review UI's shell (EUROMOD's own layout): a tab strip under the
+       logo, a ribbon of grouped commands, the brand star behind the page, a
+       status bar at the foot. -->
+  <header class="tabstrip">
+    <div class="logo" title="Nómos: ask the legislation">N</div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" role="tab" aria-selected="true">Ask the legislation</button>
+    </div>
   </header>
 
-  {#if error}<div class="banner err">{error}</div>{/if}
-  {#if worker.alive === false}
-    <div class="banner warn">No worker is running — questions wait in the queue until one starts (<span class="mono">docker compose --profile gpu up -d</span>).</div>
-  {/if}
+  <div class="ribbon">
+    <div class="group">
+      <div class="cmds">
+        <button class="big-cmd" onclick={newChat} disabled={busy} title="Start a new conversation">
+          <Icon name="plus" size={24} />
+          <span>New chat</span>
+        </button>
+        <button
+          class="big-cmd"
+          class:on={showHistory}
+          onclick={() => (showHistory = !showHistory)}
+          title="Show or hide your past conversations"
+        >
+          <Icon name="history" size={24} />
+          <span>History</span>
+        </button>
+      </div>
+      <div class="group-label">Conversation</div>
+    </div>
+    <div class="group">
+      <div class="cmds settings">
+        <label class="inline">Country
+          <select bind:value={country}>
+            <option value="">all</option>
+            {#each COUNTRIES as c}<option value={c}>{c}</option>{/each}
+          </select>
+        </label>
+        <label class="inline">In force on <input type="date" bind:value={asOf} /></label>
+        <label class="inline">Model
+          <select bind:value={model} disabled={!llmModels.length}>
+            {#if !llmModels.length}<option value="">worker default</option>{/if}
+            {#each llmModels as m (m.model)}<option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>{/each}
+          </select>
+        </label>
+        <label class="inline toggle"><input type="checkbox" bind:checked={web} /> <Icon name="globe" size={15} /> Search official portals</label>
+      </div>
+      <div class="group-label">Next question</div>
+    </div>
+    <div class="group spacer"></div>
+    <div class="group">
+      <div class="cmds col">
+        <label class="inline">
+          Theme:
+          <select value={dark ? 'dark' : 'light'} onchange={(e) => (dark = e.currentTarget.value === 'dark')}>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+      </div>
+      <div class="group-label">Display</div>
+    </div>
+    <div class="group">
+      <div class="cmds col">
+        <div
+          class="inline"
+          title={worker.alive
+            ? 'The worker that answers questions is online.'
+            : worker.alive === false
+              ? 'No worker is running: questions wait in the queue until one starts.'
+              : 'Worker status unknown'}
+        >
+          <span class="dot" class:on={worker.alive} class:off={worker.alive === false}></span>
+          {worker.alive ? 'Worker online' : worker.alive === false ? 'Worker offline' : 'Worker …'}
+        </div>
+        <div class="inline" title="Your database login: every question is recorded under it.">
+          Signed in as <strong>{config.user ?? '—'}</strong>
+        </div>
+      </div>
+      <div class="group-label">Connection</div>
+    </div>
+  </div>
 
-  <main>
-    {#if showHistory}
-      <aside class="history">
-        <h2>Conversations</h2>
-        {#if !conversations.length}<p class="muted small">None yet.</p>{/if}
-        {#each conversations as c (c.conversation_id)}
-          <button class="conv" class:on={c.conversation_id === conversationId} onclick={() => openConversation(c.conversation_id)}>
-            <span class="title">{c.title ?? '(untitled)'}</span>
-            <span class="muted small">{c.country ?? 'all'} · {c.turns} turn(s) · {c.last_at.slice(0, 16)}</span>
-          </button>
-        {/each}
-      </aside>
+  <div class="content" style:--brand-bg={`url(${brandBackground})`}>
+    {#if error}
+      <div class="callout err banner-row">
+        <span>{error}</span>
+        <button class="ghost" onclick={() => (error = '')} title="Dismiss"><Icon name="x" size={14} /></button>
+      </div>
+    {/if}
+    {#if worker.alive === false}
+      <div class="callout warn banner-row">
+        <span>No worker is running — questions wait in the queue until one starts (<span class="mono">docker compose --profile gpu up -d</span>).</span>
+      </div>
     {/if}
 
-    <section class="chat">
-      <div class="thread" bind:this={thread}>
-        {#if !turns.length}
-          <div class="empty">
-            <h2>Ask the legislation</h2>
-            <p class="muted">
-              Answers are grounded in the Nomotheca corpus: every quote is checked character-for-character
-              against the cited article. When the corpus lacks a source, the assistant searches the official
-              portals and lists the act so you can ingest it.
-            </p>
-            <ul class="muted small">
-              <li>Quel est le barème de l'impôt sur le revenu applicable aux revenus 2024 ?</li>
-              <li>What is the Irish standard rate cut-off point for a single person in 2025?</li>
-              <li>¿Qué escala autonómica del IRPF aplica Aragón en 2025?</li>
-            </ul>
+    <main class:with-history={showHistory}>
+      {#if showHistory}
+        <aside class="history panel">
+          <h3>Conversations</h3>
+          {#if !conversations.length}<p class="muted small">None yet.</p>{/if}
+          <div class="convs">
+            {#each conversations as c (c.conversation_id)}
+              <button class="conv" class:on={c.conversation_id === conversationId} onclick={() => openConversation(c.conversation_id)}>
+                <span class="title">{c.title ?? '(untitled)'}</span>
+                <span class="muted small">{c.country ?? 'all'} · {c.turns} turn(s) · {c.last_at.slice(0, 16)}</span>
+              </button>
+            {/each}
           </div>
-        {/if}
-        {#each turns as turn, i (i)}
-          <Turn
-            {turn}
-            selected={selectedTurn === i}
-            {selectedQuote}
-            onSelect={() => turn.status === 'succeeded' && (selectedTurn = i)}
-            onSelectQuote={(q) => select(i, q)}
-            onCancel={() => cancel(i)}
-          />
-        {/each}
-      </div>
-      <form class="composer" onsubmit={send}>
-        <textarea
-          bind:value={input}
-          onkeydown={onKeydown}
-          rows="2"
-          placeholder={busy ? 'Waiting for the answer…' : 'Ask about a rate, a threshold, an article… (Enter to send, Shift+Enter for a new line)'}
-          disabled={!config.db_url || !!config.db_error}
-        ></textarea>
-        <button class="primary" disabled={busy || !input.trim()}>Send</button>
-      </form>
-    </section>
+        </aside>
+      {/if}
 
-    <aside class="panel">
-      <nav>
-        <button class:on={tab === 'sources'} onclick={() => (tab = 'sources')}>
-          Sources{panelResult ? ` (${panelResult.sources.length})` : ''}
-        </button>
-        <button class:on={tab === 'web'} onclick={() => (tab = 'web')}>
-          Web{panelResult?.discoveries?.length ? ` · ${panelResult.discoveries.length} new` : ''}
-        </button>
-        <button class:on={tab === 'search'} onclick={() => (tab = 'search')}>Search</button>
-      </nav>
-      <div class="panel-body">
-        <div hidden={tab !== 'sources'}>
-          {#if !panelResult}
-            <p class="muted">Sources of the selected answer appear here: quoted passages first, then everything the assistant retrieved.</p>
-          {:else}
-            {#if panelResult.quotes.length}<h3>Quoted</h3>{/if}
-            {#each panelResult.quotes as q, i (i)}
-              <ChunkCard
-                chunk={sourceById[q.chunk_id] ?? { chunk_id: q.chunk_id, citation: q.citation, validity: q.validity, source_trust_class: q.source_trust_class }}
-                dbUrl={config.db_url}
-                label={`[${i + 1}]`}
-                extract={q.extract}
-                verified={q.verified}
-                active={selectedQuote === i}
-                open={selectedQuote === i}
-              />
-            {/each}
-            {#if otherSources.length}<h3>Also retrieved</h3>{/if}
-            {#each otherSources as s (s.chunk_id)}
-              <ChunkCard chunk={s} dbUrl={config.db_url} />
-            {/each}
+      <section class="chat panel">
+        <div class="thread" bind:this={thread}>
+          {#if !turns.length}
+            <div class="empty-state">
+              <Icon name="chat" size={32} />
+              <div class="big">Ask the legislation</div>
+              <p class="intro">
+                Answers are grounded in the Nomotheca corpus: every quote is checked character-for-character
+                against the cited article. When the corpus lacks a source, the assistant searches the official
+                portals and lists the act so you can ingest it.
+              </p>
+              <ul class="small">
+                <li>Quel est le barème de l'impôt sur le revenu applicable aux revenus 2024 ?</li>
+                <li>What is the Irish standard rate cut-off point for a single person in 2025?</li>
+                <li>¿Qué escala autonómica del IRPF aplica Aragón en 2025?</li>
+              </ul>
+            </div>
           {/if}
+          {#each turns as turn, i (i)}
+            <Turn
+              {turn}
+              selected={selectedTurn === i}
+              {selectedQuote}
+              onSelect={() => turn.status === 'succeeded' && (selectedTurn = i)}
+              onSelectQuote={(q) => select(i, q)}
+              onCancel={() => cancel(i)}
+            />
+          {/each}
         </div>
-        <div hidden={tab !== 'web'}>
-          <WebPanel result={panelResult} dbUrl={config.db_url} />
+        <form class="composer" onsubmit={send}>
+          <textarea
+            bind:value={input}
+            onkeydown={onKeydown}
+            rows="2"
+            placeholder={busy ? 'Waiting for the answer…' : 'Ask about a rate, a threshold, an article… (Enter to send, Shift+Enter for a new line)'}
+            disabled={!config.db_url || !!config.db_error}
+          ></textarea>
+          <button class="primary" disabled={busy || !input.trim()}><Icon name="send" size={15} /> Send</button>
+        </form>
+      </section>
+
+      <aside class="side">
+        <div class="side-tabs" role="tablist">
+          <button class="tab" class:active={tab === 'sources'} role="tab" aria-selected={tab === 'sources'} onclick={() => (tab = 'sources')}>
+            <Icon name="book" size={15} /> Sources{panelResult ? ` (${panelResult.sources.length})` : ''}
+          </button>
+          <button class="tab" class:active={tab === 'web'} role="tab" aria-selected={tab === 'web'} onclick={() => (tab = 'web')}>
+            <Icon name="globe" size={15} /> Web{panelResult?.discoveries?.length ? ` · ${panelResult.discoveries.length} new` : ''}
+          </button>
+          <button class="tab" class:active={tab === 'search'} role="tab" aria-selected={tab === 'search'} onclick={() => (tab = 'search')}>
+            <Icon name="search" size={15} /> Search
+          </button>
         </div>
-        <div hidden={tab !== 'search'}>
-          <SearchPanel dbUrl={config.db_url} {country} {asOf} />
+        <div class="side-body">
+          <div hidden={tab !== 'sources'}>
+            {#if !panelResult}
+              <p class="muted">Sources of the selected answer appear here: quoted passages first, then everything the assistant retrieved.</p>
+            {:else}
+              {#if panelResult.quotes.length}<h3>Quoted</h3>{/if}
+              {#each panelResult.quotes as q, i (i)}
+                <ChunkCard
+                  chunk={sourceById[q.chunk_id] ?? { chunk_id: q.chunk_id, citation: q.citation, validity: q.validity, source_trust_class: q.source_trust_class }}
+                  dbUrl={config.db_url}
+                  label={`[${i + 1}]`}
+                  extract={q.extract}
+                  verified={q.verified}
+                  active={selectedQuote === i}
+                  open={selectedQuote === i}
+                />
+              {/each}
+              {#if otherSources.length}<h3>Also retrieved</h3>{/if}
+              {#each otherSources as s (s.chunk_id)}
+                <ChunkCard chunk={s} dbUrl={config.db_url} />
+              {/each}
+            {/if}
+          </div>
+          <div hidden={tab !== 'web'}>
+            <WebPanel result={panelResult} dbUrl={config.db_url} />
+          </div>
+          <div hidden={tab !== 'search'}>
+            <SearchPanel dbUrl={config.db_url} {country} {asOf} />
+          </div>
         </div>
-      </div>
-    </aside>
-  </main>
+      </aside>
+    </main>
+  </div>
+
+  <footer class="statusbar">
+    <span>{busy ? 'Waiting for the answer…' : turns.length ? `${turns.length} question(s) in this conversation` : 'Ready'}</span>
+    <span class="muted">{config.user ? `Signed in as ${config.user}` : 'Not connected'}</span>
+  </footer>
 </div>
 
 <style>
-  .app { display: flex; flex-direction: column; height: 100%; }
-  .top {
-    display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap;
-    padding: 0.5rem 1rem; background: var(--panel); border-bottom: 1px solid var(--border);
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* --- Tab strip (as the review UI: logo disc, then light-blue tabs) --- */
+  .tabstrip {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.6rem;
+    background: var(--strip);
+    padding: 0.35rem 0.5rem 0;
+    flex: none;
   }
-  .top h1 { margin: 0; font-size: 1.05rem; }
-  .top label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.9em; }
-  .spacer { flex: 1; }
-  .app > .banner { margin: 0.5rem 1rem 0; }
-  main { flex: 1; min-height: 0; display: flex; }
-  .history {
-    width: 260px; flex-shrink: 0; overflow-y: auto; padding: 0.7rem;
-    border-right: 1px solid var(--border); background: var(--panel);
+  .logo {
+    width: 2.6rem;
+    height: 2.6rem;
+    margin-bottom: 0.25rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #4f72c9, #1f3d8f);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px var(--border-strong);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 1.35rem;
+    font-weight: 700;
+    flex: none;
   }
-  .history h2 { font-size: 0.95rem; }
+  .tabs { display: flex; gap: 3px; overflow-x: auto; min-width: 0; }
+  .tab {
+    border: 1px solid var(--border-strong);
+    border-bottom: 0;
+    border-radius: 10px 10px 0 0;
+    background: var(--tab);
+    color: var(--text);
+    padding: 0.5rem 1rem;
+    box-shadow: none;
+    white-space: nowrap;
+    flex: none;
+  }
+  .tab:hover:not(:disabled) { background: var(--tab-hover); border-color: var(--border-strong); box-shadow: none; }
+  .tab.active { background: var(--panel); position: relative; top: 1px; padding-bottom: calc(0.5rem + 1px); }
+
+  /* --- Ribbon: groups of commands, each captioned underneath --- */
+  .ribbon {
+    display: flex;
+    flex: none;
+    background: var(--panel);
+    border-top: 1px solid var(--border-strong);
+    border-bottom: 1px solid var(--border-strong);
+    overflow-x: auto;
+    font-size: 0.9rem;
+  }
+  .group {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-strong);
+    flex: none;
+  }
+  .group.spacer { flex: 1; }
+  .cmds { flex: 1; display: flex; gap: 0.3rem; padding: 0.4rem 0.6rem; align-items: stretch; }
+  .cmds.col { flex-direction: column; gap: 0.35rem; justify-content: center; }
+  .cmds.settings {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 0.35rem 1rem;
+    align-items: center;
+  }
+  .group-label {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text);
+    border-top: 1px solid var(--border-strong);
+    padding: 0.05rem 0.5rem 0.1rem;
+  }
+  .big-cmd {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 5px;
+    min-width: 4rem;
+    background: transparent;
+    border-color: transparent;
+  }
+  /* EUROMOD ribbon buttons: flat until hovered, then a border and a 1px shadow. */
+  .big-cmd:hover:not(:disabled) { border-color: var(--border-strong); }
+  .big-cmd.on { background: var(--accent-soft); border-color: var(--border-strong); }
+  .inline { display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; color: var(--muted); }
+  .inline strong { color: var(--text); }
+  .inline select, .inline input[type='date'] { padding: 0.2rem 0.4rem; }
+  .inline select { max-width: 16rem; }
+  .toggle { cursor: pointer; }
+  .dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--border-strong); }
+  .dot.on { background: var(--ok); }
+  .dot.off { background: var(--err); }
+
+  /* --- Content over the brand star --- */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 1rem 1.2rem;
+    gap: 0.9rem;
+    position: relative;
+    isolation: isolate;
+    background: var(--bg);
+  }
+  .content::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--brand-bg) right center / auto 100% no-repeat;
+    opacity: var(--brand-opacity);
+    pointer-events: none;
+  }
+  .banner-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.5rem 0.9rem; }
+  .banner-row button { padding: 0.2rem; }
+
+  main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(340px, 2fr);
+    gap: 1rem;
+  }
+  main.with-history { grid-template-columns: 260px minmax(0, 3fr) minmax(340px, 2fr); }
+
+  .history { display: flex; flex-direction: column; min-height: 0; padding: 0.9rem; }
+  .convs { overflow-y: auto; display: flex; flex-direction: column; gap: 2px; margin: 0 -0.3rem; padding: 0 0.3rem; }
   .conv {
-    display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem;
-    width: 100%; text-align: left; margin-bottom: 0.35rem; background: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border-color: transparent;
+    border-radius: 9px;
+    padding: 0.5rem 0.7rem;
   }
-  .conv.on { border-color: var(--accent); background: var(--accent-soft); }
-  .conv .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-  .chat { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .conv:hover:not(:disabled) { background: var(--panel-2); border-color: transparent; box-shadow: none; }
+  .conv.on, .conv.on:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); }
+  .conv .title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+  .chat { display: flex; flex-direction: column; min-height: 0; padding: 0; overflow: hidden; }
   .thread { flex: 1; overflow-y: auto; padding: 1rem 1.2rem; }
-  .empty { max-width: 40rem; margin: 3rem auto; }
-  .empty li { margin: 0.3rem 0; }
+  .empty-state { max-width: 40rem; margin: 2rem auto; }
+  .empty-state .intro { margin: 0; }
+  .empty-state ul { text-align: left; margin: 0.4rem 0 0; }
+  .empty-state li { margin: 0.3rem 0; font-style: italic; }
   .composer {
-    display: flex; gap: 0.5rem; padding: 0.6rem 1rem;
-    border-top: 1px solid var(--border); background: var(--panel);
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    border-top: 1px solid var(--border);
+    background: var(--panel-2);
   }
   .composer textarea { flex: 1; resize: vertical; min-height: 2.6rem; }
-  .panel {
-    width: 40%; max-width: 640px; min-width: 340px; display: flex; flex-direction: column;
-    border-left: 1px solid var(--border); background: var(--bg);
+
+  /* Source panel: EUROMOD tabs over a panel. */
+  .side { display: flex; flex-direction: column; min-height: 0; }
+  .side-tabs { display: flex; gap: 3px; padding-left: 0.5rem; }
+  .side-tabs .tab { padding: 0.4rem 0.8rem; }
+  .side-tabs .tab.active { padding-bottom: calc(0.4rem + 1px); }
+  .side-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.8rem;
+    background: var(--panel-glass);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
   }
-  .panel nav { display: flex; gap: 0.3rem; padding: 0.5rem 0.7rem 0; }
-  .panel nav button { border-radius: 6px 6px 0 0; border-bottom: none; }
-  .panel nav button.on { background: var(--panel); border-color: var(--accent); color: var(--accent); }
-  .panel-body { flex: 1; overflow-y: auto; padding: 0.7rem; border-top: 1px solid var(--border); }
-  .panel-body h3 { font-size: 0.9rem; margin: 0.4rem 0; }
+  .side-body h3 { margin: 0.4rem 0; }
+
+  /* --- Status bar --- */
+  .statusbar {
+    flex: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.78rem;
+    background: var(--panel);
+    border-top: 1px solid var(--border-strong);
+  }
+
+  @media (max-width: 1000px) {
+    main, main.with-history { grid-template-columns: 1fr; overflow: auto; }
+  }
 </style>

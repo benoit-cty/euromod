@@ -1,116 +1,374 @@
-/* Same palette tokens as the review UI (ui/src/styles.css); body.dark flips them. */
+/* Theme via CSS custom properties; body.dark flips the palette (persisted in
+   localStorage). The values are EUROMOD's own (EM_UI styles.css: --*-light /
+   --*-dark), so the review UI (and the RAG chat, which copies this file) reads as part of the same suite; colour beyond
+   that is kept for meaning (green = fine, amber = look at this, red = blocked). */
 :root {
-  --bg: #f4f5f7;
-  --panel: #ffffff;
-  --panel-2: #eef0f4;
-  --border: #d8dce3;
-  --text: #1d2330;
-  --muted: #66707f;
-  --accent: #2457d6;
-  --accent-soft: #e3ebfd;
-  --ok: #1a7f4b;
-  --ok-soft: #ddf3e6;
-  --warn: #a05a00;
-  --warn-soft: #fdeeda;
-  --err: #b3261e;
-  --err-soft: #fbe3e1;
-  --info: #4b3fae;
-  --info-soft: #e9e5fb;
-  --mark: #ffe58a;
+  --font-body: 'Segoe UI', Tahoma, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-mono: 'Fira Mono', ui-monospace, Consolas, monospace;
+  --bg: rgb(255, 255, 255);              /* background-color */
+  --panel: rgb(255, 255, 255);           /* tabs-active-background-color */
+  --panel-2: rgb(240, 240, 240);         /* table-readonly-background-color */
+  --border: rgb(214, 214, 214);          /* td-border-color */
+  --border-strong: rgb(199, 208, 211);   /* border-color */
+  --text: rgb(0, 0, 0);
+  --text-bright: rgb(0, 0, 0);
+  --muted: rgb(90, 96, 102);
+  --accent: rgb(4, 82, 172);             /* kind-if-color */
+  --accent-hover: rgb(11, 105, 212);
+  --accent-soft: rgb(234, 243, 255);     /* table-selected-background-color */
+  --focus: rgb(21, 156, 228);            /* td-focus-outline-color */
+  --selection: rgba(21, 156, 228, 0.30); /* cell-selection-color */
+  --current-row: rgba(21, 156, 228, 0.10);
+  --input-bg: rgb(242, 252, 255);
+  --button-bg: rgb(245, 252, 255);
+  --button-hover: rgb(239, 249, 253);
+  --button-ok: #9dccfd;
+  --button-cancel: #bec3c7;
+  --button-delete: #f0a9a3;
+  --header-bg: rgb(222, 240, 248);       /* table-headers-background-color */
+  --ok: rgb(46, 125, 50);
+  --ok-soft: rgb(226, 243, 226);
+  --warn: rgb(176, 90, 0);
+  --warn-soft: rgb(255, 240, 220);
+  --err: rgb(198, 40, 40);
+  --err-soft: rgb(253, 230, 228);
+  --info: rgb(90, 47, 168);              /* kind-foreach-color */
+  --info-soft: rgb(240, 234, 252);
+  --mark: rgb(255, 240, 120);
+  --answer: #f6c1b5;        /* sentence most likely answering a search */
+  --answer-soft: #fbe3dc;   /* close runner-up */
+  --shadow: 1px 1px 3px rgba(0, 0, 0, 0.18);
+  --radius: 5px;
+  /* EUROMOD shell: menu strip, tabs, the brand star */
+  --strip: rgb(196, 208, 212);           /* menu-background-color */
+  --tab: rgb(222, 240, 248);             /* tabs-background-color */
+  --tab-hover: rgb(239, 249, 253);
+  --brand-opacity: 1;
+  --panel-glass: rgba(255, 255, 255, 0.78);
+  --accent-soft-glass: rgba(234, 243, 255, 0.82);
+  --scrollbar-track: rgb(238, 245, 248);
+  --scrollbar-thumb: rgb(186, 200, 206);
+  --scrollbar-thumb-hover: rgb(148, 167, 175);
+  color-scheme: light;
 }
 
 body.dark {
-  --bg: #14161c;
-  --panel: #1d212b;
-  --panel-2: #232836;
-  --border: #333a4a;
-  --text: #e6e9f0;
-  --muted: #98a1b3;
-  --accent: #6f95f2;
-  --accent-soft: #263354;
-  --ok: #4cc98a;
-  --ok-soft: #17362a;
-  --warn: #e5a556;
-  --warn-soft: #3a2c17;
-  --err: #ef7b74;
-  --err-soft: #43211f;
-  --info: #a89bf0;
-  --info-soft: #2b2748;
-  --mark: #6b5b16;
+  --bg: rgb(0, 0, 0);
+  --panel: rgb(26, 26, 26);
+  --panel-2: rgb(35, 35, 35);
+  --border: rgb(66, 66, 66);
+  --border-strong: rgb(100, 100, 100);
+  --text: rgb(152, 170, 185);
+  --text-bright: rgb(206, 230, 250);
+  --muted: rgb(118, 130, 140);
+  --accent: rgb(74, 159, 255);
+  --accent-hover: rgb(110, 180, 255);
+  --accent-soft: rgb(38, 52, 64);        /* flag-active-background-color */
+  --focus: rgb(21, 156, 228);
+  --selection: rgba(21, 156, 228, 0.35);
+  --current-row: rgba(21, 156, 228, 0.16);
+  --input-bg: rgb(10, 10, 10);
+  --button-bg: rgb(10, 10, 10);
+  --button-hover: rgb(34, 34, 34);
+  --button-ok: #4287c7;
+  --button-cancel: #6c757d;
+  --button-delete: #b0544f;
+  --header-bg: rgb(44, 44, 44);
+  --ok: rgb(102, 187, 106);
+  --ok-soft: rgb(20, 40, 22);
+  --warn: rgb(255, 140, 0);
+  --warn-soft: rgb(48, 32, 10);
+  --err: rgb(239, 83, 80);
+  --err-soft: rgb(50, 18, 18);
+  --info: rgb(170, 140, 240);
+  --info-soft: rgb(36, 28, 56);
+  --mark: rgb(110, 90, 10);
+  --answer: #7a3a2c;
+  --answer-soft: #4a2a22;
+  --shadow: 1px 1px 3px rgba(199, 199, 199, 0.15);
+  --strip: rgb(0, 0, 0);
+  --tab: rgb(10, 10, 10);
+  --tab-hover: rgb(24, 24, 24);
+  --brand-opacity: 0.12;
+  --panel-glass: rgba(26, 26, 26, 0.82);
+  --accent-soft-glass: rgba(38, 52, 64, 0.85);
+  --scrollbar-track: rgb(18, 18, 18);
+  --scrollbar-thumb: rgb(68, 72, 76);
+  --scrollbar-thumb-hover: rgb(104, 110, 116);
+  color-scheme: dark;
 }
+
+/* Scrollbars, themed in one place as EUROMOD does. */
+html { scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
+::-webkit-scrollbar { width: 12px; height: 12px; background-color: var(--scrollbar-track); }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background-color: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover); }
+::selection { background: var(--selection); }
 
 * { box-sizing: border-box; }
 
 html, body {
   margin: 0;
   height: 100%;
-  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
+  line-height: 1.45;
   background: var(--bg);
   color: var(--text);
+  -webkit-font-smoothing: antialiased;
 }
 
 #app { height: 100%; }
 
-button, input, select, textarea { font: inherit; color: inherit; }
+h1, h2, h3 { margin: 0 0 0.5rem; font-weight: 600; color: var(--text-bright); }
+h1 { font-size: 1.35rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.05rem; }
+h3 { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+p { margin: 0.3rem 0; }
 
 button {
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.3rem 0.7rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--button-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  padding: 0.35rem 0.8rem;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: background 0.12s, border-color 0.12s;
 }
-button:hover:not(:disabled) { border-color: var(--accent); }
-button:disabled { opacity: 0.5; cursor: default; }
-button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-button.link { background: none; border: none; padding: 0; color: var(--accent); text-decoration: underline; }
+button:hover:not(:disabled) { background: var(--button-hover); box-shadow: 1px 1px var(--border-strong); }
+button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+button:disabled { opacity: 0.45; cursor: default; }
+/* EUROMOD's dialog OK / Delete buttons: a pale fill under dark text. */
+button.primary { background: var(--button-ok); border-color: transparent; color: var(--text-bright); font-weight: 600; }
+button.primary:hover:not(:disabled) { background: var(--button-ok); opacity: 0.9; box-shadow: none; }
+button.danger { background: var(--button-delete); color: var(--text-bright); border-color: transparent; }
+button.danger:hover:not(:disabled) { background: var(--button-delete); opacity: 0.9; box-shadow: none; }
+button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+button.ghost:hover:not(:disabled) { background: var(--button-hover); color: var(--text); border-color: var(--border-strong); }
+button.big { padding: 0.6rem 1.2rem; font-size: 1rem; }
+button.link {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
 
 input, select, textarea {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  font: inherit;
+  color: var(--text);
+  background: var(--input-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
   padding: 0.3rem 0.5rem;
 }
-input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--focus); outline-offset: -1px; border-color: var(--focus); }
 
-.muted { color: var(--muted); }
-.mono { font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: 0.85em; }
-.small { font-size: 0.85em; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
+th { color: var(--text); font-weight: 600; font-size: 0.8rem; position: sticky; top: 0; background: var(--header-bg); }
+tr.selectable { cursor: pointer; }
+tr.selectable:hover td { background: var(--current-row); }
+tr.selected td, tr.selected:hover td { background: var(--accent-soft); }
 
 .badge {
   display: inline-block;
-  padding: 0 0.4rem;
+  padding: 0.12rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.75rem;
-  line-height: 1.4rem;
+  font-size: 0.76rem;
+  font-weight: 600;
   white-space: nowrap;
   background: var(--panel-2);
   color: var(--muted);
 }
+.badge.changed { background: var(--warn-soft); color: var(--warn); }
+.badge.unchanged { background: var(--ok-soft); color: var(--ok); }
+.badge.new, .badge.derived { background: var(--accent-soft); color: var(--accent); }
+.badge.not_found { background: var(--err-soft); color: var(--err); }
+.badge.provisional { background: var(--info-soft); color: var(--info); }
+.badge.national_team_source { background: var(--info-soft); color: var(--info); }
+.badge.pass { background: var(--ok-soft); color: var(--ok); }
+.badge.fail { background: var(--err-soft); color: var(--err); }
+.badge.pending { background: var(--panel-2); color: var(--muted); }
+.badge.accepted, .badge.edited { background: var(--ok-soft); color: var(--ok); }
+.badge.rejected { background: var(--err-soft); color: var(--err); }
+.badge.escalated { background: var(--info-soft); color: var(--info); }
+/* Source-trust class (ADR 0001): what a value rests on, never whether it may
+   be accepted. */
+.badge.guidance { background: var(--warn-soft); color: var(--warn); }
+.badge.evidence { background: var(--ok-soft); color: var(--ok); }
+.badge.context  { background: var(--panel-2); color: var(--muted); }
+
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+.mono { font-family: var(--font-mono); font-size: 0.85em; }
+.error { color: var(--err); }
+
+mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2px; }
+
+.law-text {
+  white-space: pre-wrap;
+  line-height: 1.55;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem;
+  max-height: 16rem;
+  overflow: auto;
+}
+
+/* --- Progressive disclosure -------------------------------------------
+   Everything a reviewer does not need at first glance lives in a
+   <details class="more">: technical tables, scores, logs, provenance. */
+details.more {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+details.more > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.65rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  user-select: none;
+}
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+  margin-right: 0.15rem;
+}
+details.more[open] > summary::before { transform: rotate(45deg); }
+details.more > summary .hint { font-weight: 400; color: var(--muted); font-size: 0.88rem; }
+details.more > summary:hover { background: var(--button-hover); border-radius: var(--radius); }
+details.more > .body { padding: 0.2rem 0.9rem 0.9rem; display: flex; flex-direction: column; gap: 0.7rem; }
+
+/* --- Page scaffolding --------------------------------------------------- */
+.page-intro { color: var(--muted); margin: 0; max-width: 60rem; }
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.empty-state .big { font-size: 1.05rem; color: var(--text); font-weight: 600; }
+
+.callout {
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius);
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+}
+.callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+.callout.err { border-color: var(--err); background: var(--err-soft); }
+.callout.info { border-color: var(--info); background: var(--info-soft); }
+.callout.ok { border-color: var(--ok); background: var(--ok-soft); }
+
+/* Segmented control: a small set of mutually exclusive views. */
+.segmented { display: inline-flex; background: var(--panel-2); border-radius: var(--radius); padding: 3px; gap: 2px; }
+.segmented button {
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+  padding: 0.32rem 0.8rem;
+  color: var(--muted);
+}
+.segmented button.active { background: var(--panel); color: var(--text); box-shadow: var(--shadow); font-weight: 600; }
+.segmented .count { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+
+/* Shared progress bar + job log. */
+.bar { height: 8px; background: var(--panel-2); border-radius: 999px; overflow: hidden; }
+.bar .fill { height: 100%; background: var(--focus); transition: width 0.3s ease; }
+.bar.indeterminate .fill { width: 30%; animation: bar-slide 1.2s ease-in-out infinite; }
+@keyframes bar-slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+.spinner {
+  display: inline-block;
+  vertical-align: middle;
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.joblog {
+  max-height: 16rem;
+  min-height: 4rem;
+  overflow: auto;
+  background: var(--panel-2);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.joblog .line { white-space: pre-wrap; word-break: break-word; }
+.joblog .line.stderr .mono { color: var(--err); }
+.joblog .line.system .mono { color: var(--accent); }
+
+/* Form fields: a label above its control. */
+.field { display: flex; flex-direction: column; gap: 0.3rem; color: var(--muted); font-size: 0.88rem; }
+.field input, .field select, .field textarea { color: var(--text); font-size: 0.95rem; width: 100%; }
+.field.check { flex-direction: row; align-items: center; gap: 0.45rem; }
+.field.check input { width: auto; }
+
+/* --- RAG chat additions ------------------------------------------------- */
+/* Generic tone badges (the review UI keys badges by status instead). */
 .badge.ok { background: var(--ok-soft); color: var(--ok); }
 .badge.warn { background: var(--warn-soft); color: var(--warn); }
 .badge.err { background: var(--err-soft); color: var(--err); }
 .badge.info { background: var(--info-soft); color: var(--info); }
 
-.banner { padding: 0.45rem 0.8rem; border-radius: 6px; margin: 0.5rem 0; }
-.banner.err { background: var(--err-soft); color: var(--err); }
-.banner.warn { background: var(--warn-soft); color: var(--warn); }
-
-mark { background: var(--mark); color: inherit; border-radius: 2px; }
+.banner { padding: 0.5rem 0.9rem; border-radius: var(--radius); border-left: 3px solid var(--accent); background: var(--accent-soft); margin: 0.4rem 0; }
+.banner.err { border-color: var(--err); background: var(--err-soft); color: var(--err); }
+.banner.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
 
 /* Rendered assistant Markdown */
 .md p { margin: 0.4rem 0; line-height: 1.5; }
-.md h3, .md h4, .md h5, .md h6 { margin: 0.7rem 0 0.3rem; font-size: 1rem; }
+.md h3, .md h4, .md h5, .md h6 { margin: 0.7rem 0 0.3rem; font-size: 1rem; text-transform: none; letter-spacing: 0; color: var(--text-bright); }
 .md ul, .md ol { margin: 0.3rem 0; padding-left: 1.4rem; line-height: 1.5; }
-.md table { border-collapse: collapse; margin: 0.5rem 0; font-size: 0.92em; }
+.md table { border-collapse: collapse; margin: 0.5rem 0; font-size: 0.92em; width: auto; }
 .md th, .md td { border: 1px solid var(--border); padding: 0.2rem 0.5rem; text-align: left; }
-.md th { background: var(--panel-2); }
-.md pre { background: var(--panel-2); padding: 0.5rem; border-radius: 6px; overflow-x: auto; }
-.md code { font-family: ui-monospace, Menlo, monospace; font-size: 0.88em; }
-.md blockquote { margin: 0.4rem 0; padding-left: 0.7rem; border-left: 3px solid var(--border); color: var(--muted); }
+.md th { background: var(--header-bg); position: static; }
+.md pre { background: var(--panel-2); padding: 0.5rem; border-radius: var(--radius); overflow-x: auto; }
+.md code { font-family: var(--font-mono); font-size: 0.88em; }
+.md blockquote { margin: 0.4rem 0; padding-left: 0.7rem; border-left: 3px solid var(--border-strong); color: var(--muted); }
 .md a { color: var(--accent); }
 .md button.cite, button.cite {
+  display: inline;
   padding: 0 0.3rem;
   margin: 0 0.1rem;
   font-size: 0.75em;

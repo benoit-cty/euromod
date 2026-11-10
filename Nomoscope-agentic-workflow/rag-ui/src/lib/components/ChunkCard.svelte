@@ -108,7 +108,8 @@
   .card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
     padding: 0.55rem 0.7rem;
     margin-bottom: 0.5rem;
   }
@@ -117,12 +118,12 @@
   .label { font-weight: 600; color: var(--accent); }
   .cit { font-size: 0.95em; }
   .meta { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 0.15rem 0 0.3rem; }
-  .extract { margin: 0.3rem 0; padding: 0.3rem 0.6rem; border-left: 3px solid var(--accent); background: var(--panel-2); border-radius: 0 6px 6px 0; white-space: pre-wrap; }
+  .extract { margin: 0.3rem 0; padding: 0.3rem 0.6rem; border-left: 3px solid var(--accent); background: var(--panel-2); border-radius: 0 var(--radius) var(--radius) 0; white-space: pre-wrap; }
   .text { white-space: pre-wrap; line-height: 1.45; font-size: 0.92em; max-height: 28rem; overflow-y: auto; }
   .text.clamp { max-height: 5.5rem; overflow: hidden; color: var(--muted); }
   .langs { display: flex; gap: 0.3rem; margin-bottom: 0.3rem; }
   .langs button { padding: 0.05rem 0.45rem; font-size: 0.8em; }
-  .langs button.on { background: var(--accent-soft); border-color: var(--accent); }
+  .langs button.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
   footer { display: flex; gap: 0.8rem; align-items: center; margin-top: 0.3rem; }
   footer .mono { margin-left: auto; }
 </style>
