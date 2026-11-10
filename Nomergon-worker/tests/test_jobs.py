@@ -69,6 +69,12 @@ def test_workflow_model_and_force(cfg: WorkerConfig) -> None:
     assert argv[-5:] == ["--year", "2024", "--model", "mock/extractor", "--force"]
 
 
+def test_workflow_include_na(cfg: WorkerConfig) -> None:
+    assert "--include-na" not in build("workflow", {"targets": ["x"], "year": 2025}, cfg)
+    argv = build("workflow", {"targets": ["x"], "year": 2025, "include_na": True}, cfg)
+    assert argv[-1] == "--include-na"
+
+
 def test_workflow_needs_a_target_and_a_year() -> None:
     with pytest.raises(ValueError):
         jobs.parse_payload("workflow", {"targets": [], "year": 2025})

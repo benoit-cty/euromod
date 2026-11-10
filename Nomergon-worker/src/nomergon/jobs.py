@@ -49,6 +49,8 @@ class WorkflowPayload(_Payload):
     year: int
     model: str | None = None
     force: bool = False
+    #: Also run parameters EUROMOD holds as n/a in that system year (skipped by default).
+    include_na: bool = False
 
 
 class IngestPayload(_Payload):
@@ -242,6 +244,8 @@ def build_command(
                 argv += ["--model", payload.model]
             if payload.force:
                 argv.append("--force")
+            if payload.include_na:
+                argv.append("--include-na")
             return argv
         case "ingest":
             assert isinstance(payload, IngestPayload)

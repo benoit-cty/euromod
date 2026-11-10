@@ -18,6 +18,13 @@ Source ids used by this adapter are plain BOE analytical identifiers:
   block + every dated version of every block) in one response.
 
 One GET is the entire act, so this adapter needs no expansion generation.
+
+BOE consolidates only some acts. An annual order or resolution that is never
+amended — the yearly cotización orders (Orden ESS/55/2018, Orden
+TMS/1289/2018), where the contribution bases and ceilings live — has
+``estado_consolidacion`` 0 and the consolidated API answers 404 for it. Those
+are fetched from the daily-gazette XML (``/diario_boe/xml.php?id=``) instead:
+the act as published, one text, which the parser reads as a single version.
 """
 
 from __future__ import annotations
@@ -43,6 +50,11 @@ def instrument_url(boe_id: str) -> str:
     return f"{API_BASE}/id/{boe_id}"
 
 
+def diario_url(boe_id: str) -> str:
+    """Return the daily-gazette XML of an act as published (never consolidated)."""
+    return f"https://www.boe.es/diario_boe/xml.php?id={boe_id}"
+
+
 def html_url(boe_id: str) -> str:
     """Return the human-facing consolidated view, recorded as provenance."""
     return f"https://www.boe.es/buscar/act.php?id={boe_id}"
@@ -58,18 +70,31 @@ _MAX_ATTEMPTS = 4
 
 
 def fetch_boe(ref: SourceRef, http: SnapshotClient) -> Snapshot:
-    """Fetch and archive a BOE payload, retrying transient upstream errors."""
+    """Fetch and archive a BOE payload, retrying transient upstream errors.
+
+    An act the consolidated API does not know (404) is fetched from the
+    daily-gazette XML: an unconsolidated annual order is only there.
+    """
     url = url_for_ref(ref)
-    snapshot = http.get(ref, url, headers=XML_HEADERS)
-    for attempt in range(1, _MAX_ATTEMPTS):
-        if snapshot.http_status not in _RETRY_STATUSES:
-            break
-        time.sleep(2**attempt)
-        snapshot = http.get(ref, url, headers=XML_HEADERS)
+    snapshot = _get_with_retries(ref, url, http)
+    if snapshot.http_status == 404:
+        url = diario_url(ref.source_id)
+        snapshot = _get_with_retries(ref, url, http)
     if snapshot.http_status != 200:
         # The API answers unknown ids and bad Accept headers with a 400/404
         # XML error envelope; failing here keeps that from reaching the parser
         # as a confusing "no metadatos element" error.
         msg = f"BOE fetch failed with HTTP {snapshot.http_status} after retries: {url}"
         raise RuntimeError(msg)
+    return snapshot
+
+
+def _get_with_retries(ref: SourceRef, url: str, http: SnapshotClient) -> Snapshot:
+    """GET one URL, retrying the statuses that mean "try again later"."""
+    snapshot = http.get(ref, url, headers=XML_HEADERS)
+    for attempt in range(1, _MAX_ATTEMPTS):
+        if snapshot.http_status not in _RETRY_STATUSES:
+            break
+        time.sleep(2**attempt)
+        snapshot = http.get(ref, url, headers=XML_HEADERS)
     return snapshot

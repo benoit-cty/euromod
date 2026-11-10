@@ -50,6 +50,9 @@
   let model = $state('');
   let workerAlive = $state(null);
   let force = $state(false);
+  // Parameters EUROMOD holds as n/a in the system year are switched off there
+  // (mostly superseded constants); the worker skips them unless asked.
+  let includeNa = $state(false);
 
   // --- run state ---
   let running = $state(false);
@@ -290,6 +293,8 @@
     const targets = selectedTargets;
     if (!targets.length || running || !systemYear) return;
     const payload = { targets, year: Number(systemYear), model: model || null, force: Boolean(force) };
+    // Sent only when ticked: a worker image older than the flag refuses unknown fields.
+    if (includeNa) payload.include_na = true;
     jobId = null;
     logLines = workerAlive === false
       ? [{ stream: 'system', line: 'no worker alive — the job waits in the queue until one starts' }]
@@ -305,7 +310,9 @@
       let line;
       if (final.status === 'succeeded') {
         const n = final.result?.item_ids?.length ?? targets.length;
-        summary = `Finished: ${n} parameter(s) processed in ${took}.`;
+        const skipped = final.result?.skipped_na?.length ?? 0;
+        summary = `Finished: ${n} parameter(s) processed in ${took}.`
+          + (skipped ? ` ${skipped} skipped: n/a in EUROMOD ${systemYear}.` : '');
         line = `✓ finished (${took})`;
         if (progress) progress = { ...progress, done: progress.total, current: '', detail: 'done' };
       } else {
@@ -516,6 +523,10 @@
         <label class="field check">
           <input type="checkbox" bind:checked={force} />
           Re-check items already reviewed
+        </label>
+        <label class="field check" title="By default, parameters EUROMOD holds as n/a in the chosen year (switched off, usually superseded) are skipped">
+          <input type="checkbox" bind:checked={includeNa} />
+          Also check parameters that are n/a in EUROMOD
         </label>
       </div>
     </details>

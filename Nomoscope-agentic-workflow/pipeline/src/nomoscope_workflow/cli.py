@@ -47,6 +47,10 @@ _YEAR_ANCHOR_MONTH_DAY = (7, 1)
 
 _YEAR_HELP = "EUROMOD system year to verify (e.g. 2025). One run = one system year."
 _AS_OF_HELP = "Deprecated: reference date YYYY-MM-DD; use --year (only the year matters)."
+_INCLUDE_NA_HELP = (
+    "Also run parameters EUROMOD holds as n/a (or holds no value for) in this system year. "
+    "Skipped by default: they are switched off in that system, usually superseded constants."
+)
 
 
 def _anchor_date(year: int | None, as_of: str | None) -> date:
@@ -135,6 +139,20 @@ def _load_target(conn, target: str) -> ParameterRecord:
     )
 
 
+def _skip_dormant(
+    records: list[tuple[str, ParameterRecord]], year: int, include_na: bool
+) -> tuple[list[tuple[str, ParameterRecord]], list[str]]:
+    """Drop the parameters EUROMOD holds as n/a in `year` (unless include_na)."""
+    if include_na:
+        return records, []
+    kept, skipped = [], []
+    for ref, record in records:
+        (skipped if paramdb.dormant_in_year(record, year) else kept).append((ref, record))
+    for ref, _ in skipped:
+        typer.echo(f"skipped {ref}: n/a in EUROMOD {year} (--include-na to check it)")
+    return kept, [ref for ref, _ in skipped]
+
+
 def _run_records(
     cfg: WorkflowConfig,
     records: list[tuple[str, ParameterRecord]],
@@ -171,6 +189,7 @@ def run_targets(
     as_of: str = typer.Option(None, "--as-of", help=_AS_OF_HELP),
     model: str = typer.Option(None, "--model", help="Override WORKFLOW_MODEL"),
     force: bool = typer.Option(False, "--force", help="Overwrite already-reviewed queue items"),
+    include_na: bool = typer.Option(False, "--include-na", help=_INCLUDE_NA_HELP),
 ) -> None:
     """Run the workflow for parameters stored in the params DB (see ingest-params).
 
@@ -178,7 +197,9 @@ def run_targets(
     the resulting items land in params.review_queue. A `group:` target
     assembles one bracket schedule out of the scalar constants the export
     declares as its bands, e.g. `group:FR:tinkt_fr:tin_schedule` for the French
-    income-tax barème. Ends with `@result {"item_ids": [...]}`.
+    income-tax barème. A parameter EUROMOD holds as n/a in the system year
+    is skipped unless --include-na. Ends with
+    `@result {"item_ids": [...], "skipped_na": [...]}`.
     """
     cfg = load_config()
     anchor = _anchor_date(year, as_of)
@@ -190,8 +211,9 @@ def run_targets(
             except (KeyError, ValueError) as exc:
                 typer.echo(str(exc))
                 raise typer.Exit(1)
-    item_ids = _run_records(cfg, records, anchor, model, force)
-    _result_line({"item_ids": item_ids})
+    records, skipped = _skip_dormant(records, anchor.year, include_na)
+    item_ids = _run_records(cfg, records, anchor, model, force) if records else []
+    _result_line({"item_ids": item_ids, "skipped_na": skipped})
 
 
 @app.command("run-country")
@@ -202,14 +224,16 @@ def run_country(
     model: str = typer.Option(None, "--model", help="Override WORKFLOW_MODEL"),
     force: bool = typer.Option(False, "--force", help="Overwrite already-reviewed queue items"),
     limit: int = typer.Option(0, "--limit", help="Run at most N parameters (0 = all)"),
+    include_na: bool = typer.Option(False, "--include-na", help=_INCLUDE_NA_HELP),
 ) -> None:
     """Run the workflow for every parameter of a country in the params DB, for ONE system year.
 
     Parameters come in spine order, then the country's bracket-schedule groups
     (`group:<id>`). National-team-sourced values are not skipped up front: the
     pipeline routes them `national_team_source` before any retrieval or LLM
-    call, so they cost nothing and still get a queue item. Ends with
-    `@result {"item_ids": [...]}`.
+    call, so they cost nothing and still get a queue item. Parameters EUROMOD
+    holds as n/a in the system year are skipped unless --include-na (--limit
+    counts what is left). Ends with `@result {"item_ids": [...], "skipped_na": [...]}`.
     """
     cfg = load_config()
     anchor = _anchor_date(year, as_of)
@@ -221,16 +245,20 @@ def run_country(
         if not refs:
             typer.echo(f"No parameters for {country.upper()} in the params DB (see ingest-params).")
             raise typer.Exit(1)
-        if limit:
-            refs = refs[:limit]
         for ref in refs:
             try:
                 records.append((ref, _load_target(conn, ref)))
             except (KeyError, ValueError) as exc:
                 typer.echo(f"skipped {ref}: {exc}")
-    typer.echo(f"{country.upper()}: {len(records)} parameter(s) for system year {anchor.year}")
-    item_ids = _run_records(cfg, records, anchor, model, force)
-    _result_line({"item_ids": item_ids})
+    records, skipped = _skip_dormant(records, anchor.year, include_na)
+    if limit:
+        records = records[:limit]
+    typer.echo(
+        f"{country.upper()}: {len(records)} parameter(s) for system year {anchor.year}"
+        + (f", {len(skipped)} n/a skipped" if skipped else "")
+    )
+    item_ids = _run_records(cfg, records, anchor, model, force) if records else []
+    _result_line({"item_ids": item_ids, "skipped_na": skipped})
 
 
 @app.command()

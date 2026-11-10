@@ -40,7 +40,7 @@ class EsAdapter:
         return self._resolver.resolve(ref, as_of)
 
     def fetch(self, ref: SourceRef, http: SnapshotClient) -> Snapshot:
-        """Fetch a consolidated act from the BOE open-data API."""
+        """Fetch an act from the BOE open-data API (gazette XML if never consolidated)."""
         return fetch_boe(ref, http)
 
     def parse(self, snapshot_bytes: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:

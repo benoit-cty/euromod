@@ -25,7 +25,7 @@ uv sync
 uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025 --model mock/extractor
                                                         # mock model — no API key needed; one run = one system year;
                                                         # from the UI the same run is a `workflow` job the worker executes
-uv run nomoscope-workflow run-country FR --year 2025 --model mock/extractor   # every parameter of a country
+uv run nomoscope-workflow run-country ES --year 2025 # every parameter of Spain
 uv run nomoscope-workflow queue
 
 cd ../ui

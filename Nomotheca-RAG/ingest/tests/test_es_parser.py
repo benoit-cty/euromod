@@ -310,3 +310,94 @@ def test_canary_facts_are_declared_and_dated():
     assert all(fact.reason for fact in facts)
     savings = next(fact for fact in facts if "66" in fact.citation)
     assert savings.assert_latest_start_gte == date(2024, 12, 22)
+
+
+# Trimmed daily-gazette XML of Orden ESS/55/2018 (BOE-A-2018-1142), which BOE
+# never consolidated: flat <p class=…> paragraphs, headings told apart by class.
+DIARIO_PAYLOAD = """<?xml version="1.0" encoding="UTF-8"?>
+<documento fecha_actualizacion="20251220115601">
+  <metadatos>
+    <identificador>BOE-A-2018-1142</identificador>
+    <origen_legislativo codigo="1">Estatal</origen_legislativo>
+    <departamento codigo="9218">Ministerio de Empleo y Seguridad Social</departamento>
+    <rango codigo="1350">Orden</rango>
+    <fecha_disposicion>20180126</fecha_disposicion>
+    <numero_oficial>ESS/55/2018</numero_oficial>
+    <titulo>Orden ESS/55/2018, de 26 de enero, por la que se desarrollan las normas legales de cotización.</titulo>
+    <fecha_publicacion>20180129</fecha_publicacion>
+    <fecha_vigencia>20180130</fecha_vigencia>
+    <fecha_derogacion/>
+    <estado_consolidacion codigo="0"/>
+    <url_eli>https://www.boe.es/eli/es/o/2018/01/26/ess55</url_eli>
+  </metadatos>
+  <analisis><referencias><anteriores><anterior referencia="BOE-A-2015-11724">
+    <texto>el art. 5.2.b) de la Ley General de la Seguridad Social</texto>
+  </anterior></anteriores></referencias></analisis>
+  <texto>
+    <p class="parrafo">De conformidad con lo dispuesto en el artículo 19 del texto refundido.</p>
+    <p class="capitulo_num">CAPÍTULO I</p>
+    <p class="capitulo_tit">Cotización a la Seguridad Social</p>
+    <p class="seccion"><em>Sección 1.ª Régimen general de la seguridad social</em></p>
+    <p class="articulo">Artículo 2. Topes máximo y mínimo de cotización.</p>
+    <p class="parrafo">1. El tope máximo de la base de cotización al Régimen General será, a partir de 1 de enero de 2018, de 3.751,20 euros mensuales.</p>
+    <p class="articulo">Artículo 3. Bases máximas y mínimas de cotización.</p>
+    <table class="tabla_ancha"><tbody>
+      <tr><td><p class="cuerpo_tabla_izq">1</p></td><td><p class="cuerpo_tabla_der">1.199,10</p></td><td><p class="cuerpo_tabla_der">3.751,20</p></td></tr>
+    </tbody></table>
+    <p class="articulo">Disposición final segunda. Entrada en vigor.</p>
+    <p class="parrafo">La presente orden entrará en vigor el día siguiente al de su publicación.</p>
+    <p class="anexo_num">ANEXO</p>
+    <p class="anexo_tit">Valores límite de los índices de siniestralidad</p>
+  </texto>
+</documento>
+""".encode()
+
+
+def _diario_doc():
+    ref = SourceRef(jurisdiction="ES", source_code="ES-BOE", source_id="BOE-A-2018-1142", source_type="instrument")
+    snapshot = Snapshot(
+        id=uuid4(),
+        source_code="ES-BOE",
+        url="https://www.boe.es/diario_boe/xml.php?id=BOE-A-2018-1142",
+        http_status=200,
+        content_type="application/xml",
+        content_hash="0" * 64,
+        raw_content=DIARIO_PAYLOAD,
+    )
+    return parse_boe_xml(DIARIO_PAYLOAD, ref, snapshot).instruments[0]
+
+
+def test_gazette_payload_is_split_into_units_at_its_headings():
+    instrument = _diario_doc()
+    assert instrument.national_id == "BOE-A-2018-1142"
+    assert instrument.instrument_type == "orden"
+    assert instrument.jurisdiction == "ES"
+    by_citation = {unit.citation: unit for unit in instrument.units}
+    assert list(by_citation) == [
+        "ESS/55/2018 preámbulo",
+        "ESS/55/2018 CAPÍTULO I",
+        "ESS/55/2018 Sección 1.ª Régimen general de la seguridad social",
+        "ESS/55/2018 Artículo 2",
+        "ESS/55/2018 Artículo 3",
+        "ESS/55/2018 Disposición final segunda",
+        "ESS/55/2018 ANEXO",
+    ]
+    article = by_citation["ESS/55/2018 Artículo 3"]
+    assert article.parent_path == "capitulo_i.seccion_1_a_regimen_general_de_la_seguridad_social"
+    assert by_citation["ESS/55/2018 CAPÍTULO I"].is_container
+    # Disposiciones and anexos sit outside the chapters.
+    assert by_citation["ESS/55/2018 Disposición final segunda"].parent_path is None
+    assert by_citation["ESS/55/2018 ANEXO"].parent_path is None
+
+
+def test_gazette_units_have_one_version_from_the_act_entry_into_force():
+    instrument = _diario_doc()
+    article = next(unit for unit in instrument.units if unit.citation == "ESS/55/2018 Artículo 3")
+    (version,) = article.versions
+    assert version.valid_from == date(2018, 1, 30)
+    assert version.valid_to is None
+    content = version.texts[0].content
+    assert content.startswith("Artículo 3. Bases máximas y mínimas de cotización.")
+    assert "1 | 1.199,10 | 3.751,20" in content
+    paths = [unit.path for unit in instrument.units]
+    assert len(paths) == len(set(paths))

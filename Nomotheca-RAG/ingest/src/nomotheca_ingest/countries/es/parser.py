@@ -88,6 +88,8 @@ _UNIT_TYPE_PREFIXES: tuple[tuple[str, str], ...] = (
 def parse_boe_xml(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
     """Parse an archived BOE consolidated-act payload into IR."""
     root = ET.fromstring(payload)
+    if root.tag == "documento":
+        return _parse_diario(root, ref, snapshot)
     code = root.findtext("./status/code")
     if code is not None and code != "200":
         msg = f"BOE returned status {code} for {ref.source_id!r}: {root.findtext('./status/text')}"
@@ -136,6 +138,163 @@ def parse_boe_xml(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedD
         metadata=_instrument_metadata(metadatos, numero_oficial),
         )
     return ParsedDoc(ref=ref, instruments=[instrument], metadata={"blocks": len(units)})
+
+
+def _parse_diario(root: ET.Element, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
+    """Parse a daily-gazette ``<documento>`` (an act BOE never consolidated).
+
+    The yearly cotización orders are published once and never amended, so the
+    consolidated API does not have them (see ``fetcher``). The gazette XML is
+    the act as published: flat ``<p class=…>`` paragraphs and tables under
+    ``<texto>``, with headings told apart by class. Each article, disposición
+    and anexo becomes one unit with one version, valid from the act's
+    ``fecha_vigencia`` until its ``fecha_derogacion`` if any; chapters and
+    sections become containers, like ``encabezado`` blocks; the text before the
+    first heading is the preámbulo.
+    """
+    metadatos = root.find("./metadatos")
+    if metadatos is None:
+        msg = f"BOE gazette payload for {ref.source_id!r} has no <metadatos> element"
+        raise ValueError(msg)
+    boe_id = metadatos.findtext("identificador") or ref.source_id
+    numero_oficial = metadatos.findtext("numero_oficial") or boe_id
+    short_citation = KNOWN_ACTS.get(boe_id, numero_oficial)
+    url_eli = metadatos.findtext("url_eli")
+    published = _parse_date(metadatos.findtext("fecha_publicacion"))
+    valid_from = _parse_date(metadatos.findtext("fecha_vigencia")) or published
+    valid_to = _parse_date(metadatos.findtext("fecha_derogacion"))
+    if valid_to is not None and valid_from is not None and valid_to <= valid_from:
+        valid_to = None
+
+    units = _parse_diario_units(
+        root.find("./texto"),
+        boe_id=boe_id,
+        short_citation=short_citation,
+        url_eli=url_eli,
+        valid_from=valid_from,
+        valid_to=valid_to,
+        snapshot=snapshot,
+    )
+    origen = metadatos.find("origen_legislativo")
+    instrument = InstrumentIR(
+        jurisdiction=jurisdiction_for(
+            url_eli=url_eli,
+            departamento=metadatos.findtext("departamento"),
+            ambito_codigo=origen.get("codigo") if origen is not None else None,
+            default=ref.jurisdiction,
+        ),
+        source_code=ref.source_code,
+        instrument_type=_instrument_type(metadatos.findtext("rango")),
+        national_id=boe_id,
+        eli=url_eli,
+        title={"es": metadatos.findtext("titulo") or boe_id},
+        adoption_date=_parse_date(metadatos.findtext("fecha_disposicion")),
+        publication_date=published,
+        units=units,
+        metadata={**_instrument_metadata(metadatos, numero_oficial), "boe_source": "diario"},
+    )
+    return ParsedDoc(ref=ref, instruments=[instrument], metadata={"blocks": len(units), "boe_source": "diario"})
+
+
+# Gazette heading classes that open a container, with the rank of the
+# matching consolidated ``encabezado`` (see _CONTAINER_RANKS).
+_DIARIO_CONTAINERS: dict[str, int] = {"libro_num": 0, "titulo_num": 1, "capitulo_num": 2, "seccion": 3}
+
+
+def _parse_diario_units(
+    texto: ET.Element | None,
+    *,
+    boe_id: str,
+    short_citation: str,
+    url_eli: str | None,
+    valid_from: date | None,
+    valid_to: date | None,
+    snapshot: Snapshot,
+) -> list[UnitIR]:
+    """Split the gazette's flat paragraph stream into units at its headings."""
+    if texto is None:
+        return []
+
+    # (label, tipo, rank or None, lines) per unit, in document order.
+    pieces: list[tuple[str, str, int | None, list[str]]] = [("", "preambulo", None, [])]
+    for element in texto:
+        css = element.get("class") or ""
+        text = _normalize_space(_element_text(element))
+        if element.tag == "p" and css in _DIARIO_CONTAINERS and text:
+            pieces.append((text, "encabezado", _DIARIO_CONTAINERS[css], []))
+        elif element.tag == "p" and css == "articulo" and text:
+            pieces.append((_heading_label(text), "precepto", None, [text]))
+        elif element.tag == "p" and css == "anexo_num" and text:
+            pieces.append((text, "anexo", None, [text]))
+        elif element.tag == "table":
+            pieces[-1][3].extend(_render_table(element))
+        elif text:
+            pieces[-1][3].append(text)
+
+    units: list[UnitIR] = []
+    stack: list[tuple[int, str]] = []
+    seen_citations: dict[str, int] = {}
+    seen_paths: set[str] = set()
+    for ordinal, (label, tipo, rank, lines) in enumerate(pieces, start=1):
+        if tipo == "anexo" or _fold(label).startswith("disposicion"):
+            stack.clear()  # anexos and disposiciones hang under no chapter
+        if rank is not None:
+            while stack and stack[-1][0] >= rank:
+                stack.pop()
+        parent_path = stack[-1][1] if stack else None
+        token = _path_token(label or tipo)
+        path = f"{parent_path}.{token}" if parent_path else token
+        base, n = path, 1
+        while path in seen_paths:
+            n += 1
+            path = f"{base}_{n}"
+        seen_paths.add(path)
+        citation = _unique_citation(short_citation, label, tipo, seen_citations)
+        content = "\n".join(lines).strip()
+        if rank is None and not content:
+            continue
+        stamp = valid_from.strftime("%Y%m%d") if valid_from else "undated"
+        versions = (
+            []
+            if rank is not None or valid_from is None
+            else [
+                VersionIR(
+                    valid_from=valid_from,
+                    valid_to=valid_to,
+                    source_version_id=f"{boe_id}/{path}@{stamp}",
+                    eli_version=f"{url_eli}/dof" if url_eli else None,
+                    citation_label=citation,
+                    fetch_snapshot_id=snapshot.id,
+                    amendment_note={"id_norma": boe_id, "boe_source": "diario"},
+                    texts=[TextIR(lang="es", content=content)],
+                )
+            ]
+        )
+        units.append(
+            UnitIR(
+                unit_type=_unit_type(tipo if tipo != "anexo" else "precepto", label),
+                path=path,
+                citation=citation,
+                ordinal=ordinal,
+                parent_path=parent_path,
+                national_id=f"{boe_id}/{path}",
+                is_container=rank is not None,
+                metadata={"tipo": tipo, "boe_source": "diario"},
+                versions=versions,
+            )
+        )
+        if rank is not None:
+            stack.append((rank, path))
+    return units
+
+
+def _heading_label(heading: str) -> str:
+    """Cut a gazette heading to the label consolidated blocks carry.
+
+    «Artículo 3. Bases máximas y mínimas de cotización.» → «Artículo 3», the
+    form of a consolidated ``bloque`` title and of the resolver's citations.
+    """
+    return re.split(r"\.(?:\s|$)", heading, maxsplit=1)[0].strip()
 
 
 def _instrument_metadata(metadatos: ET.Element, numero_oficial: str) -> dict[str, Any]:

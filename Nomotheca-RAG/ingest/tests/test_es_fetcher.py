@@ -6,6 +6,7 @@ import pytest
 
 from nomotheca_ingest.countries.es.fetcher import (
     XML_HEADERS,
+    diario_url,
     fetch_boe,
     html_url,
     instrument_url,
@@ -118,3 +119,35 @@ def test_snapshot_client_merges_adapter_headers_over_the_user_agent():
 
     assert captured["headers"]["Accept"] == "application/xml"
     assert "User-Agent" in captured["headers"]
+
+
+class _ConsolidatedMissingClient:
+    """The consolidated API 404s; the daily-gazette XML has the act."""
+
+    def __init__(self) -> None:
+        self.urls: list[str] = []
+
+    def get(self, ref: SourceRef, url: str, headers: dict[str, str] | None = None) -> Snapshot:
+        self.urls.append(url)
+        return Snapshot(
+            id=uuid4(),
+            source_code=ref.source_code,
+            url=url,
+            http_status=404 if "legislacion-consolidada" in url else 200,
+            content_type="application/xml",
+            content_hash="0" * 64,
+            raw_content=b"<documento/>",
+        )
+
+
+def test_an_unconsolidated_act_is_fetched_from_the_gazette_xml():
+    # Orden ESS/55/2018 (the 2018 cotización order) has estado_consolidacion 0:
+    # the consolidated API answers 404, the gazette XML serves it.
+    client = _ConsolidatedMissingClient()
+    snapshot = fetch_boe(_ref("BOE-A-2018-1142"), client)
+    assert snapshot.http_status == 200
+    assert client.urls == [
+        instrument_url("BOE-A-2018-1142"),
+        diario_url("BOE-A-2018-1142"),
+    ]
+    assert diario_url("BOE-A-2018-1142") == "https://www.boe.es/diario_boe/xml.php?id=BOE-A-2018-1142"

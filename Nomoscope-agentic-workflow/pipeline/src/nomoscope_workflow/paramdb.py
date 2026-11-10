@@ -618,6 +618,31 @@ def record_value(value_raw, value_numeric: float | None, value_kind: str | None)
     return value_raw
 
 
+def _is_held_na(value: ParameterValue) -> bool:
+    """EUROMOD holds 'n/a' here: the parameter is switched off in that system."""
+    if isinstance(value.value, str):
+        return value.value.strip().lower() == "n/a"
+    answer = value.lineage.model_answer if value.lineage else None
+    return value.value is None and bool(answer) and answer.strip().lower() == "n/a"
+
+
+def dormant_in_year(record: ParameterRecord, year: int) -> bool:
+    """True when EUROMOD holds no usable value for this parameter in system year `year`.
+
+    Either every row overlapping the year is 'n/a', or no row overlaps it at
+    all (the parameter's history ended before: a superseded constant such as
+    ES `$tscse_agebs2018_minamt1`, n/a from 2019). In Nov 2026 that was about
+    a third of every country's parameters for 2025. A parameter n/a in Y-1 can
+    be valued in Y (37 ES parameters revived in 2025), so the test is on the
+    run's own year only. Expressions (`$PSS * 4`) are held values, not n/a.
+    """
+    start, end = date(year, 1, 1), date(year, 12, 31)
+    overlapping = [
+        v for v in record.values if v.valid_from <= end and (v.valid_to is None or v.valid_to >= start)
+    ]
+    return all(_is_held_na(v) for v in overlapping)
+
+
 def country_targets(conn: psycopg.Connection, country: str) -> list[str]:
     """Every parameter of a country in params.parameters, in spine order."""
     return [
