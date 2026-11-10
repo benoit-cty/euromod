@@ -15,7 +15,7 @@ from .schema import (
     start_of_year_as_of,
 )
 
-PROMPT_VERSION = "0.13.0"
+PROMPT_VERSION = "0.13.1"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -163,8 +163,9 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
     current = record.values[-1] if record.values else None
     temporal_note = ""
     if info.temporal_basis == "income_year":
-        # NOT as_of.year. EUROMOD system year Y states the value for income year
-        # Y-1 ("impôt 2025 sur les revenus 2024"), and `income_year_for` is the
+        # NOT as_of.year. EUROMOD system year Y holds the value the law labels
+        # income year Y-1 ("impôt 2025 sur les revenus 2024") — EUROMOD applies it
+        # to Y incomes, but the text names Y-1 — and `income_year_for` is the
         # single place that mapping is decided. This block was written before the
         # offset existed and kept asserting "system year = income year": it told
         # the model the 2025 barème governs 2025 income and demanded a
@@ -174,9 +175,9 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
         # article really does not name the year it was being asked to find.
         year = income_year_for(as_of.year)
         temporal_note = (
-            f"\nTemporal basis: INCOME YEAR — EUROMOD system year {as_of.year} states the value "
-            f"for income year {year}.\n"
-            f"This parameter governs income earned in {year}. The enacting budget/finance act is "
+            f"\nTemporal basis: INCOME YEAR — EUROMOD system year {as_of.year} holds the value "
+            f"the law states for income year {year}.\n"
+            f"In the law, this parameter governs income earned in {year}. The enacting budget/finance act is "
             f"normally published late {year} or in {year + 1} yet applies retroactively to {year} "
             f"income. valid_from must be {year}-01-01. Prefer the version enacted for income year "
             f"{year}. A finance-act article in force since early {year} or before states the "

@@ -101,9 +101,11 @@ re-ingest of a new export; the overlay is what makes it survive
 `docker compose down -v`, and it records *why* each parameter is tagged. The
 three behaviours:
 
-The income year is **not** the system year: France assesses in year Y the
-income of year Y−1 («impôt 2025 sur les revenus 2024»), so system year 2025
-means income year 2024. That mapping is decided once, in
+The income year is the law's label, **not** the year of the incomes EUROMOD
+taxes. System year 2025 holds the schedule enacted by the finance act for 2025
+and applies it to 2025 incomes; French law labels that schedule «impôt 2025
+sur les revenus 2024», so the text to find is the one for income year 2024.
+That mapping is decided once, in
 `schema.income_year_for` (`INCOME_YEAR_OFFSET = -1`), and every behaviour below
 derives from it rather than re-deriving `as_of.year ± 1`. The
 three behaviours:

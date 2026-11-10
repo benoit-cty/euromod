@@ -19,9 +19,10 @@ decides which applies:
 - `in_force` (SMIC, PSS, benefit amounts): the expected value is the OpenFisca
   value in force at `as_of`, and the expected `valid_from` is the date that
   value took effect.
-- `income_year` (the FR income-tax family): the system year is the year the tax
-  is assessed, and French law assesses it on the PREVIOUS year's income —
-  system year 2025 is income year 2024 ("impôt 2025 sur les revenus 2024").
+- `income_year` (the FR income-tax family): system year Y holds the
+  schedule of the finance act for Y, which EUROMOD applies to Y incomes and
+  French law labels by the PREVIOUS year's income — system year 2025 holds the
+  "income 2024" schedule ("impôt 2025 sur les revenus 2024").
   `schema.income_year_for` owns that mapping. OpenFisca keys these parameters
   by income year too, so the expected value is its entry at
   `income_year_for(system year)-01-01`, and the expected `valid_from` is that

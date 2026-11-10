@@ -70,7 +70,7 @@ The date range during which one version of a legal unit is the text in force. Fo
 _Avoid_: effective period, in-force dates, applicability
 
 **System year**:
-The EUROMOD year a parameter value is stated for. For income-year parameters it names the assessment year, not the income year.
+The EUROMOD year a parameter value is stated for. EUROMOD applies that value to the incomes of the same year. For income-year parameters the law labels the same value with the previous year («impôt 2025 sur les revenus 2024»): the income year is the law's label, used to find the text, not the year of the incomes EUROMOD taxes.
 _Avoid_: tax year, as-of year
 
 ### Roles

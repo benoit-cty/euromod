@@ -208,8 +208,8 @@ sections, each a list of rules with a `note` and `targets` — copy
   in the corpus that nothing states the value before flagging (LT grepped
   `ikimokyklin*` and found only eligibility clauses). The builder warns, and
   the pipeline cannot route the case, until this is applied.
-- `temporal_basis` — only when the country assesses year Y on year Y−1
-  income (FR). ES and NL are `in_force`; say so in the file's header comment
+- `temporal_basis` — only when the law labels the value EUROMOD holds for
+  system year Y as "income Y−1" (FR; EUROMOD still applies it to Y incomes). ES and NL are `in_force`; say so in the file's header comment
   and in the selection's `conventions`, so nobody re-derives it.
 - `unit` — a rate delivered as `currency`, or a `/100` that is really `/1`:
   the proposal prompt's percent normalisation and the critique's range check

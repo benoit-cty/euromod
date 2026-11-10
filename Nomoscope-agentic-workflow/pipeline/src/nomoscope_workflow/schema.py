@@ -23,8 +23,10 @@ class TemporalBasis(StrEnum):
 
     in_force: the value applies from the date the enacting text is in force
       (SMIC, CSG, benefit amounts) — the default.
-    income_year: the value belongs to an income year that is NOT the system
-      year — see `income_year_for`. The enacting act (loi de finances) is
+    income_year: the law labels the value with an income year that is NOT the
+      system year — see `income_year_for`. EUROMOD applies the value to the
+      incomes of the system year; the label only says where to find the text.
+      The enacting act (loi de finances) is
       published during or after that income year, and valid_from is back-dated
       to the income year start (the OpenFisca convention), so retrieval must
       look for versions consolidated later than the income year itself.
@@ -42,16 +44,24 @@ class TemporalBasis(StrEnum):
 
 
 #: System-year → income-year offset for `temporal_basis: income_year`.
-#: EUROMOD system year 2025 holds the schedule assessed in 2025, which French
-#: law levies on 2024 income ("impôt 2025 sur les revenus 2024"), so the offset
-#: is -1. Confirmed with the EUROMOD side on 2026-08-11. Note the FR Country
-#: Report's Table 2.77 heads that column "Taxation 2025 (income 2025)" — the
-#: label is wrong; the values in it are the income-year-2024 barème.
+#: EUROMOD system year 2025 holds the schedule of the 2025 finance act (loi
+#: n° 2025-127, the PLF 2025) and applies it to 2025 incomes. French law — and
+#: OpenFisca — label that schedule by the income it is legally assessed on,
+#: 2024 ("impôt 2025 sur les revenus 2024"), so the offset from system year to
+#: the law's label is -1. Confirmed with the EUROMOD side on 2026-08-11, and on
+#: the values: `$tin_upthres1` 2022..2026 = the barèmes of LF 2022..2026. The
+#: FR Country Report's Table 2.77 heads that column "Taxation 2025 (income
+#: 2025)" — wrong as a statement of French law: the values in it are the
+#: barème for 2024 income. It is only true in the sense that EUROMOD applies
+#: them to 2025 incomes.
 INCOME_YEAR_OFFSET = -1
 
 
 def income_year_for(system_year: int) -> int:
-    """The income year an `income_year` parameter's system year refers to.
+    """The income year the law names for an `income_year` parameter's system year.
+
+    A label for finding the text, not the year of the incomes EUROMOD taxes
+    (those are the system year's).
 
     The single place this mapping is decided. Everything downstream derives
     from it: which OpenFisca key a golden case reads, which consolidation date

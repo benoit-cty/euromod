@@ -643,7 +643,7 @@ ones needed for this report.
 |---|--------|
 | **System year** | The year a EUROMOD country system represents (`FR_2025`). One workflow run checks one system year. |
 | **Reference date (`as_of`)** | The date used to select the law in force. EUROMOD reflects the law as of 30 June, so reference dates are mid-year. |
-| **Income year** | For French income tax, system year Y applies the scale for income year Y−1. |
+| **Income year** | The year French law attaches to an income-tax value. System year Y holds the scale of the finance act for Y and applies it to the incomes of Y; the law labels that scale "income Y−1", which is where the search looks. |
 | **Country Report** | EUROMOD's annual description of each country system. Used for vocabulary, never as evidence. |
 | **Parameter target** | The address of a parameter, e.g. `euromod://FR/tin_fr/def_const/$tin_upthres1` (country / policy / function / parameter). |
 

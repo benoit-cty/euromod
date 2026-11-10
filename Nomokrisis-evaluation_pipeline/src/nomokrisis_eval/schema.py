@@ -52,7 +52,7 @@ Difficulty = Literal["verbatim", "combine", "derive", "table"]
 #: Known failure modes, orthogonal to the ladder: a `verbatim` case can still be
 #: an income-year case. Kept as flags rather than ladder rungs because they
 #: compose, and because each one names a specific mechanism we can go and fix.
-#:   income_year      FR back-dating (system year Y states income year Y-1)
+#:   income_year      FR back-dating (the law labels system year Y's value income year Y-1)
 #:   mid_year_change  EUROMOD stores the weighted average of two in-year values
 #:   budget_act_window  the value is only final once the budget act passes;
 #:                    earlier evidence routes `provisional`

@@ -109,7 +109,7 @@ def draft_labels(
 
     if str(getattr(temporal_basis, "value", temporal_basis)) == TemporalBasis.INCOME_YEAR.value:
         hazards.append("income_year")
-        reasons.append("temporal_basis is income_year: system year Y states income year Y-1")
+        reasons.append("temporal_basis is income_year: the law labels system year Y's value income year Y-1")
 
     # A code article that fixes a value by pointing at another act (the PSS
     # arrêté behind $tscsepi_uplim) is the failure mode the gap-fill scout was

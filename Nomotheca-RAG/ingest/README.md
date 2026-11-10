@@ -15,6 +15,7 @@ BOFiP doctrine page, a ministerial arrêté a reviewer saved as PDF. The
 (`core.contributed.ingest_document`) is what the TUI and the validation UI call.
 
 ```bash
+cd Nomotheca-RAG/ingest
 # a file the reviewer saved (PDF, HTML, Markdown, plain text)
 uv run python -m nomotheca_ingest.cli document ./circulaire-2025-01.pdf \
     -j fr --lang fr --title "Circulaire Unédic n° 2025-01" \
@@ -153,10 +154,11 @@ models are provider-prefixed strings (`anthropic/...`, `openai/...`,
 the environment / repo `.env` files.
 
 ```bash
+cd Nomotheca-RAG/ingest
 uv sync --extra embeddings --extra translate   # uv sync installs exactly the listed extras
 uv run python -m nomotheca_ingest.cli translate run \
 	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
-	--model=azure_openai/gpt-5.6-luna
+	--model=azure_openai/gpt-6-luna
 ```
 
 `nomoscope_workflow.config.load_config()` only auto-loads `.env` from the `euromod`
@@ -177,6 +179,7 @@ replays the stored snapshot bytes through the country parser and the ordinary
 idempotent loader.
 
 ```bash
+cd Nomotheca-RAG/ingest
 uv run python -m nomotheca_ingest.cli reparse FR --url-like '%LEGI/ARTI%' \
 	--database-url postgresql://jrc:jrc@localhost:5434/legislation
 # {"snapshots": 346, "parsed": 346, "loaded": 346, "skipped": 0, "texts_changed": 101}
@@ -210,6 +213,7 @@ hf download BAAI/bge-m3 --local-dir Nomotheca-RAG/ingest/models/bge-m3
 
 Run the embedding with PyTorch.
 ```bash
+cd Nomotheca-RAG/ingest
 uv sync --extra embeddings
 uv run python -m nomotheca_ingest.cli embeddings build \
 	--database-url postgresql://jrc:jrc@localhost:5434/legislation \

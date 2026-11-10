@@ -155,7 +155,7 @@ def test_derived_refs_detects_formula_parameters():
 
 
 def test_income_year_maps_system_year_to_the_previous_income_year():
-    # «impôt 2025 sur les revenus 2024»: system year 2025 assesses income 2024.
+    # «impôt 2025 sur les revenus 2024»: system year 2025 holds the schedule the law labels income 2024.
     assert income_year_for(2025) == 2024
 
 

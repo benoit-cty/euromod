@@ -98,7 +98,7 @@ def test_case_slug_drops_the_country_and_function_noise():
 def test_system_year_maps_to_the_previous_income_year():
     """The knob every FR income-tax expectation turns on.
 
-    France assesses in year Y the income of year Y-1, so a golden case anchored
+    French law labels the schedule EUROMOD holds for year Y "income Y-1", so a golden case anchored
     on EUROMOD system year 2025 must read OpenFisca's income-year-2024 entry
     (11 497), not the 2025 one (11 600) that LF 2026 introduced. Getting this
     backwards produces a case that looks right and scores every correct
