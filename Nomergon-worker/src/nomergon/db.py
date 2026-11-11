@@ -40,26 +40,42 @@ def submit_job(conn: psycopg.Connection[Any], job_type: str, payload: dict[str, 
     return int(row["id"])
 
 
+#: Serialises claims across a worker's slots (and workers), so two slots can
+#: never both see "no embed running" and both take one.
+CLAIM_LOCK_KEY = 0x6E6F6D6F  # "nomo"
+
+
 def claim_job(
     conn: psycopg.Connection[Any],
     worker_id: str,
     exclude_types: Sequence[str] = ("encode",),
+    singleton_types: Sequence[str] = (),
 ) -> dict[str, Any] | None:
-    """Claim the highest-priority, oldest queued job not of an excluded type."""
-    return conn.execute(
-        """
-        UPDATE ops.jobs SET status = 'running', started_at = now(), worker_id = %s
-        WHERE id = (
-            SELECT id FROM ops.jobs
-            WHERE status = 'queued' AND job_type <> ALL(%s)
-            ORDER BY priority DESC, id
-            FOR UPDATE SKIP LOCKED
-            LIMIT 1
-        )
-        RETURNING *
-        """,
-        (worker_id, list(exclude_types)),
-    ).fetchone()
+    """Claim the highest-priority, oldest queued job not of an excluded type,
+    skipping a ``singleton_types`` job while one of its type is running."""
+    with conn.transaction():
+        conn.execute("SELECT pg_advisory_xact_lock(%s)", (CLAIM_LOCK_KEY,))
+        return conn.execute(
+            """
+            UPDATE ops.jobs SET status = 'running', started_at = now(), worker_id = %s
+            WHERE id = (
+                SELECT id FROM ops.jobs j
+                WHERE status = 'queued' AND job_type <> ALL(%s)
+                  AND NOT (
+                      job_type = ANY(%s)
+                      AND EXISTS (
+                          SELECT 1 FROM ops.jobs r
+                          WHERE r.status = 'running' AND r.job_type = j.job_type
+                      )
+                  )
+                ORDER BY priority DESC, id
+                FOR UPDATE SKIP LOCKED
+                LIMIT 1
+            )
+            RETURNING *
+            """,
+            (worker_id, list(exclude_types), list(singleton_types)),
+        ).fetchone()
 
 
 def claim_encode_job(conn: psycopg.Connection[Any], worker_id: str) -> dict[str, Any] | None:

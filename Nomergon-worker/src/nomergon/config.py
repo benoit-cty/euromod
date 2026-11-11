@@ -66,6 +66,8 @@ class WorkerConfig:
     models: list[str] = field(default_factory=list)
     embedding_model_path: str = BGE_M3_MODEL
     poll_seconds: float = 1.0
+    #: Subprocess jobs run at once (the encode lane comes on top).
+    concurrency: int = 3
     encode_poll_seconds: float = 0.05
     heartbeat_seconds: float = 10.0
     stale_seconds: float = 60.0
@@ -125,6 +127,7 @@ def load_config(repo_root: Path | None = None) -> WorkerConfig:
         models=models,
         embedding_model_path=_env("WORKER_EMBEDDING_MODEL_PATH", "") or default_embedding_model_path(root),
         poll_seconds=_float_env("WORKER_POLL_SECONDS", 1.0),
+        concurrency=max(1, _int_env("WORKER_CONCURRENCY", 3)),
         encode_poll_seconds=_float_env("WORKER_ENCODE_POLL_SECONDS", 0.05),
         heartbeat_seconds=_float_env("WORKER_HEARTBEAT_SECONDS", 10.0),
         stale_seconds=_float_env("WORKER_STALE_SECONDS", 60.0),

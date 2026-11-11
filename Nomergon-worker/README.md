@@ -10,7 +10,13 @@ the existing CLIs (`nomotheca_ingest.cli`, `nomoscope_workflow.cli`,
 stdout/stderr into `ops.job_events`, and answers `encode` jobs in-process with
 BGE-M3 kept warm. There is no HTTP API: the job table is the bus.
 
-One worker, one job at a time, plus the encode lane. No automatic requeue: a
+`WORKER_CONCURRENCY` job slots (default 3), plus the encode lane. Jobs run in
+parallel except `embed`, `translate` and `translate-params`, one of each at a
+time (each walks a shared backlog, so two would do and bill the same work
+twice). The GPU is guarded where it is used: every `embeddings build` (an
+`embed` job, or the scout's cache-miss build inside a `workflow`/`eval` job)
+takes a Postgres advisory lock and waits for the previous one, and the FR KALI
+dump copy is synced under a file lock. No automatic requeue: a
 job whose worker died is marked `failed` at the next start and a human
 resubmits (embedding and translation resume by construction).
 

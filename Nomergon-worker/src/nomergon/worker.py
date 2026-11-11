@@ -1,4 +1,4 @@
-"""The serve loop: one worker, one job at a time, plus the encode lane."""
+"""The serve loop: one worker, WORKER_CONCURRENCY job slots, plus the encode lane."""
 
 from __future__ import annotations
 
@@ -12,13 +12,15 @@ from typing import Any
 
 import psycopg
 
-from . import __version__, db, runner
+from . import __version__, db, jobs, runner
 from .config import EMBEDDING_MODEL_NAME, WorkerConfig
 from .encoder import EncodeLane, describe_device
 
 log = logging.getLogger("nomergon.worker")
 
 PRUNE_INTERVAL_SECONDS = 24 * 3600.0
+#: Long enough for a slot to terminate its job and record the status.
+TERM_JOIN_SECONDS = runner.TERM_GRACE_SECONDS + 5.0
 
 
 class Heartbeat(threading.Thread):
@@ -28,7 +30,22 @@ class Heartbeat(threading.Thread):
         super().__init__(name="nomergon-heartbeat", daemon=True)
         self.cfg = cfg
         self.stop_event = stop
-        self.current_job_id: int | None = None
+        self.running: set[int] = set()
+        self._lock = threading.Lock()
+
+    def started(self, job_id: int) -> None:
+        with self._lock:
+            self.running.add(job_id)
+
+    def finished(self, job_id: int) -> None:
+        with self._lock:
+            self.running.discard(job_id)
+
+    @property
+    def current_job_id(self) -> int | None:
+        """``ops.workers.current_job_id`` holds one id: the oldest running job."""
+        with self._lock:
+            return min(self.running) if self.running else None
 
     def run(self) -> None:
         conn: psycopg.Connection[Any] | None = None
@@ -100,6 +117,56 @@ def _finish_with_retry(
     return conn
 
 
+class JobSlot(threading.Thread):
+    """One job slot: claims and runs subprocess jobs one at a time, on its own
+    connection. ``WORKER_CONCURRENCY`` slots run side by side."""
+
+    def __init__(self, cfg: WorkerConfig, stop: threading.Event, heartbeat: Heartbeat, index: int) -> None:
+        super().__init__(name=f"nomergon-slot-{index}", daemon=True)
+        self.cfg = cfg
+        self.stop_event = stop
+        self.heartbeat = heartbeat
+
+    def run(self) -> None:
+        conn = db.connect(self.cfg.database_url)
+        try:
+            while not self.stop_event.is_set():
+                try:
+                    if conn.closed:
+                        conn = db.connect(self.cfg.database_url)
+                    job = db.claim_job(
+                        conn,
+                        self.cfg.worker_id,
+                        exclude_types=jobs.IN_PROCESS_JOB_TYPES,
+                        singleton_types=jobs.SINGLETON_JOB_TYPES,
+                    )
+                except Exception:  # noqa: BLE001 - keep polling through a DB hiccup
+                    log.exception("%s: claim failed; retrying", self.name)
+                    try:
+                        conn.close()
+                    except Exception:  # noqa: BLE001
+                        pass
+                    self.stop_event.wait(self.cfg.poll_seconds)
+                    continue
+                if job is None:
+                    self.stop_event.wait(self.cfg.poll_seconds)
+                    continue
+                job_id = int(job["id"])
+                self.heartbeat.started(job_id)
+                log.info("job %s (%s) started on %s", job_id, job["job_type"], self.name)
+                try:
+                    outcome = runner.run_job(conn, self.cfg, job, stop=self.stop_event)
+                    # The final status is the one write that must land: retry it
+                    # on a fresh connection through a database outage rather than
+                    # leave the job "running" with a live heartbeat.
+                    conn = _finish_with_retry(conn, self.cfg, job_id, outcome, self.stop_event)
+                    log.info("job %s %s%s", job_id, outcome.status, f": {outcome.error.splitlines()[-1]}" if outcome.error else "")
+                finally:
+                    self.heartbeat.finished(job_id)
+        finally:
+            conn.close()
+
+
 def serve(cfg: WorkerConfig) -> None:
     """Register, publish, then claim and run jobs until SIGTERM/SIGINT."""
     stop = threading.Event()
@@ -127,6 +194,10 @@ def serve(cfg: WorkerConfig) -> None:
     heartbeat.start()
     encoder = EncodeLane(cfg, stop)
     encoder.start()
+    slots = [JobSlot(cfg, stop, heartbeat, n) for n in range(1, cfg.concurrency + 1)]
+    for slot in slots:
+        slot.start()
+    log.info("%d job slot(s); one at a time of: %s", len(slots), ", ".join(jobs.SINGLETON_JOB_TYPES))
 
     next_prune = time.monotonic()
     try:
@@ -134,34 +205,19 @@ def serve(cfg: WorkerConfig) -> None:
             if time.monotonic() >= next_prune:
                 next_prune = time.monotonic() + PRUNE_INTERVAL_SECONDS
                 try:
+                    if conn.closed:
+                        conn = db.connect(cfg.database_url)
                     pruned = db.prune_events(conn, cfg.event_retention_days)
                     if pruned:
                         log.info("pruned %d job event(s) older than %d days", pruned, cfg.event_retention_days)
                 except Exception:  # noqa: BLE001
                     log.exception("event pruning failed")
-
-            try:
-                job = db.claim_job(conn, cfg.worker_id)
-            except Exception:  # noqa: BLE001 - keep polling through a DB hiccup
-                log.exception("claim failed; retrying")
-                stop.wait(cfg.poll_seconds)
-                continue
-            if job is None:
-                stop.wait(cfg.poll_seconds)
-                continue
-
-            job_id = int(job["id"])
-            heartbeat.current_job_id = job_id
-            log.info("job %s (%s) started", job_id, job["job_type"])
-            outcome = runner.run_job(conn, cfg, job, stop=stop)
-            # The final status is the one write that must land: retry it on a
-            # fresh connection through a database outage (disk full, restart)
-            # rather than leave the job "running" with a live heartbeat.
-            conn = _finish_with_retry(conn, cfg, job_id, outcome, stop)
-            heartbeat.current_job_id = None
-            log.info("job %s %s%s", job_id, outcome.status, f": {outcome.error.splitlines()[-1]}" if outcome.error else "")
+            stop.wait(cfg.poll_seconds)
     finally:
         stop.set()
+        deadline = time.monotonic() + TERM_JOIN_SECONDS
+        for slot in slots:
+            slot.join(timeout=max(0.0, deadline - time.monotonic()))
         heartbeat.join(timeout=2.0)
         encoder.join(timeout=2.0)
         try:

@@ -36,6 +36,14 @@ pytestmark = pytest.mark.skipif(not _reachable(), reason=f"no Postgres at {DATAB
 def conn():
     connection = db.connect(DATABASE_URL)
     db.apply_schema(connection)
+    # These tests claim the oldest queued job and fail stale running ones: on
+    # a database with a live queue they would take (and break) real jobs.
+    live = connection.execute(
+        "SELECT count(*) AS n FROM ops.jobs WHERE status IN ('queued', 'running')"
+    ).fetchone()["n"]
+    if live:
+        connection.close()
+        pytest.skip(f"{live} live job(s) queued/running at {DATABASE_URL}; smoke tests would claim them")
     created: list[int] = []
     original = db.submit_job
 
@@ -176,3 +184,20 @@ def test_cancel_terminates_a_running_subprocess(conn, cfg: WorkerConfig, tmp_pat
     )
     assert outcome.status == "cancelled"
     assert time.monotonic() - started < 15
+
+
+def test_singleton_types_run_one_at_a_time(conn) -> None:
+    """A second embed waits while one runs; other types are claimed past it."""
+    from nomergon import jobs
+
+    first = client.submit(conn, "embed", {}, priority=10)
+    second = client.submit(conn, "embed", {}, priority=10)
+    impact = client.submit(conn, "impact", {"zone": "EEE"}, priority=0)
+    kwargs = {"exclude_types": jobs.IN_PROCESS_JOB_TYPES, "singleton_types": jobs.SINGLETON_JOB_TYPES}
+    assert db.claim_job(conn, "pytest-worker", **kwargs)["id"] == first
+    assert db.claim_job(conn, "pytest-worker", **kwargs)["id"] == impact  # second embed held back
+    assert db.claim_job(conn, "pytest-worker", **kwargs) is None
+    db.finish_job(conn, first, "succeeded")
+    assert db.claim_job(conn, "pytest-worker", **kwargs)["id"] == second
+    for job_id in (second, impact):
+        db.finish_job(conn, job_id, "cancelled")

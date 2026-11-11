@@ -377,6 +377,25 @@ def list_embedding_models() -> None:
             typer.echo(f"    {spec.notes}")
 
 
+#: pg advisory lock key held by every non-dry-run ``embeddings build``.
+EMBEDDING_BUILD_LOCK_KEY = 0x656D6264  # "embd"
+_embedding_lock_conn: psycopg.Connection | None = None
+
+
+def _hold_embedding_build_lock(database_url: str) -> None:
+    """Block until no other ``embeddings build`` runs, then hold the lock for
+    the life of this process (released when its connection closes)."""
+    global _embedding_lock_conn  # noqa: PLW0603 - one lock per CLI process
+    if _embedding_lock_conn is not None:
+        return
+    conn = psycopg.connect(database_url, autocommit=True)
+    acquired = conn.execute("SELECT pg_try_advisory_lock(%s)", (EMBEDDING_BUILD_LOCK_KEY,)).fetchone()[0]
+    if not acquired:
+        typer.echo("waiting for another embeddings build to finish (one at a time on the GPU)…", err=True)
+        conn.execute("SELECT pg_advisory_lock(%s)", (EMBEDDING_BUILD_LOCK_KEY,))
+    _embedding_lock_conn = conn
+
+
 @embeddings_app.command("build")
 def build_chunk_embeddings(
     database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
@@ -457,6 +476,12 @@ def build_chunk_embeddings(
         "langs": langs or None,
         "in_force_on": [date.fromisoformat(day) for day in in_force_on] if in_force_on else None,
     }
+    if not dry_run:
+        # One build at a time, whoever starts it (an embed job, the scout's
+        # cache-miss build inside a workflow/eval job, a hand-run build): two
+        # BGE-M3 copies overflow the GPU next to the worker's encode lane, and
+        # both would embed the same backlog.
+        _hold_embedding_build_lock(database_url)
     embedding_backend = (
         _DryRunEmbeddingBackend()
         if dry_run

@@ -2,7 +2,7 @@
   // Jobs: what the worker is doing and has done (ops.jobs), the worker's own
   // heartbeat and the models it serves. Everything the UI triggers is a row
   // here, so this is also where an analyst sees why their run is waiting
-  // (one worker, one job at a time — a translation batch ahead of it).
+  // (all job slots busy, or an embed/translate batch of the same type ahead).
   import { api } from '../api.js';
   import { TERMINAL } from '../jobs.js';
 

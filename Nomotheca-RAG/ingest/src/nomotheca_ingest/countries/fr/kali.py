@@ -22,6 +22,8 @@ unchanged and `reparse` replays it like any other snapshot.
 
 from __future__ import annotations
 
+import contextlib
+import fcntl
 import json
 import os
 import re
@@ -157,24 +159,50 @@ class KaliStore:
     def read(self, source_id: str) -> tuple[list[bytes], str]:
         """The XML files for an id, and the dump they were last written by."""
         self.ensure_current()
-        files = []
-        for relative in tree_paths(source_id):
-            path = self.tree / relative
-            if not path.exists():
-                msg = f"{source_id} is not in the KALI dumps (looked for {relative})"
-                raise FileNotFoundError(msg)
-            files.append(path.read_bytes())
-        return files, self.state().get("applied", "")
+        with self._locked(fcntl.LOCK_SH):  # never mid-sync of a parallel job
+            files = []
+            for relative in tree_paths(source_id):
+                path = self.tree / relative
+                if not path.exists():
+                    msg = f"{source_id} is not in the KALI dumps (looked for {relative})"
+                    raise FileNotFoundError(msg)
+                files.append(path.read_bytes())
+            return files, self.state().get("applied", "")
+
+    @contextlib.contextmanager
+    def _locked(self, mode: int):
+        """A file lock on the copy: shared to read, exclusive to sync (the
+        worker runs ingest jobs in parallel; each is its own process)."""
+        self.root.mkdir(parents=True, exist_ok=True)
+        with open(self.root / ".lock", "a") as handle:
+            fcntl.flock(handle, mode)
+            try:
+                yield
+            finally:
+                fcntl.flock(handle, fcntl.LOCK_UN)
+
+    def _fresh(self) -> bool:
+        checked = self.state().get("checked_at")
+        return bool(
+            checked
+            and self.tree.exists()
+            and datetime.now(timezone.utc) - datetime.fromisoformat(checked) < SYNC_INTERVAL
+        )
 
     def ensure_current(self) -> None:
         """Sync unless the copy was checked recently."""
-        checked = self.state().get("checked_at")
-        if checked and self.tree.exists():
-            if datetime.now(timezone.utc) - datetime.fromisoformat(checked) < SYNC_INTERVAL:
-                return
-        self.sync()
+        if self._fresh():
+            return
+        with self._locked(fcntl.LOCK_EX):
+            if not self._fresh():  # a parallel job may have synced while we waited
+                self._sync_unlocked()
 
     def sync(self) -> dict[str, Any]:
+        """Bring the copy up to date (``cli kali-sync``), under the exclusive lock."""
+        with self._locked(fcntl.LOCK_EX):
+            return self._sync_unlocked()
+
+    def _sync_unlocked(self) -> dict[str, Any]:
         """Bring the copy up to date: the global dump once, then each newer increment."""
         listing = self._listing()
         state = self.state()

@@ -52,6 +52,10 @@ file the workstation ever writes is the EUROMOD export, one file per country.
 - One worker, one job at a time (plus the in-process `encode` lane): embedding, translation
   and scouted workflow runs share one GPU, and two at once already OOM an 11 GB card.
   Analysts sometimes wait behind a translation batch; the job list says why.
+  *Amended 10 Nov 2026:* the worker now runs `WORKER_CONCURRENCY` slots in parallel; only
+  `embed`, `translate` and `translate-params` stay one of each at a time, and the GPU is
+  serialised where it is used — an advisory lock held by every `embeddings build`, the
+  scout's included.
 - No automatic requeue. A job whose worker died is marked failed at the next start; a human
   resubmits. Embedding and translation are resumable by construction (they select what is
   missing at startup), so nothing is lost.

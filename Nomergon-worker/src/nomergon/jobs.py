@@ -35,6 +35,12 @@ JOB_TYPES = (
 )
 #: Job types answered in-process by the encode lane, never as a subprocess.
 IN_PROCESS_JOB_TYPES = ("encode",)
+#: Batch types that walk a shared backlog (chunks without a vector, texts
+#: without a translation): two at once would do, and bill, the same work
+#: twice, so a worker runs at most one of each. Every other type runs in
+#: parallel up to WORKER_CONCURRENCY. The GPU is guarded separately, by the
+#: advisory lock ``embeddings build`` takes (the scout's builds included).
+SINGLETON_JOB_TYPES = ("embed", "translate", "translate-params")
 ENCODE_PRIORITY = 100
 #: A chat turn is interactive: ahead of batches, behind the encode lane.
 CHAT_PRIORITY = 50
