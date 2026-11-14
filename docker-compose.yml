@@ -68,6 +68,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 12
+    # Same policy as the worker: after a reboot Docker restarts the worker on its
+    # own, and without the db it looped on "failed to resolve host 'db'".
+    restart: unless-stopped
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -87,6 +90,7 @@ services:
       - ./Nomotheca-RAG/db/pgadmin/servers.json:/pgadmin4/servers.json:ro
       - ./Nomotheca-RAG/db/pgadmin/pgpass:/pgadmin4/pgpass:ro
       - pgadmin-data:/var/lib/pgadmin
+    restart: unless-stopped
 
   # Arize Phoenix — LLM observability: traces for the agentic workflow and the
   # query-time RAG (retrieval spans, token/cost), datasets + evals for the golden set.
@@ -106,6 +110,7 @@ services:
       - "4317:4317"   # OTLP gRPC collector
     volumes:
       - phoenix-data:/mnt/data
+    restart: unless-stopped
 
   # Nomergon — the worker (ADR 0004): claims ops.jobs rows and runs every
   # LLM call, embedding build, translation and ingestion. One job at a time,

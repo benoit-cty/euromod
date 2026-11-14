@@ -177,6 +177,22 @@ def request_cancel(conn: psycopg.Connection[Any], job_id: int) -> bool:
     return row is not None
 
 
+def request_cancel_by_type(conn: psycopg.Connection[Any], job_types: list[str]) -> list[int]:
+    """Flag every queued or running job of these types, as ``request_cancel`` does one."""
+    rows = conn.execute(
+        """
+        UPDATE ops.jobs
+        SET cancel_requested = true,
+            status = CASE WHEN status = 'queued' THEN 'cancelled' ELSE status END,
+            finished_at = CASE WHEN status = 'queued' THEN now() ELSE finished_at END
+        WHERE job_type = ANY(%s) AND status IN ('queued', 'running')
+        RETURNING id
+        """,
+        (list(job_types),),
+    ).fetchall()
+    return sorted(row["id"] for row in rows)
+
+
 # --------------------------------------------------------------- workers ----
 
 

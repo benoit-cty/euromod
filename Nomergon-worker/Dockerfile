@@ -54,6 +54,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv run --frozen --no-dev playwright install --with-deps chromium firefox \
     && rm -rf /var/lib/apt/lists/*
 
+# The three CLIs on PATH for `docker exec`: nomergon, nomoscope-workflow, nomokrisis-eval.
+ENV PATH="/app/Nomergon-worker/.venv/bin:${PATH}"
+
 VOLUME ["/models"]
 
 ENTRYPOINT ["uv", "run", "--frozen", "--no-dev", "--no-sync", "nomergon"]

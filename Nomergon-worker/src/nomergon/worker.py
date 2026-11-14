@@ -21,6 +21,34 @@ log = logging.getLogger("nomergon.worker")
 PRUNE_INTERVAL_SECONDS = 24 * 3600.0
 #: Long enough for a slot to terminate its job and record the status.
 TERM_JOIN_SECONDS = runner.TERM_GRACE_SECONDS + 5.0
+#: Back-off ceiling while the database is not reachable at startup.
+DB_WAIT_MAX_SECONDS = 30.0
+
+
+def _connect_when_ready(cfg: WorkerConfig, stop: threading.Event) -> psycopg.Connection[Any] | None:
+    """Connect, waiting for the database instead of crashing.
+
+    After a reboot Docker restarts the worker (``restart: unless-stopped``)
+    possibly before ``db`` is up, when its name does not even resolve yet:
+    one line per new error, a back-off up to 30 s, never a traceback loop.
+    Returns None when asked to stop while waiting.
+    """
+    delay, last = 1.0, None
+    while not stop.is_set():
+        try:
+            conn = db.connect(cfg.database_url)
+        except psycopg.OperationalError as exc:
+            msg = str(exc).splitlines()[0] if str(exc) else type(exc).__name__
+            if msg != last:
+                log.warning("database not reachable yet (%s); waiting", msg)
+                last = msg
+            stop.wait(delay)
+            delay = min(delay * 2, DB_WAIT_MAX_SECONDS)
+            continue
+        if last is not None:
+            log.info("database reachable")
+        return conn
+    return None
 
 
 class Heartbeat(threading.Thread):
@@ -178,7 +206,9 @@ def serve(cfg: WorkerConfig) -> None:
     signal.signal(signal.SIGTERM, _request_stop)
     signal.signal(signal.SIGINT, _request_stop)
 
-    conn = db.connect(cfg.database_url)
+    conn = _connect_when_ready(cfg, stop)
+    if conn is None:
+        return
     device = describe_device()
     log.info("worker %s starting (device=%s, models=%s)", cfg.worker_id, device, cfg.models or "none")
 

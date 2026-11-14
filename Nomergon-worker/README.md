@@ -24,7 +24,7 @@ resubmits (embedding and translation resume by construction).
 
 | job_type | payload | runs |
 |---|---|---|
-| `workflow` | `{"targets": [...], "year": 2025, "model": null, "force": false}` | `nomoscope_workflow.cli run-targets …` |
+| `workflow` | `{"targets": [...], "year": 2025, "model": null, "force": false}`, or `{"country": "FR", "year": 2025, "limit": null, …}` for every parameter of a country | `nomoscope_workflow.cli run-targets …` / `run-country …` |
 | `ingest` | `{"command": "instrument"\|"citation"\|"document"\|"route", "args": [...]}` | `nomotheca_ingest.cli <command> <args…> --database-url …` |
 | `embed` | `{"model_id": 1, "batch_size": 16, "limit": null, "dry_run": false, "precision": "auto", "authentic_only": false}` (embeds only chunks with no vector for `model_id`; `uv run nomergon submit embed --wait`) | `nomotheca_ingest.cli embeddings build --backend torch …` |
 | `translate` | `{"model": "…", "target_lang": "en", "limit": null, "request_timeout": 120, "dry_run": false}` | `nomotheca_ingest.cli translate run …` |
@@ -103,6 +103,7 @@ nomergon submit eval --payload '{"as_of":"2025-06-01","model":"mock/extractor","
 nomergon jobs --limit 20        # id, type, status, submitted_by, submitted_at, progress
 nomergon events 42 --follow     # stream the log until the job is final
 nomergon cancel 42
+nomergon cancel --type translate --type embed   # every queued/running job of those types
 nomergon status                 # workers (heartbeat age) + published models
 nomergon prune-events           # events older than WORKER_EVENT_RETENTION_DAYS
 ```
@@ -136,7 +137,15 @@ nomergon jobs                                            # next morning
 ```
 
 Both `embed` and `translate` select what is still missing at start, so a
-failed or cancelled batch is simply resubmitted.
+failed or cancelled batch is simply resubmitted. A cancel loses at most the text
+being translated or the batch being embedded (each is committed as it lands), so a
+batch that runs past the night is stopped in the morning by a cron entry on the host:
+
+```cron
+30 7 * * 1-5  make -C /path/to/repo stop-batch   # = nomergon cancel --type translate --type translate-params --type embed
+```
+
+No batch running is not an error. The next `make batch` resumes where it stopped.
 
 ## Environment
 

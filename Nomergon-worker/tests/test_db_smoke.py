@@ -109,6 +109,22 @@ def test_cancel_of_a_queued_job_is_immediate(conn) -> None:
     assert not client.cancel(conn, job_id)
 
 
+
+def test_cancel_by_type_flags_only_those_types(conn) -> None:
+    # One transaction: a live worker never sees these jobs queued (it would
+    # claim the embed/translate ones and start a real batch).
+    with conn.transaction():
+        embed = client.submit(conn, "embed", {})
+        translate = client.submit(conn, "translate", {"model": "mock/translator"})
+        other = client.submit(conn, "impact", {})
+        assert client.cancel_types(conn, ["embed", "translate"]) == sorted([embed, translate])
+        assert db.get_job(conn, embed)["status"] == "cancelled"
+        assert db.get_job(conn, translate)["status"] == "cancelled"
+        assert db.get_job(conn, other)["status"] == "queued"
+        assert client.cancel_types(conn, ["embed", "translate"]) == []
+        client.cancel(conn, other)
+
+
 def test_worker_registration_models_and_stale_jobs(conn) -> None:
     db.register_worker(conn, "pytest-worker", "host", "cpu", "0.0.0")
     db.publish_models(conn, "pytest-worker", ["mock/extractor", "mock/other"], ["bge-m3"])

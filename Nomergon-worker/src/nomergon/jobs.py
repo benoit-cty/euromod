@@ -51,12 +51,27 @@ class _Payload(BaseModel):
 
 
 class WorkflowPayload(_Payload):
-    targets: list[str] = Field(min_length=1)
+    """Either ``targets`` (run-targets) or a whole ``country`` (run-country), never both."""
+
+    targets: list[str] = Field(default_factory=list)
+    country: str | None = None
+    #: run-country only: at most N parameters (a smoke run).
+    limit: int | None = Field(default=None, ge=1)
     year: int
     model: str | None = None
     force: bool = False
     #: Also run parameters EUROMOD holds as n/a in that system year (skipped by default).
     include_na: bool = False
+
+    @model_validator(mode="after")
+    def _targets_or_country(self) -> WorkflowPayload:
+        if bool(self.targets) == bool(self.country):
+            msg = "give either targets or a country"
+            raise ValueError(msg)
+        if self.limit is not None and not self.country:
+            msg = "limit applies to a country run only"
+            raise ValueError(msg)
+        return self
 
 
 class IngestPayload(_Payload):
@@ -245,7 +260,12 @@ def build_command(
     match job_type:
         case "workflow":
             assert isinstance(payload, WorkflowPayload)
-            argv = _python(WORKFLOW_MODULE) + ["run-targets", *payload.targets, "--year", str(payload.year)]
+            if payload.country:
+                argv = _python(WORKFLOW_MODULE) + ["run-country", payload.country, "--year", str(payload.year)]
+                if payload.limit:
+                    argv += ["--limit", str(payload.limit)]
+            else:
+                argv = _python(WORKFLOW_MODULE) + ["run-targets", *payload.targets, "--year", str(payload.year)]
             if payload.model:
                 argv += ["--model", payload.model]
             if payload.force:

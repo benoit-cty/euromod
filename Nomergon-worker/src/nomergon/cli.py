@@ -196,10 +196,33 @@ def events(
 
 
 @app.command()
-def cancel(job_id: int = typer.Argument(..., help="Job id")) -> None:
-    """Ask the worker to stop a job (a queued one is cancelled at once)."""
+def cancel(
+    job_id: int | None = typer.Argument(None, help="Job id"),
+    job_types: list[str] = typer.Option(
+        [], "--type", "-t", help="Instead of an id: every queued or running job of this type (repeatable)"
+    ),
+) -> None:
+    """Ask the worker to stop a job (a queued one is cancelled at once).
+
+    With ``--type``, every queued or running job of those types, e.g. the
+    nightly batch in the morning (``--type translate --type embed``); finding
+    none is not an error, so it is safe in a cron entry.
+    """
+    if (job_id is None) == (not job_types):
+        raise typer.BadParameter("give either a job id or --type")
+    unknown = sorted(set(job_types) - set(jobs.JOB_TYPES))
+    if unknown:
+        raise typer.BadParameter(f"unknown job type(s): {', '.join(unknown)}")
     cfg = _cfg()
     with _connect(cfg) as conn:
+        if job_types:
+            ids = client.cancel_types(conn, job_types)
+            kinds = "/".join(job_types)
+            if ids:
+                typer.echo(f"cancel requested for {kinds} job(s): {', '.join(map(str, ids))}")
+            else:
+                typer.echo(f"no queued or running {kinds} job")
+            return
         if client.cancel(conn, job_id):
             typer.echo(f"job {job_id}: cancel requested")
         else:

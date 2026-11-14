@@ -82,6 +82,18 @@ def test_workflow_needs_a_target_and_a_year() -> None:
         jobs.parse_payload("workflow", {"targets": ["euromod://FR/x"]})
 
 
+def test_workflow_country_runs_run_country(cfg: WorkerConfig) -> None:
+    argv = build("workflow", {"country": "FR", "year": 2025, "limit": 5, "model": "mock/extractor"}, cfg)
+    assert argv[3:] == ["run-country", "FR", "--year", "2025", "--limit", "5", "--model", "mock/extractor"]
+
+
+def test_workflow_takes_targets_or_a_country_not_both() -> None:
+    with pytest.raises(ValueError):
+        jobs.parse_payload("workflow", {"targets": ["x"], "country": "FR", "year": 2025})
+    with pytest.raises(ValueError):
+        jobs.parse_payload("workflow", {"targets": ["x"], "limit": 3, "year": 2025})
+
+
 # ------------------------------------------------------------------ ingest --
 
 

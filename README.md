@@ -26,30 +26,45 @@ reads and reasons over fiscal legislation.
 
 ## Quick start
 
-Launch the server side (PostgreSQL + pgAdmin + Phoenix + the worker; the worker is
-behind a compose profile: `gpu` needs the NVIDIA container toolkit, `cpu` runs
-anywhere, slowly; API keys come from the repo-root `.env`):
+The main commands run from the repo root through `make` (`make` alone lists them;
+on Windows, run them in WSL). API keys come from the repo-root `.env`, read by the
+worker only:
+
 ```sh
-git clone XXXX
-cd XXXX
-cp .env.example .env   # then set the keys the worker needs
-docker compose --profile gpu up -d                 # or --profile cpu
+git clone XXXX && cd XXXX
+cp .env.example .env        # then set the keys the worker needs
+
+make up-gpu                 # Postgres + pgAdmin + Phoenix + the worker on the NVIDIA GPU
+make up-cpu                 #   ... or the worker on the CPU (no NVIDIA runtime needed)
+make init-db                # once, after the first start: params and eval schemas
+
+make update COUNTRY=FR YEAR=2025        # agentic update of every parameter of a country
+make ui                                 # validation UI (review the proposals)
+make rag-ui                             # RAG chat over the legislation corpus
+
+make batch                  # nightly batch: translate the corpus to English, then embed
+make translate              #   ... or each step alone
+make embed
+make stop-batch             # stop it (cancel), e.g. from a 07:30 cron entry; nothing done is lost
 ```
 
-- Database interface: pgAdmin: http://localhost:5050
+`make update` takes `MODEL=` (one the worker publishes: `make status`), `LIMIT=<n>`
+for a smoke run and `FORCE=1` to re-run already-reviewed items; `MODEL=mock/extractor`
+needs no key. `make translate` uses `EUROMOD_TRANSLATE_MODEL`, else `WORKFLOW_MODEL`,
+from `.env`. Every run is a job the worker executes: `make jobs`, `make logs`, and the
+UI's Jobs page show its log. `make down` stops the stack and keeps the data.
+
+- Database interface: pgAdmin: http://localhost:5050 (admin@euromod.eu / admin)
 - Phoenix (LLM traces / evals): http://localhost:6006
-- Worker: `docker compose logs -f worker`; `docker compose exec worker nomergon status`
 
 One-off after the first start with an existing checkout: import the golden set
 that used to live in git (`docker compose exec worker nomokrisis-eval import-golden`).
 
-Launch the UI in another terminal:
-```sh
-cd Nomoscope-agentic-workflow/ui
-npm install
-npm run tauri dev
-LIBGL_ALWAYS_SOFTWARE=1 npm run tauri dev
-```
+The underlying commands, without `make`: `docker compose --profile gpu up -d`
+(or `--profile cpu`), `docker compose exec worker nomergon submit workflow --wait
+country=FR year=2025`, `cd Nomoscope-agentic-workflow/ui && npm install && npm run
+tauri dev` (WSL: prefix `LIBGL_ALWAYS_SOFTWARE=1`), `nomergon submit translate`,
+`nomergon submit embed`.
 
 ## Backup and restore
 

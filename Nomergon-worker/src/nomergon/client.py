@@ -69,3 +69,11 @@ def cancel(conn: psycopg.Connection[Any], job_id: int) -> bool:
     if not conn.autocommit:
         conn.commit()
     return changed
+
+
+def cancel_types(conn: psycopg.Connection[Any], job_types: list[str]) -> list[int]:
+    """Cancel every queued or running job of these types; the ids flagged."""
+    ids = db.request_cancel_by_type(conn, job_types)
+    if not conn.autocommit:
+        conn.commit()
+    return ids
