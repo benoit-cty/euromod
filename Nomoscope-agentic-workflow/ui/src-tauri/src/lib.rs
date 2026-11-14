@@ -224,6 +224,13 @@ async fn parameter_edits(payload: TargetPayload) -> Result<Value, String> {
     blocking(move || db::parameter_edits(&payload.db_url, &payload.model_target)).await
 }
 
+/// A parameter's texts and EUROMOD value history (or a schedule's members'),
+/// for the review page's hand-off prompt. Read-only.
+#[tauri::command]
+async fn parameter_context(payload: TargetPayload) -> Result<Value, String> {
+    blocking(move || db::parameter_context(&payload.db_url, &payload.model_target)).await
+}
+
 /// Export the change set for EUROMOD — metadata edits and accepted value
 /// changes only — one JSON file per country, into a folder the reviewer picks.
 /// The only file the UI writes.
@@ -427,6 +434,7 @@ pub fn run() {
             export_changes,
             edit_parameter,
             parameter_edits,
+            parameter_context,
             db_stats,
             search_articles,
             score_sentences,

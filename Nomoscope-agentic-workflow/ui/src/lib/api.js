@@ -22,6 +22,10 @@ export const api = {
     invoke('edit_parameter', { payload: { db_url: dbUrl, model_target: modelTarget, field, value, note } }),
   parameterEdits: (dbUrl, modelTarget) =>
     invoke('parameter_edits', { payload: { db_url: dbUrl, model_target: modelTarget } }),
+  // A parameter's EUROMOD texts, law-language texts and value history (every
+  // member for a `group:` target), for the review page's hand-off prompt.
+  parameterContext: (dbUrl, modelTarget) =>
+    invoke('parameter_context', { payload: { db_url: dbUrl, model_target: modelTarget } }),
   dbStats: (dbUrl) => invoke('db_stats', { payload: { db_url: dbUrl } }),
   // Vector/hybrid modes encode the query on the worker; `notice` is set when
   // no worker was alive and the search fell back to full text.

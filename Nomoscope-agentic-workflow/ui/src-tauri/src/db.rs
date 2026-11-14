@@ -531,6 +531,62 @@ pub fn params_list(db_url: &str) -> Result<Value, String> {
     }))
 }
 
+/// What the review queue item does not carry about its parameter — its
+/// EUROMOD texts, its law-language texts and the values EUROMOD has held —
+/// for the hand-off prompt to an external assistant. A `group:<id>` target
+/// returns every member of that bracket schedule, in schedule order.
+pub fn parameter_context(db_url: &str, model_target: &str) -> Result<Value, String> {
+    let mut client = connect(db_url)?;
+    let group = model_target.strip_prefix("group:");
+    let rows = client
+        .query(
+            "SELECT p.model_target, p.policy, p.function, p.name, p.unit,
+                    p.temporal_basis::text AS temporal_basis,
+                    jsonb_build_object('label', p.label, 'short_label', p.short_label,
+                                       'description', p.description,
+                                       'explanation', p.explanation) AS texts,
+                    coalesce((SELECT jsonb_agg(jsonb_build_object(
+                                  'lang', t.lang, 'field', t.field,
+                                  'origin', t.origin, 'content', t.content)
+                                ORDER BY t.lang, t.field, t.origin)
+                              FROM params.parameter_texts t
+                              WHERE t.parameter_id = p.id), '[]'::jsonb) AS law_texts,
+                    coalesce((SELECT jsonb_agg(jsonb_build_object(
+                                  'system_year', v.system_year,
+                                  'valid_from', v.valid_from::text,
+                                  'valid_to', v.valid_to::text,
+                                  'value', v.value_raw,
+                                  'raw', v.raw_euromod_value)
+                                ORDER BY v.valid_from)
+                              FROM params.model_values v
+                              WHERE v.parameter_id = p.id), '[]'::jsonb) AS history,
+                    (SELECT g->>'role' || ' ' || (g->>'index')
+                       FROM jsonb_array_elements(coalesce(p.parameter_group, '[]'::jsonb)) g
+                      WHERE g->>'id' = $2 LIMIT 1) AS group_role
+             FROM params.parameters p
+             WHERE ($2::text IS NULL AND p.model_target = $1)
+                OR ($2::text IS NOT NULL
+                    AND p.parameter_group @> jsonb_build_array(jsonb_build_object('id', $2::text)))
+             ORDER BY group_role NULLS FIRST, p.name",
+            &[&model_target, &group],
+        )
+        .map_err(|e| format!("parameter context query failed: {e}"))?;
+    Ok(json!({
+        "parameters": rows.iter().map(|r| json!({
+            "model_target": r.get::<_, String>("model_target"),
+            "policy": r.get::<_, Option<String>>("policy"),
+            "function": r.get::<_, Option<String>>("function"),
+            "name": r.get::<_, Option<String>>("name"),
+            "unit": r.get::<_, Option<String>>("unit"),
+            "temporal_basis": r.get::<_, Option<String>>("temporal_basis"),
+            "texts": r.get::<_, Value>("texts"),
+            "law_texts": r.get::<_, Value>("law_texts"),
+            "history": r.get::<_, Value>("history"),
+            "group_role": r.get::<_, Option<String>>("group_role"),
+        })).collect::<Vec<_>>(),
+    }))
+}
+
 /// One parameter's metadata edits (`params.parameter_edits`), newest first.
 pub fn parameter_edits(db_url: &str, model_target: &str) -> Result<Value, String> {
     let mut client = connect(db_url)?;

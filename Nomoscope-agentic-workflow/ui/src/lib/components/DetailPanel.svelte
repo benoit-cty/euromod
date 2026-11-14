@@ -5,6 +5,7 @@
   import DateField from './DateField.svelte';
   import Icon from './Icon.svelte';
   import { routingLabel, statusLabel, countryName, humanize, relativeTime } from '../labels.js';
+  import { buildHandoffPrompt } from '../handoff.js';
 
   let {
     item,
@@ -48,6 +49,36 @@
   ];
 
   const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+  // Hand-off to an external chat assistant: a ready-made research prompt the
+  // reviewer pastes into Claude (or any assistant) when the pipeline did not
+  // settle the value. The UI builds text only; it runs nothing (ADR 0004).
+  let handoffText = $state('');
+  let handoffOpen = $state(false);
+  let handoffStatus = $state(''); // '' | 'copied' | 'manual'
+  let handoffBusy = $state(false);
+  const needsHandoff = $derived(item?.routing === 'not_found' || item?.routing === 'provisional');
+
+  async function copyHandoff() {
+    handoffBusy = true;
+    let context = null;
+    try {
+      context = await api.parameterContext(dbUrl, item.model_target);
+    } catch (e) {
+      console.warn('parameter context unavailable; prompt built from the queue item alone', e);
+    }
+    handoffText = buildHandoffPrompt(item, context);
+    handoffBusy = false;
+    try {
+      await navigator.clipboard.writeText(handoffText);
+      handoffStatus = 'copied';
+      setTimeout(() => (handoffStatus = ''), 3000);
+    } catch {
+      // no clipboard access: show the text so it can be copied by hand
+      handoffStatus = 'manual';
+      handoffOpen = true;
+    }
+  }
 
   let note = $state('');
   // The correction form is folded away until needed; a blocked Accept opens it.
@@ -104,6 +135,9 @@
     void item;
     resetForm();
     note = '';
+    handoffText = '';
+    handoffOpen = false;
+    handoffStatus = '';
   });
 
   const extract = $derived(item?.proposed_value?.references?.[0]?.supporting_extract ?? null);
@@ -343,6 +377,36 @@
           {outcome.hint}
         {/if}
       </p>
+
+      <div class="handoff">
+        <button
+          class:primary={needsHandoff}
+          disabled={handoffBusy}
+          title="Copy a research prompt with everything known about this parameter, to paste into Claude or another chat assistant"
+          onclick={copyHandoff}
+        >
+          <Icon name="copy" size={16} />
+          {handoffStatus === 'copied' ? 'Prompt copied' : 'Copy a prompt for an AI assistant'}
+        </button>
+        <span class="muted small">
+          {#if handoffStatus === 'copied'}
+            Paste it into Claude (or another assistant). If it finds the law, add the text under <em>Add sources</em> and check the parameter again.
+          {:else if needsHandoff}
+            Let a web-connected assistant search the law for this value.
+          {/if}
+        </span>
+      </div>
+      {#if handoffText}
+        <details class="more" bind:open={handoffOpen}>
+          <summary>
+            The prompt
+            <span class="hint">{handoffStatus === 'manual' ? 'the clipboard is not available — select it and copy' : 'what was copied'}</span>
+          </summary>
+          <div class="body">
+            <textarea class="handoff-text mono" rows="14" readonly value={handoffText} onfocus={(e) => e.currentTarget.select()}></textarea>
+          </div>
+        </details>
+      {/if}
 
       <div class="side-by-side">
         <div class="value-card">
@@ -629,6 +693,9 @@
   .value-card { flex: 1; min-width: 14rem; border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 1rem; }
   .value-card.proposed { border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 40%, transparent); }
   .arrow { display: flex; align-items: center; color: var(--muted); }
+  .handoff { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-top: -0.3rem; }
+  .handoff button { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .handoff-text { width: 100%; font-size: 0.8rem; resize: vertical; }
   .checks-line { display: flex; align-items: center; gap: 0.45rem; color: var(--ok); font-weight: 600; font-size: 0.92rem; }
   .checks-line.bad { color: var(--warn); }
   .issues { color: var(--err); margin: -0.4rem 0 0; font-size: 0.9rem; }

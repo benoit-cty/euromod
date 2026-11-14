@@ -2,9 +2,10 @@
   // Jobs: what the worker is doing and has done (ops.jobs), the worker's own
   // heartbeat and the models it serves. Everything the UI triggers is a row
   // here, so this is also where an analyst sees why their run is waiting
-  // (all job slots busy, or an embed/translate batch of the same type ahead).
+  // (all job slots busy, an embed/translate batch of the same type ahead, or
+  // — shown as "waiting" — another embeddings build holding the GPU lock).
   import { api } from '../api.js';
-  import { TERMINAL } from '../jobs.js';
+  import { TERMINAL, displayStatus } from '../jobs.js';
 
   let { dbUrl = '', active = true } = $props();
 
@@ -110,7 +111,7 @@
     const p = job.payload ?? {};
     switch (job.job_type) {
       case 'workflow':
-        return `${(p.targets ?? []).length} target(s) · ${p.year ?? '?'}${p.model ? ` · ${p.model}` : ''}${p.force ? ' · force' : ''}`;
+        return `${p.country ? `${p.country}, every parameter${p.limit ? ` (≤ ${p.limit})` : ''}` : `${(p.targets ?? []).length} target(s)`} · ${p.year ?? '?'}${p.model ? ` · ${p.model}` : ''}${p.force ? ' · force' : ''}`;
       case 'ingest':
         return `${p.command} ${(p.args ?? []).slice(0, 2).join(' ')}`;
       case 'embed':
@@ -168,7 +169,7 @@
               <td class="mono">{job.id}</td>
               <td>{job.job_type}</td>
               <td>
-                <span class="badge {job.status}">{job.status}</span>
+                <span class="badge {displayStatus(job)}" title={job.progress?.phase === 'waiting' ? job.progress.detail : ''}>{displayStatus(job)}</span>
                 {#if job.cancel_requested && !TERMINAL.has(job.status)}<span class="muted small">cancelling…</span>{/if}
               </td>
               <td class="small">{payloadSummary(job)}</td>
@@ -195,7 +196,7 @@
       {:else}
         <p>
           <strong>#{selected.id} {selected.job_type}</strong>
-          <span class="badge {selected.status}">{selected.status}</span>
+          <span class="badge {displayStatus(selected)}" title={selected.progress?.phase === 'waiting' ? selected.progress.detail : ''}>{displayStatus(selected)}</span>
           <span class="muted small">{payloadSummary(selected)}</span>
         </p>
         {#if selected.error}<pre class="err">{selected.error}</pre>{/if}
@@ -234,6 +235,7 @@
   .small { font-size: 0.8rem; }
   .badge.queued { background: var(--panel-2); color: var(--muted); }
   .badge.running { background: var(--accent-soft); color: var(--accent); }
+  .badge.waiting { background: var(--warn-soft); color: var(--warn); }
   .badge.succeeded { background: var(--ok-soft); color: var(--ok); }
   .badge.failed, .badge.cancelled { background: var(--err-soft); color: var(--err); }
   button.link { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0; font-size: 0.85rem; }

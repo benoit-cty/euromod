@@ -1,7 +1,7 @@
 // Run with: npm test (node --test src/lib)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { followJob, submitAndFollow, parseProgress, summarize } from './jobs.js';
+import { followJob, submitAndFollow, parseProgress, summarize, displayStatus } from './jobs.js';
 
 // A fake worker: the job's event log grows between polls, its status flips
 // after a number of polls. `after` seen by each events call is recorded so the
@@ -80,4 +80,13 @@ test('submitAndFollow submits with the priority and reports the id before follow
   assert.equal(result.status, 'failed');
   assert.equal(summarize(result, '3s'), 'Failed after 3s: last line');
   assert.equal(summarize({ status: 'cancelled' }), 'Cancelled.');
+});
+
+test('a running job behind the GPU lock shows as waiting', () => {
+  const detail = 'waiting for the GPU: another embeddings build holds it — embeddings build (job #42)';
+  assert.equal(displayStatus({ status: 'running', progress: { phase: 'waiting', detail } }), 'waiting');
+  assert.equal(displayStatus({ status: 'running', progress: { phase: 'starting' } }), 'running');
+  assert.equal(displayStatus({ status: 'running', progress: { done: 3, total: 9 } }), 'running');
+  assert.equal(displayStatus({ status: 'running', progress: null }), 'running');
+  assert.equal(displayStatus({ status: 'failed', progress: { phase: 'waiting' } }), 'failed');
 });

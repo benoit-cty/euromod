@@ -8,6 +8,18 @@
 
 export const TERMINAL = new Set(['succeeded', 'failed', 'cancelled']);
 
+/**
+ * The status to show for a job row. A claimed job is `running` in ops.jobs
+ * from the moment its subprocess starts, but an `embeddings build` (an embed
+ * job, or a workflow/eval job's scout) may then sit behind another build's GPU
+ * lock; it reports that as a `phase: "waiting"` progress line, and a running
+ * job whose latest progress says so is shown as `waiting`.
+ */
+export function displayStatus(job) {
+  if (job?.status === 'running' && job.progress?.phase === 'waiting') return 'waiting';
+  return job?.status ?? '';
+}
+
 const defaultTransport = {
   submitJob: async (...args) => (await import('./api.js')).api.submitJob(...args),
   jobStatus: async (...args) => (await import('./api.js')).api.jobStatus(...args),

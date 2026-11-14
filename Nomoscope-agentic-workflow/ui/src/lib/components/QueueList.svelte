@@ -1,7 +1,7 @@
 <script>
   import { routingLabel, statusLabel, countryName } from '../labels.js';
 
-  let { items, facets, selectedId, onselect } = $props();
+  let { items, facets, selectedId, onselect, loading = false } = $props();
 
   let sectionEl = $state(null);
   let search = $state('');
@@ -120,13 +120,13 @@
 <section class="panel queue" bind:this={sectionEl}>
   <div class="segmented views" role="tablist">
     <button class:active={view === 'pending'} onclick={() => (view = 'pending')}>
-      To review <span class="count">{counts.pending}</span>
+      To review <span class="count">{#if loading}<span class="spinner"></span>{:else}{counts.pending}{/if}</span>
     </button>
     <button class:active={view === 'decided'} onclick={() => (view = 'decided')}>
-      Decided <span class="count">{counts.decided}</span>
+      Decided <span class="count">{#if loading}<span class="spinner"></span>{:else}{counts.decided}{/if}</span>
     </button>
     <button class:active={view === 'all'} onclick={() => (view = 'all')}>
-      All <span class="count">{counts.all}</span>
+      All <span class="count">{#if loading}<span class="spinner"></span>{:else}{counts.all}{/if}</span>
     </button>
   </div>
 
@@ -175,7 +175,9 @@
       </button>
     {:else}
       <div class="empty-state">
-        {#if view === 'pending' && items.length}
+        {#if loading}
+          <span class="big"><span class="spinner"></span> Loading the review queue…</span>
+        {:else if view === 'pending' && items.length}
           <span class="big">All caught up</span>
           <span>Nothing left to review{country || routing || search ? ' with these filters' : ''}.</span>
           <button class="link" onclick={() => (view = 'all')}>Show everything</button>

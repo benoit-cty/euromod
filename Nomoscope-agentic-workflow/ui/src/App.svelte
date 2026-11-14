@@ -26,6 +26,9 @@
   // GraphQL gid of the workflow's Phoenix project, for trace deep-links
   let phoenixGid = $state('');
   let items = $state([]);
+  // True until the first queue load answers (931 items take a few seconds):
+  // the Overview and the review list show a loader instead of "nothing yet".
+  let queueLoading = $state(true);
   let facets = $state(null);
   let selectedId = $state(null);
   let decisions = $state([]);
@@ -119,6 +122,7 @@
     } catch (e) {
       error = String(e);
     }
+    queueLoading = false;
     pollWorker();
     try {
       const res = await api.phoenixProjects(config.db_url);
@@ -348,6 +352,7 @@
         bind:this={homePage}
         dbUrl={config.db_url}
         {items}
+        loading={queueLoading}
         reviewer={config.reviewer}
         onnavigate={go}
         onexport={exportChanges}
@@ -355,7 +360,7 @@
     </main>
     {#if visited.review}
       <main class="split" hidden={tab !== 'review'}>
-        <QueueList {items} {facets} {selectedId} onselect={(id) => (selectedId = id)} />
+        <QueueList {items} {facets} loading={queueLoading} {selectedId} onselect={(id) => (selectedId = id)} />
         <DetailPanel
           item={selected}
           {siblings}

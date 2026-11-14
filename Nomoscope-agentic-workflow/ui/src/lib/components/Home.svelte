@@ -7,7 +7,7 @@
   import { countryName, formatCount, relativeTime, humanize } from '../labels.js';
   import { countryReadiness } from '../readiness.js';
 
-  let { dbUrl = '', items = [], reviewer = null, onnavigate, onexport } = $props();
+  let { dbUrl = '', items = [], loading = false, reviewer = null, onnavigate, onexport } = $props();
 
   let stats = $state(null);
   let jobs = $state([]);
@@ -91,7 +91,9 @@
   <section class="hero">
     <div>
       <h2>{greeting}{reviewer ? `, ${reviewer}` : ''}.</h2>
-      {#if pending.length}
+      {#if loading}
+        <p class="lead"><span class="spinner"></span> Loading the review queue…</p>
+      {:else if pending.length}
         <p class="lead">
           <strong>{pending.length}</strong> proposed value{pending.length === 1 ? '' : 's'} waiting for your review.
         </p>
@@ -101,7 +103,9 @@
         <p class="lead">No proposals yet. Start by asking the assistant to check some parameters.</p>
       {/if}
     </div>
-    {#if pending.length}
+    {#if loading}
+      <!-- no call to action until the queue says which one applies -->
+    {:else if pending.length}
       <button class="primary big" onclick={() => onnavigate('review')}>
         Start reviewing <Icon name="arrow" size={18} />
       </button>
@@ -115,17 +119,17 @@
   <section class="tiles">
     <button class="tile" onclick={() => onnavigate('review')}>
       <span class="tile-icon warn"><Icon name="review" size={20} /></span>
-      <span class="num">{formatCount(pending.length)}</span>
+      <span class="num">{#if loading}<span class="spinner"></span>{:else}{formatCount(pending.length)}{/if}</span>
       <span class="label">To review</span>
     </button>
     <button class="tile" onclick={() => onnavigate('audit')}>
       <span class="tile-icon ok"><Icon name="check" size={20} /></span>
-      <span class="num">{formatCount(decidedToday)}</span>
+      <span class="num">{#if loading}<span class="spinner"></span>{:else}{formatCount(decidedToday)}{/if}</span>
       <span class="label">Decided today</span>
     </button>
     <button class="tile" onclick={onexport} title="Export the accepted changes for EUROMOD">
       <span class="tile-icon accent"><Icon name="download" size={20} /></span>
-      <span class="num">{formatCount(acceptedChanges)}</span>
+      <span class="num">{#if loading}<span class="spinner"></span>{:else}{formatCount(acceptedChanges)}{/if}</span>
       <span class="label">Accepted changes to export</span>
     </button>
     <button class="tile" onclick={() => onnavigate('database')}>
