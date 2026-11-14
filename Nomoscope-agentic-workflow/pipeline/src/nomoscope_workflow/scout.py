@@ -21,6 +21,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import threading
 import time
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -519,8 +520,19 @@ def _ingest_instrument(cfg: WorkflowConfig, country: str, instrument_id: str) ->
     return _run_ingest_cli(cfg, args, instrument_id)
 
 
+#: One scout ingest at a time per process: an eval runs several cases in
+#: threads, and two of them may scout the same act — two loaders writing one
+#: instrument at once would trip the version/chunk constraints.
+_INGEST_LOCK = threading.Lock()
+
+
 def _run_ingest_cli(cfg: WorkflowConfig, args: list[str], what: str) -> str | None:
     """Run one Nomotheca CLI command; error text on failure."""
+    with _INGEST_LOCK:
+        return _run_ingest_cli_unlocked(cfg, args, what)
+
+
+def _run_ingest_cli_unlocked(cfg: WorkflowConfig, args: list[str], what: str) -> str | None:
     env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
     env["PYTHONUNBUFFERED"] = "1"
     python = nomos_python()

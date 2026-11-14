@@ -475,6 +475,10 @@ def run(
     verbose: bool = typer.Option(
         False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
     ),
+    concurrency: int = typer.Option(
+        4, "--concurrency", "-j", min=1, envvar="EVAL_CONCURRENCY",
+        help="Cases run at once (each case is mostly waiting on the LLM)",
+    ),
 ) -> None:
     """Run the agentic workflow over the golden set, score it, store the results.
 
@@ -495,7 +499,7 @@ def run(
             f"run {manifest.run_id}  model={manifest.model}  as_of={manifest.as_of}"
             f"  dataset={manifest.dataset_version}  cases={len(cases)}"
         )
-        _execute_and_report(conn, cfg, manifest, cases, [], verbose=verbose)
+        _execute_and_report(conn, cfg, manifest, cases, [], verbose=verbose, concurrency=concurrency)
 
 
 @app.command("run-benchmark")
@@ -511,6 +515,10 @@ def run_benchmark(
     dry_run: bool = typer.Option(False, "--dry-run", help="Build and list the cases, run nothing"),
     verbose: bool = typer.Option(
         False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
+    ),
+    concurrency: int = typer.Option(
+        4, "--concurrency", "-j", min=1, envvar="EVAL_CONCURRENCY",
+        help="Cases run at once (each case is mostly waiting on the LLM)",
     ),
 ) -> None:
     """Every parameter of a country, updated blind from EUROMOD Y-1 and scored
@@ -554,7 +562,7 @@ def run_benchmark(
             f"run {manifest.run_id}  model={manifest.model}  blind_before={manifest.blind_before}"
             f"  cases={len(build.cases)}"
         )
-        _execute_and_report(conn, cfg, manifest, build.cases, [], verbose=verbose)
+        _execute_and_report(conn, cfg, manifest, build.cases, [], verbose=verbose, concurrency=concurrency)
         _echo_benchmark(evaldb.load_results(conn, evaldb.load_run(conn, manifest.run_id)[0]))
 
 
@@ -628,6 +636,10 @@ def resume(
     verbose: bool = typer.Option(
         False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
     ),
+    concurrency: int = typer.Option(
+        4, "--concurrency", "-j", min=1, envvar="EVAL_CONCURRENCY",
+        help="Cases run at once (each case is mostly waiting on the LLM)",
+    ),
 ) -> None:
     """Continue an interrupted evaluation run: same manifest, same case list,
     only the cases that have not been scored yet. Ends with `@result {"run_id": …}`."""
@@ -656,7 +668,7 @@ def resume(
             f"resuming {manifest.run_id}  model={manifest.model}  as_of={manifest.as_of}"
             f"  {len(done)}/{len(cases)} already scored"
         )
-        _execute_and_report(conn, cfg, manifest, cases, done, verbose=verbose)
+        _execute_and_report(conn, cfg, manifest, cases, done, verbose=verbose, concurrency=concurrency)
 
 
 _MARK = {True: "\u2713", False: "\u2717", None: "\u00b7"}
@@ -686,24 +698,25 @@ def _result_line(result: CaseResult) -> str:
     return f"{(result.routing_actual or '?'):<11} {marks}{flag}"
 
 
-def _progress_callbacks(verbose: bool):
+def _progress_callbacks(verbose: bool, concurrency: int = 1):
     """Print one line per case: `[ 7/42] <case id> routing... 4.1s eta 2m38s`.
 
-    Quiet (the default) writes the prefix before the case runs — so a long LLM
+    Quiet and sequential writes the prefix before the case runs — so a long LLM
     call shows what it is waiting on — and completes it in place once the case
-    is scored. Verbose lets the workflow mirror its own steps in between, so the
-    prefix and the outcome are printed as two separate lines.
+    is scored. Verbose, or several cases in flight, prints the prefix and the
+    outcome as two separate lines (the outcome line repeats the case id).
     """
     state = {"start": time.perf_counter(), "completed": 0}
+    split = verbose or concurrency > 1
 
     def on_case_start(index: int, total: int, case: GoldenCase) -> None:
-        typer.echo(f"[{index:>3}/{total}] {case.id:<46} ", nl=verbose)
+        typer.echo(f"[{index:>3}/{total}] {case.id:<46} " + ("started" if concurrency > 1 else ""), nl=split)
 
     def on_case_done(index: int, total: int, case: GoldenCase, result: CaseResult) -> None:
         state["completed"] += 1
         elapsed = time.perf_counter() - state["start"]
         eta = elapsed / state["completed"] * (total - index)
-        prefix = f"[{index:>3}/{total}] {case.id:<46} " if verbose else ""
+        prefix = f"[{index:>3}/{total}] {case.id:<46} " if split else ""
         typer.echo(
             f"{prefix}{_result_line(result)}  {(result.latency_ms or 0) / 1000:5.1f}s"
             f"  eta {_fmt_duration(eta)}"
@@ -719,10 +732,11 @@ def _execute_and_report(
     cases: list[GoldenCase],
     done: list[CaseResult],
     verbose: bool = False,
+    concurrency: int = 1,
 ) -> None:
     """Score the pending cases with live progress, then summarize."""
     set_progress(verbose)  # per-step workflow chatter would drown the per-case lines
-    on_case_start, on_case_done = _progress_callbacks(verbose)
+    on_case_start, on_case_done = _progress_callbacks(verbose, concurrency)
 
     def on_done(index: int, total: int, case: GoldenCase, result: CaseResult) -> None:
         on_case_done(index, total, case, result)
@@ -731,7 +745,7 @@ def _execute_and_report(
     try:
         results = execute_run(
             conn, cfg, manifest, cases, done,
-            on_case_start=on_case_start, on_case_done=on_done,
+            on_case_start=on_case_start, on_case_done=on_done, concurrency=concurrency,
         )
     except KeyboardInterrupt:
         scored = len(evaldb.load_results(conn, evaldb.load_run(conn, manifest.run_id)[0]))

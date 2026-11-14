@@ -127,3 +127,43 @@ def _fake_record(target: str):
         ),
         values=[ParameterValue(value=47100.0, valid_from=date(2025, 1, 1))],
     )
+
+
+def test_execute_run_runs_cases_concurrently(db, monkeypatch):
+    import threading
+    import time as _time
+
+    cases = [make_case(TEST_PREFIX + f"c{i}") for i in range(4)]
+    cfg = EvalConfig(database_url="unused", phoenix_project="test")
+    monkeypatch.setattr(runner, "_resolved_model_name", lambda model: None)
+    manifest = runner.start_run(db, cfg, cases, date(2025, 6, 1), "mock/extractor", notes="t")
+    manifest = _rename(manifest, db, TEST_PREFIX + manifest.run_id)
+    monkeypatch.setattr(runner, "load_case_record", lambda conn, target: _fake_record(target))
+    monkeypatch.setattr(runner, "_scoring_constants", lambda conn, cases, as_of: {})
+    monkeypatch.setattr(runner, "setup_tracing", lambda wf_cfg: None)
+
+    lock = threading.Lock()
+    state = {"now": 0, "peak": 0}
+    main = threading.get_ident()
+
+    def run_case(wf_cfg, tracer, record, case, as_of):
+        assert threading.get_ident() != main
+        with lock:
+            state["now"] += 1
+            state["peak"] = max(state["peak"], state["now"])
+        _time.sleep(0.2)
+        with lock:
+            state["now"] -= 1
+        if case.id.endswith("c2"):
+            raise RuntimeError("provider timeout")
+        return fake_item(case)
+
+    results = runner.execute_run(db, cfg, manifest, cases, run_case=run_case, concurrency=2)
+    assert state["peak"] == 2
+    by_id = {r.case_id: r for r in results}
+    assert set(by_id) == {c.id for c in cases}
+    assert by_id[cases[2].id].error == "RuntimeError: provider timeout"
+    assert by_id[cases[0].id].value_correct and by_id[cases[0].id].latency_ms >= 200
+    run_pk, finished = evaldb.load_run(db, manifest.run_id)
+    assert finished.status == "complete"
+    assert len(evaldb.load_results(db, run_pk)) == 4

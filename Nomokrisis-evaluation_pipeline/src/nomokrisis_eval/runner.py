@@ -21,6 +21,7 @@ import time
 import uuid
 from collections import defaultdict
 from collections.abc import Callable
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from datetime import date, datetime, timezone
 
 import psycopg
@@ -209,13 +210,22 @@ def execute_run(
     on_case_start: Callable[[int, int, GoldenCase], None] | None = None,
     on_case_done: Callable[[int, int, GoldenCase, CaseResult], None] | None = None,
     run_case: Callable[[WorkflowConfig, object, ParameterRecord, GoldenCase, date], ReviewItem] | None = None,
+    concurrency: int = 1,
 ) -> list[CaseResult]:
     """Score every case not already in `done_results`, persisting as it goes.
 
     Each result is upserted into eval.results (with the ReviewItem) the moment
-    the case is scored, so a Ctrl-C (or a crash) loses at most the case in
+    the case is scored, so a Ctrl-C (or a crash) loses at most the cases in
     flight; the run is flipped to `complete` at the end. `run_case` exists for
     tests — it replaces the workflow call and nothing else.
+
+    `concurrency` cases run their workflow at once, each in its own thread:
+    a case is almost all LLM latency (a reasoning model on OpenRouter spends
+    ~25 s per call, ~6 calls per case), and `run_parameter` opens its own
+    connections, so cases do not share state. Everything touching `conn` —
+    loading the record, scoring, upserting, the callbacks — stays on this
+    thread. Results land in completion order, not case order; the scout's
+    GPU work is serialised by the embeddings-build advisory lock.
     """
     loaded = evaldb.load_run(conn, manifest.run_id)
     if loaded is None:
@@ -231,35 +241,75 @@ def execute_run(
     tracer = setup_tracing(wf_cfg)
     constants = _scoring_constants(conn, cases, manifest.as_of)
     total = len(cases)
+    started_count = len(results)
 
-    for case in pending:
-        index = len(results) + 1
-        if on_case_start:
-            on_case_start(index, total, case)
+    def workflow(record: ParameterRecord, case: GoldenCase) -> ReviewItem:
+        if run_case is not None:
+            return run_case(wf_cfg, tracer, record, case, manifest.as_of)
+        return run_parameter(
+            wf_cfg, tracer, record, manifest.as_of,
+            force=True, parameter_ref=case.parameter_target, enqueue=False,
+        )
+
+    def timed(record: ParameterRecord, case: GoldenCase) -> tuple[ReviewItem | None, BaseException | None, float]:
         started = time.perf_counter()
-        item: ReviewItem | None = None
         try:
-            record = load_case_record(conn, case.parameter_target)
-            if manifest.blind_before is not None:
-                record = paramdb.blind_record(record, manifest.blind_before)
-            if run_case is not None:
-                item = run_case(wf_cfg, tracer, record, case, manifest.as_of)
-            else:
-                item = run_parameter(
-                    wf_cfg, tracer, record, manifest.as_of,
-                    force=True, parameter_ref=case.parameter_target, enqueue=False,
-                )
-            result = score_item(case, item, constants.get(case.country.upper()))
-        except Exception as exc:  # score the failure, keep the run going
-            conn.rollback()
-            result = _error_result(case, exc)
+            return workflow(record, case), None, started
+        except Exception as exc:  # scored as an error result, the run goes on
+            return None, exc, started
+
+    def finish(case: GoldenCase, item: ReviewItem | None, exc: BaseException | None, started: float) -> None:
+        if exc is None and item is not None:
+            try:
+                result = score_item(case, item, constants.get(case.country.upper()))
+            except Exception as score_exc:
+                result = _error_result(case, score_exc)
+        else:
+            result = _error_result(case, exc or RuntimeError("no review item"))
         result.latency_ms = int((time.perf_counter() - started) * 1000)
         results.append(result)
         evaldb.upsert_result(
             conn, run_pk, result, item.model_dump(mode="json") if item is not None else None
         )
         if on_case_done:
-            on_case_done(index, total, case, result)
+            on_case_done(len(results), total, case, result)
+
+    def load(case: GoldenCase) -> ParameterRecord | None:
+        nonlocal started_count
+        started_count += 1
+        if on_case_start:
+            on_case_start(started_count, total, case)
+        try:
+            record = load_case_record(conn, case.parameter_target)
+            if manifest.blind_before is not None:
+                record = paramdb.blind_record(record, manifest.blind_before)
+            return record
+        except Exception as exc:
+            conn.rollback()
+            finish(case, None, exc, time.perf_counter())
+            return None
+
+    queue = list(pending)
+    with ThreadPoolExecutor(max_workers=max(1, concurrency), thread_name_prefix="eval-case") as pool:
+        in_flight: dict[Future, GoldenCase] = {}
+        try:
+            while queue or in_flight:
+                while queue and len(in_flight) < max(1, concurrency):
+                    case = queue.pop(0)
+                    record = load(case)
+                    if record is not None:
+                        in_flight[pool.submit(timed, record, case)] = case
+                if not in_flight:
+                    continue
+                done, _ = wait(in_flight, return_when=FIRST_COMPLETED)
+                for future in done:
+                    case = in_flight.pop(future)
+                    finish(case, *future.result())
+        except BaseException:
+            # Ctrl-C: drop what has not started; the cases in flight are lost
+            # (resume re-runs them) — the pool still waits for their threads.
+            pool.shutdown(wait=False, cancel_futures=True)
+            raise
 
     if not manifest.model.startswith("mock") and pending:
         if _attach_impact(results, wf_cfg):

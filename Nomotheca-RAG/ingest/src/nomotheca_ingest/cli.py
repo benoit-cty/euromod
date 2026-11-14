@@ -382,17 +382,68 @@ EMBEDDING_BUILD_LOCK_KEY = 0x656D6264  # "embd"
 _embedding_lock_conn: psycopg.Connection | None = None
 
 
-def _hold_embedding_build_lock(database_url: str) -> None:
+#: Seconds between two tries of the lock while another build holds it.
+EMBEDDING_LOCK_POLL_SECONDS = 5.0
+
+
+def embedding_lock_application_name() -> str:
+    """How this build's lock connection names itself in ``pg_stat_activity``,
+    so a waiting build can say who it waits for: the worker job it runs under
+    (``WORKER_JOB_ID``; a scout build inherits its workflow/eval job's), else
+    the host process."""
+    job = os.environ.get("WORKER_JOB_ID")
+    where = f"job #{job}" if job else f"pid {os.getpid()} on {os.uname().nodename}"
+    return f"embeddings build ({where})"[:63]  # NAMEDATALEN - 1
+
+
+def _embedding_lock_holder(conn: psycopg.Connection) -> str:
+    """Describe the session holding the build lock (empty when none does)."""
+    row = conn.execute(
+        """
+        SELECT a.application_name, host(a.client_addr), a.backend_start
+          FROM pg_locks l
+          JOIN pg_stat_activity a ON a.pid = l.pid
+         WHERE l.locktype = 'advisory' AND l.granted
+           AND l.classid = 0 AND l.objid = %s AND l.objsubid = 1
+        """,
+        (EMBEDDING_BUILD_LOCK_KEY,),
+    ).fetchone()
+    if row is None:
+        return ""
+    name, addr, since = row
+    who = name or f"a connection from {addr or 'an unknown host'}"
+    return f"{who}, since {since:%H:%M:%S %Z}" if since else who
+
+
+def _hold_embedding_build_lock(database_url: str, progress_json: bool = False) -> None:
     """Block until no other ``embeddings build`` runs, then hold the lock for
-    the life of this process (released when its connection closes)."""
+    the life of this process (released when its connection closes).
+
+    While it waits it says so — on stderr, and as a ``phase: waiting``
+    progress line under ``--progress-json`` naming the holder, so the worker's
+    job row reads "waiting" rather than "running". It polls rather than
+    blocking in ``pg_advisory_lock`` so a change of holder is reported too.
+    """
     global _embedding_lock_conn  # noqa: PLW0603 - one lock per CLI process
     if _embedding_lock_conn is not None:
         return
-    conn = psycopg.connect(database_url, autocommit=True)
-    acquired = conn.execute("SELECT pg_try_advisory_lock(%s)", (EMBEDDING_BUILD_LOCK_KEY,)).fetchone()[0]
-    if not acquired:
-        typer.echo("waiting for another embeddings build to finish (one at a time on the GPU)…", err=True)
-        conn.execute("SELECT pg_advisory_lock(%s)", (EMBEDDING_BUILD_LOCK_KEY,))
+    conn = psycopg.connect(database_url, autocommit=True, application_name=embedding_lock_application_name())
+    reported = None
+    waited = False
+    while not conn.execute("SELECT pg_try_advisory_lock(%s)", (EMBEDDING_BUILD_LOCK_KEY,)).fetchone()[0]:
+        holder = _embedding_lock_holder(conn)
+        if holder != reported:
+            detail = f"waiting for the GPU: another embeddings build holds it — {holder or 'just released'}"
+            typer.echo(detail + "…", err=True)
+            if progress_json:
+                _emit_json_progress({"task": "embeddings", "phase": "waiting", "detail": detail})
+            reported = holder
+        waited = True
+        time.sleep(EMBEDDING_LOCK_POLL_SECONDS)
+    if waited:
+        typer.echo("embeddings build lock acquired", err=True)
+        if progress_json:
+            _emit_json_progress({"task": "embeddings", "phase": "starting", "detail": "lock acquired, loading model"})
     _embedding_lock_conn = conn
 
 
@@ -481,7 +532,7 @@ def build_chunk_embeddings(
         # cache-miss build inside a workflow/eval job, a hand-run build): two
         # BGE-M3 copies overflow the GPU next to the worker's encode lane, and
         # both would embed the same backlog.
-        _hold_embedding_build_lock(database_url)
+        _hold_embedding_build_lock(database_url, progress_json)
     embedding_backend = (
         _DryRunEmbeddingBackend()
         if dry_run
