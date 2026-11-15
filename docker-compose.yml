@@ -13,6 +13,10 @@
 #   docker exec -i nomotheca-legislation-db psql -U jrc -d legislation < Nomotheca-RAG/db/demo_queries.sql
 #   docker compose down -v        resets everything (schema is re-applied on next up)
 #
+# Podman: `podman-compose up -d`, and `podman-compose --profile gpu-cdi up -d` for
+# the GPU worker (CDI) — see docs/podman.md. Images are fully qualified (docker.io/…)
+# and bind mounts carry `z` (SELinux relabel) for Podman; Docker ignores both.
+#
 # The worker is the only container that holds provider keys: they come from the
 # repo-root .env (env_file), never from this file. It needs outbound internet
 # (legislation sources, LLM APIs, the Hugging Face hub for BGE-M3 on first run).
@@ -49,7 +53,7 @@ x-worker: &worker
 
 services:
   db:
-    image: pgvector/pgvector:pg17
+    image: docker.io/pgvector/pgvector:pg17
     container_name: nomotheca-legislation-db
     environment:
       POSTGRES_DB: legislation
@@ -58,10 +62,10 @@ services:
     ports:
       - "5434:5432"   # 5434 on the host to avoid clashing with a local PostgreSQL
     volumes:
-      - ./Nomotheca-RAG/db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
-      - ./Nomotheca-RAG/db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
-      - ./Nomotheca-RAG/db/create_phoenix_db.sql:/docker-entrypoint-initdb.d/03_create_phoenix_db.sql:ro
-      - ./Nomergon-worker/db/ops_schema.sql:/docker-entrypoint-initdb.d/04_ops_schema.sql:ro
+      - ./Nomotheca-RAG/db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro,z
+      - ./Nomotheca-RAG/db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro,z
+      - ./Nomotheca-RAG/db/create_phoenix_db.sql:/docker-entrypoint-initdb.d/03_create_phoenix_db.sql:ro,z
+      - ./Nomergon-worker/db/ops_schema.sql:/docker-entrypoint-initdb.d/04_ops_schema.sql:ro,z
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U jrc -d legislation"]
@@ -73,7 +77,7 @@ services:
     restart: unless-stopped
 
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: docker.io/dpage/pgadmin4:latest
     container_name: nomos-pgadmin
     depends_on:
       db:
@@ -87,8 +91,8 @@ services:
     ports:
       - "5050:80"
     volumes:
-      - ./Nomotheca-RAG/db/pgadmin/servers.json:/pgadmin4/servers.json:ro
-      - ./Nomotheca-RAG/db/pgadmin/pgpass:/pgadmin4/pgpass:ro
+      - ./Nomotheca-RAG/db/pgadmin/servers.json:/pgadmin4/servers.json:ro,z
+      - ./Nomotheca-RAG/db/pgadmin/pgpass:/pgadmin4/pgpass:ro,z
       - pgadmin-data:/var/lib/pgadmin
     restart: unless-stopped
 
@@ -97,7 +101,7 @@ services:
   # Instrument via OpenTelemetry: OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:6006
   # (HTTP) or localhost:4317 (gRPC). Storage is PostgreSQL in the shared db service.
   phoenix:
-    image: arizephoenix/phoenix:latest
+    image: docker.io/arizephoenix/phoenix:latest
     container_name: nomoscope-phoenix
     depends_on:
       db:
@@ -137,6 +141,21 @@ services:
     image: nomergon-worker-cpu
     container_name: nomergon-worker-cpu
     profiles: [cpu]
+
+  # The GPU worker through CDI (Container Device Interface) instead of a device
+  # reservation: what Podman uses (`podman-compose --profile gpu-cdi up -d`, see
+  # docs/podman.md); Docker ≥ 25 with CDI enabled can use it too. Needs the CDI
+  # spec of the host: `sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml`
+  # (recent toolkits keep /var/run/cdi/nvidia.yaml current on their own).
+  worker-cdi:
+    <<: *worker
+    container_name: nomergon-worker-cdi
+    profiles: [gpu-cdi]
+    devices:
+      - nvidia.com/gpu=all
+    # SELinux hosts (Fedora/RHEL) block GPU device access from a labelled container.
+    security_opt:
+      - label=disable
 
 volumes:
   pgdata:

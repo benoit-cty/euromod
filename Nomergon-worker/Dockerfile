@@ -9,7 +9,7 @@
 # when the compose service reserves a GPU. cpu: the CPU-only torch wheel, no
 # nvidia-* libraries (~4 GB less to download and extract). Chromium is installed for the Légifrance
 # tier-3 fallback (ADR 0002).
-FROM python:3.13-slim-bookworm
+FROM docker.io/library/python:3.13-slim-bookworm
 
 # gpu or cpu: the extra of Nomergon-worker/pyproject.toml that picks the torch build.
 ARG WORKER_VARIANT=gpu

@@ -40,6 +40,8 @@ docker compose down -v        # full reset (schema re-applied on next up)
 docker compose logs -f worker # what the worker is doing; `nomergon status` for workers + models
 ```
 
+**Podman** works too ([docs/podman.md](docs/podman.md)): `podman-compose`, and the GPU worker is the CDI service `worker-cdi` (profile `gpu-cdi`, container `nomergon-worker-cdi`); the Makefile picks Podman when `docker` is absent (`ENGINE=podman` to force). Keep image names fully qualified (`docker.io/…`) and bind mounts `:ro,z` in the compose file — Docker ignores both, Podman needs them.
+
 The worker needs the params and eval schemas too (`nomoscope-workflow init-param-db`, `nomokrisis-eval init-db`, idempotent). Roles for a shared deployment are in `Nomergon-worker/db/roles.sql` (worker role, `nomos_reviewer` group, one login per analyst; the dev stack keeps the single `jrc` superuser).
 
 Postgres is on host port **5434** (not 5432, to avoid clashing with a local PG). Default DB URL: `postgresql://jrc:jrc@localhost:5434/legislation`. pgAdmin admin@euromod.eu / admin.

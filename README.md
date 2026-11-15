@@ -66,6 +66,10 @@ country=FR year=2025`, `cd Nomoscope-agentic-workflow/ui && npm install && npm r
 tauri dev` (WSL: prefix `LIBGL_ALWAYS_SOFTWARE=1`), `nomergon submit translate`,
 `nomergon submit embed`.
 
+No Docker? The same `make` targets run on **Podman** (picked automatically when
+`docker` is absent, or `ENGINE=podman`); the GPU worker is then the CDI service
+`worker-cdi`. See [docs/podman.md](docs/podman.md).
+
 ## Backup and restore
 
 All persistent state lives in the one Postgres 17 + pgvector container (`nomotheca-legislation-db`, port 5434), which holds two databases:
