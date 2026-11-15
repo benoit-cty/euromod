@@ -15,7 +15,7 @@ from .schema import (
     start_of_year_as_of,
 )
 
-PROMPT_VERSION = "0.13.1"
+PROMPT_VERSION = "0.14.0"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -63,6 +63,17 @@ Rules:
   typically an implementing act published mid-year that sets the year's amounts, often
   retroactively («à compter du 1er janvier 2025»). valid_from is then the date the text says the
   value applies from, else the version's start.
+- CONSOLIDATED TEXT OVER AMENDING ACTS. An amending provision rewrites an article of another act
+  («Pakeisti 17 straipsnio 1 dalį ir ją išdėstyti taip: …», «L'article L. 241-3 est ainsi
+  modifié», «Artikel 22a wordt als volgt gewijzigd», «Se modifica el artículo 66»). Its text
+  stays "in force" as an act forever, yet only states the amended article as of that
+  amendment: a later amendment may have changed the figure since. When the consolidated
+  article itself is among the extracts, quote the consolidated article. Quote an amending
+  provision only when it enters into force in the year before the reference date or later (it
+  is then the latest wording). For an older amending provision with no consolidated article in
+  view, return found=false and name the consolidated article in missing_sources
+  («Lietuvos Respublikos piniginės socialinės paramos nepasiturintiems gyventojams įstatymo
+  17 straipsnis») — it is looked up and the search retried.
 - Return found=false ONLY when no extract states a value for the described concept in force on the
   reference date (or, as above, later in the system year). Never guess a value that is not present in the extracts.
 - DERIVATION, used sparingly: when NO extract states the value itself but the extracts state
@@ -124,6 +135,16 @@ each producing one boolean (true = the check passes):
    to the income year (e.g. "la contribution mentionnée au I de l'article 224 … due au titre
    de l'imposition des revenus de l'année N") each prove the vintage regardless of enactment
    date — never require the value and the year to appear in a single extract.
+   SUPERSEDED AMENDMENT (any temporal basis): when the quoted extract is an AMENDING provision —
+   it rewrites an article of another act («Pakeisti … straipsnį ir jį išdėstyti taip»,
+   «est ainsi modifié», «wordt als volgt gewijzigd», «Se modifica») — whose version entered
+   into force before 1 January of the year before the reference date, the figure is the
+   amended article's wording as of that old amendment, and a later amendment may have changed
+   it: fail the check, and name in the issue the consolidated article the proposal should cite
+   instead. When the consolidated version of that same article is among the extracts and
+   states a different figure, the consolidated article wins: fail the check too. This does not
+   apply to the income-year finance-act articles above, nor to an amending provision entering
+   into force in the year before the reference date or later.
 3. values_sane — units plausible (rates in [0,1] for unit "/1", percentage points for "/100"), bracket thresholds strictly
    ascending, no absurd magnitude versus the current value.
 
@@ -155,6 +176,46 @@ def _hits_block(hits: list[RetrievalHit]) -> str:
             f"{hit.content}"
         )
     return "\n\n---\n\n".join(parts)
+
+
+#: Hits in the list on purpose, not by rank: a citation the record names, an
+#: article a missing source, a cross-reference, an implementing act or a
+#: same-act reference located (all `located`), a version entering into force
+#: later in the system year, a sibling chunk completing an article. Dropped to
+#: fit a context window only once every ranked hit is gone.
+_UNRANKED = frozenset({"citation", "located", "later_in_year", "sibling"})
+_HIT_SEPARATOR = "\n\n---\n\n"
+
+
+def fit_hits(
+    hits: list[RetrievalHit], budget_chars: int, keep: frozenset[str] | set[str] = frozenset()
+) -> list[RetrievalHit]:
+    """The hits whose rendering fits `budget_chars`, in their original order.
+
+    Dropped first: the ranked hits (hybrid/fts/vector), lowest rank-fusion
+    score first — the tail of the k ranked hits, the least likely to state the
+    value; then, as a last resort, the `_UNRANKED` hits from the end of the
+    list. Never dropped: the chunks in `keep` (the chunks a proposal cites,
+    which its critique must see). A prompt that fits is returned unchanged.
+    """
+    sizes = {id(h): len(_hits_block([h])) + len(_HIT_SEPARATOR) for h in hits}
+    total = sum(sizes.values())
+    if total <= budget_chars:
+        return hits
+    droppable = [h for h in hits if h.chunk_id not in keep]
+    ranked = sorted(
+        (h for h in droppable if h.method not in _UNRANKED),
+        key=lambda h: h.score if h.score is not None else float("-inf"),
+    )
+    ranked_ids = {id(h) for h in ranked}
+    order = ranked + [h for h in reversed(droppable) if id(h) not in ranked_ids]
+    dropped: set[int] = set()
+    for hit in order:
+        if total <= budget_chars:
+            break
+        dropped.add(id(hit))
+        total -= sizes[id(hit)]
+    return [h for h in hits if id(h) not in dropped]
 
 
 def _parameter_block(record: ParameterRecord, as_of: date) -> str:

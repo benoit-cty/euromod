@@ -8,6 +8,7 @@ reaches this factory.
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from datetime import date
@@ -18,6 +19,8 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 from . import prompts
 from .schema import CritiqueFindings, ParameterRecord, ProposalDraft, RetrievalHit
+
+log = logging.getLogger(__name__)
 
 ANTHROPIC_MAX_TOKENS = 8000
 
@@ -39,6 +42,60 @@ def uses_responses_api(model: str) -> bool:
     return bool(_AZURE_RESPONSES_DEPLOYMENT.match(deployment))
 
 
+#: Output cap sent to OpenRouter. Without one, a provider budgets the
+#: prompt against window − ITS OWN default output reservation: in the
+#: 14 Nov 2026 LT benchmark, OpenRouter fell back from a rate-limited Groq to
+#: GMICloud (max output 176 947 tokens), which refused ~88k-token MiniMax M2.7
+#: prompts as «context window exceeds limit» while Groq had taken 128k ones —
+#: 14 of 234 cases crashed. The cap also stops a runaway answer: one MiniMax
+#: call ran to 131 072 output tokens; 99 % stay under 7 740.
+ROUTED_MAX_TOKENS = 16_384
+
+#: Context windows (tokens) of the models a full retrieval can outgrow, keyed
+#: by the name after the provider prefix; for a router, the smallest window
+#: among the providers it may route to. A model not listed is never trimmed
+#: (the Azure GPT deployments have room for every prompt the pipeline builds).
+CONTEXT_WINDOWS: dict[str, int] = {
+    "minimax/minimax-m2.7": 196_608,
+    "mistralai/mistral-small-3.2-24b-instruct": 128_000,
+}
+
+#: Characters per prompt token, on the safe side: MiniMax M2.7 measured
+#: ~2.4 on Lithuanian law with the JSON parameter block (Phoenix, 14 Nov 2026).
+CHARS_PER_TOKEN = 2.0
+#: Headroom for the tool schema and message framing the request adds.
+PROMPT_MARGIN_TOKENS = 4_096
+
+
+def max_output_tokens(model: str) -> int | None:
+    """The output cap sent with every request to `model`, if any."""
+    provider = model.partition("/")[0]
+    if provider == "anthropic":
+        return ANTHROPIC_MAX_TOKENS
+    if provider == "openrouter":
+        return ROUTED_MAX_TOKENS
+    return None
+
+
+def prompt_budget_chars(model: str) -> int | None:
+    """How many characters of system + user prompt fit `model`'s window, or
+    None when the model has no known window to respect."""
+    window = CONTEXT_WINDOWS.get(model.partition("/")[2])
+    if window is None:
+        return None
+    room = window - (max_output_tokens(model) or 0) - PROMPT_MARGIN_TOKENS
+    return int(room * CHARS_PER_TOKEN)
+
+
+def _fitted(model: str, step: str, before: list[RetrievalHit], after: list[RetrievalHit]):
+    if len(after) < len(before):
+        log.warning(
+            "%s: %d of %d retrieved chunks dropped to fit %s's context window",
+            step, len(before) - len(after), len(before), model,
+        )
+    return after
+
+
 def model_settings(model: str, temperature: float | None = None) -> ModelSettings:
     """The request settings every LLM call uses, in one place.
 
@@ -48,8 +105,8 @@ def model_settings(model: str, temperature: float | None = None) -> ModelSetting
     settings: ModelSettings = {}
     if temperature is not None and not uses_responses_api(model):
         settings["temperature"] = temperature
-    if model.partition("/")[0] == "anthropic":
-        settings["max_tokens"] = ANTHROPIC_MAX_TOKENS
+    if (cap := max_output_tokens(model)) is not None:
+        settings["max_tokens"] = cap
     return settings
 
 
@@ -152,6 +209,10 @@ def propose_with_llm(
     feedback: str | None = None,
 ) -> ProposalDraft:
     """Proposal step: structured output straight into the ProposalDraft schema."""
+    budget = prompt_budget_chars(model)
+    if budget is not None:
+        fixed = len(prompts.PROPOSAL_SYSTEM) + len(prompts.build_proposal_user(record, as_of, [], feedback))
+        hits = _fitted(model, "propose", hits, prompts.fit_hits(hits, budget - fixed))
     return run_agent(
         model,
         prompts.PROPOSAL_SYSTEM,
@@ -170,6 +231,15 @@ def critique_with_llm(
     mechanical_notes: list[str] | None = None,
 ) -> CritiqueFindings:
     """LLM critique pass (complements the mechanical checks in pipeline.py)."""
+    budget = prompt_budget_chars(model)
+    if budget is not None:
+        fixed = len(prompts.CRITIQUE_SYSTEM) + len(
+            prompts.build_critique_user(record, as_of, draft, [], mechanical_notes)
+        )
+        cited = {draft.citation_chunk_id, *(op.citation_chunk_id for op in draft.operands or [])}
+        hits = _fitted(
+            model, "critique", hits, prompts.fit_hits(hits, budget - fixed, keep=cited - {None})
+        )
     return run_agent(
         model,
         prompts.CRITIQUE_SYSTEM,
