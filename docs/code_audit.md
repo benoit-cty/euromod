@@ -106,14 +106,14 @@ Suggested fixes, in order of value:
 - **Config loading is not one `load_config()`** (medium). There are three dotenv loaders (workflow, eval, worker). Ingest and the MCP server have none. Five environment names address the same database: `WORKFLOW_`, `EVAL_`, `WORKER_`, `EUROMOD_DATABASE_URL` and bare `DATABASE_URL`. `EUROMOD_DATABASE_URL` is not in `.env.example`.
 - **Defaults disagree** (medium). `WORKFLOW_MODEL` defaults to `mock/extractor` in the workflow and to `""` in the eval and the worker. The embedding model id defaults to 99 in `config.py` and to 1 in six other places.
 - **Two environment variables are read at import**, before any `.env` is loaded, so setting them in `.env` has no effect: `WORKFLOW_SCOUT_EMBED_TIMEOUT` (`scout.py:46`) and `WORKFLOW_PROGRESS` (`tracing.py:31`). *By reading.*
-- **The eval and chat reach into private names** (medium). `pipeline._extract_states`, `_current_value`, `_derived_refs`, `_retrieval_as_of` are imported by the eval; `scout._web_search_unavailable`, `_tavily_search`, `_known_instruments` by `chat.py:331-342`. They are public API under private names.
+- **Fixed** — the eval imports `routing.derived_refs`, `derivation.extract_states`, `temporal.retrieval_as_of`; chat uses `scout.web_search` / `scout.known_instruments`. — **The eval and chat reach into private names** (medium). `pipeline._extract_states`, `_current_value`, `_derived_refs`, `_retrieval_as_of` are imported by the eval; `scout._web_search_unavailable`, `_tavily_search`, `_known_instruments` by `chat.py:331-342`. They are public API under private names.
 
 ### 2.3 Schemas
 
 - **Two migration styles and no version tracking** (medium). `Nomotheca-RAG/db/schema.sql` is non-idempotent and applied only by initdb, with hand-run files under `db/migrations/`. The other three schemas are idempotent files with `ALTER … IF NOT EXISTS` inlined.
 - **Schema application is a side effect of ordinary commands** (medium). `paramdb.apply_schema` runs inside `ingest-params`, `curate-params`, `ingest-openfisca`, `match-openfisca` and `translate-params` (`nomoscope_workflow/cli.py:324, 347, 373, 406, 453`). Each run drops and re-adds a constraint and replaces the `SECURITY DEFINER` functions. Under `roles.sql`, where the worker has DML only, this would fail. *By reading.*
 - **`seed.sql` mixes required reference rows with a demo corpus** (medium): Belgium/Justel, the placeholder model 99 and a hand-written CGI art. 197 sit in every fresh database (`Nomotheca-RAG/db/seed.sql:96-298`). Split into `reference.sql` and an opt-in `demo.sql`.
-- **The KPI summary is defined in Python and in SQL** (medium): `nomokrisis_eval/runner.py:461-558` and the views in `db/eval_schema.sql:99-225`, with a "keep the two in step" comment. `euromod_discrepancy` is in neither.
+- **Fixed** — both count `euromod_discrepancy` and FTS-only cases; a live test keeps the Python summary and `eval.run_summary` in step. — **The KPI summary is defined in Python and in SQL** (medium): `nomokrisis_eval/runner.py:461-558` and the views in `db/eval_schema.sql:99-225`, with a "keep the two in step" comment. `euromod_discrepancy` is in neither.
 
 ### 2.4 Tooling
 
@@ -184,7 +184,7 @@ Suggested fixes, in order of value:
 | medium | Cursor boilerplate about 17 times; the "skip seen, wrap as located, stop at cap" loop six times; the `rsplit("art. ")` idiom four times. | `retrieval.py`, `scout.py:915-939` |
 | medium | Scope, language and query vector are derived again at each entry point. | `pipeline.py:565-567`, `scout.py:901-904`, `retrieval.py:313`, `chat.py:250, 279` |
 | medium | The scout has two ingest loops and two subprocess launchers; `query_encoder._start` and `_start_reranker` are copies. | `scout.py:535-551, 759-774, 853-874`, `query_encoder.py:114-211` |
-| medium | Tavily access and the 432 latch are duplicated between scout and chat, and both sniff `"432" in str(exc)`. | `scout.py:735-744`, `chat.py:331-342` |
+| medium | Tavily access and the 432 latch are duplicated between scout and chat, and both sniff `"432" in str(exc)`. **Fixed**: one `scout.web_search` with one latch keyed on the HTTP status (`WebSearchUnavailable`), used by discovery, guidance search and chat. | `scout.py:735-744`, `chat.py:331-342` |
 | low | `next(h for h in hits if h.chunk_id == x)` eight times; half-up quantisation three times; two `connect()` helpers with different row factories; `critique` opens up to five connections per call. | `pipeline.py`, `paramdb.py:53`, `retrieval.py:185` |
 
 ### Size
@@ -228,10 +228,10 @@ Suggested fixes, in order of value:
 
 ### Missing factorization
 
-- **The case-id rule exists four times and one copy disagrees** (medium): `build_dataset.py:143-148`, `openfisca_golden.py:506`, `curated_golden.py:207-212`, `openfisca_golden.py:644-652`. For an OpenFisca group entry without an explicit `id`, the stale draft would never be retired; the one such entry today sets `id`.
-- **The two golden builders duplicate their second half** (medium): record loading, the `corpus_available` override, label drafting, case construction and the "ground truth changed" warning. `curated_golden.py:51-58` imports five private helpers from `openfisca_golden`.
-- **`embedding_eval.py` repeats the candidate join three times** and has drifted from production (see 2.1).
-- **Low**: `_git_commit` twice; `GROUP_PREFIX` twice; the `--verbose` and `-j` option blocks three times; the 35-column `upsert_result` written out three times while `details` already stores the full result (`db.py:117-215`).
+- **Fixed** (`golden_drafting.golden_case_id`/`entry_case_id`) — **The case-id rule exists four times and one copy disagrees** (medium): `build_dataset.py:143-148`, `openfisca_golden.py:506`, `curated_golden.py:207-212`, `openfisca_golden.py:644-652`. For an OpenFisca group entry without an explicit `id`, the stale draft would never be retired; the one such entry today sets `id`.
+- **Fixed** (one public `golden_drafting` module; output byte-identical on the 115 live entries) — **The two golden builders duplicate their second half** (medium): record loading, the `corpus_available` override, label drafting, case construction and the "ground truth changed" warning. `curated_golden.py:51-58` imports five private helpers from `openfisca_golden`.
+- **Fixed** — **`embedding_eval.py` repeats the candidate join three times** and has drifted from production (see 2.1). One `_CANDIDATE_CTE` following `search_chunks`' live-version rule; vector leg through `search_chunks`.
+- **Fixed** — **Low**: `_git_commit` twice; `GROUP_PREFIX` twice; the `--verbose` and `-j` option blocks three times; the 35-column `upsert_result` written out three times while `details` already stores the full result (`db.py:117-215`).
 
 ### Size
 
@@ -243,19 +243,19 @@ Suggested fixes, in order of value:
 | `execute_run` | `runner.py:204-321` | 118 |
 | `run_embedding_eval` | `embedding_eval.py:183-281` | 99 |
 
-`cli.py` (1 182 lines, 22 commands) splits into golden, runs and embeddings command modules. `openfisca_golden.py` mixes corpus readers, `db_constants` and `route_against_current` (used by three other modules), the drafter and stale-case retirement. `runner.py` holds both execution and summarisation.
+**Fixed**: `cli.py` is a thin entry point over `commands/{golden,runs,embeddings}.py`; `parameter_store.py` holds `db_constants`, `route_against_current`, `load_case_record`; summarisation moved to `summary.py`. Original: `cli.py` (1 182 lines, 22 commands) splits into golden, runs and embeddings command modules. `openfisca_golden.py` mixes corpus readers, `db_constants` and `route_against_current` (used by three other modules), the drafter and stale-case retirement. `runner.py` holds both execution and summarisation.
 
 ### Design
 
-- **`EVAL_VERSION` is still `"0.1.0"`** (medium) while `scoring.py` has changed on eight dates, including the tolerance change. `eval.runs.eval_version` cannot tell which scoring rules produced a row. Bump it, or store a hash of `scoring.py`.
-- **Business logic in command functions** (low): country target enumeration SQL in `cli.py:206-211`, the golden-hash drift check in `cli.py:660-666`.
+- **Fixed** (`0.2.0+scoring.<sha256[:8] of scoring.py>` recorded per run) — **`EVAL_VERSION` is still `"0.1.0"`** (medium) while `scoring.py` has changed on eight dates, including the tolerance change. `eval.runs.eval_version` cannot tell which scoring rules produced a row. Bump it, or store a hash of `scoring.py`.
+- **Fixed** (`parameter_store.country_targets`, `runner.golden_set_drift`) — **Business logic in command functions** (low): country target enumeration SQL in `cli.py:206-211`, the golden-hash drift check in `cli.py:660-666`.
 - The `-j` loop in `execute_run` is sound in itself: everything touching the connection stays on the main thread. The hazards are in what the threads call (D4, D5).
 
 ### Dead code
 
-- **The retired file-based golden set is still tracked** (medium): `dataset/` (106 files), `dataset_embedding/` (10), `golden_sources/` (6). `tests/test_import_golden.py:25-26, 46, 52` reads them without a skip guard, and the worker image copies them in. `import_golden.py` (245 lines), `golden_store.restore_verdict` and the `_legacy_parameter_file` validator exist only for that one-off import.
+- **Fixed by decision**: kept as documented seed fixtures for a fresh database; `test_import_golden` skips without them; excluded from the worker image. — **The retired file-based golden set is still tracked** (medium): `dataset/` (106 files), `dataset_embedding/` (10), `golden_sources/` (6). `tests/test_import_golden.py:25-26, 46, 52` reads them without a skip guard, and the worker image copies them in. `import_golden.py` (245 lines), `golden_store.restore_verdict` and the `_legacy_parameter_file` validator exist only for that one-off import.
   - Caveat: after `docker compose down -v`, `import-golden` from these files is the only in-repo way to rebuild the golden set. Decide between "seed fixtures, documented as such" and deletion plus a dump/restore target.
-- **Low**: `runner.run_evaluation` has no caller; `Expected.legal_status` is never set or scored; run status `'failed'` is never written; `eval.embedding_cases.reviewed_*` are never used; `.gitignore` still lists `.eval_runs/`.
+- **Fixed** (deleted / a crashed run is now marked `failed` / columns dropped / `.gitignore` cleaned) — **Low**: `runner.run_evaluation` has no caller; `Expected.legal_status` is never set or scored; run status `'failed'` is never written; `eval.embedding_cases.reviewed_*` are never used; `.gitignore` still lists `.eval_runs/`.
 
 ---
 

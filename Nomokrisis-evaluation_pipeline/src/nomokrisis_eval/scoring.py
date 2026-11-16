@@ -56,7 +56,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from math import isclose
 
-from nomoscope_workflow.pipeline import _extract_states
+from nomoscope_workflow.derivation import extract_states as _extract_states
 from nomoscope_workflow.schema import Bracket, ReviewItem, Routing
 
 from .schema import CaseResult, GoldenCase

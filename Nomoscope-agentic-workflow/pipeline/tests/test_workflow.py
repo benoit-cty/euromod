@@ -1051,7 +1051,7 @@ def test_scout_ingests_a_cnav_circular_as_guidance(monkeypatch):
             guidance_queries=["circulaire Cnav 2025 plafonds ASI revalorisation"],
         ),
     )
-    monkeypatch.setattr(scout_mod, "_known_instruments", lambda cfg, ids, rules: set())
+    monkeypatch.setattr(scout_mod, "known_instruments", lambda cfg, ids, rules: set())
     monkeypatch.setattr(scout_mod, "_run_ingest_cli", lambda cfg, args, what: ran.append(args))
     monkeypatch.setattr(scout_mod, "_build_embeddings", lambda cfg: None)
 
@@ -1400,3 +1400,24 @@ def test_check_quote_is_the_one_sequence_for_every_quote():
     tidied = check_quote(hits, "a", "Le plafond est majoré de 25 % au plus", verify)
     assert tidied.status == "misquoted" and tidied.hint and "majoré de 25 %" in tidied.hint
     assert check_quote(hits, "nowhere", "absent", verify).status == "not_retrieved"
+
+
+def test_tavily_432_latches_by_status_code(monkeypatch):
+    """One latch for scout and chat, keyed on the HTTP status (code audit 4)."""
+    import httpx
+
+    from nomoscope_workflow import scout as scout_mod
+
+    calls = []
+
+    def quota_spent(api_key, query, domains):
+        calls.append(query)
+        request = httpx.Request("POST", "https://api.tavily.com/search")
+        raise httpx.HTTPStatusError("432", request=request, response=httpx.Response(432, request=request))
+
+    monkeypatch.setattr(scout_mod, "_web_search_unavailable", None)
+    monkeypatch.setattr(scout_mod, "_tavily_search", quota_spent)
+    for _ in range(2):
+        with pytest.raises(scout_mod.WebSearchUnavailable):
+            scout_mod.web_search("k", "q", [])
+    assert calls == ["q"]  # latched: no second request

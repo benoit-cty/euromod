@@ -329,18 +329,16 @@ def web_search(
         return {"error": "web search is switched off for this chat"}
     if not deps.cfg.tavily_api_key:
         return {"error": "web search is not configured on the worker (no TAVILY_API_KEY)"}
-    if scout._web_search_unavailable:
-        return {"error": scout._web_search_unavailable}
     code = _countries(deps, country)[0] if (country or deps.country) else None
     rules = scout.COUNTRY_SOURCES.get(code or "", {})
     domains = rules.get("domains", []) if official_only else []
     emit({"event": "tool", "status": "start", "tool": "web_search",
           "args": {"query": query, "country": code, "domains": domains}})
     try:
-        results = scout._tavily_search(deps.cfg.tavily_api_key, query, domains)
+        results = scout.web_search(deps.cfg.tavily_api_key, query, domains)
+    except scout.WebSearchUnavailable as exc:
+        return {"error": str(exc)}
     except Exception as exc:
-        if "432" in str(exc):
-            scout._web_search_unavailable = "web search unavailable: the Tavily plan's usage limit is exhausted (HTTP 432)"
         emit({"event": "tool", "status": "done", "tool": "web_search", "summary": f"failed: {exc}"})
         return {"error": f"web search failed: {exc}"}
 
@@ -350,7 +348,7 @@ def web_search(
         for r in results
     }
     all_ids = [i for ids in ids_by_url.values() for i in ids]
-    known = scout._known_instruments(deps.cfg, all_ids, rules) if all_ids else set()
+    known = scout.known_instruments(deps.cfg, all_ids, rules) if all_ids else set()
     out = []
     for r in results:
         url = r.get("url", "")

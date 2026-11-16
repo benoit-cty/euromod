@@ -356,7 +356,7 @@ def cases_from_golden(
     `params_conn` (tuple rows) loads parameter records through paramdb,
     `conn` (dict rows) runs the retrieval helpers.
     """
-    from nomoscope_workflow import pipeline
+    from nomoscope_workflow import temporal
 
     from .parameter_store import load_case_record
 
@@ -375,7 +375,7 @@ def cases_from_golden(
             record = load_case_record(params_conn, case.parameter_target)
             country = record.information.country
             lang = retrieval.LANG_BY_COUNTRY.get(country, "en")
-            as_of = pipeline._retrieval_as_of(record, case.as_of)
+            as_of = temporal.retrieval_as_of(record, case.as_of)
             region = regions.region_key(country, record.information.model_target)
             scope = retrieval.jurisdiction_scope(conn, country, region)
             framed = pipeline.frame_query(wf_cfg, record, case.as_of)

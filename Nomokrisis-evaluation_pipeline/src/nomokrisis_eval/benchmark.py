@@ -34,7 +34,7 @@ from datetime import date
 import psycopg
 
 from nomoscope_workflow import paramdb, retrieval
-from nomoscope_workflow.pipeline import _derived_refs
+from nomoscope_workflow.routing import derived_refs as _derived_refs
 from nomoscope_workflow.schema import (
     system_year_anchor,
     Bracket,

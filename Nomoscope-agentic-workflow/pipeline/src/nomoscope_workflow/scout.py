@@ -446,6 +446,40 @@ def merge_results(results: list["ScoutResult"]) -> "ScoutResult":
     return merged
 
 
+QUOTA_EXHAUSTED = (
+    "web search unavailable: the Tavily plan's usage limit is exhausted "
+    "(HTTP 432) — discovery runs on the model's own instrument ids and "
+    "the corpus lookup only until the quota resets or TAVILY_API_KEY changes"
+)
+
+
+class WebSearchUnavailable(RuntimeError):
+    """Web search is off for the rest of this process (Tavily quota spent)."""
+
+
+def web_search(api_key: str, query: str, domains: list[str]) -> list[dict]:
+    """Tavily search on `domains`, with the one process-wide quota latch.
+
+    HTTP 432 (plan limit spent) is recognised by status code, sets the latch
+    and raises WebSearchUnavailable; every later call raises it at once. Other
+    failures raise as they are. The scout and the RAG chat both call this —
+    until 16 Nov 2026 each had its own latch and sniffed "432" in the
+    exception text (code audit 4).
+    """
+    global _web_search_unavailable
+    import httpx  # dependency of pydantic-ai
+
+    if _web_search_unavailable:
+        raise WebSearchUnavailable(_web_search_unavailable)
+    try:
+        return _tavily_search(api_key, query, domains)
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code == 432:
+            _web_search_unavailable = QUOTA_EXHAUSTED
+            raise WebSearchUnavailable(QUOTA_EXHAUSTED) from exc
+        raise
+
+
 def _tavily_search(api_key: str, query: str, domains: list[str]) -> list[dict]:
     import httpx  # dependency of pydantic-ai
 
@@ -463,7 +497,7 @@ def _tavily_search(api_key: str, query: str, domains: list[str]) -> list[dict]:
     return response.json().get("results", [])
 
 
-def _known_instruments(cfg: WorkflowConfig, ids: list[str], rules: dict) -> set[str]:
+def known_instruments(cfg: WorkflowConfig, ids: list[str], rules: dict) -> set[str]:
     """Ids already in the legislation DB — re-ingesting them cannot add chunks.
 
     Article-level ids (FR LEGIARTI…/JORFARTI…) are stored as legal_units under
@@ -719,35 +753,28 @@ def run(
     pattern: re.Pattern = rules["id_pattern"]
     ids = [m for text in suggestion.instrument_ids for m in pattern.findall(text)]
     titles: dict[str, str] = {}  # instrument id -> best search-result title
-    global _web_search_unavailable
-    if cfg.scout == "tavily" and cfg.tavily_api_key and _web_search_unavailable:
-        result.errors.append(_web_search_unavailable)
-    elif cfg.scout == "tavily" and cfg.tavily_api_key:
+    if cfg.scout == "tavily" and cfg.tavily_api_key:
         for query in result.queries:
             try:
-                for hit in _tavily_search(cfg.tavily_api_key, query, rules["domains"]):
+                for hit in web_search(cfg.tavily_api_key, query, rules["domains"]):
                     url = hit.get("url", "")
                     result.urls.append(url)
                     for found in pattern.findall(url):
                         ids.append(found)
                         titles.setdefault(found, hit.get("title", ""))
+            except WebSearchUnavailable as exc:
+                result.errors.append(str(exc))
+                progress(f"  [scout] ✗ {exc}")
+                break
             except Exception as exc:
                 result.errors.append(f"tavily search failed: {exc}")
-                if "432" in str(exc):
-                    _web_search_unavailable = (
-                        "web search unavailable: the Tavily plan's usage limit is exhausted "
-                        "(HTTP 432) — discovery runs on the model's own instrument ids and "
-                        "the corpus lookup only until the quota resets or TAVILY_API_KEY changes"
-                    )
-                    progress(f"  [scout] ✗ {_web_search_unavailable}")
-                    break
 
     documents = _search_guidance(cfg, info.country, suggestion, result)
 
     result.candidate_ids = list(dict.fromkeys(ids))
     if len(result.candidate_ids) > 1 and titles:
         result.candidate_ids = _rank_candidates(cfg, info, result.candidate_ids, titles)
-    known = _known_instruments(cfg, result.candidate_ids, rules) | set(attempted or ())
+    known = known_instruments(cfg, result.candidate_ids, rules) | set(attempted or ())
     to_ingest = [i for i in result.candidate_ids if i not in known][: cfg.scout_max_ingest]
     if result.candidate_ids:
         progress(
@@ -816,7 +843,10 @@ def _search_guidance(
     for query in queries:
         result.queries.append(query)
         try:
-            hits = _tavily_search(cfg.tavily_api_key, query, domains)
+            hits = web_search(cfg.tavily_api_key, query, domains)
+        except WebSearchUnavailable as exc:
+            result.errors.append(str(exc))
+            break
         except Exception as exc:
             result.errors.append(f"tavily guidance search failed: {exc}")
             continue
@@ -841,7 +871,7 @@ def _ingest_guidance(
         return
     urls = [d.url for d in documents]
     result.candidate_ids += [u for u in urls if u not in result.candidate_ids]
-    known = _known_instruments(cfg, urls, {}) | attempted
+    known = known_instruments(cfg, urls, {}) | attempted
     fresh = [d for d in documents if d.url not in known][:GUIDANCE_MAX_INGEST]
     progress(
         f"  [scout] {len(documents)} guidance document(s) "
