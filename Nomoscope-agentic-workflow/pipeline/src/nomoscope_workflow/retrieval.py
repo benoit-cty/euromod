@@ -25,7 +25,7 @@ from psycopg.rows import dict_row
 
 from . import query_encoder
 from .quotes import closest_passage, quote_span, verify_extract  # noqa: F401  (re-exported)
-from .config import WorkflowConfig
+from .config import PLACEHOLDER_MODEL_ID, WorkflowConfig
 from .schema import RetrievalHit
 
 LANG_BY_COUNTRY = {"FR": "fr", "BE": "fr", "NL": "nl", "ES": "es", "IE": "en", "LT": "lt"}
@@ -229,7 +229,7 @@ def hybrid_search(
     "vector" method), ranked by the same function.
     """
     # The demo placeholder embedder (99) lives in SQL; see the module docstring.
-    if model_id == 99:
+    if model_id == PLACEHOLDER_MODEL_ID:
         qvec = "placeholder_embedding(%(q)s)"
     elif query_vector is not None:
         qvec = "%(qvec)s::halfvec(1024)"
@@ -254,7 +254,7 @@ def hybrid_search(
     # review item's retrieval trace, and the eval, record the degradation.
     if not use_fts:
         method = "vector"
-    elif model_id == 99 or query_vector is not None:
+    elif model_id == PLACEHOLDER_MODEL_ID or query_vector is not None:
         method = "hybrid"
     else:
         method = "fts"
@@ -287,7 +287,7 @@ def retrieve(
         merged[hit.chunk_id] = hit
     query_vector = (
         query_encoder.encode(query, cfg.database_url, cfg.embedding_model_id)
-        if cfg.embedding_model_id != 99
+        if cfg.embedding_model_id != PLACEHOLDER_MODEL_ID
         else None
     )
     for hit in hybrid_search(

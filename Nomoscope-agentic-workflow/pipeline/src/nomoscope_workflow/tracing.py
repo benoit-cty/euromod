@@ -28,18 +28,26 @@ _INITIALISED = False
 # anything streaming stdout (the validation UI console, a terminal) shows what
 # the run is doing during long silent stretches (model loads, LLM calls).
 # WORKFLOW_PROGRESS=0 silences it, e.g. for eval batch runs.
-_PROGRESS = os.environ.get("WORKFLOW_PROGRESS", "1").lower() not in {"0", "false", "off"}
+#: None: follow WORKFLOW_PROGRESS, read at call time (after any .env is
+#: loaded — until 16 Nov 2026 it was read at import and a .env value had no
+#: effect); True/False: set by `set_progress`.
+_PROGRESS: bool | None = None
+
+
+def progress_enabled() -> bool:
+    if _PROGRESS is not None:
+        return _PROGRESS
+    return os.environ.get("WORKFLOW_PROGRESS", "1").lower() not in {"0", "false", "off"}
 
 
 def progress(message: str) -> None:
-    if _PROGRESS:
+    if progress_enabled():
         print(message, flush=True)
 
 
 def set_progress(enabled: bool) -> None:
-    """Toggle the console step mirror at runtime (the env var only reads once at
-    import, which is too late for a caller that imports this module first —
-    nomokrisis-eval, whose batch runs print one line per case instead)."""
+    """Toggle the console step mirror at runtime (nomokrisis-eval, whose batch
+    runs print one line per case instead)."""
     global _PROGRESS
     _PROGRESS = enabled
 

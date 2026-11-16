@@ -48,6 +48,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from nomoscope_workflow import regions, retrieval
+from nomoscope_workflow.config import PLACEHOLDER_MODEL_ID
 from nomoscope_workflow.config import WorkflowConfig
 from nomoscope_workflow.schema import RetrievalHit
 
@@ -227,11 +228,11 @@ def run_embedding_eval(
                 result.ranks["fts"] = first_relevant_rank(case.expected_citations, fts_hits)
 
                 qvec = None
-                if embedding_model_id != 99:
+                if embedding_model_id != PLACEHOLDER_MODEL_ID:
                     started = time.monotonic()
                     qvec = query_encoder.encode(case.query, cfg.database_url, embedding_model_id)
                     encode_seconds.append(time.monotonic() - started)
-                if embedding_model_id == 99 or qvec is not None:
+                if embedding_model_id == PLACEHOLDER_MODEL_ID or qvec is not None:
                     vec_hits = vector_search(*common, embedding_model_id, k, qvec)
                     result.ranks["vector"] = first_relevant_rank(case.expected_citations, vec_hits)
                     hyb_hits = retrieval.hybrid_search(

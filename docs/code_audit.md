@@ -91,7 +91,7 @@ These are behaviour problems, listed first because they outrank the refactoring.
 | "Value EUROMOD holds on a date" | `pipeline.py:450-455`; `nomokrisis_eval/build_dataset.py:78-82` (byte-identical); `paramdb.py:641, 822`; `benchmark.py:79-86`; `curated_golden.py:65-70` | No | medium |
 | Units and source types | `paramdb.py:262-274`; `schema.py:85-92`; `params_schema.sql:638-646`; `ParameterEditor.svelte:15-24`; `DetailPanel.svelte:41-49` | Python ⊆ SQL only, and only with a live DB | low |
 | Default DSN literal | 5 Python sites, 1 worker constant, 2 Rust sites, about 8 Rust test sites | — | low |
-| Placeholder model id `99` | `config.py:27, 62`; `retrieval.py:260, 319`; `chat.py:245`; `scout.py:778`; `embedding_eval.py:250, 254` | — | low |
+| Placeholder model id `99` | `config.py:27, 62`; `retrieval.py:260, 319`; `chat.py:245`; `scout.py:778`; `embedding_eval.py:250, 254` | **Fixed**: `config.PLACEHOLDER_MODEL_ID` at every site | low |
 
 Suggested fixes, in order of value:
 
@@ -104,8 +104,8 @@ Suggested fixes, in order of value:
 
 - **The base package is the workflow, not ingest** (medium). Ingest imports `nomoscope_workflow.llm` and `.config` (`nomotheca_ingest/cli.py:619`, `core/translate.py:94-95`), and the workflow calls ingest by subprocess (`scout.py:546, 607`, `query_encoder.py:123, 187`). That is a runtime cycle across two mechanisms. Extracting `llm.py` and config loading into a small shared package would let the scout import `ingest_instrument` directly and remove the `EUROMOD_INGEST_DIR` / `NOMOS_PYTHON` / `.venv-cuda` discovery code.
 - **Config loading is not one `load_config()`** (medium). There are three dotenv loaders (workflow, eval, worker). Ingest and the MCP server have none. Five environment names address the same database: `WORKFLOW_`, `EVAL_`, `WORKER_`, `EUROMOD_DATABASE_URL` and bare `DATABASE_URL`. `EUROMOD_DATABASE_URL` is not in `.env.example`.
-- **Defaults disagree** (medium). `WORKFLOW_MODEL` defaults to `mock/extractor` in the workflow and to `""` in the eval and the worker. The embedding model id defaults to 99 in `config.py` and to 1 in six other places.
-- **Two environment variables are read at import**, before any `.env` is loaded, so setting them in `.env` has no effect: `WORKFLOW_SCOUT_EMBED_TIMEOUT` (`scout.py:46`) and `WORKFLOW_PROGRESS` (`tracing.py:31`). *By reading.*
+- **Fixed** — `WORKFLOW_MODEL` defaults to `mock/extractor` in the workflow, eval and worker; the embedding model id defaults to 1 everywhere (`config.DEFAULT_EMBEDDING_MODEL_ID`; `.env.example` too). — **Defaults disagree** (medium). `WORKFLOW_MODEL` defaults to `mock/extractor` in the workflow and to `""` in the eval and the worker. The embedding model id defaults to 99 in `config.py` and to 1 in six other places.
+- **Fixed** (`tracing.progress_enabled()`, `scout.embed_timeout()` read at call time) — **Two environment variables are read at import**, before any `.env` is loaded, so setting them in `.env` has no effect: `WORKFLOW_SCOUT_EMBED_TIMEOUT` (`scout.py:46`) and `WORKFLOW_PROGRESS` (`tracing.py:31`). *By reading.*
 - **Fixed** — the eval imports `routing.derived_refs`, `derivation.extract_states`, `temporal.retrieval_as_of`; chat uses `scout.web_search` / `scout.known_instruments`. — **The eval and chat reach into private names** (medium). `pipeline._extract_states`, `_current_value`, `_derived_refs`, `_retrieval_as_of` are imported by the eval; `scout._web_search_unavailable`, `_tavily_search`, `_known_instruments` by `chat.py:331-342`. They are public API under private names.
 
 ### 2.3 Schemas

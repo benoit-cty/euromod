@@ -31,7 +31,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import llm, regions, retrieval
-from .config import WorkflowConfig
+from .config import PLACEHOLDER_MODEL_ID, WorkflowConfig
 from .query_encoder import embedding_process, ingest_dir, nomos_python
 from .schema import ParameterRecord, RetrievalHit
 from .tracing import progress
@@ -43,7 +43,10 @@ INGEST_TIMEOUT = 600  # a single arrêté is seconds; a loi de finances, minutes
 # alone is ~10 minutes (roughly 20x faster when the .venv-cuda GPU environment
 # is installed). The build commits per batch, so even a timeout here keeps the
 # vectors computed so far; the retry then resumes where it stopped.
-EMBED_TIMEOUT = int(os.environ.get("WORKFLOW_SCOUT_EMBED_TIMEOUT", "1800"))
+def embed_timeout() -> int:
+    """WORKFLOW_SCOUT_EMBED_TIMEOUT, read at call time so a .env value counts
+    (it was read at import, before any .env was loaded)."""
+    return int(os.environ.get("WORKFLOW_SCOUT_EMBED_TIMEOUT", "1800"))
 
 #: Set once the web-search provider has refused for good in this process —
 #: Tavily answers HTTP 432 when the plan's usage limit is spent. Both eval runs
@@ -638,7 +641,7 @@ def _build_embeddings(cfg: WorkflowConfig) -> str | None:
         *model_args,
     )
     proc = subprocess.run(
-        spec.command, cwd=spec.cwd, env=spec.env, capture_output=True, text=True, timeout=EMBED_TIMEOUT
+        spec.command, cwd=spec.cwd, env=spec.env, capture_output=True, text=True, timeout=embed_timeout()
     )
     if proc.returncode != 0:
         return _proc_failure("embeddings build", proc)
@@ -801,16 +804,16 @@ def run(
     _ingest_guidance(cfg, info.country, documents, result, set(attempted or ()))
     if not result.candidate_ids and not result.errors:
         progress("  [scout] no candidate instrument found for the stated needs")
-    if result.ingested and cfg.embedding_model_id != 99:
+    if result.ingested and cfg.embedding_model_id != PLACEHOLDER_MODEL_ID:
         progress(
             "  [scout] embedding new chunks with BGE-M3 "
-            f"(~1 chunk/s on CPU — expect high CPU, up to {EMBED_TIMEOUT}s)…"
+            f"(~1 chunk/s on CPU — expect high CPU, up to {embed_timeout()}s)…"
         )
         started = time.monotonic()
         try:
             error = _build_embeddings(cfg)
         except subprocess.TimeoutExpired:
-            error = f"embeddings build timed out after {EMBED_TIMEOUT}s (partial vectors kept)"
+            error = f"embeddings build timed out after {embed_timeout()}s (partial vectors kept)"
         if error:
             result.errors.append(error)  # FTS still covers the new chunks
             progress(f"  [scout] ✗ {error}")

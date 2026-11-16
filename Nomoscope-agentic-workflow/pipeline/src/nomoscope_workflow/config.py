@@ -17,6 +17,15 @@ def _env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 
 
+#: The in-SQL deterministic embedder of the seed demo corpus (seed.sql's
+#: `placeholder_embedding`): queries are embedded in SQL, never by an encoder.
+PLACEHOLDER_MODEL_ID = 99
+#: The model the corpus is embedded with (BGE-M3, embedding_models.is_default).
+DEFAULT_EMBEDDING_MODEL_ID = 1
+#: The key-less, deterministic model every default falls back to.
+DEFAULT_MODEL = "mock/extractor"
+
+
 @dataclass(slots=True)
 class WorkflowConfig:
     """All runtime knobs; every field has an env-var override."""
@@ -24,7 +33,7 @@ class WorkflowConfig:
     database_url: str = ""
     model: str = ""
     critique_model: str = ""
-    embedding_model_id: int = 99
+    embedding_model_id: int = DEFAULT_EMBEDDING_MODEL_ID
     # 8 was too tight: the correct CGI art. 197 consolidation ranked #11 behind
     # amending finance-act articles that repeat the same fiscal vocabulary.
     retrieval_k: int = 15
@@ -57,9 +66,10 @@ def load_config() -> WorkflowConfig:
     )
     return WorkflowConfig(
         database_url=database_url,
-        model=_env("WORKFLOW_MODEL", "mock/extractor"),
-        critique_model=_env("WORKFLOW_CRITIQUE_MODEL", "") or _env("WORKFLOW_MODEL", "mock/extractor"),
-        embedding_model_id=int(_env("WORKFLOW_EMBEDDING_MODEL_ID", "99")),
+        model=_env("WORKFLOW_MODEL", DEFAULT_MODEL),
+        critique_model=_env("WORKFLOW_CRITIQUE_MODEL", "") or _env("WORKFLOW_MODEL", DEFAULT_MODEL),
+        # 1 (BGE-M3) like every other package; it was 99, the demo placeholder.
+        embedding_model_id=int(_env("WORKFLOW_EMBEDDING_MODEL_ID", str(DEFAULT_EMBEDDING_MODEL_ID))),
         retrieval_k=int(_env("WORKFLOW_RETRIEVAL_K", "15")),
         phoenix_endpoint=_env("PHOENIX_COLLECTOR_ENDPOINT", "http://localhost:6006"),
         phoenix_project=_env("PHOENIX_PROJECT_NAME", "nomoscope-agentic-workflow"),

@@ -48,7 +48,7 @@ from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import UsageLimits
 
 from . import llm, query_encoder, quotes, retrieval, scout
-from .config import WorkflowConfig
+from .config import PLACEHOLDER_MODEL_ID, WorkflowConfig
 
 #: Characters of a chunk handed to the model per search hit. Chunks average
 #: ~2.3k and top out at 6k; a prefix is still verbatim, and `read_article`
@@ -243,7 +243,7 @@ def search_legislation(
     if query not in deps.vectors:
         deps.vectors[query] = (
             query_encoder.encode(query, deps.cfg.database_url, deps.cfg.embedding_model_id)
-            if deps.cfg.embedding_model_id != 99
+            if deps.cfg.embedding_model_id != PLACEHOLDER_MODEL_ID
             else None
         )
     rows: list[dict[str, Any]] = []

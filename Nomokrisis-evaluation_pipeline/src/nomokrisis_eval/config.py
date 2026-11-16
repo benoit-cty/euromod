@@ -56,7 +56,7 @@ def load_eval_config() -> EvalConfig:
             _env("WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation"),
         ),
         # Every model role falls back to WORKFLOW_MODEL (see the root .env.example).
-        builder_model=_env("EVAL_BUILDER_MODEL", "") or _env("WORKFLOW_MODEL", ""),
+        builder_model=_env("EVAL_BUILDER_MODEL", "") or _env("WORKFLOW_MODEL", "mock/extractor"),
         critique_model=_env("EVAL_CRITIQUE_MODEL", ""),
         phoenix_project=_env("EVAL_PHOENIX_PROJECT", "nomokrisis-evaluation"),
     )

@@ -132,7 +132,7 @@ def load_config(repo_root: Path | None = None) -> WorkerConfig:
     load_dotenv(root / ".env")
 
     database_url = _env("WORKER_DATABASE_URL", "") or _env("WORKFLOW_DATABASE_URL", DEFAULT_DATABASE_URL)
-    models = published_models(_env("WORKFLOW_MODEL", ""), _env("WORKER_MODELS", ""))
+    models = published_models(_env("WORKFLOW_MODEL", "mock/extractor"), _env("WORKER_MODELS", ""))
     return WorkerConfig(
         repo_root=root,
         database_url=database_url,
