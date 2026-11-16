@@ -301,8 +301,10 @@ needs no model export. CUDA and CPU torch wheels cannot share one environment
 
 ```bash
 cd Nomotheca-RAG/ingest
-UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda
-UV_PROJECT_ENVIRONMENT=.venv-cuda uv run python -m nomotheca_ingest.cli embeddings build \
+# An absolute path: in the workspace a relative one resolves from the repo root.
+export UV_PROJECT_ENVIRONMENT=$PWD/.venv-cuda
+uv sync --package nomotheca-legislation-ingest --extra embeddings-cuda
+uv run python -m nomotheca_ingest.cli embeddings build \
 	--database-url postgresql://jrc:jrc@localhost:5434/legislation \
 	--backend torch \
 	--batch-size 64 \
@@ -316,7 +318,7 @@ fiscal bill drops from minutes to ~18 s. An encode batch of 16 was the fastest;
 8 gave 16.7 chunks/s and 32 or 64 fell back to ~12.5, so raise `--batch-size`
 (commit granularity) rather than `--encode-batch-size` on this card.
 
-The default `.venv` (`uv sync --extra embeddings`) keeps CPU torch + OpenVINO, so
+The workspace `.venv` (`uv sync --all-packages --extra embeddings`) keeps CPU torch + OpenVINO, so
 the Tauri UI and `scout.py` — both of which spawn `uv run --extra embeddings` —
 are unaffected.
 

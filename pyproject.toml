@@ -1,0 +1,53 @@
+# One uv workspace, one lockfile (code audit D6). The five Python packages used
+# to carry five uv.lock files that drifted apart: the tests ran pydantic-ai
+# 2.14 / openai 2.46 / transformers 4.57 while the worker image ran 2.47 / 3.17
+# / 5.0. Every package now resolves against this root's uv.lock, and the
+# worker image installs from the same file.
+#
+#   uv sync --all-packages              # everything, one .venv at the repo root
+#   cd <package> && uv run pytest       # a member's suite (uv finds the workspace)
+#
+# The repo root is a virtual workspace: it is not itself a package.
+[tool.uv.workspace]
+members = [
+  "Nomotheca-RAG/ingest",
+  "Nomoscope-agentic-workflow/pipeline",
+  "Nomokrisis-evaluation_pipeline",
+  "Nomergon-worker",
+  "mcp-server",
+]
+
+[tool.uv]
+# One environment cannot hold both torch builds: the CPU wheel (ingest
+# `embeddings`, worker `cpu`) and the CUDA 12.6 wheel (ingest
+# `embeddings-cuda`, worker `gpu`).
+conflicts = [
+  [
+    { package = "nomotheca-legislation-ingest", extra = "embeddings" },
+    { package = "nomotheca-legislation-ingest", extra = "embeddings-cuda" },
+    { package = "nomergon-worker", extra = "gpu" },
+  ],
+  [
+    { package = "nomotheca-legislation-ingest", extra = "embeddings-cuda" },
+    { package = "nomergon-worker", extra = "cpu" },
+  ],
+  [
+    { package = "nomergon-worker", extra = "gpu" },
+    { package = "nomergon-worker", extra = "cpu" },
+  ],
+]
+
+# Only torch (routed by the members' [tool.uv.sources]) may come from these
+# indexes: they also mirror common packages at stale versions, and uv's
+# first-match strategy would otherwise pin them below what other deps need.
+[[tool.uv.index]]
+name = "pytorch_cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch_cu126"
+url = "https://download.pytorch.org/whl/cu126"
+# CUDA 12.6 is the newest PyTorch channel that still ships Pascal (sm_61)
+# kernels (GTX 1080 Ti); cu128+ start at sm_75.
+explicit = true

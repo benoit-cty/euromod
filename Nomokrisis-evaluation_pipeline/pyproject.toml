@@ -24,7 +24,7 @@ test = ["pytest>=8"]
 nomokrisis-eval = "nomokrisis_eval.cli:app"
 
 [tool.uv.sources]
-nomoscope-agentic-workflow = { path = "../Nomoscope-agentic-workflow/pipeline", editable = true }
+nomoscope-agentic-workflow = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nomokrisis_eval"]

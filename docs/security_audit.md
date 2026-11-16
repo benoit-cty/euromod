@@ -247,18 +247,18 @@ Then: findings 9 to 13, and the automation below.
 
 ## Keeping dependencies up to date
 
-The project has five Python lockfiles (`uv.lock`), two `package-lock.json`, two `Cargo.lock`, three public container images and one Dockerfile. All the lockfiles are tracked in git, which is the right basis: an update is always a reviewable diff of a lockfile.
+The project has one Python lockfile (the uv workspace's root `uv.lock`; five per-package locks until 16 Nov 2026), two `package-lock.json`, two `Cargo.lock`, three public container images and one Dockerfile. All the lockfiles are tracked in git, which is the right basis: an update is always a reviewable diff of a lockfile.
 
 Nothing updates or checks them automatically today (there is no CI workflow, no Dependabot or Renovate configuration).
 
 ### By hand
 
-**Python (uv).** In each of `Nomergon-worker`, `Nomotheca-RAG/ingest`, `Nomoscope-agentic-workflow/pipeline`, `Nomokrisis-evaluation_pipeline`, `mcp-server`:
+**Python (uv).** At the repo root (one workspace, one lock):
 
 ```bash
-uv lock --upgrade                      # everything, within the ranges of pyproject.toml
+uv lock --upgrade                      # everything, within the ranges of the members' pyproject.toml
 uv lock --upgrade-package pypdf        # one package only
-uv sync && uv run pytest               # install and test
+uv sync --all-packages && make test    # install and test every package
 ```
 
 `Nomergon-worker/uv.lock` is the one the worker image is built from (`uv sync --frozen`). It resolves the three other packages as path dependencies, so it must be re-locked whenever one of them changes its dependencies. Then rebuild and recreate the worker without restarting the database:

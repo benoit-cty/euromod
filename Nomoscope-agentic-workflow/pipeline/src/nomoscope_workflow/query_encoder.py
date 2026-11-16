@@ -132,7 +132,8 @@ def embedding_process(directory: Path | None, module: str, *args: str) -> Embedd
     Otherwise it is `uv run` inside the ingest package. The GPU wheels live in
     their own environment because CUDA and CPU torch are conflicting extras in
     the ingest package: if the operator has run
-    `UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda` there,
+    `UV_PROJECT_ENVIRONMENT=$PWD/.venv-cuda uv sync --package
+    nomotheca-legislation-ingest --extra embeddings-cuda` there,
     point uv at it and BGE-M3 runs on the GPU (roughly 20x the CPU rate);
     otherwise nothing changes and the CPU/OpenVINO `.venv` is used.
     """

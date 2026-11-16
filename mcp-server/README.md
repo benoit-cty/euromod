@@ -49,7 +49,7 @@ cd ..
 docker compose up -d
 # start the worker, see Nomergon-worker/README.md
 cd mcp-server
-uv sync
+uv sync --all-packages     # the workspace (repo-root uv.lock), one .venv for every package
 uv run nomotheca-legislation-mcp
 ```
 
@@ -68,7 +68,7 @@ The old `EUROMOD_EMBEDDING_MODEL` / `EUROMOD_EMBEDDING_BACKEND` /
 ## Test and debug
 
 ```bash
-uv sync
+uv sync --all-packages     # the workspace (repo-root uv.lock), one .venv for every package
 uv run pytest
 uv run mcp dev src/nomotheca_mcp/server.py
 ```

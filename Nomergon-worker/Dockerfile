@@ -35,29 +35,33 @@ COPY --from=ghcr.io/astral-sh/uv:0.12 /uv /uvx /bin/
 
 WORKDIR /app
 
-# The three packages the worker runs, then the worker itself. Each is an
-# editable path dependency of Nomergon-worker/pyproject.toml, so one `uv sync`
-# resolves all four (torch from the index of the chosen extra).
+# The uv workspace (root pyproject.toml + its one uv.lock, the same lock the
+# test suites run on), the three packages the worker runs, the worker itself,
+# and the MCP server (a workspace member: uv reads every member's pyproject).
+# One `uv sync` of the worker package installs all four into /app/.venv (torch
+# from the index of the chosen extra).
+COPY pyproject.toml uv.lock /app/
 COPY Nomotheca-RAG/ingest /app/Nomotheca-RAG/ingest
 COPY Nomoscope-agentic-workflow/pipeline /app/Nomoscope-agentic-workflow/pipeline
 COPY Nomokrisis-evaluation_pipeline /app/Nomokrisis-evaluation_pipeline
 COPY Nomergon-worker /app/Nomergon-worker
+COPY mcp-server /app/mcp-server
 
 WORKDIR /app/Nomergon-worker
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --extra "${WORKER_VARIANT}"
+    uv sync --frozen --no-dev --package nomergon-worker --extra "${WORKER_VARIANT}"
 
 # Playwright's Chromium and its system libraries (Legifrance ELI tier 3), and
 # Firefox for contributed PDFs a portal serves to a browser only
 # (contributed.fetch_in_browser: sante.gouv.fr's Bulletin officiel).
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv run --frozen --no-dev playwright install --with-deps chromium firefox \
+    uv run --frozen --no-dev --no-sync --package nomergon-worker playwright install --with-deps chromium firefox \
     && rm -rf /var/lib/apt/lists/*
 
 # The three CLIs on PATH for `docker exec`: nomergon, nomoscope-workflow, nomokrisis-eval.
-ENV PATH="/app/Nomergon-worker/.venv/bin:${PATH}"
+ENV PATH="/app/.venv/bin:${PATH}"
 
 VOLUME ["/models"]
 
-ENTRYPOINT ["uv", "run", "--frozen", "--no-dev", "--no-sync", "nomergon"]
+ENTRYPOINT ["uv", "run", "--frozen", "--no-dev", "--no-sync", "--package", "nomergon-worker", "nomergon"]
 CMD ["serve"]

@@ -26,13 +26,14 @@ endif
 # The running worker container: the GPU one, else the CPU one.
 WORKER = $(shell $(ENGINE) ps --format '{{.Names}}' | grep -xE 'nomergon-worker(-cpu|-cdi)?' | head -n1)
 # The worker's CLIs (nomergon, nomoscope-workflow, nomokrisis-eval) live in its venv.
-BIN = /app/Nomergon-worker/.venv/bin
+BIN = /app/.venv/bin
 # Software OpenGL for the Tauri apps under WSL.
 TAURI_ENV = $(if $(shell grep -qi microsoft /proc/version 2>/dev/null && echo wsl),LIBGL_ALWAYS_SOFTWARE=1)
 
 .DEFAULT_GOAL := help
 .PHONY: help up-gpu up-cpu up down logs status jobs init-db \
-        update ui rag-ui embed translate batch stop-batch _worker
+        update ui rag-ui embed translate batch stop-batch _worker \
+        sync test test-python test-apps
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -98,6 +99,27 @@ batch: translate embed ## The nightly batch: translate, then embed (originals an
 # batch resumes where this one stopped, and no batch running is not an error.
 stop-batch: _worker ## Stop the nightly batch: cancel queued/running translate and embed jobs
 	$(ENGINE) exec $(WORKER) $(BIN)/nomergon cancel --type translate --type translate-params --type embed
+
+# --------------------------------------------------------------------- tests --
+# Every suite, on the host. Python runs on the one workspace lock (root
+# uv.lock); suites needing the stack skip their live tests when it is down.
+
+PY_PACKAGES = Nomotheca-RAG/ingest Nomoscope-agentic-workflow/pipeline \
+              Nomokrisis-evaluation_pipeline Nomergon-worker mcp-server
+
+sync: ## Install every Python package into the workspace .venv (one lock)
+	uv sync --all-packages --extra embeddings
+
+test: test-python test-apps ## Run every test suite (Python packages, both Tauri apps)
+
+test-python:
+	@set -e; for p in $(PY_PACKAGES); do echo "== $$p"; (cd "$$p" && uv run --frozen pytest -q); done
+
+test-apps:
+	cd Nomoscope-agentic-workflow/ui && npm test
+	cd Nomoscope-agentic-workflow/rag-ui && npm test
+	cd Nomoscope-agentic-workflow/ui/src-tauri && cargo test
+	cd Nomoscope-agentic-workflow/rag-ui/src-tauri && cargo test
 
 _worker:
 	@if [ -z "$(WORKER)" ]; then \

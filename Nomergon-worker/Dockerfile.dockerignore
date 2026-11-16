@@ -2,6 +2,9 @@
 # (BuildKit reads <Dockerfile>.dockerignore next to the Dockerfile).
 # Nothing that is a secret, an environment, a model cache or runtime data.
 *
+!pyproject.toml
+!uv.lock
+!mcp-server/
 !Nomotheca-RAG/ingest/
 !Nomoscope-agentic-workflow/pipeline/
 !Nomokrisis-evaluation_pipeline/

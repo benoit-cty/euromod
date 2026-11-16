@@ -21,7 +21,7 @@ Nomoscope-agentic-workflow/
 docker compose --profile gpu up -d       # repo root: legislation DB + pgAdmin + Phoenix + the worker (--profile cpu without a GPU)
 
 cd Nomoscope-agentic-workflow/pipeline
-uv sync
+uv sync --all-packages     # the workspace (repo-root uv.lock), one .venv for every package
 uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025 --model mock/extractor
                                                         # mock model — no API key needed; one run = one system year;
                                                         # from the UI the same run is a `workflow` job the worker executes

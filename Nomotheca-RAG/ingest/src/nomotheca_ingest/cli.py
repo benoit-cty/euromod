@@ -31,7 +31,6 @@ from nomotheca_ingest.core.translate import (
     build_translations,
     count_texts_needing_translation,
 )
-from nomotheca_ingest.tui import PipelineTui
 
 # Sentinel prefix for machine-readable progress lines (--progress-json). A
 # wrapping UI (the Tauri Ingest tab) matches this prefix on stdout and renders
@@ -361,7 +360,11 @@ def route(
 
 @app.command()
 def tui() -> None:
-    """Launch the interactive terminal UI for staged ingestion runs."""
+    """Launch the interactive terminal UI for staged ingestion runs (needs the `tui` extra)."""
+    try:
+        from nomotheca_ingest.tui import PipelineTui
+    except ModuleNotFoundError as exc:
+        raise typer.BadParameter("the TUI needs the tui extra: uv sync --extra tui") from exc
     PipelineTui().run()
 
 

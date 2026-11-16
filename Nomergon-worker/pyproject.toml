@@ -48,30 +48,15 @@ packages = ["src/nomergon"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 
-# gpu: torch from the CUDA 12.6 wheel index, the newest PyTorch channel that
-# still ships Pascal (sm_61) kernels (GTX 1080 Ti). The cu126 wheels run on a
-# CPU-only box too, but their nvidia-* libraries make the image ~4 GB larger,
-# hence the cpu extra. uv only honours the sources of the root project, so the
-# indexes and the path sources of the transitive packages are repeated here
-# rather than inherited from Nomotheca-RAG/ingest/pyproject.toml.
-[[tool.uv.index]]
-name = "pytorch_cu126"
-url = "https://download.pytorch.org/whl/cu126"
-explicit = true
-
-[[tool.uv.index]]
-name = "pytorch_cpu"
-url = "https://download.pytorch.org/whl/cpu"
-explicit = true
-
-[tool.uv]
-conflicts = [[{ extra = "gpu" }, { extra = "cpu" }]]
-
+# gpu: torch from the CUDA 12.6 wheel index (the indexes and the extras'
+# conflicts are declared once, in the workspace root's pyproject.toml). The
+# cu126 wheels run on a CPU-only box too, but their nvidia-* libraries make the
+# image ~4 GB larger, hence the cpu extra.
 [tool.uv.sources]
 torch = [
   { index = "pytorch_cu126", extra = "gpu" },
   { index = "pytorch_cpu", extra = "cpu" },
 ]
-nomotheca-legislation-ingest = { path = "../Nomotheca-RAG/ingest", editable = true }
-nomoscope-agentic-workflow = { path = "../Nomoscope-agentic-workflow/pipeline", editable = true }
-nomokrisis-evaluation = { path = "../Nomokrisis-evaluation_pipeline", editable = true }
+nomotheca-legislation-ingest = { workspace = true }
+nomoscope-agentic-workflow = { workspace = true }
+nomokrisis-evaluation = { workspace = true }

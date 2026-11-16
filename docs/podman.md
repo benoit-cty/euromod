@@ -84,7 +84,7 @@ Phoenix (http://localhost:6006) work unchanged: they only talk to
 | Docker (in the docs) | Podman |
 |---|---|
 | `docker compose --profile gpu up -d` | `podman-compose --profile gpu-cdi up -d` |
-| `docker compose exec worker nomergon …` | `podman exec nomergon-worker-cdi /app/Nomergon-worker/.venv/bin/nomergon …` (or `make` targets) |
+| `docker compose exec worker nomergon …` | `podman exec nomergon-worker-cdi /app/.venv/bin/nomergon …` (or `make` targets) |
 | `docker compose --profile gpu up -d --no-deps worker` (after editing `.env`) | `podman-compose --profile gpu-cdi up -d --no-deps --force-recreate worker-cdi` |
 | `docker exec -i nomotheca-legislation-db psql -U jrc -d legislation` | `podman exec -i nomotheca-legislation-db psql -U jrc -d legislation` |
 | `docker compose logs -f worker` | `podman logs -f nomergon-worker-cdi` |

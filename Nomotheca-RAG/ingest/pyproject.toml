@@ -16,13 +16,15 @@ dependencies = [
   # layout-aware toolchain: a circular's value sits in its prose, not a table.
   "pypdf>=5.0",
   "pydantic>=2.8",
-  "pytest>=9.1.1",
   "tenacity>=8.5",
-  "textual>=0.86",
   "typer>=0.12",
 ]
 
 [project.optional-dependencies]
+# `cli tui`, the interactive ingestion monitor. Not needed by the worker image.
+tui = [
+  "textual>=0.86",
+]
 embeddings = [
   "sentence-transformers[openvino]>=3.0",
   "torch>=2.13.0",
@@ -54,26 +56,8 @@ browser = [
   "playwright>=1.47",
 ]
 
-[[tool.uv.index]]
-name = "pytorch_cpu"
-url = "https://download.pytorch.org/whl/cpu"
-# Only torch (routed via [tool.uv.sources]) may come from this index: it also
-# mirrors common packages (e.g. packaging<=24.1) at stale versions, and uv's
-# first-match strategy would otherwise pin them below what other deps need.
-explicit = true
-
-[[tool.uv.index]]
-name = "pytorch_cu126"
-url = "https://download.pytorch.org/whl/cu126"
-# CUDA 12.6 is the newest PyTorch channel that still ships Pascal (sm_61)
-# kernels, which is what the GTX 1080 Ti needs; the cu128+ channels start at
-# sm_75 and CUDA 13 dropped Pascal outright. Same explicit-only rule as above.
-explicit = true
-
-[tool.uv]
-# One environment cannot hold both torch builds; uv needs the conflict declared
-# before it will resolve the extra-scoped torch sources below.
-conflicts = [[{ extra = "embeddings" }, { extra = "embeddings-cuda" }]]
+[dependency-groups]
+dev = ["pytest>=8", "textual>=0.86"]
 
 [project.scripts]
 nomotheca-ingest = "nomotheca_ingest.cli:app"
@@ -90,4 +74,4 @@ torch = [
   { index = "pytorch_cpu", extra = "embeddings" },
   { index = "pytorch_cu126", extra = "embeddings-cuda" },
 ]
-nomoscope-agentic-workflow = { path = "../../Nomoscope-agentic-workflow/pipeline", editable = true }
+nomoscope-agentic-workflow = { workspace = true }

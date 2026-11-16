@@ -9,7 +9,7 @@ See [../README.md](../README.md) for the architecture document.
 ```bash
 docker compose up -d               # repo root: legislation DB + Phoenix
 cd Nomoscope-agentic-workflow/pipeline
-uv sync
+uv sync --all-packages     # the workspace (repo-root uv.lock), one .venv for every package
 uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule 'euromod://FR/tin_fr/def_const/$tinrt_cdhr' --year 2025   # mock model, no API key needed
 uv run nomoscope-workflow run-country FR --year 2025 --limit 20   # every FR parameter in the params DB (then its bracket-schedule groups)
 uv run nomoscope-workflow queue --country FR --status pending

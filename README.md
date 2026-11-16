@@ -167,7 +167,8 @@ See [Nomoscope-agentic-workflow/README.md](Nomoscope-agentic-workflow/README.md)
 docker compose exec worker nomergon submit workflow --wait \
   --payload '{"targets": ["group:FR:tinkt_fr:tin_schedule"], "year": 2025, "model": "mock/extractor"}'
 # or, from a checkout with the stack up, directly:
-cd Nomoscope-agentic-workflow/pipeline && uv sync
+uv sync --all-packages     # one workspace, one lockfile, one .venv at the repo root
+cd Nomoscope-agentic-workflow/pipeline
 uv run nomoscope-workflow run-targets group:FR:tinkt_fr:tin_schedule --year 2025 --model mock/extractor
 cd ../ui && npm install && npm run tauri dev
 ```

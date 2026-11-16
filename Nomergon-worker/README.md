@@ -80,8 +80,8 @@ needs outbound internet at run time (legislation sources, LLM APIs, the hub).
 
 ```bash
 cd Nomergon-worker
-uv sync --extra gpu        # torch cu126 wheels (~4 GB of nvidia-* libs), run on CPU too
-uv sync --extra cpu        # or: CPU-only torch, no nvidia-* libs
+uv sync --all-packages --extra gpu   # torch cu126 wheels (~4 GB of nvidia-* libs), run on CPU too
+uv sync --all-packages --extra cpu   # or: CPU-only torch, no nvidia-* libs
 uv run nomergon init-db    # ops schema (idempotent; the worker does it at start too)
 WORKER_MODELS=mock/extractor uv run nomergon serve
 ```
