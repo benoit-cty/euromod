@@ -455,7 +455,7 @@ def test_a_pdf_url_answered_with_a_security_page_is_retried_in_a_browser(monkeyp
     """sante.gouv.fr: httpx gets «Vérification de sécurité», Firefox gets the PDF."""
     import httpx
 
-    from nomotheca_ingest.core import contributed
+    from nomotheca_ingest.core.contributed import fetch as contributed
 
     page = b"<html><title>V\xc3\xa9rification de s\xc3\xa9curit\xc3\xa9</title></html>"
     transport = httpx.MockTransport(lambda request: httpx.Response(200, content=page, headers={"content-type": "text/html"}))
@@ -476,7 +476,7 @@ def test_a_pdf_url_no_browser_can_fetch_is_refused(monkeypatch) -> None:
     """AGS: the 2025 rate PDF answered with the press-release listing page."""
     import httpx
 
-    from nomotheca_ingest.core import contributed
+    from nomotheca_ingest.core.contributed import fetch as contributed
 
     page = b"<html><title>Communiqu\xc3\xa9s de presse</title></html>"
     transport = httpx.MockTransport(lambda request: httpx.Response(200, content=page, headers={"content-type": "text/html"}))
