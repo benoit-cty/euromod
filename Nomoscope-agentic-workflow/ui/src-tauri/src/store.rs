@@ -201,10 +201,16 @@ fn read_item(client: &mut Client, item_id: &str) -> Result<Value, String> {
 }
 
 /// Read the item from the queue and compute the decision ([compute_decision]).
+///
+/// `seen_run_id` is the run the reviewer had on screen. A re-run replaces the
+/// queue item under the same id; deciding on the re-read item would sign off
+/// a proposal nobody saw, so a mismatch is refused (and the database checks
+/// the same again inside `decide_review_item`).
 #[allow(clippy::too_many_arguments)]
 pub fn prepare_decision(
     db_url: &str,
     item_id: &str,
+    seen_run_id: Option<&str>,
     action: &str,
     reviewer: &str,
     note: Option<&str>,
@@ -213,7 +219,20 @@ pub fn prepare_decision(
 ) -> Result<(Value, Value), String> {
     let mut client = connect(db_url)?;
     let item = read_item(&mut client, item_id)?;
+    check_seen_run(&item, item_id, seen_run_id)?;
     compute_decision(item, item_id, action, reviewer, note, edited_value, edited_fields)
+}
+
+/// Refuse a decision on a queue item whose run is not the one the reviewer saw.
+pub fn check_seen_run(item: &Value, item_id: &str, seen_run_id: Option<&str>) -> Result<(), String> {
+    let queued = item.get("run_id").and_then(Value::as_str);
+    match seen_run_id {
+        Some(seen) if queued != Some(seen) => Err(format!(
+            "review item {item_id} was re-run since it was opened (run {} now, {seen} on screen): reload it",
+            queued.unwrap_or("none")
+        )),
+        _ => Ok(()),
+    }
 }
 
 /// Record the decision: one call, one transaction, audit row + queue item.
@@ -300,6 +319,14 @@ pub fn today() -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_rerun_since_opening_is_refused() {
+        let item = serde_json::json!({ "run_id": "run-2" });
+        assert!(super::check_seen_run(&item, "x", Some("run-2")).is_ok());
+        let err = super::check_seen_run(&item, "x", Some("run-1")).unwrap_err();
+        assert!(err.contains("re-run since it was opened"), "{err}");
+    }
+
     use super::*;
 
     fn seed_item() -> Value {
@@ -468,8 +495,17 @@ mod tests {
         let listed = queue["items"].as_array().unwrap().iter().find(|i| i["id"] == item_id).unwrap();
         assert_eq!(listed["status"], "pending");
 
+        // a decision on a run the reviewer did not see is refused, by the UI and by the database
+        let stale = prepare_decision(&url, item_id, Some("run-0"), "accepted", "cargo-test", None, None, None);
+        assert!(stale.unwrap_err().contains("re-run since it was opened"));
+        let (stale_item, mut stale_entry) =
+            prepare_decision(&url, item_id, None, "accepted", "cargo-test", None, None, None).unwrap();
+        stale_entry["run_id"] = json!("run-0");
+        let refused = commit_decision(&url, item_id, &stale_item, &stale_entry).unwrap_err();
+        assert!(refused.contains("re-run since it was opened"), "{refused}");
+
         let (item, entry) =
-            prepare_decision(&url, item_id, "edited", "cargo-test", Some("smoke"), Some(&json!(0.25)), None).unwrap();
+            prepare_decision(&url, item_id, None, "edited", "cargo-test", Some("smoke"), Some(&json!(0.25)), None).unwrap();
         // nothing recorded yet
         let pending: String = client
             .query_one("SELECT status FROM params.review_queue WHERE item_id = $1", &[&item_id])

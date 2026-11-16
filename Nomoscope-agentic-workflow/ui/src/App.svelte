@@ -166,6 +166,8 @@
       const res = await api.saveDecision({
         db_url: config.db_url,
         item_id: selected.id,
+        // The run on screen: a decision on an item re-run since is refused.
+        run_id: selected.run_id ?? null,
         action,
         reviewer: config.reviewer,
         note: note || null,

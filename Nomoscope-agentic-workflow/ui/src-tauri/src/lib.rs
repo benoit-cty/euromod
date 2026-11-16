@@ -28,6 +28,9 @@ use serde_json::{json, Value};
 struct DecisionPayload {
     db_url: String,
     item_id: String,
+    /// The run of the item the reviewer had on screen (`item.run_id`). A
+    /// decision on an item re-run since then is refused (code audit D7).
+    run_id: Option<String>,
     action: String,
     /// Shown in the item's own `decision` block; the audit row is stamped with
     /// the server's `current_user` regardless.
@@ -160,6 +163,7 @@ async fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
         let (item, entry) = store::prepare_decision(
             &payload.db_url,
             &payload.item_id,
+            payload.run_id.as_deref(),
             &payload.action,
             &reviewer,
             payload.note.as_deref(),
@@ -174,6 +178,8 @@ async fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
                 "the params schema is missing or outdated — run `nomoscope-workflow init-param-db`"
             } else if e.contains("not in the queue") {
                 "the item is no longer in the review queue — reload it"
+            } else if e.contains("re-run since it was opened") {
+                "the parameter was re-run after you opened it — reload the queue and review the new proposal"
             } else {
                 "the database is unreachable — check it is running, then take the decision again"
             };

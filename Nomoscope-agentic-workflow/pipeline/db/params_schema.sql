@@ -455,7 +455,9 @@ CREATE INDEX IF NOT EXISTS review_queue_status_idx  ON params.review_queue (stat
 -- with the schema owner's name.
 -- Idempotent on (item_id, decided_at) exactly like the old insert; returns the
 -- audit row id, or NULL when that decision was already recorded. Raises when
--- the item does not exist, so a decision on a vanished item fails outright.
+-- the item does not exist, so a decision on a vanished item fails outright,
+-- and when the queued run is not the entry's run_id (a re-run replaced the
+-- proposal after the reviewer opened it).
 -- SECURITY DEFINER: nomos_reviewer holds EXECUTE on this and no UPDATE on the
 -- queue — a decision is the only way an analyst changes a queue row.
 CREATE OR REPLACE FUNCTION params.decide_review_item(p_item_id text, p_item jsonb, p_entry jsonb)
@@ -468,6 +470,7 @@ DECLARE
     v_action      text := p_entry ->> 'action';
     v_run_id      text := p_entry ->> 'run_id';
     v_proposal_pk bigint;
+    v_queued_run  text;
     v_decided_at  timestamptz := coalesce((p_entry ->> 'decided_at')::timestamptz,
                                           (p_entry ->> 'logged_at')::timestamptz, now());
     v_id          bigint;
@@ -475,8 +478,16 @@ BEGIN
     IF v_action IS NULL OR v_action NOT IN ('accepted', 'rejected', 'edited', 'escalated', 'needs_revision') THEN
         RAISE EXCEPTION 'decision entry has no valid action (%)', v_action;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM params.review_queue WHERE item_id = p_item_id) THEN
+    -- Lock the row: a re-run replacing it waits for this decision, or this
+    -- decision sees the re-run. Never sign off a proposal the reviewer did not
+    -- see: the entry's run_id is the run the UI decided on (code audit D7).
+    SELECT run_id INTO v_queued_run FROM params.review_queue WHERE item_id = p_item_id FOR UPDATE;
+    IF NOT FOUND THEN
         RAISE EXCEPTION 'review item % is not in the queue', p_item_id;
+    END IF;
+    IF v_queued_run IS DISTINCT FROM v_run_id THEN
+        RAISE EXCEPTION 'review item % was re-run since it was opened (run % now, % decided on): reload it',
+            p_item_id, v_queued_run, v_run_id;
     END IF;
     IF v_run_id IS NOT NULL THEN
         SELECT id INTO v_proposal_pk FROM params.proposals
