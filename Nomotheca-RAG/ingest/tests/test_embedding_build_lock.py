@@ -13,7 +13,7 @@ import time
 import psycopg
 import pytest
 
-from nomotheca_ingest import cli
+from nomotheca_ingest.cli import batch as cli
 from nomotheca_ingest.core import embeddings
 
 DB_URL = os.environ.get("EUROMOD_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation")

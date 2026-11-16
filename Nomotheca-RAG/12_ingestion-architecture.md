@@ -40,7 +40,7 @@ ingest/
         resolver.py    # (code, num, as_of) → LEGIARTI id: Moulineuse Postgres, MCP fallback
         fetcher.py     # direct-id raw JSON from git.tricoteuses.fr (id → path scheme)
         parser.py      # DILA JSON → IR: pure functions, no I/O (shared by JORF & LEGI fonds)
-    cli.py             # typer entry points
+    cli/               # typer entry points: ingest.py (acts, documents, reparse), batch.py (embeddings, translation)
     tui.py             # Textual ingestion monitor
   tests/               # parser/fetcher golden tests on inline real-payload excerpts
 ```
