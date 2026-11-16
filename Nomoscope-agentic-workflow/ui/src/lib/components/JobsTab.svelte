@@ -6,6 +6,7 @@
   // — shown as "waiting" — another embeddings build holding the GPU lock).
   import { api } from '../api.js';
   import { TERMINAL, displayStatus } from '../jobs.js';
+  import { parseTimestamp } from '../labels.js';
 
   let { dbUrl = '', active = true } = $props();
 
@@ -93,8 +94,10 @@
 
   function duration(job) {
     if (!job.started_at) return '';
-    const end = job.finished_at ? Date.parse(job.finished_at) : Date.now();
-    const s = Math.max(0, Math.round((end - Date.parse(job.started_at)) / 1000));
+    // parseTimestamp, not Date.parse: WebKit refuses Postgres' "2026-11-10 12:00:00+00".
+    const end = job.finished_at ? parseTimestamp(job.finished_at) : Date.now();
+    const s = Math.max(0, Math.round((end - parseTimestamp(job.started_at)) / 1000));
+    if (Number.isNaN(s)) return '';
     if (s < 60) return `${s}s`;
     const m = Math.floor(s / 60);
     return m < 60 ? `${m}m ${String(s % 60).padStart(2, '0')}s` : `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
