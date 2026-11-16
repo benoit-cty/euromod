@@ -7,6 +7,16 @@ pub fn connect(db_url: &str) -> Result<Client, String> {
     Client::connect(db_url, NoTls).map_err(|e| format!("DB connection failed: {}", describe(e)))
 }
 
+/// The login the app connected with: the reviewer identity everywhere
+/// (`decide_review_item`, `ops.jobs.submitted_by`, golden verdicts).
+pub fn current_user(db_url: &str) -> Result<String, String> {
+    let mut client = connect(db_url)?;
+    client
+        .query_one("SELECT current_user", &[])
+        .map_err(describe)
+        .map(|row| row.get::<_, String>(0))
+}
+
 /// `postgres::Error` displays as a bare "db error"; the server's message (a
 /// RAISE in decide_review_item, a missing relation, a refused privilege) is
 /// what the analyst needs.

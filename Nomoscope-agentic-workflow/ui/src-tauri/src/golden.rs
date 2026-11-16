@@ -67,7 +67,7 @@ fn case_row(r: &postgres::Row) -> Value {
 
 /// The parameter record's identity plus the value it holds at the case's
 /// `as_of` — the "before" the drafted expectation is the "after" of. Same
-/// columns the Parameters tab lists (db.rs::params_list), but the value in
+/// columns the Parameters tab lists (db::params::params_list), but the value in
 /// force at `as_of` rather than the newest. A `group:<id>` target has no
 /// single parameter row: it is reported as such.
 fn parameter_summary(client: &mut Client, case: &Value) -> Result<Value, String> {

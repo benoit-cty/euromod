@@ -119,7 +119,7 @@ async fn get_env_config() -> Result<Value, String> {
     let phoenix_project = std::env::var("PHOENIX_PROJECT_NAME")
         .unwrap_or_else(|_| "nomoscope-agentic-workflow".to_string());
     let url = db_url.clone();
-    let reviewer = blocking(move || db::current_user(&url)).await;
+    let reviewer = blocking(move || pg::current_user(&url)).await;
     let (reviewer, db_error) = match reviewer {
         Ok(user) => (Some(user), None),
         Err(e) => (None, Some(e)),
@@ -194,7 +194,7 @@ async fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
 #[tauri::command]
 async fn load_decisions(payload: DecisionsPayload) -> Result<Value, String> {
     let limit = payload.limit.unwrap_or(200);
-    blocking(move || db::load_decisions(&payload.db_url, limit as i64)).await
+    blocking(move || db::params::load_decisions(&payload.db_url, limit as i64)).await
 }
 
 /// Correct one metadata field of a parameter (ADR 0005). One database call
@@ -217,14 +217,14 @@ async fn edit_parameter(payload: EditPayload) -> Result<Value, String> {
 /// A parameter's metadata edit history, newest first.
 #[tauri::command]
 async fn parameter_edits(payload: TargetPayload) -> Result<Value, String> {
-    blocking(move || db::parameter_edits(&payload.db_url, &payload.model_target)).await
+    blocking(move || db::params::parameter_edits(&payload.db_url, &payload.model_target)).await
 }
 
 /// A parameter's texts and EUROMOD value history (or a schedule's members'),
 /// for the review page's hand-off prompt. Read-only.
 #[tauri::command]
 async fn parameter_context(payload: TargetPayload) -> Result<Value, String> {
-    blocking(move || db::parameter_context(&payload.db_url, &payload.model_target)).await
+    blocking(move || db::params::parameter_context(&payload.db_url, &payload.model_target)).await
 }
 
 /// Export the change set for EUROMOD — metadata edits and accepted value
@@ -259,23 +259,23 @@ async fn export_changes(app_handle: tauri::AppHandle, payload: DbPayload) -> Res
 
 #[tauri::command]
 async fn db_stats(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || db::stats(&payload.db_url)).await
+    blocking(move || db::corpus::stats(&payload.db_url)).await
 }
 
 #[tauri::command]
 async fn eval_runs(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || db::eval_runs(&payload.db_url)).await
+    blocking(move || db::eval::eval_runs(&payload.db_url)).await
 }
 
 #[tauri::command]
 async fn eval_run_detail(payload: EvalRunPayload) -> Result<Value, String> {
-    blocking(move || db::eval_run_detail(&payload.db_url, payload.run_pk)).await
+    blocking(move || db::eval::eval_run_detail(&payload.db_url, payload.run_pk)).await
 }
 
 /// Article search (`db::search`: encode on the worker, then `search_chunks`).
 #[tauri::command]
-async fn search_articles(payload: db::SearchPayload) -> Result<Value, String> {
-    blocking(move || db::search(&payload, 25)).await
+async fn search_articles(payload: db::search::SearchPayload) -> Result<Value, String> {
+    blocking(move || db::search::search(&payload, 25)).await
 }
 
 /// Cosine of each sentence against the query, one BGE-M3 batch on the
@@ -288,7 +288,7 @@ async fn score_sentences(payload: SentenceScorePayload) -> Result<Vec<f64>, Stri
     }
     let expected = payload.sentences.len();
     blocking(move || {
-        let model_id = db::default_model_id(&mut pg::connect(&payload.db_url)?)?;
+        let model_id = db::search::default_model_id(&mut pg::connect(&payload.db_url)?)?;
         let result = jobs::encode_query(&EncodePayload {
             db_url: payload.db_url,
             query: payload.query,
@@ -316,7 +316,7 @@ async fn score_sentences(payload: SentenceScorePayload) -> Result<Vec<f64>, Stri
 #[tauri::command]
 async fn search_instruments(payload: InstrumentSearchPayload) -> Result<Value, String> {
     blocking(move || {
-        db::search_instruments(
+        db::corpus::search_instruments(
             &payload.db_url,
             &payload.country,
             &payload.query,
@@ -328,17 +328,17 @@ async fn search_instruments(payload: InstrumentSearchPayload) -> Result<Value, S
 
 #[tauri::command]
 async fn params_list(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || db::params_list(&payload.db_url)).await
+    blocking(move || db::params::params_list(&payload.db_url)).await
 }
 
 #[tauri::command]
 async fn chunk_renderings(payload: ChunkPayload) -> Result<Value, String> {
-    blocking(move || db::chunk_renderings(&payload.db_url, &payload.chunk_id)).await
+    blocking(move || db::search::chunk_renderings(&payload.db_url, &payload.chunk_id)).await
 }
 
 #[tauri::command]
 async fn phoenix_projects(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || db::phoenix_projects(&payload.db_url)).await
+    blocking(move || db::phoenix::phoenix_projects(&payload.db_url)).await
 }
 
 // ---------------------------------------------------------------- jobs ----

@@ -9,14 +9,16 @@
 //! `ingest` job followed by an `embed` job, submitted by the analyst.
 //!
 //! The job channel and the article search are the review UI's own modules,
-//! compiled in from `../ui/src-tauri/src` so the two apps cannot drift.
+//! compiled in from `../ui/src-tauri/src` so the two apps cannot drift. Only
+//! what the chat uses is compiled in: the search (not the review UI's eval,
+//! params or Phoenix reads).
 
-#[allow(dead_code)]
-#[path = "../../../ui/src-tauri/src/db.rs"]
-mod db;
+// The job channel is whole: the chat does not list jobs (`list_jobs`).
 #[allow(dead_code)]
 #[path = "../../../ui/src-tauri/src/jobs.rs"]
 mod jobs;
+#[path = "../../../ui/src-tauri/src/db/search.rs"]
+mod search;
 #[path = "../../../ui/src-tauri/src/pg.rs"]
 mod pg;
 
@@ -54,7 +56,7 @@ async fn get_env_config() -> Result<Value, String> {
     let db_url = std::env::var("WORKFLOW_DATABASE_URL")
         .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
     let url = db_url.clone();
-    let user = blocking(move || db::current_user(&url)).await;
+    let user = blocking(move || pg::current_user(&url)).await;
     let (user, db_error) = match user {
         Ok(user) => (Some(user), None),
         Err(e) => (None, Some(e)),
@@ -102,13 +104,13 @@ async fn conversation_turns(payload: conversations::ConversationPayload) -> Resu
 /// Every language rendering of the version a chunk belongs to.
 #[tauri::command]
 async fn chunk_renderings(payload: ChunkPayload) -> Result<Value, String> {
-    blocking(move || db::chunk_renderings(&payload.db_url, &payload.chunk_id)).await
+    blocking(move || search::chunk_renderings(&payload.db_url, &payload.chunk_id)).await
 }
 
-/// Direct article search, no LLM: the review UI's own `db::search`.
+/// Direct article search, no LLM: the review UI's own `search::search`.
 #[tauri::command]
-async fn search_articles(payload: db::SearchPayload) -> Result<Value, String> {
-    blocking(move || db::search(&payload, 20)).await
+async fn search_articles(payload: search::SearchPayload) -> Result<Value, String> {
+    blocking(move || search::search(&payload, 20)).await
 }
 
 pub fn run() {

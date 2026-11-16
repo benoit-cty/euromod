@@ -29,7 +29,7 @@ Conversations are rows too: every turn's job carries a `conversation_id` and the
 so far, and **History** rebuilds a conversation from the caller's own `chat` jobs.
 
 The **Search** tab runs the review UI's Database-tab query directly, with no LLM. The job
-channel (`jobs.rs`) and the search SQL (`db.rs`) are the review UI's own files, compiled in
+channel (`jobs.rs`) and the search SQL (`db/search.rs`) are the review UI's own files, compiled in
 with `#[path]`, so the two apps cannot drift.
 
 ## Run
