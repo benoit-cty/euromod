@@ -68,6 +68,11 @@ def cfg(tmp_path: Path) -> WorkerConfig:
 
 
 def test_submit_claim_event_finish_list(conn) -> None:
+    alive = conn.execute(
+        "SELECT count(*) AS n FROM ops.workers WHERE heartbeat_at > now() - interval '60 seconds'"
+    ).fetchone()["n"]
+    if alive:
+        pytest.skip("a live worker would claim the jobs this test claims")
     job_id = client.submit(conn, "impact", {"zone": "EEE"}, priority=0)
     low = client.submit(conn, "impact", {}, priority=-1)
     encode = client.submit(conn, "encode", {"query": "q"}, priority=100)
@@ -200,6 +205,41 @@ def test_cancel_terminates_a_running_subprocess(conn, cfg: WorkerConfig, tmp_pat
     )
     assert outcome.status == "cancelled"
     assert time.monotonic() - started < 15
+
+
+@pytest.mark.skipif(os.name != "posix", reason="process groups are POSIX")
+def test_cancel_also_stops_what_the_job_started(conn, cfg: WorkerConfig, tmp_path: Path) -> None:
+    """The scout's ingest and embeddings build are grandchildren of the job (D11)."""
+    job_id = client.submit(conn, "impact", {})
+    conn.execute("UPDATE ops.jobs SET status='running', worker_id=%s WHERE id=%s", (cfg.worker_id, job_id))
+    payload = jobs.parse_payload("impact", {})
+    pid_file = tmp_path / "grandchild.pid"
+    script = (
+        "import subprocess, sys, time\n"
+        "g = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'],"
+        " stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n"
+        f"open({str(pid_file)!r}, 'w').write(str(g.pid))\n"
+        "time.sleep(60)\n"
+    )
+
+    def request_cancel_soon() -> None:
+        time.sleep(1.0)
+        with db.connect(DATABASE_URL) as other:
+            client.cancel(other, job_id)
+
+    threading.Thread(target=request_cancel_soon, daemon=True).start()
+    outcome = runner._run_subprocess(conn, cfg, job_id, "impact", payload, [sys.executable, "-c", script], tmp_path, None)
+    assert outcome.status == "cancelled"
+    grandchild = int(pid_file.read_text())
+    for _ in range(50):
+        try:
+            os.kill(grandchild, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.1)
+    else:
+        os.kill(grandchild, 9)
+        raise AssertionError("the grandchild survived the cancel")
 
 
 def test_singleton_types_run_one_at_a_time(conn) -> None:

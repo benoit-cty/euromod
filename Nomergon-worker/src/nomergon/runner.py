@@ -183,6 +183,10 @@ def _run_subprocess(
             encoding="utf-8",
             errors="replace",
             bufsize=1,
+            # Its own process group, so a cancel reaches what the job started
+            # too: the scout runs an ingest and an embeddings build (GPU, the
+            # advisory lock) as grandchildren (code audit D11).
+            start_new_session=os.name == "posix",
         )
     except OSError as exc:
         _note(conn, job_id, f"failed to start: {exc}")
@@ -248,6 +252,7 @@ def _run_subprocess(
                 _terminate(child)
 
     returncode = child.wait()
+    _kill_group(child)  # nothing the job started outlives it
     for reader in readers:
         reader.join(timeout=1.0)
 
@@ -282,18 +287,35 @@ def _cancel_requested(conn: psycopg.Connection[Any], job_id: int) -> bool:
         return False
 
 
-def _terminate(child: subprocess.Popen[str]) -> None:
-    """SIGTERM, wait the grace period, then SIGKILL."""
-    if child.poll() is not None:
-        return
+def _signal_group(child: subprocess.Popen[str], sig: int) -> None:
+    """Signal the job's whole process group (POSIX), else the child alone."""
     try:
-        child.send_signal(signal.SIGTERM)
+        if os.name == "posix":
+            os.killpg(child.pid, sig)
+        else:
+            child.send_signal(sig)
+    except (ProcessLookupError, PermissionError):
+        pass
+
+
+def _terminate(child: subprocess.Popen[str]) -> None:
+    """SIGTERM the job's process group, wait the grace period, then SIGKILL it."""
+    if child.poll() is not None:
+        _kill_group(child)
+        return
+    _signal_group(child, signal.SIGTERM)
+    try:
         child.wait(timeout=TERM_GRACE_SECONDS)
     except subprocess.TimeoutExpired:
-        child.kill()
+        _signal_group(child, signal.SIGKILL)
         child.wait()
-    except ProcessLookupError:
-        pass
+    _kill_group(child)
+
+
+def _kill_group(child: subprocess.Popen[str]) -> None:
+    """SIGKILL whatever is left in the job's process group (POSIX only)."""
+    if os.name == "posix":
+        _signal_group(child, signal.SIGKILL)
 
 
 def _redact(argv: list[str], database_url: str) -> list[str]:
