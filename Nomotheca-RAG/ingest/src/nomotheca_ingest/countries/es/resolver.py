@@ -12,6 +12,12 @@ from nomotheca_ingest.countries.es.parser import KNOWN_ACTS
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 
 
+def _fold(value: str) -> str:
+    """Upper-case and strip accents: 'Aragón' and 'ARAGON' are one key."""
+    decomposed = unicodedata.normalize("NFKD", value.upper())
+    return "".join(c for c in decomposed if not unicodedata.combining(c))
+
+
 # Citation aliases -> BOE identifier. The API has no usable search endpoint
 # (every documented ``query=`` form is rejected — HTTP 400 for state acts,
 # HTTP 500 "Code: 109" for regional ones), so resolution runs off a curated
@@ -22,16 +28,16 @@ from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 # have a "Ley 3/2021", Canarias and Cantabria both a "Ley 2/2007"-shaped
 # number, and half the communities call their scheme "renta garantizada". A
 # bare regional number therefore never resolves — see ``_regional_numbers``.
-_ALIASES: dict[str, str] = {
+#: Synonyms and short forms. Every act's own label in KNOWN_ACTS (the
+#: parser's citation prefix, e.g. "Ley 3/2021 Aragón") is an alias too, added
+#: below — the two tables used to repeat each other (code audit 3).
+_EXTRA_ALIASES: dict[str, str] = {
     # --- state acts -------------------------------------------------------
-    "LIRPF": "BOE-A-2006-20764",
     "IRPF": "BOE-A-2006-20764",
     "LEY 35/2006": "BOE-A-2006-20764",
     "35/2006": "BOE-A-2006-20764",
-    "RIRPF": "BOE-A-2007-6820",
     "RD 439/2007": "BOE-A-2007-6820",
     "439/2007": "BOE-A-2007-6820",
-    "LGSS": "BOE-A-2015-11724",
     "RDL 8/2015": "BOE-A-2015-11724",
     "8/2015": "BOE-A-2015-11724",
     "IMV": "BOE-A-2021-21007",
@@ -42,58 +48,44 @@ _ALIASES: dict[str, str] = {
     "87/2025": "BOE-A-2025-2576",
     # --- autonomous communities (consolidated by BOE, verified 2026-09-08) --
     # Galicia
-    "DL 1/2011 GALICIA": "BOE-A-2011-18161",
     "DECRETO LEGISLATIVO 1/2011 GALICIA": "BOE-A-2011-18161",
     "TRIBUTOS CEDIDOS GALICIA": "BOE-A-2011-18161",
-    "LEY 3/2011 GALICIA": "BOE-A-2011-13120",
     "APOYO A LA FAMILIA GALICIA": "BOE-A-2011-13120",
     # Canarias
-    "LEY 5/2022 CANARIAS": "BOE-A-2023-2940",
     "RENTA CANARIA DE CIUDADANIA": "BOE-A-2023-2940",
-    "LEY 1/2007 CANARIAS": "BOE-A-2007-4066",
     "PRESTACION CANARIA DE INSERCION": "BOE-A-2007-4066",
-    "DL 3/2021 CANARIAS": "BOE-A-2021-9007",
     # Principado de Asturias
-    "LEY 3/2021 ASTURIAS": "BOE-A-2021-13685",
     "GARANTIA DE DERECHOS Y PRESTACIONES VITALES": "BOE-A-2021-13685",
     # País Vasco
-    "LEY 14/2022 PAIS VASCO": "BOE-A-2023-1405",
     "LEY 14/2022 EUSKADI": "BOE-A-2023-1405",
     "SISTEMA VASCO DE GARANTIA DE INGRESOS": "BOE-A-2023-1405",
-    "LEY 18/2008 PAIS VASCO": "BOE-A-2011-15732",
     "LEY 18/2008 EUSKADI": "BOE-A-2011-15732",
     # Navarra
     "LEY FORAL 15/2016": "BOE-A-2016-11671",
-    "LEY FORAL 15/2016 NAVARRA": "BOE-A-2016-11671",
     "RENTA GARANTIZADA NAVARRA": "BOE-A-2016-11671",
     # Aragón
-    "LEY 3/2021 ARAGON": "BOE-A-2021-10673",
     "PRESTACION ARAGONESA COMPLEMENTARIA": "BOE-A-2021-10673",
     # Comunidad de Madrid
-    "LEY 15/2001 MADRID": "BOE-A-2002-4378",
     "RENTA MINIMA DE INSERCION MADRID": "BOE-A-2002-4378",
     # Cataluña
-    "LEY 14/2017 CATALUNA": "BOE-A-2017-9799",
     "LLEI 14/2017": "BOE-A-2017-9799",
     "RENDA GARANTIDA DE CIUTADANIA": "BOE-A-2017-9799",
     # Illes Balears
-    "LEY 4/2023 ILLES BALEARS": "BOE-A-2023-13761",
     "LEY 4/2023 BALEARES": "BOE-A-2023-13761",
-    "DL 10/2020 ILLES BALEARS": "BOE-A-2020-8013",
     "DL 10/2020 BALEARES": "BOE-A-2020-8013",
-    "LEY 5/2016 ILLES BALEARS": "BOE-A-2016-4178",
     "LEY 5/2016 BALEARES": "BOE-A-2016-4178",
     "RENTA SOCIAL GARANTIZADA": "BOE-A-2016-4178",
     # Cantabria
-    "LEY 2/2007 CANTABRIA": "BOE-A-2007-8186",
     "LEY DE CANTABRIA 2/2007": "BOE-A-2007-8186",
     # Extremadura, La Rioja, Murcia — framework laws, consolidated, not yet
     # ingested (no bsarg/bchrg parameter names these regions).
-    "LEY 5/2019 EXTREMADURA": "BOE-A-2019-3491",
     "RENTA EXTREMENA GARANTIZADA": "BOE-A-2019-3491",
-    "LEY 4/2017 LA RIOJA": "BOE-A-2017-5627",
-    "LEY 3/2007 MURCIA": "BOE-A-2008-12493",
     "RENTA BASICA DE INSERCION MURCIA": "BOE-A-2008-12493",
+}
+
+_ALIASES: dict[str, str] = {
+    **{_fold(label): boe_id for boe_id, label in KNOWN_ACTS.items()},
+    **_EXTRA_ALIASES,
 }
 
 # A citation may simply carry the BOE id itself.
@@ -110,12 +102,6 @@ _ELI_TITLE_RE = re.compile(rb"<title>\s*(BOE-A-\d{4}-\d+)")
 _OFFICIAL_NUMBER_RE = re.compile(r"\b(\d{1,3}/\d{4})\b")
 
 EliLookup = Callable[[str], bytes | None]
-
-
-def _fold(value: str) -> str:
-    """Upper-case and strip accents: 'Aragón' and 'ARAGON' are one key."""
-    decomposed = unicodedata.normalize("NFKD", value.upper())
-    return "".join(c for c in decomposed if not unicodedata.combining(c))
 
 
 def _regional_numbers() -> dict[str, list[str]]:

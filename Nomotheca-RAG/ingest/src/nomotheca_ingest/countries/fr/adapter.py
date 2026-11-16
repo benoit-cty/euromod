@@ -14,7 +14,7 @@ from nomotheca_ingest.countries.fr.resolver import (
     canary_facts,
     resolve_legifrance_url,
 )
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
+from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 DILA_ID = re.compile(r"\b(?:LEGI|JORF|KALI)(?:ARTI|TEXT|SCTA)\d{12}\b")

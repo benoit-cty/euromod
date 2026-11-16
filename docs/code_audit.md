@@ -137,7 +137,7 @@ Suggested fixes, in order of value:
 | medium | `store_translation` duplicates the loader's text and chunk inserts, with a different conflict rule. This divergence is the cause of D10. **Fixed**: chunks go through `LegislationLoader.write_chunks` (stable ids, cited chunks retained); the text row is upserted on the same key as the loader's. | `core/translate.py:269-333` against `core/loader.py:334-368, 433-466` |
 | medium | The embeddings and translation commands are twins: the same Rich progress skeleton, JSON adapter and stats class. | `cli.py:726-901`, `core/embeddings.py:410-419`, `core/translate.py:159-176` |
 | medium | Small helpers are repeated across parsers: the ltree token (6 copies), accent folding (3, inside one country), table rendering (3), sha256 of text (6), month tables (3). The unique-citation rule, behind two recorded incidents, is enforced separately in four places. | `countries/*/parser.py`, `core/documents.py` |
-| medium | ES keeps its act aliases twice; the resolver imports `KNOWN_ACTS` and never uses it. NL and LT derive theirs from the one table. | `countries/es/resolver.py:25-97`, `es/parser.py:38-67` |
+| medium | ES keeps its act aliases twice; the resolver imports `KNOWN_ACTS` and never uses it. NL and LT derive theirs from the one table. **Fixed**: `_ALIASES` = every `KNOWN_ACTS` label (folded) + `_EXTRA_ALIASES` for synonyms (57 → 35 hand-kept). | `countries/es/resolver.py:25-97`, `es/parser.py:38-67` |
 | low | Two reparse paths, two headless-browser launchers, two identical extras (`legifrance`, `browser`). | `core/pipeline.py:119-183`, `core/contributed.py:733-804` |
 
 ### Size

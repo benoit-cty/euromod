@@ -9,7 +9,7 @@ from nomotheca_ingest.countries.ie.fetcher import SOURCE_CODE_EISB, fetch_ie
 from nomotheca_ingest.countries.ie.parser import act_index_child_metadata, parse_ie
 from nomotheca_ingest.countries.ie.resolver import IeResolver, canary_facts
 from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
+from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 

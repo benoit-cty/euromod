@@ -9,7 +9,7 @@ from nomotheca_ingest.countries.lt.fetcher import fetch_tar
 from nomotheca_ingest.countries.lt.parser import parse_tar_json
 from nomotheca_ingest.countries.lt.resolver import LtResolver, canary_facts
 from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
+from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 

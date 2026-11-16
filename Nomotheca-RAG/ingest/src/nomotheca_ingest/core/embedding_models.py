@@ -24,7 +24,7 @@ several points of recall.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 STORED_DIM = 1024
 
