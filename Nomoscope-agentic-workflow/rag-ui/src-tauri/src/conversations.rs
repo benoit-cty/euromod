@@ -3,7 +3,7 @@
 //! and whose result is the answer. Listing and reopening a conversation is a
 //! read of the caller's own jobs; there is no local copy to keep in sync.
 
-use postgres::{Client, NoTls};
+use crate::pg::{connect, describe};
 use serde::Deserialize;
 use serde_json::{json, Value};
 
@@ -19,9 +19,6 @@ pub struct ConversationPayload {
     pub conversation_id: String,
 }
 
-fn connect(db_url: &str) -> Result<Client, String> {
-    Client::connect(db_url, NoTls).map_err(|e| format!("DB connection failed: {e}"))
-}
 
 /// The caller's conversations, newest first: first question, turn count, last activity.
 pub fn list(payload: &ListPayload) -> Result<Value, String> {
@@ -42,7 +39,7 @@ pub fn list(payload: &ListPayload) -> Result<Value, String> {
              LIMIT $1",
             &[&limit],
         )
-        .map_err(|e| format!("conversation list query failed: {e}"))?;
+        .map_err(|e| format!("conversation list query failed: {}", describe(e)))?;
     Ok(json!({
         "conversations": rows.iter().map(|r| json!({
             "conversation_id": r.get::<_, String>("conversation_id"),
@@ -68,7 +65,7 @@ pub fn turns(payload: &ConversationPayload) -> Result<Value, String> {
              ORDER BY id",
             &[&payload.conversation_id],
         )
-        .map_err(|e| format!("conversation query failed: {e}"))?;
+        .map_err(|e| format!("conversation query failed: {}", describe(e)))?;
     Ok(json!({
         "conversation_id": payload.conversation_id,
         "turns": rows.iter().map(|r| {

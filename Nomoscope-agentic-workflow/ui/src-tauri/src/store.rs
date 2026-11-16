@@ -13,7 +13,8 @@
 //! in the pipeline without lockstep releases of the UI.
 
 use chrono::Utc;
-use postgres::{Client, NoTls};
+use crate::pg::{connect, describe};
+use postgres::Client;
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -28,18 +29,7 @@ pub struct Facets {
     pub row_count: usize,
 }
 
-fn connect(db_url: &str) -> Result<Client, String> {
-    Client::connect(db_url, NoTls).map_err(|e| format!("DB connection failed: {e}"))
-}
 
-/// `postgres::Error` displays as a bare "db error"; the server's message (a
-/// RAISE in decide_review_item, a missing relation) is what the reviewer needs.
-fn describe(e: postgres::Error) -> String {
-    match e.as_db_error() {
-        Some(db) => format!("{}: {}", e, db.message()),
-        None => e.to_string(),
-    }
-}
 
 fn str_field(value: &Value, key: &str) -> String {
     value

@@ -11,14 +11,13 @@ import psycopg
 from mcp.server.fastmcp import FastMCP
 
 from .encoder import QueryEncoder
+from .search import default_model_id, search
 from .search import get_chunk as fetch_chunk
-from .search import search
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql://jrc:jrc@localhost:5434/legislation",
 )
-BGE_M3_MODEL_ID = 1
 
 mcp = FastMCP("EUROMOD legislation", json_response=True)
 # Query vectors come from the Nomergon worker through ops.jobs; the server never
@@ -54,15 +53,21 @@ def search_legislation(
 ) -> dict:
     """Search citable fiscal legislation chunks.
 
-    Use English queries freely: BGE-M3 performs multilingual vector retrieval.
-    Filters are applied before ranking. Hybrid mode merges full-text and vector
-    ranks with reciprocal rank fusion. Each result reports both component ranks
-    and contributions so the model can explain why it was retrieved. Omit
-    languages to search every stored language; pass ["en"] to search English
-    translations only, or a country's official language for authoritative text.
+    Use English queries freely: the embedding model is multilingual. Filters
+    are applied before ranking; with ``as_of`` each article is searched in the
+    version in force that day. Country Reports are never returned: they
+    describe the EUROMOD model, not the law. Hybrid mode merges full-text and
+    vector ranks with reciprocal rank fusion. Each result reports both
+    component ranks and contributions so the model can explain why it was
+    retrieved. Omit languages to search every stored language; pass ["en"] to
+    search English translations only, or a country's official language for
+    authoritative text.
     """
-    query_vector = encoder.encode_literal(query) if mode in {"hybrid", "vector"} else None
     with _connect() as conn:
+        model_id = default_model_id(conn)
+        query_vector = (
+            encoder.encode_literal(query, model_id) if mode in {"hybrid", "vector"} else None
+        )
         hits = search(
             conn,
             query=query,
@@ -71,15 +76,19 @@ def search_legislation(
             country=country,
             as_of=_parse_as_of(as_of),
             languages=languages,
-            model_id=BGE_M3_MODEL_ID,
+            model_id=model_id,
             limit=limit,
         )
     return {
         "query": query,
         "mode": mode,
         "filters": {"country": country, "as_of": as_of, "languages": languages},
-        "model_id": BGE_M3_MODEL_ID if query_vector else None,
-        "ranking": "RRF(k=60) over full-text and vector ranks" if mode == "hybrid" else mode,
+        "model_id": model_id if query_vector else None,
+        "ranking": (
+            "RRF(k=60) over full-text and vector ranks, vector top 3 guaranteed"
+            if mode == "hybrid"
+            else mode
+        ),
         "result_count": len(hits),
         "results": [asdict(hit) for hit in hits],
     }

@@ -65,8 +65,5 @@ export const api = {
   // { workers: [{ alive, device, … }], models: [{ model, kind, is_default }] }
   workerStatus: (dbUrl) => invoke('worker_status', { payload: { db_url: dbUrl } }),
   // Synchronous encode on the worker's priority lane: { halfvec } or { similarities }.
-  encodeQuery: (dbUrl, query, sentences = null) =>
-    invoke('encode_query', { payload: { db_url: dbUrl, query, sentences } }),
-
   openExternal: (url) => open(url),
 };

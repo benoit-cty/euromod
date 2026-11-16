@@ -2,12 +2,9 @@
 //! Database tab (corpus statistics, article search) and to the `eval`
 //! schema (Nomokrisis-evaluation_pipeline/db/eval_schema.sql) for the Evaluation tab.
 
-use postgres::{Client, NoTls};
+use crate::pg::{connect, describe};
+use postgres::Client;
 use serde_json::{json, Value};
-
-fn connect(db_url: &str) -> Result<Client, String> {
-    Client::connect(db_url, NoTls).map_err(|e| format!("DB connection failed: {e}"))
-}
 
 /// The login the UI connected with: the reviewer identity everywhere
 /// (`decide_review_item`, `ops.jobs.submitted_by`, golden verdicts).
@@ -15,7 +12,7 @@ pub fn current_user(db_url: &str) -> Result<String, String> {
     let mut client = connect(db_url)?;
     client
         .query_one("SELECT current_user", &[])
-        .map_err(|e| e.to_string())
+        .map_err(describe)
         .map(|row| row.get::<_, String>(0))
 }
 
@@ -39,7 +36,7 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
                     (SELECT count(*) FROM citation_registry)    AS citations_registered",
             &[],
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(describe)?;
 
     let by_country = client
         .query(
@@ -70,7 +67,7 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
              GROUP BY 1, 2 ORDER BY 1",
             &[],
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(describe)?;
 
     let models = client
         .query(
@@ -82,14 +79,14 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
              ORDER BY m.id",
             &[],
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(describe)?;
 
     // The languages the store is configured to index. The Contributed-document
     // form offers these and nothing else: a text stored under a language with
     // no FTS config is invisible to full-text search.
     let languages = client
         .query("SELECT lang FROM lang_fts_config ORDER BY lang", &[])
-        .map_err(|e| e.to_string())?;
+        .map_err(describe)?;
 
     // Non-legislative inputs the pipeline needs beside the law corpus: the
     // EUROMOD Country Report (instrument_type = 'country_report', a separate
@@ -116,14 +113,14 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
              GROUP BY 1 ORDER BY 1",
             &[],
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(describe)?;
 
     // The params schema lives in this same DB but is created by
     // `nomoscope-workflow init-param-db`; absent it, report "not initialised"
     // rather than failing the whole stats call.
     let params_schema: bool = client
         .query_one("SELECT to_regclass('params.parameters') IS NOT NULL", &[])
-        .map_err(|e| e.to_string())?
+        .map_err(describe)?
         .get(0);
 
     let params_by_country = if params_schema {
@@ -141,7 +138,7 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
                  GROUP BY p.country ORDER BY p.country",
                 &[],
             )
-            .map_err(|e| e.to_string())?
+            .map_err(describe)?
     } else {
         Vec::new()
     };
@@ -269,7 +266,7 @@ pub fn eval_runs(db_url: &str) -> Result<Value, String> {
             &[],
         )
         .map_err(|e| {
-            let msg = e.to_string();
+            let msg = describe(e);
             if msg.contains("eval.runs") {
                 format!("{msg} — has `nomokrisis-eval init-db` been run?")
             } else {
@@ -324,7 +321,7 @@ pub fn eval_run_detail(db_url: &str, run_pk: i64) -> Result<Value, String> {
              ORDER BY language, country",
             &[&run_pk],
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(describe)?;
 
     let cases = client
         .query(
@@ -337,7 +334,7 @@ pub fn eval_run_detail(db_url: &str, run_pk: i64) -> Result<Value, String> {
              ORDER BY country, case_id",
             &[&run_pk],
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(describe)?;
 
     Ok(json!({
         "summary": summary.iter().map(|r| json!({
@@ -411,7 +408,7 @@ pub fn search_instruments(
              LIMIT $3",
             &[&country, &pattern, &limit],
         )
-        .map_err(|e| format!("instrument search failed: {e}"))?;
+        .map_err(|e| format!("instrument search failed: {}", describe(e)))?;
 
     Ok(json!({
         "instruments": rows.iter().map(|r| json!({
@@ -469,7 +466,7 @@ pub fn params_list(db_url: &str) -> Result<Value, String> {
             &[],
         )
         .map_err(|e| {
-            format!("params query failed (has `nomoscope-workflow ingest-params` been run?): {e}")
+            format!("params query failed (has `nomoscope-workflow ingest-params` been run?): {}", describe(e))
         })?;
 
     // The EUROMOD system years each country actually defines. The run form must
@@ -486,7 +483,7 @@ pub fn params_list(db_url: &str) -> Result<Value, String> {
              GROUP BY p.country",
             &[],
         )
-        .map_err(|e| format!("system-year query failed: {e}"))?;
+        .map_err(|e| format!("system-year query failed: {}", describe(e)))?;
     let mut system_years = serde_json::Map::new();
     for r in &year_rows {
         system_years.insert(
@@ -570,7 +567,7 @@ pub fn parameter_context(db_url: &str, model_target: &str) -> Result<Value, Stri
              ORDER BY group_role NULLS FIRST, p.name",
             &[&model_target, &group],
         )
-        .map_err(|e| format!("parameter context query failed: {e}"))?;
+        .map_err(|e| format!("parameter context query failed: {}", describe(e)))?;
     Ok(json!({
         "parameters": rows.iter().map(|r| json!({
             "model_target": r.get::<_, String>("model_target"),
@@ -597,7 +594,7 @@ pub fn parameter_edits(db_url: &str, model_target: &str) -> Result<Value, String
              ORDER BY edited_at DESC, id DESC",
             &[&model_target],
         )
-        .map_err(|e| format!("edit history query failed (run `nomoscope-workflow init-param-db`?): {e}"))?;
+        .map_err(|e| format!("edit history query failed (run `nomoscope-workflow init-param-db`?): {}", describe(e)))?;
     Ok(json!(rows.iter().map(|r| json!({
         "id": r.get::<_, i64>("id"),
         "field": r.get::<_, String>("field"),
@@ -623,7 +620,7 @@ pub fn chunk_renderings(db_url: &str, chunk_id: &str) -> Result<Value, String> {
             "SET default_transaction_read_only = on;
              SET statement_timeout = '15s';",
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(describe)?;
     let rows = client
         .query(
             "SELECT t.id::text                     AS unit_text_id,
@@ -650,7 +647,7 @@ pub fn chunk_renderings(db_url: &str, chunk_id: &str) -> Result<Value, String> {
                       t.lang",
             &[&chunk_id],
         )
-        .map_err(|e| format!("chunk renderings query failed: {e}"))?;
+        .map_err(|e| format!("chunk renderings query failed: {}", describe(e)))?;
 
     Ok(json!({
         "chunk_id": chunk_id,
@@ -714,7 +711,7 @@ pub fn load_decisions(db_url: &str, limit: i64) -> Result<Value, String> {
              LIMIT $1",
             &[&limit],
         )
-        .map_err(|e| format!("decisions query failed: {e}"))?;
+        .map_err(|e| format!("decisions query failed: {}", describe(e)))?;
     Ok(json!({
         "decisions": rows.iter().map(|r| json!({
             "id": r.get::<_, i64>("id"),
@@ -746,7 +743,7 @@ pub fn phoenix_projects(db_url: &str) -> Result<Value, String> {
     let mut client = connect(&swap_database(db_url, "phoenix"))?;
     let rows = client
         .query("SELECT id, name FROM projects", &[])
-        .map_err(|e| format!("phoenix projects query failed: {e}"))?;
+        .map_err(|e| format!("phoenix projects query failed: {}", describe(e)))?;
     Ok(json!({
         "projects": rows.iter().map(|r| {
             let id: i32 = r.get("id");
@@ -833,7 +830,84 @@ impl SearchMode {
     }
 }
 
-/// Search law chunks using FTS, BGE-M3 vectors, or RRF-fused hybrid ranking.
+/// What the Database tab (and the RAG chat's search box) sends.
+#[derive(serde::Deserialize)]
+pub struct SearchPayload {
+    pub db_url: String,
+    pub query: String,
+    pub country: Option<String>,
+    pub as_of: Option<String>,
+    pub languages: Option<Vec<String>>,
+    pub mode: Option<String>,
+    pub limit: Option<i64>,
+}
+
+/// The embedding model the corpus is searched with (`embedding_models.is_default`).
+pub fn default_model_id(client: &mut Client) -> Result<i32, String> {
+    client
+        .query_opt(
+            "SELECT id::int FROM embedding_models WHERE is_default ORDER BY id LIMIT 1",
+            &[],
+        )
+        .map_err(|e| format!("embedding model lookup failed: {}", describe(e)))?
+        .map(|row| row.get::<_, i32>(0))
+        .ok_or_else(|| "no default embedding model in embedding_models".to_string())
+}
+
+/// Article search for both desktop apps. Vector and hybrid modes need the
+/// query encoded by the worker (an `encode` job, with the corpus's default
+/// model); when no worker is alive the search degrades to full text and says
+/// so in `notice`, rather than failing.
+pub fn search(payload: &SearchPayload, default_limit: i64) -> Result<Value, String> {
+    let mut mode = SearchMode::parse(payload.mode.as_deref().unwrap_or("hybrid"))?;
+    let model_id = default_model_id(&mut connect(&payload.db_url)?)?;
+    let mut notice: Option<String> = None;
+    let query_vector = if mode.uses_vector() {
+        match crate::jobs::encode_query(&crate::jobs::EncodePayload {
+            db_url: payload.db_url.clone(),
+            query: payload.query.clone(),
+            sentences: None,
+            model_id: Some(model_id),
+        }) {
+            Ok(result) => Some(
+                result
+                    .get("halfvec")
+                    .and_then(Value::as_str)
+                    .filter(|v| v.starts_with('[') && v.ends_with(']'))
+                    .ok_or("encode job returned no halfvec")?
+                    .to_string(),
+            ),
+            Err(e) if e == crate::jobs::NO_WORKER => {
+                notice = Some(format!("{e}; showing full-text results instead"));
+                mode = SearchMode::FullText;
+                None
+            }
+            Err(e) => return Err(e),
+        }
+    } else {
+        None
+    };
+    let mut result = search_articles(
+        &payload.db_url,
+        &payload.query,
+        payload.country.as_deref(),
+        payload.as_of.as_deref(),
+        payload.languages.as_deref(),
+        mode,
+        query_vector.as_deref(),
+        model_id,
+        payload.limit.unwrap_or(default_limit),
+    )?;
+    result["notice"] = json!(notice);
+    Ok(result)
+}
+
+/// Search law chunks with the database's `search_chunks()` — the one hybrid
+/// search the workflow, the eval and the MCP server use too (live version on
+/// `as_of`, OR-of-terms FTS, RRF + vector top-3 slot, vector leg ranked over
+/// the filtered set, never through HNSW). This page browses, so Country
+/// Reports are included; every hit carries its `source_trust_class`.
+#[allow(clippy::too_many_arguments)]
 pub fn search_articles(
     db_url: &str,
     query: &str,
@@ -842,6 +916,7 @@ pub fn search_articles(
     languages: Option<&[String]>,
     mode: SearchMode,
     query_vector: Option<&str>,
+    model_id: i32,
     limit: i64,
 ) -> Result<Value, String> {
     if query.trim().is_empty() {
@@ -858,114 +933,73 @@ pub fn search_articles(
     client
         .batch_execute(
             "SET default_transaction_read_only = on;
-             SET statement_timeout = '30s';
-             SET hnsw.ef_search = 100;",
+             SET statement_timeout = '30s';",
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(describe)?;
     let language_filter = languages.map(|values| values.to_vec());
     let use_full_text = mode.uses_full_text();
     let use_vector = mode.uses_vector();
+    let vector = if use_vector { query_vector } else { None };
     let rows = client
         .query(
-            "WITH candidate AS MATERIALIZED (
-                SELECT ch.id AS chunk_id, ch.tsv, ch.search_config, ch.seq,
-                       t.version_id, t.lang, t.authenticity,
-                       v.validity, v.version_status, u.citation,
-                       i.title AS instrument_title, j.code AS country
-                FROM chunks ch
-                JOIN unit_texts t          ON t.id = ch.unit_text_id
-                JOIN legal_unit_versions v ON v.id = t.version_id
-                JOIN legal_units u         ON u.id = v.legal_unit_id
-                JOIN instruments i         ON i.id = u.instrument_id
-                JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-                WHERE ($2::text IS NULL OR j.code = upper($2)
-                       OR j.parent_id = (SELECT id FROM jurisdictions WHERE code = upper($2)))
-                  AND ($3::text IS NULL OR v.validity @> ($3::text)::date)
-                  AND ($4::text[] IS NULL OR t.lang = ANY($4::text[]))
-             ),
-             fts AS (
-                SELECT chunk_id,
-                       row_number() OVER (ORDER BY rank_score DESC, chunk_id) AS rank,
-                       rank_score
-                FROM (
-                    SELECT chunk_id,
-                           ts_rank_cd(tsv, websearch_to_tsquery(search_config, $1), 32) AS rank_score
-                    FROM candidate
-                    WHERE $6 AND tsv @@ websearch_to_tsquery(search_config, $1)
-                ) ranked_fts
-                ORDER BY rank_score DESC
-                LIMIT 50
-             ),
-             vec AS (
-                SELECT chunk_id,
-                       row_number() OVER (ORDER BY distance, chunk_id) AS rank,
-                       distance
-                FROM (
-                    SELECT e.chunk_id, e.embedding <=> $5::text::halfvec AS distance
-                    FROM embeddings e
-                    JOIN candidate USING (chunk_id)
-                    WHERE $7 AND e.model_id = 1
-                    ORDER BY e.embedding <=> $5::text::halfvec
-                    LIMIT 50
-                ) ranked_vec
-             ),
-             scored AS (
-                SELECT c.*,
-                       (coalesce(1.0 / (60 + f.rank), 0) +
-                        coalesce(1.0 / (60 + ve.rank), 0))::float8 AS score,
-                       f.rank AS full_text_rank,
-                       f.rank_score::float8 AS full_text_score,
-                       coalesce(1.0 / (60 + f.rank), 0)::float8 AS full_text_contribution,
-                       ve.rank AS vector_rank,
-                       ve.distance::float8 AS vector_distance,
-                       coalesce(1.0 / (60 + ve.rank), 0)::float8 AS vector_contribution
-                FROM fts f
-                FULL OUTER JOIN vec ve USING (chunk_id)
-                JOIN candidate c USING (chunk_id)
-             ),
-             deduplicated AS (
-                SELECT scored.*,
+            "WITH found AS (
+                SELECT s.*, t.version_id, ch.seq,
                        row_number() OVER (
-                           PARTITION BY version_id, seq
-                           ORDER BY score DESC, chunk_id
+                           PARTITION BY t.version_id, ch.seq
+                           ORDER BY s.score DESC, s.chunk_id
                        ) AS rendering_rank
-                FROM scored
+                FROM search_chunks(
+                        $1, $5::text::halfvec(1024), $8,
+                        CASE WHEN $2::text IS NULL THEN NULL ELSE jurisdiction_tree($2) END,
+                        $4::text[], ($3::text)::date, ($7::bigint * 4)::int, $6, true) s
+                JOIN chunks ch    ON ch.id = s.chunk_id
+                JOIN unit_texts t ON t.id = ch.unit_text_id
              )
-             SELECT d.chunk_id::text, d.citation, ch.context_header, ch.content,
+             SELECT d.chunk_id::text, u.citation, ch.context_header, ch.content,
                     CASE WHEN $6 THEN ts_headline(ch.search_config, ch.content,
-                              websearch_to_tsquery(ch.search_config, $1),
+                              websearch_to_tsquery(ch.search_config, fts_or_query($1)),
                               'StartSel=<<HL>>, StopSel=<</HL>>, HighlightAll=true')
                     END AS headline,
-                    d.lang, d.authenticity, d.validity::text, d.version_status,
-                    d.country, d.instrument_title, d.score,
-                    d.full_text_rank, d.full_text_score, d.full_text_contribution,
-                    d.vector_rank, d.vector_distance, d.vector_contribution
-             FROM deduplicated d
-             JOIN chunks ch ON ch.id = d.chunk_id
+                    t.lang, t.authenticity, v.validity::text, v.version_status,
+                    j.code AS country, i.title AS instrument_title, i.source_trust_class,
+                    d.score,
+                    d.fts_rank AS full_text_rank,
+                    d.fts_score AS full_text_score,
+                    coalesce(1.0 / (60 + d.fts_rank), 0)::float8 AS full_text_contribution,
+                    d.vec_rank AS vector_rank,
+                    d.vec_distance AS vector_distance,
+                    coalesce(1.0 / (60 + d.vec_rank), 0)::float8 AS vector_contribution
+             FROM found d
+             JOIN chunks ch             ON ch.id = d.chunk_id
+             JOIN unit_texts t          ON t.id = ch.unit_text_id
+             JOIN legal_unit_versions v ON v.id = t.version_id
+             JOIN legal_units u         ON u.id = v.legal_unit_id
+             JOIN instruments i         ON i.id = u.instrument_id
+             JOIN jurisdictions j       ON j.id = i.jurisdiction_id
              WHERE d.rendering_rank = 1
              ORDER BY d.score DESC, d.chunk_id
-             LIMIT $8",
+             LIMIT $7::bigint",
             &[
                 &query,
                 &country,
                 &as_of,
                 &language_filter,
-                &query_vector,
+                &vector,
                 &use_full_text,
-                &use_vector,
                 &limit,
+                &model_id,
             ],
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(describe)?;
 
     Ok(json!({
         "query": query,
         "mode": mode.as_str(),
-        "model_id": if use_vector { Some(1) } else { None },
+        "model_id": if use_vector { Some(model_id) } else { None },
         "ranking": if mode == SearchMode::Hybrid {
-            "RRF(k=60) over full-text and BGE-M3 vector ranks"
+            "RRF(k=60) over full-text and vector ranks, vector top 3 guaranteed"
         } else if mode == SearchMode::Vector {
-            "BGE-M3 vector rank"
+            "vector rank"
         } else {
             "full-text rank"
         },
@@ -988,6 +1022,7 @@ pub fn search_articles(
             "version_status": r.get::<_, String>("version_status"),
             "country": r.get::<_, String>("country"),
             "instrument_title": r.get::<_, Value>("instrument_title"),
+            "source_trust_class": r.get::<_, String>("source_trust_class"),
             "score": r.get::<_, f64>("score"),
             "full_text_rank": r.get::<_, Option<i64>>("full_text_rank"),
             "full_text_score": r.get::<_, Option<f64>>("full_text_score"),
@@ -1057,6 +1092,7 @@ mod search_tests {
                 None,
                 mode,
                 query_vector,
+                99,
                 5,
             )
             .unwrap_or_else(|error| panic!("{} search failed: {error}", mode.as_str()));

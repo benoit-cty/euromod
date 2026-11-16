@@ -24,6 +24,7 @@ class SearchHit:
     authenticity: str
     validity: str
     version_status: str
+    source_trust_class: str
     context_header: str
     content: str
     score: float
@@ -35,118 +36,44 @@ class SearchHit:
     vector_contribution: float
 
 
-_BASE_CANDIDATE = """
-candidate AS MATERIALIZED (
-    SELECT c.id AS chunk_id, c.tsv, c.search_config, c.unit_text_id, c.seq,
-           t.version_id, t.lang, t.authenticity,
-           v.validity, v.version_status,
-           u.citation, i.title, j.code AS country
-    FROM chunks c
-    JOIN unit_texts t          ON t.id = c.unit_text_id
-    JOIN legal_unit_versions v ON v.id = t.version_id
-    JOIN legal_units u         ON u.id = v.legal_unit_id
-    JOIN instruments i         ON i.id = u.instrument_id
-    JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-    -- A country's scope includes its child jurisdictions (Spain's autonomous
-    -- communities, ADR 0003); a child code narrows to that region alone.
-    WHERE (%(country)s::text IS NULL OR j.code = upper(%(country)s)
-           OR j.parent_id = (SELECT id FROM jurisdictions WHERE code = upper(%(country)s)))
-      AND (%(as_of)s::date IS NULL OR v.validity @> %(as_of)s::date)
-      AND (%(languages)s::text[] IS NULL OR t.lang = ANY(%(languages)s::text[]))
-),
-"""
+DEFAULT_MODEL_SQL = "SELECT id FROM embedding_models WHERE is_default ORDER BY id LIMIT 1"
 
-_FTS_CTE = """
-fts AS (
-    SELECT chunk_id,
-           row_number() OVER (ORDER BY rank_score DESC, chunk_id) AS rank,
-           rank_score
-    FROM (
-        SELECT chunk_id,
-               ts_rank_cd(tsv, websearch_to_tsquery(search_config, %(query)s), 32) AS rank_score
-        FROM candidate
-        WHERE tsv @@ websearch_to_tsquery(search_config, %(query)s)
-    ) ranked_fts
-    ORDER BY rank_score DESC
-    LIMIT %(candidate_limit)s
-)
-"""
-
-_VECTOR_CTE = """
-vec AS (
-    SELECT chunk_id,
-           row_number() OVER (ORDER BY distance, chunk_id) AS rank,
-           distance
-    FROM (
-        SELECT e.chunk_id, e.embedding <=> %(query_vector)s::halfvec AS distance
-        FROM embeddings e
-        JOIN candidate USING (chunk_id)
-        WHERE e.model_id = %(model_id)s
-        ORDER BY e.embedding <=> %(query_vector)s::halfvec
-        LIMIT %(candidate_limit)s
-    ) ranked_vec
-)
-"""
-
-_RESULT_COLUMNS = """
-SELECT c.chunk_id::text, c.version_id::text, c.seq AS sequence,
-       c.country, c.citation, c.title, c.lang AS language,
-       c.authenticity, c.validity::text, c.version_status,
+# The database's search_chunks() (Nomotheca-RAG/db/schema.sql) — the one
+# hybrid search the workflow, the eval and the review UI use too: live version
+# on as_of, Country Reports (trust class 'context') excluded, OR-of-terms FTS,
+# RRF plus the vector top-3 slot, vector leg ranked over the filtered set.
+_SEARCH_SQL = """
+SELECT ch.id::text AS chunk_id, t.version_id::text AS version_id, ch.seq AS sequence,
+       j.code AS country, u.citation, i.title, t.lang AS language,
+       t.authenticity, v.validity::text, v.version_status, i.source_trust_class,
        ch.context_header, ch.content,
-       {score}::float8 AS score,
-       {fts_rank} AS full_text_rank,
-       {fts_score}::float8 AS full_text_score,
-       {fts_contribution}::float8 AS full_text_contribution,
-       {vec_rank} AS vector_rank,
-       {vec_distance}::float8 AS vector_distance,
-       {vec_contribution}::float8 AS vector_contribution
-FROM {ranking}
-JOIN candidate c USING (chunk_id)
-JOIN chunks ch ON ch.id = c.chunk_id
-ORDER BY score DESC, c.chunk_id
-LIMIT %(limit)s
+       s.score,
+       s.fts_rank AS full_text_rank,
+       s.fts_score AS full_text_score,
+       coalesce(1.0 / (60 + s.fts_rank), 0)::float8 AS full_text_contribution,
+       s.vec_rank AS vector_rank,
+       s.vec_distance AS vector_distance,
+       coalesce(1.0 / (60 + s.vec_rank), 0)::float8 AS vector_contribution
+FROM search_chunks(
+        %(query)s, %(query_vector)s::halfvec(1024), %(model_id)s,
+        CASE WHEN %(country)s::text IS NULL THEN NULL ELSE jurisdiction_tree(%(country)s) END,
+        %(languages)s::text[], %(as_of)s::date, %(candidates)s, %(use_fts)s) s
+JOIN chunks ch             ON ch.id = s.chunk_id
+JOIN unit_texts t          ON t.id = ch.unit_text_id
+JOIN legal_unit_versions v ON v.id = t.version_id
+JOIN legal_units u         ON u.id = v.legal_unit_id
+JOIN instruments i         ON i.id = u.instrument_id
+JOIN jurisdictions j       ON j.id = i.jurisdiction_id
+ORDER BY s.score DESC, s.chunk_id
 """
 
 
-def _search_sql(mode: SearchMode) -> str:
-    if mode == "hybrid":
-        score = "coalesce(1.0 / (%(rrf_k)s + f.rank), 0) + coalesce(1.0 / (%(rrf_k)s + v.rank), 0)"
-        result = _RESULT_COLUMNS.format(
-            score=score,
-            fts_rank="f.rank",
-            fts_score="f.rank_score",
-            fts_contribution="coalesce(1.0 / (%(rrf_k)s + f.rank), 0)",
-            vec_rank="v.rank",
-            vec_distance="v.distance",
-            vec_contribution="coalesce(1.0 / (%(rrf_k)s + v.rank), 0)",
-            ranking="fts f FULL OUTER JOIN vec v USING (chunk_id)",
-        )
-        return "WITH " + _BASE_CANDIDATE + _FTS_CTE + ",\n" + _VECTOR_CTE + result
-    if mode == "full_text":
-        result = _RESULT_COLUMNS.format(
-            score="1.0 / (%(rrf_k)s + f.rank)",
-            fts_rank="f.rank",
-            fts_score="f.rank_score",
-            fts_contribution="1.0 / (%(rrf_k)s + f.rank)",
-            vec_rank="NULL::bigint",
-            vec_distance="NULL::double precision",
-            vec_contribution="0.0",
-            ranking="fts f",
-        )
-        return "WITH " + _BASE_CANDIDATE + _FTS_CTE + result
-    if mode == "vector":
-        result = _RESULT_COLUMNS.format(
-            score="1.0 / (%(rrf_k)s + v.rank)",
-            fts_rank="NULL::bigint",
-            fts_score="NULL::real",
-            fts_contribution="0.0",
-            vec_rank="v.rank",
-            vec_distance="v.distance",
-            vec_contribution="1.0 / (%(rrf_k)s + v.rank)",
-            ranking="vec v",
-        )
-        return "WITH " + _BASE_CANDIDATE + _VECTOR_CTE + result
-    raise ValueError(f"Unsupported search mode: {mode}")
+def default_model_id(conn: Connection) -> int:
+    """The embedding model the corpus is searched with (embedding_models.is_default)."""
+    row = conn.execute(DEFAULT_MODEL_SQL).fetchone()
+    if row is None:
+        raise ValueError("no default embedding model in embedding_models")
+    return int(row[0])
 
 
 def search(
@@ -155,17 +82,20 @@ def search(
     query: str,
     mode: SearchMode,
     query_vector: str | None,
+    model_id: int,
     country: str | None = None,
     as_of: date | None = None,
     languages: Sequence[str] | None = None,
-    model_id: int = 1,
     limit: int = 8,
-    candidate_limit: int = 50,
-    rrf_k: int = 60,
 ) -> list[SearchHit]:
-    """Search legislation and return the component ranks used for each result."""
+    """Search citable legislation and return the component ranks of each result.
+
+    ``model_id`` must be the model that encoded ``query_vector``.
+    """
     if not query.strip():
         raise ValueError("query must not be empty")
+    if mode not in {"hybrid", "full_text", "vector"}:
+        raise ValueError(f"Unsupported search mode: {mode}")
     if mode in {"hybrid", "vector"} and query_vector is None:
         raise ValueError(f"{mode} search requires a query vector")
     if not 1 <= limit <= 50:
@@ -173,17 +103,17 @@ def search(
 
     params = {
         "query": query,
-        "query_vector": query_vector,
+        "query_vector": query_vector if mode != "full_text" else None,
+        "model_id": model_id,
         "country": country,
         "as_of": as_of,
         "languages": list(languages) if languages else None,
-        "model_id": model_id,
-        "limit": min(50, limit * 4),
-        "candidate_limit": max(candidate_limit, limit),
-        "rrf_k": rrf_k,
+        # Room for the per-(version, seq) de-duplication below.
+        "candidates": min(50, limit * 4),
+        "use_fts": mode != "vector",
     }
     with conn.cursor(row_factory=dict_row) as cursor:
-        cursor.execute(_search_sql(mode), params)
+        cursor.execute(_SEARCH_SQL, params)
         hits = [SearchHit(**row) for row in cursor.fetchall()]
 
     deduplicated: list[SearchHit] = []
@@ -205,7 +135,7 @@ def get_chunk(conn: Connection, chunk_id: str) -> SearchHit | None:
         SELECT c.id::text AS chunk_id, t.version_id::text AS version_id,
                c.seq AS sequence, j.code AS country, u.citation, i.title,
                t.lang AS language, t.authenticity, v.validity::text,
-               v.version_status, c.context_header, c.content,
+               v.version_status, i.source_trust_class, c.context_header, c.content,
                0.0::float8 AS score, NULL::bigint AS full_text_rank,
                NULL::float8 AS full_text_score, 0.0::float8 AS full_text_contribution,
                NULL::bigint AS vector_rank, NULL::float8 AS vector_distance,

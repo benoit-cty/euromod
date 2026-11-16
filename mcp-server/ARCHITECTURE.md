@@ -25,8 +25,9 @@ The server owns query-time concerns:
 - obtaining a query vector from the worker's `encode` lane (`ops.jobs`, priority
   100, 100 ms poll, `EUROMOD_ENCODE_TIMEOUT`), with a liveness check on
   `ops.workers.heartbeat_at` so a missing worker is a clear error, not a hang;
-- country, point-in-time, and language candidate filters;
-- full-text, vector, or reciprocal-rank-fused hybrid ranking;
+- country, point-in-time, and language candidate filters, and full-text,
+  vector, or reciprocal-rank-fused hybrid ranking — all through the database's
+  `search_chunks()`, shared with the workflow, the eval and the review UI;
 - deduplication of language renderings by legal version and chunk sequence;
 - transparent full-text rank, vector distance, and score contributions;
 - exact chunk lookup by `chunks.id`.
@@ -54,6 +55,7 @@ pass the existing character-for-character supporting-extract verification.
 ## Architecture impact
 
 This adds an access layer, not a new data or decision layer. It makes the RAG
-retriever reusable by MCP-capable hosts. The server is a thin psycopg + mcp
+retriever reusable by MCP-capable hosts: the ranking is the workflow's own
+`search_chunks()`, not a copy of it. The server is a thin psycopg + mcp
 process: no model memory on the workstation, one per-analyst Postgres login as
 its only credential, and hybrid search available exactly when the worker is.

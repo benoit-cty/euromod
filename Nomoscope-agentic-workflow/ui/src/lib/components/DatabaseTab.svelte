@@ -1,7 +1,7 @@
 <script>
   import { api } from '../api.js';
   import { renderView, splitSentences } from '../highlight.js';
-  import { countryName, formatCount, humanize } from '../labels.js';
+  import { countryName, formatCount, humanize, trustLabel } from '../labels.js';
   import { countryReadiness } from '../readiness.js';
   import Icon from './Icon.svelte';
 
@@ -218,6 +218,10 @@
                 <span class="badge {hit.version_status === 'in_force' ? 'pass' : 'pending'}">
                   {hit.version_status === 'in_force' ? 'In force' : humanize(hit.version_status)}
                 </span>
+                {#if hit.source_trust_class && hit.source_trust_class !== 'evidence'}
+                  {@const trust = trustLabel(hit.source_trust_class)}
+                  <span class="badge {trust.raw}" title="{trust.hint} ({trust.raw})">{trust.label}</span>
+                {/if}
               </div>
             </div>
           </summary>

@@ -1,1 +1,0 @@
-"""EUROMOD legislation MCP server."""

@@ -15,6 +15,7 @@
 mod db;
 mod golden;
 mod jobs;
+mod pg;
 mod store;
 
 use golden::GoldenVerifyPayload;
@@ -83,17 +84,6 @@ struct InstrumentSearchPayload {
     db_url: String,
     country: String,
     query: String,
-    limit: Option<i64>,
-}
-
-#[derive(Deserialize)]
-struct SearchPayload {
-    db_url: String,
-    query: String,
-    country: Option<String>,
-    as_of: Option<String>,
-    languages: Option<Vec<String>>,
-    mode: Option<String>,
     limit: Option<i64>,
 }
 
@@ -276,52 +266,10 @@ async fn eval_run_detail(payload: EvalRunPayload) -> Result<Value, String> {
     blocking(move || db::eval_run_detail(&payload.db_url, payload.run_pk)).await
 }
 
-/// Article search. Vector and hybrid modes need the query encoded by the
-/// worker (an `encode` job); when no worker is alive the search degrades to
-/// full-text and says so in `notice`, rather than failing.
+/// Article search (`db::search`: encode on the worker, then `search_chunks`).
 #[tauri::command]
-async fn search_articles(payload: SearchPayload) -> Result<Value, String> {
-    blocking(move || {
-        let mut mode = db::SearchMode::parse(payload.mode.as_deref().unwrap_or("hybrid"))?;
-        let mut notice: Option<String> = None;
-        let query_vector = if mode.uses_vector() {
-            match jobs::encode_query(&EncodePayload {
-                db_url: payload.db_url.clone(),
-                query: payload.query.clone(),
-                sentences: None,
-            }) {
-                Ok(result) => Some(
-                    result
-                        .get("halfvec")
-                        .and_then(Value::as_str)
-                        .filter(|v| v.starts_with('[') && v.ends_with(']'))
-                        .ok_or("encode job returned no halfvec")?
-                        .to_string(),
-                ),
-                Err(e) if e == jobs::NO_WORKER => {
-                    notice = Some(format!("{e}; showing full-text results instead"));
-                    mode = db::SearchMode::FullText;
-                    None
-                }
-                Err(e) => return Err(e),
-            }
-        } else {
-            None
-        };
-        let mut result = db::search_articles(
-            &payload.db_url,
-            &payload.query,
-            payload.country.as_deref(),
-            payload.as_of.as_deref(),
-            payload.languages.as_deref(),
-            mode,
-            query_vector.as_deref(),
-            payload.limit.unwrap_or(25),
-        )?;
-        result["notice"] = json!(notice);
-        Ok(result)
-    })
-    .await
+async fn search_articles(payload: db::SearchPayload) -> Result<Value, String> {
+    blocking(move || db::search(&payload, 25)).await
 }
 
 /// Cosine of each sentence against the query, one BGE-M3 batch on the
@@ -334,10 +282,12 @@ async fn score_sentences(payload: SentenceScorePayload) -> Result<Vec<f64>, Stri
     }
     let expected = payload.sentences.len();
     blocking(move || {
+        let model_id = db::default_model_id(&mut pg::connect(&payload.db_url)?)?;
         let result = jobs::encode_query(&EncodePayload {
             db_url: payload.db_url,
             query: payload.query,
             sentences: Some(payload.sentences),
+            model_id: Some(model_id),
         })?;
         let similarities = result
             .get("similarities")
@@ -417,11 +367,6 @@ async fn worker_status(payload: DbPayload) -> Result<Value, String> {
     blocking(move || jobs::worker_status(&payload.db_url)).await
 }
 
-#[tauri::command]
-async fn encode_query(payload: EncodePayload) -> Result<Value, String> {
-    blocking(move || jobs::encode_query(&payload)).await
-}
-
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -452,7 +397,6 @@ pub fn run() {
             cancel_job,
             list_jobs,
             worker_status,
-            encode_query,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

@@ -1,9 +1,12 @@
 # EUROMOD legislation MCP server
 
 Model Context Protocol tools for the shared legislation database. The server
-accepts English queries and supports full-text, multilingual BGE-M3 vector, or
-reciprocal-rank-fused hybrid retrieval. It returns citable chunk IDs, provenance,
-and the component ranks used to build each result.
+accepts English queries and supports full-text, multilingual vector, or
+reciprocal-rank-fused hybrid retrieval. Ranking is the database's
+`search_chunks()`, the same function the agentic workflow retrieves evidence
+with: Country Reports (trust class `context`) are never returned, and every hit
+carries its `source_trust_class`. It returns citable chunk IDs, provenance, and
+the component ranks used to build each result.
 
 The server **never loads a model** (ADR 0004). A hybrid or vector query is
 encoded by submitting an `encode` job to `ops.jobs`; the Nomergon worker keeps
@@ -35,8 +38,9 @@ autocommit connection with the same login.
   `ops.workers.heartbeat_at` (within 60 s) before submitting and refuses with a
   clear error naming the worker when none is alive; it does not queue a job that
   nothing will run.
-- Model-1 (BGE-M3) embeddings built for the corpus, which is itself an `embed`
-  job the worker runs.
+- Embeddings of the default model (`embedding_models.is_default`, BGE-M3) built
+  for the corpus, which is itself an `embed` job the worker runs. The server
+  encodes queries with that same model (`model_id` in the encode payload).
 
 ## Run
 

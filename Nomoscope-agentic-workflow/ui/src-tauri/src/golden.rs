@@ -12,7 +12,8 @@
 //! do: the dataset schema evolves in the Python package and the UI must not
 //! need a lockstep release.
 
-use postgres::{Client, NoTls};
+use crate::pg::{connect, describe};
+use postgres::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
@@ -24,9 +25,6 @@ pub struct GoldenVerifyPayload {
     pub note: Option<String>,
 }
 
-fn connect(db_url: &str) -> Result<Client, String> {
-    Client::connect(db_url, NoTls).map_err(|e| format!("DB connection failed: {e}"))
-}
 
 /// One case object from a row: the stored `case` with the identity and
 /// verdict columns laid over it (the columns win — they are what the eval
@@ -82,7 +80,7 @@ fn parameter_summary(client: &mut Client, case: &Value) -> Result<Value, String>
     let as_of = case.get("as_of").and_then(Value::as_str).unwrap_or("");
     let params_schema: bool = client
         .query_one("SELECT to_regclass('params.parameters') IS NOT NULL", &[])
-        .map_err(|e| e.to_string())?
+        .map_err(describe)?
         .get(0);
     if !params_schema {
         return Ok(json!({ "missing": target }));
@@ -106,7 +104,7 @@ fn parameter_summary(client: &mut Client, case: &Value) -> Result<Value, String>
              WHERE p.model_target = $1",
             &[&target, &as_of],
         )
-        .map_err(|e| format!("parameter lookup failed: {e}"))?;
+        .map_err(|e| format!("parameter lookup failed: {}", describe(e)))?;
     let Some(r) = row else {
         return Ok(json!({ "missing": target }));
     };
@@ -139,7 +137,7 @@ pub fn load_cases(db_url: &str) -> Result<Value, String> {
             &format!("SELECT {CASE_COLUMNS} FROM eval.golden_cases ORDER BY country, id"),
             &[],
         )
-        .map_err(|e| format!("golden cases query failed (has `nomokrisis-eval init-db` been run?): {e}"))?;
+        .map_err(|e| format!("golden cases query failed (has `nomokrisis-eval init-db` been run?): {}", describe(e)))?;
     let mut cases = Vec::with_capacity(rows.len());
     for r in &rows {
         let mut case = case_row(r);
@@ -176,7 +174,7 @@ pub fn set_verified(payload: &GoldenVerifyPayload) -> Result<Value, String> {
             ),
             &[&payload.id, &payload.verified, &note],
         )
-        .map_err(|e| format!("golden verdict refused: {e}"))?
+        .map_err(|e| format!("golden verdict refused: {}", describe(e)))?
         .ok_or_else(|| format!("golden case {} does not exist", payload.id))?;
     Ok(json!({ "case": case_row(&row) }))
 }

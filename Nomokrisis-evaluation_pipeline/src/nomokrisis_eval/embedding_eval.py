@@ -61,36 +61,6 @@ from .scoring import citation_equal, citation_matches
 #: Id prefix of the retrieval cases derived from golden cases.
 GOLDEN_CASE_PREFIX = "golden:"
 
-# Same candidate filter as retrieval.py's hybrid CTE: in force at as_of, one
-# jurisdiction+lang, trust class 'context' excluded (Country Reports describe
-# the model, not the law — retrieving one can never be a "relevant" outcome).
-#
-# Ranked by the computed `score`, never by `e.embedding <=> q` directly: that
-# form lets the planner walk a model's HNSW index, which returns the 40 nearest
-# chunks of the WHOLE corpus and only then applies the filters — a Lithuanian
-# query got 2 rows out of 15 that way, and only the model that had an index
-# (BGE-M3) was penalised. Exact ranking over one country's candidates is a few
-# milliseconds and the same for every model. (retrieval.py's vector leg ranks
-# inside a window function and never takes the index.)
-_VECTOR_SQL_TEMPLATE = """
-SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status,
-       (1 - (e.embedding <=> {qexpr}))::float8 AS score
-FROM embeddings e
-JOIN chunks ch             ON ch.id = e.chunk_id
-JOIN unit_texts t          ON t.id = ch.unit_text_id
-JOIN legal_unit_versions v ON v.id = t.version_id
-JOIN legal_units u         ON u.id = v.legal_unit_id
-JOIN instruments i         ON i.id = u.instrument_id
-JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-WHERE e.model_id = %(model_id)s
-  AND j.code = ANY(%(jurisdictions)s::text[]) AND t.lang = %(lang)s
-  AND v.validity @> %(as_of)s::date
-  AND i.source_trust_class <> 'context'
-ORDER BY score DESC
-LIMIT %(k)s
-"""
-
 _CANDIDATES_SQL = """
 SELECT count(*)::int AS chunks, count(e.chunk_id)::int AS embedded
 FROM chunks ch
@@ -118,24 +88,14 @@ def vector_search(
     k: int,
     query_vector: str | None,
 ) -> list[RetrievalHit]:
-    """Pure cosine ranking over the embedded candidate set (no FTS leg)."""
-    use_placeholder = model_id == 99  # demo embedder lives in SQL, as in retrieval.py
-    sql = _VECTOR_SQL_TEMPLATE.format(
-        qexpr="placeholder_embedding(%(q)s)" if use_placeholder else "%(qvec)s::halfvec(1024)"
+    """Pure cosine ranking over the embedded candidate set (no FTS leg).
+
+    The database's search_chunks() with its FTS leg off — the same candidate
+    set (live version, scope, trust class) as production retrieval.
+    """
+    return retrieval.hybrid_search(
+        conn, country, lang, as_of, query, model_id, k, query_vector, use_fts=False
     )
-    rows = conn.execute(
-        sql,
-        {
-            "jurisdictions": retrieval.scope_codes(country),
-            "lang": lang,
-            "as_of": as_of,
-            "q": query,
-            "qvec": query_vector,
-            "model_id": model_id,
-            "k": k,
-        },
-    ).fetchall()
-    return [RetrievalHit(method="vector", **row) for row in rows]
 
 
 def first_relevant_rank(expected_citations: list[str], hits: list[RetrievalHit]) -> int | None:

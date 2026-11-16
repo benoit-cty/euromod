@@ -17,10 +17,12 @@ mod db;
 #[allow(dead_code)]
 #[path = "../../../ui/src-tauri/src/jobs.rs"]
 mod jobs;
+#[path = "../../../ui/src-tauri/src/pg.rs"]
+mod pg;
 
 mod conversations;
 
-use jobs::{EncodePayload, EventsPayload, JobPayload, SubmitPayload};
+use jobs::{EventsPayload, JobPayload, SubmitPayload};
 
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -34,17 +36,6 @@ struct DbPayload {
 struct ChunkPayload {
     db_url: String,
     chunk_id: String,
-}
-
-#[derive(Deserialize)]
-struct SearchPayload {
-    db_url: String,
-    query: String,
-    country: Option<String>,
-    as_of: Option<String>,
-    languages: Option<Vec<String>>,
-    mode: Option<String>,
-    limit: Option<i64>,
 }
 
 async fn blocking<T, F>(f: F) -> Result<T, String>
@@ -114,52 +105,10 @@ async fn chunk_renderings(payload: ChunkPayload) -> Result<Value, String> {
     blocking(move || db::chunk_renderings(&payload.db_url, &payload.chunk_id)).await
 }
 
-/// Direct article search, no LLM: the same SQL as the review UI's Database
-/// tab. Hybrid and vector modes encode the query on the worker; with no
-/// worker alive the search degrades to full text and says so in `notice`.
+/// Direct article search, no LLM: the review UI's own `db::search`.
 #[tauri::command]
-async fn search_articles(payload: SearchPayload) -> Result<Value, String> {
-    blocking(move || {
-        let mut mode = db::SearchMode::parse(payload.mode.as_deref().unwrap_or("hybrid"))?;
-        let mut notice: Option<String> = None;
-        let query_vector = if mode.uses_vector() {
-            match jobs::encode_query(&EncodePayload {
-                db_url: payload.db_url.clone(),
-                query: payload.query.clone(),
-                sentences: None,
-            }) {
-                Ok(result) => Some(
-                    result
-                        .get("halfvec")
-                        .and_then(Value::as_str)
-                        .filter(|v| v.starts_with('[') && v.ends_with(']'))
-                        .ok_or("encode job returned no halfvec")?
-                        .to_string(),
-                ),
-                Err(e) if e == jobs::NO_WORKER => {
-                    notice = Some(format!("{e}; showing full-text results instead"));
-                    mode = db::SearchMode::FullText;
-                    None
-                }
-                Err(e) => return Err(e),
-            }
-        } else {
-            None
-        };
-        let mut result = db::search_articles(
-            &payload.db_url,
-            &payload.query,
-            payload.country.as_deref(),
-            payload.as_of.as_deref(),
-            payload.languages.as_deref(),
-            mode,
-            query_vector.as_deref(),
-            payload.limit.unwrap_or(20),
-        )?;
-        result["notice"] = json!(notice);
-        Ok(result)
-    })
-    .await
+async fn search_articles(payload: db::SearchPayload) -> Result<Value, String> {
+    blocking(move || db::search(&payload, 20)).await
 }
 
 pub fn run() {

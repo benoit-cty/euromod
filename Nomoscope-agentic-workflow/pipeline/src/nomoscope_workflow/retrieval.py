@@ -118,57 +118,22 @@ ORDER BY score DESC, ch.seq
 LIMIT %(k)s
 """
 
-_HYBRID_SQL_TEMPLATE = f"""
-WITH {_LIVE_VERSION_CTE},
-candidate AS (
-  SELECT c.id AS chunk_id, c.tsv, c.search_config
-  FROM chunks c
-  JOIN unit_texts t    ON t.id = c.unit_text_id
-  JOIN live_version lv ON lv.version_id = t.version_id
-  WHERE t.lang = %(lang)s
-),
-fts AS (
-  SELECT chunk_id,
-         row_number() OVER (
-           -- 1|32: log-length normalisation, then rank/(rank+1). Without the
-           -- length term, long amending acts that repeat common fiscal words
-           -- outrank the short implementing act that actually sets the value.
-           ORDER BY ts_rank_cd(tsv, websearch_to_tsquery(search_config, %(fts_q)s), 1|32) DESC
-         ) AS r
-  FROM candidate
-  WHERE tsv @@ websearch_to_tsquery(search_config, %(fts_q)s)
-  LIMIT 50
-){{vec_cte}}
+# Hybrid search is the database's search_chunks() (Nomotheca-RAG/db/schema.sql):
+# one implementation for the workflow, the eval, the review UI and the MCP
+# server — live version, trust class, OR-of-terms FTS, RRF + vector top-3 slot.
+_HYBRID_SQL = """
 SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
        v.validity::text AS validity, v.version_status, i.source_trust_class,
-       {{score_expr}} AS score
-FROM {{joined}}
-JOIN chunks ch             ON ch.id = chunk_id
+       s.score
+FROM search_chunks(%(q)s, {qvec}, %(model_id)s, %(jurisdictions)s::text[],
+                   ARRAY[%(lang)s]::text[], %(as_of)s::date, %(k)s, %(use_fts)s) s
+JOIN chunks ch             ON ch.id = s.chunk_id
 JOIN unit_texts t          ON t.id = ch.unit_text_id
 JOIN legal_unit_versions v ON v.id = t.version_id
 JOIN legal_units u         ON u.id = v.legal_unit_id
 JOIN instruments i         ON i.id = u.instrument_id
-ORDER BY score DESC
-LIMIT %(k)s
+ORDER BY s.score DESC, s.chunk_id
 """
-
-_VEC_CTE = """,
-vec AS (
-  SELECT e.chunk_id,
-         row_number() OVER (ORDER BY e.embedding <=> placeholder_embedding(%(q)s)) AS r
-  FROM embeddings e JOIN candidate USING (chunk_id)
-  WHERE e.model_id = %(model_id)s
-  LIMIT 50
-)"""
-
-_VEC_CTE_QVEC = """,
-vec AS (
-  SELECT e.chunk_id,
-         row_number() OVER (ORDER BY e.embedding <=> %(qvec)s::halfvec(1024)) AS r
-  FROM embeddings e JOIN candidate USING (chunk_id)
-  WHERE e.model_id = %(model_id)s
-  LIMIT 50
-)"""
 
 
 def _fts_query(query: str) -> str:
@@ -255,39 +220,38 @@ def hybrid_search(
     model_id: int,
     k: int,
     query_vector: str | None = None,
+    *,
+    use_fts: bool = True,
 ) -> list[RetrievalHit]:
-    """RRF-merged FTS + vector search over as-of/jurisdiction/lang candidates."""
-    use_placeholder = model_id == 99  # demo embedder lives in SQL; see module docstring
-    use_vector = use_placeholder or query_vector is not None
-    sql = _HYBRID_SQL_TEMPLATE.format(
-        vec_cte=(_VEC_CTE if use_placeholder else _VEC_CTE_QVEC) if use_vector else "",
-        # RRF, plus guaranteed slots for the vector top-3: ts_rank_cd has no
-        # IDF, so common fiscal terms let long amending acts crowd the FTS
-        # leg, and a chunk ranked #1 by the (semantically reliable) vector
-        # leg alone would lose the fusion to chunks present in both legs.
-        score_expr=(
-            "(coalesce(1.0/(60+fts.r),0) + coalesce(1.0/(60+vec.r),0)"
-            " + CASE WHEN vec.r <= 3 THEN 1.0 ELSE 0 END)::float8"
-            if use_vector
-            else "(1.0/(60+fts.r))::float8"
-        ),
-        joined="fts FULL OUTER JOIN vec USING (chunk_id)" if use_vector else "fts",
-    )
+    """RRF-merged FTS + vector search over as-of/jurisdiction/lang candidates.
+
+    ``use_fts=False`` is the vector leg alone (the embedding comparison's
+    "vector" method), ranked by the same function.
+    """
+    # The demo placeholder embedder (99) lives in SQL; see the module docstring.
+    if model_id == 99:
+        qvec = "placeholder_embedding(%(q)s)"
+    elif query_vector is not None:
+        qvec = "%(qvec)s::halfvec(1024)"
+    else:
+        qvec = "NULL"
+    sql = _HYBRID_SQL.format(qvec=qvec)
     params = {
         "jurisdictions": scope_codes(country),
         "lang": lang,
         "as_of": as_of,
         "q": query,
-        "fts_q": _fts_query(query),
         "qvec": query_vector,
         "k": k,
         "model_id": model_id,
+        "use_fts": use_fts,
     }
     # Rows are unpacked by name: bind the row factory here rather than relying on
     # the caller's connection (a plain `psycopg.connect` yields tuples).
     with conn.cursor(row_factory=dict_row) as cur:
         rows = cur.execute(sql, params).fetchall()
-    return [RetrievalHit(method="hybrid", **row) for row in rows]
+    method = "hybrid" if use_fts else "vector"
+    return [RetrievalHit(method=method, **row) for row in rows]
 
 
 def retrieve(
@@ -1042,7 +1006,9 @@ JOIN unit_texts t          ON t.version_id = v.id AND t.lang = %(lang)s
 JOIN chunks ch             ON ch.unit_text_id = t.id
 JOIN embeddings e          ON e.chunk_id = ch.id AND e.model_id = %(model_id)s
 WHERE u.instrument_id = %(instrument_id)s::uuid AND v.validity @> %(as_of)s::date
-ORDER BY e.embedding <=> %(qvec)s::halfvec(1024)
+-- `+ 0`: never the bare `embedding <=> q` the HNSW index could serve (it would
+-- return the corpus's nearest and filter to this act afterwards).
+ORDER BY (e.embedding <=> %(qvec)s::halfvec(1024)) + 0
 LIMIT %(k)s
 """
 # Cosine distance of given chunks to the query vector.

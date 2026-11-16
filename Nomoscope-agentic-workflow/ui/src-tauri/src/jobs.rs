@@ -14,7 +14,8 @@
 //! evolve worker-side (nomergon/jobs.py validates them) without a lockstep
 //! release of the UI.
 
-use postgres::{Client, NoTls};
+use crate::pg::{connect, describe};
+use postgres::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::time::{Duration, Instant};
@@ -58,11 +59,13 @@ pub struct EncodePayload {
     pub db_url: String,
     pub query: String,
     pub sentences: Option<Vec<String>>,
+    /// The embedding model to encode with (`embedding_models.id`); the
+    /// worker's default (BGE-M3) when absent. Must be the model the searched
+    /// vectors were built with.
+    #[serde(default)]
+    pub model_id: Option<i32>,
 }
 
-fn connect(db_url: &str) -> Result<Client, String> {
-    Client::connect(db_url, NoTls).map_err(|e| format!("DB connection failed: {e}"))
-}
 
 /// The columns every job read returns, in one place so status/list agree.
 const JOB_COLUMNS: &str = "id, job_type, status, submitted_by,
@@ -97,7 +100,7 @@ pub fn submit(client: &mut Client, job_type: &str, payload: &Value, priority: i1
             "INSERT INTO ops.jobs (job_type, payload, priority) VALUES ($1, $2, $3) RETURNING id",
             &[&job_type, payload, &priority],
         )
-        .map_err(|e| format!("job submit failed: {e}"))?;
+        .map_err(|e| format!("job submit failed: {}", describe(e)))?;
     Ok(row.get(0))
 }
 
@@ -111,7 +114,7 @@ pub fn submit_job(payload: &SubmitPayload) -> Result<Value, String> {
 fn status_row(client: &mut Client, id: i64) -> Result<Value, String> {
     let row = client
         .query_opt(&format!("SELECT {JOB_COLUMNS} FROM ops.jobs WHERE id = $1"), &[&id])
-        .map_err(|e| format!("job status query failed: {e}"))?
+        .map_err(|e| format!("job status query failed: {}", describe(e)))?
         .ok_or_else(|| format!("job {id} does not exist"))?;
     Ok(job_row(&row))
 }
@@ -128,7 +131,7 @@ fn events_after(client: &mut Client, job_id: i64, after: i64) -> Result<Vec<Valu
              FROM ops.job_events WHERE job_id = $1 AND id > $2 ORDER BY id",
             &[&job_id, &after],
         )
-        .map_err(|e| format!("job events query failed: {e}"))?;
+        .map_err(|e| format!("job events query failed: {}", describe(e)))?;
     Ok(rows
         .iter()
         .map(|r| {
@@ -160,7 +163,7 @@ pub fn cancel_job(payload: &JobPayload) -> Result<Value, String> {
              WHERE id = $1 AND status IN ('queued', 'running')",
             &[&payload.id],
         )
-        .map_err(|e| format!("job cancel failed: {e}"))?;
+        .map_err(|e| format!("job cancel failed: {}", describe(e)))?;
     Ok(json!({ "id": payload.id, "cancelled": n > 0 }))
 }
 
@@ -172,10 +175,10 @@ pub fn list_jobs(payload: &ListPayload) -> Result<Value, String> {
             &format!("SELECT {JOB_COLUMNS} FROM ops.jobs ORDER BY id DESC LIMIT $1"),
             &[&limit],
         )
-        .map_err(|e| format!("job list query failed: {e}"))?;
+        .map_err(|e| format!("job list query failed: {}", describe(e)))?;
     let me: String = client
         .query_one("SELECT current_user", &[])
-        .map_err(|e| e.to_string())?
+        .map_err(describe)?
         .get(0);
     Ok(json!({
         "current_user": me,
@@ -195,14 +198,14 @@ pub fn worker_status_with(client: &mut Client) -> Result<Value, String> {
              FROM ops.workers ORDER BY heartbeat_at DESC",
             &[&(HEARTBEAT_STALE_SECS as f64)],
         )
-        .map_err(|e| format!("workers query failed: {e}"))?;
+        .map_err(|e| format!("workers query failed: {}", describe(e)))?;
     let models = client
         .query(
             "SELECT model, kind, is_default, published_by, published_at::text AS published_at
              FROM ops.worker_models ORDER BY kind, is_default DESC, model",
             &[],
         )
-        .map_err(|e| format!("worker models query failed: {e}"))?;
+        .map_err(|e| format!("worker models query failed: {}", describe(e)))?;
     Ok(json!({
         "workers": workers.iter().map(|r| json!({
             "worker_id": r.get::<_, String>("worker_id"),
@@ -237,7 +240,7 @@ fn any_worker_alive(client: &mut Client) -> Result<bool, String> {
                             WHERE heartbeat_at > now() - make_interval(secs => $1::float8))",
             &[&(HEARTBEAT_STALE_SECS as f64)],
         )
-        .map_err(|e| format!("workers query failed: {e}"))?;
+        .map_err(|e| format!("workers query failed: {}", describe(e)))?;
     Ok(row.get(0))
 }
 
@@ -257,10 +260,13 @@ pub fn encode_query(payload: &EncodePayload) -> Result<Value, String> {
     if !any_worker_alive(&mut client)? {
         return Err(NO_WORKER.to_string());
     }
-    let body = match &payload.sentences {
+    let mut body = match &payload.sentences {
         Some(sentences) => json!({ "query": payload.query, "sentences": sentences }),
         None => json!({ "query": payload.query }),
     };
+    if let Some(model_id) = payload.model_id {
+        body["model_id"] = json!(model_id);
+    }
     let id = submit(&mut client, "encode", &body, ENCODE_PRIORITY)?;
     let started = Instant::now();
     loop {
@@ -269,7 +275,7 @@ pub fn encode_query(payload: &EncodePayload) -> Result<Value, String> {
                 "SELECT status, result, error FROM ops.jobs WHERE id = $1",
                 &[&id],
             )
-            .map_err(|e| format!("encode job poll failed: {e}"))?;
+            .map_err(|e| format!("encode job poll failed: {}", describe(e)))?;
         let status: String = row.get("status");
         match status.as_str() {
             "succeeded" => {
@@ -320,6 +326,11 @@ mod tests {
     fn job_round_trip_smoke() {
         let Some(mut client) = test_client() else { return };
         let db_url = url();
+        // A live worker would claim the job and race the assertions.
+        if any_worker_alive(&mut client).unwrap_or(true) {
+            eprintln!("skipped: a worker is running");
+            return;
+        }
 
         let submitted = submit_job(&SubmitPayload {
             db_url: db_url.clone(),
@@ -389,7 +400,7 @@ mod tests {
         // Other tests in this binary insert jobs concurrently, so count only
         // the row this call would have written, not the whole table.
         let query = format!("zz_encode_refusal_{}", std::process::id());
-        let error = encode_query(&EncodePayload { db_url: url(), query: query.clone(), sentences: None })
+        let error = encode_query(&EncodePayload { db_url: url(), query: query.clone(), sentences: None, model_id: None })
             .unwrap_err();
         assert_eq!(error, NO_WORKER);
         let left_behind: i64 = client

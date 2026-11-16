@@ -96,3 +96,12 @@ def test_the_national_scope_sees_no_regional_act(conn):
     hits = retrieval.hybrid_search(conn, ["ES"], "es", AS_OF, QUERY, 0, 50, None)
     assert hits, "no state-law hit at all for a Spanish query"
     assert _jurisdictions_of(conn, hits) == {"ES"}
+
+
+def test_sql_fts_or_query_matches_python(conn):
+    """search_chunks() builds its OR query in SQL; the rest of retrieval in Python."""
+    for q in ["Taux de la tranche 1 taux marginal de l'impôt", "Švietimo įstatymas OR 2025", "", "a"]:
+        sql = conn.execute("SELECT fts_or_query(%s) AS q", (q,)).fetchone()
+        sql = sql["q"] if isinstance(sql, dict) else sql[0]
+        py = retrieval._fts_query(q)
+        assert set(sql.split(" OR ")) == set(py.split(" OR ")), q

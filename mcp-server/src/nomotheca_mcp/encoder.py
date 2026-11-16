@@ -94,8 +94,12 @@ class QueryEncoder:
             cur.execute(ALIVE_WORKERS_SQL, (WORKER_HEARTBEAT_MAX_AGE_SECONDS,))
             return [row[0] for row in cur.fetchall()]
 
-    def encode_literal(self, query: str) -> str:
-        """Return a PostgreSQL halfvec literal for one normalized query vector."""
+    def encode_literal(self, query: str, model_id: int = 1) -> str:
+        """Return a PostgreSQL halfvec literal for one normalized query vector.
+
+        ``model_id`` names the embedding model; the worker encodes with that
+        model's query prompt, so the vector matches the corpus it searches.
+        """
         if not query.strip():
             raise ValueError("query must not be empty")
         conn = self._connect()
@@ -106,14 +110,16 @@ class QueryEncoder:
                     f"{WORKER_HEARTBEAT_MAX_AGE_SECONDS} s): start the worker "
                     "(Nomergon-worker) or use mode='full_text'"
                 )
-            job_id = self._submit(conn, query)
+            job_id = self._submit(conn, query, model_id)
             return self._wait(conn, job_id)
         finally:
             conn.close()
 
-    def _submit(self, conn: Any, query: str) -> int:
+    def _submit(self, conn: Any, query: str, model_id: int = 1) -> int:
         with conn.cursor() as cur:
-            cur.execute(SUBMIT_SQL, (Jsonb({"query": query}), ENCODE_JOB_PRIORITY))
+            cur.execute(
+                SUBMIT_SQL, (Jsonb({"query": query, "model_id": model_id}), ENCODE_JOB_PRIORITY)
+            )
             row = cur.fetchone()
         if row is None:
             raise EncoderUnavailable("INSERT INTO ops.jobs returned no id")
