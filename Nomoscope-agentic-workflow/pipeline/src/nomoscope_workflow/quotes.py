@@ -23,6 +23,8 @@ from typing import Protocol
 
 import psycopg
 
+from . import issues as issue_text
+
 
 class Quotable(Protocol):
     """What the resolution rules read from a retrieved chunk."""
@@ -175,7 +177,7 @@ def misquote_hint(hits: Sequence[Quotable], chunk_id: str, extract: str) -> str 
     passage = closest_passage(content or "", extract or "")
     if passage is None:
         return None
-    return f"the cited chunk reads: «{passage}» — quote it exactly as written, without correcting it"
+    return issue_text.misquote_hint(passage)
 
 
 @dataclass(slots=True)
@@ -241,14 +243,6 @@ def check_quote(hits: Sequence[Quotable], cited: str, extract: str, verify: Veri
     return check
 
 
-MISQUOTE_ISSUE = re.compile(
-    r"supporting_extract is not a verbatim quote of the cited chunk$"
-    r"|the cited chunk reads: «"
-    r"|derivation: operand \w+'s extract is not a verbatim quote of its chunk$"
-    r"|derivation: operand \w+: the cited chunk reads: «"
-)
-
-
 def misquoted_only(issues: list[str]) -> bool:
     """Whether a failed critique objects to nothing but a misquote.
 
@@ -260,4 +254,4 @@ def misquoted_only(issues: list[str]) -> bool:
     The extract check itself is unchanged.
     """
     objections = [i for i in issues if not i.startswith("note:")]
-    return bool(objections) and all(MISQUOTE_ISSUE.match(i) for i in objections)
+    return bool(objections) and all(issue_text.code_of(i) in issue_text.MISQUOTE for i in objections)

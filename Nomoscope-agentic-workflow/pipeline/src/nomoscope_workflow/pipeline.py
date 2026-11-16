@@ -21,7 +21,7 @@ from typing import TypedDict
 
 from opentelemetry.trace import Tracer
 
-from . import AGENT_VERSION, llm, mock, paramdb, queue_store, quotes, regions, retrieval, scout
+from . import AGENT_VERSION, issues, llm, mock, paramdb, queue_store, quotes, regions, retrieval, scout
 from .config import WorkflowConfig
 from .prompts import PROMPT_VERSION
 from .schema import (
@@ -138,11 +138,6 @@ class WorkflowState(TypedDict, total=False):
 #: gap-fill round on a proposal that WAS produced: a unit-sanity or
 #: value-support complaint is about the answer, and fetching more law cannot
 #: fix it.
-_SOURCE_GAP_ISSUES = (
-    "citation_chunk_id missing",
-    "predates the budget-act window",
-    "never names income year",
-)
 
 
 def _needs_gap_fill(state: WorkflowState) -> bool:
@@ -172,7 +167,7 @@ def _needs_gap_fill(state: WorkflowState) -> bool:
         return True
     if report.verdict == "pass":
         return False
-    return any(marker in issue for issue in report.issues for marker in _SOURCE_GAP_ISSUES)
+    return any(issues.code_of(issue) in issues.SOURCE_GAP for issue in report.issues)
 
 
 @dataclass(slots=True)
@@ -308,14 +303,12 @@ def critique(ctx: StepContext, state: WorkflowState) -> dict:
                 mech_notes.extend(check.notes)
                 draft.citation_chunk_id = check.chunk_id
             if not draft.supporting_extract or check.status == "not_retrieved":
-                report.issues.append("citation_chunk_id missing or not among retrieved chunks")
+                report.issues.append(issues.CITATION_NOT_RETRIEVED)
             else:
                 report.citation_verified = check.verified
                 report.extract_offsets = check.offsets
                 if not check.verified:
-                    report.issues.append(
-                        "supporting_extract is not a verbatim quote of the cited chunk"
-                    )
+                    report.issues.append(issues.NOT_VERBATIM)
                     if check.hint:
                         report.issues.append(check.hint)
 

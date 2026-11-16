@@ -14,6 +14,7 @@ import operator
 import re
 from decimal import ROUND_HALF_UP, Decimal
 
+from . import issues as issue_text
 from . import quotes
 from .schema import ParameterValue, ProposalDraft, RetrievalHit
 
@@ -246,14 +247,14 @@ def _check_derivation(
         check = quotes.check_quote(hits, op.citation_chunk_id, op.supporting_extract, verify)
         op.citation_chunk_id = check.chunk_id
         if check.status == "not_retrieved":
-            issues.append(f"derivation: {where} cites a chunk that was not retrieved")
+            issues.append(issue_text.operand_not_retrieved(op.name))
             offsets.append(None)
             continue
         offsets.append(check.offsets)
         if not check.verified:
-            issues.append(f"derivation: {where}'s extract is not a verbatim quote of its chunk")
+            issues.append(issue_text.operand_not_verbatim(op.name))
             if check.hint:
-                issues.append(f"derivation: {where}: {check.hint}")
+                issues.append(issue_text.operand_hint(op.name, check.hint))
         elif not _extract_states(op.supporting_extract, op.value):
             issues.append(f"derivation: {where}'s extract does not state {op.value:g}")
             content = next((h.content for h in hits if h.chunk_id == op.citation_chunk_id), "")

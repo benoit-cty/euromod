@@ -1421,3 +1421,14 @@ def test_tavily_432_latches_by_status_code(monkeypatch):
         with pytest.raises(scout_mod.WebSearchUnavailable):
             scout_mod.web_search("k", "q", [])
     assert calls == ["q"]  # latched: no second request
+
+
+def test_routed_issues_are_recognised_from_their_own_wording():
+    """Rewording a routed issue cannot silently change routing (code audit 4)."""
+    from nomoscope_workflow import issues as it
+
+    assert it.code_of(it.CITATION_NOT_RETRIEVED) in it.SOURCE_GAP
+    assert it.code_of(it.operand_not_verbatim("b")) in it.MISQUOTE
+    assert it.code_of(it.operand_hint("b", it.misquote_hint("x"))) in it.MISQUOTE
+    assert it.code_of(it.operand_not_retrieved("b")) not in it.MISQUOTE
+    assert it.code_of("note: derived") is None
