@@ -20,7 +20,7 @@ from uuid import UUID
 import psycopg
 
 from nomotheca_ingest.core.db import ensure_source, fetch_run
-from nomotheca_ingest.core.documents import build_document
+from nomotheca_ingest.core.documents import DocumentSpec, build_document
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
     ParsedDoc,
@@ -70,23 +70,22 @@ def parse_country_report(
     """
     jurisdiction = jurisdiction.upper()
     national_id = f"CR-{jurisdiction}-{vintage}"
-    return build_document(
-        text=markdown,
+    spec = DocumentSpec(
         jurisdiction=jurisdiction,
         source_code=source_code,
         instrument_type=INSTRUMENT_TYPE,
         source_trust_class=SourceTrustClass.CONTEXT,
         national_id=national_id,
         title=f"EUROMOD Country Report {jurisdiction} {vintage}",
-        title_from_heading=True,
         lang=lang,
         valid_from=valid_from,
         snapshot_id=snapshot_id,
         citation_prefix=f"CR {jurisdiction} {vintage}",
-        pattern="markdown",
         version_key=f"{national_id}@{valid_from.isoformat()}",
-        unit_type_by_depth=_UNIT_TYPE_BY_DEPTH,
         metadata={"vintage": vintage, "corpus_class": INSTRUMENT_TYPE},
+    )
+    return build_document(
+        markdown, spec, pattern="markdown", title_from_heading=True, unit_type_by_depth=_UNIT_TYPE_BY_DEPTH
     )
 
 

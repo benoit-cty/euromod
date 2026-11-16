@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from uuid import uuid4
 
-from nomotheca_ingest.core.documents import build_document, find_headings
+from nomotheca_ingest.core.documents import DocumentSpec, build_document, find_headings
 
 MARKDOWN = """\
 Preamble text before any heading.
@@ -35,9 +35,8 @@ La decote est de 889 EUR.
 """
 
 
-def _build(text: str, pattern: str, **kwargs):
-    return build_document(
-        text=text,
+def _build(text: str, pattern: str, version_key: str | None = None, **kwargs):
+    spec = DocumentSpec(
         jurisdiction="fr",
         source_code="FR-CONTRIB",
         instrument_type="circulaire",
@@ -47,9 +46,9 @@ def _build(text: str, pattern: str, **kwargs):
         snapshot_id=uuid4(),
         citation_prefix="Circulaire Unedic",
         lang="fr",
-        pattern=pattern,
-        **kwargs,
+        version_key=version_key,
     )
+    return build_document(text, spec, pattern=pattern, **kwargs)
 
 
 def test_markdown_headings_build_a_nested_unit_tree() -> None:

@@ -13,7 +13,7 @@ from nomotheca_ingest.core import extract
 from nomotheca_ingest.core.contributed.fetch import SourceDocument, read_input
 from nomotheca_ingest.core.contributed.kinds import ContributedFields, stated_fields
 from nomotheca_ingest.core.db import ensure_source, fetch_run
-from nomotheca_ingest.core.documents import build_document
+from nomotheca_ingest.core.documents import DocumentSpec, build_document
 from nomotheca_ingest.core.ir import (
     InstrumentRelationIR,
     ParsedDoc,
@@ -107,8 +107,7 @@ def parse_document(document: SourceDocument, fields: ContributedFields) -> Parse
     extracted = extract.extract(document.raw, document.content_type)
     digest = document.content_hash
 
-    instrument = build_document(
-        text=extracted.text,
+    spec = DocumentSpec(
         jurisdiction=fields.jurisdiction,
         source_code=fields.source_code,
         instrument_type=fields.kind,
@@ -119,12 +118,10 @@ def parse_document(document: SourceDocument, fields: ContributedFields) -> Parse
         valid_from=fields.valid_from,
         snapshot_id=document.snapshot_id,
         citation_prefix=fields.title[:120],
-        pattern=extracted.pattern,
         # Content, not the date, decides identity of a version: re-adding the
         # same bytes reuses the version, a changed page opens a new one and
         # the loader closes the previous (see LegislationLoader._chain_versions).
         version_key=f"{document.national_id}@{digest[:16]}",
-        content_html=extracted.html,
         metadata={
             "contributed": True,
             "kind": fields.kind,
@@ -134,6 +131,7 @@ def parse_document(document: SourceDocument, fields: ContributedFields) -> Parse
             "origin": document.origin,
         },
     )
+    instrument = build_document(extracted.text, spec, pattern=extracted.pattern, content_html=extracted.html)
     return ParsedDoc(
         ref=source_ref(document, fields),
         instruments=[instrument],

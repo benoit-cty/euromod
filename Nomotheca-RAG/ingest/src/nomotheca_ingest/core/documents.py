@@ -250,98 +250,161 @@ def _prune_textless(units: list[UnitIR]) -> list[UnitIR]:
         kept = survivors
 
 
+@dataclass(frozen=True, slots=True)
+class DocumentSpec:
+    """Who a headed text is: its instrument row and its versions' provenance.
+
+    ``version_key`` becomes every version's ``source_version_id``, which is
+    what the loader deduplicates on: pass a key that changes exactly when the
+    document's content changes and re-ingestion is a no-op or a new version,
+    never a pile of near-duplicates. Default: ``<national_id>@<valid_from>``.
+    """
+
+    jurisdiction: str
+    source_code: str
+    instrument_type: str
+    national_id: str
+    title: str
+    valid_from: date
+    snapshot_id: UUID
+    citation_prefix: str
+    lang: str = "en"
+    source_trust_class: SourceTrustClass = SourceTrustClass.EVIDENCE
+    version_key: str | None = None
+    metadata: dict | None = None
+    eli: str | None = None
+
+    @property
+    def key(self) -> str:
+        return self.version_key or f"{self.national_id}@{self.valid_from.isoformat()}"
+
+    def versions(self, content: str, html: str | None = None) -> list[VersionIR]:
+        """The one authentic version a unit holding ``content`` gets (none if empty)."""
+        if not content.strip():
+            return []
+        return [
+            VersionIR(
+                valid_from=self.valid_from,
+                source_version_id=self.key,
+                fetch_snapshot_id=self.snapshot_id,
+                texts=[
+                    TextIR(lang=self.lang, authenticity=Authenticity.AUTHENTIC, content=content, content_html=html)
+                ],
+            )
+        ]
+
+
 def build_document(
-    *,
     text: str,
-    jurisdiction: str,
-    source_code: str,
-    instrument_type: str,
-    national_id: str,
-    title: str,
-    valid_from: date,
-    snapshot_id: UUID,
-    citation_prefix: str,
-    lang: str = "en",
+    spec: DocumentSpec,
+    *,
     pattern: str | re.Pattern[str] = "markdown",
-    source_trust_class: SourceTrustClass = SourceTrustClass.EVIDENCE,
     title_from_heading: bool = False,
-    version_key: str | None = None,
     unit_type_by_depth: dict[int, str] | None = None,
     default_unit_type: str = "subsection",
-    metadata: dict | None = None,
     content_html: str | None = None,
-    eli: str | None = None,
 ) -> InstrumentIR:
     """Turn one headed text into a loadable InstrumentIR.
 
     ``title_from_heading`` claims the first level-1 heading as the document
     title (the Country Report shape, where sections start at level 2).
-    Otherwise the caller's ``title`` stands — a contributed document is titled
-    by the reviewer — and sections start at the shallowest heading present.
+    Otherwise the spec's title stands — a contributed document is titled by
+    the reviewer — and sections start at the shallowest heading present.
 
-    ``version_key`` becomes every version's ``source_version_id``, which is
-    what the loader deduplicates on: pass a key that changes exactly when the
-    document's content changes and re-ingestion is a no-op or a new version,
-    never a pile of near-duplicates.
+    Five steps: find the headings, settle the title and section level, the
+    preamble unit, one unit per section heading, then prune and finish.
     """
-    jurisdiction = jurisdiction.upper()
     compiled = heading_pattern(pattern)
     heading_is_body = any(compiled is HEADING_PATTERNS[name] for name in BODY_HEADING_PATTERNS)
     lines = text.splitlines()
     headings = find_headings(lines, compiled)
     if heading_is_body:
-        headings = drop_table_rows(headings, lines, lang)
+        headings = drop_table_rows(headings, lines, spec.lang)
 
+    title = spec.title
     if title_from_heading:
         title = next((h.text for h in headings if h.level == 1), title)
         section_level = 2
     else:
         section_level = min((h.level for h in headings), default=1)
-
-    key = version_key or f"{national_id}@{valid_from.isoformat()}"
     unit_types = unit_type_by_depth or {section_level: "section"}
+    preamble_type = unit_types.get(section_level, "section")
 
-    def make_version(content: str, html: str | None = None) -> list[VersionIR]:
-        if not content.strip():
-            return []
-        return [
-            VersionIR(
-                valid_from=valid_from,
-                source_version_id=key,
-                fetch_snapshot_id=snapshot_id,
-                texts=[
-                    TextIR(
-                        lang=lang,
-                        authenticity=Authenticity.AUTHENTIC,
-                        content=content,
-                        content_html=html,
-                    )
-                ],
+    units = _preamble_units(lines, headings, section_level, spec, preamble_type)
+    units += _section_units(
+        lines,
+        headings,
+        section_level,
+        spec,
+        unit_types=unit_types,
+        default_unit_type=default_unit_type,
+        heading_is_body=heading_is_body,
+        used_paths={unit.path for unit in units},
+    )
+    if not units:
+        # No headings and no preamble is only possible for an empty document;
+        # a text with no headings at all is one unit holding the whole thing.
+        units = [
+            UnitIR(
+                unit_type=preamble_type,
+                path="preamble",
+                citation=f"{spec.citation_prefix}, preamble",
+                versions=spec.versions(text.strip()),
             )
         ]
+    units = _finish_units(units, content_html)
 
-    units: list[UnitIR] = []
-    used_paths: set[str] = set()
-    citations = UniqueCitations(max_len=200)
-    stack: list[tuple[int, str]] = []          # (level, path) ancestor stack
-    child_counts: dict[str | None, int] = {}
+    return InstrumentIR(
+        jurisdiction=spec.jurisdiction.upper(),
+        source_code=spec.source_code,
+        instrument_type=spec.instrument_type,
+        source_trust_class=spec.source_trust_class,
+        title={spec.lang: title},
+        national_id=spec.national_id,
+        eli=spec.eli,
+        units=units,
+        metadata=spec.metadata or {},
+    )
 
+
+def _preamble_units(
+    lines: list[str], headings: list[Heading], section_level: int, spec: DocumentSpec, unit_type: str
+) -> list[UnitIR]:
+    """Whatever precedes the first section heading, as one ``preamble`` unit."""
     first_section = next((h for h in headings if h.level >= section_level), None)
     cutoff = first_section.line_idx if first_section else len(lines)
     heading_lines = {h.line_idx for h in headings}  # not table rows (drop_table_rows)
     preamble = "\n".join(line for i, line in enumerate(lines[:cutoff]) if i not in heading_lines).strip()
-    if preamble:
-        units.append(
-            UnitIR(
-                unit_type=unit_types.get(section_level, "section"),
-                path="preamble",
-                citation=f"{citation_prefix}, preamble",
-                ordinal=0,
-                versions=make_version(preamble),
-            )
+    if not preamble:
+        return []
+    return [
+        UnitIR(
+            unit_type=unit_type,
+            path="preamble",
+            citation=f"{spec.citation_prefix}, preamble",
+            ordinal=0,
+            versions=spec.versions(preamble),
         )
-        used_paths.add("preamble")
+    ]
 
+
+def _section_units(
+    lines: list[str],
+    headings: list[Heading],
+    section_level: int,
+    spec: DocumentSpec,
+    *,
+    unit_types: dict[int, str],
+    default_unit_type: str,
+    heading_is_body: bool,
+    used_paths: set[str],
+) -> list[UnitIR]:
+    """One unit per heading at or below the section level, nested by level,
+    with de-duplicated ltree paths and unique citations."""
+    units: list[UnitIR] = []
+    citations = UniqueCitations(max_len=200)
+    stack: list[tuple[int, str]] = []  # (level, path) ancestor stack
+    child_counts: dict[str | None, int] = {}
     for heading in headings:
         if heading.level < section_level:
             continue
@@ -359,38 +422,25 @@ def build_document(
         ordinal = child_counts.get(parent_path, 0)
         child_counts[parent_path] = ordinal + 1
 
-        # The loader matches a unit by its citation, so two headings that read
-        # alike (or alike in their first 200 characters) would share one unit
-        # and keep only the first text.
-        citation = citations.claim(f"{citation_prefix}, \u00a7{heading.text}")
-
         start = heading.line_idx if heading_is_body else heading.content_start
         content = "\n".join(lines[start : heading.content_end]).strip()
         units.append(
             UnitIR(
                 unit_type=unit_types.get(heading.level, default_unit_type),
                 path=path,
-                citation=citation,
+                citation=citations.claim(f"{spec.citation_prefix}, §{heading.text}"),
                 ordinal=ordinal,
                 parent_path=parent_path,
-                versions=make_version(content),
+                versions=spec.versions(content),
                 metadata={"heading_level": heading.level},
             )
         )
         stack.append((heading.level, path))
+    return units
 
-    if not units:
-        # No headings and no preamble is only possible for an empty document;
-        # a text with no headings at all is one unit holding the whole thing.
-        units.append(
-            UnitIR(
-                unit_type=unit_types.get(section_level, "section"),
-                path="preamble",
-                citation=f"{citation_prefix}, preamble",
-                versions=make_version(text.strip()),
-            )
-        )
 
+def _finish_units(units: list[UnitIR], content_html: str | None) -> list[UnitIR]:
+    """Prune text-less units, mark containers, attach the fetched page once."""
     units = _prune_textless(units)
     surviving_parents = {unit.parent_path for unit in units if unit.parent_path}
     for unit in units:
@@ -406,15 +456,4 @@ def build_document(
             if unit.versions and unit.versions[0].texts:
                 unit.versions[0].texts[0].content_html = content_html
                 break
-
-    return InstrumentIR(
-        jurisdiction=jurisdiction,
-        source_code=source_code,
-        instrument_type=instrument_type,
-        source_trust_class=source_trust_class,
-        title={lang: title},
-        national_id=national_id,
-        eli=eli,
-        units=units,
-        metadata=metadata or {},
-    )
+    return units
