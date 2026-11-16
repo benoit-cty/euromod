@@ -36,6 +36,7 @@ import psycopg
 import typer
 from psycopg.rows import dict_row
 from nomoscope_workflow import paramdb
+from nomoscope_workflow.schema import system_year_anchor
 from nomoscope_workflow.tracing import set_progress
 
 from . import benchmark
@@ -238,7 +239,7 @@ def build_openfisca_dataset(
     year: int = typer.Option(..., "--year", help="EUROMOD system year to draft cases for, e.g. 2025"),
     country: str = typer.Option(..., "--country", help="ISO country code"),
     as_of: str = typer.Option(
-        None, "--as-of", help="Anchor date inside the system year (default: <year>-06-01)"
+        None, "--as-of", help="Anchor date inside the system year (default: <year>-07-01, as --year runs)"
     ),
     limit: int = typer.Option(50, "--limit", help="Maximum number of cases to write"),
     fill: bool = typer.Option(
@@ -253,7 +254,7 @@ def build_openfisca_dataset(
     each case in the UI's Golden set tab before it counts.
     """
     cfg = load_eval_config()
-    anchor = _parse_date(as_of) if as_of else date(year, 6, 1)
+    anchor = _parse_date(as_of) if as_of else system_year_anchor(year)
     with evaldb.connect(cfg.database_url) as conn:
         header, entries = _selection_or_exit(conn, country, "openfisca")
         outcomes = openfisca_golden.build_dataset(
@@ -273,7 +274,7 @@ def build_curated_dataset(
     year: int = typer.Option(..., "--year", help="EUROMOD system year to draft cases for, e.g. 2025"),
     country: str = typer.Option(..., "--country", help="ISO country code, e.g. IE"),
     as_of: str = typer.Option(
-        None, "--as-of", help="Anchor date inside the system year (default: <year>-06-01)"
+        None, "--as-of", help="Anchor date inside the system year (default: <year>-07-01, as --year runs)"
     ),
 ) -> None:
     """Draft golden cases from the hand-curated selection (verified=false).
@@ -285,7 +286,7 @@ def build_curated_dataset(
     cross-checked against what EUROMOD holds.
     """
     cfg = load_eval_config()
-    anchor = _parse_date(as_of) if as_of else date(year, 6, 1)
+    anchor = _parse_date(as_of) if as_of else system_year_anchor(year)
     with evaldb.connect(cfg.database_url) as conn:
         header, entries = _selection_or_exit(conn, country, "curated")
         outcomes = curated_golden.build_dataset(
@@ -466,7 +467,10 @@ def selection_import(
 
 @app.command()
 def run(
-    as_of: str = typer.Option(..., "--as-of", help="Reference date, YYYY-MM-DD"),
+    as_of: str = typer.Option(
+        ..., "--as-of",
+        help="The run's reference date, YYYY-MM-DD (recorded on the run; each case runs on its own as_of)",
+    ),
     model: str = typer.Option(..., "--model", help="Provider-prefixed model, e.g. anthropic/claude-sonnet-5 or mock/extractor"),
     country: list[str] = typer.Option(None, "--country", help="Restrict to country code(s)"),
     language: list[str] = typer.Option(None, "--language", help="Restrict to language(s)"),

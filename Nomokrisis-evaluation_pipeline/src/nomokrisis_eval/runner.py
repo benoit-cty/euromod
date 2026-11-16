@@ -68,16 +68,21 @@ def load_case_record(conn: psycopg.Connection, parameter_target: str) -> Paramet
     return paramdb.load_record(conn, parameter_target)
 
 
-def _scoring_constants(
-    conn: psycopg.Connection, cases: list[GoldenCase], as_of: date
-) -> dict[str, dict[str, object]]:
-    """Per-country $-constant resolution map for scoring.values_equal, read
-    from the params DB (`openfisca_golden.db_constants`) for every country the
-    cases cover."""
-    return {
-        country: db_constants(conn, country, as_of)
-        for country in sorted({c.country.upper() for c in cases})
-    }
+def _constants_for(
+    conn: psycopg.Connection, cases: list[GoldenCase]
+) -> Callable[[GoldenCase], dict[str, object] | None]:
+    """$-constants for a case, read at that case's own as_of (cached per date)."""
+    cache: dict[tuple[str, date], dict[str, object]] = {}
+
+    def lookup(case: GoldenCase) -> dict[str, object] | None:
+        key = (case.country.upper(), case.as_of)
+        if key not in cache:
+            cache[key] = db_constants(conn, key[0], key[1])
+        return cache[key]
+
+    for case in cases:  # read up front, on the main thread
+        lookup(case)
+    return lookup
 
 
 def list_runs(conn: psycopg.Connection, limit: int | None = None) -> list[dict]:
@@ -239,15 +244,19 @@ def execute_run(
 
     wf_cfg = _workflow_config(cfg, manifest)
     tracer = setup_tracing(wf_cfg)
-    constants = _scoring_constants(conn, cases, manifest.as_of)
+    constants_of = _constants_for(conn, cases)
     total = len(cases)
     started_count = len(results)
 
     def workflow(record: ParameterRecord, case: GoldenCase) -> ReviewItem:
+        # Each case runs on the date its ground truth was established for. Until
+        # 16 Nov 2026 every case ran on the run's as_of, so a case drafted for
+        # another date (or another system year) was scored against a value in
+        # force on a day its expectation never described (code audit D14).
         if run_case is not None:
-            return run_case(wf_cfg, tracer, record, case, manifest.as_of)
+            return run_case(wf_cfg, tracer, record, case, case.as_of)
         return run_parameter(
-            wf_cfg, tracer, record, manifest.as_of,
+            wf_cfg, tracer, record, case.as_of,
             force=True, parameter_ref=case.parameter_target, enqueue=False,
         )
 
@@ -261,7 +270,7 @@ def execute_run(
     def finish(case: GoldenCase, item: ReviewItem | None, exc: BaseException | None, started: float) -> None:
         if exc is None and item is not None:
             try:
-                result = score_item(case, item, constants.get(case.country.upper()))
+                result = score_item(case, item, constants_of(case))
             except Exception as score_exc:
                 result = _error_result(case, score_exc)
         else:
@@ -363,7 +372,7 @@ def rescore_run(conn: psycopg.Connection, run_id: str) -> tuple[RunManifest, lis
     previous_list = evaldb.load_results(conn, run_pk)
     previous = {r.case_id: r for r in previous_list}
     items = evaldb.load_review_items(conn, run_pk)
-    constants = _scoring_constants(conn, list(cases.values()), manifest.as_of)
+    constants_of = _constants_for(conn, list(cases.values()))
 
     rescored: list[CaseResult] = []
     for case_id, case in cases.items():
@@ -377,7 +386,7 @@ def rescore_run(conn: psycopg.Connection, run_id: str) -> tuple[RunManifest, lis
             rescored.append(before)
             continue
         item = ReviewItem.model_validate(item_dump)
-        result = score_item(case, item, constants.get(case.country.upper()))
+        result = score_item(case, item, constants_of(case))
         for measured in (
             "latency_ms", "phoenix_trace_id", "llm_calls", "tokens_prompt",
             "tokens_completion", "energy_kwh", "gwp_kgco2eq", "impact_estimated",

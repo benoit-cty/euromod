@@ -97,11 +97,12 @@ def test_start_append_resume_from_the_tables(db, monkeypatch):
 
     def run_case(wf_cfg, tracer, record, case, as_of):
         ran.append(case.id)
+        assert as_of == case.as_of  # each case on its own date (D14)
         assert record.information.model_target == case.parameter_target
         return fake_item(case)
 
     monkeypatch.setattr(runner, "load_case_record", lambda conn, target: _fake_record(target))
-    monkeypatch.setattr(runner, "_scoring_constants", lambda conn, cases, as_of: {})
+    monkeypatch.setattr(runner, "_constants_for", lambda conn, cases: (lambda case: {}))
     monkeypatch.setattr(runner, "setup_tracing", lambda wf_cfg: None)
     results = runner.execute_run(db, cfg, resumed_manifest, resumed_cases, done, run_case=run_case)
     assert ran == [cases[1].id]
@@ -139,7 +140,7 @@ def test_execute_run_runs_cases_concurrently(db, monkeypatch):
     manifest = runner.start_run(db, cfg, cases, date(2025, 6, 1), "mock/extractor", notes="t")
     manifest = _rename(manifest, db, TEST_PREFIX + manifest.run_id)
     monkeypatch.setattr(runner, "load_case_record", lambda conn, target: _fake_record(target))
-    monkeypatch.setattr(runner, "_scoring_constants", lambda conn, cases, as_of: {})
+    monkeypatch.setattr(runner, "_constants_for", lambda conn, cases: (lambda case: {}))
     monkeypatch.setattr(runner, "setup_tracing", lambda wf_cfg: None)
 
     lock = threading.Lock()

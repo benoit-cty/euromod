@@ -34,16 +34,16 @@ from . import (
     translate,
 )
 from .config import WorkflowConfig, load_config
-from .schema import ParameterRecord
+from .schema import ParameterRecord, system_year_anchor
 from .tracing import setup_tracing
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
 # One run verifies ONE EUROMOD system year — mirroring EUROMOD's
-# one-software-version-per-year model. The mid-year anchor date only feeds
-# "version in force at" selection for in_force parameters; income_year
-# parameters shift it internally (see pipeline._retrieval_as_of).
-_YEAR_ANCHOR_MONTH_DAY = (7, 1)
+# one-software-version-per-year model. The mid-year anchor date
+# (schema.system_year_anchor) only feeds "version in force at" selection for
+# in_force parameters; income_year parameters shift it internally (see
+# pipeline._retrieval_as_of).
 
 _YEAR_HELP = "EUROMOD system year to verify (e.g. 2025). One run = one system year."
 _AS_OF_HELP = "Deprecated: reference date YYYY-MM-DD; use --year (only the year matters)."
@@ -59,7 +59,7 @@ def _anchor_date(year: int | None, as_of: str | None) -> date:
         typer.echo("Pass exactly one of --year or --as-of (prefer --year).")
         raise typer.Exit(2)
     if year is not None:
-        return date(year, *_YEAR_ANCHOR_MONTH_DAY)
+        return system_year_anchor(year)
     parsed = date.fromisoformat(as_of)
     typer.echo(
         f"note: --as-of is deprecated; this run verifies system year {parsed.year} "

@@ -36,6 +36,7 @@ import psycopg
 from nomoscope_workflow import paramdb, retrieval
 from nomoscope_workflow.pipeline import _current_value, _derived_refs
 from nomoscope_workflow.schema import (
+    system_year_anchor,
     Bracket,
     ParameterRecord,
     ParameterValue,
@@ -51,8 +52,6 @@ from .runner import GROUP_PREFIX, load_case_record
 from .schema import CaseResult, Expected, GoldenCase
 from .scoring import normalise_value, values_equal
 
-#: Same anchor as `nomoscope-workflow --year`: the reference date of a system year.
-ANCHOR_MONTH_DAY = (7, 1)
 
 CASE_PREFIX = "bench"
 
@@ -69,7 +68,8 @@ class BenchmarkBuild:
 
 
 def anchor_date(year: int) -> date:
-    return date(year, *ANCHOR_MONTH_DAY)
+    """Same anchor as `nomoscope-workflow --year` (schema.system_year_anchor)."""
+    return system_year_anchor(year)
 
 
 def case_id(country: str, year: int, target: str) -> str:

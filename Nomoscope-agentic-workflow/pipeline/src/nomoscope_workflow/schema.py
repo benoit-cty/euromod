@@ -72,6 +72,17 @@ def income_year_for(system_year: int) -> int:
     return system_year + INCOME_YEAR_OFFSET
 
 
+#: The reference date of a system year: `--year Y` runs, benchmark cases and
+#: golden-case builders all anchor on 1 July of Y. The one place it is decided
+#: (until 16 Nov 2026 the golden builders anchored on 1 June, code audit D14).
+SYSTEM_YEAR_ANCHOR = (7, 1)
+
+
+def system_year_anchor(year: int) -> date:
+    """The run date that verifies EUROMOD system year `year`."""
+    return date(year, *SYSTEM_YEAR_ANCHOR)
+
+
 def start_of_year_as_of(as_of: date) -> date:
     """The reference date of a `start_of_year` parameter: 1 January of the system year.
 

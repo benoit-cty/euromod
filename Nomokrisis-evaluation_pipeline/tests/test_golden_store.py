@@ -136,6 +136,17 @@ def test_carry_over_keeps_the_verdict_only_while_the_ground_truth_stands(db):
     assert reset.expected.value == 47200.0
 
 
+def test_moving_the_anchor_inside_the_year_keeps_the_verdict(db):
+    """1 June -> 1 July (the production anchor, D14) with the same expectation."""
+    golden_store.save_case(db, make_case())
+    golden_store.set_verified(db, TEST_PREFIX + "fr_pss", True, "ok")
+    july = make_case().model_copy(update={"as_of": date(2025, 7, 1)})
+    assert golden_store.save_drafted_case(db, july) is False
+    assert golden_store.load_case(db, july.id).verified
+    next_year = make_case().model_copy(update={"as_of": date(2026, 7, 1)})
+    assert golden_store.save_drafted_case(db, next_year) is True
+
+
 def test_a_failed_verdict_reset_leaves_the_old_ground_truth(db, monkeypatch):
     """The new expectation and the verdict reset commit together, or not at all (D13)."""
     golden_store.save_case(db, make_case())

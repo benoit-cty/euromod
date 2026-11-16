@@ -358,10 +358,11 @@ def test_normalise_value_shapes():
 
 
 def test_runner_builds_constants_from_the_params_db():
-    """`_scoring_constants` reads every country's $-constants in force at as_of
-    from params.* (openfisca_golden.db_constants), keyed by casefolded name;
-    a formula row keeps its raw EUROMOD string so normalise_value can evaluate it."""
-    from nomokrisis_eval.runner import _scoring_constants
+    """`_constants_for` reads a case's country's $-constants in force at the
+    case's own as_of from params.* (openfisca_golden.db_constants), keyed by
+    casefolded name; a formula row keeps its raw EUROMOD string so
+    normalise_value can evaluate it."""
+    from nomokrisis_eval.runner import _constants_for
 
     class _Cursor:
         def __init__(self, rows):
@@ -390,15 +391,14 @@ def test_runner_builds_constants_from_the_params_db():
             ],
         }
     )
-    case = make_case(routing=Routing.UNCHANGED, value=1.0)
+    case = make_case(routing=Routing.UNCHANGED, value=1.0)  # as_of 2025-06-01
+    older = case.model_copy(update={"as_of": date(2024, 6, 1)})
+    constants_of = _constants_for(conn, [case, older])
 
-    by_country = _scoring_constants(conn, [case], date(2025, 6, 1))
-    assert by_country["FR"]["pss"] == 47100.0
-    assert "minwage" not in by_country["FR"]  # no 2025 row -> nothing in force
-
-    by_country = _scoring_constants(conn, [case], date(2024, 6, 1))
-    assert by_country["FR"]["pss"] == 46368.0
-    assert values_equal("$MinWage", 1772.7333333333333, by_country["FR"])
+    assert constants_of(case)["pss"] == 47100.0
+    assert "minwage" not in constants_of(case)  # no 2025 row -> nothing in force
+    assert constants_of(older)["pss"] == 46368.0
+    assert values_equal("$MinWage", 1772.7333333333333, constants_of(older))
 
 
 def test_score_item_uses_constants():

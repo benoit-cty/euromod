@@ -161,7 +161,10 @@ def _ground_truth(case: GoldenCase) -> str:
         {
             "expected": case.expected.model_dump(mode="json"),
             "parameter_target": case.parameter_target,
-            "as_of": case.as_of.isoformat(),
+            # The system year, not the day: moving the anchor inside the year
+            # (1 June -> 1 July, code audit D14) re-derives `expected`, and the
+            # verdict survives exactly when that leaves the expectation unchanged.
+            "system_year": case.as_of.year,
         },
         sort_keys=True,
     )
