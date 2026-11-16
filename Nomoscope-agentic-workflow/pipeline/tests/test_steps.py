@@ -96,8 +96,9 @@ def test_critique_fails_a_paraphrase_and_quotes_the_passage(ctx):
 def test_critique_resolves_a_mistyped_chunk_id(ctx):
     ctx, calls = ctx
     state = _state(_draft(citation_chunk_id="Décret n° 2025-283, art. 1"))
-    report = pipeline.critique(ctx, state)["critique"]
-    assert report.citation_verified and state["draft"].citation_chunk_id == "rsa"
+    out = pipeline.critique(ctx, state)
+    assert out["critique"].citation_verified and out["draft"].citation_chunk_id == "rsa"
+    assert state["draft"].citation_chunk_id != "rsa"  # the input is not edited
     assert any("resolved to rsa" in n for n in calls[-1] or [])
 
 

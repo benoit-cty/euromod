@@ -11,6 +11,7 @@ pure functions. One Phoenix trace per parameter run.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import re
 import uuid
@@ -295,7 +296,10 @@ def critique(ctx: StepContext, state: WorkflowState) -> dict:
 
 
 def _critique(ctx: StepContext, state: WorkflowState, db) -> dict:
-    record, as_of, draft, hits = state["record"], state["as_of"], state["draft"], state["hits"]
+    record, as_of, hits = state["record"], state["as_of"], state["hits"]
+    # The critique corrects the draft (a resolved chunk id, a rounding): it
+    # works on a copy and returns it, never edits the state it was given.
+    draft = state["draft"].model_copy(deep=True) if state.get("draft") is not None else None
     info = record.information
     extra_hits: list[RetrievalHit] = []
     mech_notes: list[str] = []
@@ -549,8 +553,8 @@ def _critique(ctx: StepContext, state: WorkflowState, db) -> dict:
     if extra_hits:
         # Sibling chunks of the year-naming article, so the proposal retry
         # (and the reviewer's source view) can see the applicability clause.
-        return {"critique": report, "hits": hits}
-    return {"critique": report}
+        return {"critique": report, "hits": hits, "draft": draft}
+    return {"critique": report, "draft": draft}
 
 def diff(ctx: StepContext, state: WorkflowState) -> dict:
     record, as_of, draft = state["record"], state["as_of"], state.get("draft")
@@ -699,16 +703,20 @@ def scout_step(ctx: StepContext, state: WorkflowState, round_index: int) -> dict
             state.get("retrieval_as_of", as_of),
             needs=needs,
             known_citations=[h.citation for h in state.get("hits", []) if h.citation],
-            attempted=state.setdefault("scout_attempted", set()),
+            attempted=set(state.get("scout_attempted", ())),
             round_index=round_index,
         )
         set_output(span, result.summary())
-    state["scout_attempted"].update(result.candidate_ids)
     rounds = [*state.get("scout_rounds", []), result]
-    return {"scout_rounds": rounds, "scout": scout.merge_results(rounds)}
+    return {
+        "scout_rounds": rounds,
+        "scout": scout.merge_results(rounds),
+        "scout_attempted": set(state.get("scout_attempted", ())) | set(result.candidate_ids),
+    }
 
-def locate_step(ctx: StepContext, state: WorkflowState) -> bool:
-    """Look the last round's needs up in the corpus we hold; True when new chunks arrived.
+def locate_step(ctx: StepContext, state: WorkflowState) -> dict:
+    """Look the last round's needs up in the corpus we hold; a state delta
+    that carries "hits" only when new chunks arrived.
 
     The scout's other half: `run` fetches what is missing, this finds what
     is present but ranked out — on the 2026-09-09 eval, six of nine "corpus
@@ -729,14 +737,13 @@ def locate_step(ctx: StepContext, state: WorkflowState) -> bool:
             ctx.cfg, record, state.get("retrieval_as_of", as_of), last.needs, known,
             later_until=_later_until(record, as_of),
         )
-        last.located = citations
-        state["scout"] = scout.merge_results(state["scout_rounds"])
+        rounds = [*state["scout_rounds"][:-1], dataclasses.replace(last, located=citations)]
         set_output(span, {"located": citations, "chunks": len(located_hits)})
-    if not located_hits:
-        return False
-    progress(f"  [scout] located in the corpus: {', '.join(citations)}")
-    state["hits"] = [*located_hits, *state.get("hits", [])]
-    return True
+    delta: dict = {"scout_rounds": rounds, "scout": scout.merge_results(rounds)}
+    if located_hits:
+        progress(f"  [scout] located in the corpus: {', '.join(citations)}")
+        delta["hits"] = [*located_hits, *state.get("hits", [])]
+    return delta
 
 def _propose_and_critique(ctx: StepContext, state: WorkflowState) -> None:
     while True:
@@ -803,7 +810,9 @@ def invoke(ctx: StepContext, state: WorkflowState) -> WorkflowState:
             # held and ranked out (a freshly ingested act's article can be
             # too): look it up directly. Nothing new from either leg means
             # another round would only ask the same question.
-            if not locate_step(ctx, state) and not ingested:
+            located = locate_step(ctx, state)
+            state.update(located)
+            if "hits" not in located and not ingested:
                 break
             if state["hits"]:
                 _propose_and_critique(ctx, state)
