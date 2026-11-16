@@ -5,7 +5,7 @@
 //! `params.decide_review_item` and edits only by `params.edit_parameter`
 //! (store.rs); this module never writes.
 
-use crate::pg::{connect, describe};
+use crate::pg::{connect, describe, rows_to_json};
 use serde_json::{json, Value};
 
 /// All parameters in the `params` schema, each with its most recent model
@@ -81,37 +81,7 @@ pub fn params_list(db_url: &str) -> Result<Value, String> {
 
     Ok(json!({
         "system_years": system_years,
-        "parameters": rows.iter().map(|r| json!({
-            "country": r.get::<_, String>("country"),
-            "model_target": r.get::<_, String>("model_target"),
-            "policy": r.get::<_, Option<String>>("policy"),
-            "function": r.get::<_, Option<String>>("function"),
-            "name": r.get::<_, Option<String>>("name"),
-            "value_type": r.get::<_, String>("value_type"),
-            "unit": r.get::<_, Option<String>>("unit"),
-            "parameter_key": r.get::<_, Option<String>>("parameter_key"),
-            "label": r.get::<_, Option<String>>("label"),
-            // the full language-keyed texts, for the metadata editor
-            "texts": r.get::<_, Value>("texts"),
-            "edit_count": r.get::<_, i64>("edit_count"),
-            "description": r.get::<_, Option<String>>("description"),
-            "category": r.get::<_, Option<String>>("category"),
-            // group memberships: [{id, kind, role, index}, …] or null
-            "groups": r.get::<_, Option<Value>>("groups"),
-            "current_value": r.get::<_, Option<Value>>("current_value"),
-            "current_raw": r.get::<_, Option<String>>("current_raw"),
-            "current_valid_from": r.get::<_, Option<String>>("current_valid_from"),
-            "current_source_type": r.get::<_, Option<String>>("current_source_type"),
-            "last_run_id": r.get::<_, Option<String>>("last_run_id"),
-            "last_as_of": r.get::<_, Option<String>>("last_as_of"),
-            "last_model": r.get::<_, Option<String>>("last_model"),
-            "last_routing": r.get::<_, Option<String>>("last_routing"),
-            "last_verdict": r.get::<_, Option<String>>("last_verdict"),
-            "last_phoenix_project": r.get::<_, Option<String>>("last_phoenix_project"),
-            "last_trace_id": r.get::<_, Option<String>>("last_trace_id"),
-            "last_item_id": r.get::<_, Option<String>>("last_item_id"),
-            "last_finished_at": r.get::<_, Option<String>>("last_finished_at"),
-        })).collect::<Vec<_>>(),
+        "parameters": rows_to_json(&rows)?,
     }))
 }
 
@@ -156,18 +126,7 @@ pub fn parameter_context(db_url: &str, model_target: &str) -> Result<Value, Stri
         )
         .map_err(|e| format!("parameter context query failed: {}", describe(e)))?;
     Ok(json!({
-        "parameters": rows.iter().map(|r| json!({
-            "model_target": r.get::<_, String>("model_target"),
-            "policy": r.get::<_, Option<String>>("policy"),
-            "function": r.get::<_, Option<String>>("function"),
-            "name": r.get::<_, Option<String>>("name"),
-            "unit": r.get::<_, Option<String>>("unit"),
-            "temporal_basis": r.get::<_, Option<String>>("temporal_basis"),
-            "texts": r.get::<_, Value>("texts"),
-            "law_texts": r.get::<_, Value>("law_texts"),
-            "history": r.get::<_, Value>("history"),
-            "group_role": r.get::<_, Option<String>>("group_role"),
-        })).collect::<Vec<_>>(),
+        "parameters": rows_to_json(&rows)?,
     }))
 }
 
@@ -182,15 +141,7 @@ pub fn parameter_edits(db_url: &str, model_target: &str) -> Result<Value, String
             &[&model_target],
         )
         .map_err(|e| format!("edit history query failed (run `nomoscope-workflow init-param-db`?): {}", describe(e)))?;
-    Ok(json!(rows.iter().map(|r| json!({
-        "id": r.get::<_, i64>("id"),
-        "field": r.get::<_, String>("field"),
-        "value": r.get::<_, Option<Value>>("value"),
-        "previous": r.get::<_, Option<Value>>("previous"),
-        "reviewer": r.get::<_, String>("reviewer"),
-        "note": r.get::<_, Option<String>>("note"),
-        "edited_at": r.get::<_, String>("edited_at"),
-    })).collect::<Vec<_>>()))
+    Ok(json!(rows_to_json(&rows)?))
 }
 
 /// The audit log (`params.review_decisions`, the system of record), newest
@@ -210,23 +161,32 @@ pub fn load_decisions(db_url: &str, limit: i64) -> Result<Value, String> {
         )
         .map_err(|e| format!("decisions query failed: {}", describe(e)))?;
     Ok(json!({
-        "decisions": rows.iter().map(|r| json!({
-            "id": r.get::<_, i64>("id"),
-            "proposal_pk": r.get::<_, Option<i64>>("proposal_pk"),
-            "item_id": r.get::<_, Option<String>>("item_id"),
-            "run_id": r.get::<_, Option<String>>("run_id"),
-            "model_target": r.get::<_, Option<String>>("model_target"),
-            "as_of": r.get::<_, Option<String>>("as_of"),
-            "routing": r.get::<_, Option<String>>("routing"),
-            "action": r.get::<_, String>("action"),
-            "reviewer": r.get::<_, Option<String>>("reviewer"),
-            "note": r.get::<_, Option<String>>("note"),
-            "edited_value": r.get::<_, Option<Value>>("edited_value"),
-            "edited_fields": r.get::<_, Option<Value>>("edited_fields"),
-            "confidence": r.get::<_, Option<f32>>("confidence"),
-            "critique_verdict": r.get::<_, Option<String>>("critique_verdict"),
-            "decided_at": r.get::<_, Option<String>>("decided_at"),
-            "logged_at": r.get::<_, Option<String>>("logged_at"),
-        })).collect::<Vec<_>>(),
+        "decisions": rows_to_json(&rows)?,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    fn url() -> String {
+        std::env::var("WORKFLOW_DATABASE_URL")
+            .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string())
+    }
+
+    /// The params reads' row→JSON mapping against the live stack; skipped
+    /// when the database is down or the params schema is absent.
+    #[test]
+    fn params_reads_smoke() {
+        let Ok(mut client) = crate::pg::connect(&url()) else { return };
+        if client.execute("SELECT 1 FROM params.review_decisions LIMIT 0", &[]).is_err() {
+            return;
+        }
+        let listed = super::params_list(&url()).unwrap();
+        assert!(listed["system_years"].is_object());
+        if let Some(first) = listed["parameters"].as_array().unwrap().first() {
+            let target = first["model_target"].as_str().unwrap();
+            assert!(super::parameter_context(&url(), target).unwrap()["parameters"].is_array());
+            assert!(super::parameter_edits(&url(), target).unwrap().is_array());
+        }
+        assert!(super::load_decisions(&url(), 5).unwrap()["decisions"].is_array());
+    }
 }

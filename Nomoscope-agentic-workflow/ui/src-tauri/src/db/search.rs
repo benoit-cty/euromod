@@ -3,7 +3,7 @@
 //! (the chat compiles this file in with `#[path]`, so the two cannot drift).
 //! Read-only.
 
-use crate::pg::{connect, describe};
+use crate::pg::{connect, describe, rows_to_json};
 use postgres::Client;
 use serde_json::{json, Value};
 
@@ -219,29 +219,10 @@ pub fn search_articles(
             "as_of": as_of,
             "languages": language_filter,
         },
-        "results": rows.iter().map(|r| json!({
-            "chunk_id": r.get::<_, String>("chunk_id"),
-            "citation": r.get::<_, Option<String>>("citation"),
-            "context_header": r.get::<_, String>("context_header"),
-            "content": r.get::<_, String>("content"),
-            // `content` with every query lexeme wrapped in <<HL>>…<</HL>>
-            // (null in vector-only mode); the UI turns the markers into marks.
-            "headline": r.get::<_, Option<String>>("headline"),
-            "lang": r.get::<_, String>("lang"),
-            "authenticity": r.get::<_, String>("authenticity"),
-            "validity": r.get::<_, String>("validity"),
-            "version_status": r.get::<_, String>("version_status"),
-            "country": r.get::<_, String>("country"),
-            "instrument_title": r.get::<_, Value>("instrument_title"),
-            "source_trust_class": r.get::<_, String>("source_trust_class"),
-            "score": r.get::<_, f64>("score"),
-            "full_text_rank": r.get::<_, Option<i64>>("full_text_rank"),
-            "full_text_score": r.get::<_, Option<f64>>("full_text_score"),
-            "full_text_contribution": r.get::<_, f64>("full_text_contribution"),
-            "vector_rank": r.get::<_, Option<i64>>("vector_rank"),
-            "vector_distance": r.get::<_, Option<f64>>("vector_distance"),
-            "vector_contribution": r.get::<_, f64>("vector_contribution"),
-        })).collect::<Vec<_>>(),
+        // `headline` is `content` with every query lexeme wrapped in
+        // <<HL>>…<</HL>> (null in vector-only mode); the UI turns the markers
+        // into marks.
+        "results": rows_to_json(&rows)?,
     }))
 }
 
@@ -290,21 +271,9 @@ pub fn chunk_renderings(db_url: &str, chunk_id: &str) -> Result<Value, String> {
 
     Ok(json!({
         "chunk_id": chunk_id,
-        "renderings": rows.iter().map(|r| json!({
-            "unit_text_id": r.get::<_, String>("unit_text_id"),
-            "lang": r.get::<_, String>("lang"),
-            "authenticity": r.get::<_, String>("authenticity"),
-            "mt_engine": r.get::<_, Option<String>>("mt_engine"),
-            "source_lang": r.get::<_, Option<String>>("source_lang"),
-            "chunk_id": r.get::<_, Option<String>>("chunk_id"),
-            "seq": r.get::<_, Option<i32>>("seq"),
-            "content": r.get::<_, String>("content"),
-            // false = no chunk with this seq in that language: full text shown
-            "aligned": r.get::<_, bool>("aligned"),
-            "is_cited": r.get::<_, bool>("is_cited"),
-            "citation": r.get::<_, Option<String>>("citation"),
-            "validity": r.get::<_, Option<String>>("validity"),
-        })).collect::<Vec<_>>(),
+        // `aligned` false = no chunk with this seq in that language: the full
+        // version text is shown.
+        "renderings": rows_to_json(&rows)?,
     }))
 }
 

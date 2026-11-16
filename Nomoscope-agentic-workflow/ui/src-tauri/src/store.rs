@@ -293,8 +293,8 @@ pub fn export_records(db_url: &str) -> Result<BTreeMap<String, Vec<Value>>, Stri
         groups.entry(r.get::<_, String>("country")).or_default().push(json!({
             "parameter_key": r.get::<_, Option<String>>("parameter_key"),
             "model_target": r.get::<_, String>("model_target"),
-            "metadata": r.get::<_, Value>("metadata"),
-            "values": r.get::<_, Value>("values"),
+            "metadata": r.get::<_, Option<Value>>("metadata"),
+            "values": r.get::<_, Option<Value>>("values"),
         }));
     }
     Ok(groups)

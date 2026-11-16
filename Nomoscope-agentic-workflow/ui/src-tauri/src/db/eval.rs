@@ -2,7 +2,7 @@
 //! the Evaluation tab: runs with whole-run KPI rates, and one run's breakdown
 //! and case results. Read-only.
 
-use crate::pg::{connect, describe};
+use crate::pg::{connect, describe, rows_to_json};
 use serde_json::{json, Value};
 
 /// All evaluation runs with whole-run KPI rates (averaged across languages).
@@ -42,33 +42,7 @@ pub fn eval_runs(db_url: &str) -> Result<Value, String> {
         })?;
 
     Ok(json!({
-        "runs": rows.iter().map(|r| json!({
-            "id": r.get::<_, i64>("id"),
-            "run_id": r.get::<_, String>("run_id"),
-            "created_at": r.get::<_, String>("created_at"),
-            "as_of": r.get::<_, String>("as_of"),
-            "model_provider": r.get::<_, String>("model_provider"),
-            "model_name": r.get::<_, String>("model_name"),
-            "prompt_version": r.get::<_, String>("prompt_version"),
-            "agent_version": r.get::<_, String>("agent_version"),
-            "eval_version": r.get::<_, String>("eval_version"),
-            "dataset_version": r.get::<_, String>("dataset_version"),
-            "git_commit": r.get::<_, Option<String>>("git_commit"),
-            "countries": r.get::<_, Vec<String>>("countries"),
-            "notes": r.get::<_, Option<String>>("notes"),
-            "cases": r.get::<_, i64>("cases"),
-            "errors": r.get::<_, i64>("errors"),
-            "routing_pct": r.get::<_, Option<f64>>("routing_pct"),
-            "value_pct": r.get::<_, Option<f64>>("value_pct"),
-            "date_pct": r.get::<_, Option<f64>>("date_pct"),
-            "citation_pct": r.get::<_, Option<f64>>("citation_pct"),
-            "supportedness_pct": r.get::<_, Option<f64>>("supportedness_pct"),
-            "hallucination_pct": r.get::<_, Option<f64>>("hallucination_pct"),
-            "retrieval_recall_pct": r.get::<_, Option<f64>>("retrieval_recall_pct"),
-            "avg_latency_ms": r.get::<_, Option<f64>>("avg_latency_ms"),
-            "energy_kwh": r.get::<_, Option<f64>>("energy_kwh"),
-            "gwp_kgco2eq": r.get::<_, Option<f64>>("gwp_kgco2eq"),
-        })).collect::<Vec<_>>(),
+        "runs": rows_to_json(&rows)?,
     }))
 }
 
@@ -104,43 +78,8 @@ pub fn eval_run_detail(db_url: &str, run_pk: i64) -> Result<Value, String> {
         .map_err(describe)?;
 
     Ok(json!({
-        "summary": summary.iter().map(|r| json!({
-            "language": r.get::<_, String>("language"),
-            "country": r.get::<_, String>("country"),
-            "cases": r.get::<_, i64>("cases"),
-            "errors": r.get::<_, i64>("errors"),
-            "routing_pct": r.get::<_, Option<f64>>("routing_pct"),
-            "value_pct": r.get::<_, Option<f64>>("value_pct"),
-            "date_pct": r.get::<_, Option<f64>>("date_pct"),
-            "citation_pct": r.get::<_, Option<f64>>("citation_pct"),
-            "supportedness_pct": r.get::<_, Option<f64>>("supportedness_pct"),
-            "hallucination_pct": r.get::<_, Option<f64>>("hallucination_pct"),
-            "retrieval_recall_pct": r.get::<_, Option<f64>>("retrieval_recall_pct"),
-            "avg_latency_ms": r.get::<_, Option<f64>>("avg_latency_ms"),
-            "energy_kwh": r.get::<_, Option<f64>>("energy_kwh"),
-            "gwp_kgco2eq": r.get::<_, Option<f64>>("gwp_kgco2eq"),
-        })).collect::<Vec<_>>(),
-        "cases": cases.iter().map(|r| json!({
-            "case_id": r.get::<_, String>("case_id"),
-            "country": r.get::<_, String>("country"),
-            "language": r.get::<_, String>("language"),
-            "model_target": r.get::<_, Option<String>>("model_target"),
-            "difficulty": r.get::<_, Option<String>>("difficulty"),
-            "source_class": r.get::<_, Option<String>>("source_class"),
-            "routing_expected": r.get::<_, String>("routing_expected"),
-            "routing_actual": r.get::<_, Option<String>>("routing_actual"),
-            "routing_correct": r.get::<_, Option<bool>>("routing_correct"),
-            "value_correct": r.get::<_, Option<bool>>("value_correct"),
-            "date_correct": r.get::<_, Option<bool>>("date_correct"),
-            "citation_correct": r.get::<_, Option<bool>>("citation_correct"),
-            "supportedness": r.get::<_, Option<bool>>("supportedness"),
-            "hallucination": r.get::<_, bool>("hallucination"),
-            "retrieval_hit": r.get::<_, Option<bool>>("retrieval_hit"),
-            "confidence": r.get::<_, Option<f32>>("confidence"),
-            "latency_ms": r.get::<_, Option<i32>>("latency_ms"),
-            "error": r.get::<_, Option<String>>("error"),
-            "details": r.get::<_, Option<Value>>("details"),
-        })).collect::<Vec<_>>(),
+        "summary": rows_to_json(&summary)?,
+        "cases": rows_to_json(&cases)?,
     }))
 }
 

@@ -2,7 +2,7 @@
 //! statistics and per-country readiness, and the instruments a contributed
 //! document can be said to implement. Read-only.
 
-use crate::pg::{connect, describe};
+use crate::pg::{connect, describe, row_to_json, rows_to_json};
 use serde_json::{json, Value};
 
 /// Corpus totals, per-jurisdiction breakdown, embedding coverage and the
@@ -133,98 +133,45 @@ pub fn stats(db_url: &str) -> Result<Value, String> {
     };
 
     // Merge on country code, keyed off the jurisdictions list so a country
-    // with neither input still shows a row.
-    let mut inputs: Vec<Value> = country_reports
-        .iter()
-        .map(|r| {
-            let code = r.get::<_, String>("code");
-            let p = params_by_country
-                .iter()
-                .find(|pr| pr.get::<_, String>("country") == code);
-            json!({
-                "code": code,
-                "country_report": {
-                    "reports": r.get::<_, i64>("reports"),
-                    "chunks": r.get::<_, i64>("chunks"),
-                    "embedded_chunks": r.get::<_, i64>("embedded_chunks"),
-                    "ingested_on": r.get::<_, Option<String>>("ingested_on"),
-                    "ids": r.get::<_, Option<String>>("ids"),
-                },
-                "parameters": p.map(|pr| json!({
-                    "parameters": pr.get::<_, i64>("parameters"),
-                    "model_values": pr.get::<_, i64>("model_values"),
-                    "income_year": pr.get::<_, i64>("income_year"),
-                    "ingested_on": pr.get::<_, Option<String>>("ingested_on"),
-                    "source_files": pr.get::<_, Option<String>>("source_files"),
-                })),
-            })
-        })
-        .collect();
-
-    // Parameters ingested for a country that has no jurisdictions row yet.
-    let known: Vec<String> = country_reports
-        .iter()
-        .map(|r| r.get::<_, String>("code"))
-        .collect();
-    for pr in params_by_country
-        .iter()
-        .filter(|pr| !known.contains(&pr.get::<_, String>("country")))
-    {
-        inputs.push(json!({
-            "code": pr.get::<_, String>("country"),
-            "country_report": null,
-            "parameters": {
-                "parameters": pr.get::<_, i64>("parameters"),
-                "model_values": pr.get::<_, i64>("model_values"),
-                "income_year": pr.get::<_, i64>("income_year"),
-                "ingested_on": pr.get::<_, Option<String>>("ingested_on"),
-                "source_files": pr.get::<_, Option<String>>("source_files"),
-            },
-        }));
+    // with neither input still shows a row; then the parameters of a country
+    // that has no jurisdictions row yet.
+    let mut parameters: Vec<(String, Value)> = Vec::new();
+    for row in &params_by_country {
+        let (code, rest) = split_key(row_to_json(row)?, "country");
+        parameters.push((code, rest));
+    }
+    let mut inputs: Vec<Value> = Vec::new();
+    for row in &country_reports {
+        let (code, report) = split_key(row_to_json(row)?, "code");
+        let params = parameters.iter().find(|(c, _)| *c == code).map(|(_, p)| p.clone());
+        inputs.push(json!({ "code": code, "country_report": report, "parameters": params }));
+    }
+    for (code, params) in parameters {
+        if !inputs.iter().any(|i| i["code"] == code.as_str()) {
+            inputs.push(json!({ "code": code, "country_report": null, "parameters": params }));
+        }
     }
 
     Ok(json!({
-        "totals": {
-            "jurisdictions": totals.get::<_, i64>("jurisdictions"),
-            "instruments": totals.get::<_, i64>("instruments"),
-            "legal_units": totals.get::<_, i64>("legal_units"),
-            "versions": totals.get::<_, i64>("versions"),
-            "versions_in_force": totals.get::<_, i64>("versions_in_force"),
-            "unit_texts": totals.get::<_, i64>("unit_texts"),
-            "chunks": totals.get::<_, i64>("chunks"),
-            "embeddings": totals.get::<_, i64>("embeddings"),
-            "citations_registered": totals.get::<_, i64>("citations_registered"),
-        },
-        "by_country": by_country.iter().map(|r| json!({
-            "code": r.get::<_, String>("code"),
-            "name": r.get::<_, Option<String>>("name"),
-            "instruments": r.get::<_, i64>("instruments"),
-            "legal_units": r.get::<_, i64>("legal_units"),
-            "versions": r.get::<_, i64>("versions"),
-            "in_force": r.get::<_, i64>("in_force"),
-            "texts": r.get::<_, i64>("texts"),
-            "text_versions": r.get::<_, i64>("text_versions"),
-            "en_versions": r.get::<_, i64>("en_versions"),
-            "authentic": r.get::<_, i64>("authentic"),
-            "official_translation": r.get::<_, i64>("official_translation"),
-            "machine_translation": r.get::<_, i64>("machine_translation"),
-            "chunks": r.get::<_, i64>("chunks"),
-            "embedded_chunks": r.get::<_, i64>("embedded_chunks"),
-        })).collect::<Vec<_>>(),
+        "totals": row_to_json(&totals)?,
+        "by_country": rows_to_json(&by_country)?,
         "languages": languages.iter().map(|r| r.get::<_, String>("lang")).collect::<Vec<_>>(),
-        "embedding_models": models.iter().map(|r| json!({
-            "id": r.get::<_, i32>(0),
-            "name": r.get::<_, String>("name"),
-            "provider": r.get::<_, Option<String>>("provider"),
-            "stored_dim": r.get::<_, i32>("stored_dim"),
-            "is_default": r.get::<_, bool>("is_default"),
-            "embedded_chunks": r.get::<_, i64>("embedded_chunks"),
-        })).collect::<Vec<_>>(),
+        "embedding_models": rows_to_json(&models)?,
         "model_inputs": {
             "params_schema": params_schema,
             "by_country": inputs,
         },
     }))
+}
+
+/// Take `key` out of a row object: (its text, the rest of the row).
+fn split_key(mut row: Value, key: &str) -> (String, Value) {
+    let code = row
+        .as_object_mut()
+        .and_then(|o| o.remove(key))
+        .and_then(|v| v.as_str().map(str::to_string))
+        .unwrap_or_default();
+    (code, row)
 }
 
 /// Instruments a contributed document could be said to implement.
@@ -260,15 +207,7 @@ pub fn search_instruments(
         )
         .map_err(|e| format!("instrument search failed: {}", describe(e)))?;
 
-    Ok(json!({
-        "instruments": rows.iter().map(|r| json!({
-            "national_id": r.get::<_, String>("national_id"),
-            "instrument_type": r.get::<_, String>("instrument_type"),
-            "source_trust_class": r.get::<_, String>("source_trust_class"),
-            "title": r.get::<_, Option<String>>("title"),
-            "publication_date": r.get::<_, Option<String>>("publication_date"),
-        })).collect::<Vec<_>>()
-    }))
+    Ok(json!({ "instruments": rows_to_json(&rows)? }))
 }
 
 #[cfg(test)]
@@ -276,6 +215,23 @@ mod tests {
     fn url() -> String {
         std::env::var("WORKFLOW_DATABASE_URL")
             .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string())
+    }
+
+    /// The statistics' row→JSON mapping against the live stack.
+    #[test]
+    fn stats_smoke() {
+        if super::connect(&url()).is_err() {
+            return;
+        }
+        let stats = match super::stats(&url()) {
+            Ok(stats) => stats,
+            // a container whose /dev/shm is too small for the parallel joins
+            Err(e) if e.contains("shared memory") => return eprintln!("skipped: {e}"),
+            Err(e) => panic!("stats failed: {e}"),
+        };
+        assert!(stats["totals"]["chunks"].is_i64());
+        assert!(stats["by_country"].is_array());
+        assert!(stats["model_inputs"]["by_country"].is_array());
     }
 
     #[test]

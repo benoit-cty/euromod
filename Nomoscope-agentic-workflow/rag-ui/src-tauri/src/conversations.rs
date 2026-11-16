@@ -3,7 +3,7 @@
 //! and whose result is the answer. Listing and reopening a conversation is a
 //! read of the caller's own jobs; there is no local copy to keep in sync.
 
-use crate::pg::{connect, describe};
+use crate::pg::{connect, describe, rows_to_json};
 use serde::Deserialize;
 use serde_json::{json, Value};
 
@@ -33,7 +33,9 @@ pub fn list(payload: &ListPayload) -> Result<Value, String> {
                     (array_agg(payload->>'country' ORDER BY id DESC))[1] AS country
              FROM ops.jobs
              WHERE job_type = 'chat' AND submitted_by = current_user
-               AND payload ? 'conversation_id'
+               -- not `payload ? 'conversation_id'`: a JSON null passes that
+               -- test and ->> then yields SQL NULL
+               AND payload->>'conversation_id' IS NOT NULL
              GROUP BY 1
              ORDER BY max(submitted_at) DESC
              LIMIT $1",
@@ -41,13 +43,7 @@ pub fn list(payload: &ListPayload) -> Result<Value, String> {
         )
         .map_err(|e| format!("conversation list query failed: {}", describe(e)))?;
     Ok(json!({
-        "conversations": rows.iter().map(|r| json!({
-            "conversation_id": r.get::<_, String>("conversation_id"),
-            "turns": r.get::<_, i64>("turns"),
-            "last_at": r.get::<_, String>("last_at"),
-            "title": r.get::<_, Option<String>>("title"),
-            "country": r.get::<_, Option<String>>("country"),
-        })).collect::<Vec<_>>(),
+        "conversations": rows_to_json(&rows)?,
     }))
 }
 
@@ -69,7 +65,7 @@ pub fn turns(payload: &ConversationPayload) -> Result<Value, String> {
     Ok(json!({
         "conversation_id": payload.conversation_id,
         "turns": rows.iter().map(|r| {
-            let body: Value = r.get("payload");
+            let body: Value = r.get::<_, Option<Value>>("payload").unwrap_or(Value::Null);
             let question = body["messages"]
                 .as_array()
                 .and_then(|m| m.last())
@@ -88,8 +84,38 @@ pub fn turns(payload: &ConversationPayload) -> Result<Value, String> {
                 },
                 "result": r.get::<_, Option<Value>>("result"),
                 "error": r.get::<_, Option<String>>("error"),
-                "submitted_at": r.get::<_, String>("submitted_at"),
+                "submitted_at": r.get::<_, Option<String>>("submitted_at"),
             })
         }).collect::<Vec<_>>(),
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    /// The listing's row→JSON mapping against the live stack; a chat job whose
+    /// payload says `"conversation_id": null` is left out instead of failing
+    /// the whole list. Skipped when the database or `ops` is absent.
+    #[test]
+    fn list_skips_a_null_conversation_id() {
+        let url = std::env::var("WORKFLOW_DATABASE_URL")
+            .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
+        let Ok(mut client) = crate::pg::connect(&url) else { return };
+        let Ok(row) = client.query_one(
+            "INSERT INTO ops.jobs (job_type, payload, status)
+             VALUES ('chat', '{\"conversation_id\": null, \"_test\": \"zz_null_conversation\"}', 'cancelled')
+             RETURNING id",
+            &[],
+        ) else {
+            return;
+        };
+        let id: i64 = row.get(0);
+        let listed = super::list(&super::ListPayload { db_url: url.clone(), limit: Some(200) });
+        client.execute("DELETE FROM ops.jobs WHERE id = $1", &[&id]).unwrap();
+        assert!(listed
+            .unwrap()["conversations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|c| c["conversation_id"].is_string()));
+    }
 }

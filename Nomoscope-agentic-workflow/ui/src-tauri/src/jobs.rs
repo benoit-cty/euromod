@@ -14,7 +14,7 @@
 //! evolve worker-side (nomergon/jobs.py validates them) without a lockstep
 //! release of the UI.
 
-use crate::pg::{connect, describe};
+use crate::pg::{connect, describe, row_to_json, rows_to_json};
 use postgres::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -73,25 +73,6 @@ const JOB_COLUMNS: &str = "id, job_type, status, submitted_by,
         finished_at::text AS finished_at, worker_id, cancel_requested,
         priority, payload, progress, result, error";
 
-fn job_row(r: &postgres::Row) -> Value {
-    json!({
-        "id": r.get::<_, i64>("id"),
-        "job_type": r.get::<_, String>("job_type"),
-        "status": r.get::<_, String>("status"),
-        "submitted_by": r.get::<_, String>("submitted_by"),
-        "submitted_at": r.get::<_, Option<String>>("submitted_at"),
-        "started_at": r.get::<_, Option<String>>("started_at"),
-        "finished_at": r.get::<_, Option<String>>("finished_at"),
-        "worker_id": r.get::<_, Option<String>>("worker_id"),
-        "cancel_requested": r.get::<_, bool>("cancel_requested"),
-        "priority": r.get::<_, i16>("priority"),
-        "payload": r.get::<_, Value>("payload"),
-        "progress": r.get::<_, Option<Value>>("progress"),
-        "result": r.get::<_, Option<Value>>("result"),
-        "error": r.get::<_, Option<String>>("error"),
-    })
-}
-
 /// Insert one job request. `submitted_by` is never set here: its default is
 /// `current_user`, which is also what the reviewer role's RLS policy checks.
 pub fn submit(client: &mut Client, job_type: &str, payload: &Value, priority: i16) -> Result<i64, String> {
@@ -116,7 +97,7 @@ fn status_row(client: &mut Client, id: i64) -> Result<Value, String> {
         .query_opt(&format!("SELECT {JOB_COLUMNS} FROM ops.jobs WHERE id = $1"), &[&id])
         .map_err(|e| format!("job status query failed: {}", describe(e)))?
         .ok_or_else(|| format!("job {id} does not exist"))?;
-    Ok(job_row(&row))
+    row_to_json(&row)
 }
 
 pub fn job_status(payload: &JobPayload) -> Result<Value, String> {
@@ -132,18 +113,7 @@ fn events_after(client: &mut Client, job_id: i64, after: i64) -> Result<Vec<Valu
             &[&job_id, &after],
         )
         .map_err(|e| format!("job events query failed: {}", describe(e)))?;
-    Ok(rows
-        .iter()
-        .map(|r| {
-            json!({
-                "id": r.get::<_, i64>("id"),
-                "at": r.get::<_, String>("at"),
-                "stream": r.get::<_, String>("stream"),
-                "line": r.get::<_, String>("line"),
-                "data": r.get::<_, Option<Value>>("data"),
-            })
-        })
-        .collect())
+    rows_to_json(&rows)
 }
 
 pub fn job_events(payload: &EventsPayload) -> Result<Value, String> {
@@ -182,7 +152,7 @@ pub fn list_jobs(payload: &ListPayload) -> Result<Value, String> {
         .get(0);
     Ok(json!({
         "current_user": me,
-        "jobs": rows.iter().map(job_row).collect::<Vec<_>>(),
+        "jobs": rows_to_json(&rows)?,
     }))
 }
 
@@ -207,24 +177,8 @@ pub fn worker_status_with(client: &mut Client) -> Result<Value, String> {
         )
         .map_err(|e| format!("worker models query failed: {}", describe(e)))?;
     Ok(json!({
-        "workers": workers.iter().map(|r| json!({
-            "worker_id": r.get::<_, String>("worker_id"),
-            "hostname": r.get::<_, String>("hostname"),
-            "started_at": r.get::<_, String>("started_at"),
-            "heartbeat_at": r.get::<_, String>("heartbeat_at"),
-            "heartbeat_age": r.get::<_, f64>("heartbeat_age"),
-            "alive": r.get::<_, bool>("alive"),
-            "current_job_id": r.get::<_, Option<i64>>("current_job_id"),
-            "device": r.get::<_, Option<String>>("device"),
-            "version": r.get::<_, Option<String>>("version"),
-        })).collect::<Vec<_>>(),
-        "models": models.iter().map(|r| json!({
-            "model": r.get::<_, String>("model"),
-            "kind": r.get::<_, String>("kind"),
-            "is_default": r.get::<_, bool>("is_default"),
-            "published_by": r.get::<_, String>("published_by"),
-            "published_at": r.get::<_, String>("published_at"),
-        })).collect::<Vec<_>>(),
+        "workers": rows_to_json(&workers)?,
+        "models": rows_to_json(&models)?,
     }))
 }
 
