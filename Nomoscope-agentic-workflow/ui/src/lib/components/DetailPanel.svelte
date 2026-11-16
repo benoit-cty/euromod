@@ -1,4 +1,5 @@
 <script>
+  import { untrack } from 'svelte';
   import { api } from '../api.js';
   import ValueView from './ValueView.svelte';
   import SourceViewer from './SourceViewer.svelte';
@@ -130,10 +131,17 @@
     form = next;
   }
 
+  // What the form was seeded from: another item, another run of it, or a new
+  // decision on it. Not the object identity — the ribbon's Refresh hands over
+  // equal items as new objects, and re-seeding on that discarded the
+  // reviewer's unsaved corrections and note (code audit D18).
+  const seedKey = $derived(
+    item ? `${item.id}|${item.run_id ?? ''}|${item.status}|${item.decision?.decided_at ?? ''}` : '',
+  );
+
   $effect(() => {
-    // re-seed whenever another item is selected or the current one is re-saved
-    void item;
-    resetForm();
+    void seedKey;
+    untrack(resetForm);
     note = '';
     handoffText = '';
     handoffOpen = false;
