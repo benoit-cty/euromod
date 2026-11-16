@@ -11,25 +11,20 @@ pure functions. One Phoenix trace per parameter run.
 
 from __future__ import annotations
 
-import ast
 import json
-import math
-import operator
 import re
 import uuid
-from decimal import ROUND_HALF_UP, Decimal
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import TypedDict
 
 from opentelemetry.trace import Tracer
 
-from . import AGENT_VERSION, llm, mock, paramdb, queue_store, quotes, regions, retrieval, scout, translate
+from . import AGENT_VERSION, llm, mock, paramdb, queue_store, quotes, regions, retrieval, scout
 from .config import WorkflowConfig
 from .prompts import PROMPT_VERSION
 from .schema import (
-    Bracket,
     CritiqueFindings,
     CritiqueReport,
     Lineage,
@@ -44,9 +39,36 @@ from .schema import (
     SourceTrustClass,
     TemporalBasis,
     income_year_for,
-    start_of_year_as_of,
 )
 from .tracing import progress, set_output, step_span
+from .derivation import (  # noqa: F401  (re-exported for callers and tests)
+    DERIVATION_CONSTANTS,
+    DERIVATION_MAX_DIGITS,
+    _check_derivation,
+    _derivation_summary,
+    _extract_states,
+    _figures_in,
+    _round_like_held,
+    _values_sane,
+    evaluate_derivation,
+)
+from .framing import _clean_query_text, frame_query  # noqa: F401
+from .routing import (  # noqa: F401
+    _confirms_held,
+    _current_value,
+    _derived_refs,
+    _draft_value,
+    _merge_record,
+    _unchanged_window,
+    _values_equal,
+)
+from .temporal import (  # noqa: F401
+    _consolidated_in_force,
+    _cross_article_year_proof,
+    _income_year_date_issues,
+    _later_until,
+    _retrieval_as_of,
+)
 
 MAX_PROPOSAL_ATTEMPTS = 2
 
@@ -111,236 +133,6 @@ class WorkflowState(TypedDict, total=False):
     scout_attempted: set[str]
 
 
-def _values_equal(a, b) -> bool:
-    """Compare parameter values (scalar/bool/str/brackets) with float tolerance."""
-    if isinstance(a, list) and isinstance(b, list):
-        if len(a) != len(b):
-            return False
-        return all(_values_equal_bracket(x, y) for x, y in zip(a, b))
-    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
-        return abs(float(a) - float(b)) < 1e-9
-    return a == b
-
-
-def _values_equal_bracket(a: Bracket, b: Bracket) -> bool:
-    def eq(x: float | None, y: float | None) -> bool:
-        return (x is None) == (y is None) and (x is None or abs(x - y) < 1e-9)
-
-    return eq(a.threshold, b.threshold) and eq(a.rate, b.rate) and eq(a.amount, b.amount)
-
-
-_PARAM_REF = re.compile(r"\$[A-Za-z_]\w*")
-
-
-def _derived_refs(record: ParameterRecord, current: ParameterValue | None) -> list[str]:
-    """$references to other parameters in the current value / raw EUROMOD string.
-
-    A value like `$PSS * 4` has no independent legislative existence: the
-    anchor parameter is what legislation sets, so asking the corpus about the
-    derived one is a guaranteed not_found.
-    """
-    if current is None:
-        return []
-    own = record.information.model_target.rsplit("/", 1)[-1]
-    sources = [
-        current.value if isinstance(current.value, str) else "",
-        (current.lineage.model_answer or "") if current.lineage else "",
-    ]
-    refs = dict.fromkeys(m for s in sources for m in _PARAM_REF.findall(s))
-    return [r for r in refs if r != own]
-
-
-#: What the enrichment wrote for EUROMOD readers, not for the law: CR table
-#: references and EUROMOD names in parentheses, quoted EUROMOD function titles,
-#: `policy_cc` / `$param` identifiers. In an OR-of-terms FTS leg every such
-#: token pulls unrelated chunks; measured offline over the 39 ready FR golden
-#: cases with a citation, stripping them raised golden-citation recall at k=15
-#: from 31 to 34 (the three barème thresholds: CGI art. 197 rose from rank 22).
-#: Numbers stay: the export's value is usually still the law's, and "11,88"
-#: is what finds the SMIC arrêté — dropping them lost that case.
-_QUERY_NOISE = (
-    re.compile(r"\([^()]*\)"),
-    re.compile(r"«[^»]*»"),
-    re.compile(r"\$?\b\w*_\w*\b"),
-    # EUROMOD modelling vocabulary and Country Report pointers: the enrichment
-    # says where a constant is USED ("the 'formula' parameter of the ArithOp
-    # function", "Table 2.79 confirms", "the taxes theme doc's credit list",
-    # "per direct inspection of the ES policy spine"), none of which a statute
-    # contains. Measured over the 9 retrieval misses of the 2026-09-08 review.
-    re.compile(
-        r"\b(?:SchedCalc|BenCalc|ArithOp|DefConst|DefVar|Elig|Loop|Uprate|SetDefault|"
-        r"ILDef|ILArithOp|DefIL|Allocate|UnitCalc|Store|Totals|EUROMOD|OpenFisca)\b"
-    ),
-    re.compile(r"\b(?:Country Report|CR)(?:['’]s)?\b(?:\s+Table\s+[\d.]+)?", re.IGNORECASE),
-    re.compile(r"\bTable\s+\d+(?:\.\d+)*\b"),
-    re.compile(r"\b(?:policy|theme)\s+(?:spine|doc(?:ument)?)\b", re.IGNORECASE),
-)
-
-
-#: An English EUROMOD comment quoted inside a translated text: «Calculate end
-#: of year bonus», «Fix amount».
-_ENGLISH_SPAN = re.compile(
-    r"\b(?:the|of|and|for|per|with|amount|calculate|fix(?:ed)?|year|bonus|benefit|rate|see)\b", re.IGNORECASE
-)
-_QUOTED_SPAN = re.compile(r"«([^»]*)»")
-_PAREN_SPAN = re.compile(r"\(([^()]*)\)")
-
-
-def _keep_span(match: re.Match[str]) -> str:
-    """A quoted or parenthesised span of a law-language text, unless it is noise.
-
-    In the French translations the quotes and parentheses hold the benefit's
-    own name: «prime de fin d'année», «(Prime de fin d'année, également
-    appelée prime exceptionnelle de Noël)», «(Revenu de Solidarité Active)».
-    Dropped whole, the $bunmt_bonus1 query read «le montant forfaitaire de
-    base annuel de la pour un bénéficiaire seul», and décret n° 2025-1212
-    ranked 80th. An English EUROMOD comment, or a span left with no word
-    («(Table 2.52)»), is still dropped.
-    """
-    inner = match.group(1)
-    if _ENGLISH_SPAN.search(inner) and not re.search(r"[À-ÿ]", inner):
-        return " "
-    return f" {inner} "
-
-
-def _clean_query_text(text: str, lang: str = "en") -> str:
-    """Strip EUROMOD-side noise from a label/description before it becomes a query.
-
-    In a law-language text other than English, quoted and parenthesised spans
-    keep their content (see `_keep_span`); an English record drops them.
-    """
-    if lang != "en":
-        text = _QUOTED_SPAN.sub(_keep_span, text)
-        text = _PAREN_SPAN.sub(_keep_span, text)
-    for pattern in _QUERY_NOISE:
-        text = pattern.sub(" ", text)
-    return re.sub(r"\s+", " ", text).strip(" ,;:.-")
-
-
-def _later_until(record: ParameterRecord, as_of: date) -> date | None:
-    """How far past as_of retrieval looks for versions of the same system year.
-
-    Only for in-force parameters: an income-year parameter already retrieves
-    at 1 July of the following year (_retrieval_as_of), and a start-of-year
-    one wants the value of 1 January.
-    """
-    if record.information.temporal_basis in (TemporalBasis.INCOME_YEAR, TemporalBasis.START_OF_YEAR):
-        return None  # start_of_year: a change later in the year is next year's value
-    return date(as_of.year, 12, 31)
-
-
-def _retrieval_as_of(record: ParameterRecord, as_of: date) -> date:
-    """The date used to select in-force legislation versions.
-
-    income_year parameters (FR income tax family): the enacting finance act is
-    published months AFTER the income year it governs, so look for versions
-    consolidated mid-way through the year FOLLOWING the income year — for
-    system year 2025 (income year 2024) that is 1 July 2025, when LF 2025 is
-    consolidated. Open-ended current versions still match, and the critique's
-    version-window check catches the act not being in the corpus yet.
-    """
-    if record.information.temporal_basis == TemporalBasis.INCOME_YEAR:
-        return date(income_year_for(as_of.year) + 1, 7, 1)
-    if record.information.temporal_basis == TemporalBasis.START_OF_YEAR:
-        return start_of_year_as_of(as_of)
-    return as_of
-
-
-def _consolidated_in_force(
-    provenance: dict | None, retrieval_as_of: date, income_year: int, article_text: str
-) -> bool:
-    """Is the cited text a consolidated code article in force on the retrieval date?
-
-    France assesses income year Y in Y+1, and the code article as consolidated
-    on 1 July Y+1 (`_retrieval_as_of`) is the text that assessment applies —
-    CGI art. 197 "en vigueur du 16 février 2025 au 21 février 2026" is the
-    barème for 2024 income. That holds however old the version is: art. 223
-    sexies has read the same since 2018 because the CEHR thresholds never
-    moved, and no finance act for Y restates it. The old rule treated every
-    version older than the budget-act window as "probably last year's value"
-    and demanded a finance-act clause naming Y, which rejected correct
-    unchanged proposals. Two guards keep the presumption honest:
-
-    * an open-ended version only proves "not amended" up to the day we
-      fetched it, so the snapshot must postdate the retrieval date;
-    * a text whose applicability clause names the NEXT income year (CDHR:
-      "applicables à l'imposition des revenus de l'année 2025", in force
-      Feb 2025) is for that year, not this one.
-    """
-    if not provenance or provenance.get("instrument_type") != "code":
-        return False
-    start = retrieval.validity_start(provenance.get("validity"))
-    end = retrieval.validity_end(provenance.get("validity"))
-    if start is None or start > retrieval_as_of or (end is not None and end <= retrieval_as_of):
-        return False
-    retrieved = provenance.get("retrieved_at")
-    if provenance.get("open_ended") and retrieved is not None:
-        retrieved_day = retrieved.date() if hasattr(retrieved, "date") else retrieved
-        if retrieved_day < retrieval_as_of:
-            return False
-    names_this = re.search(rf"\b{income_year}\b", article_text) is not None
-    for hit in re.finditer(rf"\b{income_year + 1}\b", article_text):
-        if _APPLICABILITY.search(article_text[max(0, hit.start() - 200) : hit.start()]) and not names_this:
-            return False
-    return True
-
-
-def _income_year_date_issues(
-    valid_from: date | None,
-    version_start: date | None,
-    income_year: int,
-    cited_text: str = "",
-    consolidated_in_force: bool = False,
-) -> tuple[list[str], bool]:
-    """Mechanical date checks for income_year parameters.
-
-    Returns (issues, provisional): issues empty = consistent; provisional=True
-    when the cited version predates the budget-act window — the window opens
-    1 December of the income year: finance acts for income year Y are normally
-    promulgated late December Y (or later — Feb 2025 for LF 2025). An older
-    version almost certainly states the previous year's value: the act for Y
-    is not in the corpus (yet), which routes the item to PROVISIONAL rather
-    than plain critique failure.
-
-    Exemption: a cited text that NAMES the income year ("à compter de
-    l'imposition des revenus de l'année 2025") proves its own vintage, however
-    early it was enacted — the CDHR was instituted by LF 2025 (Feb 2025) FOR
-    2025 income. Consolidated code articles drop such clauses (CGI art. 224
-    never says 2025), so the year-naming extract is the finance-act article;
-    the propose prompt nudges the model towards it.
-
-    Second exemption, `consolidated_in_force` (decided by
-    `_consolidated_in_force` from the corpus): the cited text is the code
-    article as consolidated on the retrieval date, i.e. the text the income
-    year's assessment applies — an old version start means the value did not
-    change, not that the act is missing.
-    """
-    issues: list[str] = []
-    provisional = False
-    if valid_from != date(income_year, 1, 1):
-        issues.append(
-            f"income-year parameter: valid_from must be exactly {income_year}-01-01 "
-            f"(the income-year start, NOT the act's publication or in-force date), got "
-            f"{valid_from.isoformat() if valid_from else 'none'}"
-        )
-    window = date(income_year, 12, 1)
-    names_year = re.search(rf"\b{income_year}\b", cited_text) is not None
-    if (
-        version_start is not None
-        and version_start < window
-        and not names_year
-        and not consolidated_in_force
-    ):
-        provisional = True
-        issues.append(
-            f"cited version in force since {version_start.isoformat()} predates the "
-            f"budget-act window for income year {income_year} and its text does not "
-            f"name {income_year} — likely the previous year's value; the act for "
-            f"{income_year} income may not be in the corpus yet (treat as provisional)"
-        )
-    return issues, provisional
-
-
 #: Critique issues that mean "the establishing text is not in the corpus"
 #: rather than "the model reasoned badly". Only these justify spending another
 #: gap-fill round on a proposal that WAS produced: a unit-sanity or
@@ -381,153 +173,6 @@ def _needs_gap_fill(state: WorkflowState) -> bool:
     if report.verdict == "pass":
         return False
     return any(marker in issue for issue in report.issues for marker in _SOURCE_GAP_ISSUES)
-
-
-def _unchanged_window(proposed: ParameterValue, current: ParameterValue) -> ParameterValue:
-    """The proposal rewritten to keep the validity window already in force.
-
-    The value the law states is the one EUROMOD already holds, so the existing
-    period simply continues: proposing a fresh valid_from (the model's date, or
-    as_of) would read as a legislative change that did not happen. The citation
-    re-confirms the value, it does not restart it — everything else about the
-    proposal (evidence, legal_status, OJ date) is kept as proposed.
-    """
-    return proposed.model_copy(
-        update={"valid_from": current.valid_from, "valid_to": current.valid_to}
-    )
-
-
-_ARTICLE_NUM = re.compile(r"art(?:icle|\.)\s*([0-9]+(?:\s+[A-Za-z]+)*)", re.IGNORECASE)
-
-#: Stock openings of a French applicability clause. A finance-act article ends
-#: with one — "II. - Les A et B du I s'appliquent à l'impôt sur le revenu dû au
-#: titre de l'année 2024 et des années suivantes" — and it governs everything
-#: above it, however far away that is.
-_APPLICABILITY = re.compile(
-    r"(s'appliquent?|applicables?|à compter de|au titre de|pour l'imposition|"
-    r"aux revenus (?:perçus|réalisés))",
-    re.IGNORECASE,
-)
-
-
-def _cross_article_year_proof(cited_citation: str | None, text: str, income_year: int) -> bool:
-    """True when `text` ties the CITED article to the income year.
-
-    Finance acts often state the applicability of a code article they created
-    in a cross-reference — LF 2025 art. 10: "La contribution mentionnée au I
-    de l'article 224 du code général des impôts due au titre de l'imposition
-    des revenus de l'année 2025…". A mention of the cited article number with
-    the income year nearby (±400 chars) proves the vintage of the cited
-    consolidated article, which itself names no year.
-    """
-    if not cited_citation:
-        return False
-    match = _ARTICLE_NUM.search(cited_citation)
-    if not match:
-        return False
-    number = match.group(1).strip()
-    mentions = list(re.finditer(rf"article\s+{re.escape(number)}\b", text, re.IGNORECASE))
-    if not mentions:
-        return False
-    for hit in mentions:
-        window = text[max(0, hit.start() - 400) : hit.end() + 400]
-        if re.search(rf"\b{income_year}\b", window):
-            return True
-    # Proximity is the strong signal but it is not how finance acts are drafted.
-    # `text` is ONE article (pulled whole via retrieval.unit_chunks), and its
-    # closing applicability clause governs every amendment above it: LF 2025
-    # art. 2 rewrites the barème in CGI art. 197 at offset 199 and only says
-    # "dû au titre de l'année 2024" at offset 5365 — 5 166 characters later, so
-    # the window could never see it and every FR barème case refused. Inside a
-    # single article, "this article mentions the cited article" plus "this
-    # article carries an applicability clause for the income year" is the proof.
-    for hit in re.finditer(rf"\b{income_year}\b", text):
-        if _APPLICABILITY.search(text[max(0, hit.start() - 200) : hit.start()]):
-            return True
-    return False
-
-
-def _current_value(record: ParameterRecord, as_of: date) -> ParameterValue | None:
-    """The value in force at as_of, if any."""
-    for value in record.values:
-        if value.valid_from <= as_of and (value.valid_to is None or value.valid_to >= as_of):
-            return value
-    return None
-
-
-def _draft_value(draft: ProposalDraft):
-    return draft.value_brackets if draft.value_brackets is not None else draft.value_scalar
-
-
-def frame_query(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> dict:
-    """The `frame` step's deterministic output: the search query and known citations.
-
-    Module-level so the retrieval evaluation (nomokrisis_eval, embedding cases
-    built from golden cases) searches with exactly the query a run would send.
-    """
-    info = record.information
-    labels = {**(info.short_label or {}), **(info.label or {})}
-    descriptions = info.description or {}
-    # Prefer law-language text for the query: the FTS leg of hybrid retrieval
-    # is language-specific, so an English-only record searches French law
-    # poorly. Translations live in params.parameter_texts (best-effort:
-    # no rows / no schema -> received text only, previous behaviour).
-    lang = retrieval.LANG_BY_COUNTRY.get(info.country, "en")
-    native: list[str] = []
-    if lang in descriptions:
-        # An assembled schedule carries its members' law-language texts
-        # (paramdb._group_texts): search with those alone.
-        native = [t for t in (labels.get(lang), descriptions[lang]) if t]
-    elif lang not in labels:
-        try:
-            with paramdb.connect(cfg) as conn:
-                texts = translate.law_language_texts(conn, info.model_target, lang)
-            native = [t for f in ("short_label", "label", "description") if (t := texts.get(f))]
-        except Exception:
-            native = []
-    # Native texts REPLACE the received ones in the query rather than being
-    # appended: a mixed-language ~60-term query dilutes the BGE-M3 embedding
-    # and turns the OR'd FTS leg into noise.
-    parts = (
-        [_clean_query_text(p, lang) for p in native]
-        if native
-        else [_clean_query_text(p) for p in [*labels.values(), *descriptions.values()]]
-    )
-    query = " ".join(dict.fromkeys(p for p in parts if p)) or info.model_target
-    # Country Report enrichment (acronym -> semantic): CR section headings
-    # translate EUROMOD codes into official native benefit/tax names
-    # ('tinto01_s' -> 'Contribution différentielle sur les hauts revenus').
-    # Context only — CR chunks are excluded from evidence retrieval.
-    # Probe with the identity tokens ALONE: label words match every fiscal
-    # section and drown the one heading that carries this parameter's code.
-    ident = retrieval.euromod_ident_tokens(info.model_target)
-    cr_terms: list[str] = []
-    cr_headings: list[str] = []
-    try:
-        if ident:
-            with retrieval.connect(cfg) as conn:
-                cr_hits = retrieval.country_report_search(
-                    conn, info.country, as_of, " ".join(ident), k=5
-                )
-            cr_terms = retrieval.cr_enrichment_terms(cr_hits, ident, query)
-            cr_headings = [h.citation for h in cr_hits if h.citation]
-    except Exception:  # no CR corpus / DB hiccup -> frame works as before
-        cr_terms = []
-    if cr_terms:
-        query = " ".join([query, *cr_terms])
-    citations: list[str] = []
-    for value in reversed(record.values):
-        for ref in value.references:
-            citations.extend(filter(None, [ref.title, ref.legal_unit_ref]))
-        if citations:
-            break
-    return {
-        "query": query,
-        "citations": list(dict.fromkeys(citations)),
-        "law_language_texts": len(native),
-        "cr_terms": cr_terms,
-        "cr_headings": cr_headings,
-    }
 
 
 @dataclass(slots=True)
@@ -1176,377 +821,6 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
     return lambda state: invoke(ctx, state)
 
 
-#: Figures a derivation may use without quoting them: calendar and scaling
-#: constants (months, quarters, weeks, days in a year, percent, per mille).
-#: 3, 6 and 9 are the months either side of an April, July or October
-#: revaluation: a full-year average is (a * 3 + b * 9) / 12, and five
-#: derivations of the 5 Nov run were refused for the bare 3 alone.
-#: Everything else is a fact about the law and must be an operand quoted
-#: verbatim from a retrieved chunk — that is what keeps a derived value inside
-#: the anti-hallucination contract.
-DERIVATION_CONSTANTS = frozenset(
-    {1.0, 2.0, 3.0, 4.0, 6.0, 9.0, 12.0, 13.0, 52.0, 100.0, 365.0, 366.0, 1000.0}
-)
-#: Most decimal places `round(x, n)` may keep. The precision is not a fact about
-#: the law the way a figure is: it is the rounding rule the text itself states —
-#: «Les taux ainsi appelés sont arrondis au centième» (AGIRC-ARRCO art. 36: 6,20 %
-#: × 127 % = 7,874 % → 7,87 %), «arrondi à l'euro le plus proche».
-DERIVATION_MAX_DIGITS = 8
-_DERIVATION_OPS = {
-    ast.Add: operator.add,
-    ast.Sub: operator.sub,
-    ast.Mult: operator.mul,
-    ast.Div: operator.truediv,
-}
-
-
-def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
-    """Evaluate `expression` over named operands.
-
-    Raises ValueError for anything but + - * / over operand names and
-    DERIVATION_CONSTANTS, plus `round(x, n)` with n an integer literal up to
-    DERIVATION_MAX_DIGITS — no other calls, no attributes, no other literals.
-    Rounding is half-up, as legal texts mean it (not Python's half-even).
-    """
-    try:
-        tree = ast.parse(expression.strip(), mode="eval")
-    except SyntaxError as exc:
-        raise ValueError(f"derivation is not an arithmetic expression ({exc.msg})") from None
-
-    def ev(node: ast.AST) -> float:
-        if isinstance(node, ast.Expression):
-            return ev(node.body)
-        if (
-            isinstance(node, ast.Constant)
-            and isinstance(node.value, (int, float))
-            and not isinstance(node.value, bool)
-        ):
-            if float(node.value) not in DERIVATION_CONSTANTS:
-                raise ValueError(
-                    f"bare figure {node.value} is not a quoted operand (only "
-                    f"{sorted(int(c) for c in DERIVATION_CONSTANTS)} may appear unquoted)"
-                )
-            return float(node.value)
-        if isinstance(node, ast.Name):
-            if node.id not in operands:
-                raise ValueError(f"operand {node.id!r} is not listed in operands")
-            return operands[node.id]
-        if isinstance(node, ast.BinOp) and type(node.op) in _DERIVATION_OPS:
-            return _DERIVATION_OPS[type(node.op)](ev(node.left), ev(node.right))
-        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
-            value = ev(node.operand)
-            return -value if isinstance(node.op, ast.USub) else value
-        if (
-            isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Name)
-            and node.func.id == "round"
-            and not node.keywords
-        ):
-            if len(node.args) != 2:
-                raise ValueError("round takes exactly (expression, digits)")
-            digits = node.args[1]
-            if not (
-                isinstance(digits, ast.Constant)
-                and type(digits.value) is int
-                and 0 <= digits.value <= DERIVATION_MAX_DIGITS
-            ):
-                raise ValueError(
-                    f"round's digits must be an integer literal from 0 to {DERIVATION_MAX_DIGITS}"
-                )
-            value = Decimal(repr(ev(node.args[0])))
-            return float(value.quantize(Decimal(1).scaleb(-digits.value), rounding=ROUND_HALF_UP))
-        raise ValueError(
-            "only + - * / and round(x, n) over operand names and calendar constants are allowed"
-        )
-
-    try:
-        return float(ev(tree))
-    except ZeroDivisionError:
-        raise ValueError("derivation divides by zero") from None
-
-
-_FIGURE = re.compile(r"\d(?:[\d\s\u00a0\u202f.,]*\d)?")
-
-
-def _figures_in(text: str) -> set[float]:
-    """Every reading of every number in `text`: «1 801,80» and «1.801,80»
-    (thousands separators), «1,801.80», «9.139» (a Dutch thousand or an English
-    decimal — both readings kept), «347,83»."""
-    figures: set[float] = set()
-    for raw in _FIGURE.findall(text):
-        for number in (raw, *_table_cells(raw)):
-            compact = re.sub(r"[\s\u00a0\u202f]", "", number)
-            for candidate in (
-                compact,
-                compact.replace(",", "."),
-                compact.replace(".", "").replace(",", "."),
-                compact.replace(",", ""),
-            ):
-                try:
-                    figures.add(float(candidate))
-                except ValueError:
-                    pass
-    lowered = text.lower()
-    figures.update(value for word, value in _NUMBER_WORDS.items() if re.search(rf"\b{word}\b", lowered))
-    return figures
-
-
-def _table_cells(run: str) -> list[str]:
-    """A run of figures cut where one number visibly ends: «I 329,71 397,64
-    449,43 65,21» (a PDF table row, arrêté du 27 sept. 2019 art. 7) is four
-    amounts, not one. A number ends after its decimal part, or before a group
-    that is not three digits; «1 801,80» stays one number."""
-    cells: list[list[str]] = []
-    for token in re.split(r"[\s\u00a0\u202f]+", run):
-        joins = (
-            cells
-            and not re.search(r"[.,]\d+$", cells[-1][-1])
-            and re.fullmatch(r"\d{3}(?:[.,]\d+)?", token)
-        )
-        if joins:
-            cells[-1].append(token)
-        else:
-            cells.append([token])
-    return [" ".join(cell) for cell in cells] if len(cells) > 1 else []
-
-
-#: Numbers the law spells out: «dans la limite de trois fois ce plafond»
-#: (CSS D622-7) states the operand 3 of a derivation as surely as «3» would;
-#: two derivations of the 5 Nov run were refused for it.
-_NUMBER_WORDS = {
-    "deux": 2.0, "trois": 3.0, "quatre": 4.0, "cinq": 5.0, "six": 6.0, "sept": 7.0,
-    "huit": 8.0, "neuf": 9.0, "dix": 10.0, "onze": 11.0, "douze": 12.0,
-    "double": 2.0, "triple": 3.0, "moitié": 0.5, "quart": 0.25,
-    "two": 2.0, "three": 3.0, "four": 4.0, "five": 5.0, "half": 0.5, "twice": 2.0,
-}
-
-
-def _extract_states(extract: str, value: float) -> bool:
-    """Whether the extract states `value` — as such, or as a percentage (108 % for 1.08).
-
-    A multiplier above 1 is also stated by its increase: «majoré de 50 %» is
-    the 1.5 of a × 1.5 (four prime d'activité derivations of the 5 Nov batch
-    were refused for writing it so rather than a × (1 + 0.5)).
-    """
-    targets = [value, value * 100]
-    if value > 1 and re.search(r"major|augment|increase", extract, re.IGNORECASE):
-        targets.append((value - 1) * 100)
-    return any(
-        math.isclose(figure, target, rel_tol=1e-9, abs_tol=1e-9)
-        for figure in _figures_in(extract)
-        for target in targets
-    )
-
-
-def _derivation_summary(draft: ProposalDraft, hits: list[RetrievalHit]) -> str:
-    """«a / b with a = 347.83 (AKW, artikel 12), b = 286.45 (AKW, artikel 12)» — for the reviewer."""
-    citations = {h.chunk_id: h.citation for h in hits}
-    parts = [
-        f"{op.name} = {op.value:g} ({citations.get(op.citation_chunk_id) or op.citation_chunk_id})"
-        for op in draft.operands
-    ]
-    return f"{draft.derivation} with " + ", ".join(parts)
-
-
-def _stating_passage(content: str, value: float, limit: int = 300) -> str | None:
-    """The first sentence of `content` that states `value`, for a retry's feedback.
-
-    Told only «operand b's extract does not state 730», the model quoted the
-    same sentence of CSS D. 622-7 again; the figure is in another one («égal
-    à 1/ 730e de la moyenne des revenus», $bhl_max_amt2, 5 Nov batch).
-    """
-    for sentence in re.split(r"(?<=[.;])\s+|\n+", content):
-        sentence = sentence.strip()
-        if sentence and _extract_states(sentence, value):
-            return sentence if len(sentence) <= limit else sentence[:limit] + "…"
-    return None
-
-
-def _check_derivation(
-    draft: ProposalDraft,
-    hits: list[RetrievalHit],
-    verify,
-) -> tuple[list[str], list[tuple[int, int] | None], str | None]:
-    """Mechanical check of a derived proposal — the extract check, per operand.
-
-    `verify(chunk_id, extract)` returns the extract's offsets in the chunk or
-    None (retrieval.verify_extract in production). Every operand must cite a
-    retrieved chunk, quote it verbatim and state its own figure; the
-    expression may use only those operands and calendar constants; and it
-    must evaluate to the proposed value. Returns (issues, operand offsets,
-    note for the critique) — issues empty means verified.
-    """
-    # A schedule derives one of its figures (the AGIRC-ARRCO CET share a * b,
-    # a threshold of 12 monthly ceilings): the result must be one of them,
-    # exactly — a schedule's figures are not replaced by the result, so a
-    # figure 0.1 % off its own arithmetic would reach the queue (round(x, n)
-    # states a rounding). A scalar's typed figure may be 0.1 % off: the
-    # result replaces it (_round_like_held).
-    figures = (
-        [f for band in draft.value_brackets for f in (band.threshold, band.rate, band.amount) if f is not None]
-        if draft.value_brackets is not None
-        else [draft.value_scalar] if draft.value_scalar is not None else []
-    )
-    if not figures:
-        return ["derivation: no value to derive"], [], None
-    if not draft.operands:
-        return ["derivation: no operands quoted"], [], None
-    issues: list[str] = []
-    offsets: list[tuple[int, int] | None] = []
-    values: dict[str, float] = {}
-    for op in draft.operands:
-        where = f"operand {op.name}"
-        if op.name in values:
-            issues.append(f"derivation: {where} is listed twice")
-            offsets.append(None)
-            continue
-        values[op.name] = op.value
-        # Same rule as the main citation (quotes.check_quote).
-        check = quotes.check_quote(hits, op.citation_chunk_id, op.supporting_extract, verify)
-        op.citation_chunk_id = check.chunk_id
-        if check.status == "not_retrieved":
-            issues.append(f"derivation: {where} cites a chunk that was not retrieved")
-            offsets.append(None)
-            continue
-        offsets.append(check.offsets)
-        if not check.verified:
-            issues.append(f"derivation: {where}'s extract is not a verbatim quote of its chunk")
-            if check.hint:
-                issues.append(f"derivation: {where}: {check.hint}")
-        elif not _extract_states(op.supporting_extract, op.value):
-            issues.append(f"derivation: {where}'s extract does not state {op.value:g}")
-            content = next((h.content for h in hits if h.chunk_id == op.citation_chunk_id), "")
-            stating = _stating_passage(content, op.value)
-            if stating:
-                issues.append(f"derivation: {where}: its chunk states {op.value:g} in «{stating}» — quote that")
-    if issues:
-        return issues, offsets, None
-    try:
-        result = evaluate_derivation(draft.derivation or "", values)
-    except ValueError as exc:
-        return [f"derivation: {exc}"], offsets, None
-    rel_tol = 1e-9 if draft.value_brackets is not None else 1e-3
-    if not any(math.isclose(result, f, rel_tol=rel_tol, abs_tol=1e-12) for f in figures):
-        proposed = (
-            "any figure of the proposed schedule"
-            if draft.value_brackets is not None
-            else f"the proposed {draft.value_scalar:g}"
-        )
-        return [f"derivation: {draft.derivation} evaluates to {result:g}, not {proposed}"], offsets, None
-    note = (
-        f"derivation verified deterministically: {_derivation_summary(draft, hits)} = {result:g}; "
-        "every operand extract is verbatim in its cited chunk and states its figure, so do NOT "
-        "fail citation_supports_value for the value not being stated literally — judge whether "
-        "these are the right operands and the right formula for the parameter"
-    )
-    return [], offsets, note
-
-
-def _confirms_held(draft: ProposalDraft, held: ParameterValue | None) -> bool:
-    """Whether a scalar proposal is the value already held."""
-    value = held.value if held is not None else None
-    if draft.value_scalar is None or isinstance(value, bool) or not isinstance(value, (int, float)):
-        return False
-    return math.isclose(draft.value_scalar, float(value), rel_tol=1e-9, abs_tol=1e-12)
-
-
-def _held_digits(held: ParameterValue | None) -> int:
-    """Decimals of the amount EUROMOD holds: 0 for 51229, cents otherwise.
-
-    A float cannot tell 1343.40 from 1343.4, so one decimal reads as cents.
-    """
-    value = held.value if held is not None else None
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return 2
-    return 0 if float(value).is_integer() else 2
-
-
-def _rate_digits(held: ParameterValue | None) -> int | None:
-    """Decimals of a `/1` rate EUROMOD holds, when four to eight; else None."""
-    value = held.value if held is not None else None
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return None
-    digits = -Decimal(repr(float(value))).normalize().as_tuple().exponent
-    return digits if 4 <= digits <= 8 else None
-
-
-def _round_like_held(
-    unit: str, draft: ProposalDraft, held: ParameterValue | None, derived: float | None = None
-) -> str | None:
-    """Round a derived amount the way the published amount is: half-up, to the held precision.
-
-    The law states the operands, the administration publishes the rounded
-    result (the CAF's PAJE ceiling 29 169 × 1,8 = 52 504,2 is published as
-    52 504; RSA 646,52 × 1,8 = 1 163,736 is paid as 1 163,74), and the
-    rounding rule itself is rarely in the corpus. A `/1` rate held with four
-    or more decimals is rounded to as many (AGIRC-ARRCO art. 36: «arrondis au
-    centième», 12,954 % → 12,95 %, held 0.1295; three tscerpi rates of the
-    5 Nov run were 0.12954 / 0.047244); a coarser rate is left alone, since
-    0.0675 is a real change from a held 0.068. Returns the reviewer's note
-    when the value changed.
-
-    With `derived`, the verified derivation's own result is rounded, not the
-    figure the model typed: the check accepts a result within 0.1 % of it,
-    and RSA 646,52 × (1,28412 + 2 × 0,42804) = 1 383,68 was proposed as
-    1 383,28 (5 Nov full run, $bsa00_amt9). Without a precision to round to,
-    the result itself is proposed: the typed figure never stands.
-    """
-    if draft.value_scalar is None:
-        return None
-    if unit == "/1":
-        digits = _rate_digits(held)
-    elif unit.startswith("currency"):
-        digits = _held_digits(held)
-    else:
-        digits = None
-    if digits is None:
-        if derived is None or derived == draft.value_scalar:
-            return None
-        note = f"note: derived {derived:g} proposed (the proposal said {draft.value_scalar:g})"
-        draft.value_scalar = derived
-        return note
-    source = draft.value_scalar if derived is None else derived
-    value = Decimal(repr(source))
-    rounded = float(value.quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))
-    if rounded == draft.value_scalar:
-        return None
-    note = (
-        f"note: derived {source:g} rounded half-up to {rounded:g}, "
-        f"{'whole units' if digits == 0 else f'{digits} decimals'} like the value held"
-    )
-    typed = Decimal(repr(draft.value_scalar)).quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP)
-    if float(typed) != rounded:
-        note += f" (the proposal said {draft.value_scalar:g})"
-    draft.value_scalar = rounded
-    return note
-
-
-#: The magnitude range of a rate per unit: "/1" is a fraction, "/100" a rate
-#: held in percentage points (FR `$bho_rl_rate2` = 0.45 for 0,45 %).
-_RATE_BOUNDS = {"/1": (-1.0, 1.0), "/100": (-100.0, 100.0)}
-
-
-def _values_sane(unit: str, draft: ProposalDraft) -> bool:
-    """Unit-range and bracket-order sanity.
-
-    The /1 range catches a percentage left unnormalised (11 for 0.11) — a
-    magnitude test, so a negative rate is in range: the housing-benefit
-    participation rate «Majoration par personne à charge -0,06%» is one.
-    """
-    if draft.value_brackets is not None:
-        thresholds = [b.threshold for b in draft.value_brackets]
-        if thresholds != sorted(thresholds) or len(set(thresholds)) != len(thresholds):
-            return False
-        if unit in _RATE_BOUNDS:
-            low, high = _RATE_BOUNDS[unit]
-            return all(b.rate is None or low <= b.rate <= high for b in draft.value_brackets)
-        return True
-    if draft.value_scalar is not None and unit in _RATE_BOUNDS:
-        low, high = _RATE_BOUNDS[unit]
-        return low <= draft.value_scalar <= high
-    return draft.value_scalar is not None
-
-
 def _build_proposed_value(state: WorkflowState, cfg: WorkflowConfig) -> ParameterValue:
     """Assemble the Activity 1 value envelope from the draft + critique + trace."""
     draft: ProposalDraft = state["draft"]
@@ -1611,22 +885,6 @@ def _build_proposed_value(state: WorkflowState, cfg: WorkflowConfig) -> Paramete
             ],
         ),
     )
-
-
-def _merge_record(
-    record: ParameterRecord, proposed: ParameterValue, as_of: date, routing: Routing
-) -> ParameterRecord:
-    """The full record as it would look after acceptance (export-first write-back)."""
-    merged = record.model_copy(deep=True)
-    if routing == Routing.UNCHANGED:
-        merged.information.last_confirmed_valid_on = as_of
-        return merged
-    for value in merged.values:
-        if value.valid_to is None and value.valid_from < proposed.valid_from:
-            value.valid_to = proposed.valid_from - timedelta(days=1)
-    merged.values.append(proposed)
-    merged.information.last_confirmed_valid_on = as_of
-    return merged
 
 
 def run_parameter(

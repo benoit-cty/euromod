@@ -189,7 +189,7 @@ Suggested fixes, in order of value:
 
 ### Size
 
-- **`pipeline.py`** (1 756 lines) splits into:
+- **Fixed** (pipeline.py 1 756 → 948 lines: `framing.py`, `temporal.py`, `derivation.py`, `routing.py` extracted; `quotes.py` earlier; pipeline re-exports the old names) — **`pipeline.py`** (1 756 lines) splits into:
   - `framing.py` — query cleaning and `frame_query`;
   - `temporal.py` — reference dates, the income-year checks, `_consolidated_in_force`;
   - `quotes.py` — see section 2.1;
