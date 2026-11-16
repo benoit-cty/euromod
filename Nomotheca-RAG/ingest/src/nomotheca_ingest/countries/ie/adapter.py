@@ -8,7 +8,7 @@ from datetime import date
 from nomotheca_ingest.countries.ie.fetcher import SOURCE_CODE_EISB, fetch_ie
 from nomotheca_ingest.countries.ie.parser import act_index_child_metadata, parse_ie
 from nomotheca_ingest.countries.ie.resolver import IeResolver, canary_facts
-from nomotheca_ingest.countries.base import UrlSource
+from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
@@ -22,7 +22,7 @@ IE_URL_SOURCE = UrlSource(
 )
 
 
-class IeAdapter:
+class IeAdapter(BaseAdapter):
     """Ireland implementation of the country adapter protocol."""
 
     jurisdiction = "IE"
@@ -45,28 +45,14 @@ class IeAdapter:
         """Parse archived eISB XML or Oireachtas JSON into country-neutral IR."""
         return parse_ie(snapshot_bytes, ref, snapshot)
 
-    def expand(self, doc: ParsedDoc) -> list[WorkItem]:
-        """Return follow-up work discovered from the parsed document.
+    # expand: BaseAdapter's. An act index yields one work item per fiscal act
+    # of that year; the children cross hosts, so each names its own source_code.
 
-        An act index yields one work item per fiscal act of that year. The
-        children cross hosts, so each carries its own source_code rather than
-        inheriting the index's.
-        """
-        work: list[WorkItem] = []
-        for child in doc.metadata.get("child_refs", []):
-            work.append(
-                WorkItem(
-                    ref=SourceRef(
-                        jurisdiction=doc.ref.jurisdiction,
-                        source_code=child.get("source_code") or doc.ref.source_code,
-                        source_id=child["source_id"],
-                        source_type=child["source_type"],
-                        metadata=act_index_child_metadata(child),
-                    ),
-                    reason=f"{doc.ref.source_id} lists {child.get('title') or child['source_id']}",
-                )
-            )
-        return work
+    def child_metadata(self, child: dict) -> dict:
+        return act_index_child_metadata(child)
+
+    def child_reason(self, doc: ParsedDoc, child: dict) -> str:
+        return f"{doc.ref.source_id} lists {child.get('title') or child['source_id']}"
 
     def canary_facts(self) -> list[CanaryFact]:
         """Return Irish freshness canaries for supported fiscal years."""

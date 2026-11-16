@@ -33,14 +33,19 @@ class PostgresSnapshotStore:
         """Insert raw response bytes into fetch_snapshots and return its id."""
         source_id = self._source_id(ref.source_code)
         with self.conn.cursor() as cur:
+            # The SourceRef goes with the bytes: `reparse` replays any country's
+            # archive from it, with no per-country URL reverse-engineering.
             cur.execute(
                 """
                 INSERT INTO fetch_snapshots
-                  (run_id, source_id, url, http_status, content_type, content_hash, raw_content)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                  (run_id, source_id, url, http_status, content_type, content_hash, raw_content, metadata)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
-                (self.run_id, source_id, url, status_code, content_type, content_hash, content),
+                (
+                    self.run_id, source_id, url, status_code, content_type, content_hash, content,
+                    Jsonb({"source_ref": ref.model_dump(mode="json")}),
+                ),
             )
             return cur.fetchone()[0]
 

@@ -8,7 +8,7 @@ from datetime import date
 from nomotheca_ingest.countries.es.fetcher import SOURCE_CODE, fetch_boe
 from nomotheca_ingest.countries.es.parser import parse_boe_xml
 from nomotheca_ingest.countries.es.resolver import EsResolver, canary_facts
-from nomotheca_ingest.countries.base import UrlSource
+from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
@@ -24,7 +24,7 @@ ES_URL_SOURCE = UrlSource(
 )
 
 
-class EsAdapter:
+class EsAdapter(BaseAdapter):
     """Spain implementation of the country adapter protocol."""
 
     jurisdiction = "ES"

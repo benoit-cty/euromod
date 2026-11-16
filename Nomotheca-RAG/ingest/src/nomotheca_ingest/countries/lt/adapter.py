@@ -8,7 +8,7 @@ from datetime import date
 from nomotheca_ingest.countries.lt.fetcher import fetch_tar
 from nomotheca_ingest.countries.lt.parser import parse_tar_json
 from nomotheca_ingest.countries.lt.resolver import LtResolver, canary_facts
-from nomotheca_ingest.countries.base import UrlSource
+from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
@@ -22,7 +22,7 @@ LT_URL_SOURCE = UrlSource(
 )
 
 
-class LtAdapter:
+class LtAdapter(BaseAdapter):
     """Lithuania implementation of the country adapter protocol."""
 
     jurisdiction = "LT"
@@ -44,24 +44,6 @@ class LtAdapter:
     def parse(self, snapshot_bytes: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
         """Parse archived TAR JSON into country-neutral IR."""
         return parse_tar_json(snapshot_bytes, ref, snapshot)
-
-    def expand(self, doc: ParsedDoc) -> list[WorkItem]:
-        """Return follow-up work discovered from the parsed document."""
-        work: list[WorkItem] = []
-        for child in doc.metadata.get("child_refs", []):
-            source_id = child["source_id"]
-            work.append(
-                WorkItem(
-                    ref=SourceRef(
-                        jurisdiction=doc.ref.jurisdiction,
-                        source_code=doc.ref.source_code,
-                        source_id=source_id,
-                        source_type=child["source_type"],
-                    ),
-                    reason=f"{doc.ref.source_id} contains {child['source_type']} {child.get('title') or source_id}",
-                )
-            )
-        return work
 
     def canary_facts(self) -> list[CanaryFact]:
         """Return Lithuanian freshness canaries for supported fiscal years."""

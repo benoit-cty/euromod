@@ -62,10 +62,7 @@ def default_source_code(jurisdiction: str, national_id: str | None = None) -> st
     FR-KALI, the rest FR-LEGI).
     """
     adapter = get_adapter(jurisdiction)
-    by_id = getattr(adapter, "source_code_for", None)
-    if national_id and by_id is not None:
-        return by_id(national_id)
-    return getattr(adapter, "default_source_code", f"{jurisdiction.upper()}-LEGI")
+    return adapter.source_code_for(national_id) if national_id else adapter.default_source_code
 
 
 def ingest_instrument(
@@ -174,26 +171,27 @@ def reparse_snapshots(
     Archive-first pays off here: a parser change (keeping Legifrance's NOTA,
     say) reaches every document already ingested by replaying the stored
     bytes, so the corpus never depends on the source still serving them. The
-    adapter rebuilds the SourceRef from the snapshot URL; snapshots it cannot
-    map are skipped and counted. Loading is the ordinary idempotent upsert:
+    SourceRef a snapshot was fetched for is stored with it
+    (`fetch_snapshots.metadata.source_ref`); for snapshots archived before
+    16 Nov 2026 the adapter rebuilds it from the URL (FR only), and the rest
+    are skipped and counted. Contributed documents and Country Reports have
+    their own reparse paths and are never read here. Loading is the ordinary idempotent upsert:
     unchanged texts keep their hash, changed ones get new chunks, and their
     embeddings turn stale for `embeddings build` to refresh.
     """
     jurisdiction_code = jurisdiction.upper()
     adapter = get_adapter(jurisdiction_code)
-    rebuild = getattr(adapter, "source_ref_from_url", None)
-    if rebuild is None:
-        raise ValueError(f"{jurisdiction_code} adapter cannot rebuild source refs from snapshot URLs")
     stats = ReparseStats()
     with psycopg.connect(database_url) as conn:
         rows = conn.execute(
             """
             SELECT fs.id, fs.url, fs.http_status, fs.content_type, fs.content_hash, fs.raw_content,
-                   s.code AS source_code
+                   s.code AS source_code, fs.metadata -> 'source_ref' AS source_ref
             FROM fetch_snapshots fs
             JOIN sources s ON s.id = fs.source_id
             JOIN jurisdictions j ON j.id = s.jurisdiction_id
             WHERE j.code = %s AND fs.url LIKE %s AND fs.raw_content IS NOT NULL
+              AND s.fetch_skill NOT IN ('core/contributed', 'core/country_reports')
             ORDER BY fs.retrieved_at
             """
             + (" LIMIT %s" if limit else ""),
@@ -201,9 +199,13 @@ def reparse_snapshots(
         ).fetchall()
         loader = LegislationLoader(conn)
         for row in rows:
-            snapshot_id, url, status, ctype, chash, raw, source_code = row
+            snapshot_id, url, status, ctype, chash, raw, source_code, stored_ref = row
             stats.snapshots += 1
-            ref = rebuild(url, source_code)
+            ref = (
+                SourceRef.model_validate(stored_ref)
+                if stored_ref
+                else adapter.source_ref_from_url(url, source_code)
+            )
             if ref is None:
                 stats.skipped += 1
                 continue

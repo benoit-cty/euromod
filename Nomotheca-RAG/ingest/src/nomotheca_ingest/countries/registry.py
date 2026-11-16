@@ -28,7 +28,7 @@ def url_sources() -> dict[str, UrlSource]:
     return {
         code: adapter_type.url_source
         for code, adapter_type in _ADAPTERS.items()
-        if getattr(adapter_type, "url_source", None) is not None
+        if adapter_type.url_source is not None
     }
 
 
