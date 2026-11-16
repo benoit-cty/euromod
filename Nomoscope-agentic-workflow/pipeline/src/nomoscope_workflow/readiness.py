@@ -1,10 +1,14 @@
 """Corpus readiness for a system year: are the finance-act vintages in place?
 
-Verifying system year Y needs two consecutive finance-act vintages:
-  - the act FOR Y (voted late Y-1 / early Y) — governs in_force parameters
-    during Y;
-  - the act FOR Y+1 (voted late Y / early Y+1) — carries the income-Y values
-    of temporal_basis=income_year parameters (FR income-tax family).
+Verifying system year Y needs, per parameter family:
+  - in_force parameters: the act FOR Y (voted late Y-1 / early Y), which
+    governs them during Y;
+  - temporal_basis=income_year parameters (FR income-tax family): the act
+    carrying the barème the law labels "income income_year_for(Y)", i.e. the
+    act FOR income_year_for(Y) + 1. With INCOME_YEAR_OFFSET = -1 that is the
+    act for Y too (LF 2025 for system year 2025), so one vintage serves both.
+    Before 16 Nov 2026 this module still used the pre-offset model and probed
+    the act for Y+1, announcing false "provisional" parameters (code audit D3).
 
 This module answers, per vintage: is the act ingested, and are its chunks
 embedded (chunks without vectors are invisible to the vector leg of
@@ -21,6 +25,8 @@ from dataclasses import dataclass
 
 import psycopg
 from psycopg.rows import dict_row
+
+from .schema import income_year_for
 
 # How to recognise the annual budget act of vintage V in instrument titles.
 # The pattern receives the vintage year via format(); matched against
@@ -51,7 +57,7 @@ class ActStatus:
     """One finance-act vintage as seen by the corpus."""
 
     vintage: int          # the year the act is FOR (LF pour <vintage>)
-    role: str             # 'in_force' | 'income_year' — which parameters need it
+    roles: tuple[str, ...]  # 'in_force' and/or 'income_year' — which parameters need it
     national_id: str | None = None
     title: str | None = None
     chunks: int = 0
@@ -70,39 +76,52 @@ class ActStatus:
 def finance_act_readiness(
     conn: psycopg.Connection, country: str, year: int
 ) -> list[ActStatus]:
-    """Corpus status of the two finance-act vintages system year `year` needs.
+    """Corpus status of the finance-act vintages system year `year` needs.
 
     Empty list when no probe is configured for the country.
     """
     pattern = _BUDGET_ACT_TITLE.get(country)
     if pattern is None:
         return []
-    statuses = []
-    for vintage, role in ((year, "in_force"), (year + 1, "income_year")):
-        status = ActStatus(vintage=vintage, role=role)
-        with conn.cursor(row_factory=dict_row) as cur:
-            row = cur.execute(
-                _STATUS_SQL, {"country": country, "pattern": pattern.format(year=vintage)}
-            ).fetchone()
-        if row is not None:
-            status.national_id = row["national_id"]
-            status.title = row["title"]
-            status.chunks = row["chunks"]
-            status.embedded = row["embedded"]
-        statuses.append(status)
-    return statuses
+    return [_status(conn, country, pattern, vintage, roles) for vintage, roles in vintages_for(year)]
+
+
+def vintages_for(year: int) -> list[tuple[int, tuple[str, ...]]]:
+    """The finance-act vintages system year `year` needs, with who needs each."""
+    needs: dict[int, list[str]] = {}
+    needs.setdefault(year, []).append("in_force")
+    needs.setdefault(income_year_for(year) + 1, []).append("income_year")
+    return [(vintage, tuple(roles)) for vintage, roles in sorted(needs.items())]
+
+
+def _status(
+    conn: psycopg.Connection, country: str, pattern: str, vintage: int, roles: tuple[str, ...]
+) -> ActStatus:
+    status = ActStatus(vintage=vintage, roles=roles)
+    with conn.cursor(row_factory=dict_row) as cur:
+        row = cur.execute(
+            _STATUS_SQL, {"country": country, "pattern": pattern.format(year=vintage)}
+        ).fetchone()
+    if row is not None:
+        status.national_id = row["national_id"]
+        status.title = row["title"]
+        status.chunks = row["chunks"]
+        status.embedded = row["embedded"]
+    return status
 
 
 def describe(status: ActStatus, income_year_params: int = 0) -> str:
     """One human-readable banner line for the CLI."""
-    need = "in-force params" if status.role == "in_force" else "income-year params"
+    need = " and ".join(
+        "in-force params" if role == "in_force" else "income-year params" for role in status.roles
+    )
     head = f"  finance act for {status.vintage} ({need}): "
     if not status.present:
         line = head + "✗ not in corpus"
-        if status.role == "income_year" and income_year_params:
+        if "income_year" in status.roles and income_year_params:
             line += f" → {income_year_params} income-year parameter(s) will be provisional"
         return line
     line = head + f"✓ {status.title} ({status.national_id}) — {status.embedded}/{status.chunks} chunks embedded"
     if status.backlog:
-        line += f" ⚠ {status.backlog} not embedded: run `nomotheca_ingest.cli embeddings build`"
+        line += f" ⚠ {status.backlog} not embedded: run `nomergon submit embed --wait`"
     return line
