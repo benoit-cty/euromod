@@ -27,7 +27,7 @@ uv run python -m nomotheca_ingest.cli document \
     -j fr --lang fr --title "BOFiP — BIC" --kind doctrine --valid-from 2026-05-06 \
     -d $EUROMOD_DATABASE_URL
 
-# what would happen, as one JSON line (what the UI's pre-check calls)
+# what would happen, as one `@result {json}` line (the UI's pre-check, through a worker `ingest` job)
 uv run python -m nomotheca_ingest.cli route "<url or path>" -d $EUROMOD_DATABASE_URL
 ```
 

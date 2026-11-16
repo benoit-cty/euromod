@@ -474,7 +474,7 @@ def impact(
     since: str = typer.Option(None, "--since", help="Only spans on/after this ISO date/datetime"),
     until: str = typer.Option(None, "--until", help="Only spans before this ISO date/datetime"),
     zone: str = typer.Option(None, "--zone", help="EcoLogits electricity mix zone (default: config, EEE)"),
-    json_output: bool = typer.Option(False, "--json", help="Machine-readable output: exactly one JSON line (used by the worker/UI)"),
+    json_output: bool = typer.Option(False, "--json", help="Machine-readable output: exactly one `@result {json}` line (the worker's job result)"),
 ) -> None:
     """Estimate the environmental impact of traced LLM calls (EcoLogits over Phoenix spans)."""
     from . import impact as impact_mod
@@ -488,7 +488,7 @@ def impact(
         electricity_mix_zone=zone or cfg.electricity_mix_zone,
     )
     if json_output:
-        typer.echo(json.dumps(report.as_dict(), ensure_ascii=False))
+        _result_line(report.as_dict())
         return
     if not report.models:
         typer.echo("No LLM spans with token counts found (mock runs carry none).")

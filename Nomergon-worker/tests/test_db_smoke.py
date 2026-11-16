@@ -174,8 +174,7 @@ def test_subprocess_output_streams_into_events(conn, cfg: WorkerConfig, tmp_path
         "print('oops', file=sys.stderr)\n"
         "print('@result {\"item_ids\": [\"FR_x_2025\"]}')\n"
     )
-    payload = jobs.parse_payload("workflow", {"targets": ["x"], "year": 2025})
-    outcome = runner._run_subprocess(conn, cfg, job_id, "workflow", payload, [sys.executable, "-c", script], tmp_path, None)
+    outcome = runner._run_subprocess(conn, cfg, job_id, "workflow", [sys.executable, "-c", script], tmp_path, None)
     assert outcome.status == "succeeded"
     assert outcome.result == {"item_ids": ["FR_x_2025"]}
     events = db.events_after(conn, job_id, 0)
@@ -192,16 +191,14 @@ def test_subprocess_output_streams_into_events(conn, cfg: WorkerConfig, tmp_path
 
 def test_failed_subprocess_reports_the_stderr_tail(conn, cfg: WorkerConfig, tmp_path: Path) -> None:
     job_id = client.submit(conn, "impact", {})
-    payload = jobs.parse_payload("impact", {})
     script = "import sys\nprint('boom', file=sys.stderr)\nsys.exit(3)\n"
-    outcome = runner._run_subprocess(conn, cfg, job_id, "impact", payload, [sys.executable, "-c", script], tmp_path, None)
+    outcome = runner._run_subprocess(conn, cfg, job_id, "impact", [sys.executable, "-c", script], tmp_path, None)
     assert outcome.status == "failed" and outcome.error == "boom"
 
 
 def test_cancel_terminates_a_running_subprocess(conn, cfg: WorkerConfig, tmp_path: Path) -> None:
     job_id = client.submit(conn, "impact", {})
     conn.execute("UPDATE ops.jobs SET status='running', worker_id=%s WHERE id=%s", (cfg.worker_id, job_id))
-    payload = jobs.parse_payload("impact", {})
 
     def request_cancel_soon() -> None:
         time.sleep(0.5)
@@ -211,7 +208,7 @@ def test_cancel_terminates_a_running_subprocess(conn, cfg: WorkerConfig, tmp_pat
     threading.Thread(target=request_cancel_soon, daemon=True).start()
     started = time.monotonic()
     outcome = runner._run_subprocess(
-        conn, cfg, job_id, "impact", payload, [sys.executable, "-c", "import time; time.sleep(30)"], tmp_path, None
+        conn, cfg, job_id, "impact", [sys.executable, "-c", "import time; time.sleep(30)"], tmp_path, None
     )
     assert outcome.status == "cancelled"
     assert time.monotonic() - started < 15
@@ -222,7 +219,6 @@ def test_cancel_also_stops_what_the_job_started(conn, cfg: WorkerConfig, tmp_pat
     """The scout's ingest and embeddings build are grandchildren of the job (D11)."""
     job_id = client.submit(conn, "impact", {})
     conn.execute("UPDATE ops.jobs SET status='running', worker_id=%s WHERE id=%s", (cfg.worker_id, job_id))
-    payload = jobs.parse_payload("impact", {})
     pid_file = tmp_path / "grandchild.pid"
     script = (
         "import subprocess, sys, time\n"
@@ -238,7 +234,7 @@ def test_cancel_also_stops_what_the_job_started(conn, cfg: WorkerConfig, tmp_pat
             client.cancel(other, job_id)
 
     threading.Thread(target=request_cancel_soon, daemon=True).start()
-    outcome = runner._run_subprocess(conn, cfg, job_id, "impact", payload, [sys.executable, "-c", script], tmp_path, None)
+    outcome = runner._run_subprocess(conn, cfg, job_id, "impact", [sys.executable, "-c", script], tmp_path, None)
     assert outcome.status == "cancelled"
     grandchild = int(pid_file.read_text())
     for _ in range(50):
@@ -254,8 +250,6 @@ def test_cancel_also_stops_what_the_job_started(conn, cfg: WorkerConfig, tmp_pat
 
 def test_singleton_types_run_one_at_a_time(conn) -> None:
     """A second embed waits while one runs; other types are claimed past it."""
-    from nomergon import jobs
-
     first = client.submit(conn, "embed", {}, priority=10)
     second = client.submit(conn, "embed", {}, priority=10)
     impact = client.submit(conn, "impact", {"zone": "EEE"}, priority=0)

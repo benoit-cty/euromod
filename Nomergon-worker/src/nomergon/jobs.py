@@ -7,7 +7,6 @@ a subprocess. The table it implements is `.scratch/nomergon-worker/contracts.md`
 
 from __future__ import annotations
 
-import json
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -662,38 +661,15 @@ def write_chat_request(payload: ChatPayload, scratch_dir: Path | None) -> Path:
 
 def extract_result(
     job_type: str,
-    payload: _Payload,
     *,
     result_line: dict[str, Any] | None,
     last_progress: dict[str, Any] | None,
-    stdout_tail: list[str],
 ) -> Any:
-    """What ``ops.jobs.result`` holds for a succeeded job, per the contract.
-
-    ``@result`` lines are captured by the runner; ``route`` and ``impact`` print
-    their report as a plain JSON line instead, so it is the last JSON line of
-    stdout. ``embed`` and ``translate`` report their final progress.
-    """
-    if job_type == "impact" or (job_type == "ingest" and getattr(payload, "command", None) == "route"):
-        return last_json_line(stdout_tail)
+    """What ``ops.jobs.result`` holds for a succeeded job: per its spec, the
+    child's ``@result`` line (``embed`` and ``translate``: its last progress)."""
     source = job_spec(job_type).result
     if source == "progress":
         return last_progress
-    if source == "result_line" and job_type != "ingest":
+    if source == "result_line":
         return result_line
-    return None
-
-
-def last_json_line(lines: list[str]) -> dict[str, Any] | None:
-    """The last stdout line that parses as a JSON object, or None."""
-    for line in reversed(lines):
-        stripped = line.strip()
-        if not stripped.startswith("{"):
-            continue
-        try:
-            value = json.loads(stripped)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(value, dict):
-            return value
     return None

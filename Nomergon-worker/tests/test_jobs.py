@@ -522,20 +522,18 @@ def test_encode_is_in_process(cfg: WorkerConfig) -> None:
 # ----------------------------------------------------------------- results --
 
 
-def test_result_per_job_type(cfg: WorkerConfig) -> None:
+def test_result_per_job_type() -> None:
     progress = {"phase": "done", "embedded": 3}
     result = {"item_ids": ["FR_x_2025"]}
-    assert jobs.extract_result("workflow", jobs.parse_payload("workflow", {"targets": ["x"], "year": 2025}), result_line=result, last_progress=None, stdout_tail=[]) == result
-    assert jobs.extract_result("embed", jobs.parse_payload("embed", {}), result_line=None, last_progress=progress, stdout_tail=[]) == progress
-    route = jobs.parse_payload("ingest", {"command": "route", "args": ["https://x"]})
-    assert jobs.extract_result("ingest", route, result_line=None, last_progress=None, stdout_tail=["noise", '{"outcome": {"kind": "adapter"}}']) == {"outcome": {"kind": "adapter"}}
-    instrument = jobs.parse_payload("ingest", {"command": "instrument", "args": ["fr", "JORFTEXT000051168007"]})
-    assert jobs.extract_result("ingest", instrument, result_line=None, last_progress=None, stdout_tail=['{"x": 1}']) is None
-    impact = jobs.parse_payload("impact", {})
-    assert jobs.extract_result("impact", impact, result_line=None, last_progress=None, stdout_tail=['{"total_kwh": 0.1}']) == {"total_kwh": 0.1}
-    assert jobs.extract_result("translate-params", jobs.parse_payload("translate-params", {"country": "FR"}), result_line=None, last_progress=progress, stdout_tail=[]) is None
-    chat = jobs.parse_payload("chat", {"messages": [{"role": "user", "content": "q"}]})
-    assert jobs.extract_result("chat", chat, result_line={"answer": "a"}, last_progress=progress, stdout_tail=[]) == {"answer": "a"}
+    assert jobs.extract_result("workflow", result_line=result, last_progress=None) == result
+    assert jobs.extract_result("embed", result_line=None, last_progress=progress) == progress
+    # `route` and `impact --json` print their report as the `@result` line.
+    route = {"outcome": "adapter", "kinds": {}}
+    assert jobs.extract_result("ingest", result_line=route, last_progress=None) == route
+    assert jobs.extract_result("ingest", result_line=None, last_progress=progress) is None
+    assert jobs.extract_result("impact", result_line={"total_kwh": 0.1}, last_progress=None) == {"total_kwh": 0.1}
+    assert jobs.extract_result("translate-params", result_line=None, last_progress=progress) is None
+    assert jobs.extract_result("chat", result_line={"answer": "a"}, last_progress=progress) == {"answer": "a"}
 
 
 def test_workflow_model_is_published_first_and_once() -> None:

@@ -347,7 +347,7 @@ def route(
         str | None, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")
     ] = None,
 ) -> None:
-    """Print, as one JSON line, whether a URL is a contributed document or an official act.
+    """Print, as one `@result {json}` line, whether a URL is a contributed document or an official act.
 
     The validation UI calls this before starting a run, so it can announce a
     switch to the legislation ingester, prefill the title and validity date,
@@ -389,7 +389,8 @@ def route(
         }
         for jurisdiction, table in KINDS_BY_JURISDICTION.items()
     }
-    typer.echo(json.dumps(payload, ensure_ascii=False))
+    # The worker's job result (the UI's pre-check reads ops.jobs.result).
+    typer.echo("@result " + json.dumps(payload, ensure_ascii=False))
 
 
 @app.command()

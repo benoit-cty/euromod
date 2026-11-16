@@ -110,16 +110,21 @@ def test_document_help_exposes_the_reviewer_fields() -> None:
     assert "circulaire" in result.output
 
 
-def test_route_prints_exactly_one_json_line() -> None:
-    """The UI's pre-check parses one line and decides what to show."""
+def _route_result(output: str) -> dict:
+    """The one `@result {json}` line `route` prints: the worker's job result."""
+    lines = output.strip().splitlines()
+    assert len(lines) == 1 and lines[0].startswith("@result ")
+    return json.loads(lines[0].removeprefix("@result "))
+
+
+def test_route_prints_exactly_one_result_line() -> None:
+    """The UI's pre-check reads it as the job's result and decides what to show."""
     result = CliRunner().invoke(
         app, ["route", "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051168007"]
     )
 
     assert result.exit_code == 0
-    lines = result.output.strip().splitlines()
-    assert len(lines) == 1
-    payload = json.loads(lines[0])
+    payload = _route_result(result.output)
     assert payload["outcome"] == "adapter"
     assert payload["jurisdiction"] == "FR"
     assert payload["national_id"] == "JORFTEXT000051168007"
@@ -132,7 +137,7 @@ def test_route_carries_the_prefill_suggestions_for_a_contributed_document(tmp_pa
 
     result = CliRunner().invoke(app, ["route", str(document)])
 
-    payload = json.loads(result.output.strip())
+    payload = _route_result(result.output)
     assert payload["outcome"] == "contributed"
     assert payload["suggestions"]["title"] == "Circulaire Unedic n. 2025-01"
     assert payload["suggestions"]["valid_from"] == "2025-01-01"
@@ -143,7 +148,7 @@ def test_route_refuses_a_whole_legifrance_code_with_a_hint() -> None:
         app, ["route", "https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006069577"]
     )
 
-    payload = json.loads(result.output.strip())
+    payload = _route_result(result.output)
     assert payload["outcome"] == "refused"
     assert "LEGIARTI" in payload["hint"]
 

@@ -141,7 +141,7 @@ def run_job(
     try:
         cwd = jobs.package_dir(job_type, cfg)
         argv = jobs.build_command(job_type, payload, cfg, scratch_dir=scratch)
-        return _run_subprocess(conn, cfg, job_id, job_type, payload, argv, cwd, stop)
+        return _run_subprocess(conn, cfg, job_id, job_type, argv, cwd, stop)
     except Exception as exc:  # noqa: BLE001 - the job must end in a final state
         log.exception("job %s crashed the runner", job_id)
         _note(conn, job_id, f"runner error: {exc}")
@@ -155,7 +155,6 @@ def _run_subprocess(
     cfg: WorkerConfig,
     job_id: int,
     job_type: str,
-    payload: Any,
     argv: list[str],
     cwd: Path,
     stop: threading.Event | None,
@@ -179,7 +178,7 @@ def _run_subprocess(
     returncode = child.wait()
     _kill_group(child)  # nothing the job started outlives it
     output.join()
-    return _outcome(conn, job_id, job_type, payload, returncode, interrupt.reason, capture)
+    return _outcome(conn, job_id, job_type, returncode, interrupt.reason, capture)
 
 
 def _start_child(argv: list[str], cwd: Path, env: dict[str, str]) -> subprocess.Popen[str]:
@@ -253,9 +252,8 @@ class _ChildOutput:
 
 @dataclass(slots=True)
 class _Capture:
-    """What the job's output leaves behind: the protocol lines and the tails."""
+    """What the job's output leaves behind: the protocol lines and the stderr tail."""
 
-    stdout_tail: deque[str] = field(default_factory=lambda: deque(maxlen=STDERR_TAIL_LINES))
     stderr_tail: deque[str] = field(default_factory=lambda: deque(maxlen=STDERR_TAIL_LINES))
     last_progress: dict[str, Any] | None = None
     result_line: dict[str, Any] | None = None
@@ -271,7 +269,8 @@ class _Capture:
                 self.result_line = parsed.data
             else:
                 pending.append((parsed.stream, parsed.line, None))
-                (self.stderr_tail if parsed.stream == "stderr" else self.stdout_tail).append(parsed.line)
+                if parsed.stream == "stderr":
+                    self.stderr_tail.append(parsed.line)
         if not pending:
             return
         _write(f"job {job_id} log lines", db.append_events, conn, job_id, pending)
@@ -315,7 +314,6 @@ def _outcome(
     conn: psycopg.Connection[Any],
     job_id: int,
     job_type: str,
-    payload: Any,
     returncode: int,
     interrupted: str | None,
     capture: _Capture,
@@ -332,13 +330,7 @@ def _outcome(
         error = "\n".join(capture.stderr_tail) or f"exit code {returncode}"
         return JobOutcome("failed", error=error)
     try:
-        result = jobs.extract_result(
-            job_type,
-            payload,
-            result_line=capture.result_line,
-            last_progress=capture.last_progress,
-            stdout_tail=list(capture.stdout_tail),
-        )
+        result = jobs.extract_result(job_type, result_line=capture.result_line, last_progress=capture.last_progress)
     except Exception as exc:  # noqa: BLE001
         return JobOutcome("failed", error=f"could not read the job's result: {exc}")
     return JobOutcome("succeeded", result=result)
