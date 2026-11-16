@@ -24,3 +24,8 @@ Nomotheca-RAG/ingest/models/
 Nomotheca-RAG/ingest/logs/
 Nomoscope-agentic-workflow/pipeline/data/
 Nomokrisis-evaluation_pipeline/.eval_runs/
+# Seed fixtures for a fresh database (`import-golden`), not runtime data: the
+# golden set the worker evaluates is in the eval schema.
+Nomokrisis-evaluation_pipeline/dataset/
+Nomokrisis-evaluation_pipeline/dataset_embedding/
+Nomokrisis-evaluation_pipeline/golden_sources/

@@ -4,7 +4,6 @@ upserts (twice, idempotently), rows carry the file's verdict."""
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 
 import pytest
@@ -16,6 +15,13 @@ from conftest import TEST_PREFIX
 
 EVAL_ROOT = Path(__file__).resolve().parents[1]
 
+#: The seed fixtures this module reads. They are not the system of record and
+#: may be absent (an image built without them, a checkout that dropped them):
+#: then the whole module is skipped, never failed.
+SEED_DIRS = [EVAL_ROOT / "dataset", EVAL_ROOT / "dataset_embedding", EVAL_ROOT / "golden_sources"]
+_missing = [path.name for path in SEED_DIRS if not path.is_dir()]
+pytestmark = pytest.mark.skipif(bool(_missing), reason=f"seed fixtures absent: {', '.join(_missing)}")
+
 
 @pytest.fixture
 def temp_golden(tmp_path: Path) -> Path:
@@ -25,9 +31,11 @@ def temp_golden(tmp_path: Path) -> Path:
         EVAL_ROOT / "dataset" / "fr" / "fr_constdef_pss_2025-06-01.json",
         EVAL_ROOT / "dataset" / "es" / "es_tin_capinc_schedule_2025-06-01.json",
     ]
-    for path in src_cases:
+    src_selection = EVAL_ROOT / "golden_sources" / "es.json"
+    src_embedding = EVAL_ROOT / "dataset_embedding" / "fr" / "fr_pss_2025.json"
+    for path in [*src_cases, src_selection, src_embedding]:
         if not path.exists():
-            pytest.skip(f"on-disk golden set already removed: {path}")
+            pytest.skip(f"seed fixture absent: {path}")
     dataset = tmp_path / "dataset"
     for path in src_cases:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -43,21 +51,19 @@ def temp_golden(tmp_path: Path) -> Path:
 
     sources = tmp_path / "golden_sources"
     sources.mkdir()
-    selection = json.loads((EVAL_ROOT / "golden_sources" / "es.json").read_text(encoding="utf-8"))
+    selection = json.loads(src_selection.read_text(encoding="utf-8"))
     selection["country"] = "ZZ"
     (sources / "zz.json").write_text(json.dumps(selection), encoding="utf-8")
 
     embedding = tmp_path / "dataset_embedding" / "fr"
     embedding.mkdir(parents=True)
-    emb = json.loads((EVAL_ROOT / "dataset_embedding" / "fr" / "fr_pss_2025.json").read_text(encoding="utf-8"))
+    emb = json.loads(src_embedding.read_text(encoding="utf-8"))
     emb["id"] = TEST_PREFIX + emb["id"]
     (embedding / f"{emb['id']}.json").write_text(json.dumps(emb), encoding="utf-8")
     return tmp_path
 
 
 def test_selection_files_read_kind_and_header():
-    if not (EVAL_ROOT / "golden_sources").exists():
-        pytest.skip("golden_sources/ already removed")
     rows = {(country, kind): (header, entries) for country, kind, header, entries in read_selection_files(EVAL_ROOT / "golden_sources")}
     assert ("FR", "openfisca") in rows and ("FR", "curated") in rows
     header, entries = rows[("FR", "openfisca")]

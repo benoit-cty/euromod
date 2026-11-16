@@ -25,25 +25,40 @@ eval.embedding_runs          retrieval-eval runs (manifest + results JSON)
 src/nomokrisis_eval/
   schema.py                  GoldenCase / Expected / CaseResult / RunManifest (+ EmbeddingCase)
   golden_store.py            load/save cases, selections, embedding cases; set_verified; golden_set_hash
-  import_golden.py           one-off import of the old dataset/, dataset_embedding/, golden_sources/ files
+  import_golden.py           seeds a fresh database from dataset/, dataset_embedding/, golden_sources/
+  parameter_store.py         what EUROMOD holds: the record under test, its value on a date,
+                             $-constants, deterministic routing against the held value
+  golden_drafting.py         what every drafter shares: the case-id rule, record loading,
+                             case construction, saving, retiring drafts that stopped building
   build_dataset.py           an LLM (via nomoscope_workflow.llm.run_agent) drafts cases from a trusted document
   openfisca_golden.py        drafts cases from the ingested OpenFisca corpus (no LLM)
   curated_golden.py          drafts cases from the hand-curated selection (no LLM)
   scoring.py                 KPI scoring (pure functions)
   runner.py                  drives nomoscope_workflow.run_parameter over the set, resumable from the DB
+  summary.py                 the console KPI summary (mapped column by column onto eval.run_summary)
+  benchmark.py               blind EUROMOD Y-1 -> Y benchmark cases and their report
   embedding_eval.py          ranks golden chunks under fts / vector / hybrid search; golden-derived
                              cases; side-by-side comparison of embedding models
   db.py                      Postgres persistence (eval.runs / run_cases / results / embedding_runs)
-  cli.py                     nomokrisis-eval init-db | import-golden | build-dataset
-                             | build-openfisca-dataset | build-curated-dataset | list-cases | verify
-                             | selections | selection-export | selection-import
-                             | label-cases | run | resume | list-runs | rescore | report
-                             | build-embedding-cases | list-embedding-cases | run-embeddings
-                             | compare-embeddings
+  cli.py                     the `nomokrisis-eval` entry point; the commands live in commands/:
+    commands/golden.py         init-db | import-golden | build-dataset | build-openfisca-dataset
+                               | build-curated-dataset | verify | list-cases | selections
+                               | selection-export | selection-import | label-cases
+    commands/runs.py           run | run-benchmark | benchmark-report | list-runs | resume
+                               | rescore | report
+    commands/embeddings.py     list-embedding-cases | build-embedding-cases | compare-embeddings
+                               | run-embeddings
 db/eval_schema.sql           tables + eval.run_summary view (the UI read surface)
-dataset/, dataset_embedding/, golden_sources/   the pre-ADR-0004 files: import them ONCE with
-                             `import-golden`, then they go (kept only until that import is done)
+dataset/, dataset_embedding/, golden_sources/   seed fixtures for a fresh database (after
+                             `docker compose down -v`), loaded by `import-golden` — NOT the
+                             system of record (see "Seeding a fresh database" below)
 ```
+
+`eval.runs.eval_version` reads `<EVAL_VERSION>+scoring.<hash>` (e.g.
+`0.2.0+scoring.1a2b3c4d`): the hand-bumped version plus the first 8 hex digits of
+the SHA-256 of `scoring.py`, so two runs carry the same string only when the same
+rules scored them. A `rescore --write` moves the run's `eval_version` with its
+results. Runs stored before 17 Nov 2026 all read `0.1.0` whatever rules scored them.
 
 Commands a worker job wraps (`run`, `resume`, the three builders, `import-golden`,
 `run-embeddings`) end with one `@result {json}` line on stdout — `{"run_id": …}` for
@@ -54,7 +69,7 @@ runs, `{"written": n}` for the builders — and `run` emits `@progress {…}` pe
 ```bash
 cd Nomokrisis-evaluation_pipeline
 uv run nomokrisis-eval init-db                                  # create eval schema (DB must be up)
-uv run nomokrisis-eval import-golden --dry-run                  # once: the old files -> eval.* (drop --dry-run to write)
+uv run nomokrisis-eval import-golden --dry-run                  # fresh DB only: seed fixtures -> eval.* (drop --dry-run to write)
 uv run nomokrisis-eval list-cases                               # inspect the golden set
 uv run nomokrisis-eval run --as-of 2025-06-01 --model mock/extractor    # offline smoke run
 uv run nomokrisis-eval run --as-of 2025-06-01 --model azure_openai/gpt-5.6-luna --language fr
@@ -322,17 +337,25 @@ uv run nomokrisis-eval verify fr_constdef_pss_2025-06-01 --note "checked against
 uv run nomokrisis-eval verify fr_tinkt_tin_rate1_2025-06-01 --unverify
 ```
 
-### Importing the pre-ADR-0004 files (once)
+### Seeding a fresh database
 
-`dataset/`, `dataset_embedding/` and `golden_sources/` are the golden set as it was
-kept in git. `nomokrisis-eval import-golden [--dry-run]` upserts them into the tables —
+`dataset/`, `dataset_embedding/` and `golden_sources/` are **seed fixtures for a fresh
+database** — after `docker compose down -v`, they are the only in-repo way to get a
+golden set back. They are **not the system of record**: the `eval` tables are, and the
+files are a frozen snapshot of the golden set as it was kept in git before ADR 0004.
+They are not updated when a case is redrafted or verified, and they are not copied into
+the worker image.
+
+`nomokrisis-eval import-golden [--dry-run]` upserts them into the tables —
 selections (`<cc>.json` → kind `curated`, `openfisca_<cc>.json` → kind `openfisca`),
 cases with the verdict their file records, retrieval cases — mapping each case's
 `parameter_file` to a `parameter_target` (the materialized file's `information.model_target`,
 a group id mapped back through `params.parameter_groups`; failing that, the case id
-matched against the selection entries; else reported and skipped). Idempotent. Once
-imported, the directories are removed from git, and every later edit to a selection goes
-through `selection-export` / `selection-import` — never through `import-golden` again.
+matched against the selection entries; else reported and skipped). Idempotent. On a
+database that already holds the golden set, do not run it: every edit to a selection
+goes through `selection-export` / `selection-import`, then a rebuild. The
+`parameter_file` key the fixtures carry is accepted by `import-golden` alone
+(`GoldenCase._legacy_parameter_file`); anywhere else it fails loudly.
 
 ## Embedding (retrieval) evaluation dataset
 
