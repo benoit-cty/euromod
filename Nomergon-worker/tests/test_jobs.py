@@ -24,8 +24,8 @@ def cfg(tmp_path: Path) -> WorkerConfig:
     )
 
 
-def build(job_type: str, payload: dict, cfg: WorkerConfig, **kwargs) -> list[str]:
-    return jobs.build_command(job_type, jobs.parse_payload(job_type, payload), cfg, **kwargs)
+def build(job_type: str, payload: dict, cfg: WorkerConfig, scratch_dir: Path | None = None) -> list[str]:
+    return jobs.build_command(job_type, jobs.parse_payload(job_type, payload), cfg, scratch_dir=scratch_dir or cfg.repo_root)
 
 
 def test_every_contract_job_type_has_a_payload_model() -> None:
@@ -38,9 +38,9 @@ def test_every_subprocess_payload_maps_itself_to_an_argv() -> None:
             assert spec.payload.to_argv is not jobs._Payload.to_argv, spec.name
 
 
-def test_build_command_refuses_another_types_payload(cfg: WorkerConfig) -> None:
+def test_build_command_refuses_another_types_payload(cfg: WorkerConfig, tmp_path: Path) -> None:
     with pytest.raises(TypeError, match="ImpactPayload"):
-        jobs.build_command("impact", jobs.parse_payload("embed", {}), cfg)
+        jobs.build_command("impact", jobs.parse_payload("embed", {}), cfg, scratch_dir=tmp_path)
 
 
 def test_unknown_job_type_is_refused_by_name() -> None:
@@ -219,14 +219,14 @@ def test_ingest_files_only_from_the_document_dir(cfg: WorkerConfig, tmp_path: Pa
     for source in ("/proc/self/environ", "notes.md"):
         payload = jobs.parse_payload("ingest", {"command": "route", "source": source})
         with pytest.raises(ValueError, match="http"):
-            jobs.build_command("ingest", payload, cfg)
+            jobs.build_command("ingest", payload, cfg, scratch_dir=tmp_path)
     cfg.document_dir = tmp_path / "contributed"
     inside = jobs.parse_payload("ingest", {"command": "route", "source": "ani-apec-2011.md"})
-    assert jobs.build_command("ingest", inside, cfg)[4] == str((tmp_path / "contributed" / "ani-apec-2011.md").resolve())
+    assert jobs.build_command("ingest", inside, cfg, scratch_dir=tmp_path)[4] == str((tmp_path / "contributed" / "ani-apec-2011.md").resolve())
     for source in ("../.env", "/proc/self/environ"):
         outside = jobs.parse_payload("ingest", {"command": "route", "source": source})
         with pytest.raises(ValueError, match="under WORKER_DOCUMENT_DIR"):
-            jobs.build_command("ingest", outside, cfg)
+            jobs.build_command("ingest", outside, cfg, scratch_dir=tmp_path)
 
 
 # ------------------------------------------------------------------- embed --
@@ -451,16 +451,6 @@ def test_draft_golden_document_writes_the_text_to_a_scratch_file(cfg: WorkerConf
     ]
 
 
-def test_draft_golden_document_without_scratch_uses_a_temp_file(cfg: WorkerConfig) -> None:
-    argv = build("draft-golden", {"source": "document", "country": "FR", "as_of": "2025-06-01", "text": "x"}, cfg)
-    document = Path(argv[4])
-    try:
-        assert document.is_file()
-        assert document.read_text(encoding="utf-8") == "x"
-    finally:
-        document.unlink(missing_ok=True)
-
-
 def test_draft_golden_validation() -> None:
     with pytest.raises(ValueError, match="year"):
         jobs.parse_payload("draft-golden", {"source": "openfisca", "country": "FR"})
@@ -512,7 +502,7 @@ def test_chat_must_end_with_a_question() -> None:
 def test_encode_is_in_process(cfg: WorkerConfig) -> None:
     payload = jobs.parse_payload("encode", {"query": "barème de l'impôt", "sentences": ["a", "b"]})
     with pytest.raises(ValueError, match="in-process"):
-        jobs.build_command("encode", payload, cfg)
+        jobs.build_command("encode", payload, cfg, scratch_dir=cfg.repo_root)
     with pytest.raises(ValueError, match="empty"):
         jobs.parse_payload("encode", {"query": "   "})
     with pytest.raises(ValueError):

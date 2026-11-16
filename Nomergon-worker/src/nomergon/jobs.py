@@ -8,7 +8,6 @@ a subprocess. The table it implements is `.scratch/nomergon-worker/contracts.md`
 from __future__ import annotations
 
 import sys
-import tempfile
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -45,7 +44,7 @@ class _Payload(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         """The argv for this job, always ``sys.executable -m <module> …``."""
         raise NotImplementedError
 
@@ -73,7 +72,7 @@ class WorkflowPayload(_Payload):
             raise ValueError(msg)
         return self
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         if self.country:
             argv = _python(WORKFLOW_MODULE) + ["run-country", self.country, "--year", str(self.year)]
             if self.limit:
@@ -225,7 +224,7 @@ class IngestPayload(_Payload):
                 raise ValueError(msg)
         return self
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         argv = _python(INGEST_MODULE) + [self.command]
         if self.command in ("instrument", "citation"):
             argv.append(str(self.jurisdiction))
@@ -289,7 +288,7 @@ class EmbedPayload(_Payload):
     #: Skip machine translations — what a candidate model under evaluation needs.
     authentic_only: bool = False
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         argv = _python(INGEST_MODULE) + ["embeddings", "build", "--backend", "torch"]
         # The configured path holds BGE-M3's weights; any other registry
         # model loads from its own Hugging Face id.
@@ -314,7 +313,7 @@ class TranslatePayload(_Payload):
     request_timeout: float = Field(default=120, ge=0)
     dry_run: bool = False
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         argv = _python(INGEST_MODULE) + [
             "translate",
             "run",
@@ -341,7 +340,7 @@ class TranslateParamsPayload(_Payload):
     limit: int | None = Field(default=None, ge=1)
     force: bool = False
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         argv = _python(WORKFLOW_MODULE) + ["translate-params", "--country", self.country]
         if self.lang:
             argv += ["--lang", self.lang]
@@ -368,7 +367,7 @@ class EncodePayload(_Payload):
             raise ValueError(msg)
         return self
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         msg = "encode jobs are answered in-process by the encode lane"
         raise ValueError(msg)
 
@@ -391,7 +390,7 @@ class EvalPayload(_Payload):
             raise ValueError(msg)
         return self
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         if self.resume is not None:
             return _python(EVAL_MODULE) + ["resume", self.resume]
         argv = _python(EVAL_MODULE) + ["run", "--as-of", str(self.as_of), "--model", str(self.model)]
@@ -432,7 +431,7 @@ class DraftGoldenPayload(_Payload):
                 raise ValueError(msg)
         return self
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         if self.source == "document":
             # The text goes through a file under the job's scratch directory.
             path = write_document_text(self.text or "", scratch_dir)
@@ -460,7 +459,7 @@ class ImpactPayload(_Payload):
     until: str | None = None
     zone: str = ""
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         argv = _python(WORKFLOW_MODULE) + ["impact", "--json"]
         if self.project:
             argv += ["--project", self.project]
@@ -500,7 +499,7 @@ class ChatPayload(_Payload):
             raise ValueError(msg)
         return self
 
-    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path) -> list[str]:
         # The conversation goes through a file: it grows with every turn
         # and a single argv string is capped at 128 KiB on Linux.
         return _python(WORKFLOW_MODULE) + ["chat", str(write_chat_request(self, scratch_dir))]
@@ -613,17 +612,12 @@ def job_types_document() -> dict[str, Any]:
     }
 
 
-def build_command(
-    job_type: str,
-    payload: _Payload,
-    cfg: WorkerConfig,
-    *,
-    scratch_dir: Path | None = None,
-) -> list[str]:
+def build_command(job_type: str, payload: _Payload, cfg: WorkerConfig, *, scratch_dir: Path) -> list[str]:
     """The argv for one job: its payload's ``to_argv``.
 
     A job that writes a file (a ``draft-golden`` document, a ``chat``
-    conversation) writes it under ``scratch_dir``.
+    conversation) writes it under ``scratch_dir``, the runner's per-job
+    directory, removed with the job.
     """
     spec = job_spec(job_type)
     if not isinstance(payload, spec.payload):
@@ -632,31 +626,18 @@ def build_command(
     return payload.to_argv(cfg, scratch_dir)
 
 
-def write_document_text(text: str, scratch_dir: Path | None) -> Path:
-    """Write a trusted document's text to a file the eval builder can read.
-
-    Under ``scratch_dir`` when the runner provides one (removed with the job);
-    otherwise a named temp file the caller owns.
-    """
-    if scratch_dir is not None:
-        path = scratch_dir / "document.md"
-        path.write_text(text, encoding="utf-8")
-        return path
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", prefix="nomergon-draft-", suffix=".md", delete=False) as fh:
-        fh.write(text)
-        return Path(fh.name)
+def write_document_text(text: str, scratch_dir: Path) -> Path:
+    """Write a trusted document's text where the eval builder reads it."""
+    path = scratch_dir / "document.md"
+    path.write_text(text, encoding="utf-8")
+    return path
 
 
-def write_chat_request(payload: ChatPayload, scratch_dir: Path | None) -> Path:
+def write_chat_request(payload: ChatPayload, scratch_dir: Path) -> Path:
     """Write a chat job's payload where ``nomoscope-workflow chat`` reads it."""
-    text = payload.model_dump_json()
-    if scratch_dir is not None:
-        path = scratch_dir / "chat.json"
-        path.write_text(text, encoding="utf-8")
-        return path
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", prefix="nomergon-chat-", suffix=".json", delete=False) as fh:
-        fh.write(text)
-        return Path(fh.name)
+    path = scratch_dir / "chat.json"
+    path.write_text(payload.model_dump_json(), encoding="utf-8")
+    return path
 
 
 def extract_result(

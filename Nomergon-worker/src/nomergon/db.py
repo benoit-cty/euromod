@@ -231,10 +231,6 @@ def heartbeat(conn: psycopg.Connection[Any], worker_id: str, current_job_id: int
     )
 
 
-def set_worker_device(conn: psycopg.Connection[Any], worker_id: str, device: str) -> None:
-    conn.execute("UPDATE ops.workers SET device = %s WHERE worker_id = %s", (device, worker_id))
-
-
 def unregister_worker(conn: psycopg.Connection[Any], worker_id: str) -> None:
     conn.execute("DELETE FROM ops.workers WHERE worker_id = %s", (worker_id,))
 
