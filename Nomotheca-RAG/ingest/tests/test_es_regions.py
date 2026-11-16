@@ -16,7 +16,6 @@ from nomotheca_ingest.countries.es.parser import KNOWN_ACTS, parse_boe_xml
 from nomotheca_ingest.countries.es.regions import (
     AUTONOMOUS_COMMUNITIES,
     by_code,
-    by_nuts2,
     jurisdiction_for,
 )
 from nomotheca_ingest.countries.es.resolver import (
@@ -50,7 +49,6 @@ def test_the_table_covers_the_nineteen_communities_with_unique_keys():
         "11", "12", "13", "21", "22", "23", "24", "30", "41", "42", "43",
         "51", "52", "53", "61", "62", "63", "64", "70",
     }
-    assert by_nuts2("ES24").code == "ES-AR"
     assert by_code("es-cn").nuts2 == "ES70"
 
 

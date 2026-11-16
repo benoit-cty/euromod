@@ -8,7 +8,6 @@ from nomotheca_ingest.countries.es.fetcher import (
     XML_HEADERS,
     diario_url,
     fetch_boe,
-    html_url,
     instrument_url,
     url_for_ref,
 )
@@ -28,10 +27,6 @@ def test_instrument_url_targets_the_consolidated_api():
 
 def test_url_for_ref_uses_the_bare_boe_id():
     assert url_for_ref(_ref()).endswith("/id/BOE-A-2006-20764")
-
-
-def test_html_url_is_the_human_facing_citation_target():
-    assert html_url("BOE-A-2006-20764") == "https://www.boe.es/buscar/act.php?id=BOE-A-2006-20764"
 
 
 class _RecordingClient:

@@ -58,7 +58,6 @@ class EmbeddingModelSpec:
     #: overflow in fp16; they stay fp32 unless the GPU does bf16).
     fp16_safe: bool = True
     notes: str = ""
-    extra: dict[str, object] = field(default_factory=dict)
 
     def registry_row(self) -> dict[str, object]:
         """Column values for the `embedding_models` row."""

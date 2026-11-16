@@ -55,11 +55,6 @@ def diario_url(boe_id: str) -> str:
     return f"https://www.boe.es/diario_boe/xml.php?id={boe_id}"
 
 
-def html_url(boe_id: str) -> str:
-    """Return the human-facing consolidated view, recorded as provenance."""
-    return f"https://www.boe.es/buscar/act.php?id={boe_id}"
-
-
 def url_for_ref(ref: SourceRef) -> str:
     """Map an ES source reference onto the URL that serves it."""
     return instrument_url(ref.source_id)

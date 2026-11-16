@@ -62,8 +62,6 @@ class CitationRef(BaseModel):
 
     jurisdiction: str = Field(min_length=2, max_length=8)
     citation: str = Field(min_length=1)
-    instrument_id: str | None = None
-    article_number: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -76,7 +74,6 @@ class SourceRef(BaseModel):
     source_code: str
     source_id: str
     source_type: str
-    url: AnyUrl | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

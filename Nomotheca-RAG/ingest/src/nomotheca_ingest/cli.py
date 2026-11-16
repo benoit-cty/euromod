@@ -328,6 +328,9 @@ def document(
                 "versions": result.versions,
                 "texts": result.texts,
                 "chunks": result.chunks,
+                # Provenance: the run and the archived bytes this came from.
+                "fetch_run_id": str(result.fetch_run_id) if result.fetch_run_id else None,
+                "snapshot_id": str(result.snapshot_id) if result.snapshot_id else None,
             },
             indent=2,
             ensure_ascii=False,

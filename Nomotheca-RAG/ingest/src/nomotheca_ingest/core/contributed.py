@@ -3,9 +3,10 @@
 A country adapter can only ingest what a national portal keys by a national
 id. Much of what actually fixes a EUROMOD value is not there at all: a Unedic
 circular, a BOFiP doctrine page, a ministerial arrete a reviewer saved as PDF.
-This module is the path for those — one library function behind the CLI, the
-TUI and the validation UI, so a future cache-miss workflow can contribute a
-document with no UI in sight.
+This module is the path for those — one library function behind the CLI (which
+the validation UI reaches through a worker `ingest` job, ADR 0004) and the
+scout's guidance ingests, so a workflow can contribute a document with no UI
+in sight.
 
 The rules that matter (ADR 0001, and the spec's Implementation Decisions):
 
@@ -182,8 +183,9 @@ class ContributedFields:
 
     @property
     def source_trust_class(self) -> SourceTrustClass:
-        """Derived from the kind, never stated — see ADR 0001."""
-        return TRUST_CLASS_BY_LEVEL[self.norm_level]
+        """Derived from the kind, never stated — see ADR 0001. Through
+        `trust_class_for`, the one function the guidance-publisher test checks."""
+        return trust_class_for(self.jurisdiction, self.kind)
 
     @property
     def source_code(self) -> str:

@@ -66,7 +66,6 @@ AUTONOMOUS_COMMUNITIES: tuple[AutonomousCommunity, ...] = (
 )
 
 _BY_CODE = {ac.code: ac for ac in AUTONOMOUS_COMMUNITIES}
-_BY_NUTS2 = {ac.nuts2: ac for ac in AUTONOMOUS_COMMUNITIES}
 
 # BOE's ``ambito`` code for autonomous-community acts ("Autonómico"); state
 # acts carry "1" ("Estatal").
@@ -79,11 +78,6 @@ ELI_JURISDICTION_RE = re.compile(r"/eli/(es-[a-z]{2})/", re.IGNORECASE)
 def by_code(code: str) -> AutonomousCommunity | None:
     """Look a community up by ISO 3166-2 code (``ES-AR``)."""
     return _BY_CODE.get(code.upper())
-
-
-def by_nuts2(nuts2: str) -> AutonomousCommunity | None:
-    """Look a community up by NUTS-2 code (``ES24``)."""
-    return _BY_NUTS2.get(nuts2.upper())
 
 
 def _fold(value: str) -> str:

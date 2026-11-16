@@ -1,10 +1,12 @@
 -- ============================================================================
 -- EU Tax Legislation Database — PostgreSQL schema
 -- ============================================================================
--- Legislation-only store backing the EUROMOD lazy, agent-populated RAG.
--- Policy parameters live OUTSIDE this database (JSON files in git); they cite
--- legal text through stable UUIDs (jrc_database_id) and rag:// URIs resolved
--- by resolve_rag_uri() below. See Nomotheca-RAG/11_database-model.md for the design doc.
+-- Legislation store backing the EUROMOD lazy, agent-populated RAG. Policy
+-- parameters live in the `params` schema of the same database
+-- (Nomoscope-agentic-workflow/pipeline/db/params_schema.sql), never in these
+-- tables; they cite legal text through stable chunk UUIDs (jrc_database_id)
+-- and rag:// URIs resolved by resolve_rag_uri() below (the documented contract
+-- with the parameter JSON format). See Nomotheca-RAG/11_database-model.md.
 --
 -- Target: PostgreSQL 16+ with pgvector >= 0.7 (halfvec).
 -- ============================================================================
@@ -156,7 +158,6 @@ CREATE TABLE instruments (
     title_search     text GENERATED ALWAYS AS (jsonb_text_values(title)) STORED,
     adoption_date    date,
     publication_date date,
-    in_force         daterange,               -- coarse instrument lifetime; unit versions are the truth
     metadata         jsonb NOT NULL DEFAULT '{}',
     created_at       timestamptz NOT NULL DEFAULT now(),
     UNIQUE (source_id, national_id)
@@ -422,18 +423,6 @@ BEGIN
 END;
 $$;
 
--- ----------------------------------------------------------------------------
--- Convenience view: units with their in-force version and authentic texts today
--- ----------------------------------------------------------------------------
-CREATE VIEW current_legal_texts AS
-SELECT j.code AS jurisdiction, i.title, u.citation, u.path,
-       v.id AS version_id, v.validity, t.lang, t.authenticity, t.source_lang, t.content
-FROM legal_units u
-JOIN instruments i ON i.id = u.instrument_id
-JOIN jurisdictions j ON j.id = i.jurisdiction_id
-JOIN legal_unit_versions v ON v.legal_unit_id = u.id AND v.validity @> current_date
-JOIN unit_texts t ON t.version_id = v.id
-WHERE NOT u.is_container;
 
 -- ----------------------------------------------------------------------------
 -- Hybrid search — the one implementation every caller uses (workflow, eval,

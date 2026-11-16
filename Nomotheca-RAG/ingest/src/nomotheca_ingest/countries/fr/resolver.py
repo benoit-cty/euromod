@@ -220,16 +220,40 @@ def default_tiers(database_url: str | None = None) -> list:
 
 
 class FrResolver:
-    """Placeholder resolver for French citations until Moulineuse wiring lands.
+    """French citations a reviewer can actually paste: a DILA id, an ELI or
+    Legifrance URL, or a bare NOR — resolved to the one DILA document.
 
-    ELI/NOR URL resolution — its first real implementation — is the module
-    function `resolve_legifrance_url`, so the router and the scout can use it
-    without an adapter.
+    Free-text citations («CGI art. 197») are refused by name: there is no
+    citation index to resolve them against, and guessing an article is how a
+    stale or wrong text gets ingested. Until 16 Nov 2026 this was a
+    placeholder that raised NotImplementedError for everything (code audit).
     """
 
+    def __init__(self, database_url: str | None = None) -> None:
+        self._database_url = database_url
+
     def resolve(self, ref: CitationRef, as_of: date) -> list[SourceRef]:
-        """Resolve a French citation at a date to exact source references."""
-        raise NotImplementedError("FR citation resolution needs Moulineuse SQL or MCP wiring.")
+        """Resolve a DILA id, Legifrance URL or NOR to its DILA source reference."""
+        citation = ref.citation.strip()
+        if not (DILA_ID.search(citation) or NOR.fullmatch(citation) or "legifrance" in citation):
+            msg = (
+                f"FR citation {citation!r} is not resolvable: pass a DILA id (JORFTEXT…, LEGIARTI…, "
+                "KALITEXT…), a Legifrance/ELI URL or a NOR — or use `instrument fr <id>`"
+            )
+            raise ValueError(msg)
+        resolution = resolve_legifrance_url(citation, self._database_url)
+        if resolution is None:
+            msg = f"FR citation {citation!r} did not resolve to a DILA id (Legifrance unreachable or blocked)"
+            raise ValueError(msg)
+        source_code = "FR-KALI" if resolution.national_id.startswith("KALI") else "FR-LEGI"
+        return [
+            SourceRef(
+                jurisdiction="FR",
+                source_code=source_code,
+                source_id=resolution.national_id,
+                source_type="instrument",
+            )
+        ]
 
 
 def canary_facts() -> list[CanaryFact]:

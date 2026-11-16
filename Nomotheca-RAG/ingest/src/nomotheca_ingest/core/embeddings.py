@@ -580,11 +580,12 @@ def _embed_batch(
     """Encode and persist a batch of chunks, returning (embedded, skipped).
 
     The candidate list is read before encoding, which takes minutes, so a
-    concurrent ingest can retire a chunk id in between: `_replace_chunks`
-    deletes and re-inserts a unit text's chunks with fresh UUIDs. Inserting
-    against `chunks` instead of blind-inserting the id drops those vanished
-    chunks rather than failing the run on the foreign key; the re-chunked rows
-    are picked up by the next build.
+    concurrent ingest can retire a chunk id in between: `write_chunks` upserts
+    a text's chunks on (unit_text_id, seq) and deletes the seqs a shorter text
+    no longer produces. Inserting against `chunks` instead of blind-inserting
+    the id drops those vanished chunks rather than failing the run on the
+    foreign key; changed chunks keep their id and are re-embedded by the next
+    build once their input_hash differs.
     """
     if dry_run:
         return len(batch), 0

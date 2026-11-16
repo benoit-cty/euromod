@@ -161,14 +161,14 @@ Suggested fixes, in order of value:
 
 | Severity | Item | Where |
 |---|---|---|
-| medium | `_probe_backend_kwargs.py`, `_probe_tokenizer.py`: each is one docstring, "Deprecated temporary probe; safe to delete." | `Nomotheca-RAG/ingest/` |
+| medium | `_probe_backend_kwargs.py`, `_probe_tokenizer.py`: each is one docstring, "Deprecated temporary probe; safe to delete." **Fixed (deleted).** | `Nomotheca-RAG/ingest/` |
 | medium | `canary_facts()` in five adapters, `CanaryFact` and the protocol method: about 130 lines that no runner calls. **Fixed by use**: `core/canary.py` + `cli canary [CC…]` check every fact against the corpus (exact folded citation, not trigram); 11/11 OK on the dev DB; live test `tests/test_canary.py`. | `countries/*/resolver.py`, `core/ir.py:200-207` |
-| medium | `FrResolver`, a placeholder whose `resolve` raises `NotImplementedError`; `cli citation FR …` cannot work. | `countries/fr/resolver.py:222-232` |
+| medium | `FrResolver`, a placeholder whose `resolve` raises `NotImplementedError`; `cli citation FR …` cannot work. **Fixed**: resolves what a reviewer can paste (DILA id, Legifrance/ELI URL, NOR) through `resolve_legifrance_url` and refuses free text by name. | `countries/fr/resolver.py:222-232` |
 | low | TUI modes "bill" and "direct" behave identically; `PipelineTui._log_snapshots` has no caller. **Fixed** (merged into one mode; method removed). | `tui.py:134, 392-399` |
-| low | Test-only functions: `es/fetcher.html_url`, `es/regions.by_nuts2`, `contributed.trust_class_for`. The last means the guidance-publisher test checks a helper, not the production property. | — |
-| low | Fields never set or read: `CitationRef.instrument_id`, `.article_number`, `SourceRef.url`, `DocumentResult.fetch_run_id`, `.snapshot_id`, `EmbeddingModelSpec.extra`. | `core/ir.py`, `core/contributed.py`, `core/embedding_models.py` |
-| low | Schema objects with no reader or writer: view `current_legal_texts`, function `resolve_rag_uri`, `fetch_snapshots.storage_ref/parser_version/metadata`, `instruments.in_force`, `fts_de`. | `Nomotheca-RAG/db/schema.sql` |
-| low | Stale docstrings: `core/embeddings.py:567-572`, `core/contributed.py:6-7`, `db/schema.sql:5`. | — |
+| low | Test-only functions: `es/fetcher.html_url`, `es/regions.by_nuts2`, `contributed.trust_class_for`. The last means the guidance-publisher test checks a helper, not the production property. **Fixed**: the first two deleted; `ContributedFields.source_trust_class` now goes through `trust_class_for`. | — |
+| low | Fields never set or read: `CitationRef.instrument_id`, `.article_number`, `SourceRef.url`, `DocumentResult.fetch_run_id`, `.snapshot_id`, `EmbeddingModelSpec.extra`. **Fixed**: four removed; `fetch_run_id` and `snapshot_id` are now printed by `cli document` (provenance). | `core/ir.py`, `core/contributed.py`, `core/embedding_models.py` |
+| low | Schema objects with no reader or writer: view `current_legal_texts`, function `resolve_rag_uri`, `fetch_snapshots.storage_ref/parser_version/metadata`, `instruments.in_force`, `fts_de`. **Fixed**: the view and the column dropped (`migrations/0007`). Kept on purpose: `resolve_rag_uri` (the documented rag:// contract), `storage_ref` (large-PDF store, open deployment question), `fts_de` (BE German). `metadata` is now written (section 3, design). | `Nomotheca-RAG/db/schema.sql` |
+| low | Stale docstrings: `core/embeddings.py:567-572`, `core/contributed.py:6-7`, `db/schema.sql:5`. **Fixed.** | — |
 
 ---
 
