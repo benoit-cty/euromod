@@ -21,7 +21,7 @@ import tempfile
 import threading
 import time
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import IO, Any
 
@@ -121,14 +121,6 @@ def job_environment(cfg: WorkerConfig, job_id: int) -> dict[str, str]:
     return env
 
 
-def _pump(stream: IO[str], name: str, sink: queue.Queue[Any]) -> None:
-    try:
-        for raw in stream:
-            sink.put((name, raw.rstrip("\r\n")))
-    finally:
-        sink.put((name, _EOF))
-
-
 def run_job(
     conn: psycopg.Connection[Any],
     cfg: WorkerConfig,
@@ -168,111 +160,184 @@ def _run_subprocess(
     cwd: Path,
     stop: threading.Event | None,
 ) -> JobOutcome:
+    """Start the child, stream its output until both pipes close, map the outcome."""
     _note(conn, job_id, "$ " + " ".join(_redact(argv, cfg.database_url)))
     _note(conn, job_id, f"cwd: {cwd}")
-
     try:
-        child = subprocess.Popen(
-            argv,
-            cwd=cwd,
-            env=job_environment(cfg, job_id),
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            bufsize=1,
-            # Its own process group, so a cancel reaches what the job started
-            # too: the scout runs an ingest and an embeddings build (GPU, the
-            # advisory lock) as grandchildren (code audit D11).
-            start_new_session=os.name == "posix",
-        )
+        child = _start_child(argv, cwd, job_environment(cfg, job_id))
     except OSError as exc:
         _note(conn, job_id, f"failed to start: {exc}")
         return JobOutcome("failed", error=f"failed to start: {exc}")
 
-    sink: queue.Queue[Any] = queue.Queue()
-    assert child.stdout is not None and child.stderr is not None
-    readers = [
-        threading.Thread(target=_pump, args=(child.stdout, "stdout", sink), daemon=True),
-        threading.Thread(target=_pump, args=(child.stderr, "stderr", sink), daemon=True),
-    ]
-    for reader in readers:
-        reader.start()
-
-    stderr_tail: deque[str] = deque(maxlen=STDERR_TAIL_LINES)
-    stdout_tail: deque[str] = deque(maxlen=STDERR_TAIL_LINES)
-    last_progress: dict[str, Any] | None = None
-    result_line: dict[str, Any] | None = None
-    open_streams = 2
-    cancelled = False
-    stopped = False
-    next_cancel_check = time.monotonic()
-
-    while open_streams > 0:
-        pending: list[tuple[str, str, dict[str, Any] | None]] = []
-        try:
-            item = sink.get(timeout=0.2)
-        except queue.Empty:
-            item = None
-        while item is not None:
-            name, value = item
-            if value is _EOF:
-                open_streams -= 1
-            else:
-                parsed = parse_line(name, value)
-                if parsed.kind == "progress":
-                    last_progress = parsed.data
-                    pending.append(("progress", parsed.line, parsed.data))
-                elif parsed.kind == "result":
-                    result_line = parsed.data
-                else:
-                    pending.append((parsed.stream, parsed.line, None))
-                    (stderr_tail if name == "stderr" else stdout_tail).append(parsed.line)
-            try:
-                item = sink.get_nowait()
-            except queue.Empty:
-                item = None
-        if pending:
-            _write(f"job {job_id} log lines", db.append_events, conn, job_id, pending)
-            if last_progress is not None and any(stream == "progress" for stream, _, _ in pending):
-                _write(f"job {job_id} progress", db.set_progress, conn, job_id, last_progress)
-
-        now = time.monotonic()
-        if not (cancelled or stopped) and child.poll() is None and now >= next_cancel_check:
-            next_cancel_check = now + CANCEL_POLL_SECONDS
-            if stop is not None and stop.is_set():
-                stopped = True
-                _note(conn, job_id, "worker stopping: terminating the job")
-                _terminate(child)
-            elif _cancel_requested(conn, job_id):
-                cancelled = True
-                _note(conn, job_id, "cancel requested: terminating the job")
-                _terminate(child)
+    output = _ChildOutput(child)
+    capture = _Capture()
+    interrupt = _Interrupt(conn, job_id, child, stop)
+    while output.open:
+        capture.record(conn, job_id, output.next_batch())
+        interrupt.check()
 
     returncode = child.wait()
     _kill_group(child)  # nothing the job started outlives it
-    for reader in readers:
-        reader.join(timeout=1.0)
+    output.join()
+    return _outcome(conn, job_id, job_type, payload, returncode, interrupt.reason, capture)
 
-    if stopped:
+
+def _start_child(argv: list[str], cwd: Path, env: dict[str, str]) -> subprocess.Popen[str]:
+    return subprocess.Popen(
+        argv,
+        cwd=cwd,
+        env=env,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
+        # Its own process group, so a cancel reaches what the job started
+        # too: the scout runs an ingest and an embeddings build (GPU, the
+        # advisory lock) as grandchildren (code audit D11).
+        start_new_session=os.name == "posix",
+    )
+
+
+class _ChildOutput:
+    """The child's stdout and stderr, read on two threads into one queue."""
+
+    def __init__(self, child: subprocess.Popen[str]) -> None:
+        assert child.stdout is not None and child.stderr is not None
+        self._sink: queue.Queue[Any] = queue.Queue()
+        self._open = 2
+        self._readers = [
+            threading.Thread(target=self._pump, args=(child.stdout, "stdout"), daemon=True),
+            threading.Thread(target=self._pump, args=(child.stderr, "stderr"), daemon=True),
+        ]
+        for reader in self._readers:
+            reader.start()
+
+    def _pump(self, stream: IO[str], name: str) -> None:
+        try:
+            for raw in stream:
+                self._sink.put((name, raw.rstrip("\r\n")))
+        finally:
+            self._sink.put((name, _EOF))
+
+    @property
+    def open(self) -> bool:
+        """Until both pipes reached end of file."""
+        return self._open > 0
+
+    def next_batch(self, timeout: float = 0.2) -> list[ParsedLine]:
+        """Every line available now, waiting up to ``timeout`` for the first."""
+        lines: list[ParsedLine] = []
+        try:
+            item = self._sink.get(timeout=timeout)
+        except queue.Empty:
+            return lines
+        while item is not None:
+            name, value = item
+            if value is _EOF:
+                self._open -= 1
+            else:
+                lines.append(parse_line(name, value))
+            try:
+                item = self._sink.get_nowait()
+            except queue.Empty:
+                item = None
+        return lines
+
+    def join(self) -> None:
+        for reader in self._readers:
+            reader.join(timeout=1.0)
+
+
+@dataclass(slots=True)
+class _Capture:
+    """What the job's output leaves behind: the protocol lines and the tails."""
+
+    stdout_tail: deque[str] = field(default_factory=lambda: deque(maxlen=STDERR_TAIL_LINES))
+    stderr_tail: deque[str] = field(default_factory=lambda: deque(maxlen=STDERR_TAIL_LINES))
+    last_progress: dict[str, Any] | None = None
+    result_line: dict[str, Any] | None = None
+
+    def record(self, conn: psycopg.Connection[Any], job_id: int, lines: list[ParsedLine]) -> None:
+        """Keep the protocol lines; write the batch as events and the latest progress."""
+        pending: list[tuple[str, str, dict[str, Any] | None]] = []
+        for parsed in lines:
+            if parsed.kind == "progress":
+                self.last_progress = parsed.data
+                pending.append(("progress", parsed.line, parsed.data))
+            elif parsed.kind == "result":
+                self.result_line = parsed.data
+            else:
+                pending.append((parsed.stream, parsed.line, None))
+                (self.stderr_tail if parsed.stream == "stderr" else self.stdout_tail).append(parsed.line)
+        if not pending:
+            return
+        _write(f"job {job_id} log lines", db.append_events, conn, job_id, pending)
+        if self.last_progress is not None and any(stream == "progress" for stream, _, _ in pending):
+            _write(f"job {job_id} progress", db.set_progress, conn, job_id, self.last_progress)
+
+
+class _Interrupt:
+    """Polls, at most once a second, for a worker stop or a cancel request,
+    and terminates the job's process group on the first one seen."""
+
+    def __init__(
+        self,
+        conn: psycopg.Connection[Any],
+        job_id: int,
+        child: subprocess.Popen[str],
+        stop: threading.Event | None,
+    ) -> None:
+        self.conn, self.job_id, self.child, self.stop = conn, job_id, child, stop
+        #: None while the job runs undisturbed, else "stopped" or "cancelled".
+        self.reason: str | None = None
+        self._next_check = time.monotonic()
+
+    def check(self) -> None:
+        now = time.monotonic()
+        if self.reason is not None or self.child.poll() is not None or now < self._next_check:
+            return
+        self._next_check = now + CANCEL_POLL_SECONDS
+        if self.stop is not None and self.stop.is_set():
+            self.reason = "stopped"
+            _note(self.conn, self.job_id, "worker stopping: terminating the job")
+        elif _cancel_requested(self.conn, self.job_id):
+            self.reason = "cancelled"
+            _note(self.conn, self.job_id, "cancel requested: terminating the job")
+        else:
+            return
+        _terminate(self.child)
+
+
+def _outcome(
+    conn: psycopg.Connection[Any],
+    job_id: int,
+    job_type: str,
+    payload: Any,
+    returncode: int,
+    interrupted: str | None,
+    capture: _Capture,
+) -> JobOutcome:
+    """The job's final status, from how it ended."""
+    if interrupted == "stopped":
         _note(conn, job_id, "worker stopped")
         return JobOutcome("failed", error="worker stopped")
-    if cancelled:
+    if interrupted == "cancelled":
         _note(conn, job_id, "cancelled")
         return JobOutcome("cancelled")
     _note(conn, job_id, f"exit code {returncode}")
     if returncode != 0:
-        error = "\n".join(stderr_tail) or f"exit code {returncode}"
+        error = "\n".join(capture.stderr_tail) or f"exit code {returncode}"
         return JobOutcome("failed", error=error)
     try:
         result = jobs.extract_result(
             job_type,
             payload,
-            result_line=result_line,
-            last_progress=last_progress,
-            stdout_tail=list(stdout_tail),
+            result_line=capture.result_line,
+            last_progress=capture.last_progress,
+            stdout_tail=list(capture.stdout_tail),
         )
     except Exception as exc:  # noqa: BLE001
         return JobOutcome("failed", error=f"could not read the job's result: {exc}")
