@@ -9,7 +9,7 @@ import pytest
 from nomoscope_workflow.schema import Routing, TemporalBasis
 
 from nomokrisis_eval.labels import draft_labels, instrument_of, is_formula
-from nomokrisis_eval.runner import summarize
+from nomokrisis_eval.summary import summarize
 from nomokrisis_eval.schema import CaseResult, Expected, GoldenCase
 
 
