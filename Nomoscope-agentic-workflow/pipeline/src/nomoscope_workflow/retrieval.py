@@ -370,15 +370,31 @@ _ARTICLE_REF = re.compile(
 #: act 0.35; a code named in full scores 0.85–1.0.
 NAMED_ACT_MIN_SCORE = 0.4
 
+#: An act number the need spells out: «Ley 35/2006», «Real Decreto 439/2007»,
+#: «loi n° 2025-127». When an act in scope carries it, that act IS the one
+#: named: Ley 18/1991 «del Impuesto sobre la Renta de las Personas Físicas»
+#: scores 0.72 on title words against a need naming Ley 35/2006 (0.47).
+_ACT_NUMBER = re.compile(r"\b(\d{1,5}/\d{4})\b|\bn[°ºo]\s*(\d{4}-\d{1,5})\b", re.IGNORECASE)
+
+
+def act_numbers(need: str) -> list[str]:
+    """The act numbers a need names («35/2006», «2025-127»), in order."""
+    return list(dict.fromkeys(a or b for a, b in _ACT_NUMBER.findall(need)))
+
+
 _NAMED_INSTRUMENTS_SQL = """
 SELECT i.id::text AS instrument_id, i.national_id, i.title_search,
-       word_similarity(i.title_search, %(need)s)::float8 AS score
+       word_similarity(i.title_search, %(need)s)::float8 AS score,
+       EXISTS (SELECT 1 FROM unnest(%(numbers)s::text[]) n
+               WHERE i.title_search ~ ('(^|[^0-9])' || n || '([^0-9]|$)')) AS by_number
 FROM instruments i
 JOIN jurisdictions j ON j.id = i.jurisdiction_id
 WHERE j.code = ANY(%(jurisdictions)s::text[])
   AND i.source_trust_class <> 'context'
-  AND word_similarity(i.title_search, %(need)s) >= %(min_score)s
-ORDER BY score DESC
+  AND (word_similarity(i.title_search, %(need)s) >= %(min_score)s
+       OR EXISTS (SELECT 1 FROM unnest(%(numbers)s::text[]) n
+                  WHERE i.title_search ~ ('(^|[^0-9])' || n || '([^0-9]|$)')))
+ORDER BY by_number DESC, score DESC
 LIMIT 3
 """
 
@@ -1144,7 +1160,8 @@ def locate_named_units(
     do nothing for those; a direct lookup can, and it needs no ranking:
 
     1. the act — every instrument in scope whose title the need contains
-       (pg_trgm `word_similarity`, NAMED_ACT_MIN_SCORE), up to three;
+       (pg_trgm `word_similarity`, NAMED_ACT_MIN_SCORE), up to three; an act
+       whose number the need spells out («Ley 35/2006») wins outright;
     2. the article — every legal unit whose citation carries an article number
        the need spells out, scoped to those acts when any matched (fallback for
        the ES paragraph idiom: «66.2» is article 66);
@@ -1176,8 +1193,12 @@ def locate_named_units(
     base = {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of, "need": need}
     with conn.cursor(row_factory=dict_row) as cur:
         acts = cur.execute(
-            _NAMED_INSTRUMENTS_SQL, {**base, "min_score": NAMED_ACT_MIN_SCORE}
+            _NAMED_INSTRUMENTS_SQL,
+            {**base, "min_score": NAMED_ACT_MIN_SCORE, "numbers": act_numbers(need)},
         ).fetchall()
+    # An act the need names by number is the act: drop title look-alikes.
+    if any(act["by_number"] for act in acts):
+        acts = [act for act in acts if act["by_number"]]
     act_ids = [act["instrument_id"] for act in acts] or None
     search_acts = acts
     if not acts and held_instrument_ids:

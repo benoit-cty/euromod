@@ -375,6 +375,13 @@ Suggested handling of the Triangulator: move `country-reports/Y16/` under `Nomot
 7. **Front-end**: shared directory for the two apps, the job-run module, then the component splits.
 8. **Repository**: decide the fate of the Triangulator and the retired data directories; add a root `ruff.toml`, a `make test` and a minimal CI job.
 
+## 13. Found while fixing (16 November 2026)
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| N1 | medium | `locate_named_units` picked acts by title similarity alone. Ley 18/1991 «del Impuesto sobre la Renta de las Personas Físicas», ingested since the test was written, scored 0.72 against a need naming «Ley 35/2006» (0.47), so LIRPF art. 66 was not located (`test_locate_live` red). | **Fixed** — an act number the need spells out (`retrieval.act_numbers`: «35/2006», «n° 2025-127») selects that act outright |
+| N2 | medium | Repealed ES acts loaded through the BOE daily-gazette fallback carry `estatus_derogacion: N` and open-ended versions: Ley 18/1991 (140 versions) and Ley 40/1998 (133) are «in force» on every date, so retrieval can quote a repealed IRPF article as current law. | Open — needs the repeal date from BOE (the consolidated record's `fecha_derogacion`, or the repealing act) |
+
 ## 12. Not checked
 
 - No test suite was run and test bodies were mostly skimmed. Claims about missing coverage rest on test names and imports.

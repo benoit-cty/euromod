@@ -105,3 +105,9 @@ def test_sql_fts_or_query_matches_python(conn):
         sql = sql["q"] if isinstance(sql, dict) else sql[0]
         py = retrieval._fts_query(q)
         assert set(sql.split(" OR ")) == set(py.split(" OR ")), q
+
+
+def test_act_numbers_are_read_from_the_need():
+    assert retrieval.act_numbers("artículo 66.2 de la Ley 35/2006, del IRPF") == ["35/2006"]
+    assert retrieval.act_numbers("loi n° 2025-127 du 14 février 2025") == ["2025-127"]
+    assert retrieval.act_numbers("arrêté du 31 juillet 2025") == []
