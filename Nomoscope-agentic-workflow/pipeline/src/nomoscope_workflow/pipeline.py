@@ -22,7 +22,7 @@ from typing import TypedDict
 
 from opentelemetry.trace import Tracer
 
-from . import AGENT_VERSION, issues, llm, mock, paramdb, queue_store, quotes, regions, retrieval, scout
+from . import AGENT_VERSION, issues, llm, mock, paramdb, queue_store, quotes, retrieval, scout
 from .config import WorkflowConfig
 from .prompts import PROMPT_VERSION
 from .schema import (
@@ -241,9 +241,7 @@ def retrieve(ctx: StepContext, state: WorkflowState) -> dict:
             # draw on state law and its own community's law, never on a
             # sibling community's (ADR 0003). National parameters scope to
             # the country alone, so regional acts stay out of their runs.
-            scope = retrieval.jurisdiction_scope(
-                conn, info.country, regions.region_key(info.country, info.model_target)
-            )
+            scope = retrieval.record_scope(conn, info)
             hits = retrieval.retrieve(
                 conn, ctx.cfg, scope, retrieval_as_of, state["query"], state["citations"],
                 later_until=_later_until(state["record"], state["as_of"]),

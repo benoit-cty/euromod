@@ -192,3 +192,16 @@ def article_label(citation: str | None) -> str:
     """The article part of a citation — «CGI, art. 197» -> «197» — under the
     corpus's «…, art. N» convention (FR, KALI); the whole citation otherwise."""
     return (citation or "").rsplit("art. ", 1)[-1]
+
+
+def law_language(scope: Scope) -> str:
+    """The language a scope's law is searched in: its country's (the first code)."""
+    return LANG_BY_COUNTRY.get(scope_codes(scope)[0], "en")
+
+
+def record_scope(conn: psycopg.Connection, info) -> list[str]:
+    """The jurisdiction scope of a parameter: its country, plus the region its
+    model target names (ADR 0003). The one derivation every entry point uses."""
+    from .regions import region_key
+
+    return jurisdiction_scope(conn, info.country, region_key(info.country, info.model_target))

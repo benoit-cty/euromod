@@ -34,6 +34,8 @@ from .corpus import (  # noqa: F401  (re-exported: retrieval is the facade)
     _fts_query,
     connect,
     jurisdiction_scope,
+    law_language,
+    record_scope,
     scope_codes,
     unit_chunks,
     validity_end,
@@ -183,7 +185,7 @@ def retrieve(
     ``country`` is a jurisdiction scope (see ``jurisdiction_scope``); the
     law language is the country's, i.e. the scope's first code.
     """
-    lang = LANG_BY_COUNTRY.get(scope_codes(country)[0], "en")
+    lang = law_language(country)
     merged: dict[str, RetrievalHit] = {}
     for hit in citation_fast_path(conn, country, lang, as_of, citations, cfg.retrieval_k):
         merged[hit.chunk_id] = hit

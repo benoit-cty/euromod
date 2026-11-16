@@ -30,7 +30,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import llm, regions, retrieval
+from . import llm, retrieval
 from .config import PLACEHOLDER_MODEL_ID, WorkflowConfig
 from .query_encoder import embedding_process, ingest_dir, nomos_python
 from .schema import ParameterRecord, RetrievalHit
@@ -930,10 +930,8 @@ def locate(
     hits: list[RetrievalHit] = []
     citations: list[str] = []
     with retrieval.connect(cfg) as conn:
-        scope = retrieval.jurisdiction_scope(
-            conn, info.country, regions.region_key(info.country, info.model_target)
-        )
-        lang = retrieval.LANG_BY_COUNTRY.get(retrieval.scope_codes(scope)[0], "en")
+        scope = retrieval.record_scope(conn, info)
+        lang = retrieval.law_language(scope)
         held = retrieval.instruments_of_chunks(conn, list(seen))
         # Articles missing between two retrieved ones (AGIRC-ARRCO art. 36
         # between 35 and 38), then the code articles the retrieved ones send
