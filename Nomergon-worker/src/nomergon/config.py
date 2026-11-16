@@ -43,6 +43,15 @@ def find_repo_root(start: Path | None = None) -> Path:
     raise RuntimeError(msg)
 
 
+def redact_url(url: str) -> str:
+    """A database URL with its password hidden, for logs and messages."""
+    if "://" not in url or "@" not in url:
+        return url
+    scheme, rest = url.split("://", 1)
+    credentials, host = rest.rsplit("@", 1)
+    return f"{scheme}://{credentials.split(':', 1)[0]}:***@{host}"
+
+
 def _env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 

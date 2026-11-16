@@ -28,7 +28,7 @@ from typing import IO, Any
 import psycopg
 
 from . import db, jobs
-from .config import WorkerConfig
+from .config import WorkerConfig, redact_url
 
 log = logging.getLogger("nomergon.runner")
 
@@ -377,10 +377,4 @@ def _kill_group(child: subprocess.Popen[str]) -> None:
 
 def _redact(argv: list[str], database_url: str) -> list[str]:
     """Hide the database password in the logged command line."""
-    if "@" not in database_url or "://" not in database_url:
-        return argv
-    scheme, rest = database_url.split("://", 1)
-    credentials, host = rest.rsplit("@", 1)
-    user = credentials.split(":", 1)[0]
-    redacted = f"{scheme}://{user}:***@{host}"
-    return [redacted if arg == database_url else arg for arg in argv]
+    return [redact_url(arg) if arg == database_url else arg for arg in argv]

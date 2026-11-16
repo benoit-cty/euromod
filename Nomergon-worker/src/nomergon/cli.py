@@ -11,7 +11,7 @@ from typing import Any
 import typer
 
 from . import client, db, jobs
-from .config import WorkerConfig, load_config
+from .config import WorkerConfig, load_config, redact_url
 
 app = typer.Typer(help="Nomergon worker: the process that owns every model call (ADR 0004).", no_args_is_help=True)
 
@@ -24,16 +24,8 @@ def _connect(cfg: WorkerConfig):
     try:
         return db.connect(cfg.database_url)
     except Exception as exc:  # noqa: BLE001
-        typer.echo(f"cannot connect to {_redact_url(cfg.database_url)}: {exc}", err=True)
+        typer.echo(f"cannot connect to {redact_url(cfg.database_url)}: {exc}", err=True)
         raise typer.Exit(2) from None
-
-
-def _redact_url(url: str) -> str:
-    if "://" in url and "@" in url:
-        scheme, rest = url.split("://", 1)
-        credentials, host = rest.rsplit("@", 1)
-        return f"{scheme}://{credentials.split(':', 1)[0]}:***@{host}"
-    return url
 
 
 @app.command("init-db")
@@ -42,7 +34,7 @@ def init_db() -> None:
     cfg = _cfg()
     with _connect(cfg) as conn:
         db.apply_schema(conn)
-    typer.echo(f"ops schema applied to {_redact_url(cfg.database_url)}")
+    typer.echo(f"ops schema applied to {redact_url(cfg.database_url)}")
 
 
 @app.command()

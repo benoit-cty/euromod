@@ -70,6 +70,14 @@ def test_redact_hides_the_password() -> None:
     assert runner._redact(["x", url], url) == ["x", "postgresql://jrc:***@localhost:5434/legislation"]
 
 
+def test_one_url_redaction_for_logs_and_messages() -> None:
+    from nomergon.config import redact_url
+
+    assert redact_url("postgresql://jrc:secret@db:5432/legislation") == "postgresql://jrc:***@db:5432/legislation"
+    assert redact_url("postgresql://p@ss:w@rd@db/x") == "postgresql://p@ss:***@db/x"
+    assert redact_url("postgresql:///legislation") == "postgresql:///legislation"
+
+
 def test_a_failing_database_does_not_kill_the_job(tmp_path, monkeypatch):
     """Disk full mid-run (seen 2026-09-22): every bookkeeping write raises, the
     child still runs to completion and its exit code decides the outcome."""
