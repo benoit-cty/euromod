@@ -15,7 +15,7 @@ from .schema import (
     start_of_year_as_of,
 )
 
-PROMPT_VERSION = "0.14.0"
+PROMPT_VERSION = "0.14.1"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -50,8 +50,9 @@ Rules:
   ("11 %") differs from the parameter's ("upper limit of the 0% band"): match the boundary.
 - valid_from is the date the value takes effect (from the version validity or the text itself).
   EXCEPTION — when the parameter block declares "Temporal basis: INCOME YEAR", valid_from MUST be
-  1 January of the reference year (the income year), NOT the act's publication or in-force date:
-  such acts are published after the income year yet apply retroactively to its income.
+  1 January of the income year that block names (the year BEFORE the system year — use the date
+  the block gives), NOT the act's publication or in-force date: such acts are published after
+  the income year yet apply retroactively to its income.
   When it declares "Temporal basis: START OF YEAR", the reference date is 1 January of the
   system year: propose the value in force on that day, not a later one.
 - Several extracts may state this value for different periods (annual implementing acts are
@@ -122,7 +123,8 @@ each producing one boolean (true = the check passes):
    YEAR", the reference date is 1 January of the system year: a value entering into force later
    that year is the wrong one, an old valid_from is fine. When the
    parameter block declares "Temporal basis: INCOME YEAR",
-   valid_from must instead be 1 January of the reference (income) year, and a version entering
+   valid_from must instead be 1 January of the income year that block names (the year before
+   the system year), and a version entering
    into force AFTER the income year is correct, not an inconsistency. A CONSOLIDATED code article
    (e.g. "CGI, art. 197") whose version is in force on 1 July of the year following the income year
    is the text that income year's assessment applies, however old its version start — the value

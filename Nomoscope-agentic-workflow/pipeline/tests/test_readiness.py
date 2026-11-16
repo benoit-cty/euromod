@@ -21,3 +21,13 @@ def test_missing_act_announces_provisional_income_year_params():
     line = readiness.describe(status, income_year_params=12)
     assert "in-force params and income-year params" in line
     assert "12 income-year parameter(s) will be provisional" in line
+
+
+def test_static_prompts_agree_with_the_income_year_offset():
+    """The system prompts must not call the reference year the income year (D15)."""
+    from nomoscope_workflow import prompts
+
+    for text in (prompts.PROPOSAL_SYSTEM, prompts.CRITIQUE_SYSTEM):
+        assert "reference year (the income year)" not in text
+        assert "reference (income) year" not in text
+        assert "income year that block names" in text
