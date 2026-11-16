@@ -90,7 +90,7 @@ These are behaviour problems, listed first because they outrank the refactoring.
 | Country tables | `countries/registry.py:13-19`; `core/contributed.py:96-133`; `scout.py:78-155, 205-225, 247`; `retrieval.py:31`; `readiness.py:29`; `ui/src/lib/labels.js:38-45`; `handoff.js:15-23`; `rag-ui/src/lib/chat.js:4` | Scout ↔ adapters and ES regions only | medium |
 | "Value EUROMOD holds on a date" | `pipeline.py:450-455`; `nomokrisis_eval/build_dataset.py:78-82` (byte-identical); `paramdb.py:641, 822`; `benchmark.py:79-86`; `curated_golden.py:65-70` | **Fixed**: `routing.current_value` is the rule; the eval's `parameter_store.current_value` delegates to it (the eval copies were merged); paramdb's two interval queries over histories stay (they select overlaps, not one date) | medium |
 | Units and source types | `paramdb.py:262-274`; `schema.py:85-92`; `params_schema.sql:638-646`; `ParameterEditor.svelte:15-24`; `DetailPanel.svelte:41-49` | Python ⊆ SQL only, and only with a live DB | low |
-| Default DSN literal | 5 Python sites, 1 worker constant, 2 Rust sites, about 8 Rust test sites | — | low |
+| Default DSN literal | 5 Python sites, 1 worker constant, 2 Rust sites, about 8 Rust test sites | **Partly fixed**: `nomoscope_workflow.config.DEFAULT_DATABASE_URL` used by the workflow, eval and worker; the MCP server (no workflow dependency) and the Rust apps keep their own | low |
 | Placeholder model id `99` | `config.py:27, 62`; `retrieval.py:260, 319`; `chat.py:245`; `scout.py:778`; `embedding_eval.py:250, 254` | **Fixed**: `config.PLACEHOLDER_MODEL_ID` at every site | low |
 
 Suggested fixes, in order of value:

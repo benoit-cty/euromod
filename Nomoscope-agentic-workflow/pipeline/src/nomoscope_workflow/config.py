@@ -17,6 +17,8 @@ def _env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 
 
+#: The dev stack's database (docker compose, host port 5434) — the one default.
+DEFAULT_DATABASE_URL = "postgresql://jrc:jrc@localhost:5434/legislation"
 #: The in-SQL deterministic embedder of the seed demo corpus (seed.sql's
 #: `placeholder_embedding`): queries are embedded in SQL, never by an encoder.
 PLACEHOLDER_MODEL_ID = 99
@@ -62,7 +64,7 @@ def load_config() -> WorkflowConfig:
     """
     load_dotenv(WORKFLOW_ROOT.parent / ".env")
     database_url = _env(
-        "WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation"
+        "WORKFLOW_DATABASE_URL", DEFAULT_DATABASE_URL
     )
     return WorkflowConfig(
         database_url=database_url,

@@ -49,7 +49,7 @@ EMBEDDING_EXTRA = "embeddings"
 CUDA_EXTRA = "embeddings-cuda"
 CUDA_ENVIRONMENT = ".venv-cuda"
 
-DEFAULT_DATABASE_URL = "postgresql://jrc:jrc@localhost:5434/legislation"
+from .config import DEFAULT_DATABASE_URL  # noqa: E402
 
 DEFAULT_MODEL_ID = 1
 

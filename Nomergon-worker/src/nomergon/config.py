@@ -14,7 +14,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-DEFAULT_DATABASE_URL = "postgresql://jrc:jrc@localhost:5434/legislation"
+from nomoscope_workflow.config import DEFAULT_DATABASE_URL  # noqa: E402  (the one default)
 BGE_M3_MODEL = "BAAI/bge-m3"
 EMBEDDING_MODEL_NAME = "bge-m3"
 

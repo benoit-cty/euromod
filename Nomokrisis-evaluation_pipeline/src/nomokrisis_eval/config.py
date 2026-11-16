@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from nomoscope_workflow.config import DEFAULT_DATABASE_URL
+
 import os
 import subprocess
 from dataclasses import dataclass
@@ -53,7 +55,7 @@ def load_eval_config() -> EvalConfig:
     return EvalConfig(
         database_url=_env(
             "EVAL_DATABASE_URL",
-            _env("WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation"),
+            _env("WORKFLOW_DATABASE_URL", DEFAULT_DATABASE_URL),
         ),
         # Every model role falls back to WORKFLOW_MODEL (see the root .env.example).
         builder_model=_env("EVAL_BUILDER_MODEL", "") or _env("WORKFLOW_MODEL", "mock/extractor"),
