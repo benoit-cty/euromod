@@ -28,8 +28,26 @@ ENCODE_PRIORITY = 100
 CHAT_PRIORITY = 50
 
 
+def _python(module: str) -> list[str]:
+    return [sys.executable, "-m", module]
+
+
+def _number(value: float) -> str:
+    return str(int(value)) if float(value).is_integer() else str(value)
+
+
 class _Payload(BaseModel):
+    """A job's payload; each subprocess type maps itself to the argv it runs.
+
+    The ingest CLIs take the database as ``--database-url`` (last); the
+    workflow and eval CLIs read it from the environment the runner sets.
+    """
+
     model_config = ConfigDict(extra="forbid")
+
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        """The argv for this job, always ``sys.executable -m <module> …``."""
+        raise NotImplementedError
 
 
 class WorkflowPayload(_Payload):
@@ -55,11 +73,29 @@ class WorkflowPayload(_Payload):
             raise ValueError(msg)
         return self
 
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        if self.country:
+            argv = _python(WORKFLOW_MODULE) + ["run-country", self.country, "--year", str(self.year)]
+            if self.limit:
+                argv += ["--limit", str(self.limit)]
+        else:
+            argv = _python(WORKFLOW_MODULE) + ["run-targets", *self.targets, "--year", str(self.year)]
+        if self.model:
+            argv += ["--model", self.model]
+        if self.force:
+            argv.append("--force")
+        if self.include_na:
+            argv.append("--include-na")
+        return argv
+
 
 class IngestPayload(_Payload):
     command: Literal["instrument", "citation", "document", "route"]
     #: Exactly what the UI built today (``IngestTab.buildRequest``), minus ``--database-url``.
     args: list[str] = Field(default_factory=list)
+
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        return _python(INGEST_MODULE) + [self.command, *self.args, "--database-url", cfg.database_url]
 
 
 class EmbedPayload(_Payload):
@@ -72,6 +108,23 @@ class EmbedPayload(_Payload):
     #: Skip machine translations — what a candidate model under evaluation needs.
     authentic_only: bool = False
 
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        argv = _python(INGEST_MODULE) + ["embeddings", "build", "--backend", "torch"]
+        # The configured path holds BGE-M3's weights; any other registry
+        # model loads from its own Hugging Face id.
+        if self.model_id == 1:
+            argv += ["--model-path", cfg.embedding_model_path]
+        argv += ["--model-id", str(self.model_id), "--batch-size", str(self.batch_size)]
+        if self.precision != "auto":
+            argv += ["--precision", self.precision]
+        if self.authentic_only:
+            argv.append("--authentic-only")
+        if self.limit is not None:
+            argv += ["--limit", str(self.limit)]
+        if self.dry_run:
+            argv.append("--dry-run")
+        return argv + ["--progress-json", "--database-url", cfg.database_url]
+
 
 class TranslatePayload(_Payload):
     model: str
@@ -79,6 +132,24 @@ class TranslatePayload(_Payload):
     limit: int | None = Field(default=None, ge=1)
     request_timeout: float = Field(default=120, ge=0)
     dry_run: bool = False
+
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        argv = _python(INGEST_MODULE) + [
+            "translate",
+            "run",
+            "--model",
+            self.model,
+            "--target-lang",
+            self.target_lang,
+            "--progress-json",
+            "--request-timeout",
+            _number(self.request_timeout),
+        ]
+        if self.limit is not None:
+            argv += ["--limit", str(self.limit)]
+        if self.dry_run:
+            argv.append("--dry-run")
+        return argv + ["--database-url", cfg.database_url]
 
 
 class TranslateParamsPayload(_Payload):
@@ -88,6 +159,19 @@ class TranslateParamsPayload(_Payload):
     batch_size: int = Field(default=20, ge=1)
     limit: int | None = Field(default=None, ge=1)
     force: bool = False
+
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        argv = _python(WORKFLOW_MODULE) + ["translate-params", "--country", self.country]
+        if self.lang:
+            argv += ["--lang", self.lang]
+        if self.model:
+            argv += ["--model", self.model]
+        argv += ["--batch-size", str(self.batch_size)]
+        if self.limit is not None:
+            argv += ["--limit", str(self.limit)]
+        if self.force:
+            argv.append("--force")
+        return argv
 
 
 class EncodePayload(_Payload):
@@ -102,6 +186,10 @@ class EncodePayload(_Payload):
             msg = "query must not be empty"
             raise ValueError(msg)
         return self
+
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        msg = "encode jobs are answered in-process by the encode lane"
+        raise ValueError(msg)
 
 
 class EvalPayload(_Payload):
@@ -121,6 +209,20 @@ class EvalPayload(_Payload):
             msg = "an eval job needs either resume=<run_id> or both as_of and model"
             raise ValueError(msg)
         return self
+
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        if self.resume is not None:
+            return _python(EVAL_MODULE) + ["resume", self.resume]
+        argv = _python(EVAL_MODULE) + ["run", "--as-of", str(self.as_of), "--model", str(self.model)]
+        for country in self.countries:
+            argv += ["--country", country]
+        for language in self.languages:
+            argv += ["--language", language]
+        if self.include_drafts:
+            argv.append("--include-drafts")
+        if self.notes:
+            argv += ["--notes", self.notes]
+        return argv
 
 
 class DraftGoldenPayload(_Payload):
@@ -149,12 +251,45 @@ class DraftGoldenPayload(_Payload):
                 raise ValueError(msg)
         return self
 
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        if self.source == "document":
+            # The text goes through a file under the job's scratch directory.
+            path = write_document_text(self.text or "", scratch_dir)
+            argv = _python(EVAL_MODULE) + ["build-dataset", str(path), "--country", self.country, "--as-of", str(self.as_of)]
+            if self.language:
+                argv += ["--language", self.language]
+            for target in self.targets:
+                argv += ["--target", target]
+            if self.model:
+                argv += ["--model", self.model]
+            return argv
+        command = "build-openfisca-dataset" if self.source == "openfisca" else "build-curated-dataset"
+        argv = _python(EVAL_MODULE) + [command, "--country", self.country, "--year", str(self.year)]
+        if self.as_of:
+            argv += ["--as-of", self.as_of]
+        if self.source == "openfisca":
+            # Only the OpenFisca builder tops a selection up from parameter_links.
+            argv += ["--limit", str(self.limit), "--fill" if self.fill else "--curated-only"]
+        return argv
+
 
 class ImpactPayload(_Payload):
     project: str = ""
     since: str | None = None
     until: str | None = None
     zone: str = ""
+
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        argv = _python(WORKFLOW_MODULE) + ["impact", "--json"]
+        if self.project:
+            argv += ["--project", self.project]
+        if self.since:
+            argv += ["--since", self.since]
+        if self.until:
+            argv += ["--until", self.until]
+        if self.zone:
+            argv += ["--zone", self.zone]
+        return argv
 
 
 class ChatMessage(_Payload):
@@ -183,6 +318,11 @@ class ChatPayload(_Payload):
             msg = "a chat job's last message must be a non-empty user message"
             raise ValueError(msg)
         return self
+
+    def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
+        # The conversation goes through a file: it grows with every turn
+        # and a single argv string is capped at 128 KiB on Linux.
+        return _python(WORKFLOW_MODULE) + ["chat", str(write_chat_request(self, scratch_dir))]
 
 
 Package = Literal["ingest", "pipeline", "eval"]
@@ -292,10 +432,6 @@ def job_types_document() -> dict[str, Any]:
     }
 
 
-def _python(module: str) -> list[str]:
-    return [sys.executable, "-m", module]
-
-
 def build_command(
     job_type: str,
     payload: _Payload,
@@ -303,155 +439,16 @@ def build_command(
     *,
     scratch_dir: Path | None = None,
 ) -> list[str]:
-    """The argv for one job, always ``sys.executable -m <module> …``.
+    """The argv for one job: its payload's ``to_argv``.
 
-    The ingest CLIs take the database as ``--database-url`` (last); the
-    workflow and eval CLIs read it from the environment the runner sets.
-    A ``draft-golden`` job from a document writes its text to a file under
-    ``scratch_dir`` (a fresh temp file when none is given) and passes the path.
+    A job that writes a file (a ``draft-golden`` document, a ``chat``
+    conversation) writes it under ``scratch_dir``.
     """
-    match job_type:
-        case "workflow":
-            assert isinstance(payload, WorkflowPayload)
-            if payload.country:
-                argv = _python(WORKFLOW_MODULE) + ["run-country", payload.country, "--year", str(payload.year)]
-                if payload.limit:
-                    argv += ["--limit", str(payload.limit)]
-            else:
-                argv = _python(WORKFLOW_MODULE) + ["run-targets", *payload.targets, "--year", str(payload.year)]
-            if payload.model:
-                argv += ["--model", payload.model]
-            if payload.force:
-                argv.append("--force")
-            if payload.include_na:
-                argv.append("--include-na")
-            return argv
-        case "ingest":
-            assert isinstance(payload, IngestPayload)
-            return _python(INGEST_MODULE) + [payload.command, *payload.args, "--database-url", cfg.database_url]
-        case "embed":
-            assert isinstance(payload, EmbedPayload)
-            argv = _python(INGEST_MODULE) + ["embeddings", "build", "--backend", "torch"]
-            # The configured path holds BGE-M3's weights; any other registry
-            # model loads from its own Hugging Face id.
-            if payload.model_id == 1:
-                argv += ["--model-path", cfg.embedding_model_path]
-            argv += [
-                "--model-id",
-                str(payload.model_id),
-                "--batch-size",
-                str(payload.batch_size),
-            ]
-            if payload.precision != "auto":
-                argv += ["--precision", payload.precision]
-            if payload.authentic_only:
-                argv.append("--authentic-only")
-            if payload.limit is not None:
-                argv += ["--limit", str(payload.limit)]
-            if payload.dry_run:
-                argv.append("--dry-run")
-            return argv + ["--progress-json", "--database-url", cfg.database_url]
-        case "translate":
-            assert isinstance(payload, TranslatePayload)
-            argv = _python(INGEST_MODULE) + [
-                "translate",
-                "run",
-                "--model",
-                payload.model,
-                "--target-lang",
-                payload.target_lang,
-                "--progress-json",
-                "--request-timeout",
-                _number(payload.request_timeout),
-            ]
-            if payload.limit is not None:
-                argv += ["--limit", str(payload.limit)]
-            if payload.dry_run:
-                argv.append("--dry-run")
-            return argv + ["--database-url", cfg.database_url]
-        case "translate-params":
-            assert isinstance(payload, TranslateParamsPayload)
-            argv = _python(WORKFLOW_MODULE) + ["translate-params", "--country", payload.country]
-            if payload.lang:
-                argv += ["--lang", payload.lang]
-            if payload.model:
-                argv += ["--model", payload.model]
-            argv += ["--batch-size", str(payload.batch_size)]
-            if payload.limit is not None:
-                argv += ["--limit", str(payload.limit)]
-            if payload.force:
-                argv.append("--force")
-            return argv
-        case "eval":
-            assert isinstance(payload, EvalPayload)
-            if payload.resume is not None:
-                return _python(EVAL_MODULE) + ["resume", payload.resume]
-            argv = _python(EVAL_MODULE) + ["run", "--as-of", str(payload.as_of), "--model", str(payload.model)]
-            for country in payload.countries:
-                argv += ["--country", country]
-            for language in payload.languages:
-                argv += ["--language", language]
-            if payload.include_drafts:
-                argv.append("--include-drafts")
-            if payload.notes:
-                argv += ["--notes", payload.notes]
-            return argv
-        case "draft-golden":
-            assert isinstance(payload, DraftGoldenPayload)
-            return _draft_golden_command(payload, scratch_dir)
-        case "impact":
-            assert isinstance(payload, ImpactPayload)
-            argv = _python(WORKFLOW_MODULE) + ["impact", "--json"]
-            if payload.project:
-                argv += ["--project", payload.project]
-            if payload.since:
-                argv += ["--since", payload.since]
-            if payload.until:
-                argv += ["--until", payload.until]
-            if payload.zone:
-                argv += ["--zone", payload.zone]
-            return argv
-        case "chat":
-            assert isinstance(payload, ChatPayload)
-            # The conversation goes through a file: it grows with every turn
-            # and a single argv string is capped at 128 KiB on Linux.
-            path = write_chat_request(payload, scratch_dir)
-            return _python(WORKFLOW_MODULE) + ["chat", str(path)]
-        case "encode":
-            msg = "encode jobs are answered in-process by the encode lane"
-            raise ValueError(msg)
-        case _:
-            msg = f"unknown job type: {job_type!r}"
-            raise ValueError(msg)
-
-
-def _draft_golden_command(payload: DraftGoldenPayload, scratch_dir: Path | None) -> list[str]:
-    if payload.source == "document":
-        path = write_document_text(payload.text or "", scratch_dir)
-        argv = _python(EVAL_MODULE) + [
-            "build-dataset",
-            str(path),
-            "--country",
-            payload.country,
-            "--as-of",
-            str(payload.as_of),
-        ]
-        if payload.language:
-            argv += ["--language", payload.language]
-        for target in payload.targets:
-            argv += ["--target", target]
-        if payload.model:
-            argv += ["--model", payload.model]
-        return argv
-
-    command = "build-openfisca-dataset" if payload.source == "openfisca" else "build-curated-dataset"
-    argv = _python(EVAL_MODULE) + [command, "--country", payload.country, "--year", str(payload.year)]
-    if payload.as_of:
-        argv += ["--as-of", payload.as_of]
-    if payload.source == "openfisca":
-        # Only the OpenFisca builder tops a selection up from parameter_links.
-        argv += ["--limit", str(payload.limit), "--fill" if payload.fill else "--curated-only"]
-    return argv
+    spec = job_spec(job_type)
+    if not isinstance(payload, spec.payload):
+        msg = f"a {job_type} job needs a {spec.payload.__name__}, not {type(payload).__name__}"
+        raise TypeError(msg)
+    return payload.to_argv(cfg, scratch_dir)
 
 
 def write_document_text(text: str, scratch_dir: Path | None) -> Path:
@@ -479,10 +476,6 @@ def write_chat_request(payload: ChatPayload, scratch_dir: Path | None) -> Path:
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", prefix="nomergon-chat-", suffix=".json", delete=False) as fh:
         fh.write(text)
         return Path(fh.name)
-
-
-def _number(value: float) -> str:
-    return str(int(value)) if float(value).is_integer() else str(value)
 
 
 def extract_result(

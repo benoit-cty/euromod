@@ -32,6 +32,17 @@ def test_every_contract_job_type_has_a_payload_model() -> None:
     assert set(jobs.PAYLOAD_MODELS) == set(jobs.JOB_TYPES)
 
 
+def test_every_subprocess_payload_maps_itself_to_an_argv() -> None:
+    for spec in jobs.JOB_SPECS.values():
+        if not spec.in_process:
+            assert spec.payload.to_argv is not jobs._Payload.to_argv, spec.name
+
+
+def test_build_command_refuses_another_types_payload(cfg: WorkerConfig) -> None:
+    with pytest.raises(TypeError, match="ImpactPayload"):
+        jobs.build_command("impact", jobs.parse_payload("embed", {}), cfg)
+
+
 def test_unknown_job_type_is_refused_by_name() -> None:
     with pytest.raises(ValueError, match="rm-rf"):
         jobs.parse_payload("rm-rf", {})
