@@ -11,7 +11,7 @@ What this module adds over hand-writing the case files is everything that must
 NOT be typed by hand:
 
 - the parameter under test is loaded from the params DB
-  (`openfisca_golden._load_record`) and the case names it by `parameter_target`,
+  (`golden_drafting.load_record`) and the case names it by `parameter_target`,
   so no case points at a hand-authored parameter file;
 - the value EUROMOD holds at `as_of` is read back into the case notes, which is
   what a reviewer needs in front of them at the verification gate;
@@ -44,17 +44,18 @@ import psycopg
 
 from nomoscope_workflow.schema import Bracket, Routing, SourceType, TemporalBasis
 
-from .golden_drafting import golden_case_id
-from .golden_store import save_drafted_case
-from .labels import draft_labels
-from .openfisca_golden import (
+from .golden_drafting import (
     DraftOutcome,
-    _load_record,
-    _retire_skipped,
+    golden_case,
+    load_record,
+    resolve_corpus_available,
+    retire_skipped,
+    save_outcome,
 )
-from .parameter_store import comparable as _comparable, current_value, db_constants, route_against_current
-from .schema import Expected, GoldenCase
+from .parameter_store import comparable, current_value, db_constants, route_against_current
+from .schema import Expected
 from .scoring import PERIOD_TO_MONTHLY, normalise_value
+
 
 def _expected_value(entry: dict) -> object | None:
     """The selection's curated value, with a bracket schedule promoted to Brackets."""
@@ -100,13 +101,13 @@ def draft_case(
 ) -> DraftOutcome:
     outcome = DraftOutcome(entry=entry)
     try:
-        record, parameter_target = _load_record(conn, entry)
+        record, parameter_target = load_record(conn, entry)
     except (KeyError, ValueError) as exc:
         outcome.skipped = f"parameter not available: {exc}"
         return outcome
 
     current = current_value(record, as_of)
-    comparable = _comparable(current)
+    held = comparable(current)
     expected_value = _expected_value(entry)
     scored = "expected_value" in entry and expected_value is not None
 
@@ -118,10 +119,10 @@ def draft_case(
         computed, refusal = route_against_current(current, expected_value, constants)
     # Only a `changed` verdict can be an artefact of the missing basis: equal
     # magnitudes stay equal whichever period they are read on.
-    ambiguous = computed == Routing.CHANGED and _period_ambiguous(comparable, expected_value, constants)
+    ambiguous = computed == Routing.CHANGED and _period_ambiguous(held, expected_value, constants)
     if ambiguous:
         outcome.warnings.append(
-            f"routing not cross-checked: EUROMOD holds {comparable!r} with no period basis "
+            f"routing not cross-checked: EUROMOD holds {held!r} with no period basis "
             f"while the expected value states one ({expected_value!r}) — the difference may be "
             "the y/m basis alone. Confirm against the parameter's unit when verifying"
         )
@@ -139,7 +140,7 @@ def draft_case(
             # must never reach a run.
             outcome.skipped = (
                 f"contested routing: the selection says '{routing.value}' but the store "
-                f"routes '{computed.value}' (EUROMOD holds {comparable!r} at {as_of}). "
+                f"routes '{computed.value}' (EUROMOD holds {held!r} at {as_of}). "
                 f"Pipeline routing compares the proposal against the value EUROMOD "
                 f"currently holds — not against last year's law — so a value the export "
                 f"already carries is 'unchanged' however recently the legislature changed "
@@ -174,7 +175,7 @@ def draft_case(
     note_parts = [
         f"curated: {selection_name}#{entry.get('id') or entry.get('model_target') or entry.get('group_id')}",
         f"euromod value in force at {as_of}: "
-        + (f"{comparable!r} from {current.valid_from}" if current is not None else "none"),
+        + (f"{held!r} from {current.valid_from}" if current is not None else "none"),
     ]
     if not scored:
         note_parts.append(
@@ -190,42 +191,25 @@ def draft_case(
         note_parts.append(entry["note"])
     note_parts.extend(f"drafting warning: {warning}" for warning in outcome.warnings)
 
-    corpus_available = entry.get("corpus_available")
+    corpus_available = resolve_corpus_available(entry)
     if corpus_available is False:
         note_parts.append(
             "corpus_available: false — the act stating this value is not ingested yet, so "
             "no retrieval can reach it. The case measures ingest coverage and is excluded "
             "from the 'source in corpus' KPI slice"
         )
-    # Labels are drafted from the ground truth and overridable per entry: a
-    # reviewer who disagrees writes `difficulty`/`hazards` into the selection
-    # file, and the draft never overwrites it.
-    drafted = draft_labels(
-        value=expected_value if scored else None,
-        citations=list(entry.get("citations", [])),
-        temporal_basis=record.information.temporal_basis,
-        is_bracket_table=bool(entry.get("group_id")),
-    )
-    outcome.case = GoldenCase(
-        id=golden_case_id(country, as_of, parameter_target, entry.get("id")),
-        country=country.upper(),
-        language=language,
-        parameter_target=parameter_target,
-        as_of=as_of,
-        difficulty=entry.get("difficulty") or drafted.difficulty,
-        hazards=entry.get("hazards", drafted.hazards),
-        labels_drafted="difficulty" not in entry and "hazards" not in entry,
-        source_class=entry.get("source_class", "codified_law"),
-        expected=Expected(
+    outcome.case = golden_case(
+        entry, record, parameter_target, as_of, country, language,
+        Expected(
             routing=routing,
             value=expected_value if scored else None,
             valid_from=valid_from,
             citations=list(entry.get("citations", [])),
         ),
         corpus_available=corpus_available,
-        verified=False,
         drafted_by="human",
-        notes=" | ".join(note_parts),
+        notes=note_parts,
+        is_bracket_table=bool(entry.get("group_id")),
     )
     return outcome
 
@@ -254,11 +238,6 @@ def build_dataset(
             selection_name=selection_name, constants=constants,
         )
         outcomes.append(outcome)
-        if outcome.case is not None:
-            if save_drafted_case(conn, outcome.case):
-                outcome.warnings.append(
-                    "ground truth changed since it was reviewed — the case is back to "
-                    "verified:false and must be re-verified before it counts"
-                )
-    _retire_skipped(conn, outcomes, as_of, country)
+        save_outcome(conn, outcome)
+    retire_skipped(conn, outcomes, as_of, country)
     return outcomes

@@ -170,9 +170,9 @@ def test_an_excluded_entry_is_neither_drafted_nor_topped_up(monkeypatch):
 
     monkeypatch.setattr(og, "db_constants", lambda *a: {})
     monkeypatch.setattr(og, "draft_case", draft_case)
-    monkeypatch.setattr(og, "save_drafted_case", lambda *a: False)
+    monkeypatch.setattr(og, "save_outcome", lambda conn, outcome: outcome.case is not None)
     monkeypatch.setattr(og, "entries_from_links", links)
-    monkeypatch.setattr(og, "_retire_skipped", lambda *a: None)
+    monkeypatch.setattr(og, "retire_skipped", lambda *a: None)
     entries = [{"model_target": "a"}, {"model_target": "rci", "exclude": True}]
 
     og.build_dataset(None, {"country": "FR"}, entries, date(2025, 6, 1))

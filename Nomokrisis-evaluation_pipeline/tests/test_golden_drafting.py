@@ -59,7 +59,7 @@ def test_an_openfisca_group_entry_without_id_drafts_the_id_retirement_looks_for(
     while retirement slugged it from the group id: a group entry without `id`
     that stopped drafting left its old case behind for ever."""
     entry = {"group_id": GROUP, "openfisca_path": "impot_revenu.bareme", "component": "brackets"}
-    monkeypatch.setattr(og, "_load_record", lambda conn, e: (_group_record(), f"group:{GROUP}"))
+    monkeypatch.setattr(og, "load_record", lambda conn, e: (_group_record(), f"group:{GROUP}"))
     monkeypatch.setattr(og, "external_parameter", lambda *a, **k: {"id": 1, "commit": "abc1234"})
     monkeypatch.setattr(
         og, "schedule_at", lambda *a: ([Bracket(threshold=0.0, rate=0.0)], date(2025, 1, 1))

@@ -36,38 +36,30 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass, field
 from datetime import date
 
 import psycopg
 
 from nomoscope_workflow.schema import (
     Bracket,
-    ParameterRecord,
     Routing,
     TemporalBasis,
     income_year_for,
     start_of_year_as_of,
 )
-from nomoscope_workflow import paramdb
 
-from .golden_drafting import entry_case_id, golden_case_id
-from .parameter_store import GROUP_PREFIX, current_value, db_constants, route_against_current
-from .golden_store import delete_case, load_case, save_drafted_case
-from .labels import draft_labels
-from .schema import Expected, GoldenCase
+from .golden_drafting import (
+    DraftOutcome,
+    golden_case,
+    load_record,
+    resolve_corpus_available,
+    retire_skipped,
+    save_outcome,
+)
+from .parameter_store import current_value, db_constants, route_against_current
+from .schema import Expected
 
 _BRACKET_COMPONENT = re.compile(r"^brackets\[(\d+)\]\.(\w+)$")
-
-
-@dataclass
-class DraftOutcome:
-    """One entry's result: a case, or the reason it produced none."""
-
-    entry: dict
-    case: GoldenCase | None = None
-    skipped: str | None = None
-    warnings: list[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -244,28 +236,6 @@ def resolve_citation(conn: psycopg.Connection, national_id: str) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-def _load_record(conn: psycopg.Connection, entry: dict) -> tuple[ParameterRecord, str]:
-    """The parameter under test, plus the `parameter_target` the runner hands
-    to the workflow.
-
-    **Everything comes from the parameter store**, so a golden case never
-    depends on a loose file whose provenance nobody can trace:
-
-    - `group_id` — a bracket schedule assembled from `params.parameter_groups`
-      (the FR barème is 4 thresholds + 5 rates; the export's groups block is the
-      only place it exists as an object) → target `group:<group_id>`.
-    - `model_target` — a single parameter from `params.parameters`. Parameters
-      EUROMOD defines inside functions rather than as named constants (CDHR)
-      reach the store through `extracted_parameters/curated/<CC>.in_function.json`
-      like any other ingest, not through a file read at run time.
-    """
-    if entry.get("group_id"):
-        record = paramdb.load_group_record(conn, entry["group_id"])
-        return record, f"{GROUP_PREFIX}{entry['group_id']}"
-    record = paramdb.load_record(conn, entry["model_target"])
-    return record, record.information.model_target
-
-
 def draft_case(
     conn: psycopg.Connection,
     entry: dict,
@@ -277,7 +247,7 @@ def draft_case(
 ) -> DraftOutcome:
     outcome = DraftOutcome(entry=entry)
     try:
-        record, parameter_target = _load_record(conn, entry)
+        record, parameter_target = load_record(conn, entry)
     except (KeyError, ValueError) as exc:
         outcome.skipped = f"parameter not available: {exc}"
         return outcome
@@ -400,11 +370,7 @@ def draft_case(
         )
         note_parts.append(lag)
         outcome.warnings.append(lag)
-    corpus_available = in_corpus if references else None
-    if "corpus_available" in entry:
-        # The selection file knows more than the reference list: an explicit
-        # value on the entry wins (the curated builder has always allowed it).
-        corpus_available = entry["corpus_available"]
+    corpus_available = resolve_corpus_available(entry, in_corpus if references else None)
     if corpus_available is False:
         note_parts.append(
             "corpus_available: false — not one of this parameter's OpenFisca references "
@@ -418,34 +384,14 @@ def draft_case(
         note_parts.append(entry["note"])
     outcome.warnings.extend(unresolved)
 
-    drafted = draft_labels(
-        value=expected_value,
-        citations=citations,
-        temporal_basis=record.information.temporal_basis,
+    outcome.case = golden_case(
+        entry, record, parameter_target, as_of, country, language,
+        Expected(routing=routing, value=expected_value, valid_from=valid_from, citations=citations),
+        corpus_available=corpus_available,
+        drafted_by=f"openfisca@{(external['commit'] or 'unknown')[:7]}",
+        notes=note_parts,
         is_bracket_table=component == "brackets",
     )
-    case = GoldenCase(
-        id=golden_case_id(country, as_of, parameter_target, entry.get("id")),
-        country=country.upper(),
-        language=language,
-        parameter_target=parameter_target,
-        as_of=as_of,
-        difficulty=entry.get("difficulty") or drafted.difficulty,
-        hazards=entry.get("hazards", drafted.hazards),
-        labels_drafted="difficulty" not in entry and "hazards" not in entry,
-        source_class=entry.get("source_class", "codified_law"),
-        expected=Expected(
-            routing=routing,
-            value=expected_value,
-            valid_from=valid_from,
-            citations=citations,
-        ),
-        corpus_available=corpus_available,
-        verified=False,
-        drafted_by=f"openfisca@{(external['commit'] or 'unknown')[:7]}",
-        notes=" | ".join(note_parts),
-    )
-    outcome.case = case
     return outcome
 
 
@@ -541,12 +487,7 @@ def build_dataset(
                 return
             outcome = draft_case(conn, entry, as_of, country, language, kind=kind, constants=constants)
             outcomes.append(outcome)
-            if outcome.case is not None:
-                if save_drafted_case(conn, outcome.case):
-                    outcome.warnings.append(
-                        "ground truth changed since it was reviewed — the case is back to "
-                        "verified:false and must be re-verified before it counts"
-                    )
+            if save_outcome(conn, outcome):
                 written += 1
 
     drain(entries)
@@ -557,36 +498,5 @@ def build_dataset(
         exclude = {e["model_target"] for e in [*entries, *excluded] if e.get("model_target")}
         extra = entries_from_links(conn, country, as_of, (limit - written) * 3, exclude, kind=kind)
         drain(extra)
-    _retire_skipped(conn, outcomes, as_of, country)
+    retire_skipped(conn, outcomes, as_of, country)
     return outcomes
-
-
-def _retire_skipped(
-    conn: psycopg.Connection, outcomes: list[DraftOutcome], as_of: date, country: str
-) -> None:
-    """Delete the case row of an entry that stopped drafting this run.
-
-    An entry can stop producing a case because the world changed under it — the
-    CDHR has no value in the income year the system year now maps to. Leaving
-    the previous run's row in place would keep a case in the golden set that
-    the current rules no longer generate, and the count would still read 50.
-    A reviewed case is never removed: a human verdict outranks a rebuild, and
-    the mismatch is worth seeing rather than silently erasing.
-    """
-    for outcome in outcomes:
-        if outcome.case is not None or not outcome.skipped:
-            continue
-        case_id = entry_case_id(outcome.entry, as_of, country)
-        if case_id is None:
-            continue
-        existing = load_case(conn, case_id)
-        if existing is None:
-            continue
-        if existing.reviewed_by:
-            outcome.warnings.append(
-                f"reviewed case {case_id} kept although the entry no longer drafts "
-                f"({outcome.skipped}) — re-verify or delete it by hand"
-            )
-            continue
-        delete_case(conn, case_id)
-        outcome.warnings.append(f"removed stale draft {case_id} ({outcome.skipped})")
