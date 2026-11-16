@@ -7,7 +7,7 @@
 // law-language texts and value history (every member for a `group:` target).
 // It is optional — the prompt is still useful from the queue item alone.
 
-import { countryName, routingLabel } from './labels.js';
+import { countryName, routingLabel } from '../../../shared/lib/labels.js';
 
 // Official portals per country — the same list the scout searches
 // (scout.COUNTRY_SOURCES), with the law's language.

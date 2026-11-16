@@ -4,8 +4,8 @@
   import ValueView from './ValueView.svelte';
   import SourceViewer from './SourceViewer.svelte';
   import DateField from './DateField.svelte';
-  import Icon from './Icon.svelte';
-  import { routingLabel, statusLabel, countryName, humanize, relativeTime } from '../labels.js';
+  import Icon from '@shared/components/Icon.svelte';
+  import { routingLabel, statusLabel, countryName, humanize, relativeTime } from '@shared/lib/labels.js';
   import { buildHandoffPrompt } from '../handoff.js';
 
   let {

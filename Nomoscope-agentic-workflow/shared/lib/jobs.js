@@ -1,10 +1,11 @@
-// Following a worker job from the UI: poll its events by last-seen id and its
-// status row until it reaches a terminal state (ADR 0004 — no NOTIFY, no
-// process, a row is the API).
+// Following a worker job from either desktop app: poll its events by
+// last-seen id and its status row until it reaches a terminal state (ADR 0004
+// — no NOTIFY, no process, a row is the API).
 //
-// The transport is injectable so the cursor logic is testable under plain
-// node (the default one is the Tauri `api` module, imported lazily so this
-// file has no static dependency on @tauri-apps).
+// The transport is the app's `api` (submitJob, jobStatus, jobEvents) and is
+// passed in, so this file has no dependency on @tauri-apps and its cursor
+// logic runs under plain node. Each app binds it once (`bindJobs(api)` in its
+// lib/api.js) and its components call the bound functions.
 
 export const TERMINAL = new Set(['succeeded', 'failed', 'cancelled']);
 
@@ -20,12 +21,7 @@ export function displayStatus(job) {
   return job?.status ?? '';
 }
 
-const defaultTransport = {
-  submitJob: async (...args) => (await import('./api.js')).api.submitJob(...args),
-  jobStatus: async (...args) => (await import('./api.js')).api.jobStatus(...args),
-  jobEvents: async (...args) => (await import('./api.js')).api.jobEvents(...args),
-  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-};
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Follow job `id` until it finishes. Handlers:
@@ -36,8 +32,9 @@ const defaultTransport = {
  * Events that land between the last event poll and the terminal status are
  * drained before resolving, so nothing printed at exit is lost.
  */
-export async function followJob(id, handlers = {}, pollMs = 1000, transport = defaultTransport) {
-  const { onLine, onProgress, onStatus } = handlers;
+export async function followJob(id, handlers, pollMs, transport) {
+  const { onLine, onProgress, onStatus } = handlers ?? {};
+  const wait = transport.sleep ?? sleep;
   let after = 0;
 
   const drain = async () => {
@@ -58,15 +55,23 @@ export async function followJob(id, handlers = {}, pollMs = 1000, transport = de
       await drain();
       return status;
     }
-    await transport.sleep(pollMs);
+    await wait(pollMs);
   }
 }
 
 /** Submit a job and follow it. Resolves with the final status row; `onSubmit(id)` fires first. */
-export async function submitAndFollow(jobType, payload, handlers = {}, pollMs = 1000, transport = defaultTransport) {
-  const { id } = await transport.submitJob(jobType, payload, handlers.priority ?? 0);
-  handlers.onSubmit?.(id);
+export async function submitAndFollow(jobType, payload, handlers, pollMs, transport) {
+  const { id } = await transport.submitJob(jobType, payload, handlers?.priority ?? 0);
+  handlers?.onSubmit?.(id);
   return followJob(id, handlers, pollMs, transport);
+}
+
+/** followJob / submitAndFollow bound to an app's transport (its `api`). */
+export function bindJobs(transport, pollMs = 1000) {
+  return {
+    followJob: (id, handlers = {}) => followJob(id, handlers, pollMs, transport),
+    submitAndFollow: (jobType, payload, handlers = {}) => submitAndFollow(jobType, payload, handlers, pollMs, transport),
+  };
 }
 
 const PROGRESS_PREFIX = '@progress ';
@@ -90,14 +95,14 @@ export function summarize(status, took = '') {
     case 'cancelled':
       return `Cancelled${suffix}.`;
     case 'failed':
-      return `Failed${suffix}: ${lastLine(status.error) ?? 'no error recorded'}`;
+      return `Failed${suffix}: ${lastLine(status.error)}`;
     default:
       return status?.status ?? '';
   }
 }
 
-function lastLine(text) {
-  if (!text) return null;
-  const lines = String(text).trim().split('\n');
-  return lines[lines.length - 1];
+/** The last line of a job's error text, for an inline message. */
+export function lastLine(text) {
+  const lines = String(text ?? '').trim().split('\n');
+  return lines[lines.length - 1] || 'no error recorded';
 }

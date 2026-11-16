@@ -3,11 +3,11 @@
   // select some, submit a `workflow` job for them (the worker runs
   // run-targets), then jump to the review-queue item or open the run's trace
   // in Phoenix. The expanded row edits the parameter's metadata (ParameterEditor).
-  import { api } from '../api.js';
+  import { api, submitAndFollow } from '../api.js';
   import ParameterEditor from './ParameterEditor.svelte';
-  import { submitAndFollow, summarize } from '../jobs.js';
-  import { countryName, routingLabel, humanize } from '../labels.js';
-  import Icon from './Icon.svelte';
+  import { summarize } from '@shared/lib/jobs.js';
+  import { countryName, routingLabel, humanize } from '@shared/lib/labels.js';
+  import Icon from '@shared/components/Icon.svelte';
 
   // The component stays mounted (hidden) while other tabs are shown, so a
   // launched run keeps streaming; `active` re-triggers the log auto-scroll on

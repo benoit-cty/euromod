@@ -1,6 +1,7 @@
 <script>
   import { api } from './lib/api.js';
-  import Icon from './lib/components/Icon.svelte';
+  import AppShell from '@shared/components/AppShell.svelte';
+  import Icon from '@shared/components/Icon.svelte';
   import Home from './lib/components/Home.svelte';
   import QueueList from './lib/components/QueueList.svelte';
   import DetailPanel from './lib/components/DetailPanel.svelte';
@@ -12,7 +13,6 @@
   import ParamsTab from './lib/components/ParamsTab.svelte';
   import ImpactTab from './lib/components/ImpactTab.svelte';
   import JobsTab from './lib/components/JobsTab.svelte';
-  import brandBackground from './assets/brand_background_EUROMOD.jpg';
 
   // The UI is remote (ADR 0004): its one credential is the database login,
   // and `reviewer` is that login's current_user as the server sees it. The
@@ -51,7 +51,6 @@
       return null;
     }
   };
-  let dark = $state(stored('theme') === 'dark');
   // Expert tools (golden set, evaluation, impact, jobs) are for the people
   // who build and measure the pipeline; a reviewer never needs them, so they
   // stay out of the tab strip until asked for.
@@ -96,9 +95,7 @@
   });
 
   $effect(() => {
-    document.body.classList.toggle('dark', dark);
     try {
-      localStorage.setItem('theme', dark ? 'dark' : 'light');
       localStorage.setItem('expert', expert ? '1' : '0');
     } catch {
       /* preferences are a convenience */
@@ -281,20 +278,27 @@
   </button>
 {/snippet}
 
-<div class="app">
-  <!-- EUROMOD's own layout: a tab strip under the logo, a ribbon of grouped
-       commands, the brand star behind the pages, a status bar at the foot. -->
-  <header class="tabstrip">
-    <div class="logo" title="Nómos: EUROMOD parameter review">N</div>
-    <nav role="tablist">
-      {#each PAGES.filter((p) => !p.expert) as p (p.id)}{@render navItem(p)}{/each}
-      {#if expert}
-        {#each PAGES.filter((p) => p.expert) as p (p.id)}{@render navItem(p)}{/each}
-      {/if}
-    </nav>
-  </header>
+<AppShell
+  logoTitle="Nómos: EUROMOD parameter review"
+  themeKey="theme"
+  {workerAlive}
+  workerHint={{
+    online: 'The worker that runs checks, searches and imports is online.',
+    offline: 'No worker is running: submitted work waits in the queue until one starts.',
+  }}
+  user={config.reviewer}
+  userHint="Your database login: every decision and job is recorded under it."
+  bind:error
+  status={pendingCount ? `${pendingCount} proposal(s) waiting for review` : 'Ready'}
+>
+  {#snippet tabs()}
+    {#each PAGES.filter((p) => !p.expert) as p (p.id)}{@render navItem(p)}{/each}
+    {#if expert}
+      {#each PAGES.filter((p) => p.expert) as p (p.id)}{@render navItem(p)}{/each}
+    {/if}
+  {/snippet}
 
-  <div class="ribbon">
+  {#snippet ribbon()}
     <div class="group">
       <div class="cmds">
         <button
@@ -324,174 +328,94 @@
       </div>
       <div class="group-label">Page</div>
     </div>
-    <div class="group">
-      <div class="cmds col">
-        <label class="inline">
-          Theme:
-          <select value={dark ? 'dark' : 'light'} onchange={(e) => (dark = e.currentTarget.value === 'dark')}>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
-        <label class="inline toggle">
-          <input type="checkbox" bind:checked={expert} />
-          <Icon name="tools" size={15} /> Show expert tools
-        </label>
-      </div>
-      <div class="group-label">Display</div>
-    </div>
-    <div class="group">
-      <div class="cmds col">
-        <div
-          class="inline"
-          title={workerAlive
-            ? 'The worker that runs checks, searches and imports is online.'
-            : workerAlive === false
-              ? 'No worker is running: submitted work waits in the queue until one starts.'
-              : 'Worker status unknown'}
-        >
-          <span class="dot" class:on={workerAlive} class:off={workerAlive === false}></span>
-          {workerAlive ? 'Worker online' : workerAlive === false ? 'Worker offline' : 'Worker …'}
-        </div>
-        <div class="inline" title="Your database login: every decision and job is recorded under it.">
-          Signed in as <strong>{config.reviewer ?? '—'}</strong>
-        </div>
-      </div>
-      <div class="group-label">Connection</div>
-    </div>
-  </div>
+  {/snippet}
 
-  <div class="content" style:--brand-bg={`url(${brandBackground})`}>
-    {#if error}
-      <div class="callout err banner">
-        <span>{error}</span>
-        <button class="ghost" onclick={() => (error = '')} title="Dismiss"><Icon name="x" size={14} /></button>
-      </div>
-    {/if}
-    {#if statusMsg}
-      <div class="callout ok banner"><span>{statusMsg}</span></div>
-    {/if}
+  {#snippet display()}
+    <label class="inline toggle">
+      <input type="checkbox" bind:checked={expert} />
+      <Icon name="tools" size={15} /> Show expert tools
+    </label>
+  {/snippet}
 
-    {#key dbGeneration}
-    <main hidden={tab !== 'home'} class="single">
-      <Home
-        bind:this={homePage}
-        {items}
-        loading={queueLoading}
-        reviewer={config.reviewer}
-        onnavigate={go}
-        onexport={exportChanges}
+  {#if statusMsg}
+    <div class="callout ok banner"><span>{statusMsg}</span></div>
+  {/if}
+
+  {#key dbGeneration}
+  <main hidden={tab !== 'home'} class="single">
+    <Home
+      bind:this={homePage}
+      {items}
+      loading={queueLoading}
+      reviewer={config.reviewer}
+      onnavigate={go}
+      onexport={exportChanges}
+    />
+  </main>
+  {#if visited.review}
+    <main class="split" hidden={tab !== 'review'}>
+      <QueueList {items} {facets} loading={queueLoading} {selectedId} onselect={(id) => (selectedId = id)} />
+      <DetailPanel
+        item={selected}
+        {siblings}
+        onselectrun={(id) => (selectedId = id)}
+        ondecide={decide}
+        phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
+        {phoenixGid}
       />
     </main>
-    {#if visited.review}
-      <main class="split" hidden={tab !== 'review'}>
-        <QueueList {items} {facets} loading={queueLoading} {selectedId} onselect={(id) => (selectedId = id)} />
-        <DetailPanel
-          item={selected}
-          {siblings}
-          onselectrun={(id) => (selectedId = id)}
-          ondecide={decide}
-          phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
-          {phoenixGid}
-        />
-      </main>
-    {/if}
-    {#if visited.params}
-      <main class="single" hidden={tab !== 'params'}>
-        <ParamsTab
-          bind:this={paramsTab}
-          phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
-          onopenitem={openReviewItem}
-          active={tab === 'params'}
-          onrunning={(v) => (paramsRunning = v)}
-        />
-      </main>
-    {/if}
-    {#if visited.audit}
-      <main class="single" hidden={tab !== 'audit'}>
-        <AuditLog {decisions} />
-      </main>
-    {/if}
-    {#if visited.database}
-      <main class="single" hidden={tab !== 'database'}>
-        <DatabaseTab bind:this={dbTab} dbUrl={config.db_url} onchangedb={changeDb} />
-      </main>
-    {/if}
-    {#if visited.ingest}
-      <main class="single" hidden={tab !== 'ingest'}>
-        <IngestTab />
-      </main>
-    {/if}
-    {#if visited.golden}
-      <main class="single" hidden={tab !== 'golden'}>
-        <GoldenTab bind:this={goldenTab} />
-      </main>
-    {/if}
-    {#if visited.eval}
-      <main class="single" hidden={tab !== 'eval'}>
-        <EvalTab bind:this={evalTab} dbUrl={config.db_url} onchangedb={changeDb} />
-      </main>
-    {/if}
-    {#if visited.impact}
-      <main class="single" hidden={tab !== 'impact'}>
-        <ImpactTab bind:this={impactTab} />
-      </main>
-    {/if}
-    {#if visited.jobs}
-      <main class="single" hidden={tab !== 'jobs'}>
-        <JobsTab bind:this={jobsTab} active={tab === 'jobs'} />
-      </main>
-    {/if}
-    {/key}
-  </div>
-
-  <footer class="statusbar">
-    <span>{pendingCount ? `${pendingCount} proposal(s) waiting for review` : 'Ready'}</span>
-    <span class="muted">{config.reviewer ? `Signed in as ${config.reviewer}` : 'Not connected'}</span>
-  </footer>
-</div>
+  {/if}
+  {#if visited.params}
+    <main class="single" hidden={tab !== 'params'}>
+      <ParamsTab
+        bind:this={paramsTab}
+        phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
+        onopenitem={openReviewItem}
+        active={tab === 'params'}
+        onrunning={(v) => (paramsRunning = v)}
+      />
+    </main>
+  {/if}
+  {#if visited.audit}
+    <main class="single" hidden={tab !== 'audit'}>
+      <AuditLog {decisions} />
+    </main>
+  {/if}
+  {#if visited.database}
+    <main class="single" hidden={tab !== 'database'}>
+      <DatabaseTab bind:this={dbTab} dbUrl={config.db_url} onchangedb={changeDb} />
+    </main>
+  {/if}
+  {#if visited.ingest}
+    <main class="single" hidden={tab !== 'ingest'}>
+      <IngestTab />
+    </main>
+  {/if}
+  {#if visited.golden}
+    <main class="single" hidden={tab !== 'golden'}>
+      <GoldenTab bind:this={goldenTab} />
+    </main>
+  {/if}
+  {#if visited.eval}
+    <main class="single" hidden={tab !== 'eval'}>
+      <EvalTab bind:this={evalTab} dbUrl={config.db_url} onchangedb={changeDb} />
+    </main>
+  {/if}
+  {#if visited.impact}
+    <main class="single" hidden={tab !== 'impact'}>
+      <ImpactTab bind:this={impactTab} />
+    </main>
+  {/if}
+  {#if visited.jobs}
+    <main class="single" hidden={tab !== 'jobs'}>
+      <JobsTab bind:this={jobsTab} active={tab === 'jobs'} />
+    </main>
+  {/if}
+  {/key}
+</AppShell>
 
 <style>
-  .app { display: flex; flex-direction: column; height: 100vh; }
-
-  /* --- Tab strip (EUROMOD: logo disc, then light-blue tabs) --- */
-  .tabstrip {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.6rem;
-    background: var(--strip);
-    padding: 0.35rem 0.5rem 0;
-    flex: none;
-  }
-  .logo {
-    width: 2.6rem;
-    height: 2.6rem;
-    margin-bottom: 0.25rem;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #4f72c9, #1f3d8f);
-    border: 2px solid #fff;
-    box-shadow: 0 0 0 1px var(--border-strong);
-    color: #fff;
-    display: grid;
-    place-items: center;
-    font-size: 1.35rem;
-    font-weight: 700;
-    flex: none;
-  }
-  nav { display: flex; gap: 3px; overflow-x: auto; min-width: 0; }
-  .tab {
-    border: 1px solid var(--border-strong);
-    border-bottom: 0;
-    border-radius: 10px 10px 0 0;
-    background: var(--tab);
-    color: var(--text);
-    padding: 0.5rem 1rem;
-    box-shadow: none;
-    white-space: nowrap;
-    flex: none;
-  }
-  .tab:hover:not(:disabled) { background: var(--tab-hover); border-color: var(--border-strong); box-shadow: none; }
-  .tab.active { background: var(--panel); position: relative; top: 1px; padding-bottom: calc(0.5rem + 1px); }
+  /* What the review UI adds to the shared shell (@shared/shell.css). */
   .tab.expert { font-style: italic; }
   .count {
     background: var(--accent);
@@ -505,76 +429,8 @@
   }
   .running-dot { color: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.25; } }
-
-  /* --- Ribbon: groups of commands, each captioned underneath --- */
-  .ribbon {
-    display: flex;
-    flex: none;
-    background: var(--panel);
-    border-top: 1px solid var(--border-strong);
-    border-bottom: 1px solid var(--border-strong);
-    overflow-x: auto;
-    font-size: 0.9rem;
-  }
-  .group {
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid var(--border-strong);
-    flex: none;
-  }
   .group.page-group { flex: 1 1 18rem; min-width: 14rem; }
-  .cmds { flex: 1; display: flex; gap: 0.3rem; padding: 0.4rem 0.6rem; align-items: stretch; }
-  .cmds.col { flex-direction: column; gap: 0.35rem; justify-content: center; }
-  .group-label {
-    text-align: center;
-    font-size: 12px;
-    color: var(--text);
-    border-top: 1px solid var(--border-strong);
-    padding: 0.05rem 0.5rem 0.1rem;
-  }
-  .big-cmd {
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.4rem 0.7rem;
-    border-radius: 5px;
-    min-width: 4rem;
-    background: transparent;
-    border-color: transparent;
-  }
-  /* EUROMOD ribbon buttons: flat until hovered, then a border and a 1px shadow. */
-  .big-cmd:hover:not(:disabled) { border-color: var(--border-strong); }
   .page-intro { color: var(--muted); font-size: 0.85rem; }
-  .inline { display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; color: var(--muted); }
-  .inline strong { color: var(--text); }
-  .inline select { padding: 0.2rem 0.4rem; }
-  .toggle { cursor: pointer; }
-  .dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--border-strong); }
-  .dot.on { background: var(--ok); }
-  .dot.off { background: var(--err); }
-
-  /* --- Content over the brand star --- */
-  .content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    padding: 1rem 1.2rem;
-    gap: 0.9rem;
-    position: relative;
-    isolation: isolate;
-    background: var(--bg);
-  }
-  .content::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: var(--brand-bg) right center / auto 100% no-repeat;
-    opacity: var(--brand-opacity);
-    pointer-events: none;
-  }
-  .banner { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.5rem 0.9rem; }
-  .banner button { padding: 0.2rem; }
 
   main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   main.single > :global(*) { flex: 1; min-height: 0; }
@@ -586,20 +442,8 @@
   /* display:grid/flex above would override the hidden attribute's default */
   main[hidden] { display: none; }
 
-  /* --- Status bar --- */
-  .statusbar {
-    flex: none;
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.15rem 0.6rem;
-    font-size: 0.78rem;
-    background: var(--panel);
-    border-top: 1px solid var(--border-strong);
-  }
-
   @media (max-width: 1000px) {
-    .page-group { display: none; }
+    .group.page-group { display: none; }
     main.split { grid-template-columns: 1fr; overflow: auto; }
   }
 </style>

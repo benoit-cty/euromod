@@ -1,7 +1,7 @@
 <script>
   // Renders one value envelope (scalar or bracket schedule); when `other` is
   // given, bracket cells that differ from it are highlighted.
-  import { humanize } from '../labels.js';
+  import { humanize } from '@shared/lib/labels.js';
 
   let { title, value, other = null, unit = '' } = $props();
 

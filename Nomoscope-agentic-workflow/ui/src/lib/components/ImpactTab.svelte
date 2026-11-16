@@ -3,8 +3,8 @@
   // the pipeline CLI over Phoenix spans (see nomoscope_workflow/impact.py),
   // run on the worker as an `impact` job whose result is the report.
   // Impacts are min–max ranges: proprietary model architectures are estimated.
-  import { api } from '../api.js';
-  import { submitAndFollow, summarize } from '../jobs.js';
+  import { api, submitAndFollow } from '../api.js';
+  import { summarize } from '@shared/lib/jobs.js';
 
   let report = $state(null);
   let projects = $state([]);

@@ -3,10 +3,10 @@
   // `ingest` (instrument / citation / document / route), `embed`, `translate`
   // — and follows its events until it finishes. Nothing runs on this machine.
   import { onMount } from 'svelte';
-  import { api } from '../api.js';
-  import { submitAndFollow, summarize } from '../jobs.js';
-  import { countryName, humanize } from '../labels.js';
-  import Icon from './Icon.svelte';
+  import { api, submitAndFollow } from '../api.js';
+  import { summarize } from '@shared/lib/jobs.js';
+  import { countryName, humanize } from '@shared/lib/labels.js';
+  import Icon from '@shared/components/Icon.svelte';
 
   const ACTIONS = {
     document: { run: 'Add this document', title: 'A document or web page', blurb: 'A circular, decree, guidance page or PDF you found.' },

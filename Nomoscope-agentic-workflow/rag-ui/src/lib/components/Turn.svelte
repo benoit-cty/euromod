@@ -4,7 +4,7 @@
   // source panel, and links open in the system browser.
   import { api } from '../api.js';
   import { stepLabel } from '../chat.js';
-  import { lastLine } from '../jobs.js';
+  import { lastLine } from '@shared/lib/jobs.js';
   import { renderMarkdown } from '../markdown.js';
 
   let { turn, selected = false, selectedQuote = null, onSelectQuote, onSelect, onCancel } = $props();

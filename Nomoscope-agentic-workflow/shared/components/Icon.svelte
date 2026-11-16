@@ -1,7 +1,8 @@
 <script>
   // A small inline icon set (stroke icons on a 24-unit grid) so the tabs
-  // and buttons read at a glance. No icon font, no network: the app is a
-  // desktop window and must render offline.
+  // and buttons read at a glance, shared by the review UI and the RAG chat.
+  // No icon font, no network: the apps are desktop windows and must render
+  // offline.
   let { name, size = 18 } = $props();
 
   const PATHS = {
@@ -24,6 +25,9 @@
     arrow: ['M5 12h14', 'M13 6l6 6-6 6'],
     book: ['M4 19.5A2.5 2.5 0 0 1 6.5 17H20', 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'],
     sparkle: ['M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z', 'M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z'],
+    chat: ['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
+    globe: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M2 12h20', 'M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z'],
+    send: ['M22 2 11 13', 'M22 2l-7 20-4-9-9-4z'],
     tools: ['M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z'],
   };
 </script>

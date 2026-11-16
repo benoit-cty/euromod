@@ -4,9 +4,9 @@
   // be ingested — an `ingest` job (archive-first: fetch → snapshot → parse →
   // chunk) followed by an `embed` job, exactly as the Ingest tab of the
   // review UI does. Ask again once it is in.
-  import { api } from '../api.js';
+  import { api, submitAndFollow } from '../api.js';
   import { ingestPayload } from '../chat.js';
-  import { lastLine, submitAndFollow } from '../jobs.js';
+  import { lastLine } from '@shared/lib/jobs.js';
 
   let { result } = $props();
 

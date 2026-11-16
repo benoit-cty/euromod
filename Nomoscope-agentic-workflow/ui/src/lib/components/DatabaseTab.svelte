@@ -1,9 +1,9 @@
 <script>
   import { api } from '../api.js';
   import { renderView, splitSentences } from '../highlight.js';
-  import { countryName, formatCount, humanize, trustLabel } from '../labels.js';
+  import { countryName, formatCount, humanize, trustLabel } from '@shared/lib/labels.js';
   import { countryReadiness } from '../readiness.js';
-  import Icon from './Icon.svelte';
+  import Icon from '@shared/components/Icon.svelte';
   import DbUrlField from './DbUrlField.svelte';
 
   const LANGUAGES = { en: 'English', fr: 'French', nl: 'Dutch', es: 'Spanish', lt: 'Lithuanian' };

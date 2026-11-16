@@ -1,5 +1,5 @@
 <script>
-  import { routingLabel, statusLabel, countryName } from '../labels.js';
+  import { routingLabel, statusLabel, countryName } from '@shared/lib/labels.js';
 
   let { items, facets, selectedId, onselect, loading = false } = $props();
 

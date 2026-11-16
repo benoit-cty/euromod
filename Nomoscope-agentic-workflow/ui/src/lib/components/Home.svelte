@@ -3,8 +3,8 @@
   // what is waiting for me, can I export, is each country usable — and one
   // button per answer. Every number behind them is one click away on its page.
   import { api } from '../api.js';
-  import Icon from './Icon.svelte';
-  import { countryName, formatCount, relativeTime, humanize } from '../labels.js';
+  import Icon from '@shared/components/Icon.svelte';
+  import { countryName, formatCount, relativeTime, humanize } from '@shared/lib/labels.js';
   import { countryReadiness } from '../readiness.js';
 
   let { items = [], loading = false, reviewer = null, onnavigate, onexport } = $props();

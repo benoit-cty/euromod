@@ -2,7 +2,7 @@
   // Every decision (params.review_decisions, append-only), newest first. The
   // log is also future training/validation data, so the technical columns
   // stay one tick away.
-  import { statusLabel, routingLabel, relativeTime } from '../labels.js';
+  import { statusLabel, routingLabel, relativeTime } from '@shared/lib/labels.js';
 
   let { decisions = [] } = $props();
   let search = $state('');

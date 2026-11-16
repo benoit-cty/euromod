@@ -5,8 +5,8 @@
   // (all job slots busy, an embed/translate batch of the same type ahead, or
   // — shown as "waiting" — another embeddings build holding the GPU lock).
   import { api } from '../api.js';
-  import { TERMINAL, displayStatus } from '../jobs.js';
-  import { parseTimestamp } from '../labels.js';
+  import { TERMINAL, displayStatus } from '@shared/lib/jobs.js';
+  import { parseTimestamp } from '@shared/lib/labels.js';
 
   let { active = true } = $props();
 

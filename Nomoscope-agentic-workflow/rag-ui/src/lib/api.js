@@ -1,26 +1,22 @@
-// Single seam between the Svelte frontend and the Rust commands (ADR 0004:
-// every call is a database round trip; anything needing a model or the
-// internet is a job in ops.jobs that the worker runs). The database URL lives
-// on the Rust side: no call carries it.
+// Single seam between the RAG chat's Svelte frontend and its Rust commands:
+// the commands both apps share (@shared/lib/api.js) plus the chat's own
+// (ADR 0004: every call is a database round trip; anything needing a model
+// or the internet is a job in ops.jobs that the worker runs). The database
+// URL lives on the Rust side: no call carries it.
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-shell';
+import { createApi } from '@shared/lib/api.js';
+import { bindJobs } from '@shared/lib/jobs.js';
 
-const payload = (fields) => ({ payload: fields });
+const shared = createApi(invoke, open);
+const { call } = shared;
 
 export const api = {
-  getEnvConfig: () => invoke('get_env_config'),
-  // { workers: [{ alive, … }], models: [{ model, kind, is_default }] }
-  workerStatus: () => invoke('worker_status'),
-  submitJob: (jobType, body, priority = 0) => invoke('submit_job', payload({ job_type: jobType, payload: body, priority })),
-  jobStatus: (id) => invoke('job_status', payload({ id })),
-  jobEvents: (id, after = 0) => invoke('job_events', payload({ id, after })),
-  cancelJob: (id) => invoke('cancel_job', payload({ id })),
+  ...shared,
   // Chat history = the caller's own `chat` jobs, grouped by conversation_id.
-  listConversations: (limit = 40) => invoke('list_conversations', payload({ limit })),
-  conversationTurns: (conversationId) => invoke('conversation_turns', payload({ conversation_id: conversationId })),
-  // Every language rendering of the version a chunk belongs to.
-  chunkRenderings: (chunkId) => invoke('chunk_renderings', payload({ chunk_id: chunkId })),
-  // Direct search, no LLM: { results, notice } (notice = fell back to full text).
-  searchArticles: (payload) => invoke('search_articles', { payload }),
-  openExternal: (url) => open(url),
+  listConversations: (limit = 40) => call('list_conversations', { limit }),
+  conversationTurns: (conversationId) => call('conversation_turns', { conversation_id: conversationId }),
 };
+
+// A chat turn is short: poll a little faster than the review UI's batches.
+export const { followJob, submitAndFollow } = bindJobs(api, 800);

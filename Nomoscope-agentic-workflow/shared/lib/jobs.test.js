@@ -1,7 +1,7 @@
-// Run with: npm test (node --test src/lib)
+// Run with: npm test in either app (node --test also covers ../shared/lib)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { followJob, submitAndFollow, parseProgress, summarize, displayStatus } from './jobs.js';
+import { bindJobs, followJob, submitAndFollow, parseProgress, summarize, displayStatus, lastLine } from './jobs.js';
 
 // A fake worker: the job's event log grows between polls, its status flips
 // after a number of polls. `after` seen by each events call is recorded so the
@@ -80,6 +80,23 @@ test('submitAndFollow submits with the priority and reports the id before follow
   assert.equal(result.status, 'failed');
   assert.equal(summarize(result, '3s'), 'Failed after 3s: last line');
   assert.equal(summarize({ status: 'cancelled' }), 'Cancelled.');
+  assert.equal(summarize({ status: 'failed' }), 'Failed: no error recorded');
+});
+
+test('lastLine keeps the last line of an error, or says there is none', () => {
+  assert.equal(lastLine('Traceback\n  …\nValueError: bad'), 'ValueError: bad');
+  assert.equal(lastLine(null), 'no error recorded');
+  assert.equal(lastLine('  \n'), 'no error recorded');
+});
+
+test('bindJobs binds the transport and the poll interval once', async () => {
+  const fake = fakeTransport({ pages: [[ev(1, 'stdout', 'hi')]], statuses: [{ id: 42, status: 'succeeded' }] });
+  const { submitAndFollow: run } = bindJobs(fake, 0);
+  const lines = [];
+  const result = await run('embed', {}, { priority: 5, onLine: (e) => lines.push(e.line) });
+  assert.equal(result.status, 'succeeded');
+  assert.deepEqual(fake.submitted, [{ jobType: 'embed', payload: {}, priority: 5 }]);
+  assert.deepEqual(lines, ['hi']);
 });
 
 test('a running job behind the GPU lock shows as waiting', () => {
