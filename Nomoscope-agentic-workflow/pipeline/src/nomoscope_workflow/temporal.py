@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from datetime import date
 
-from . import retrieval
+from . import idiom, retrieval
 from .schema import (
     ParameterRecord,
     TemporalBasis,
@@ -146,15 +146,7 @@ def _income_year_date_issues(
 
 _ARTICLE_NUM = re.compile(r"art(?:icle|\.)\s*([0-9]+(?:\s+[A-Za-z]+)*)", re.IGNORECASE)
 
-#: Stock openings of a French applicability clause. A finance-act article ends
-#: with one — "II. - Les A et B du I s'appliquent à l'impôt sur le revenu dû au
-#: titre de l'année 2024 et des années suivantes" — and it governs everything
-#: above it, however far away that is.
-_APPLICABILITY = re.compile(
-    r"(s'appliquent?|applicables?|à compter de|au titre de|pour l'imposition|"
-    r"aux revenus (?:perçus|réalisés))",
-    re.IGNORECASE,
-)
+_APPLICABILITY = idiom.FR_APPLICABILITY
 
 
 def _cross_article_year_proof(cited_citation: str | None, text: str, income_year: int) -> bool:

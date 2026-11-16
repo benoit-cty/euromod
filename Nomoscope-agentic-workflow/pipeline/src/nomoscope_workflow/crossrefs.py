@@ -11,12 +11,11 @@ import psycopg
 from psycopg.rows import dict_row
 
 from .schema import RetrievalHit
+from . import idiom
 from .corpus import article_label, CHUNK_JOINS, HIT_COLUMNS, Scope, scope_codes
 from .locate import _citation_pattern
 
-#: «article R. 522-2», «articles L. 531-2 et L. 531-3», «art. D. 633-3»: a
-#: code article number as the text of a French code writes it.
-_CODE_ARTICLE_REF = re.compile(r"\b([LRD])\.?\s?(\d+(?:-\d+)+)\b")
+_CODE_ARTICLE_REF = idiom.FR_CODE_ARTICLE_REF
 #: Explicit references followed per article (regulatory R./D. ones first:
 #: they carry the figures), and the most a call adds.
 CROSS_REF_PER_ARTICLE = 4
@@ -112,7 +111,7 @@ def _code_refs(content: str, own: str | None, codes: dict[str, str]) -> list[tup
                 ),
                 None,
             )
-        if after is None and "même code" in tail:
+        if after is None and idiom.FR_SAME_CODE in tail:
             after = next((iid for start, end, iid in reversed(mentions) if end <= match.start()), None)
         instrument = after or own
         if instrument is not None:
@@ -206,14 +205,8 @@ def cross_referenced_articles(
     return list(found.values())
 
 
-#: «l'article 1er», «aux articles 3 et 4», «à l'article 2 du présent décret»:
-#: an article of the act itself. A number followed by another act («de la loi
-#: du …», «du code …») is that act's, and skipped.
-_SAME_ACT_REF = re.compile(r"\barticles?\s+(\d+)(?:\s?er)?\b(?!\s*[-.]\d)", re.IGNORECASE)
-_OTHER_ACT_AFTER = re.compile(
-    r"^\s*(?:,\s*)?(?:du|de la|de l'|de l’|des)\s+(?!présente?\b|même décret|même arrêté)",
-    re.IGNORECASE,
-)
+_SAME_ACT_REF = idiom.FR_SAME_ACT_REF
+_OTHER_ACT_AFTER = idiom.FR_OTHER_ACT_AFTER
 SAME_ACT_PER_ARTICLE = 3
 SAME_ACT_MAX = 6
 #: Backwards: the retrieved articles whose citing articles are looked up

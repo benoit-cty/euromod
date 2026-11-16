@@ -14,7 +14,7 @@ import re
 from decimal import ROUND_HALF_UP, Decimal
 
 from . import issues as issue_text
-from . import quotes
+from . import idiom, quotes
 from .values import eval_arith
 from .schema import ParameterValue, ProposalDraft, RetrievalHit
 
@@ -150,15 +150,8 @@ def _table_cells(run: str) -> list[str]:
     return [" ".join(cell) for cell in cells] if len(cells) > 1 else []
 
 
-#: Numbers the law spells out: «dans la limite de trois fois ce plafond»
-#: (CSS D622-7) states the operand 3 of a derivation as surely as «3» would;
-#: two derivations of the 5 Nov run were refused for it.
-_NUMBER_WORDS = {
-    "deux": 2.0, "trois": 3.0, "quatre": 4.0, "cinq": 5.0, "six": 6.0, "sept": 7.0,
-    "huit": 8.0, "neuf": 9.0, "dix": 10.0, "onze": 11.0, "douze": 12.0,
-    "double": 2.0, "triple": 3.0, "moitié": 0.5, "quart": 0.25,
-    "two": 2.0, "three": 3.0, "four": 4.0, "five": 5.0, "half": 0.5, "twice": 2.0,
-}
+#: Numbers the law spells out (idiom.NUMBER_WORDS, every language).
+_NUMBER_WORDS = idiom.ALL_NUMBER_WORDS
 
 
 def _extract_states(extract: str, value: float) -> bool:
