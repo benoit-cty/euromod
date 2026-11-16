@@ -7,6 +7,7 @@ import re
 from datetime import date
 
 from .regions import region_key
+from .routing import current_value
 from .schema import (
     ParameterRecord,
     ProposalDraft,
@@ -15,7 +16,7 @@ from .schema import (
     start_of_year_as_of,
 )
 
-PROMPT_VERSION = "0.14.2"
+PROMPT_VERSION = "0.14.3"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -221,7 +222,10 @@ def fit_hits(
 def _parameter_block(record: ParameterRecord, as_of: date) -> str:
     """Render the parameter definition and its current value for the prompt."""
     info = record.information
-    current = record.values[-1] if record.values else None
+    # The value `diff` routes against (held on as_of); the latest one on file
+    # only when nothing is held that day. It was always the latest, so a run
+    # for 2025 showed the model a 2026 value (code audit 4).
+    current = current_value(record, as_of) or (record.values[-1] if record.values else None)
     temporal_note = ""
     if info.temporal_basis == "income_year":
         # NOT as_of.year. EUROMOD system year Y holds the value the law labels
