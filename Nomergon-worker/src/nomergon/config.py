@@ -73,6 +73,9 @@ class WorkerConfig:
     stale_seconds: float = 60.0
     event_retention_days: int = 30
     worker_id: str = ""
+    #: The one directory an ``ingest`` job may read a contributed file from
+    #: (WORKER_DOCUMENT_DIR); unset, a document source must be an http(s) URL.
+    document_dir: Path | None = None
 
     @property
     def default_model(self) -> str | None:
@@ -133,4 +136,5 @@ def load_config(repo_root: Path | None = None) -> WorkerConfig:
         stale_seconds=_float_env("WORKER_STALE_SECONDS", 60.0),
         event_retention_days=_int_env("WORKER_EVENT_RETENTION_DAYS", 30),
         worker_id=_env("WORKER_ID", "") or default_worker_id(),
+        document_dir=Path(_env("WORKER_DOCUMENT_DIR", "")) if _env("WORKER_DOCUMENT_DIR", "") else None,
     )

@@ -87,6 +87,7 @@
       "result": "result_line",
       "payload_schema": {
         "additionalProperties": false,
+        "description": "One ingest CLI run: an official act by id or by citation, a contributed\ndocument, or the ``route`` pre-check. Only these four commands and these\nfields reach ``nomotheca_ingest.cli``; the database URL is the worker's.",
         "properties": {
           "command": {
             "enum": [
@@ -98,12 +99,185 @@
             "title": "Command",
             "type": "string"
           },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z]{2}(-[A-Za-z0-9]{1,8})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Country code, e.g. fr, ES-AR",
+            "title": "Jurisdiction"
+          },
+          "national_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "instrument: the act's national id",
+            "title": "National Id"
+          },
+          "citation": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "citation: the citation text to resolve",
+            "title": "Citation"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "citation: the date the citation is resolved at",
+            "title": "As Of"
+          },
+          "source_code": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_-]{1,32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "e.g. FR-KALI",
+            "title": "Source Code"
+          },
+          "max_items": {
+            "anyOf": [
+              {
+                "maximum": 10000,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Items"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "document/route: an http(s) URL, or a file under the worker's WORKER_DOCUMENT_DIR",
+            "title": "Source"
+          },
+          "lang": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z]{2,3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lang"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "pattern": "^[\\w-]{1,40}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "in the country's own words",
+            "title": "Kind"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Valid From"
+          },
+          "implements": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "national_id of the implemented act",
+            "title": "Implements"
+          },
           "args": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Args",
-            "type": "array"
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Deprecated: the CLI arguments the desktop apps build; read through an allow-list into the fields above, never passed through. Give either args or the fields.",
+            "title": "Args"
           }
         },
         "required": [

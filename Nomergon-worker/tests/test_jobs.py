@@ -125,17 +125,108 @@ def test_ingest_argv_puts_the_database_url_last(cfg: WorkerConfig) -> None:
     assert jobs.package_dir("ingest", cfg) == cfg.ingest_dir
 
 
-def test_ingest_document_args_pass_through_untouched(cfg: WorkerConfig) -> None:
-    args = ["/tmp/circulaire.pdf", "--jurisdiction", "fr", "--kind", "circulaire", "--valid-from", "2025-04-01", "--progress-json"]
-    argv = build("ingest", {"command": "document", "args": args}, cfg)
-    assert argv[3] == "document"
-    assert argv[4 : 4 + len(args)] == args
-    assert argv[-2:] == ["--database-url", DB]
+DOCUMENT_ARGS = [
+    "https://www.urssaf.fr/circulaire-2025.pdf",
+    "--jurisdiction", "fr",
+    "--lang", "fr",
+    "--title", "Circulaire 2025-01",
+    "--kind", "circulaire",
+    "--valid-from", "2025-04-01",
+    "--implements", "JORFTEXT000051168007",
+    "--progress-json",
+]  # fmt: skip
+
+
+def test_ingest_document_legacy_args_give_the_same_argv(cfg: WorkerConfig) -> None:
+    """IngestTab.documentArgs(): read through the allow-list, rebuilt identically."""
+    argv = build("ingest", {"command": "document", "args": DOCUMENT_ARGS}, cfg)
+    assert argv[3:] == ["document", *DOCUMENT_ARGS, "--database-url", DB]
+
+
+def test_ingest_typed_payloads(cfg: WorkerConfig) -> None:
+    typed = {
+        "command": "document",
+        "source": "https://www.urssaf.fr/circulaire-2025.pdf",
+        "jurisdiction": "fr",
+        "lang": "fr",
+        "title": "Circulaire 2025-01",
+        "kind": "circulaire",
+        "valid_from": "2025-04-01",
+        "implements": "JORFTEXT000051168007",
+    }
+    assert build("ingest", typed, cfg)[3:] == ["document", *DOCUMENT_ARGS, "--database-url", DB]
+    citation = {"command": "citation", "jurisdiction": "fr", "citation": "CGI art. 197", "as_of": "2025-06-01", "max_items": 50}
+    assert build("ingest", citation, cfg)[3:] == [
+        "citation", "fr", "CGI art. 197", "2025-06-01", "--max-items", "50", "--database-url", DB,
+    ]  # fmt: skip
+    legacy = ["fr", "CGI art. 197", "2025-06-01", "--source-code", "FR-LEGI", "--max-items", "50"]
+    assert build("ingest", {"command": "citation", "args": legacy}, cfg)[3:] == [
+        "citation", *legacy, "--database-url", DB,
+    ]  # fmt: skip
+    instrument = {"command": "instrument", "jurisdiction": "fr", "national_id": "KALITEXT000005678", "source_code": "FR-KALI"}
+    assert build("ingest", instrument, cfg)[3:] == [
+        "instrument", "fr", "KALITEXT000005678", "--source-code", "FR-KALI", "--database-url", DB,
+    ]  # fmt: skip
+
+
+def test_ingest_route_with_and_without_a_source(cfg: WorkerConfig) -> None:
+    assert build("ingest", {"command": "route", "args": []}, cfg)[3:] == ["route", "--database-url", DB]
+    assert build("ingest", {"command": "route"}, cfg)[3:] == ["route", "--database-url", DB]
+    url = "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051168007"
+    assert build("ingest", {"command": "route", "args": [url]}, cfg)[3:] == ["route", url, "--database-url", DB]
 
 
 def test_ingest_refuses_commands_outside_the_contract() -> None:
     with pytest.raises(ValueError):
         jobs.parse_payload("ingest", {"command": "reparse", "args": []})
+    with pytest.raises(ValueError):
+        jobs.parse_payload("ingest", {"command": "reparse", "jurisdiction": "fr"})
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["fr", "JORFTEXT000051168007", "--database-url", "postgresql://evil/db"],
+        ["fr", "JORFTEXT000051168007", "-d", "postgresql://evil/db"],
+        ["fr", "JORFTEXT000051168007", "--max-items=5"],
+        ["fr", "JORFTEXT000051168007", "--trigger", "cache_miss"],
+        ["fr", "JORFTEXT000051168007", "extra-positional"],
+        ["fr", "JORFTEXT000051168007", "--max-items"],
+        ["fr", "JORFTEXT000051168007", "--max-items", "lots"],
+        ["fr"],
+    ],
+)
+def test_ingest_legacy_args_outside_the_allow_list_are_refused(args: list[str]) -> None:
+    with pytest.raises(ValueError):
+        jobs.parse_payload("ingest", {"command": "instrument", "args": args})
+
+
+def test_ingest_document_refuses_unlisted_flags_and_mixed_forms() -> None:
+    with pytest.raises(ValueError, match="not allowed"):
+        jobs.parse_payload("ingest", {"command": "document", "args": [*DOCUMENT_ARGS, "--trigger", "cache_miss"]})
+    with pytest.raises(ValueError, match="either args"):
+        jobs.parse_payload("ingest", {"command": "route", "args": [], "source": "https://x"})
+    with pytest.raises(ValueError, match="needs valid_from"):
+        jobs.parse_payload("ingest", {"command": "document", "args": DOCUMENT_ARGS[:9]})
+    with pytest.raises(ValueError, match="takes no national_id"):
+        jobs.parse_payload("ingest", {"command": "route", "national_id": "x"})
+    with pytest.raises(ValueError, match="must not start"):
+        jobs.parse_payload("ingest", {"command": "instrument", "jurisdiction": "fr", "national_id": "--help"})
+
+
+def test_ingest_files_only_from_the_document_dir(cfg: WorkerConfig, tmp_path: Path) -> None:
+    """A path would let a submitter load the worker's own files (its keys) into the corpus."""
+    for source in ("/proc/self/environ", "notes.md"):
+        payload = jobs.parse_payload("ingest", {"command": "route", "source": source})
+        with pytest.raises(ValueError, match="http"):
+            jobs.build_command("ingest", payload, cfg)
+    cfg.document_dir = tmp_path / "contributed"
+    inside = jobs.parse_payload("ingest", {"command": "route", "source": "ani-apec-2011.md"})
+    assert jobs.build_command("ingest", inside, cfg)[4] == str((tmp_path / "contributed" / "ani-apec-2011.md").resolve())
+    for source in ("../.env", "/proc/self/environ"):
+        outside = jobs.parse_payload("ingest", {"command": "route", "source": source})
+        with pytest.raises(ValueError, match="under WORKER_DOCUMENT_DIR"):
+            jobs.build_command("ingest", outside, cfg)
 
 
 # ------------------------------------------------------------------- embed --
@@ -438,7 +529,7 @@ def test_result_per_job_type(cfg: WorkerConfig) -> None:
     assert jobs.extract_result("embed", jobs.parse_payload("embed", {}), result_line=None, last_progress=progress, stdout_tail=[]) == progress
     route = jobs.parse_payload("ingest", {"command": "route", "args": ["https://x"]})
     assert jobs.extract_result("ingest", route, result_line=None, last_progress=None, stdout_tail=["noise", '{"outcome": {"kind": "adapter"}}']) == {"outcome": {"kind": "adapter"}}
-    instrument = jobs.parse_payload("ingest", {"command": "instrument", "args": []})
+    instrument = jobs.parse_payload("ingest", {"command": "instrument", "args": ["fr", "JORFTEXT000051168007"]})
     assert jobs.extract_result("ingest", instrument, result_line=None, last_progress=None, stdout_tail=['{"x": 1}']) is None
     impact = jobs.parse_payload("impact", {})
     assert jobs.extract_result("impact", impact, result_line=None, last_progress=None, stdout_tail=['{"total_kwh": 0.1}']) == {"total_kwh": 0.1}

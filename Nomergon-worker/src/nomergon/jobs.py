@@ -11,6 +11,7 @@ import json
 import sys
 import tempfile
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
@@ -89,13 +90,194 @@ class WorkflowPayload(_Payload):
         return argv
 
 
+IngestCommand = Literal["instrument", "citation", "document", "route"]
+
+#: The fields each ingest command needs; the others must be absent.
+_INGEST_REQUIRED: dict[str, tuple[str, ...]] = {
+    "instrument": ("jurisdiction", "national_id"),
+    "citation": ("jurisdiction", "citation", "as_of"),
+    "document": ("source", "jurisdiction", "lang", "title", "kind", "valid_from"),
+    "route": (),
+}
+_INGEST_ALLOWED: dict[str, tuple[str, ...]] = {
+    "instrument": ("jurisdiction", "national_id", "source_code", "max_items"),
+    "citation": ("jurisdiction", "citation", "as_of", "source_code", "max_items"),
+    "document": ("source", "jurisdiction", "lang", "title", "kind", "valid_from", "implements"),
+    "route": ("source",),
+}
+
+#: The legacy ``args`` form, read through an allow-list: per command, the
+#: positionals in order (the trailing ones of ``route`` optional) and the
+#: flags with the field each one fills. ``--progress-json`` is accepted and
+#: implied; ``--database-url``, ``--trigger`` or any other flag is refused.
+_LEGACY_POSITIONALS: dict[str, tuple[str, ...]] = {
+    "instrument": ("jurisdiction", "national_id"),
+    "citation": ("jurisdiction", "citation", "as_of"),
+    "document": ("source",),
+    "route": ("source",),
+}
+_LEGACY_FLAGS: dict[str, dict[str, str]] = {
+    "instrument": {"--source-code": "source_code", "--max-items": "max_items"},
+    "citation": {"--source-code": "source_code", "--max-items": "max_items"},
+    "document": {
+        "--jurisdiction": "jurisdiction",
+        "--lang": "lang",
+        "--title": "title",
+        "--kind": "kind",
+        "--valid-from": "valid_from",
+        "--implements": "implements",
+    },
+    "route": {},
+}
+_LEGACY_SWITCHES: dict[str, tuple[str, ...]] = {"document": ("--progress-json",)}
+
+_URL_PREFIXES = ("http://", "https://")
+
+
+def _legacy_ingest_fields(command: str, args: list[str]) -> dict[str, Any]:
+    """Read the ``args`` the desktop apps still send into the typed fields."""
+    positionals = _LEGACY_POSITIONALS.get(command, ())
+    flags = _LEGACY_FLAGS.get(command, {})
+    switches = _LEGACY_SWITCHES.get(command, ())
+    fields: dict[str, Any] = {}
+    values: list[str] = []
+    rest = list(args)
+    while rest:
+        token = rest.pop(0)
+        if token in switches:
+            continue
+        if token in flags:
+            if not rest:
+                msg = f"ingest {command}: {token} needs a value"
+                raise ValueError(msg)
+            fields[flags[token]] = rest.pop(0)
+            continue
+        if token.startswith("-"):
+            msg = f"ingest {command}: option {token!r} is not allowed (allowed: {', '.join([*flags, *switches]) or 'none'})"
+            raise ValueError(msg)
+        values.append(token)
+    if len(values) > len(positionals):
+        msg = f"ingest {command}: too many arguments ({len(values)} for {len(positionals)})"
+        raise ValueError(msg)
+    fields.update(zip(positionals, values, strict=False))
+    return fields
+
+
 class IngestPayload(_Payload):
-    command: Literal["instrument", "citation", "document", "route"]
-    #: Exactly what the UI built today (``IngestTab.buildRequest``), minus ``--database-url``.
-    args: list[str] = Field(default_factory=list)
+    """One ingest CLI run: an official act by id or by citation, a contributed
+    document, or the ``route`` pre-check. Only these four commands and these
+    fields reach ``nomotheca_ingest.cli``; the database URL is the worker's."""
+
+    command: IngestCommand
+    jurisdiction: str | None = Field(
+        default=None, pattern=r"^[A-Za-z]{2}(-[A-Za-z0-9]{1,8})?$", description="Country code, e.g. fr, ES-AR"
+    )
+    national_id: str | None = Field(default=None, min_length=1, description="instrument: the act's national id")
+    citation: str | None = Field(default=None, min_length=1, description="citation: the citation text to resolve")
+    as_of: date | None = Field(default=None, description="citation: the date the citation is resolved at")
+    source_code: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,32}$", description="e.g. FR-KALI")
+    max_items: int | None = Field(default=None, ge=1, le=10_000)
+    source: str | None = Field(
+        default=None,
+        description="document/route: an http(s) URL, or a file under the worker's WORKER_DOCUMENT_DIR",
+    )
+    lang: str | None = Field(default=None, pattern=r"^[a-z]{2,3}$")
+    title: str | None = Field(default=None, min_length=1)
+    kind: str | None = Field(default=None, pattern=r"^[\w-]{1,40}$", description="in the country's own words")
+    valid_from: date | None = None
+    implements: str | None = Field(default=None, min_length=1, description="national_id of the implemented act")
+    args: list[str] | None = Field(
+        default=None,
+        description="Deprecated: the CLI arguments the desktop apps build; read through an allow-list "
+        "into the fields above, never passed through. Give either args or the fields.",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _read_legacy_args(cls, data: Any) -> Any:
+        if not isinstance(data, dict) or data.get("args") is None:
+            return data
+        others = sorted(set(data) - {"command", "args"})
+        if others:
+            msg = f"give either args or the typed fields, not both ({', '.join(others)})"
+            raise ValueError(msg)
+        args = data["args"]
+        if not isinstance(args, list) or not all(isinstance(a, str) for a in args):
+            msg = "args must be a list of strings"
+            raise ValueError(msg)
+        return {"command": data.get("command"), **_legacy_ingest_fields(str(data.get("command")), args)}
+
+    @model_validator(mode="after")
+    def _fields_for_command(self) -> IngestPayload:
+        given = {name for name in self.model_fields_set if getattr(self, name) is not None} - {"command", "args"}
+        missing = [name for name in _INGEST_REQUIRED[self.command] if getattr(self, name) in (None, "")]
+        if missing:
+            msg = f"ingest {self.command} needs {', '.join(missing)}"
+            raise ValueError(msg)
+        extra = sorted(given - set(_INGEST_ALLOWED[self.command]))
+        if extra:
+            msg = f"ingest {self.command} takes no {', '.join(extra)}"
+            raise ValueError(msg)
+        # A value starting with '-' would be read as an option by the CLI.
+        for name in ("jurisdiction", "national_id", "citation", "source"):
+            value = getattr(self, name)
+            if isinstance(value, str) and value.startswith("-"):
+                msg = f"{name} must not start with '-'"
+                raise ValueError(msg)
+        return self
 
     def to_argv(self, cfg: WorkerConfig, scratch_dir: Path | None) -> list[str]:
-        return _python(INGEST_MODULE) + [self.command, *self.args, "--database-url", cfg.database_url]
+        argv = _python(INGEST_MODULE) + [self.command]
+        if self.command in ("instrument", "citation"):
+            argv.append(str(self.jurisdiction))
+            if self.command == "instrument":
+                argv.append(str(self.national_id))
+            else:
+                argv += [str(self.citation), str(self.as_of)]
+            if self.source_code:
+                argv += ["--source-code", self.source_code]
+            if self.max_items is not None:
+                argv += ["--max-items", str(self.max_items)]
+        elif self.command == "document":
+            argv += [
+                _document_source(str(self.source), cfg),
+                "--jurisdiction",
+                str(self.jurisdiction),
+                "--lang",
+                str(self.lang),
+                "--title",
+                str(self.title),
+                "--kind",
+                str(self.kind),
+                "--valid-from",
+                str(self.valid_from),
+            ]
+            if self.implements:
+                argv += ["--implements", self.implements]
+            argv.append("--progress-json")
+        elif self.source:
+            argv.append(_document_source(self.source, cfg))
+        return argv + ["--database-url", cfg.database_url]
+
+
+def _document_source(source: str, cfg: WorkerConfig) -> str:
+    """A URL as given; a file only inside ``WORKER_DOCUMENT_DIR``.
+
+    The ingester reads any path it is handed and loads it into the shared
+    corpus, so a path from a submitter could otherwise read the worker's own
+    files (its environment holds every model key, ADR 0004).
+    """
+    if source.startswith(_URL_PREFIXES):
+        return source
+    if cfg.document_dir is None:
+        msg = "a document source must be an http(s) URL (set WORKER_DOCUMENT_DIR to accept files from one directory)"
+        raise ValueError(msg)
+    root = cfg.document_dir.resolve()
+    path = (root / source).resolve()
+    if not path.is_relative_to(root):
+        msg = f"a document file must be under WORKER_DOCUMENT_DIR ({root})"
+        raise ValueError(msg)
+    return str(path)
 
 
 class EmbedPayload(_Payload):
