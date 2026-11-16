@@ -372,6 +372,10 @@ def score_item(
             for hit in item.retrieval_trace
         )
 
+    ranked = {hit.method for hit in item.retrieval_trace} & {"hybrid", "vector", "fts"}
+    if ranked:
+        result.vector_leg = ranked != {"fts"}
+
     if proposed is not None:
         critique = item.critique
         # Mechanical only: `extract_offsets` is set by the verbatim check in

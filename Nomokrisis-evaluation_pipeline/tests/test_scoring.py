@@ -477,3 +477,14 @@ def test_no_finding_beyond_one_unit_or_on_a_rejected_proposal():
     # One cent on a rate is not a unit EUROMOD holds it in.
     rate_case = make_case(routing=Routing.CHANGED, value=0.0405)
     assert score_item(rate_case, _quoting("4,04 %", 0.0404)).euromod_discrepancy is None
+
+
+def test_vector_leg_records_an_fts_only_retrieval():
+    """The query encoder can be down or paused: the case must say so (code audit D5)."""
+    case = make_case(routing=Routing.UNCHANGED, value=0.45)
+    item = make_item()
+    assert score_item(case, item).vector_leg is True  # RetrievalHit defaults to "hybrid"
+    item.retrieval_trace = [RetrievalHit(chunk_id="c1", citation="x", method="fts")]
+    assert score_item(case, item).vector_leg is False
+    item.retrieval_trace = [RetrievalHit(chunk_id="c1", citation="x", method="citation")]
+    assert score_item(case, item).vector_leg is None

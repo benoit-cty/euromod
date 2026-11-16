@@ -15,8 +15,18 @@ Two ways to get a query vector, chosen by `WORKFLOW_ENCODER`:
   (encode_client) — the worker keeps the model warm and runs workflow jobs
   with this mode, so the subprocess never loads the model itself.
 
-Any failure disables the vector leg for the rest of the process and retrieval
-degrades to FTS-only with one console note naming the encoder mode.
+A failure degrades that query to FTS-only (its hybrid hits carry
+method="fts", so the review item and the eval record it). An encoder that
+cannot start, or an unknown mode, disables the vector leg for the rest of the
+process; any other failure (a 60 s timeout while the GPU is busy, a dead
+subprocess) only pauses it for `WORKFLOW_ENCODER_COOLDOWN` seconds (default
+30), after which the next query tries again. Until 16 Nov 2026 one timeout
+latched the whole process, and an eval run (one process, hundreds of cases)
+went FTS-only for good with nothing recording it (code audit D5).
+
+The subprocess encoders are shared by every thread of the process (an eval
+run with -j 4): each request/response pair holds that process's lock, so two
+cases can never read each other's vector (code audit D4).
 
 Subprocess spawns honour `NOMOS_PYTHON`: when set (the worker sets it to its
 own interpreter), the command is `[NOMOS_PYTHON, -m, module, …]` run in the
@@ -28,8 +38,9 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import encode_client
@@ -42,8 +53,40 @@ DEFAULT_DATABASE_URL = "postgresql://jrc:jrc@localhost:5434/legislation"
 
 DEFAULT_MODEL_ID = 1
 
-_processes: dict[int, subprocess.Popen] = {}
+DEFAULT_COOLDOWN_SECONDS = 30.0
+
+
+@dataclass(slots=True)
+class _Channel:
+    """One long-lived JSON-lines subprocess and the lock its I/O holds."""
+
+    process: subprocess.Popen | None = None
+    lock: threading.Lock = field(default_factory=threading.Lock)
+
+
+_channels: dict[int, _Channel] = {}
+_channels_lock = threading.Lock()
 _disabled = False
+_paused_until = 0.0
+#: Queries answered without a vector since the process started (FTS-only).
+fts_only_queries = 0
+
+
+class EncoderStartError(RuntimeError):
+    """The encoder process could not start: retrying will not help."""
+
+
+def _channel(registry: dict, key) -> _Channel:
+    with _channels_lock:
+        return registry.setdefault(key, _Channel())
+
+
+def cooldown_seconds() -> float:
+    """WORKFLOW_ENCODER_COOLDOWN, read at call time (after any .env is loaded)."""
+    try:
+        return float(os.environ.get("WORKFLOW_ENCODER_COOLDOWN", DEFAULT_COOLDOWN_SECONDS))
+    except ValueError:
+        return DEFAULT_COOLDOWN_SECONDS
 
 
 def encoder_mode() -> str:
@@ -131,18 +174,19 @@ def _start(model_id: int = DEFAULT_MODEL_ID) -> subprocess.Popen:
     ready = json.loads(process.stdout.readline() or "{}")
     if not ready.get("ready"):
         process.kill()
-        raise RuntimeError(f"encoder failed to initialize: {ready}")
+        raise EncoderStartError(f"encoder failed to initialize: {ready}")
     print(f"[retrieval] query encoder ready ({time.monotonic() - started:.0f}s)", flush=True)
     return process
 
 
 def _encode_subprocess(query: str, model_id: int = DEFAULT_MODEL_ID) -> str:
-    process = _processes.get(model_id)
-    if process is None or process.poll() is not None:
-        process = _processes[model_id] = _start(model_id)
-    process.stdin.write(json.dumps({"query": query}) + "\n")
-    process.stdin.flush()
-    response = json.loads(process.stdout.readline() or "{}")
+    channel = _channel(_channels, model_id)
+    with channel.lock:
+        if channel.process is None or channel.process.poll() is not None:
+            channel.process = _start(model_id)
+        channel.process.stdin.write(json.dumps({"query": query}) + "\n")
+        channel.process.stdin.flush()
+        response = json.loads(channel.process.stdout.readline() or "{}")
     if "halfvec" not in response:
         raise RuntimeError(response.get("error", "no halfvec in encoder response"))
     return response["halfvec"]
@@ -157,8 +201,9 @@ def encode(
     `database_url` is only used by the `db` encoder mode (defaults to
     WORKFLOW_DATABASE_URL, same default as config.py).
     """
-    global _disabled
-    if _disabled:
+    global _disabled, _paused_until, fts_only_queries
+    if _disabled or time.monotonic() < _paused_until:
+        fts_only_queries += 1
         return None
     mode = encoder_mode()
     try:
@@ -166,11 +211,22 @@ def encode(
             url = database_url or os.environ.get("WORKFLOW_DATABASE_URL", DEFAULT_DATABASE_URL)
             return encode_client.encode_via_jobs(url, query, model_id=model_id)
         if mode != "subprocess":
-            raise ValueError(f"unknown WORKFLOW_ENCODER {mode!r} (subprocess | db)")
+            raise EncoderStartError(f"unknown WORKFLOW_ENCODER {mode!r} (subprocess | db)")
         return _encode_subprocess(query, model_id)
-    except Exception as exc:
+    except EncoderStartError as exc:
         _disabled = True
-        print(f"[retrieval] vector leg disabled (encoder={mode}; {exc.__class__.__name__}: {exc})")
+        fts_only_queries += 1
+        print(f"[retrieval] vector leg disabled (encoder={mode}; {exc})", flush=True)
+        return None
+    except Exception as exc:
+        pause = cooldown_seconds()
+        _paused_until = time.monotonic() + pause
+        fts_only_queries += 1
+        print(
+            f"[retrieval] vector leg paused {pause:.0f}s, this query FTS-only "
+            f"(encoder={mode}; {exc.__class__.__name__}: {exc})",
+            flush=True,
+        )
         return None
 
 
@@ -178,7 +234,7 @@ def encode(
 # Cross-encoder reranking (evaluation only for now)
 # ---------------------------------------------------------------------------
 
-_rerankers: dict[str, subprocess.Popen] = {}
+_rerankers: dict[str, _Channel] = {}
 
 
 def _start_reranker(model: str) -> subprocess.Popen:
@@ -200,12 +256,13 @@ def rerank(query: str, passages: list[str], model: str) -> list[float]:
     Unlike `encode`, a failure raises: nothing in a workflow run depends on a
     reranker yet, and the retrieval evaluation records the error per case.
     """
-    process = _rerankers.get(model)
-    if process is None or process.poll() is not None:
-        process = _rerankers[model] = _start_reranker(model)
-    process.stdin.write(json.dumps({"query": query, "passages": passages}) + "\n")
-    process.stdin.flush()
-    response = json.loads(process.stdout.readline() or "{}")
+    channel = _channel(_rerankers, model)
+    with channel.lock:
+        if channel.process is None or channel.process.poll() is not None:
+            channel.process = _start_reranker(model)
+        channel.process.stdin.write(json.dumps({"query": query, "passages": passages}) + "\n")
+        channel.process.stdin.flush()
+        response = json.loads(channel.process.stdout.readline() or "{}")
     if "scores" not in response:
         raise RuntimeError(response.get("error", "no scores in reranker response"))
     return response["scores"]

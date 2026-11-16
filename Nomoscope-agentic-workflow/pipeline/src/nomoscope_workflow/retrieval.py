@@ -250,7 +250,14 @@ def hybrid_search(
     # the caller's connection (a plain `psycopg.connect` yields tuples).
     with conn.cursor(row_factory=dict_row) as cur:
         rows = cur.execute(sql, params).fetchall()
-    method = "hybrid" if use_fts else "vector"
+    # "fts": the vector leg was unavailable (encoder down or paused) — the
+    # review item's retrieval trace, and the eval, record the degradation.
+    if not use_fts:
+        method = "vector"
+    elif model_id == 99 or query_vector is not None:
+        method = "hybrid"
+    else:
+        method = "fts"
     return [RetrievalHit(method=method, **row) for row in rows]
 
 

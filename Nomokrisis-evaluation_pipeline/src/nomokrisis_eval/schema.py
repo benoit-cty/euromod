@@ -271,6 +271,10 @@ class CaseResult(BaseModel):
     critique_pass: bool | None = None
     hallucination: bool = False
     retrieval_hit: bool | None = None
+    # False when the run's ranked retrieval had no vector leg (the query
+    # encoder was down or paused, hits carry method "fts"): the case measured
+    # an FTS-only pipeline. None when there was no ranked retrieval at all.
+    vector_leg: bool | None = None
     # A refusal on a case that has a ground-truth value: the pipeline said
     # not_found rather than proposing something it could not cite. Scored
     # separately because it is the *correct* behaviour when the source is

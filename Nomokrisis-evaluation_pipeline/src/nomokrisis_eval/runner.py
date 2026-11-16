@@ -517,6 +517,8 @@ def summarize(results: list[CaseResult]) -> dict[str, dict[str, str]]:
             "rejected": str(sum(1 for r in rows if r.rejected)),
             "no_corpus": str(sum(1 for r in rows if readiness_of(r) == "no_corpus")),
             "undocumented": str(sum(1 for r in rows if readiness_of(r) == "undocumented")),
+            # Cases retrieved without the vector leg (encoder down or paused).
+            "fts_only": str(sum(1 for r in rows if r.vector_leg is False)),
         }
         for kpi in KPIS:
             entry[kpi] = _rate(rows, kpi)
