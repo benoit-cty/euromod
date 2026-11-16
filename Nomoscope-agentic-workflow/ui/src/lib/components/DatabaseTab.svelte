@@ -312,9 +312,9 @@
           <div class="body">
             <DbUrlField {dbUrl} {onchangedb} />
             <div><button onclick={loadStats} disabled={loading}>{loading ? 'Loading…' : 'Reload statistics'}</button></div>
-            <div class="cards">
+            <div class="stats">
               {#each Object.entries(stats.totals) as [key, count]}
-                <div class="card">
+                <div class="stat">
                   <div class="num">{formatCount(count)}</div>
                   <div class="muted">{key.replaceAll('_', ' ')}</div>
                 </div>
@@ -447,8 +447,6 @@
 
 <style>
   .db { overflow: auto; display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
-  .row { display: flex; gap: 0.5rem; align-items: end; flex-wrap: wrap; }
-  .grow { flex: 1; min-width: 16rem; }
   .search-form { display: flex; flex-direction: column; gap: 0.8rem; }
   .search-query { display: flex; gap: 0.6rem; align-items: center; position: relative; }
   .search-icon { position: absolute; left: 0.85rem; color: var(--muted); display: flex; pointer-events: none; }
@@ -498,9 +496,6 @@
   .score-total { background: var(--panel-2); }
   .summary-table td, .summary-table th { padding: 0.45rem 0.6rem; }
   .nested { margin-top: 0.4rem; }
-  .cards { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-  .card { background: var(--panel-2); border-radius: 8px; padding: 0.55rem 0.85rem; min-width: 7.5rem; }
-  .num { font-size: 1.25rem; font-weight: 700; }
   .tables { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
   .tables .wide { grid-column: 1 / -1; }
   .note { margin: 0 0 0.4rem; font-size: 0.82rem; }

@@ -210,6 +210,26 @@ th { color: var(--text); font-weight: 600; font-size: 0.8rem; position: sticky; 
 .badge.evidence { background: var(--ok-soft); color: var(--ok); }
 .badge.context  { background: var(--panel-2); color: var(--muted); }
 
+/* Layout helpers: a wrapping row of controls, the one that takes the room,
+   a push to the far end. */
+.row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.row.bottom { align-items: end; }
+.row.between { justify-content: space-between; }
+.grow { flex: 1; min-width: 14rem; }
+.spacer { flex: 1; }
+
+/* Figure tiles: a big number over its caption. */
+.stats { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.stat {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  min-width: 7.5rem;
+}
+.stat.bad { border-color: var(--err); }
+.stat .num { font-size: 1.4rem; font-weight: 700; }
+
 .muted { color: var(--muted); }
 .small { font-size: 0.85rem; }
 .mono { font-family: var(--font-mono); font-size: 0.85em; }
@@ -238,6 +258,8 @@ mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2
 .callout.err { border-color: var(--err); background: var(--err-soft); }
 .callout.info { border-color: var(--info); background: var(--info-soft); }
 .callout.ok { border-color: var(--ok); background: var(--ok-soft); }
+/* Callouts are how both apps say what went wrong: `callout err`, never bare red text. */
+.callout.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; }
 
 .spinner {
   display: inline-block;

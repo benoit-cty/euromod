@@ -138,7 +138,7 @@
   <section class="panel">
     <h2>Countries</h2>
     {#if loadError}
-      <p class="error">Could not load the library status: {loadError}</p>
+      <p class="callout err">Could not load the library status: {loadError}</p>
     {:else if !stats}
       <p class="muted"><span class="spinner"></span> Loading…</p>
     {:else}

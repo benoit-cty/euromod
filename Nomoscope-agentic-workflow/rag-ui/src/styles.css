@@ -1,10 +1,6 @@
 /* The RAG chat's own rules, over the shared base (../../shared/styles.css,
    imported first by main.js). */
 
-.banner { padding: 0.5rem 0.9rem; border-radius: var(--radius); border-left: 3px solid var(--accent); background: var(--accent-soft); margin: 0.4rem 0; }
-.banner.err { border-color: var(--err); background: var(--err-soft); color: var(--err); }
-.banner.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
-
 /* Rendered assistant Markdown */
 .md p { margin: 0.4rem 0; line-height: 1.5; }
 .md h3, .md h4, .md h5, .md h6 { margin: 0.7rem 0 0.3rem; font-size: 1rem; text-transform: none; letter-spacing: 0; color: var(--text-bright); }

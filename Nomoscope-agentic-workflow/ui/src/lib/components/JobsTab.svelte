@@ -152,7 +152,7 @@
     <button onclick={refresh}>Refresh</button>
   </div>
 
-  {#if error}<p class="error">{error}</p>{/if}
+  {#if error}<p class="callout err">{error}</p>{/if}
 
   <div class="split">
     <div class="tablebox">
@@ -212,8 +212,6 @@
 <style>
   .jobs { display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; overflow: hidden; }
   .worker { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
-  .spacer { flex: 1; }
-  .error { color: var(--err); margin: 0; }
   .split { display: grid; grid-template-columns: 3fr 2fr; gap: 0.7rem; flex: 1; min-height: 0; }
   .split > * { min-height: 0; }
   .tablebox { overflow: auto; border: 1px solid var(--border); border-radius: 8px; }

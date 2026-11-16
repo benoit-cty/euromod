@@ -100,7 +100,7 @@
     {/if}
     <span class="mono muted" title="chunks.id">{chunk.chunk_id.slice(0, 8)}</span>
   </footer>
-  {#if loadError}<p class="banner err small">{loadError}</p>{/if}
+  {#if loadError}<p class="callout err small">{loadError}</p>{/if}
 </article>
 
 <style>

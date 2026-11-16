@@ -177,12 +177,12 @@
 <svelte:window {onkeydown} />
 
 <section class="panel golden" bind:this={sectionEl}>
-  <div class="row">
+  <div class="row bottom">
     <span class="muted grow">Drafted cases in <span class="mono">eval.golden_cases</span> — accept or reject each against the value EUROMOD holds.</span>
     <button onclick={load} disabled={loading}>{loading ? 'Loading…' : 'Reload cases'}</button>
   </div>
 
-  {#if error}<p class="error">{error}</p>{/if}
+  {#if error}<p class="callout err">{error}</p>{/if}
 
   {#if cases}
     <div class="row between">
@@ -341,13 +341,9 @@
   /* The panel itself never scrolls: the list and the detail pane each own their
      own scrollbar, so running down a long worklist leaves the detail in place. */
   .golden { overflow: hidden; display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
-  .row { display: flex; gap: 0.5rem; align-items: end; flex-wrap: wrap; }
-  .row.between { justify-content: space-between; align-items: center; }
-  .grow { flex: 1; min-width: 16rem; }
   .filters { display: flex; gap: 0.3rem; }
   label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }
   label input { width: 100%; }
-  .error { color: var(--err); }
   .split {
     display: grid;
     grid-template-columns: minmax(24rem, 2fr) 3fr;

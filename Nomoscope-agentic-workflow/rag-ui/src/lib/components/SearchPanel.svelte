@@ -56,8 +56,8 @@
   </div>
 </form>
 
-{#if notice}<p class="banner warn small">{notice}</p>{/if}
-{#if error}<p class="banner err small">{error}</p>{/if}
+{#if notice}<p class="callout warn small">{notice}</p>{/if}
+{#if error}<p class="callout err small">{error}</p>{/if}
 {#if searched && !results.length}<p class="muted">No passage matches.</p>{/if}
 {#each results as r (r.chunk_id)}
   <ChunkCard chunk={r} headline={r.headline} />

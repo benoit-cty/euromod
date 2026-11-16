@@ -111,7 +111,7 @@
   <DbUrlField {dbUrl} {onchangedb} />
   <div><button onclick={loadRuns} disabled={loading}>{loading ? 'Loading…' : 'Refresh runs'}</button></div>
 
-  {#if error}<p class="error">{error}</p>{/if}
+  {#if error}<p class="callout err">{error}</p>{/if}
 
   {#if runs}
     <h2>Evaluation runs</h2>
@@ -161,27 +161,27 @@
     </h2>
     {#if selectedRun.notes}<p class="muted">{selectedRun.notes}</p>{/if}
 
-    {#if detailError}<p class="error">{detailError}</p>{/if}
+    {#if detailError}<p class="callout err">{detailError}</p>{/if}
     {#if detailLoading}<p class="muted">Loading run detail…</p>{/if}
 
     {#if detail}
-      <div class="cards">
+      <div class="stats">
         {#each KPIS as k}
           {@const v = selectedRun[k.key]}
-          <div class="card" class:bad={v != null && (k.invert ? v > 0 : v < 100)}>
+          <div class="stat" class:bad={v != null && (k.invert ? v > 0 : v < 100)}>
             <div class="num">{pct(v)}</div>
             <div class="muted">{k.label}{k.invert ? ' (want 0)' : ''}</div>
           </div>
         {/each}
-        <div class="card">
+        <div class="stat">
           <div class="num">{ms(selectedRun.avg_latency_ms)}</div>
           <div class="muted">avg latency</div>
         </div>
-        <div class="card">
+        <div class="stat">
           <div class="num">{energy(selectedRun.energy_kwh)}</div>
           <div class="muted">energy (EcoLogits)</div>
         </div>
-        <div class="card">
+        <div class="stat">
           <div class="num">{co2(selectedRun.gwp_kgco2eq)}</div>
           <div class="muted">emissions CO₂eq</div>
         </div>
@@ -265,20 +265,9 @@
   label.inline { display: inline-flex; flex-direction: row; align-items: center; gap: 0.35rem;
     font-size: 0.8rem; font-weight: 400; margin-left: 0.8rem; }
   label.inline input { width: auto; }
-  .error { color: var(--err); }
   .runs tbody tr { cursor: pointer; }
   .runs tbody tr:hover { background: var(--panel-2); }
   .runs tbody tr.selected { background: var(--accent-soft); }
-  .cards { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-  .card {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.6rem 0.9rem;
-    min-width: 7.5rem;
-  }
-  .card.bad { border-color: var(--err); }
-  .num { font-size: 1.4rem; font-weight: 700; }
   .tick.ok { color: var(--ok); }
   .tick.bad { color: var(--err); font-weight: 700; }
   .kpi-marks { display: inline-flex; gap: 0.5rem; align-items: baseline; color: var(--muted); font-size: 0.85em; }

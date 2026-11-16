@@ -76,7 +76,7 @@
           {/each}
         </div>
         {#if unverified}
-          <p class="banner warn small">
+          <p class="callout warn small">
             {unverified} quote(s) could not be found verbatim in the cited chunk — treat them as unsupported.
           </p>
         {/if}
@@ -94,7 +94,7 @@
         {#if turn.result.phoenix_trace_id}<span class="mono" title="Phoenix trace id">trace {turn.result.phoenix_trace_id.slice(0, 12)}</span>{/if}
       </div>
     {:else}
-      <p class="banner err small">
+      <p class="callout err small">
         {turn.status === 'cancelled' ? 'Stopped.' : `Failed: ${lastLine(turn.error)}`}
       </p>
     {/if}

@@ -597,11 +597,8 @@
   .choice-text { display: flex; flex-direction: column; gap: 0.15rem; }
   .maintenance { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
   .maintenance .on { background: var(--accent-soft); color: var(--accent); }
-  .spacer { flex: 1; }
   .form { display: flex; flex-direction: column; gap: 0.9rem; }
   .form > p.muted { margin: 0; }
-  .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-  .grow { flex: 1; min-width: 16rem; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.7rem; align-items: end; }
   .wide { grid-column: span 2; }
   .trust { display: flex; align-items: center; gap: 0.5rem; margin: 0; }

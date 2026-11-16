@@ -167,7 +167,7 @@
       </button>
       <button onclick={() => (editing = false)} disabled={saving}>Cancel</button>
     </div>
-    {#if error}<p class="error">{error}</p>{/if}
+    {#if error}<p class="callout err">{error}</p>{/if}
   {/if}
 
   {#if history.length}
@@ -187,7 +187,7 @@
       </tbody>
     </table>
   {/if}
-  {#if historyError}<p class="error small">{historyError}</p>{/if}
+  {#if historyError}<p class="callout err small">{historyError}</p>{/if}
 </div>
 
 <style>
@@ -198,7 +198,6 @@
   label input, label textarea, label select { width: 100%; }
   textarea { font: inherit; resize: vertical; }
   .actions { display: flex; gap: 0.5rem; }
-  .error { color: var(--err); margin: 0; }
   .warn { color: var(--err); margin: 0; }
   .small { font-size: 0.8rem; }
   .history { border-collapse: collapse; margin-top: 0.3rem; }

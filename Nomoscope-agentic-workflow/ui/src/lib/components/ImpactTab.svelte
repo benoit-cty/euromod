@@ -90,7 +90,7 @@
 </script>
 
 <section class="panel impact">
-  <div class="row">
+  <div class="row bottom">
     <label>
       Phoenix project
       <select bind:value={project} onchange={load}>
@@ -112,7 +112,7 @@
     {#if loading}<button onclick={cancel}>Cancel</button>{/if}
   </div>
 
-  {#if error}<p class="error">{error}</p>{/if}
+  {#if error}<p class="callout err">{error}</p>{/if}
 
   {#if report}
     {#if report.models.length === 0}
@@ -122,20 +122,20 @@
       </p>
     {:else}
       <h2>Estimated impact of traced LLM calls</h2>
-      <div class="cards">
-        <div class="card">
+      <div class="stats">
+        <div class="stat">
           <div class="num">{fmt(report.total_calls, 0)}</div>
           <div class="muted">LLM calls</div>
         </div>
-        <div class="card">
+        <div class="stat">
           <div class="num">{fmt(report.total_output_tokens, 0)}</div>
           <div class="muted">output tokens</div>
         </div>
-        <div class="card">
+        <div class="stat">
           <div class="num">{energyRange(report.energy_kwh_min, report.energy_kwh_max)}</div>
           <div class="muted">energy</div>
         </div>
-        <div class="card">
+        <div class="stat">
           <div class="num">{gwpRange(report.gwp_kgco2eq_min, report.gwp_kgco2eq_max)}</div>
           <div class="muted">emissions (GWP)</div>
         </div>
@@ -196,18 +196,7 @@
 
 <style>
   .impact { overflow: auto; display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
-  .row { display: flex; gap: 0.5rem; align-items: end; flex-wrap: wrap; }
   label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }
-  .error { color: var(--err); }
-  .cards { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-  .card {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.6rem 0.9rem;
-    min-width: 7.5rem;
-  }
-  .num { font-size: 1.4rem; font-weight: 700; }
   .right { text-align: right; }
   .footnote { max-width: 60rem; }
   .footnote a { color: var(--accent); }

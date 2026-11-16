@@ -441,9 +441,6 @@
 
 <style>
   .params { display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; overflow: hidden; }
-  .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-  .grow { flex: 1; min-width: 14rem; }
-  .spacer { flex: 1; }
   .morefilters > summary, .runopts > summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; white-space: nowrap; }
   .morefilters { position: relative; }
   .morefilters-body, .runopts-body {

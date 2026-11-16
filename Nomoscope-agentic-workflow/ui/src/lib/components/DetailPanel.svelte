@@ -298,7 +298,7 @@
 
 <section class="panel detail">
   {#if !item}
-    <div class="empty-state grow">
+    <div class="empty-state fill">
       <Icon name="review" size={32} />
       <span class="big">Pick a proposal on the left</span>
       <span>You will see the value EUROMOD holds, the value found in the law, and the quote it rests on.</span>
@@ -678,7 +678,7 @@
 
 <style>
   .detail { display: flex; flex-direction: column; min-height: 0; padding: 0; overflow: hidden; }
-  .grow { flex: 1; justify-content: center; }
+  .fill { flex: 1; justify-content: center; }
   .scroll { overflow: auto; flex: 1; display: flex; flex-direction: column; gap: 0.9rem; padding: 1.1rem 1.2rem; }
   header { display: flex; align-items: flex-start; gap: 0.8rem; justify-content: space-between; }
   header h2 { margin: 0 0 0.1rem; font-size: 1.2rem; }

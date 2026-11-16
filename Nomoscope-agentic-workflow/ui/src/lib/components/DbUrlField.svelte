@@ -23,7 +23,7 @@
   }
 </script>
 
-<div class="row">
+<div class="row bottom">
   <label class="field grow">
     Database URL
     <input class="mono" value={draft} oninput={(e) => (draft = e.currentTarget.value)} />
@@ -33,8 +33,3 @@
   </button>
 </div>
 {#if error}<p class="callout err">{error}</p>{/if}
-
-<style>
-  .row { display: flex; gap: 0.5rem; align-items: end; flex-wrap: wrap; }
-  .grow { flex: 1; min-width: 16rem; }
-</style>
