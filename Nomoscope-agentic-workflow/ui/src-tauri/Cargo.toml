@@ -18,7 +18,7 @@ tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
-chrono = { version = "0.4", features = ["serde"] }
+chrono = "0.4"
 log = "0.4"
 postgres = { version = "0.19", features = ["with-serde_json-1"] }
 base64 = "0.22"

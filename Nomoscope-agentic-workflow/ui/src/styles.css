@@ -23,7 +23,6 @@
   --button-bg: rgb(245, 252, 255);
   --button-hover: rgb(239, 249, 253);
   --button-ok: #9dccfd;
-  --button-cancel: #bec3c7;
   --button-delete: #f0a9a3;
   --header-bg: rgb(222, 240, 248);       /* table-headers-background-color */
   --ok: rgb(46, 125, 50);
@@ -71,7 +70,6 @@ body.dark {
   --button-bg: rgb(10, 10, 10);
   --button-hover: rgb(34, 34, 34);
   --button-ok: #4287c7;
-  --button-cancel: #6c757d;
   --button-delete: #b0544f;
   --header-bg: rgb(44, 44, 44);
   --ok: rgb(102, 187, 106);
@@ -188,8 +186,6 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--focus); out
 table { border-collapse: collapse; width: 100%; }
 th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
 th { color: var(--text); font-weight: 600; font-size: 0.8rem; position: sticky; top: 0; background: var(--header-bg); }
-tr.selectable { cursor: pointer; }
-tr.selectable:hover td { background: var(--current-row); }
 tr.selected td, tr.selected:hover td { background: var(--accent-soft); }
 
 .badge {

@@ -64,6 +64,5 @@ export const api = {
   listJobs: (dbUrl, limit = 100) => invoke('list_jobs', { payload: { db_url: dbUrl, limit } }),
   // { workers: [{ alive, device, … }], models: [{ model, kind, is_default }] }
   workerStatus: (dbUrl) => invoke('worker_status', { payload: { db_url: dbUrl } }),
-  // Synchronous encode on the worker's priority lane: { halfvec } or { similarities }.
   openExternal: (url) => open(url),
 };
