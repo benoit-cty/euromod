@@ -21,10 +21,10 @@
 --     phoenix_trace_id links it to the full agent trace in Phoenix
 --     (http://localhost:6006), which shares this Postgres instance.
 --   Stage D (human)         -> review_decisions, append-only. The validation
---     UI writes here on every Accept/Reject/Edit, and refuses the decision if
---     it cannot: this table gates the queue-item write, so a decision that
---     never reached the audit log never looks accepted. data/decisions.jsonl
---     is a redundant local copy, not the system of record.
+--     UI writes here on every Accept/Reject/Edit through
+--     params.decide_review_item(), which writes the audit row and the queue
+--     item in one transaction: a decision that never reached the audit log
+--     never looks accepted. There is no local copy.
 --
 -- Applied idempotently by `nomoscope-workflow init-param-db`.
 -- ============================================================================
@@ -270,7 +270,7 @@ CREATE TABLE IF NOT EXISTS params.extraction_runs (
     phoenix_trace_id text,                       -- lower-case 32-hex OTel trace id
     routing          text,                       -- unchanged|changed|new|not_found|national_team_source|derived
     critique_verdict text,                       -- pass|fail
-    item_id          text,                       -- review-queue file id (data/queue/<item_id>.json)
+    item_id          text,                       -- params.review_queue.item_id
     retrieval_trace  jsonb,                      -- chunk ids/scores, content stripped
     started_at       timestamptz NOT NULL,
     finished_at      timestamptz
@@ -306,6 +306,8 @@ CREATE INDEX IF NOT EXISTS proposals_param_idx  ON params.proposals (parameter_i
 
 -- ----------------------------------------------------------------------------
 -- proposal_references — evidence attached to a proposal (doc §8: "references").
+-- The per-run evidence history: the review queue keeps only the latest run of
+-- a parameter-year, these rows keep what every run cited.
 -- For legislation-sourced proposals the anti-hallucination rule is mechanical:
 -- supporting_extract occurs character-for-character in the cited chunk
 -- (public.chunks.id = jrc_chunk_id), offsets into unit_texts.content.
@@ -331,9 +333,8 @@ CREATE INDEX IF NOT EXISTS proposal_references_proposal_idx ON params.proposal_r
 -- decisions. Rows are only ever inserted; an empty set for a proposal means
 -- "pending". Columns carry the whole audit entry the UI produces, including the
 -- reviewer's edits, because this log is future training/validation data.
--- The UI's decision fails outright if this insert does, so the table is never
--- behind what the queue shows. data/decisions.jsonl is a redundant local copy,
--- replayable by `nomoscope-workflow sync-decisions`; see paramdb.record_decision.
+-- The UI's decision fails outright if this insert does (decide_review_item),
+-- so the table is never behind what the queue shows. It is the only copy.
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS params.review_decisions (
     id          bigserial PRIMARY KEY,
@@ -368,55 +369,15 @@ ALTER TABLE params.review_decisions ADD COLUMN IF NOT EXISTS critique_verdict te
 CREATE INDEX IF NOT EXISTS review_decisions_proposal_idx ON params.review_decisions (proposal_pk)
     WHERE proposal_pk IS NOT NULL;
 CREATE INDEX IF NOT EXISTS review_decisions_item_idx ON params.review_decisions (item_id, decided_at DESC);
--- Replaying decisions.jsonl must not duplicate rows: one decision per
+-- A replayed decision must not duplicate rows: one decision per
 -- (item, instant). Append-only still holds — re-deciding an item yields a new
 -- decided_at, so both rows survive.
 CREATE UNIQUE INDEX IF NOT EXISTS review_decisions_replay_idx
     ON params.review_decisions (item_id, decided_at)
     WHERE item_id IS NOT NULL AND decided_at IS NOT NULL;
 
--- ----------------------------------------------------------------------------
--- proposal_review — the read surface for the validation UI: proposal next to
--- the current model value, with the Phoenix trace id for "view agent process".
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE VIEW params.proposal_review AS
-SELECT
-    pr.id                 AS proposal_pk,
-    pr.proposal_id,
-    pr.model_target,
-    p.country,
-    p.short_label ->> 'en'  AS short_label,
-    p.unit,
-    mv.value_raw          AS current_model_value,
-    mv.raw_euromod_value  AS current_raw_euromod_value,
-    mv.system_year        AS current_system_year,
-    pr.proposed_value,
-    pr.proposed_value_numeric,
-    pr.effective_from,
-    pr.effective_to,
-    pr.legal_status,
-    pr.source_class,
-    pr.confidence,
-    r.run_id,
-    r.as_of,
-    r.model,
-    r.routing,
-    r.critique_verdict,
-    r.phoenix_project,
-    r.phoenix_trace_id,
-    (SELECT count(*) FROM params.review_decisions d WHERE d.proposal_pk = pr.id) AS decisions,
-    pr.created_at
-FROM params.proposals pr
-JOIN params.extraction_runs r ON r.id = pr.run_pk
-LEFT JOIN params.parameters p ON p.id = pr.parameter_id
-LEFT JOIN LATERAL (
-    SELECT * FROM params.model_values mv
-    WHERE mv.parameter_id = p.id
-      AND mv.valid_from <= r.as_of
-      AND (mv.valid_to IS NULL OR mv.valid_to >= r.as_of)
-    ORDER BY mv.valid_from DESC
-    LIMIT 1
-) mv ON true;
+-- proposal_review, a view no UI or package read, was dropped on 16 Nov 2026.
+DROP VIEW IF EXISTS params.proposal_review;
 
 -- ----------------------------------------------------------------------------
 -- review_queue — the review queue itself (ADR 0004). One row per queue item,
@@ -446,7 +407,7 @@ CREATE INDEX IF NOT EXISTS review_queue_status_idx  ON params.review_queue (stat
 --   p_item_id  the queue item
 --   p_item     the updated ReviewItem the UI computed (status, decision block,
 --              reviewer edits applied) — stored verbatim
---   p_entry    the audit entry: same keys record_decision/insert_decision took
+--   p_entry    the audit entry: keys of the UI's audit entry
 --              (action, note, edited_value, edited_fields, routing, model_target,
 --              as_of, run_id, confidence, critique_verdict, decided_at, logged_at)
 -- The reviewer is always session_user, the analyst's login: the entry's

@@ -105,14 +105,6 @@ def load_items(
     return [_from_row(status, item) for status, item in rows]
 
 
-def load_item(conn: psycopg.Connection, item_id: str) -> ReviewItem | None:
-    """One queue item by id, or None."""
-    row = conn.execute(
-        "SELECT status, item FROM params.review_queue WHERE item_id = %s", (item_id,)
-    ).fetchone()
-    return _from_row(*row) if row else None
-
-
 def export_change_set(conn: psycopg.Connection) -> dict[str, list[dict]]:
     """What goes back to EUROMOD — only the changes — grouped by country.
 

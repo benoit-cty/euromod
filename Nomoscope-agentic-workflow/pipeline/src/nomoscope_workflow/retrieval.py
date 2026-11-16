@@ -1385,18 +1385,3 @@ def unit_chunks(conn: psycopg.Connection, chunk_id: str) -> list[RetrievalHit]:
     return [RetrievalHit(method="sibling", **row) for row in rows]
 
 
-def sibling_text(conn: psycopg.Connection, chunk_id: str, lang: str) -> str | None:
-    """Content of the same version's chunk (same seq) in another language, if ingested."""
-    row = conn.execute(
-        """
-        SELECT c2.content
-        FROM chunks c1
-        JOIN unit_texts t1 ON t1.id = c1.unit_text_id
-        JOIN unit_texts t2 ON t2.version_id = t1.version_id AND t2.lang = %(lang)s
-        JOIN chunks c2     ON c2.unit_text_id = t2.id AND c2.seq = c1.seq
-        WHERE c1.id = %(chunk_id)s::uuid
-        LIMIT 1
-        """,
-        {"chunk_id": chunk_id, "lang": lang},
-    ).fetchone()
-    return row["content"] if row else None

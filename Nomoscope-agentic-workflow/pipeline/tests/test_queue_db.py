@@ -31,6 +31,14 @@ from nomoscope_workflow.schema import (
 DATABASE_URL = os.environ.get("WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation")
 
 
+def _load_item(conn, item_id: str):
+    """One queue item by id, or None (test helper)."""
+    row = conn.execute(
+        "SELECT status, item FROM params.review_queue WHERE item_id = %s", (item_id,)
+    ).fetchone()
+    return queue_store._from_row(*row) if row else None
+
+
 @pytest.fixture(scope="module")
 def conn():
     try:
@@ -80,19 +88,19 @@ def _item(target: str, status: ItemStatus = ItemStatus.PENDING, run_id: str = "r
 def test_write_item_replaces_pending_and_keeps_decided_unless_forced(conn, scratch_target):
     item = _item(scratch_target)
     assert queue_store.write_item(conn, item)
-    assert queue_store.load_item(conn, item.id).run_id == "run-1"
+    assert _load_item(conn, item.id).run_id == "run-1"
 
     # a re-run replaces a pending item
     assert queue_store.write_item(conn, _item(scratch_target, run_id="run-2"))
-    assert queue_store.load_item(conn, item.id).run_id == "run-2"
+    assert _load_item(conn, item.id).run_id == "run-2"
 
     # a decided item is immutable to re-runs, unless forced
     assert queue_store.write_item(conn, _item(scratch_target, ItemStatus.ACCEPTED, run_id="run-3"), force=True)
     assert not queue_store.write_item(conn, _item(scratch_target, run_id="run-4"))
-    kept = queue_store.load_item(conn, item.id)
+    kept = _load_item(conn, item.id)
     assert kept.run_id == "run-3" and kept.status == ItemStatus.ACCEPTED
     assert queue_store.write_item(conn, _item(scratch_target, run_id="run-5"), force=True)
-    assert queue_store.load_item(conn, item.id).status == ItemStatus.PENDING
+    assert _load_item(conn, item.id).status == ItemStatus.PENDING
 
     listed = queue_store.load_items(conn, country="FR", status="pending")
     assert item.id in {i.id for i in listed}
@@ -279,7 +287,7 @@ def test_decide_review_item_records_the_decision_and_updates_the_item(conn, scra
     ).fetchone()
     assert row == ("accepted", conn.execute("SELECT current_user").fetchone()[0], "looks right", scratch_target)
 
-    stored = queue_store.load_item(conn, item.id)
+    stored = _load_item(conn, item.id)
     assert stored.status == ItemStatus.ACCEPTED
     assert stored.decision is not None and stored.decision.action == ItemStatus.ACCEPTED
     assert conn.execute(
@@ -330,6 +338,6 @@ def test_mock_run_from_the_params_db_lands_in_the_queue(conn):
 
     assert item.id == queue_store.item_id("FR", target, 2025)
     assert item.parameter_ref == target
-    stored = queue_store.load_item(conn, item.id)
+    stored = _load_item(conn, item.id)
     assert stored is not None and stored.run_id == item.run_id
     assert stored.routing == item.routing

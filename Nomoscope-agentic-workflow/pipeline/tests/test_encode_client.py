@@ -71,19 +71,6 @@ def test_encode_via_jobs_returns_the_halfvec_the_worker_wrote(conn, marker):
     assert job == (encode_client.ENCODE_PRIORITY, {"query": marker})
 
 
-def test_score_via_jobs_sends_the_sentences(conn, marker):
-    worker = threading.Thread(target=_settle, args=(conn, marker, "succeeded", {"similarities": [0.9, 0.1]}))
-    worker.start()
-    try:
-        scores = encode_client.score_via_jobs(DATABASE_URL, marker, ["a", "b"], timeout=5, poll=0.02)
-    finally:
-        worker.join()
-    assert scores == [0.9, 0.1]
-    assert conn.execute(
-        "SELECT payload -> 'sentences' FROM ops.jobs WHERE payload ->> 'query' = %s", (marker,)
-    ).fetchone()[0] == ["a", "b"]
-
-
 def test_a_failed_job_raises_its_error(conn, marker):
     worker = threading.Thread(target=_settle, args=(conn, marker, "failed", None, "CUDA out of memory"))
     worker.start()

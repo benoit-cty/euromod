@@ -46,26 +46,10 @@ app = typer.Typer(no_args_is_help=True, add_completion=False)
 # pipeline._retrieval_as_of).
 
 _YEAR_HELP = "EUROMOD system year to verify (e.g. 2025). One run = one system year."
-_AS_OF_HELP = "Deprecated: reference date YYYY-MM-DD; use --year (only the year matters)."
 _INCLUDE_NA_HELP = (
     "Also run parameters EUROMOD holds as n/a (or holds no value for) in this system year. "
     "Skipped by default: they are switched off in that system, usually superseded constants."
 )
-
-
-def _anchor_date(year: int | None, as_of: str | None) -> date:
-    """Resolve --year/--as-of into the run's anchor date (exactly one required)."""
-    if (year is None) == (as_of is None):
-        typer.echo("Pass exactly one of --year or --as-of (prefer --year).")
-        raise typer.Exit(2)
-    if year is not None:
-        return system_year_anchor(year)
-    parsed = date.fromisoformat(as_of)
-    typer.echo(
-        f"note: --as-of is deprecated; this run verifies system year {parsed.year} "
-        f"(same as --year {parsed.year})"
-    )
-    return parsed
 
 
 def _result_line(payload: dict) -> None:
@@ -185,8 +169,7 @@ def run_targets(
         help="model_target ids (euromod://…), parameter_keys, or 'group:<group_id>' "
         "for a bracket schedule assembled from params.parameter_groups",
     ),
-    year: int = typer.Option(None, "--year", help=_YEAR_HELP),
-    as_of: str = typer.Option(None, "--as-of", help=_AS_OF_HELP),
+    year: int = typer.Option(..., "--year", help=_YEAR_HELP),
     model: str = typer.Option(None, "--model", help="Override WORKFLOW_MODEL"),
     force: bool = typer.Option(False, "--force", help="Overwrite already-reviewed queue items"),
     include_na: bool = typer.Option(False, "--include-na", help=_INCLUDE_NA_HELP),
@@ -202,7 +185,7 @@ def run_targets(
     `@result {"item_ids": [...], "skipped_na": [...]}`.
     """
     cfg = load_config()
-    anchor = _anchor_date(year, as_of)
+    anchor = system_year_anchor(year)
     records: list[tuple[str, ParameterRecord]] = []
     with paramdb.connect(cfg) as conn:
         for target in targets:
@@ -219,8 +202,7 @@ def run_targets(
 @app.command("run-country")
 def run_country(
     country: str = typer.Argument(..., help="ISO country code, e.g. FR"),
-    year: int = typer.Option(None, "--year", help=_YEAR_HELP),
-    as_of: str = typer.Option(None, "--as-of", help=_AS_OF_HELP),
+    year: int = typer.Option(..., "--year", help=_YEAR_HELP),
     model: str = typer.Option(None, "--model", help="Override WORKFLOW_MODEL"),
     force: bool = typer.Option(False, "--force", help="Overwrite already-reviewed queue items"),
     limit: int = typer.Option(0, "--limit", help="Run at most N parameters (0 = all)"),
@@ -236,7 +218,7 @@ def run_country(
     counts what is left). Ends with `@result {"item_ids": [...], "skipped_na": [...]}`.
     """
     cfg = load_config()
-    anchor = _anchor_date(year, as_of)
+    anchor = system_year_anchor(year)
     records: list[tuple[str, ParameterRecord]] = []
     with paramdb.connect(cfg) as conn:
         refs = paramdb.country_targets(conn, country) + [

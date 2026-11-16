@@ -215,12 +215,12 @@ Suggested fixes, in order of value:
 
 | Severity | Item | Where |
 |---|---|---|
-| medium | `paramdb.record_decision`: no caller, no test. | `paramdb.py:1093-1150` |
-| medium | `ProposalDraft.original_language_quote` and `english_translation` are requested from the model and read nowhere. Every real proposal pays output tokens for them. `retrieval.sibling_text` and the `translation_lookup` plumbing exist only to fill them. | `schema.py:291-292`, `prompts.py:103-104`, `retrieval.py:1394-1408` |
-| medium | Stale schema comments about `data/decisions.jsonl`, `sync-decisions` and `data/queue/<item_id>.json`. | `pipeline/db/params_schema.sql:26-27, 273, 335-336, 371, 449` |
-| low/medium | View `params.proposal_review` has no reader; table `params.proposal_references` is written on every run and read only by that view. | `params_schema.sql:379…`, `paramdb.py:1039-1060` |
-| low | `impact.phoenix_url_from`; `encode_client.score_via_jobs` and `queue_store.load_item` (tests only); unused imports `CritiqueFindings`, `ItemStatus` (**removed**); `RetrievalHit.method` value `"fts"` never produced. | — |
-| low | Deprecated `--as-of` alias on `run-targets` and `run-country`; legacy `parameter_file` validation alias. | `cli.py:49-68`, `schema.py:398-400` |
+| medium | `paramdb.record_decision`: no caller, no test. **Removed.** | `paramdb.py:1093-1150` |
+| medium | **Removed** (fields, prompt line, `sibling_text`, `translation_lookup`; prompt 0.14.2) — `ProposalDraft.original_language_quote` and `english_translation` are requested from the model and read nowhere. Every real proposal pays output tokens for them. `retrieval.sibling_text` and the `translation_lookup` plumbing exist only to fill them. | `schema.py:291-292`, `prompts.py:103-104`, `retrieval.py:1394-1408` |
+| medium | Stale schema comments about `data/decisions.jsonl`, `sync-decisions` and `data/queue/<item_id>.json`. **Fixed.** | `pipeline/db/params_schema.sql:26-27, 273, 335-336, 371, 449` |
+| low/medium | View `params.proposal_review` has no reader; table `params.proposal_references` is written on every run and read only by that view. **Fixed**: view dropped; the table kept and documented as the per-run evidence history (the queue keeps only the latest run). | `params_schema.sql:379…`, `paramdb.py:1039-1060` |
+| low | `impact.phoenix_url_from`; `encode_client.score_via_jobs` and `queue_store.load_item` (tests only; **removed**, the latter now a test helper); unused imports `CritiqueFindings`, `ItemStatus` (**removed**); `RetrievalHit.method` value `"fts"` never produced. | — |
+| low | Deprecated `--as-of` alias on `run-targets` and `run-country`; legacy `parameter_file` validation alias. **Removed** (no queue row carries the old key). | `cli.py:49-68`, `schema.py:398-400` |
 
 ---
 

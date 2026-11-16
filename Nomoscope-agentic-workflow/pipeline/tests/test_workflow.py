@@ -284,17 +284,9 @@ def test_income_year_prompt_states_the_income_year_not_the_system_year():
 
 
 def test_year_anchor_and_cli_mapping():
-    from nomoscope_workflow.cli import _anchor_date
+    from nomoscope_workflow.schema import system_year_anchor
 
-    assert _anchor_date(2025, None) == date(2025, 7, 1)
-    assert _anchor_date(None, "2025-06-01") == date(2025, 6, 1)  # deprecated alias
-    import pytest
-    import typer
-
-    with pytest.raises(typer.Exit):
-        _anchor_date(None, None)
-    with pytest.raises(typer.Exit):
-        _anchor_date(2025, "2025-06-01")
+    assert system_year_anchor(2025) == date(2025, 7, 1)
 
 
 def test_validity_start_parses_pg_daterange():
@@ -933,16 +925,6 @@ def _item_kwargs(**extra) -> dict:
         **extra,
     )
 
-
-def test_review_item_still_loads_the_old_parameter_file_key():
-    """Items stored before the queue moved into the DB named the materialized file."""
-    stored = {**_item_kwargs(), "as_of": "2025-07-01", "parameter_file": "data/parameters/db/x.json"}
-    loaded = ReviewItem.model_validate(stored)
-    assert loaded.parameter_ref == "data/parameters/db/x.json"
-    assert "parameter_ref" in loaded.model_dump(mode="json")
-    assert "parameter_file" not in loaded.model_dump(mode="json")
-    fresh = ReviewItem(**_item_kwargs(), parameter_ref="group:FR:tinkt_fr:tin_schedule")
-    assert ReviewItem.model_validate(fresh.model_dump(mode="json")).parameter_ref == fresh.parameter_ref
 
 
 def _offline_cfg():

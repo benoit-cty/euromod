@@ -15,7 +15,7 @@ from .schema import (
     start_of_year_as_of,
 )
 
-PROMPT_VERSION = "0.14.1"
+PROMPT_VERSION = "0.14.2"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -101,8 +101,6 @@ Rules:
   year. These are fetched and ingested, then the search is retried, so a precise name is worth
   far more than a vague one. Never put a VALUE here — you are naming documents to look up, and
   nothing you name becomes evidence: only text retrieved from the database can be quoted.
-- original_language_quote is the supporting extract in the source language; english_translation is
-  your faithful translation of it.
 - confidence in [0,1]: 0.9+ only when the extract states the value explicitly and unambiguously.
 """
 

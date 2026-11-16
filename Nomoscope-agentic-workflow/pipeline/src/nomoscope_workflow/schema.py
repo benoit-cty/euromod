@@ -6,7 +6,7 @@ from datetime import date, datetime
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class LegalStatus(StrEnum):
@@ -299,8 +299,6 @@ class ProposalDraft(BaseModel):
     supporting_extract: str | None = Field(
         default=None, description="VERBATIM contiguous quote from the cited chunk containing the value"
     )
-    original_language_quote: str | None = None
-    english_translation: str | None = None
     confidence: float = 0.0
     reasoning: str | None = None
     #: When no extract states the value (or the extracts only point at another
@@ -404,11 +402,7 @@ class ReviewItem(BaseModel):
     retrieval_trace: list[RetrievalHit] = Field(default_factory=list)
     proposed_record: ParameterRecord | None = None
     #: What the run was asked for: a `euromod://…` target or `group:<group_id>`.
-    #: Items stored before the queue moved into the DB carried the materialized
-    #: file's path under `parameter_file`; that key still loads.
-    parameter_ref: str | None = Field(
-        default=None, validation_alias=AliasChoices("parameter_ref", "parameter_file")
-    )
+    parameter_ref: str | None = None
     decision: Decision | None = None
     # routing=derived: the $parameters this value is a formula over.
     derived_from: list[str] | None = None

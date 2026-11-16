@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import re
 from datetime import date
-from typing import Callable
 
 from .retrieval import validity_start
 from .schema import (
@@ -71,7 +70,6 @@ def propose_with_mock(
     record: ParameterRecord,
     as_of: date,
     hits: list[RetrievalHit],
-    translation_lookup: Callable[[str], str | None] | None = None,
 ) -> ProposalDraft:
     """Rule-based stand-in for the proposal LLM call."""
     hit = _pick_hit(hits)
@@ -122,9 +120,6 @@ def propose_with_mock(
 
     if draft.found and span:
         draft.supporting_extract = hit.content[span[0] : span[1]]
-        draft.original_language_quote = draft.supporting_extract
-        if hit.lang != "en" and translation_lookup:
-            draft.english_translation = translation_lookup(hit.chunk_id)
     if not draft.found:
         draft.reasoning = (
             f"mock extractor found no {info.value_type} value in chunk {hit.chunk_id}"

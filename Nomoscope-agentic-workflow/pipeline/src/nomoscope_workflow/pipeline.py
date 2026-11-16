@@ -198,16 +198,10 @@ class StepContext:
 def step_context(cfg: WorkflowConfig, tracer: Tracer) -> StepContext:
     """The production wiring: the LLM named by cfg, or the key-less mock."""
     if cfg.model.startswith("mock"):
-        def translation_lookup(chunk_id: str) -> str | None:
-            with retrieval.connect(cfg) as conn:
-                return retrieval.sibling_text(conn, chunk_id, "en")
-
         return StepContext(
             cfg=cfg,
             tracer=tracer,
-            proposer=lambda record, as_of, hits, feedback: mock.propose_with_mock(
-                record, as_of, hits, translation_lookup
-            ),
+            proposer=lambda record, as_of, hits, feedback: mock.propose_with_mock(record, as_of, hits),
             critic=lambda record, as_of, draft, hits, notes: mock.critique_with_mock(draft),
             deterministic=True,
         )

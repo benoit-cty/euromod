@@ -56,18 +56,3 @@ def encode_via_jobs(
     if model_id != 1:
         payload["model_id"] = model_id
     return _submit(database_url, payload, timeout, poll)["halfvec"]
-
-
-def score_via_jobs(
-    database_url: str,
-    query: str,
-    sentences: list[str],
-    timeout: float = 60.0,
-    poll: float = 0.1,
-) -> list[float]:
-    """Cosine similarities of `query` against `sentences`, computed by the worker."""
-    return list(
-        _submit(database_url, {"query": query, "sentences": list(sentences)}, timeout, poll)[
-            "similarities"
-        ]
-    )
