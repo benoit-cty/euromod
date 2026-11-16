@@ -4,7 +4,7 @@ The RAG assistant behind `rag-ui`. Unlike the parameter pipeline this is a
 free-roaming PydanticAI agent, but it keeps the pipeline's two guarantees:
 
 * **Quotes are mechanical.** The answer's `quotes` must each be found
-  character-for-character (whitespace-tolerant, `retrieval.verify_extract`) in
+  character-for-character (whitespace-tolerant, `quotes.verify_extract`) in
   the chunk they name. A mistyped chunk id is resolved by its extract among the
   chunks this turn retrieved (one candidate only), as the critique does; a quote
   still unverified after one model retry is returned flagged, never silently.
@@ -28,6 +28,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import date
+from types import SimpleNamespace
 from typing import Any, Literal
 
 import psycopg
@@ -46,7 +47,7 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.usage import UsageLimits
 
-from . import llm, query_encoder, retrieval, scout
+from . import llm, query_encoder, quotes, retrieval, scout
 from .config import WorkflowConfig
 
 #: Characters of a chunk handed to the model per search hit. Chunks average
@@ -386,35 +387,40 @@ TOOLS = (search_legislation, find_article, read_article, web_search)
 
 
 def resolve_quote(conn: psycopg.Connection, quote: Quote, sources: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    """Verify one quote against its chunk; rewrite a wrong id only to the ONE
-    retrieved chunk that contains the extract (`pipeline._resolve_chunk_by_extract`)."""
+    """Verify one quote against its chunk under the workflow's own rule.
+
+    `quotes.check_quote` — the sequence the proposal's citation goes through:
+    a wrong id is resolved, or re-pointed, only to the ONE chunk the answer's
+    tools returned that holds the extract (whitespace, split-ligature and
+    edge-punctuation tolerant), and the quote is always verified against the
+    chunk finally named. Until 16 Nov 2026 the chat had its own, weaker copy.
+    """
     chunk_id = quote.chunk_id.strip()
-    offsets = retrieval.verify_extract(conn, chunk_id, quote.extract) if _UUID.match(chunk_id) else None
-    resolved_from = None
-    if offsets is None:
-        candidates = [
-            cid for cid, row in sources.items()
-            if cid != chunk_id and _contains(row.get("content") or "", quote.extract)
+
+    def verify(cid: str, extract: str):
+        return quotes.verify_extract(conn, cid, extract) if _UUID.match(cid) else None
+
+    # A chunk the tools did not return is still checked against itself first.
+    direct = verify(chunk_id, quote.extract) if chunk_id not in sources else None
+    if direct is not None:
+        check = quotes.QuoteCheck(chunk_id=chunk_id, status="verified", offsets=direct)
+    else:
+        hits = [
+            SimpleNamespace(chunk_id=cid, citation=row.get("citation"), content=row.get("content") or "")
+            for cid, row in sources.items()
         ]
-        if len(candidates) == 1:
-            resolved_from, chunk_id = chunk_id, candidates[0]
-            offsets = retrieval.verify_extract(conn, chunk_id, quote.extract)
+        check = quotes.check_quote(hits, chunk_id, quote.extract, verify)
+        if check.status == "not_retrieved":
+            check.chunk_id = chunk_id
+    offsets = check.offsets
     return {
-        "chunk_id": chunk_id,
+        "chunk_id": check.chunk_id,
         "extract": quote.extract,
-        "verified": offsets is not None,
+        "verified": check.verified,
         "char_start": offsets[0] if offsets else None,
         "char_end": offsets[1] if offsets else None,
-        "resolved_from": resolved_from,
+        "resolved_from": check.resolved_from,
     }
-
-
-def _contains(content: str, extract: str) -> bool:
-    if not extract.strip():
-        return False
-    if extract in content:
-        return True
-    return re.search(r"\s+".join(re.escape(p) for p in extract.split()), content) is not None
 
 
 def _validate(ctx: RunContext[ChatDeps], output: ChatAnswer) -> ChatAnswer:

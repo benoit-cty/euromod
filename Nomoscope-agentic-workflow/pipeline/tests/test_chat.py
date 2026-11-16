@@ -7,7 +7,7 @@ from datetime import date
 import pytest
 from pydantic_ai.messages import ModelRequest, ModelResponse
 
-from nomoscope_workflow import chat, retrieval
+from nomoscope_workflow import chat, quotes, retrieval
 from nomoscope_workflow.config import load_config
 
 CHUNK_A = "11111111-1111-1111-1111-111111111111"
@@ -24,7 +24,7 @@ def fake_verify(monkeypatch):
             idx = content.find(extract)
             return (idx, idx + len(extract)) if idx >= 0 else None
 
-        monkeypatch.setattr(retrieval, "verify_extract", verify)
+        monkeypatch.setattr(quotes, "verify_extract", verify)
 
     return install
 
@@ -92,3 +92,13 @@ def test_mock_turn_runs_the_tool_loop_against_the_corpus() -> None:
     source_ids = {s["chunk_id"] for s in result["sources"]}
     assert {q["chunk_id"] for q in result["quotes"]} <= source_ids
     assert all(s["source_trust_class"] != "context" for s in result["sources"])
+
+
+def test_a_chat_quote_gets_the_split_ligature_rule() -> None:
+    """The chat used a weaker copy of the quote rule (code audit 2.1)."""
+    from nomoscope_workflow import quotes as q
+
+    content = "revalorisation des prestati ons familiales au 1er avril 2025."
+    sources = {CHUNK_B: {"content": content}}
+    hits = [type("H", (), {"chunk_id": CHUNK_B, "citation": None, "content": content})()]
+    assert q.resolve_chunk_by_extract(hits, "revalorisation des prestations familiales") == CHUNK_B

@@ -720,12 +720,13 @@ from nomoscope_workflow.pipeline import (  # noqa: E402
     _check_derivation,
     _values_sane,
     _figures_in,
-    _misquote_hint,
-    _misquoted_only,
     _round_like_held,
     evaluate_derivation,
 )
-from nomoscope_workflow.retrieval import _article_tokens, _code_refs, closest_passage  # noqa: E402
+from nomoscope_workflow.retrieval import _article_tokens, _code_refs  # noqa: E402
+from nomoscope_workflow.quotes import closest_passage  # noqa: E402
+from nomoscope_workflow.quotes import misquote_hint as _misquote_hint  # noqa: E402
+from nomoscope_workflow.quotes import misquoted_only as _misquoted_only  # noqa: E402
 from nomoscope_workflow.schema import Operand  # noqa: E402
 
 AKW_TEXT = (
@@ -1239,7 +1240,7 @@ def test_a_version_entered_since_reads_the_range_start():
 def test_a_word_split_by_pdf_extraction_still_matches_but_digits_do_not():
     import re as _re
 
-    from nomoscope_workflow.retrieval import _split_word_pattern
+    from nomoscope_workflow.quotes import _split_word_pattern
 
     chunk = "en pourcentage duquel sont fixées les prestati ons \nfamiliales, est donc porté de 466,44 €"
     assert _re.search(_split_word_pattern("sont fixées les prestations familiales, est donc"), chunk)
@@ -1318,7 +1319,7 @@ def test_an_average_labelled_amount_is_proposed_as_the_amount_in_force():
 
 
 def test_a_quote_citing_the_wrong_retrieved_chunk_is_repointed_to_the_one_holding_it():
-    from nomoscope_workflow.pipeline import _repoint_misquoted
+    from nomoscope_workflow.quotes import repoint_misquoted as _repoint_misquoted
 
     hits = [
         RetrievalHit(chunk_id="r5222", citation="CSS R522-2", content="Le plafond est majoré de 25 %"),
@@ -1394,3 +1395,26 @@ def test_an_agreement_article_brings_the_nearest_article_that_names_it():
              "content": "taux de calcul des points"}]
     found = _same_act_citing(_Conn(), "fr", rows, {"c35"})
     assert [h.citation.rsplit(" ", 1)[-1] for h in found] == ["36", "49"]
+
+
+def test_check_quote_is_the_one_sequence_for_every_quote():
+    """resolve -> repoint -> verify -> hint (code audit 2.1)."""
+    from nomoscope_workflow.quotes import check_quote
+
+    hits = [
+        RetrievalHit(chunk_id="a", citation="CSS R522-2", content="Le plafond est majoré de 25 %"),
+        RetrievalHit(chunk_id="b", citation="DSS/2B/2025/38", content="Taux plein 96,62 % 458,34"),
+    ]
+
+    def verify(chunk_id, extract):
+        content = next(h.content for h in hits if h.chunk_id == chunk_id)
+        i = content.find(extract)
+        return (i, i + len(extract)) if i >= 0 else None
+
+    typo = check_quote(hits, "a-typo", "Taux plein 96,62 %", verify)
+    assert (typo.chunk_id, typo.status, typo.resolved_from) == ("b", "verified", "a-typo")
+    swapped = check_quote(hits, "a", "Taux plein 96,62 %", verify)
+    assert (swapped.chunk_id, swapped.status) == ("b", "verified") and swapped.notes
+    tidied = check_quote(hits, "a", "Le plafond est majoré de 25 % au plus", verify)
+    assert tidied.status == "misquoted" and tidied.hint and "majoré de 25 %" in tidied.hint
+    assert check_quote(hits, "nowhere", "absent", verify).status == "not_retrieved"

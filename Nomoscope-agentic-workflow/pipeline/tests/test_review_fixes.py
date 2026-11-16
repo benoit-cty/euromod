@@ -1,7 +1,8 @@
 """Regressions from the 2026-09-08 eval review (eval-20260908T143801Z…luna)."""
 
 from nomoscope_workflow.paramdb import normalise_value, percent_literal
-from nomoscope_workflow.pipeline import _resolve_chunk_by_extract, _resolve_chunk_id
+from nomoscope_workflow.quotes import resolve_chunk_by_extract as _resolve_chunk_by_extract
+from nomoscope_workflow.quotes import resolve_chunk_id as _resolve_chunk_id
 from nomoscope_workflow.schema import RetrievalHit
 
 

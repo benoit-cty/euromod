@@ -24,14 +24,12 @@ from typing import TypedDict
 
 from opentelemetry.trace import Tracer
 
-from . import AGENT_VERSION, llm, mock, paramdb, queue_store, regions, retrieval, scout, translate
+from . import AGENT_VERSION, llm, mock, paramdb, queue_store, quotes, regions, retrieval, scout, translate
 from .config import WorkflowConfig
 from .prompts import PROMPT_VERSION
 from .schema import (
     Bracket,
-    CritiqueFindings,
     CritiqueReport,
-    ItemStatus,
     Lineage,
     ParameterRecord,
     ParameterValue,
@@ -619,40 +617,29 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                 if draft is not None and draft.reasoning:
                     report.issues.append(f"model: {draft.reasoning}")
             else:
-                hit_ids = {h.chunk_id for h in hits}
-                if draft.citation_chunk_id not in hit_ids and draft.supporting_extract:
-                    resolved = _resolve_chunk_id(hits, draft.citation_chunk_id, draft.supporting_extract)
-                    if resolved is not None:
-                        mech_notes.append(
-                            f"citation_chunk_id {draft.citation_chunk_id!r} is not a retrieved "
-                            f"chunk; resolved to {resolved} — the only retrieved chunk that "
-                            "contains the supporting_extract verbatim or carries that citation"
-                        )
-                        draft.citation_chunk_id = resolved
-                if draft.citation_chunk_id in hit_ids and draft.supporting_extract:
-                    repointed = _repoint_misquoted(hits, draft.citation_chunk_id, draft.supporting_extract)
-                    if repointed is not None:
-                        mech_notes.append(
-                            f"citation_chunk_id {draft.citation_chunk_id!r} does not contain the "
-                            f"supporting_extract; re-pointed to {repointed}, the only retrieved "
-                            "chunk that does"
-                        )
-                        draft.citation_chunk_id = repointed
+                # The verbatim rule (quotes.check_quote): resolve a mistyped
+                # id, re-point a swapped one, verify against the chunk named.
+                if draft.supporting_extract:
                     with retrieval.connect(cfg) as conn:
-                        offsets = retrieval.verify_extract(
-                            conn, draft.citation_chunk_id, draft.supporting_extract
+                        check = quotes.check_quote(
+                            hits,
+                            draft.citation_chunk_id,
+                            draft.supporting_extract,
+                            lambda chunk_id, extract: quotes.verify_extract(conn, chunk_id, extract),
                         )
-                    report.citation_verified = offsets is not None
-                    report.extract_offsets = offsets
-                    if offsets is None:
+                    mech_notes.extend(check.notes)
+                    draft.citation_chunk_id = check.chunk_id
+                if not draft.supporting_extract or check.status == "not_retrieved":
+                    report.issues.append("citation_chunk_id missing or not among retrieved chunks")
+                else:
+                    report.citation_verified = check.verified
+                    report.extract_offsets = check.offsets
+                    if not check.verified:
                         report.issues.append(
                             "supporting_extract is not a verbatim quote of the cited chunk"
                         )
-                        hint = _misquote_hint(hits, draft.citation_chunk_id, draft.supporting_extract)
-                        if hint:
-                            report.issues.append(hint)
-                else:
-                    report.issues.append("citation_chunk_id missing or not among retrieved chunks")
+                        if check.hint:
+                            report.issues.append(check.hint)
 
                 if draft.derivation:
                     # A derived value: the extract check, operand by operand,
@@ -663,7 +650,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
                         derivation_issues, report.operand_offsets, note = _check_derivation(
                             draft,
                             hits,
-                            lambda chunk_id, extract: retrieval.verify_extract(
+                            lambda chunk_id, extract: quotes.verify_extract(
                                 conn, chunk_id, extract
                             ),
                         )
@@ -987,7 +974,7 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
             and draft.found
             and (
                 state.get("attempts", 0) < MAX_PROPOSAL_ATTEMPTS
-                or (state.get("attempts", 0) < MAX_PROPOSAL_ATTEMPTS + 1 and _misquoted_only(report.issues))
+                or (state.get("attempts", 0) < MAX_PROPOSAL_ATTEMPTS + 1 and quotes.misquoted_only(report.issues))
             )
             and not is_mock  # the mock extractor is deterministic; retrying can't help
         )
@@ -1149,57 +1136,6 @@ def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
         return state
 
     return invoke
-
-
-def _resolve_chunk_by_extract(hits: list[RetrievalHit], extract: str) -> str | None:
-    """The one retrieved chunk that contains `extract` verbatim, else None.
-
-    The proposer transcribes a 36-character chunk id into its answer, and one
-    hex digit off (`4a56d7eb…` for the retrieved `4a56d5eb…`) failed a correct
-    27 382 on both attempts; another run put the citation string in the id
-    field. The extract is the evidence the anti-hallucination check verifies,
-    so when it sits character-for-character in exactly ONE retrieved chunk that
-    chunk is the citation and the id was a typo. Two or more candidates (the
-    same sentence in two versions of an article) keep the failure: guessing
-    between them would cite a version the model never read.
-    """
-    needle = extract.strip()
-    if not needle:
-        return None
-    matches = [h.chunk_id for h in hits if h.content and retrieval.quote_span(h.content, needle)]
-    return matches[0] if len(matches) == 1 else None
-
-
-def _repoint_misquoted(hits: list[RetrievalHit], cited: str, extract: str) -> str | None:
-    """A quote absent from the retrieved chunk it cites, found in ONE other: that chunk.
-
-    The model swaps ids between retrieved chunks: on the 5 Nov run «Taux plein
-    96,62 % 458,34» (instruction DSS/2B/2025/38) cited a chunk of R. 522-2,
-    and RSA's «128, 412 %» a Wallis-et-Futuna article — eleven right values
-    refused. The quote is still verified, against the chunk it now names.
-    """
-    current = next((h for h in hits if h.chunk_id == cited), None)
-    if current is None or not current.content or retrieval.quote_span(current.content, extract):
-        return None
-    resolved = _resolve_chunk_by_extract([h for h in hits if h.chunk_id != cited], extract)
-    return resolved
-
-
-def _resolve_chunk_id(hits: list[RetrievalHit], cited: str, extract: str) -> str | None:
-    """A cited id that is not a retrieved chunk: by its extract, else by its citation.
-
-    The model often writes the citation string in the id field («LEGITEXT…,
-    art. D622-7»), and then misquotes too (the 4 Nov $bhl_max_amt2 run dropped
-    the «e» of «1/ 730e»): resolving by the extract fails, the feedback said
-    only "not retrieved", and the retry never saw the passage. When exactly
-    one retrieved chunk carries that citation it is the chunk meant — the
-    extract is still verified against it, and a misquote now gets its hint.
-    """
-    resolved = _resolve_chunk_by_extract(hits, extract)
-    if resolved is not None:
-        return resolved
-    named = [h.chunk_id for h in hits if h.citation and h.citation == (cited or "").strip()]
-    return named[0] if len(named) == 1 else None
 
 
 #: Figures a derivation may use without quoting them: calendar and scaling
@@ -1374,37 +1310,6 @@ def _derivation_summary(draft: ProposalDraft, hits: list[RetrievalHit]) -> str:
     return f"{draft.derivation} with " + ", ".join(parts)
 
 
-_MISQUOTE_ISSUE = re.compile(
-    r"supporting_extract is not a verbatim quote of the cited chunk$"
-    r"|the cited chunk reads: «"
-    r"|derivation: operand \w+'s extract is not a verbatim quote of its chunk$"
-    r"|derivation: operand \w+: the cited chunk reads: «"
-)
-
-
-def _misquoted_only(issues: list[str]) -> bool:
-    """Whether a failed critique objects to nothing but a misquote.
-
-    Such a proposal earns one attempt past MAX_PROPOSAL_ATTEMPTS: its
-    feedback quotes the passage it tried to copy, and the attempt after
-    `locate` is otherwise the last — RSA forfait logement «calculé pour
-    trois personnes ou plus lorsque …» for «… pour trois personnes lorsque
-    …» was refused with the right passage in hand ($bsa00_hp_amt5, 5 Nov).
-    The extract check itself is unchanged.
-    """
-    objections = [i for i in issues if not i.startswith("note:")]
-    return bool(objections) and all(_MISQUOTE_ISSUE.match(i) for i in objections)
-
-
-def _misquote_hint(hits: list[RetrievalHit], chunk_id: str, extract: str) -> str | None:
-    """The retry's feedback for a non-verbatim extract: what the chunk really says."""
-    content = next((h.content for h in hits if h.chunk_id == chunk_id), "")
-    passage = retrieval.closest_passage(content, extract or "")
-    if passage is None:
-        return None
-    return f"the cited chunk reads: «{passage}» — quote it exactly as written, without correcting it"
-
-
 def _stating_passage(content: str, value: float, limit: int = 300) -> str | None:
     """The first sentence of `content` that states `value`, for a retry's feedback.
 
@@ -1450,7 +1355,6 @@ def _check_derivation(
         return ["derivation: no operands quoted"], [], None
     issues: list[str] = []
     offsets: list[tuple[int, int] | None] = []
-    hit_ids = {h.chunk_id for h in hits}
     values: dict[str, float] = {}
     for op in draft.operands:
         where = f"operand {op.name}"
@@ -1459,26 +1363,18 @@ def _check_derivation(
             offsets.append(None)
             continue
         values[op.name] = op.value
-        if op.citation_chunk_id not in hit_ids:
-            # Same rule as the main citation: a mistyped id (a citation
-            # string, a hex digit off) is resolved by the extract alone.
-            resolved = _resolve_chunk_id(hits, op.citation_chunk_id, op.supporting_extract)
-            if resolved is not None:
-                op.citation_chunk_id = resolved
-        if op.citation_chunk_id not in hit_ids:
+        # Same rule as the main citation (quotes.check_quote).
+        check = quotes.check_quote(hits, op.citation_chunk_id, op.supporting_extract, verify)
+        op.citation_chunk_id = check.chunk_id
+        if check.status == "not_retrieved":
             issues.append(f"derivation: {where} cites a chunk that was not retrieved")
             offsets.append(None)
             continue
-        repointed = _repoint_misquoted(hits, op.citation_chunk_id, op.supporting_extract)
-        if repointed is not None:
-            op.citation_chunk_id = repointed
-        span = verify(op.citation_chunk_id, op.supporting_extract)
-        offsets.append(span)
-        if span is None:
+        offsets.append(check.offsets)
+        if not check.verified:
             issues.append(f"derivation: {where}'s extract is not a verbatim quote of its chunk")
-            hint = _misquote_hint(hits, op.citation_chunk_id, op.supporting_extract)
-            if hint:
-                issues.append(f"derivation: {where}: {hint}")
+            if check.hint:
+                issues.append(f"derivation: {where}: {check.hint}")
         elif not _extract_states(op.supporting_extract, op.value):
             issues.append(f"derivation: {where}'s extract does not state {op.value:g}")
             content = next((h.content for h in hits if h.chunk_id == op.citation_chunk_id), "")

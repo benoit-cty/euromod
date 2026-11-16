@@ -83,7 +83,7 @@ These are behaviour problems, listed first because they outrank the refactoring.
 | Concept | Definition sites | Kept in step by a test? | Severity |
 |---|---|---|---|
 | Hybrid search SQL | `nomoscope_workflow/retrieval.py:164-275`; `nomokrisis_eval/embedding_eval.py:75-106, 310-322`; `ui/src-tauri/src/db.rs:868-921`; `mcp-server/src/nomotheca_mcp/search.py:38-108` | **Fixed**: one SQL function `search_chunks()` (+ `fts_or_query`, `jurisdiction_tree`) in `schema.sql` / `migrations/0004_search_chunks.sql`, called by all four. Verified hit-for-hit against the old pipeline SQL on FR/LT/ES/NL/IE queries (only tie order differs, now deterministic) | high |
-| Quote matching | `retrieval.py:1411-1458` (`verify_extract`, `quote_span`); `chat.py:412-417` (`_contains`); `rag-ui/src/lib/chat.js:81-93` (`locateExtract`) | No. The two copies lack the split-ligature and edge-punctuation rules | high |
+| Quote matching | `retrieval.py:1411-1458` (`verify_extract`, `quote_span`); `chat.py:412-417` (`_contains`); `rag-ui/src/lib/chat.js:81-93` (`locateExtract`) | **Fixed** (Python): `nomoscope_workflow/quotes.py` holds `verify_extract`, `quote_span`, `closest_passage`, the resolve/re-point helpers and `check_quote`, used by the main citation, every operand and the chat; the JS `locateExtract` port is tracked with the desktop-app work | high |
 | Value parsing | `nomokrisis_eval/scoring.py:176-243`; `paramdb.py:85-126`; `pipeline.py:1229-1293` (a second AST evaluator); `benchmark.py:61-126` | No. `8,17%` parses in `paramdb` only; `100%*$MMS` in `scoring` only | medium |
 | Encode-job submit-and-poll | `nomergon/client.py:25-63`; `nomoscope_workflow/encode_client.py:21-41`; `nomotheca_mcp/encoder.py:97-149`; `ui/src-tauri/src/jobs.rs:247-264` | No. Priority 100 is a literal in each | medium |
 | Job types | `Nomergon-worker/db/ops_schema.sql:21-23` and again `:51-53`; `nomergon/jobs.py:24-35, 206-217, 230-239, 260-372, 449-455`; `nomergon/cli.py:102`; `Home.svelte:71-80`; literals in `IngestTab.svelte:270-296` | Python lists only. Nothing ties Python to SQL or to the UI | medium |
@@ -178,8 +178,8 @@ Suggested fixes, in order of value:
 
 | Severity | Finding | Where |
 |---|---|---|
-| high | The resolve → repoint → verify → hint sequence runs twice, once for the main citation and once per operand, with different messages. `_MISQUOTE_ISSUE` needs four alternatives to recognise them. | `pipeline.py:622-655` and `1462-1487` |
-| high | A third, weaker copy of the quote rule lives in chat. | `chat.py:388-417` |
+| high | The resolve → repoint → verify → hint sequence runs twice, once for the main citation and once per operand, with different messages. `_MISQUOTE_ISSUE` needs four alternatives to recognise them. **Fixed**: one `quotes.check_quote` returns a structured `QuoteCheck`; the two callers only word the issue. | `pipeline.py:622-655` and `1462-1487` |
+| high | A third, weaker copy of the quote rule lives in chat. **Fixed**: `chat.resolve_quote` goes through `quotes.check_quote` (split-ligature and edge-punctuation rules included). | `chat.py:388-417` |
 | high | The `RetrievalHit` column list is pasted 14 times and the five-table join about 15. Adding a field to `RetrievalHit` means editing 14 SQL strings. | `retrieval.py` (e.g. `:106, 142, 416, 656, 1017, 1273`) |
 | medium | Cursor boilerplate about 17 times; the "skip seen, wrap as located, stop at cap" loop six times; the `rsplit("art. ")` idiom four times. | `retrieval.py`, `scout.py:915-939` |
 | medium | Scope, language and query vector are derived again at each entry point. | `pipeline.py:565-567`, `scout.py:901-904`, `retrieval.py:313`, `chat.py:250, 279` |
@@ -219,7 +219,7 @@ Suggested fixes, in order of value:
 | medium | `ProposalDraft.original_language_quote` and `english_translation` are requested from the model and read nowhere. Every real proposal pays output tokens for them. `retrieval.sibling_text` and the `translation_lookup` plumbing exist only to fill them. | `schema.py:291-292`, `prompts.py:103-104`, `retrieval.py:1394-1408` |
 | medium | Stale schema comments about `data/decisions.jsonl`, `sync-decisions` and `data/queue/<item_id>.json`. | `pipeline/db/params_schema.sql:26-27, 273, 335-336, 371, 449` |
 | low/medium | View `params.proposal_review` has no reader; table `params.proposal_references` is written on every run and read only by that view. | `params_schema.sql:379…`, `paramdb.py:1039-1060` |
-| low | `impact.phoenix_url_from`; `encode_client.score_via_jobs` and `queue_store.load_item` (tests only); unused imports `CritiqueFindings`, `ItemStatus`; `RetrievalHit.method` value `"fts"` never produced. | — |
+| low | `impact.phoenix_url_from`; `encode_client.score_via_jobs` and `queue_store.load_item` (tests only); unused imports `CritiqueFindings`, `ItemStatus` (**removed**); `RetrievalHit.method` value `"fts"` never produced. | — |
 | low | Deprecated `--as-of` alias on `run-targets` and `run-country`; legacy `parameter_file` validation alias. | `cli.py:49-68`, `schema.py:398-400` |
 
 ---

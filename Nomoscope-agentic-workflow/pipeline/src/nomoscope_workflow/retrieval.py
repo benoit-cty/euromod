@@ -16,7 +16,6 @@ job when WORKFLOW_ENCODER=db) and falls back to FTS-only when the encoder is una
 
 from __future__ import annotations
 
-import difflib
 import re
 from collections.abc import Sequence
 from datetime import date, timedelta
@@ -25,6 +24,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from . import query_encoder
+from .quotes import closest_passage, quote_span, verify_extract  # noqa: F401  (re-exported)
 from .config import WorkflowConfig
 from .schema import RetrievalHit
 
@@ -1400,86 +1400,3 @@ def sibling_text(conn: psycopg.Connection, chunk_id: str, lang: str) -> str | No
         {"chunk_id": chunk_id, "lang": lang},
     ).fetchone()
     return row["content"] if row else None
-
-
-def verify_extract(
-    conn: psycopg.Connection, chunk_id: str, extract: str
-) -> tuple[int, int] | None:
-    """Locate a supposedly-verbatim extract inside the cited chunk.
-
-    Returns (char_start, char_end) offsets into unit_texts.content — the
-    anti-hallucination check: no offsets, no verified citation. Whitespace
-    runs are treated as equivalent so line-wrapping differences don't fail
-    an otherwise verbatim quote, and so is whitespace a PDF extraction put
-    between two letters of one word: DSS/2B/2025/38 reads «prestati ons»
-    (a split "ti" ligature), and every quote of its BMAF sentence failed on
-    the 5 Nov re-run with the right amount proposed. Between digits it is
-    never ignored: «25 %» must not match two table cells «2» and «5».
-    Punctuation at the quote's two ends is not part of the check either.
-    """
-    row = conn.execute(
-        "SELECT content, char_start FROM chunks WHERE id = %s::uuid", (chunk_id,)
-    ).fetchone()
-    if row is None or not extract:
-        return None
-    span = quote_span(row["content"], extract)
-    base = row["char_start"] or 0
-    return (base + span[0], base + span[1]) if span is not None else None
-
-
-def quote_span(content: str, extract: str) -> tuple[int, int] | None:
-    """Where `extract` sits in `content` under verify_extract's rules, else None."""
-    if not extract:
-        return None
-    idx = content.find(extract)
-    if idx >= 0:
-        return (idx, idx + len(extract))
-    for quote in dict.fromkeys((extract, extract.strip(_QUOTE_EDGE_PUNCTUATION))):
-        if not quote.strip():
-            continue
-        pattern = re.compile(r"\s+".join(re.escape(part) for part in quote.split()))
-        match = pattern.search(content) or re.search(_split_word_pattern(quote), content)
-        if match:
-            return (match.start(), match.end())
-    return None
-
-
-#: Punctuation a quote may end (or start) on that the text does not: the model
-#: closes «… deux personnes ; 3° A 16,5 %» on a full stop, or wraps it in «».
-#: Stripped from the ends only — every word in between must still match.
-_QUOTE_EDGE_PUNCTUATION = " \t\n.;:,«»\"“”'’"
-
-
-def _split_word_pattern(extract: str) -> str:
-    """`extract` as a regex in which whitespace may also fall between two letters."""
-    parts: list[str] = []
-    for word in extract.split():
-        letters = [re.escape(c) + (r"\s*" if c.isalpha() and n.isalpha() else "") for c, n in zip(word, word[1:])]
-        parts.append("".join(letters) + re.escape(word[-1]))
-    return r"\s+".join(parts)
-
-
-def closest_passage(content: str, extract: str) -> str | None:
-    """The passage of a chunk that a non-verbatim extract was trying to quote.
-
-    Feedback for the retry, never a substitute for the check: models "tidy"
-    legal French (la contribution → la contribution sociale, a dropped «à
-    charge», an added closing »), and told only "not verbatim" they repeat the
-    same quote. The span runs from the first to the last stretch of 6+
-    characters the extract shares with the chunk, widened to whole words;
-    None when under half the extract matches or the matches are scattered.
-    """
-    if not extract.strip():
-        return None
-    matcher = difflib.SequenceMatcher(None, content, extract, autojunk=False)
-    blocks = [b for b in matcher.get_matching_blocks() if b.size >= 6]
-    if sum(b.size for b in blocks) < len(extract) / 2:
-        return None
-    start, end = blocks[0].a, blocks[-1].a + blocks[-1].size
-    if end - start > 2 * len(extract) + 100:
-        return None
-    while start > 0 and not content[start - 1].isspace():
-        start -= 1
-    while end < len(content) and not content[end].isspace():
-        end += 1
-    return content[start:end]
