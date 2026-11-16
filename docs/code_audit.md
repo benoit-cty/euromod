@@ -197,7 +197,7 @@ Suggested fixes, in order of value:
   - `routing.py` — value comparison and record merging;
   - `pipeline.py` — the steps and `run_parameter`.
 - **`critique`** is four checks in one function: citation, derivation, income-year vintage (about 120 lines, three levels of nesting, three DB round trips) and in-force dates, then the LLM merge. Each should return `(issues, notes, flags)`.
-- **`retrieval.py`** (1 491 lines) splits into `corpus.py`, `search.py`, `crossrefs.py` (about 650 lines), `locate.py` and `country_report.py`.
+- **Fixed** — **`retrieval.py`** (1 491 lines) splits into `corpus.py`, `search.py`, `crossrefs.py` (about 650 lines), `locate.py` and `country_report.py`. Done: `corpus.py` (188), `locate.py` (386), `crossrefs.py` (548), `country_report.py` (103); `retrieval.py` (252) keeps the search and stays the facade every caller imports.
 - **`scout.py`** (940 lines) holds static per-country tables, discovery prompts, a Tavily client, subprocess launchers and the corpus-side `locate`, which touches neither web nor ingest.
 - **`tests/test_workflow.py`** is 1 396 lines and 78 tests on unrelated subjects, with a second import block mid-file and about 20 private names imported.
 
