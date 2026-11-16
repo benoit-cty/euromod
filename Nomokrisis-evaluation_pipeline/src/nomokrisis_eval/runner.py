@@ -33,7 +33,7 @@ from nomoscope_workflow.prompts import PROMPT_VERSION
 from nomoscope_workflow.schema import ParameterRecord, ReviewItem
 from nomoscope_workflow.tracing import setup_tracing
 
-from . import EVAL_VERSION
+from . import eval_version
 from . import db as evaldb
 from .config import EvalConfig, git_commit
 from .golden_store import golden_set_hash
@@ -128,7 +128,7 @@ def start_run(
         resolved_critique_model=_resolved_model_name(critique_model_for(cfg, model)),
         prompt_version=PROMPT_VERSION,
         agent_version=AGENT_VERSION,
-        eval_version=EVAL_VERSION,
+        eval_version=eval_version(),
         dataset_version=golden_set_hash(cases),
         git_commit=git_commit(),
         countries=sorted({c.country for c in cases}),
@@ -374,11 +374,14 @@ def rescore_run(conn: psycopg.Connection, run_id: str) -> tuple[RunManifest, lis
 
 
 def store_rescored(conn: psycopg.Connection, run_id: str, results: list[CaseResult]) -> None:
+    """Persist a rescore. The run's eval_version moves to today's scoring rules
+    with its results: the row must say which rules produced the scores it holds."""
     loaded = evaldb.load_run(conn, run_id)
     if loaded is None:
         raise LookupError(f"no evaluation run {run_id} in eval.runs")
     for result in results:
         evaldb.upsert_result(conn, loaded[0], result)  # review_item kept (coalesce)
+    evaldb.set_eval_version(conn, loaded[0], eval_version())
 
 
 def _attach_impact(results: list[CaseResult], wf_cfg: WorkflowConfig) -> bool:

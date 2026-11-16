@@ -51,7 +51,7 @@ from nomoscope_workflow import regions, retrieval
 from nomoscope_workflow.config import WorkflowConfig
 from nomoscope_workflow.schema import RetrievalHit
 
-from . import EVAL_VERSION
+from . import eval_version
 from .config import EvalConfig, git_commit
 from .golden_store import embedding_set_hash
 from .schema import EmbeddingCase, EmbeddingCaseResult, GoldenCase, Routing
@@ -182,7 +182,7 @@ def run_embedding_eval(
         "embedding_model_id": embedding_model_id,
         "embedding_model": _model_name(cfg.database_url, embedding_model_id),
         "k": k,
-        "eval_version": EVAL_VERSION,
+        "eval_version": eval_version(),
         "dataset_version": embedding_set_hash(cases),
         "git_commit": git_commit(),
         "countries": sorted({c.country for c in cases}),

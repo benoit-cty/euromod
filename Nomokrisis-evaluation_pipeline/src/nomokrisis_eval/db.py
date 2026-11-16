@@ -104,6 +104,12 @@ def freeze_run_cases(conn: psycopg.Connection, run_pk: int, cases: list[GoldenCa
     conn.commit()
 
 
+def set_eval_version(conn: psycopg.Connection, run_pk: int, eval_version: str) -> None:
+    """Record the scoring rules a run's results now carry (after a rescore)."""
+    conn.execute("UPDATE eval.runs SET eval_version = %s WHERE id = %s", (eval_version, run_pk))
+    conn.commit()
+
+
 def set_run_status(conn: psycopg.Connection, run_pk: int, status: str) -> None:
     conn.execute(
         """UPDATE eval.runs SET status = %s,
