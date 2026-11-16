@@ -69,6 +69,21 @@ from .schema import CaseResult, GoldenCase, RunManifest
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
 
+def _verbose_option():
+    """`--verbose/--quiet`, shared by every command that runs cases."""
+    return typer.Option(
+        False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
+    )
+
+
+def _concurrency_option():
+    """`-j`, shared by every command that runs cases."""
+    return typer.Option(
+        4, "--concurrency", "-j", min=1, envvar="EVAL_CONCURRENCY",
+        help="Cases run at once (each case is mostly waiting on the LLM)",
+    )
+
+
 def _parse_date(value: str) -> date:
     return date.fromisoformat(value)
 
@@ -476,13 +491,8 @@ def run(
     language: list[str] = typer.Option(None, "--language", help="Restrict to language(s)"),
     verified_only: bool = typer.Option(True, "--verified-only/--include-drafts", help="Evaluate only human-verified cases"),
     notes: str = typer.Option(None, "--notes"),
-    verbose: bool = typer.Option(
-        False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
-    ),
-    concurrency: int = typer.Option(
-        4, "--concurrency", "-j", min=1, envvar="EVAL_CONCURRENCY",
-        help="Cases run at once (each case is mostly waiting on the LLM)",
-    ),
+    verbose: bool = _verbose_option(),
+    concurrency: int = _concurrency_option(),
 ) -> None:
     """Run the agentic workflow over the golden set, score it, store the results.
 
@@ -517,13 +527,8 @@ def run_benchmark(
     target: list[str] = typer.Option(None, "--target", help="Only these refs (model_target or group:<id>)"),
     notes: str = typer.Option(None, "--notes"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Build and list the cases, run nothing"),
-    verbose: bool = typer.Option(
-        False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
-    ),
-    concurrency: int = typer.Option(
-        4, "--concurrency", "-j", min=1, envvar="EVAL_CONCURRENCY",
-        help="Cases run at once (each case is mostly waiting on the LLM)",
-    ),
+    verbose: bool = _verbose_option(),
+    concurrency: int = _concurrency_option(),
 ) -> None:
     """Every parameter of a country, updated blind from EUROMOD Y-1 and scored
     against EUROMOD Y and OpenFisca Y (see `benchmark`).
@@ -637,13 +642,8 @@ def list_runs_cmd(
 @app.command()
 def resume(
     run_id: str = typer.Argument(None, help="Run id to continue (default: the most recent unfinished run)"),
-    verbose: bool = typer.Option(
-        False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
-    ),
-    concurrency: int = typer.Option(
-        4, "--concurrency", "-j", min=1, envvar="EVAL_CONCURRENCY",
-        help="Cases run at once (each case is mostly waiting on the LLM)",
-    ),
+    verbose: bool = _verbose_option(),
+    concurrency: int = _concurrency_option(),
 ) -> None:
     """Continue an interrupted evaluation run: same manifest, same case list,
     only the cases that have not been scored yet. Ends with `@result {"run_id": …}`."""

@@ -16,7 +16,6 @@ those tables and skips the latter.
 from __future__ import annotations
 
 import re
-import subprocess
 import time
 import uuid
 from collections import defaultdict
@@ -36,21 +35,11 @@ from nomoscope_workflow.tracing import setup_tracing
 
 from . import EVAL_VERSION
 from . import db as evaldb
-from .config import REPO_ROOT, EvalConfig
+from .config import EvalConfig, git_commit
 from .golden_store import golden_set_hash
 from .parameter_store import db_constants, load_case_record
 from .schema import CaseResult, GoldenCase, RunManifest
 from .scoring import score_item
-
-def _git_commit() -> str | None:
-    try:
-        return subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            cwd=REPO_ROOT, capture_output=True, text=True, check=True,
-        ).stdout.strip()
-    except Exception:
-        return None
-
 
 def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
@@ -141,7 +130,7 @@ def start_run(
         agent_version=AGENT_VERSION,
         eval_version=EVAL_VERSION,
         dataset_version=golden_set_hash(cases),
-        git_commit=_git_commit(),
+        git_commit=git_commit(),
         countries=sorted({c.country for c in cases}),
         notes=notes,
         blind_before=blind_before,

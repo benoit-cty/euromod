@@ -38,7 +38,6 @@ reranker's ceiling (it can only promote what the pool contains).
 
 from __future__ import annotations
 
-import subprocess
 import time
 import uuid
 from collections import defaultdict
@@ -53,7 +52,7 @@ from nomoscope_workflow.config import WorkflowConfig
 from nomoscope_workflow.schema import RetrievalHit
 
 from . import EVAL_VERSION
-from .config import REPO_ROOT, EvalConfig
+from .config import EvalConfig, git_commit
 from .golden_store import embedding_set_hash
 from .schema import EmbeddingCase, EmbeddingCaseResult, GoldenCase, Routing
 from .scoring import citation_equal, citation_matches
@@ -185,7 +184,7 @@ def run_embedding_eval(
         "k": k,
         "eval_version": EVAL_VERSION,
         "dataset_version": embedding_set_hash(cases),
-        "git_commit": _git_commit(),
+        "git_commit": git_commit(),
         "countries": sorted({c.country for c in cases}),
         "cases": len(cases),
         "notes": notes,
@@ -456,12 +455,3 @@ def compare_runs(runs: list[dict], method: str = "vector") -> list[dict[str, str
                 rows.append({"model": name, "lang": lang, **metrics})
     return rows
 
-
-def _git_commit() -> str | None:
-    try:
-        return subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            cwd=REPO_ROOT, capture_output=True, text=True, check=True,
-        ).stdout.strip()
-    except Exception:
-        return None

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -33,6 +34,17 @@ class EvalConfig:
     #: judge with EVAL_CRITIQUE_MODEL to make those columns comparable.
     critique_model: str = ""
     phoenix_project: str = ""
+
+
+def git_commit() -> str | None:
+    """The repository's short HEAD, recorded on every run; None outside a checkout."""
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=REPO_ROOT, capture_output=True, text=True, check=True,
+        ).stdout.strip()
+    except Exception:
+        return None
 
 
 def load_eval_config() -> EvalConfig:

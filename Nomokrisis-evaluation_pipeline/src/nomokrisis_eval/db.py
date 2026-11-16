@@ -114,6 +114,31 @@ def set_run_status(conn: psycopg.Connection, run_pk: int, status: str) -> None:
     conn.commit()
 
 
+#: The eval.results columns copied from the CaseResult field of the same name.
+#: `details` holds the whole CaseResult as well (what `load_results` reads back);
+#: these are its queryable projection for the views and the UI.
+RESULT_COLUMNS = (
+    "case_id", "country", "language", "model_target", "difficulty", "hazards",
+    "source_class", "routing_expected", "routing_actual", "routing_correct",
+    "value_correct", "date_correct", "citation_correct", "extract_verbatim",
+    "supportedness", "critique_pass", "hallucination", "retrieval_hit", "abstained",
+    "guidance_only", "corpus_available", "readiness", "confidence", "latency_ms",
+    "error", "phoenix_trace_id", "llm_calls", "tokens_prompt", "tokens_completion",
+    "energy_kwh", "gwp_kgco2eq", "impact_estimated",
+)
+
+_UPSERT_RESULT_SQL = (
+    "INSERT INTO eval.results (run_pk, "
+    + ", ".join(RESULT_COLUMNS)
+    + ", details, review_item) VALUES ("
+    + ", ".join(["%s"] * (len(RESULT_COLUMNS) + 3))
+    + ") ON CONFLICT (run_pk, case_id) DO UPDATE SET "
+    + ", ".join(f"{column} = EXCLUDED.{column}" for column in RESULT_COLUMNS if column != "case_id")
+    + ", details = EXCLUDED.details"
+    + ", review_item = coalesce(EXCLUDED.review_item, eval.results.review_item)"
+)
+
+
 def upsert_result(
     conn: psycopg.Connection, run_pk: int, result: CaseResult, review_item: dict | None = None
 ) -> None:
@@ -122,93 +147,11 @@ def upsert_result(
     is the ReviewItem dump so `rescore` can replay scoring without tokens; a
     None keeps whatever the row already holds."""
     conn.execute(
-        """
-        INSERT INTO eval.results (run_pk, case_id, country, language, model_target,
-                                  difficulty, hazards, source_class, routing_expected,
-                                  routing_actual, routing_correct, value_correct,
-                                  date_correct, citation_correct, extract_verbatim,
-                                  supportedness, critique_pass,
-                                  hallucination, retrieval_hit, abstained,
-                                  guidance_only,
-                                  corpus_available, readiness, confidence,
-                                  latency_ms, error, details,
-                                  phoenix_trace_id, llm_calls, tokens_prompt,
-                                  tokens_completion, energy_kwh, gwp_kgco2eq,
-                                  impact_estimated, review_item)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s)
-        ON CONFLICT (run_pk, case_id) DO UPDATE SET
-            country = EXCLUDED.country,
-            language = EXCLUDED.language,
-            model_target = EXCLUDED.model_target,
-            difficulty = EXCLUDED.difficulty,
-            hazards = EXCLUDED.hazards,
-            source_class = EXCLUDED.source_class,
-            routing_expected = EXCLUDED.routing_expected,
-            routing_actual = EXCLUDED.routing_actual,
-            routing_correct = EXCLUDED.routing_correct,
-            value_correct = EXCLUDED.value_correct,
-            date_correct = EXCLUDED.date_correct,
-            citation_correct = EXCLUDED.citation_correct,
-            extract_verbatim = EXCLUDED.extract_verbatim,
-            supportedness = EXCLUDED.supportedness,
-            critique_pass = EXCLUDED.critique_pass,
-            hallucination = EXCLUDED.hallucination,
-            retrieval_hit = EXCLUDED.retrieval_hit,
-            abstained = EXCLUDED.abstained,
-            guidance_only = EXCLUDED.guidance_only,
-            corpus_available = EXCLUDED.corpus_available,
-            readiness = EXCLUDED.readiness,
-            confidence = EXCLUDED.confidence,
-            latency_ms = EXCLUDED.latency_ms,
-            error = EXCLUDED.error,
-            details = EXCLUDED.details,
-            phoenix_trace_id = EXCLUDED.phoenix_trace_id,
-            llm_calls = EXCLUDED.llm_calls,
-            tokens_prompt = EXCLUDED.tokens_prompt,
-            tokens_completion = EXCLUDED.tokens_completion,
-            energy_kwh = EXCLUDED.energy_kwh,
-            gwp_kgco2eq = EXCLUDED.gwp_kgco2eq,
-            impact_estimated = EXCLUDED.impact_estimated,
-            review_item = coalesce(EXCLUDED.review_item, eval.results.review_item)
-        """,
+        _UPSERT_RESULT_SQL,
         (
             run_pk,
-            result.case_id,
-            result.country,
-            result.language,
-            result.model_target,
-            result.difficulty,
-            result.hazards,
-            result.source_class,
-            result.routing_expected,
-            result.routing_actual,
-            result.routing_correct,
-            result.value_correct,
-            result.date_correct,
-            result.citation_correct,
-            result.extract_verbatim,
-            result.supportedness,
-            result.critique_pass,
-            result.hallucination,
-            result.retrieval_hit,
-            result.abstained,
-            result.guidance_only,
-            result.corpus_available,
-            result.readiness,
-            result.confidence,
-            result.latency_ms,
-            result.error,
+            *(getattr(result, column) for column in RESULT_COLUMNS),
             Jsonb(result.model_dump(mode="json")),
-            result.phoenix_trace_id,
-            result.llm_calls,
-            result.tokens_prompt,
-            result.tokens_completion,
-            result.energy_kwh,
-            result.gwp_kgco2eq,
-            result.impact_estimated,
             Jsonb(review_item) if review_item is not None else None,
         ),
     )
