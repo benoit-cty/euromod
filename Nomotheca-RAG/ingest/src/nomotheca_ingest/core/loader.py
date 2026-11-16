@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Iterable
+from dataclasses import asdict, dataclass, fields
 from hashlib import sha256
 from typing import Any
 from uuid import UUID
@@ -33,6 +34,18 @@ class LoadStats:
     chunks: int = 0
     retained_chunks: int = 0   # cited chunks past the new end of a shrunken text
     relations: int = 0
+
+    @classmethod
+    def total(cls, items: Iterable[LoadStats]) -> LoadStats:
+        """Sum several loads into one."""
+        out = cls()
+        for item in items:
+            for f in fields(cls):
+                setattr(out, f.name, getattr(out, f.name) + getattr(item, f.name))
+        return out
+
+    def as_dict(self) -> dict[str, int]:
+        return asdict(self)
 
 
 class LegislationLoader:

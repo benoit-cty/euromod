@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from uuid import UUID
 
+import psycopg
 from psycopg import Connection
 from psycopg.types.json import Jsonb
 
@@ -121,3 +124,59 @@ def finish_fetch_run(conn: Connection, run_id: UUID, status: str, stats: dict | 
             """,
             (status, Jsonb(stats) if stats is not None else None, run_id),
         )
+
+
+@dataclass(slots=True)
+class FetchRun:
+    """An open fetch run: its id, the archive connection and the stats to record.
+
+    `archive` is an autocommit connection: the run row and every snapshot
+    written through `store` are committed as they are written, so a failed
+    load (rolled back on the caller's own connection) still leaves the run,
+    marked `failed`, and the bytes it fetched. Archive-first holds on failure.
+    """
+
+    id: UUID
+    archive: Connection
+    trigger: Trigger
+    stats: dict = field(default_factory=dict)
+
+    @property
+    def store(self) -> PostgresSnapshotStore:
+        return PostgresSnapshotStore(self.archive, self.id)
+
+
+@contextmanager
+def fetch_run(
+    database_url: str,
+    source_code: str,
+    skill_version: str,
+    trigger: Trigger = Trigger.CACHE_MISS,
+    frozen_label: str | None = None,
+    *,
+    setup: Callable[[Connection], None] | None = None,
+) -> Iterator[FetchRun]:
+    """Open a fetch run whose outcome is recorded whatever happens.
+
+    The body loads on its own connection (one transaction, rolled back on
+    error); the run row and snapshots live on the autocommit archive
+    connection. On exit the run is marked `succeeded` with `run.stats`, or
+    `failed` with the error, and the exception propagates. `setup` runs on
+    the archive connection before the run row is created (`ensure_source`).
+    """
+    with psycopg.connect(database_url, autocommit=True) as archive:
+        if setup is not None:
+            setup(archive)
+        run = FetchRun(
+            id=create_fetch_run(archive, source_code, skill_version, trigger, frozen_label),
+            archive=archive,
+            trigger=trigger,
+        )
+        try:
+            yield run
+        except BaseException as exc:
+            finish_fetch_run(
+                archive, run.id, "failed", {"trigger": trigger.value, "error": str(exc) or type(exc).__name__}
+            )
+            raise
+        finish_fetch_run(archive, run.id, "succeeded", {"trigger": trigger.value, **run.stats})

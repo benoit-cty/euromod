@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, datetime
+from functools import partial
 import os
 from pathlib import Path
 import re
@@ -11,15 +12,13 @@ from threading import Thread
 from traceback import format_exc
 from uuid import UUID, uuid4
 
-import psycopg
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Input, Label, RichLog, Select, Static
 
-from nomotheca_ingest.countries.registry import get_adapter
-from nomotheca_ingest.core.db import PostgresSnapshotStore, create_fetch_run, finish_fetch_run
-from nomotheca_ingest.core.ir import CitationRef, SourceRef, Trigger
-from nomotheca_ingest.core.loader import LegislationLoader
+from nomotheca_ingest.core.ir import SourceRef, Trigger
+from nomotheca_ingest.core.loader import LoadStats
+from nomotheca_ingest.core.pipeline import FetchEvent, PipelineResult, ingest, run_database_ingest
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 
@@ -53,7 +52,7 @@ class RunConfig:
     mode: str
     identifier: str
     as_of: date | None
-    source_code: str
+    source_code: str | None
     database_url: str | None
     max_items: int
 
@@ -115,7 +114,7 @@ class PipelineTui(App):
     }
     """
 
-    STEP_IDS = ("adapter", "resolve", "fetch", "parse", "expand", "load")
+    STEP_IDS = ("fetch", "load")
     MARKUP_RE = re.compile(r"\[[^\]]+\]")
 
     def __init__(self) -> None:
@@ -131,8 +130,8 @@ class PipelineTui(App):
             with Horizontal():
                 yield Input(value="FR", placeholder="Jurisdiction", id="jurisdiction", classes="field")
                 yield Select(
-                    (("Complete fiscal bill", "bill"), ("Direct DILA id", "direct"), ("Citation", "citation")),
-                    value="bill",
+                    (("Instrument id", "instrument"), ("Citation", "citation")),
+                    value="instrument",
                     id="mode",
                     classes="field",
                 )
@@ -140,7 +139,7 @@ class PipelineTui(App):
                 yield Input(value="JORFTEXT000051168007", placeholder="DILA id or citation", id="identifier", classes="field")
                 yield Input(value="2025-06-01", placeholder="As-of date", id="as_of", classes="field")
             with Horizontal():
-                yield Input(value="FR-LEGI", placeholder="Source code", id="source_code", classes="field")
+                yield Input(value="", placeholder="Source code (blank: the adapter's default)", id="source_code", classes="field")
                 yield Input(value="500", placeholder="Max source items", id="max_items", classes="field")
             with Horizontal():
                 yield Input(
@@ -185,15 +184,13 @@ class PipelineTui(App):
         mode = str(self.query_one("#mode", Select).value)
         identifier = self.query_one("#identifier", Input).value.strip()
         as_of_raw = self.query_one("#as_of", Input).value.strip()
-        source_code = self.query_one("#source_code", Input).value.strip().upper()
+        source_code = self.query_one("#source_code", Input).value.strip().upper() or None
         max_items_raw = self.query_one("#max_items", Input).value.strip()
         database_url = self.query_one("#database_url", Input).value.strip() or None
         if not jurisdiction:
             raise ValueError("jurisdiction is required")
         if not identifier:
             raise ValueError("identifier or citation is required")
-        if not source_code:
-            raise ValueError("source code is required")
         max_items = int(max_items_raw) if max_items_raw else 500
         if max_items < 1:
             raise ValueError("max source items must be at least 1")
@@ -203,129 +200,86 @@ class PipelineTui(App):
         return RunConfig(jurisdiction, mode, identifier, as_of, source_code, database_url, max_items)
 
     def _run_pipeline(self, config: RunConfig) -> None:
-        """Run ingestion stages in a worker thread and report status to the UI."""
-        conn = None
-        run_id = None
-        current_step = "adapter"
+        """Run the library pipeline in a worker thread and report its progress.
+
+        The TUI drives `core.pipeline` like the CLI does — same source code,
+        same `SourceRef`, same fetch-run lifecycle — and only renders the
+        fetch events it reports.
+        """
+        current_step = "fetch"
         try:
             self.call_from_thread(self._log_run_start, config)
-            if config.database_url is not None:
-                conn = psycopg.connect(config.database_url)
-                run_id = create_fetch_run(conn, config.source_code, "tui-0.1", Trigger.MANUAL)
-                conn.commit()
-                store = PostgresSnapshotStore(conn, run_id)
-                self.call_from_thread(self._log, f"[cyan]run:[/cyan] Created fetch run {run_id}")
-            else:
-                store = InMemorySnapshotStore()
-                self.call_from_thread(self._log, "[cyan]run:[/cyan] Preview mode; snapshots stay in memory")
-
-            self._mark_running("adapter")
-            adapter = get_adapter(config.jurisdiction)
-            self._mark_success("adapter", f"Using {adapter.__class__.__name__}")
-
-            current_step = "resolve"
-            self._mark_running("resolve")
-            if config.mode == "citation":
-                refs = adapter.resolve(
-                    CitationRef(jurisdiction=config.jurisdiction, citation=config.identifier),
-                    config.as_of or date.today(),
-                )
-                self._mark_success("resolve", f"Resolved {len(refs)} source reference(s)")
-            else:
-                refs = [
-                    SourceRef(
-                        jurisdiction=config.jurisdiction,
-                        source_code=config.source_code,
-                        source_id=config.identifier,
-                        source_type="direct_id",
-                    )
-                ]
-                self._mark_success("resolve", "Direct id supplied")
-            self.call_from_thread(self._log_source_refs, refs)
-
-            current_step = "fetch"
             self._mark_running("fetch")
-            http = SnapshotClient(store)
-            snapshots = []
-            parsed_docs = []
-            queued = []
-            pending = list(refs)
-            seen: set[tuple[str, str]] = set()
-            while pending and len(seen) < config.max_items:
-                ref = pending.pop(0)
-                ref_key = (ref.source_code, ref.source_id)
-                if ref_key in seen:
-                    continue
-                seen.add(ref_key)
-                self.call_from_thread(
-                    self._log,
-                    f"[cyan]fetch:[/cyan] fetching {len(seen)}/{config.max_items} {ref.source_id} queue={len(pending)}",
-                )
-                snapshot = adapter.fetch(ref, http)
-                snapshots.append((ref, snapshot))
-                parsed = adapter.parse(snapshot.raw_content, ref, snapshot)
-                parsed_docs.append(parsed)
-                followups = adapter.expand(parsed)
-                queued.extend(followups)
-                pending.extend(item.ref for item in followups)
-                self._set_step_threadsafe("fetch", "running", f"Fetched {len(snapshots)}; queue {len(pending)}")
-                self.call_from_thread(
-                    self._log,
-                    _format_fetch_progress(
-                        source_id=ref.source_id,
-                        status_code=snapshot.http_status,
-                        byte_count=len(snapshot.raw_content),
-                        content_hash=snapshot.content_hash,
-                        snapshot_id=snapshot.id,
-                        fetched_count=len(snapshots),
-                        queue_count=len(pending),
-                        max_items=config.max_items,
-                        discovered_count=len(followups),
-                    ),
-                )
-            self._mark_success("fetch", f"Fetched {len(snapshots)} snapshot(s)")
-
-            current_step = "parse"
-            self._mark_running("parse")
-            instruments = sum(len(doc.instruments) for doc in parsed_docs)
-            self._mark_success("parse", f"Parsed {instruments} instrument(s)")
-            self.call_from_thread(self._log_parsed_docs, parsed_docs)
-
-            current_step = "expand"
-            self._mark_running("expand")
-            self._mark_success("expand", f"Queued {len(queued)} follow-up item(s)")
-            self.call_from_thread(self._log_queued_work, queued)
-            if pending:
-                self.call_from_thread(
-                    self._log,
-                    f"[yellow]expand:[/yellow] Stopped at max source items={config.max_items}; {len(pending)} item(s) remain",
-                )
-
-            current_step = "load"
-            self._mark_running("load")
+            on_fetch = partial(self._on_fetch, config.max_items)
             if config.database_url is None:
+                self.call_from_thread(self._log, "[cyan]run:[/cyan] Preview mode; snapshots stay in memory")
+                result = ingest(
+                    config.jurisdiction,
+                    config.identifier,
+                    SnapshotClient(InMemorySnapshotStore()),
+                    mode=config.mode,
+                    as_of=config.as_of,
+                    source_code=config.source_code,
+                    max_items=config.max_items,
+                    on_fetch=on_fetch,
+                )
+                self._finish_fetch(result, config)
                 self._set_step_threadsafe("load", "skipped", "Preview mode; no database URL")
                 self.call_from_thread(self._log, "[yellow]load:[/yellow] Skipped database load in preview mode")
             else:
-                loader = LegislationLoader(conn)
-                totals = [loader.load(doc) for doc in parsed_docs]
-                finish_fetch_run(conn, run_id, "succeeded", {"trigger": "tui", "parsed_docs": len(parsed_docs)})
-                conn.commit()
-                loaded_chunks = sum(item.chunks for item in totals)
-                self._mark_success("load", f"Loaded {loaded_chunks} chunk(s)")
-                self.call_from_thread(self._log_load_totals, totals)
+                result = run_database_ingest(
+                    config.jurisdiction,
+                    config.identifier,
+                    config.database_url,
+                    mode=config.mode,
+                    as_of=config.as_of,
+                    source_code=config.source_code,
+                    trigger=Trigger.MANUAL,
+                    skill_version="tui-0.1",
+                    max_items=config.max_items,
+                    on_fetch=on_fetch,
+                )
+                self._finish_fetch(result, config)
+                loaded_chunks = LoadStats.total(result.loaded).chunks
+                self._mark_success("load", f"Loaded {loaded_chunks} chunk(s); fetch run {result.run_id}")
+                self.call_from_thread(self._log_load_totals, result.loaded)
             self.call_from_thread(self._log, "[bold green]run:[/bold green] Completed successfully")
         except Exception:
             error = format_exc()
             self._set_step_threadsafe(current_step, "failed", "See log")
-            if conn is not None and run_id is not None:
-                finish_fetch_run(conn, run_id, "failed", {"trigger": "tui", "error": error})
-                conn.commit()
             self.call_from_thread(self._log, f"[red]{error}[/red]")
         finally:
-            if conn is not None:
-                conn.close()
             self.call_from_thread(self._enable_run_button)
+
+    def _on_fetch(self, max_items: int, event: FetchEvent) -> None:
+        """Render one fetched source (called from the worker thread)."""
+        self._set_step_threadsafe("fetch", "running", f"Fetched {event.fetched}; queue {event.pending}")
+        self.call_from_thread(
+            self._log,
+            _format_fetch_progress(
+                source_id=event.ref.source_id,
+                status_code=event.snapshot.http_status,
+                byte_count=len(event.snapshot.raw_content),
+                content_hash=event.snapshot.content_hash,
+                snapshot_id=event.snapshot.id,
+                fetched_count=event.fetched,
+                queue_count=event.pending,
+                max_items=max_items,
+                discovered_count=len(event.followups),
+            ),
+        )
+
+    def _finish_fetch(self, result: PipelineResult, config: RunConfig) -> None:
+        """Mark fetch done and log what was parsed and queued."""
+        self._mark_success("fetch", f"Fetched and parsed {len(result.parsed)} source(s)")
+        self.call_from_thread(self._log_parsed_docs, result.parsed)
+        self.call_from_thread(self._log_queued_work, result.queued)
+        if len(result.parsed) >= config.max_items:
+            self.call_from_thread(
+                self._log,
+                f"[yellow]expand:[/yellow] Stopped at max source items={config.max_items}",
+            )
+        self._mark_running("load")
 
     def _mark_running(self, step_id: str) -> None:
         """Set a step to running from the worker thread."""
@@ -380,7 +334,7 @@ class PipelineTui(App):
         self._log("[bold]run:[/bold] Starting ingestion pipeline")
         self._log(
             f"[cyan]run:[/cyan] jurisdiction={config.jurisdiction} mode={config.mode} "
-            f"source={config.source_code} as_of={as_of} persistence={persistence} max_items={config.max_items}"
+            f"source={config.source_code or 'default'} as_of={as_of} persistence={persistence} max_items={config.max_items}"
         )
         self._log(f"[cyan]run:[/cyan] identifier={config.identifier}")
 
@@ -388,15 +342,6 @@ class PipelineTui(App):
         """Log source references selected for fetching."""
         for ref in refs:
             self._log(f"[cyan]resolve:[/cyan] {ref.source_code}:{ref.source_type}:{ref.source_id}")
-
-    def _log_snapshots(self, snapshots: list[tuple[SourceRef, object]]) -> None:
-        """Log archived snapshot details for successful fetches."""
-        for ref, snapshot in snapshots:
-            size = len(snapshot.raw_content)
-            self._log(
-                f"[cyan]fetch:[/cyan] {ref.source_id} status={snapshot.http_status} "
-                f"bytes={size} sha256={snapshot.content_hash[:12]} snapshot={snapshot.id}"
-            )
 
     def _log_parsed_docs(self, parsed_docs: list[object]) -> None:
         """Log parsed document and IR row counts after parsing."""
@@ -424,14 +369,10 @@ class PipelineTui(App):
 
     def _log_load_totals(self, totals: list[object]) -> None:
         """Log aggregate database load counts for successful database runs."""
-        instruments = sum(item.instruments for item in totals)
-        units = sum(item.units for item in totals)
-        versions = sum(item.versions for item in totals)
-        texts = sum(item.texts for item in totals)
-        chunks = sum(item.chunks for item in totals)
+        t = LoadStats.total(totals)
         self._log(
-            f"[cyan]load:[/cyan] instruments={instruments} units={units} "
-            f"versions={versions} texts={texts} chunks={chunks}"
+            f"[cyan]load:[/cyan] instruments={t.instruments} units={t.units} "
+            f"versions={t.versions} texts={t.texts} chunks={t.chunks}"
         )
 
     def _enable_run_button(self) -> None:

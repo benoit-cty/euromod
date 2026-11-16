@@ -20,7 +20,7 @@ from uuid import UUID
 
 import psycopg
 
-from nomotheca_ingest.core.db import create_fetch_run, ensure_source, finish_fetch_run
+from nomotheca_ingest.core.db import ensure_source, fetch_run
 from nomotheca_ingest.core.documents import build_document
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
@@ -124,7 +124,7 @@ def ingest_country_report(
     jurisdiction = jurisdiction.upper()
     source_code = source_code_for(jurisdiction)
 
-    with psycopg.connect(database_url) as conn:
+    def register_source(conn: psycopg.Connection) -> None:
         ensure_source(
             conn,
             jurisdiction,
@@ -134,34 +134,21 @@ def ingest_country_report(
             fetch_skill="core/country_reports",
             note="non-legislative corpus: excluded from evidence retrieval",
         )
-        run_id = create_fetch_run(conn, source_code, SKILL_VERSION, Trigger.BULK_SEED)
-        try:
-            snapshot_id = _write_file_snapshot(conn, run_id, source_code, file_path, raw)
-            instrument = parse_country_report(
-                raw.decode("utf-8"), jurisdiction, vintage, source_code, valid_from, snapshot_id, lang
-            )
-            ref = SourceRef(
-                jurisdiction=jurisdiction,
-                source_code=source_code,
-                source_id=instrument.national_id or file_path.name,
-                source_type=INSTRUMENT_TYPE,
-            )
+
+    with fetch_run(
+        database_url, source_code, SKILL_VERSION, Trigger.BULK_SEED, setup=register_source
+    ) as run:
+        snapshot_id = _write_file_snapshot(run.archive, run.id, source_code, file_path, raw)
+        instrument = parse_country_report(
+            raw.decode("utf-8"), jurisdiction, vintage, source_code, valid_from, snapshot_id, lang
+        )
+        ref = SourceRef(
+            jurisdiction=jurisdiction,
+            source_code=source_code,
+            source_id=instrument.national_id or file_path.name,
+            source_type=INSTRUMENT_TYPE,
+        )
+        with psycopg.connect(database_url) as conn:
             stats = LegislationLoader(conn).load(ParsedDoc(ref=ref, instruments=[instrument]))
-            finish_fetch_run(
-                conn,
-                run_id,
-                "succeeded",
-                {
-                    "trigger": Trigger.BULK_SEED.value,
-                    "file": file_path.name,
-                    "instruments": stats.instruments,
-                    "units": stats.units,
-                    "versions": stats.versions,
-                    "texts": stats.texts,
-                    "chunks": stats.chunks,
-                },
-            )
-        except Exception as exc:
-            finish_fetch_run(conn, run_id, "failed", {"trigger": Trigger.BULK_SEED.value, "error": str(exc)})
-            raise
+        run.stats = {"file": file_path.name, **stats.as_dict()}
     return stats

@@ -22,7 +22,7 @@ from nomotheca_ingest.core.embeddings import (
     count_chunks_needing_embeddings,
 )
 from nomotheca_ingest.core.ir import Trigger
-from nomotheca_ingest.core.loader import LegislationLoader
+from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.pipeline import PipelineResult, run_database_ingest
 from nomotheca_ingest.core.translate import (
     DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS,
@@ -919,14 +919,8 @@ def _embedding_progress_status(event: dict[str, int | str], *, dry_run: bool) ->
 
 def _print_result(result: PipelineResult) -> None:
     """Print a compact ingest summary for scripts and operators."""
-    totals = {
-        "instruments": sum(item.instruments for item in result.loaded),
-        "units": sum(item.units for item in result.loaded),
-        "versions": sum(item.versions for item in result.loaded),
-        "texts": sum(item.texts for item in result.loaded),
-        "chunks": sum(item.chunks for item in result.loaded),
-    }
-    retained = sum(item.retained_chunks for item in result.loaded)
+    totals = LoadStats.total(result.loaded).as_dict()
+    retained = totals["retained_chunks"]
     typer.echo(f"fetch_run={result.run_id}")
     typer.echo(
         "loaded "

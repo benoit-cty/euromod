@@ -34,12 +34,7 @@ from uuid import UUID
 import psycopg
 
 from nomotheca_ingest.core import extract
-from nomotheca_ingest.core.db import (
-    PostgresSnapshotStore,
-    create_fetch_run,
-    ensure_source,
-    finish_fetch_run,
-)
+from nomotheca_ingest.core.db import ensure_source, fetch_run
 from nomotheca_ingest.core.documents import build_document
 from nomotheca_ingest.core.ir import (
     InstrumentRelationIR,
@@ -313,16 +308,17 @@ def _ingest_through_adapter(
         mode="instrument",
         max_items=max_items,
     )
+    loaded = LoadStats.total(pipeline_result.loaded)
     return DocumentResult(
         jurisdiction=outcome.jurisdiction,
         source_code=outcome.source_name or "",
         national_id=outcome.national_id,
         origin=outcome.url,
         routed_to="adapter",
-        units=sum(item.units for item in pipeline_result.loaded),
-        versions=sum(item.versions for item in pipeline_result.loaded),
-        texts=sum(item.texts for item in pipeline_result.loaded),
-        chunks=sum(item.chunks for item in pipeline_result.loaded),
+        units=loaded.units,
+        versions=loaded.versions,
+        texts=loaded.texts,
+        chunks=loaded.chunks,
         fetch_run_id=pipeline_result.run_id,
     )
 
@@ -633,7 +629,7 @@ def ingest_document(
         {"phase": "archive", "detail": f"{len(document.raw)} bytes, {document.content_type}"}
     )
 
-    with psycopg.connect(database_url) as conn:
+    def register_source(conn: psycopg.Connection) -> None:
         ensure_source(
             conn,
             fields.jurisdiction,
@@ -643,7 +639,10 @@ def ingest_document(
             fetch_skill="core/contributed",
             note="documents contributed by a reviewer from the validation UI or the CLI",
         )
-        run_id = create_fetch_run(conn, fields.source_code, SKILL_VERSION, trigger)
+
+    with fetch_run(
+        database_url, fields.source_code, SKILL_VERSION, trigger, setup=register_source
+    ) as run:
         result = DocumentResult(
             jurisdiction=fields.jurisdiction,
             source_code=fields.source_code,
@@ -652,23 +651,23 @@ def ingest_document(
             source_trust_class=fields.source_trust_class,
             content_hash=document.content_hash,
             origin=document.origin,
-            fetch_run_id=run_id,
+            fetch_run_id=run.id,
             implements=fields.implements,
         )
-        try:
-            ref = source_ref(document, fields)
-            document = document.archived_as(
-                PostgresSnapshotStore(conn, run_id).write_snapshot(
-                    ref=ref,
-                    url=document.origin,
-                    status_code=200,
-                    content_type=document.content_type,
-                    content_hash=document.content_hash,
-                    content=document.raw,
-                )
+        ref = source_ref(document, fields)
+        document = document.archived_as(
+            run.store.write_snapshot(
+                ref=ref,
+                url=document.origin,
+                status_code=200,
+                content_type=document.content_type,
+                content_hash=document.content_hash,
+                content=document.raw,
             )
-            result.snapshot_id = document.snapshot_id
+        )
+        result.snapshot_id = document.snapshot_id
 
+        with psycopg.connect(database_url) as conn:
             stored = stored_content_hash(conn, fields.source_code, document.national_id)
             if stored == document.content_hash:
                 report({"phase": "already_present", "detail": document.national_id})
@@ -685,48 +684,31 @@ def ingest_document(
                             relations=_relations_for(document.national_id, fields.implements),
                         )
                     )
-                finish_fetch_run(
-                    conn,
-                    run_id,
-                    "succeeded",
-                    {
-                        "trigger": trigger.value,
-                        "national_id": document.national_id,
-                        "already_present": True,
-                        "implements": fields.implements,
-                    },
-                )
+                run.stats = {
+                    "national_id": document.national_id,
+                    "already_present": True,
+                    "implements": fields.implements,
+                }
                 return result
 
             report({"phase": "parse", "detail": document.content_type})
             doc = parse_document(document, fields)
             report({"phase": "load", "detail": document.national_id})
             stats: LoadStats = LegislationLoader(conn).load(doc)
-            report({"phase": "done", "detail": f"{stats.chunks} chunks"})
-            result.units = stats.units
-            result.versions = stats.versions
-            result.texts = stats.texts
-            result.chunks = stats.chunks
-            finish_fetch_run(
-                conn,
-                run_id,
-                "succeeded",
-                {
-                    "trigger": trigger.value,
-                    "national_id": document.national_id,
-                    "kind": fields.kind,
-                    "source_trust_class": fields.source_trust_class.value,
-                    "units": stats.units,
-                    "versions": stats.versions,
-                    "texts": stats.texts,
-                    "chunks": stats.chunks,
-                },
-            )
-        except Exception as exc:
-            finish_fetch_run(
-                conn, run_id, "failed", {"trigger": trigger.value, "error": str(exc)}
-            )
-            raise
+        report({"phase": "done", "detail": f"{stats.chunks} chunks"})
+        result.units = stats.units
+        result.versions = stats.versions
+        result.texts = stats.texts
+        result.chunks = stats.chunks
+        run.stats = {
+            "national_id": document.national_id,
+            "kind": fields.kind,
+            "source_trust_class": fields.source_trust_class.value,
+            "units": stats.units,
+            "versions": stats.versions,
+            "texts": stats.texts,
+            "chunks": stats.chunks,
+        }
     return result
 
 

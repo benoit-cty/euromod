@@ -34,14 +34,15 @@ def test_pipeline_tui_defaults_to_database_load() -> None:
     asyncio.run(run_check())
 
 
-def test_pipeline_tui_defaults_to_complete_fiscal_bill() -> None:
-    """The TUI defaults to the LF2025 fiscal bill worklist mode."""
+def test_pipeline_tui_defaults_to_the_lf2025_instrument() -> None:
+    """The TUI defaults to ingesting the LF2025 instrument by id."""
 
     async def run_check() -> None:
-        """Mount the app and inspect fiscal bill defaults."""
+        """Mount the app and inspect the instrument defaults."""
         app = PipelineTui()
         async with app.run_test():
-            assert app.query_one("#mode", Select).value == "bill"
+            assert app.query_one("#mode", Select).value == "instrument"
+            assert app.query_one("#source_code", Input).value == ""
             assert app.query_one("#identifier", Input).value == "JORFTEXT000051168007"
             assert app.query_one("#max_items", Input).value == "500"
 
@@ -82,3 +83,31 @@ def test_format_fetch_progress_includes_live_counts() -> None:
     assert "9/500 JORFARTI000051168017" in line
     assert "queue=217" in line
     assert "discovered=0" in line
+
+
+def test_pipeline_reports_each_fetch(monkeypatch) -> None:
+    """`_ingest_refs` reports every fetched source to its `on_fetch` callback."""
+    from uuid import uuid4
+
+    from nomotheca_ingest.core import pipeline
+    from nomotheca_ingest.core.ir import ParsedDoc, Snapshot, SourceRef, WorkItem
+
+    ref = SourceRef(jurisdiction="FR", source_code="FR-LEGI", source_id="A", source_type="instrument")
+    child = SourceRef(jurisdiction="FR", source_code="FR-LEGI", source_id="B", source_type="article")
+
+    class Adapter:
+        def fetch(self, r, http):
+            return Snapshot(id=uuid4(), source_code=r.source_code, url=f"https://x.test/{r.source_id}", http_status=200,
+                            content_type="text/plain", content_hash="0" * 64, raw_content=b"x")
+
+        def parse(self, raw, r, snapshot):
+            return ParsedDoc(ref=r, instruments=[])
+
+        def expand(self, parsed):
+            return [WorkItem(ref=child, reason="child")] if parsed.ref.source_id == "A" else []
+
+    events = []
+    result = pipeline._ingest_refs(Adapter(), [ref], http=None, on_fetch=events.append)
+    assert [e.ref.source_id for e in events] == ["A", "B"]
+    assert [e.pending for e in events] == [1, 0]
+    assert len(result.parsed) == 2
