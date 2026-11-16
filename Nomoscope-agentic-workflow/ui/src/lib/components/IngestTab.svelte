@@ -11,7 +11,7 @@
   import { createJobRun } from '../jobRun.svelte.js';
   import JobProgress from './JobProgress.svelte';
   import JobLog from './JobLog.svelte';
-  import { countryName, humanize } from '@shared/lib/labels.js';
+  import { countryName, humanize, trustLabel } from '@shared/lib/labels.js';
   import Icon from '@shared/components/Icon.svelte';
 
   const ACTIONS = {
@@ -445,7 +445,7 @@
         {/if}
         {#if docTrustClass}
           <p class="small trust">
-            <span class="badge {docTrustClass}">{docTrustClass === 'evidence' ? 'Legislation' : humanize(docTrustClass)}</span>
+            <span class="badge {docTrustClass}" title={trustLabel(docTrustClass).hint}>{trustLabel(docTrustClass).label}</span>
             <span class="muted">
               {docTrustClass === 'evidence'
                 ? 'Will be treated as legislation.'
@@ -484,7 +484,7 @@
                     }}
                   >
                     <span>{instrument.title ?? instrument.national_id}</span>
-                    <span class="muted mono small">{instrument.national_id} · {instrument.instrument_type}</span>
+                    <span class="muted small"><span class="mono">{instrument.national_id}</span> · {humanize(instrument.instrument_type)}</span>
                   </button>
                 {/each}
               </div>

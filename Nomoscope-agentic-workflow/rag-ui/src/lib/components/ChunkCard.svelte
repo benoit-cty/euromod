@@ -5,6 +5,7 @@
   // (authentic / machine translation) load on demand.
   import { api } from '../api.js';
   import { headlineRuns } from '@shared/lib/headline.js';
+  import { authenticityLabel, countryName, trustLabel } from '@shared/lib/labels.js';
   import { locateExtract } from '../chat.js';
 
   let {
@@ -60,8 +61,11 @@
     <strong class="cit">{chunk.citation ?? chunk.context_header ?? 'passage'}</strong>
     {#if verified === true}<span class="badge ok" title="found character-for-character in this chunk">verbatim ✓</span>{/if}
     {#if verified === false}<span class="badge err" title="not found in the chunk — do not rely on it">not verbatim ✗</span>{/if}
-    {#if chunk.source_trust_class === 'guidance'}<span class="badge warn" title="circular / doctrine: citable, but not legislation">guidance</span>{/if}
-    {#if chunk.country}<span class="badge">{chunk.country}</span>{/if}
+    {#if chunk.source_trust_class && chunk.source_trust_class !== 'evidence'}
+      {@const trust = trustLabel(chunk.source_trust_class)}
+      <span class="badge {trust.raw}" title="{trust.hint} ({trust.raw})">{trust.label}</span>
+    {/if}
+    {#if chunk.country}<span class="badge" title={countryName(chunk.country)}>{chunk.country}</span>{/if}
     {#if chunk.lang}<span class="badge">{chunk.lang}</span>{/if}
   </header>
   <div class="meta muted small">
@@ -77,7 +81,7 @@
     {#if renderings}
       <div class="langs">
         {#each renderings as r, i (r.unit_text_id)}
-          <button class:on={i === renderingIdx} onclick={() => (renderingIdx = i)} title={r.mt_engine ?? r.authenticity}>
+          <button class:on={i === renderingIdx} onclick={() => (renderingIdx = i)} title={r.mt_engine ? `${authenticityLabel(r.authenticity).label} (${r.mt_engine})` : authenticityLabel(r.authenticity).label}>
             {r.lang}{r.authenticity === 'machine_translation' ? ' (MT)' : ''}
           </button>
         {/each}

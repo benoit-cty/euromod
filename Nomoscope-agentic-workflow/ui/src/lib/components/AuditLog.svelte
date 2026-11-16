@@ -2,7 +2,7 @@
   // Every decision (params.review_decisions, append-only), newest first. The
   // log is also future training/validation data, so the technical columns
   // stay one tick away.
-  import { statusLabel, routingLabel, relativeTime } from '@shared/lib/labels.js';
+  import { statusLabel, routingLabel, verdictLabel, relativeTime } from '@shared/lib/labels.js';
 
   let { decisions = [] } = $props();
   let search = $state('');
@@ -41,12 +41,12 @@
             <td title={d.logged_at}>{relativeTime(d.logged_at)}</td>
             <td class="mono">{d.model_target}</td>
             <td>{d.as_of?.slice(0, 4) ?? '—'}</td>
-            <td><span class="badge {d.action}">{statusLabel(d.action).label}</span></td>
+            <td><span class="badge {d.action}" title={d.action}>{statusLabel(d.action).label}</span></td>
             <td>{d.reviewer}</td>
             {#if technical}
-              <td><span class="badge {d.routing}">{routingLabel(d.routing).label}</span></td>
+              <td><span class="badge {d.routing}" title={d.routing}>{routingLabel(d.routing).label}</span></td>
               <td>{d.confidence ?? '—'}</td>
-              <td>{d.critique_verdict ?? '—'}</td>
+              <td title={d.critique_verdict ?? ''}>{d.critique_verdict ? verdictLabel(d.critique_verdict).label : '—'}</td>
             {/if}
             <td>{d.note ?? ''}</td>
           </tr>

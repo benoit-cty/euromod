@@ -1,6 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { routingLabel, statusLabel, countryName, relativeTime, humanize } from './labels.js';
+import {
+  authenticityLabel,
+  countryName,
+  humanize,
+  jobStatusLabel,
+  jobTypeLabel,
+  relativeTime,
+  retrievalLabel,
+  routingLabel,
+  statusLabel,
+  trustLabel,
+  verdictLabel,
+  versionStatusLabel,
+} from './labels.js';
 
 test('known enum values get plain wording and keep the raw value', () => {
   assert.equal(routingLabel('not_found').label, 'Not found');
@@ -29,4 +42,17 @@ test('relative time', () => {
   assert.equal(relativeTime(null, now), '—');
   // Postgres timestamptz::text
   assert.equal(relativeTime('2026-11-10 11:30:00.123+00', now), '30 min ago');
+});
+
+test('every vocabulary the pages show has its wording', () => {
+  assert.equal(trustLabel('evidence').label, 'Legislation');
+  assert.equal(trustLabel('guidance').label, 'Guidance');
+  assert.equal(verdictLabel('pass').label, 'Checks passed');
+  assert.equal(authenticityLabel('machine_translation').label, 'Machine translation');
+  assert.equal(versionStatusLabel('in_force').label, 'In force');
+  assert.equal(retrievalLabel('later_in_year').label, 'Later this year');
+  assert.equal(jobTypeLabel('workflow').label, 'Parameter check');
+  assert.equal(jobTypeLabel('translate-params').raw, 'translate-params');
+  assert.equal(jobStatusLabel('succeeded').label, 'Done');
+  assert.equal(jobStatusLabel('waiting').label, 'Waiting for the GPU');
 });

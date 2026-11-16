@@ -8,6 +8,7 @@
   // EUROMOD change set ("Export changes…").
   import { api } from '../api.js';
   import { SOURCE_TYPES, UNITS } from '../vocabulary.js';
+  import { humanize } from '@shared/lib/labels.js';
 
   let { param, onsaved = null } = $props();
 
@@ -134,7 +135,7 @@
         Source type
         <select bind:value={sourceType}>
           {#if !param.current_source_type}<option value="">— none</option>{/if}
-          {#each SOURCE_TYPES as s (s)}<option value={s}>{s}</option>{/each}
+          {#each SOURCE_TYPES as s (s)}<option value={s}>{humanize(s)}</option>{/each}
         </select>
       </label>
       <label>
@@ -145,11 +146,11 @@
       </label>
     </div>
     {#if sourceType === 'national_team' && param.current_source_type !== 'national_team'}
-      <p class="warn small">national_team routes this parameter around the pipeline: agent runs will no longer propose a value.</p>
+      <p class="warn small">“{humanize('national_team')}” routes this parameter around the pipeline: agent runs will no longer propose a value.</p>
     {/if}
     {#each TEXT_FIELDS as f (f)}
       <label>
-        {f.replace('_', ' ')}
+        {humanize(f)}
         {#if f === 'description' || f === 'explanation'}
           <textarea rows="3" bind:value={texts[f]}></textarea>
         {:else}
@@ -178,7 +179,7 @@
           <tr>
             <td class="mono">{h.edited_at.slice(0, 16)}</td>
             <td class="mono">{h.reviewer}</td>
-            <td>{h.field}</td>
+            <td title={h.field}>{humanize(h.field)}</td>
             <td>{show(h.previous)}</td>
             <td>{show(h.value)}</td>
             <td>{h.note ?? ''}</td>

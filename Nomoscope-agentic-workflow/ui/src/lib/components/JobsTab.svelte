@@ -6,7 +6,7 @@
   // — shown as "waiting" — another embeddings build holding the GPU lock).
   import { api, worker } from '../api.js';
   import { TERMINAL, displayStatus } from '@shared/lib/jobs.js';
-  import { parseTimestamp } from '@shared/lib/labels.js';
+  import { jobStatusLabel, jobTypeLabel, parseTimestamp } from '@shared/lib/labels.js';
   import { formatDuration } from '@shared/lib/format.js';
   import JobLog from './JobLog.svelte';
 
@@ -127,6 +127,14 @@
   }
 </script>
 
+{#snippet statusBadge(job)}
+  {@const status = displayStatus(job)}
+  <span
+    class="badge {status}"
+    title={job.progress?.phase === 'waiting' ? job.progress.detail : `${jobStatusLabel(status).hint} (${status})`}
+  >{jobStatusLabel(status).label}</span>
+{/snippet}
+
 <section class="panel jobs">
   <div class="worker">
     {#if !worker.status}
@@ -164,9 +172,9 @@
           {#each jobs as job (job.id)}
             <tr class:selected={job.id === selectedId} onclick={() => select(job)}>
               <td class="mono">{job.id}</td>
-              <td>{job.job_type}</td>
+              <td title={job.job_type}>{jobTypeLabel(job.job_type).label}</td>
               <td>
-                <span class="badge {displayStatus(job)}" title={job.progress?.phase === 'waiting' ? job.progress.detail : ''}>{displayStatus(job)}</span>
+                {@render statusBadge(job)}
                 {#if job.cancel_requested && !TERMINAL.has(job.status)}<span class="muted small">cancelling…</span>{/if}
               </td>
               <td class="small">{payloadSummary(job)}</td>
@@ -192,8 +200,8 @@
         <p class="muted">Select a job to tail its output.</p>
       {:else}
         <p>
-          <strong>#{selected.id} {selected.job_type}</strong>
-          <span class="badge {displayStatus(selected)}" title={selected.progress?.phase === 'waiting' ? selected.progress.detail : ''}>{displayStatus(selected)}</span>
+          <strong>#{selected.id} {jobTypeLabel(selected.job_type).label}</strong>
+          {@render statusBadge(selected)}
           <span class="muted small">{payloadSummary(selected)}</span>
         </p>
         {#if selected.error}<pre class="err">{selected.error}</pre>{/if}

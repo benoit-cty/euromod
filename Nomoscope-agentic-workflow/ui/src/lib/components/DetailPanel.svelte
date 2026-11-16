@@ -5,7 +5,7 @@
   import SourceViewer from './SourceViewer.svelte';
   import DateField from './DateField.svelte';
   import Icon from '@shared/components/Icon.svelte';
-  import { routingLabel, statusLabel, countryName, humanize, relativeTime } from '@shared/lib/labels.js';
+  import { routingLabel, statusLabel, trustLabel, verdictLabel, countryName, humanize, relativeTime } from '@shared/lib/labels.js';
   import { buildHandoffPrompt } from '../handoff.js';
   import { LEGAL_STATUSES, SOURCE_TYPES } from '../vocabulary.js';
 
@@ -424,7 +424,11 @@
           !item.critique.dates_consistent && 'the dates do not fit the year',
           !item.critique.values_sane && 'the value looks implausible',
         ].filter(Boolean)}
-        <div class="checks-line" class:bad={item.critique.verdict !== 'pass'}>
+        <div
+          class="checks-line"
+          class:bad={item.critique.verdict !== 'pass'}
+          title="{verdictLabel(item.critique.verdict).hint} ({item.critique.verdict})"
+        >
           {#if item.critique.verdict === 'pass' && !failed.length}
             <Icon name="check" size={16} /> All automatic checks passed
           {:else}
@@ -451,7 +455,8 @@
             <div class="cite muted small">
               {ref0.title ?? ref0.legal_unit_ref ?? ''}
               {#if ref0.source_trust_class}
-                <span class="badge {ref0.source_trust_class}">{humanize(ref0.source_trust_class === 'evidence' ? 'legislation' : ref0.source_trust_class)}</span>
+                {@const trust = trustLabel(ref0.source_trust_class)}
+                <span class="badge {trust.raw}" title="{trust.hint} ({trust.raw})">{trust.label}</span>
               {/if}
               {#if ref0.href}
                 <button class="link" onclick={() => api.openExternal(ref0.href)}>open the official text ↗</button>
@@ -563,9 +568,10 @@
                       <input class="mono" value={ref.jrc_database_id} readonly tabindex="-1" />
                     </label>
                     {#if ref.source_trust_class}
+                      {@const trust = trustLabel(ref.source_trust_class)}
                       <div class="trust">
                         Source class
-                        <span class="badge {ref.source_trust_class}">{ref.source_trust_class}</span>
+                        <span class="badge {trust.raw}" title="{trust.hint} ({trust.raw})">{trust.label}</span>
                       </div>
                     {/if}
                   </div>

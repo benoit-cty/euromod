@@ -13,6 +13,7 @@
   // database's current_user.
   import { api } from '../api.js';
   import { navDelta, plainKey, stepIndex } from '../keynav.js';
+  import { routingLabel } from '@shared/lib/labels.js';
 
   let cases = $state(null);
   let error = $state('');
@@ -212,7 +213,7 @@
                   {:else}<span class="muted" title="not reviewed">·</span>{/if}
                 </td>
                 <td class="mono">{c.id}</td>
-                <td>{c.expected?.routing}</td>
+                <td title={c.expected?.routing}>{routingLabel(c.expected?.routing).label}</td>
                 <td class="num">{fmt(c.expected?.value)}</td>
                 <td class="muted">{c.expected?.valid_from ?? '—'}</td>
               </tr>
@@ -278,7 +279,7 @@
               </tr>
               <tr>
                 <th>Routing</th>
-                <td colspan="2"><strong>{selected.expected?.routing}</strong></td>
+                <td colspan="2"><strong title={selected.expected?.routing}>{routingLabel(selected.expected?.routing).label}</strong></td>
               </tr>
               <tr>
                 <th>Citations</th>

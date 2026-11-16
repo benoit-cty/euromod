@@ -2,7 +2,7 @@
   import { api } from '../api.js';
   import { library } from '../library.svelte.js';
   import { renderView, splitSentences } from '../highlight.js';
-  import { countryName, humanize, trustLabel } from '@shared/lib/labels.js';
+  import { authenticityLabel, countryName, trustLabel, versionStatusLabel } from '@shared/lib/labels.js';
   import { formatCount, formatFixed } from '@shared/lib/format.js';
   import { countryReadiness } from '../readiness.js';
   import Icon from '@shared/components/Icon.svelte';
@@ -203,9 +203,9 @@
               <strong>{hit.citation ?? hit.context_header}</strong>
               <div class="hit-meta">
                 <span class="badge">{countryName(hit.country)}</span>
-                <span class="badge">{langName(hit.lang)}{hit.authenticity !== 'authentic' ? ` · ${humanize(hit.authenticity)}` : ''}</span>
-                <span class="badge {hit.version_status === 'in_force' ? 'pass' : 'pending'}">
-                  {hit.version_status === 'in_force' ? 'In force' : humanize(hit.version_status)}
+                <span class="badge" title={authenticityLabel(hit.authenticity).hint}>{langName(hit.lang)}{hit.authenticity !== 'authentic' ? ` · ${authenticityLabel(hit.authenticity).label}` : ''}</span>
+                <span class="badge {hit.version_status === 'in_force' ? 'pass' : 'pending'}" title={versionStatusLabel(hit.version_status).hint}>
+                  {versionStatusLabel(hit.version_status).label}
                 </span>
                 {#if hit.source_trust_class && hit.source_trust_class !== 'evidence'}
                   {@const trust = trustLabel(hit.source_trust_class)}

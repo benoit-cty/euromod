@@ -5,6 +5,7 @@
   // official translations, machine translations), fetched on demand.
   import { api } from '../api.js';
   import { formatFixed } from '@shared/lib/format.js';
+  import { authenticityLabel, retrievalLabel, versionStatusLabel } from '@shared/lib/labels.js';
 
   let { trace = [], extract = null, citedChunkId = null } = $props();
 
@@ -15,12 +16,6 @@
   // the reviewer opened, picking a language would slam the panel shut again.
   let opened = $state({});
   const requested = new Set(); // plain: guards the fetch, must not be reactive
-
-  const AUTHENTICITY_LABEL = {
-    authentic: 'original',
-    official_translation: 'official translation',
-    machine_translation: 'machine translation',
-  };
 
   async function loadLangs(chunkId) {
     if (!chunkId || requested.has(chunkId)) return;
@@ -72,7 +67,7 @@
   }
 
   function langLabel(r) {
-    const kind = AUTHENTICITY_LABEL[r.authenticity] ?? r.authenticity;
+    const kind = authenticityLabel(r.authenticity).label.toLowerCase();
     return `${r.lang.toUpperCase()} · ${kind}`;
   }
 </script>
@@ -90,7 +85,9 @@
       <summary>
         <strong>{hit.citation ?? hit.context_header}</strong>
         <span class="muted">
-          {hit.method} · {hit.lang} · {hit.validity} · {hit.version_status}
+          <span title={retrievalLabel(hit.method).hint}>{retrievalLabel(hit.method).label}</span>
+          · {hit.lang?.toUpperCase()} · {hit.validity}
+          · <span title={versionStatusLabel(hit.version_status).hint}>{versionStatusLabel(hit.version_status).label}</span>
           {#if hit.score != null}· score {formatFixed(hit.score, 3)}{/if}
         </span>
         {#if hit.chunk_id === citedChunkId}<span class="badge pass">cited</span>{/if}
@@ -123,7 +120,7 @@
 
       {#if selected(hit) && !selected(hit).is_cited}
         <p class="muted">
-          Showing a {AUTHENTICITY_LABEL[selected(hit).authenticity] ?? selected(hit).authenticity} —
+          Showing a {authenticityLabel(selected(hit).authenticity).label.toLowerCase()} —
           the verbatim extract is highlighted in the cited rendering only.
           {#if !selected(hit).aligned}
             No chunk with this offset in that language: the full version text is shown.

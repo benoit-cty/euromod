@@ -11,7 +11,7 @@
   import { fromWorkflowLine } from '../progress.js';
   import JobProgress from './JobProgress.svelte';
   import JobLog from './JobLog.svelte';
-  import { countryName, routingLabel, humanize } from '@shared/lib/labels.js';
+  import { countryName, routingLabel, verdictLabel, humanize } from '@shared/lib/labels.js';
   import Icon from '@shared/components/Icon.svelte';
 
   // The component stays mounted (hidden) while other tabs are shown, so a
@@ -236,12 +236,12 @@
       <option value="">Any check status</option>
       <option value="never">Never checked</option>
       <option value="ran">Checked at least once</option>
-      <option value="changed">Change proposed</option>
-      <option value="not_found">Not found</option>
-      <option value="provisional">Needs newer law</option>
-      <option value="derived">Calculated</option>
-      <option value="pass">Checks passed</option>
-      <option value="fail">Checks failed</option>
+      {#each ['changed', 'not_found', 'provisional', 'derived'] as r (r)}
+        <option value={r}>{routingLabel(r).label}</option>
+      {/each}
+      {#each ['pass', 'fail'] as v (v)}
+        <option value={v}>{verdictLabel(v).label}</option>
+      {/each}
     </select>
     <details class="morefilters">
       <summary>More filters{policy || group ? ' •' : ''}</summary>
@@ -257,7 +257,7 @@
           Schedule / group
           <select bind:value={group}>
             <option value="">all</option>
-            {#each groups as g (g.id)}<option value={g.id}>{g.id} ({g.kind})</option>{/each}
+            {#each groups as g (g.id)}<option value={g.id}>{g.id} ({humanize(g.kind)})</option>{/each}
           </select>
         </label>
       </div>
@@ -314,7 +314,7 @@
               {#if p.last_run_id}
                 {@const r = routingLabel(p.last_routing)}
                 <span class="badge {p.last_routing}" title={r.hint}>{r.label}</span>
-                {#if p.last_verdict === 'fail'}<span class="flag" title="The automatic checks found a problem">⚠</span>{/if}
+                {#if p.last_verdict === 'fail'}<span class="flag" title={verdictLabel('fail').hint}>⚠</span>{/if}
                 <div class="muted small">for {p.last_as_of?.slice(0, 4) ?? '—'}</div>
               {:else}
                 <span class="muted">Never checked</span>
@@ -336,11 +336,11 @@
                 <dl class="facts">
                   <dt>Identifier</dt><dd class="mono">{p.model_target}</dd>
                   {#if p.policy}<dt>Policy</dt><dd class="mono">{p.policy}</dd>{/if}
-                  <dt>Type</dt><dd>{p.value_type}{p.unit ? ` · ${p.unit}` : ''}</dd>
+                  <dt>Type</dt><dd>{humanize(p.value_type)}{p.unit ? ` · ${p.unit}` : ''}</dd>
                   {#if p.category}<dt>Classification</dt><dd>{p.category}</dd>{/if}
                   {#if p.groups?.length}
                     <dt>Groups</dt>
-                    <dd>{p.groups.map((g) => `${g.id} (${g.kind}, band ${g.index}${g.role ? ` · ${g.role}` : ''})`).join(', ')}</dd>
+                    <dd>{p.groups.map((g) => `${g.id} (${humanize(g.kind).toLowerCase()}, band ${g.index}${g.role ? ` · ${humanize(g.role).toLowerCase()}` : ''})`).join(', ')}</dd>
                   {/if}
                   {#if p.current_source_type === 'national_team'}
                     <dt>Source</dt><dd>National team: not checked against legislation</dd>

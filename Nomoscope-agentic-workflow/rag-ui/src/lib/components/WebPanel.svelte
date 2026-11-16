@@ -7,6 +7,7 @@
   import { api, submitAndFollow } from '../api.js';
   import { ingestPayload } from '../chat.js';
   import { lastLine } from '@shared/lib/jobs.js';
+  import { countryName } from '@shared/lib/labels.js';
 
   let { result } = $props();
 
@@ -50,7 +51,7 @@
       {@const job = ingests[d.instrument_id]}
       <div class="disc">
         <div>
-          <span class="badge">{d.country}</span>
+          <span class="badge" title={countryName(d.country)}>{d.country}</span>
           <span class="mono">{d.instrument_id}</span>
           <div class="small">{d.title}</div>
           <button class="link small" onclick={() => api.openExternal(d.url)}>{d.url}</button>

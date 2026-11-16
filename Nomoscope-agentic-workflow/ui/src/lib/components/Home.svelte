@@ -5,7 +5,7 @@
   import { api } from '../api.js';
   import { library } from '../library.svelte.js';
   import Icon from '@shared/components/Icon.svelte';
-  import { countryName, relativeTime, humanize } from '@shared/lib/labels.js';
+  import { countryName, jobStatusLabel, jobTypeLabel, relativeTime } from '@shared/lib/labels.js';
   import { formatCount } from '@shared/lib/format.js';
   import { countryReadiness } from '../readiness.js';
 
@@ -63,24 +63,6 @@
   export function reload() {
     return load(true);
   }
-
-  const JOB_NAMES = {
-    workflow: 'Parameter check',
-    ingest: 'Import',
-    embed: 'Make texts searchable',
-    translate: 'Translation',
-    eval: 'Evaluation',
-    encode: 'Search',
-    impact: 'Impact estimate',
-    chat: 'Chat question',
-  };
-  const JOB_STATUS = {
-    queued: 'Waiting',
-    running: 'Running',
-    succeeded: 'Done',
-    failed: 'Failed',
-    cancelled: 'Cancelled',
-  };
 </script>
 
 <div class="home">
@@ -175,10 +157,10 @@
       <ul class="activity">
         {#each jobs as job (job.id)}
           <li>
-            <span class="badge {job.status === 'succeeded' ? 'pass' : job.status === 'failed' ? 'fail' : 'pending'}">
-              {JOB_STATUS[job.status] ?? humanize(job.status)}
+            <span class="badge {job.status === 'succeeded' ? 'pass' : job.status === 'failed' ? 'fail' : 'pending'}" title={job.status}>
+              {jobStatusLabel(job.status).label}
             </span>
-            <span>{JOB_NAMES[job.job_type] ?? humanize(job.job_type)}</span>
+            <span title={job.job_type}>{jobTypeLabel(job.job_type).label}</span>
             <span class="muted small">{job.submitted_by ? `by ${job.submitted_by} · ` : ''}{relativeTime(job.submitted_at)}</span>
           </li>
         {/each}
