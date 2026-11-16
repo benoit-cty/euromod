@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { applyStep, buildMessages, headlineRuns, ingestPayload, locateExtract, stepLabel } from './chat.js';
+import { applyStep, buildMessages, ingestPayload, locateExtract, stepLabel } from './chat.js';
 import { renderMarkdown, renderInline, escapeHtml } from './markdown.js';
 
 test('buildMessages keeps answered turns and their verified quotes only', () => {
@@ -50,14 +50,6 @@ test('locateExtract tolerates whitespace runs like verify_extract', () => {
   assert.equal(locateExtract(content, 'absent'), null);
   assert.equal(locateExtract(content, ''), null);
   assert.equal(locateExtract(content, 'a (b'), null); // regex metacharacters are literal
-});
-
-test('headlineRuns splits ts_headline markers', () => {
-  assert.deepEqual(headlineRuns('a <<HL>>b<</HL>> c'), [
-    { text: 'a ', hit: false },
-    { text: 'b', hit: true },
-    { text: ' c', hit: false },
-  ]);
 });
 
 test('ingestPayload mirrors the scout: lower-case country, suffixed id', () => {

@@ -8,8 +8,10 @@
 //     for BGE-M3, the "this is probably the answer" hint, which also works in
 //     Embeddings mode where the lexical layer has nothing to show.
 
-export const MARK_START = '<<HL>>';
-export const MARK_END = '<</HL>>';
+import { lexicalSpans } from '../../../shared/lib/headline.js';
+
+// The <<HL>> markers are read by the one parser both apps share.
+export { MARK_START, MARK_END, lexicalSpans } from '../../../shared/lib/headline.js';
 
 /** Sentences shorter than this are glued to their neighbour (a stray "P" before "ar ailleurs…"). */
 export const MIN_SENTENCE_CHARS = 20;
@@ -80,34 +82,6 @@ export function splitSentences(content) {
 
 function trimmed(content, seg) {
   return content.slice(seg.start, seg.end).trim();
-}
-
-/**
- * Offsets of the lexical marks in `content`, read off a ts_headline rendering
- * of the same text. Returns [] when the headline does not reproduce the content
- * verbatim once the markers are removed, so a mismatch loses the marks rather
- * than shifting them onto the wrong words.
- */
-export function lexicalSpans(headline, content) {
-  if (!headline) return [];
-  const spans = [];
-  let plain = '';
-  let open = null;
-  let i = 0;
-  while (i < headline.length) {
-    if (headline.startsWith(MARK_START, i)) {
-      open = plain.length;
-      i += MARK_START.length;
-    } else if (headline.startsWith(MARK_END, i)) {
-      if (open != null && plain.length > open) spans.push([open, plain.length]);
-      open = null;
-      i += MARK_END.length;
-    } else {
-      plain += headline[i];
-      i += 1;
-    }
-  }
-  return plain === content ? spans : [];
 }
 
 /**

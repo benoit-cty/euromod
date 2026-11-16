@@ -12,6 +12,7 @@
   // yet. Cases are rows in eval.golden_cases; the verdict is stamped with the
   // database's current_user.
   import { api } from '../api.js';
+  import { navDelta, plainKey, stepIndex } from '../keynav.js';
 
   let cases = $state(null);
   let error = $state('');
@@ -89,13 +90,8 @@
   function move(delta) {
     if (!visible.length) return;
     const current = visible.findIndex((c) => c.id === selectedId);
-    const next =
-      current === -1
-        ? delta > 0
-          ? 0
-          : visible.length - 1
-        : Math.min(visible.length - 1, Math.max(0, current + delta));
-    if (visible[next].id !== selectedId) select(visible[next]);
+    const next = visible[stepIndex(current, delta, visible.length)];
+    if (next.id !== selectedId) select(next);
   }
 
   // Arrow keys walk the worklist. Bound on the window rather than on a focusable
@@ -105,19 +101,15 @@
   // the review queue's search box): the note field is part of the verdict, and
   // stepping away from it would discard what is being typed.
   function onkeydown(event) {
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (!plainKey(event)) return;
     if (!sectionEl || sectionEl.offsetParent === null) return;
     const active = document.activeElement;
     // Buttons ignore arrow keys anyway, so "Accept, then arrow on" keeps working
     // with the focus left on the verdict button.
     if (active && active !== document.body && active.tagName !== 'BUTTON') return;
-    if (event.key === 'ArrowDown') move(1);
-    else if (event.key === 'ArrowUp') move(-1);
-    else if (event.key === 'PageDown') move(10);
-    else if (event.key === 'PageUp') move(-10);
-    else if (event.key === 'Home') move(-visible.length);
-    else if (event.key === 'End') move(visible.length);
-    else return;
+    const delta = navDelta(event.key, visible.length);
+    if (delta == null) return;
+    move(delta);
     event.preventDefault();
   }
 

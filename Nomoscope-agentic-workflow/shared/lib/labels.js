@@ -89,9 +89,3 @@ export function relativeTime(iso, now = Date.now()) {
   if (d < 7) return `${d} days ago`;
   return new Date(then).toISOString().slice(0, 10);
 }
-
-/** 34903 -> "34 903": thin-space thousands, as the reviewers' legal texts write them. */
-export function formatCount(n) {
-  if (n == null) return '—';
-  return Number(n).toLocaleString('en-US').replaceAll(',', ' ');
-}

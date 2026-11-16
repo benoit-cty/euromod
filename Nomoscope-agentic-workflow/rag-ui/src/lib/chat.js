@@ -96,20 +96,6 @@ function escapeRegExp(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Split a ts_headline with <<HL>>…<</HL>> markers into [{text, hit}] runs. */
-export function headlineRuns(headline) {
-  const runs = [];
-  const re = /<<HL>>(.*?)<<\/HL>>/gs;
-  let last = 0;
-  for (let m; (m = re.exec(headline)); ) {
-    if (m.index > last) runs.push({ text: headline.slice(last, m.index), hit: false });
-    runs.push({ text: m[1], hit: true });
-    last = m.index + m[0].length;
-  }
-  if (last < headline.length) runs.push({ text: headline.slice(last), hit: false });
-  return runs;
-}
-
 /** The ingest job for an act found on the web (same form the scout uses). */
 export function ingestPayload(discovery) {
   return {

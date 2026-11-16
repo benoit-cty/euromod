@@ -7,6 +7,7 @@
   import Icon from '@shared/components/Icon.svelte';
   import { routingLabel, statusLabel, countryName, humanize, relativeTime } from '@shared/lib/labels.js';
   import { buildHandoffPrompt } from '../handoff.js';
+  import { LEGAL_STATUSES, SOURCE_TYPES } from '../vocabulary.js';
 
   let {
     item,
@@ -28,25 +29,6 @@
     const next = siblings[runIndex + delta];
     if (next) onselectrun(next.id);
   }
-
-  // Param_Schema doc 01 §"legal_status enum" / schema.py LegalStatus & SourceType.
-  const LEGAL_STATUSES = [
-    'enacted_in_force',
-    'enacted_not_yet_in_force',
-    'adopted_pending_publication',
-    'bill_proposed',
-    'announced',
-    'national_team_estimate',
-  ];
-  const SOURCE_TYPES = [
-    'legislation',
-    'national_team',
-    'administrative_guidance',
-    'official_statistics',
-    'parliamentary_bill',
-    'government_announcement',
-    'other',
-  ];
 
   const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 

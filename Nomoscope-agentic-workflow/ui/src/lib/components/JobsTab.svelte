@@ -4,7 +4,7 @@
   // here, so this is also where an analyst sees why their run is waiting
   // (all job slots busy, an embed/translate batch of the same type ahead, or
   // — shown as "waiting" — another embeddings build holding the GPU lock).
-  import { api } from '../api.js';
+  import { api, worker } from '../api.js';
   import { TERMINAL, displayStatus } from '@shared/lib/jobs.js';
   import { parseTimestamp } from '@shared/lib/labels.js';
   import { formatDuration } from '@shared/lib/format.js';
@@ -14,15 +14,13 @@
 
   let jobs = $state([]);
   let currentUser = $state('');
-  let worker = $state(null); // { workers: [...], models: [...] }
   let error = $state('');
   let selectedId = $state(null);
   let events = $state([]);
   let lastEventId = $state(0);
 
   const selected = $derived(jobs.find((j) => j.id === selectedId) ?? null);
-  const alive = $derived((worker?.workers ?? []).filter((w) => w.alive));
-  const llmModels = $derived((worker?.models ?? []).filter((m) => m.kind === 'llm'));
+  const alive = $derived(worker.workers.filter((w) => w.alive));
 
   // The 5 s poll and the Refresh button share this; a refresh still running
   // when the next tick comes (a slow database) is joined, not doubled.
@@ -30,10 +28,9 @@
   function refresh() {
     inFlight ??= (async () => {
       try {
-        const [list, status] = await Promise.all([api.listJobs(200), api.workerStatus()]);
+        const [list] = await Promise.all([api.listJobs(200), worker.refresh()]);
         jobs = list.jobs;
         currentUser = list.current_user;
-        worker = status;
         error = '';
       } catch (e) {
         error = String(e);
@@ -132,8 +129,8 @@
 
 <section class="panel jobs">
   <div class="worker">
-    {#if !worker}
-      <span class="muted">Reading worker status…</span>
+    {#if !worker.status}
+      <span class="muted">{worker.error ? `Worker status unavailable: ${worker.error}` : 'Reading worker status…'}</span>
     {:else if alive.length === 0}
       <span class="badge fail">no worker alive</span>
       <span class="muted">
@@ -148,8 +145,8 @@
         {#if w.current_job_id}<span class="muted">· running job #{w.current_job_id}</span>{/if}
       {/each}
     {/if}
-    {#if llmModels.length}
-      <span class="muted">· models: {llmModels.map((m) => m.model + (m.is_default ? ' (default)' : '')).join(', ')}</span>
+    {#if worker.llmModels.length}
+      <span class="muted">· models: {worker.llmModels.map((m) => m.model + (m.is_default ? ' (default)' : '')).join(', ')}</span>
     {/if}
     <div class="spacer"></div>
     <button onclick={refresh}>Refresh</button>

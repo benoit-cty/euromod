@@ -7,6 +7,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-shell';
 import { createApi } from '@shared/lib/api.js';
 import { bindJobs } from '@shared/lib/jobs.js';
+import { worker } from '@shared/lib/worker.svelte.js';
 
 const shared = createApi(invoke, open);
 const { call } = shared;
@@ -20,3 +21,7 @@ export const api = {
 
 // A chat turn is short: poll a little faster than the review UI's batches.
 export const { followJob, submitAndFollow } = bindJobs(api, 800);
+
+// The one worker status the chat reads (polled by the shell).
+worker.use(api.workerStatus);
+export { worker };

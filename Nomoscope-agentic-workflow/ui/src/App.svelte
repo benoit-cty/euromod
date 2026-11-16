@@ -1,5 +1,6 @@
 <script>
-  import { api } from './lib/api.js';
+  import { api, worker } from './lib/api.js';
+  import { library } from './lib/library.svelte.js';
   import AppShell from '@shared/components/AppShell.svelte';
   import Icon from '@shared/components/Icon.svelte';
   import Home from './lib/components/Home.svelte';
@@ -43,7 +44,6 @@
   let dbGeneration = $state(0);
   let error = $state('');
   let statusMsg = $state('');
-  let workerAlive = $state(null);
   const stored = (key) => {
     try {
       return localStorage.getItem(key);
@@ -124,7 +124,6 @@
       error = String(e);
     }
     queueLoading = false;
-    pollWorker();
     try {
       const res = await api.phoenixProjects();
       const project =
@@ -135,19 +134,8 @@
     }
   }
 
-  async function pollWorker() {
-    try {
-      const status = await api.workerStatus();
-      workerAlive = (status.workers ?? []).some((w) => w.alive);
-    } catch {
-      workerAlive = null;
-    }
-  }
-
-  $effect(() => {
-    const t = setInterval(pollWorker, 30000);
-    return () => clearInterval(t);
-  });
+  // One worker status for the whole app (ribbon, pickers, badges).
+  $effect(() => worker.poll(15000));
 
   async function refresh() {
     try {
@@ -221,11 +209,12 @@
     decisions = [];
     selectedId = null;
     visited = { home: true, [tab]: true };
+    library.reset();
     dbGeneration += 1;
     queueLoading = true;
     await refresh();
     queueLoading = false;
-    pollWorker();
+    worker.refresh();
     statusMsg = `Connected to ${res.db_url} as ${res.reviewer}.`;
   }
 
@@ -253,7 +242,7 @@
   async function reloadActive() {
     try {
       await reloaders[tab]?.();
-      pollWorker();
+      worker.refresh();
     } catch (e) {
       error = String(e);
     }
@@ -281,7 +270,7 @@
 <AppShell
   logoTitle="Nómos: EUROMOD parameter review"
   themeKey="theme"
-  {workerAlive}
+  workerAlive={worker.alive}
   workerHint={{
     online: 'The worker that runs checks, searches and imports is online.',
     offline: 'No worker is running: submitted work waits in the queue until one starts.',

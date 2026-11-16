@@ -4,7 +4,8 @@
   // terms when it comes from the direct search. Other language renderings
   // (authentic / machine translation) load on demand.
   import { api } from '../api.js';
-  import { headlineRuns, locateExtract } from '../chat.js';
+  import { headlineRuns } from '@shared/lib/headline.js';
+  import { locateExtract } from '../chat.js';
 
   let {
     chunk,

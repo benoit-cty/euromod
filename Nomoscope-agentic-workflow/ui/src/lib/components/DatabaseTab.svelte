@@ -1,7 +1,9 @@
 <script>
   import { api } from '../api.js';
+  import { library } from '../library.svelte.js';
   import { renderView, splitSentences } from '../highlight.js';
-  import { countryName, formatCount, humanize, trustLabel } from '@shared/lib/labels.js';
+  import { countryName, humanize, trustLabel } from '@shared/lib/labels.js';
+  import { formatCount, formatFixed } from '@shared/lib/format.js';
   import { countryReadiness } from '../readiness.js';
   import Icon from '@shared/components/Icon.svelte';
   import DbUrlField from './DbUrlField.svelte';
@@ -12,9 +14,10 @@
   // dbUrl: the app's database, password masked, for the technical section.
   let { dbUrl = '', onchangedb } = $props();
 
-  let stats = $state(null);
+  // The library statistics are shared with the other pages (library.svelte.js).
+  const stats = $derived(library.stats);
+  const loading = $derived(library.loading);
   let error = $state('');
-  let loading = $state(false);
 
   let query = $state('');
   let country = $state('');
@@ -44,20 +47,12 @@
   });
   const readyCount = $derived(countryRows.filter((c) => c.level === 'ready').length);
 
-  const formatScore = (value, digits = 5) => value == null ? '—' : Number(value).toFixed(digits);
   const vectorSimilarity = (distance) => distance == null ? null : 1 - Number(distance);
 
-  async function loadStats() {
-    loading = true;
+  async function loadStats(force = true) {
     error = '';
-    try {
-      stats = await api.dbStats();
-    } catch (e) {
-      error = String(e);
-      stats = null;
-    } finally {
-      loading = false;
-    }
+    await library.load(force);
+    error = library.error;
   }
 
   async function search(event) {
@@ -117,9 +112,7 @@
 
   const scoringCount = $derived(Object.values(sentenceScores).filter((s) => s.status === 'loading').length);
 
-  $effect(() => {
-    if (!stats && !loading && !error) loadStats();
-  });
+  loadStats(false);
 
   // Target of the shell's Reload button while this tab is showing: stats plus
   // the current search, so results reflect a corpus that changed under us.
@@ -232,7 +225,7 @@
                   class="sentence"
                   class:best={sentence.level === 'best'}
                   class:near={sentence.level === 'near'}
-                  title={sentence.similarity != null ? `similarity ${formatScore(sentence.similarity, 3)}` : undefined}
+                  title={sentence.similarity != null ? `similarity ${formatFixed(sentence.similarity, 3)}` : undefined}
                 >{#each sentence.parts as part}{#if part.mark}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</span>
               {/each}
             </div>
@@ -246,19 +239,19 @@
                 <div>
                   <span class="score-label">Word match</span>
                   <strong>{hit.full_text_rank ? `#${hit.full_text_rank}` : 'No match'}</strong>
-                  <span>raw {formatScore(hit.full_text_score, 4)}</span>
-                  <span>RRF +{formatScore(hit.full_text_contribution)}</span>
+                  <span>raw {formatFixed(hit.full_text_score, 4)}</span>
+                  <span>RRF +{formatFixed(hit.full_text_contribution, 5)}</span>
                 </div>
                 <div>
                   <span class="score-label">Meaning match</span>
                   <strong>{hit.vector_rank ? `#${hit.vector_rank}` : 'Not ranked'}</strong>
-                  <span>similarity {formatScore(vectorSimilarity(hit.vector_distance), 4)}</span>
-                  <span>distance {formatScore(hit.vector_distance, 4)}</span>
-                  <span>RRF +{formatScore(hit.vector_contribution)}</span>
+                  <span>similarity {formatFixed(vectorSimilarity(hit.vector_distance), 4)}</span>
+                  <span>distance {formatFixed(hit.vector_distance, 4)}</span>
+                  <span>RRF +{formatFixed(hit.vector_contribution, 5)}</span>
                 </div>
                 <div class="score-total">
                   <span class="score-label">Final</span>
-                  <strong>{formatScore(hit.score)}</strong>
+                  <strong>{formatFixed(hit.score, 5)}</strong>
                 </div>
               </div>
               <p class="muted mono">chunk {hit.chunk_id}</p>

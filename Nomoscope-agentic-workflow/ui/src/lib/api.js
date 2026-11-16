@@ -10,6 +10,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-shell';
 import { createApi } from '@shared/lib/api.js';
 import { bindJobs } from '@shared/lib/jobs.js';
+import { worker } from '@shared/lib/worker.svelte.js';
 
 const shared = createApi(invoke, open);
 const { call } = shared;
@@ -54,3 +55,7 @@ export const api = {
 };
 
 export const { followJob, submitAndFollow } = bindJobs(api);
+
+// The one worker status every page reads (polled by the shell).
+worker.use(api.workerStatus);
+export { worker };

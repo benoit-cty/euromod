@@ -7,21 +7,12 @@
   // audits under current_user and applies it; the edit then travels in the
   // EUROMOD change set ("Export changes…").
   import { api } from '../api.js';
+  import { SOURCE_TYPES, UNITS } from '../vocabulary.js';
 
   let { param, onsaved = null } = $props();
 
-  // Mirrors paramdb.KNOWN_UNITS and schema.SourceType; the database refuses
-  // anything else (a pytest keeps the SQL lists in step with the Python ones).
-  const UNITS = ['/1', '/100', 'ratio', 'currency', 'currency/hour', 'currency/day', 'currency/week', 'currency/month', 'currency/year'];
-  const SOURCE_TYPES = [
-    'legislation',
-    'national_team',
-    'administrative_guidance',
-    'official_statistics',
-    'parliamentary_bill',
-    'government_announcement',
-    'other',
-  ];
+  // UNITS and SOURCE_TYPES mirror paramdb.KNOWN_UNITS and schema.SourceType;
+  // the database refuses anything else (lib/vocabulary.js).
   const TEXT_FIELDS = ['short_label', 'label', 'description', 'explanation'];
 
   let editing = $state(false);

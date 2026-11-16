@@ -1,5 +1,6 @@
 <script>
   import { routingLabel, statusLabel, countryName } from '@shared/lib/labels.js';
+  import { navDelta, plainKey, stepIndex } from '../keynav.js';
 
   let { items, facets, selectedId, onselect, loading = false } = $props();
 
@@ -69,13 +70,7 @@
   function move(delta) {
     if (!rows.length) return;
     const current = rows.findIndex((row) => row.runs.some((r) => r.id === selectedId));
-    const next =
-      current === -1
-        ? delta > 0
-          ? 0
-          : rows.length - 1
-        : Math.min(rows.length - 1, Math.max(0, current + delta));
-    const id = shown(rows[next]).id;
+    const id = shown(rows[stepIndex(current, delta, rows.length)]).id;
     if (id !== selectedId) onselect(id);
   }
 
@@ -85,7 +80,7 @@
   // somewhere that owns its arrow keys (a filter dropdown, the detail panel's
   // fields, a scrollable evidence pane).
   function onkeydown(event) {
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (!plainKey(event)) return;
     if (!sectionEl || sectionEl.offsetParent === null) return;
     const active = document.activeElement;
     if (active && active !== document.body) {
@@ -96,13 +91,9 @@
       // The search box is fine (up/down do nothing there); a <select> is not.
       if (active.matches('select')) return;
     }
-    if (event.key === 'ArrowDown') move(1);
-    else if (event.key === 'ArrowUp') move(-1);
-    else if (event.key === 'PageDown') move(10);
-    else if (event.key === 'PageUp') move(-10);
-    else if (event.key === 'Home') move(-rows.length);
-    else if (event.key === 'End') move(rows.length);
-    else return;
+    const delta = navDelta(event.key, rows.length);
+    if (delta == null) return;
+    move(delta);
     event.preventDefault();
   }
 

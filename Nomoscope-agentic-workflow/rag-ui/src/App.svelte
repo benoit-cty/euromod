@@ -8,7 +8,8 @@
   import AppShell from '@shared/components/AppShell.svelte';
   import Icon from '@shared/components/Icon.svelte';
   import { countryName } from '@shared/lib/labels.js';
-  import { api, submitAndFollow } from './lib/api.js';
+  import ModelPicker from '@shared/components/ModelPicker.svelte';
+  import { api, submitAndFollow, worker } from './lib/api.js';
   import { applyStep, buildMessages, CHAT_PRIORITY, COUNTRIES, newConversationId, todayIso } from './lib/chat.js';
   import ChunkCard from './lib/components/ChunkCard.svelte';
   import SearchPanel from './lib/components/SearchPanel.svelte';
@@ -16,7 +17,6 @@
   import WebPanel from './lib/components/WebPanel.svelte';
 
   let config = $state({ db_url: '', user: null, db_error: null });
-  let worker = $state({ alive: null, models: [] });
   let error = $state('');
 
   // Settings of the next question (each turn records its own).
@@ -38,18 +38,15 @@
   let thread = $state(null);
 
   const busy = $derived(turns.some((t) => t.status === 'queued' || t.status === 'running'));
-  const llmModels = $derived(worker.models.filter((m) => m.kind === 'llm'));
   const panelTurn = $derived(selectedTurn !== null ? turns[selectedTurn] : null);
   const panelResult = $derived(panelTurn?.status === 'succeeded' ? panelTurn.result : null);
   const quotedIds = $derived(new Set((panelResult?.quotes ?? []).map((q) => q.chunk_id)));
   const otherSources = $derived((panelResult?.sources ?? []).filter((s) => !quotedIds.has(s.chunk_id)));
   const sourceById = $derived(Object.fromEntries((panelResult?.sources ?? []).map((s) => [s.chunk_id, s])));
 
-  onMount(() => {
-    init();
-    const timer = setInterval(refreshWorker, 15000);
-    return () => clearInterval(timer);
-  });
+  onMount(init);
+  // One worker status for the chat (ribbon, model picker, offline warning).
+  $effect(() => worker.poll(15000));
 
   async function init() {
     try {
@@ -58,23 +55,9 @@
         error = `Database unreachable: ${config.db_error}`;
         return;
       }
-      await refreshWorker();
       await loadConversations();
     } catch (e) {
       error = String(e);
-    }
-  }
-
-  async function refreshWorker() {
-    if (config.db_error) return;
-    try {
-      const res = await api.workerStatus();
-      worker = { alive: res.workers.some((w) => w.alive), models: res.models };
-      if (!model || !worker.models.some((m) => m.model === model)) {
-        model = (llmModels.find((m) => m.is_default) ?? llmModels[0])?.model ?? '';
-      }
-    } catch (e) {
-      worker = { alive: null, models: [] };
     }
   }
 
@@ -234,10 +217,7 @@
         </label>
         <label class="inline">In force on <input type="date" bind:value={asOf} /></label>
         <label class="inline">Model
-          <select bind:value={model} disabled={!llmModels.length}>
-            {#if !llmModels.length}<option value="">worker default</option>{/if}
-            {#each llmModels as m (m.model)}<option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>{/each}
-          </select>
+          <ModelPicker models={worker.llmModels} bind:value={model} emptyText="worker default" />
         </label>
         <label class="inline toggle"><input type="checkbox" bind:checked={web} /> <Icon name="globe" size={15} /> Search official portals</label>
       </div>

@@ -3,7 +3,9 @@
   // `ingest` (instrument / citation / document / route), `embed`, `translate`
   // — and follows its events until it finishes. Nothing runs on this machine.
   import { onMount } from 'svelte';
-  import { api, submitAndFollow } from '../api.js';
+  import { api, submitAndFollow, worker } from '../api.js';
+  import { library } from '../library.svelte.js';
+  import ModelPicker from '@shared/components/ModelPicker.svelte';
   import { summarize } from '@shared/lib/jobs.js';
   import { formatDuration } from '@shared/lib/format.js';
   import { createJobRun } from '../jobRun.svelte.js';
@@ -91,9 +93,7 @@
   // The model is picked from the list the worker publishes (ops.worker_models),
   // never typed: a free-text model string is how a wrong deployment went
   // unnoticed for a month.
-  let models = $state([]);            // [{ model, kind, is_default }] of kind llm
   let model = $state('');
-  let workerAlive = $state(null);     // null = unknown yet
   let targetLang = $state('en');
   let trLimit = $state('');
   let requestTimeout = $state(120);
@@ -102,7 +102,7 @@
   // --- run state ---
   // One job (or a document followed by its embeddings build) at a time; the
   // ingest, embed and translate CLIs report structured `@progress` events.
-  const job = createJobRun({ workerAlive: () => workerAlive });
+  const job = createJobRun({ workerAlive: () => worker.alive });
   // Errors outside a run: reading the library's vocabulary, checking a source.
   let error = $state('');
 
@@ -111,25 +111,17 @@
   // jurisdictions it holds. A failure is shown: the pickers would otherwise
   // sit on their seeds with no word of why.
   onMount(() => {
-    api
-      .dbStats()
-      .then((stats) => {
-        if (stats?.languages?.length) languages = stats.languages;
-        const codes = (stats?.by_country ?? []).map((row) => row.code).filter(Boolean);
-        if (codes.length) jurisdictions = codes;
-      })
-      .catch((e) => (error = `Could not read the library's languages and countries: ${e}`));
-    loadWorker().catch((e) => (error = `Could not read the worker status: ${e}`));
+    library.load().then(() => {
+      if (library.error) error = `Could not read the library's languages and countries: ${library.error}`;
+    });
   });
 
-  async function loadWorker() {
-    const status = await api.workerStatus();
-    workerAlive = (status.workers ?? []).some((w) => w.alive);
-    models = (status.models ?? []).filter((m) => m.kind === 'llm');
-    if (!models.some((m) => m.model === model)) {
-      model = (models.find((m) => m.is_default) ?? models[0])?.model ?? '';
-    }
-  }
+  $effect(() => {
+    const stats = library.stats;
+    if (stats?.languages?.length) languages = stats.languages;
+    const codes = (stats?.by_country ?? []).map((row) => row.code).filter(Boolean);
+    if (codes.length) jurisdictions = codes;
+  });
 
   // The kinds each jurisdiction offers, and the class each one implies, come
   // from the ingester so the two can never drift. `route` with no source
@@ -155,8 +147,8 @@
   // hint for something we will not ingest this way. One `route` job; the
   // worker stores the JSON line the CLI prints as the job's result.
   async function routeSource(source) {
-    if (workerAlive === null) await loadWorker();
-    if (!workerAlive) throw new Error('no worker is running — the source cannot be checked');
+    if (worker.alive === null) await worker.refresh();
+    if (!worker.alive) throw new Error('no worker is running — the source cannot be checked');
     const final = await submitAndFollow('ingest', {
       command: 'route',
       args: source ? [source] : [],
@@ -329,7 +321,7 @@
       </button>
     {/each}
     <div class="spacer"></div>
-    {#if workerAlive === false}
+    {#if worker.alive === false}
       <span class="badge fail" title="No worker heartbeat: work will wait until one starts">worker offline</span>
     {/if}
   </div>
@@ -531,13 +523,7 @@
       <div class="grid">
         <label class="field wide">
           Language model
-          <select bind:value={model} disabled={!models.length}>
-            {#each models as m (m.model)}
-              <option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>
-            {:else}
-              <option value="">no model available</option>
-            {/each}
-          </select>
+          <ModelPicker models={worker.llmModels} bind:value={model} />
         </label>
         <label class="field">
           Into

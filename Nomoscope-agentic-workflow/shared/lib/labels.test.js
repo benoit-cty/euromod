@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { routingLabel, statusLabel, countryName, relativeTime, formatCount, humanize } from './labels.js';
+import { routingLabel, statusLabel, countryName, relativeTime, humanize } from './labels.js';
 
 test('known enum values get plain wording and keep the raw value', () => {
   assert.equal(routingLabel('not_found').label, 'Not found');
@@ -29,9 +29,4 @@ test('relative time', () => {
   assert.equal(relativeTime(null, now), '—');
   // Postgres timestamptz::text
   assert.equal(relativeTime('2026-11-10 11:30:00.123+00', now), '30 min ago');
-});
-
-test('counts use thin-space thousands', () => {
-  assert.equal(formatCount(34903), '34 903');
-  assert.equal(formatCount(null), '—');
 });

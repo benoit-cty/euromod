@@ -3,13 +3,15 @@
   // what is waiting for me, can I export, is each country usable — and one
   // button per answer. Every number behind them is one click away on its page.
   import { api } from '../api.js';
+  import { library } from '../library.svelte.js';
   import Icon from '@shared/components/Icon.svelte';
-  import { countryName, formatCount, relativeTime, humanize } from '@shared/lib/labels.js';
+  import { countryName, relativeTime, humanize } from '@shared/lib/labels.js';
+  import { formatCount } from '@shared/lib/format.js';
   import { countryReadiness } from '../readiness.js';
 
   let { items = [], loading = false, reviewer = null, onnavigate, onexport } = $props();
 
-  let stats = $state(null);
+  const stats = $derived(library.stats);
   let jobs = $state([]);
   let loadError = $state('');
 
@@ -48,21 +50,18 @@
     return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
   });
 
-  async function load() {
-    try {
-      const [s, j] = await Promise.all([api.dbStats(), api.listJobs(5).catch(() => ({ jobs: [] }))]);
-      stats = s;
-      jobs = j.jobs ?? [];
-      loadError = '';
-    } catch (e) {
-      loadError = String(e);
-    }
+  // The library statistics are shared with the other pages (library.svelte.js);
+  // the Refresh button re-reads them for all.
+  async function load(force = false) {
+    const [, j] = await Promise.all([library.load(force), api.listJobs(5).catch(() => ({ jobs: [] }))]);
+    jobs = j.jobs ?? [];
+    loadError = library.error;
   }
 
   load();
 
   export function reload() {
-    return load();
+    return load(true);
   }
 
   const JOB_NAMES = {

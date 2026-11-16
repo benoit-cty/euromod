@@ -5,6 +5,7 @@
   // Impacts are min–max ranges: proprietary model architectures are estimated.
   import { api, submitAndFollow } from '../api.js';
   import { summarize } from '@shared/lib/jobs.js';
+  import { formatNumber as fmt } from '@shared/lib/format.js';
 
   let report = $state(null);
   let projects = $state([]);
@@ -66,9 +67,6 @@
     await loadProjects();
     await load();
   }
-
-  const fmt = (n, digits = 2) =>
-    n == null ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: digits });
 
   // Energy in Wh below 1 kWh, else kWh; emissions in gCO2eq below 1 kg, else kg.
   const energyRange = (minKwh, maxKwh) =>

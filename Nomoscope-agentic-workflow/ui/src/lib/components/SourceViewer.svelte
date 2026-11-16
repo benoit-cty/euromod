@@ -4,6 +4,7 @@
   // be read in any language the DB holds for that version (authentic renderings,
   // official translations, machine translations), fetched on demand.
   import { api } from '../api.js';
+  import { formatFixed } from '@shared/lib/format.js';
 
   let { trace = [], extract = null, citedChunkId = null } = $props();
 
@@ -90,7 +91,7 @@
         <strong>{hit.citation ?? hit.context_header}</strong>
         <span class="muted">
           {hit.method} · {hit.lang} · {hit.validity} · {hit.version_status}
-          {#if hit.score != null}· score {hit.score.toFixed(3)}{/if}
+          {#if hit.score != null}· score {formatFixed(hit.score, 3)}{/if}
         </span>
         {#if hit.chunk_id === citedChunkId}<span class="badge pass">cited</span>{/if}
       </summary>

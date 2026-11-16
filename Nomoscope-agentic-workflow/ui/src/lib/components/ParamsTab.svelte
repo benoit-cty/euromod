@@ -3,7 +3,8 @@
   // select some, submit a `workflow` job for them (the worker runs
   // run-targets), then jump to the review-queue item or open the run's trace
   // in Phoenix. The expanded row edits the parameter's metadata (ParameterEditor).
-  import { api } from '../api.js';
+  import { api, worker } from '../api.js';
+  import ModelPicker from '@shared/components/ModelPicker.svelte';
   import ParameterEditor from './ParameterEditor.svelte';
   import { formatDuration } from '@shared/lib/format.js';
   import { createJobRun } from '../jobRun.svelte.js';
@@ -49,9 +50,7 @@
   let systemYear = $state(null);
   // The model is picked from the list the worker publishes; '' = the worker's
   // default (the job carries `model: null`). Never free text (see llm.py).
-  let models = $state([]);
   let model = $state('');
-  let workerAlive = $state(null);
   let force = $state(false);
   // Parameters EUROMOD holds as n/a in the system year are switched off there
   // (mostly superseded constants); the worker skips them unless asked.
@@ -62,7 +61,7 @@
   // instead ("[i/N] target", "  › step", "…: routing=…"; lib/progress.js).
   // Structured events still count where it emits them (a scout's embeddings
   // build waiting for the GPU).
-  const job = createJobRun({ fromLine: fromWorkflowLine, workerAlive: () => workerAlive });
+  const job = createJobRun({ fromLine: fromWorkflowLine, workerAlive: () => worker.alive });
 
   const countries = $derived([...new Set(params.map((p) => p.country))].sort());
   const policies = $derived(
@@ -160,14 +159,6 @@
       gids = Object.fromEntries(res.projects.map((p) => [p.name, p.gid]));
     } catch {
       gids = {}; // Phoenix links degrade to the projects page
-    }
-    try {
-      const status = await api.workerStatus();
-      workerAlive = (status.workers ?? []).some((w) => w.alive);
-      models = (status.models ?? []).filter((m) => m.kind === 'llm');
-      if (model && !models.some((m) => m.model === model)) model = '';
-    } catch {
-      models = [];
     }
   }
 
@@ -399,7 +390,7 @@
       {/if}
     </span>
     <div class="spacer"></div>
-    {#if workerAlive === false}
+    {#if worker.alive === false}
       <span class="badge fail" title="No worker heartbeat: the check will wait until one starts">worker offline</span>
     {/if}
     <label class="field inline">
@@ -415,12 +406,7 @@
       <div class="runopts-body">
         <label class="field">
           Language model
-          <select bind:value={model} class="mono">
-            <option value="">Default</option>
-            {#each models as m (m.model)}
-              <option value={m.model}>{m.model}{m.is_default ? ' (default)' : ''}</option>
-            {/each}
-          </select>
+          <ModelPicker models={worker.llmModels} bind:value={model} allowDefault class="mono" />
         </label>
         <label class="field check">
           <input type="checkbox" bind:checked={force} />

@@ -1,5 +1,6 @@
 <script>
   import { api } from '../api.js';
+  import { formatFixed, formatPercent } from '@shared/lib/format.js';
   import DbUrlField from './DbUrlField.svelte';
 
   // dbUrl: the app's database, password masked; onchangedb switches the whole app.
@@ -70,9 +71,7 @@
     if (pk && runs?.some((r) => r.id === pk)) await selectRun(pk);
   }
 
-  function pct(v) {
-    return v == null ? '—' : `${v.toFixed(1)}%`;
-  }
+  const pct = (v) => formatPercent(v);
 
   function ms(v) {
     return v == null ? '—' : `${Math.round(v)} ms`;
@@ -80,11 +79,11 @@
 
   // EcoLogits midpoint estimates over the run's Phoenix traces (NULL for mock runs).
   function energy(kwh) {
-    return kwh == null ? '—' : `${(kwh * 1000).toFixed(1)} Wh`;
+    return kwh == null ? '—' : `${formatFixed(kwh * 1000, 1)} Wh`;
   }
 
   function co2(kg) {
-    return kg == null ? '—' : `${(kg * 1000).toFixed(1)} g`;
+    return kg == null ? '—' : `${formatFixed(kg * 1000, 1)} g`;
   }
 
   function caseFailed(c) {
@@ -245,7 +244,7 @@
               routing: expected <strong>{c.routing_expected}</strong> →
               actual <strong>{c.routing_actual ?? '—'}</strong>
               {#if c.model_target}· target <span class="mono">{c.model_target}</span>{/if}
-              {#if c.confidence != null}· confidence {c.confidence.toFixed(2)}{/if}
+              {#if c.confidence != null}· confidence {formatFixed(c.confidence, 2)}{/if}
               {#if c.latency_ms != null}· {c.latency_ms} ms{/if}
             </p>
             {#if c.error}<p class="error mono">{c.error}</p>{/if}
