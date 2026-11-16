@@ -433,6 +433,13 @@ def report(
     for row in rows:
         abstentions = row.get("abstentions") or 0
         rejections = row.get("rejections") or 0
+        # Printed only when they happened: a finding about EUROMOD, and a run
+        # that measured an FTS-only pipeline for some of its cases.
+        off_law = row.get("euromod_discrepancies") or 0
+        fts_only = row.get("fts_only_cases") or 0
+        extra = (f"  euromod_off_law={off_law}" if off_law else "") + (
+            f"  fts_only={fts_only}" if fts_only else ""
+        )
         typer.echo(
             f"{row['created_at']:%Y-%m-%d %H:%M}  {row['model_provider']}/{row['model_name']}"
             f"  [{row['language']}/{row['country']}]  cases={row['cases']}"
@@ -440,7 +447,7 @@ def report(
             f"  citation={pct(row['citation_pct'])}  verbatim={pct(row['extract_verbatim_pct'])}"
             f"  supported={pct(row['supportedness_pct'])}  critique={pct(row['critique_pass_pct'])}"
             f"  halluc={pct(row['hallucination_pct'])}  recall={pct(row['retrieval_recall_pct'])}"
-            f"  abstained={abstentions}  rejected={rejections}"
+            f"  abstained={abstentions}  rejected={rejections}{extra}"
             f"{guidance(row)}"
             f"{impact(row)}"
             f"  {row['run_id']}"

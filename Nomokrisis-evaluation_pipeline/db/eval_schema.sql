@@ -91,7 +91,7 @@ CREATE INDEX IF NOT EXISTS eval_results_lang_idx ON eval.results (language, coun
 -- measure a model at all" that every view below shares. Rows written before the
 -- readiness column existed carry NULL: they still know corpus_available, so they
 -- fall back to the coarser corpus split rather than claiming to be ready.
--- Mirrors runner.readiness_of — keep the two in step.
+-- Mirrors summary.readiness_of — keep the two in step.
 DROP VIEW IF EXISTS eval.run_hazards;
 DROP VIEW IF EXISTS eval.run_difficulty;
 DROP VIEW IF EXISTS eval.run_summary;
@@ -106,7 +106,13 @@ SELECT
     -- A proposal the pipeline's own critique rejected; routing/value/date are
     -- already scored False for it (scoring.score_item), this only counts them.
     -- Read from the JSON dump so the column needs no table migration.
-    coalesce((res.details ->> 'rejected')::boolean, false) AS rejected
+    coalesce((res.details ->> 'rejected')::boolean, false) AS rejected,
+    -- 'stated' / 'derived' when EUROMOD is one unit of its precision off the
+    -- figure the law states (scoring.law_vs_euromod): a finding, not a miss.
+    res.details ->> 'euromod_discrepancy' AS euromod_discrepancy,
+    -- false: the case's retrieval had no vector leg (encoder down or paused),
+    -- so it measured an FTS-only pipeline; NULL: no ranked retrieval at all.
+    (res.details ->> 'vector_leg')::boolean AS vector_leg
 FROM eval.results res;
 
 -- KPI rates per (run, language): the read surface for the Tauri UI and the KPI report.
@@ -162,6 +168,8 @@ SELECT
     count(*) FILTER (WHERE res.guidance_only)             AS guidance_only_cases,
     round(100 * avg(res.guidance_only::int), 1)           AS guidance_only_pct,
     count(*) FILTER (WHERE res.rejected)                  AS rejections,
+    count(*) FILTER (WHERE res.euromod_discrepancy IS NOT NULL) AS euromod_discrepancies,
+    count(*) FILTER (WHERE res.vector_leg IS FALSE)       AS fts_only_cases,
     round(100 * avg(res.routing_correct::int)
           FILTER (WHERE res.readiness_eff = 'ready'), 1)  AS routing_pct_ready,
     round(100 * avg(res.value_correct::int)
