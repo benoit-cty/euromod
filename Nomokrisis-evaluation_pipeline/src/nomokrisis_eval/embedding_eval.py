@@ -357,7 +357,7 @@ def cases_from_golden(
     `params_conn` (tuple rows) loads parameter records through paramdb,
     `conn` (dict rows) runs the retrieval helpers.
     """
-    from nomoscope_workflow import temporal
+    from nomoscope_workflow import framing, temporal
 
     from .parameter_store import load_case_record
 
@@ -379,7 +379,7 @@ def cases_from_golden(
             as_of = temporal.retrieval_as_of(record, case.as_of)
             region = regions.region_key(country, record.information.model_target)
             scope = retrieval.jurisdiction_scope(conn, country, region)
-            framed = pipeline.frame_query(wf_cfg, record, case.as_of)
+            framed = framing.frame_query(wf_cfg, record, case.as_of)
             expected = resolve_citations(conn, list(case.expected.citations), scope, lang, as_of)
         except Exception as exc:  # noqa: BLE001 - report it, keep building the rest
             params_conn.rollback()
