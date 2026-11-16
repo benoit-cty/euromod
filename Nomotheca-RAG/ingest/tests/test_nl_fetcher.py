@@ -76,7 +76,7 @@ def test_fetch_bwb_sends_the_xml_accept_header():
 
 
 def test_fetch_bwb_retries_transient_upstream_errors(monkeypatch):
-    monkeypatch.setattr("nomotheca_ingest.countries.nl.fetcher.time.sleep", lambda _s: None)
+    monkeypatch.setattr("nomotheca_ingest.core.snapshots.time.sleep", lambda _s: None)
     client = _RecordingClient(failures=1)
     snapshot = fetch_bwb(_ref("BWBR0011353"), client)
     assert snapshot.http_status == 200

@@ -20,8 +20,9 @@ Source ids used by this adapter:
 
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING
+
+from nomotheca_ingest.core.snapshots import get_with_retries
 
 if TYPE_CHECKING:
     from nomotheca_ingest.core.ir import Snapshot, SourceRef
@@ -68,19 +69,12 @@ def url_for_ref(ref: SourceRef) -> str:
     return act_url(ref.source_id)
 
 
-_RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
-_MAX_ATTEMPTS = 4
 
 
 def fetch_ie(ref: SourceRef, http: SnapshotClient) -> Snapshot:
     """Fetch and archive an Irish payload, retrying transient upstream errors."""
     url = url_for_ref(ref)
-    snapshot = http.get(ref, url)
-    for attempt in range(1, _MAX_ATTEMPTS):
-        if snapshot.http_status not in _RETRY_STATUSES:
-            break
-        time.sleep(2**attempt)
-        snapshot = http.get(ref, url)
+    snapshot = get_with_retries(http, ref, url, attempts=4)
     if snapshot.http_status != 200:
         # eISB answers unknown act numbers with a 404 HTML page; failing here
         # keeps that from reaching the parser as an opaque XML syntax error.

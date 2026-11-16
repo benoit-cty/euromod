@@ -77,7 +77,7 @@ class _FlakyClient:
 
 
 def test_fetch_ie_retries_transient_upstream_errors(monkeypatch):
-    monkeypatch.setattr("nomotheca_ingest.countries.ie.fetcher.time.sleep", lambda _s: None)
+    monkeypatch.setattr("nomotheca_ingest.core.snapshots.time.sleep", lambda _s: None)
     client = _FlakyClient(failures=1)
     assert fetch_ie(_ref("2024/act/43"), client).http_status == 200
     assert client.calls == 2
@@ -91,7 +91,7 @@ def test_fetch_ie_retries_transient_upstream_errors(monkeypatch):
 def test_fetch_ie_fails_fast_on_an_unknown_act_number(monkeypatch):
     # eISB answers an unknown act with a 404 HTML page; raising here keeps that
     # from reaching the parser as an opaque XML syntax error.
-    monkeypatch.setattr("nomotheca_ingest.countries.ie.fetcher.time.sleep", lambda _s: None)
+    monkeypatch.setattr("nomotheca_ingest.core.snapshots.time.sleep", lambda _s: None)
     client = _FlakyClient(failures=99, status=404)
     with pytest.raises(RuntimeError, match="HTTP 404"):
         fetch_ie(_ref("2024/act/999"), client)

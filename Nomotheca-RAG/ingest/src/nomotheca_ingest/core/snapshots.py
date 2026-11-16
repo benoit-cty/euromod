@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from hashlib import sha256
 from typing import Protocol
@@ -84,3 +85,31 @@ class SnapshotClient:
             content_hash=content_hash,
             raw_content=content,
         )
+
+
+#: Statuses that mean "try again later" on every portal we fetch from.
+RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
+
+
+def get_with_retries(
+    http: SnapshotClient,
+    ref: SourceRef,
+    url: str,
+    *,
+    headers: dict[str, str] | None = None,
+    attempts: int = 4,
+) -> Snapshot:
+    """GET one URL, retrying the transient statuses with exponential back-off.
+
+    Every attempt is archived (archive-first: a 503 page is what the portal
+    said). Returns the last snapshot whatever its status; the adapter decides
+    what a final non-200 means. The one retry loop of every fetcher — until
+    16 Nov 2026 ES, IE, LT and NL each carried a copy and FR had none.
+    """
+    snapshot = http.get(ref, url, headers=headers) if headers else http.get(ref, url)
+    for attempt in range(1, attempts):
+        if snapshot.http_status not in RETRY_STATUSES:
+            break
+        time.sleep(2**attempt)
+        snapshot = http.get(ref, url, headers=headers) if headers else http.get(ref, url)
+    return snapshot

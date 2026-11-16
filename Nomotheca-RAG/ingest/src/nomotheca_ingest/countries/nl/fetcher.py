@@ -17,9 +17,10 @@ expression label, not a version number -- see ``parser.select_toestanden``.
 
 from __future__ import annotations
 
-import time
 import urllib.parse
 from typing import TYPE_CHECKING
+
+from nomotheca_ingest.core.snapshots import get_with_retries
 
 if TYPE_CHECKING:
     from nomotheca_ingest.core.ir import Snapshot, SourceRef
@@ -74,19 +75,12 @@ def url_for_ref(ref: SourceRef) -> str:
     return manifest_url(source_id)
 
 
-_RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
-_MAX_ATTEMPTS = 5
 
 
 def fetch_bwb(ref: SourceRef, http: SnapshotClient) -> Snapshot:
     """Fetch and archive a BWB payload, retrying transient upstream errors."""
     url = url_for_ref(ref)
-    snapshot = http.get(ref, url, headers=XML_HEADERS)
-    for attempt in range(1, _MAX_ATTEMPTS):
-        if snapshot.http_status not in _RETRY_STATUSES:
-            break
-        time.sleep(2**attempt)
-        snapshot = http.get(ref, url, headers=XML_HEADERS)
+    snapshot = get_with_retries(http, ref, url, headers=XML_HEADERS, attempts=5)
     if snapshot.http_status != 200:
         # Failing here keeps an error page's HTML from reaching the XML parser
         # as an opaque ParseError.

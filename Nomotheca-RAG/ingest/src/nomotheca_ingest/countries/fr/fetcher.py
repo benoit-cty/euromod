@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nomotheca_ingest.core.snapshots import get_with_retries
+
 if TYPE_CHECKING:
     from nomotheca_ingest.core.ir import Snapshot, SourceRef
     from nomotheca_ingest.core.snapshots import SnapshotClient
@@ -31,7 +33,7 @@ def dila_json_url(source_id: str) -> str:
 
 def fetch_direct_id(ref: SourceRef, http: SnapshotClient) -> Snapshot:
     """Fetch and archive a DILA JSON document by direct source id."""
-    snapshot = http.get(ref, dila_json_url(ref.source_id))
+    snapshot = get_with_retries(http, ref, dila_json_url(ref.source_id))
     if snapshot.http_status != 200:
         # The mirror answers an id it does not hold with a plain-text 404
         # «Not found.»; failing here keeps it from reaching the parser as an

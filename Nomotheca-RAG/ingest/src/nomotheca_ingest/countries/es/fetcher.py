@@ -29,8 +29,9 @@ the act as published, one text, which the parser reads as a single version.
 
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING
+
+from nomotheca_ingest.core.snapshots import get_with_retries
 
 if TYPE_CHECKING:
     from nomotheca_ingest.core.ir import Snapshot, SourceRef
@@ -60,8 +61,6 @@ def url_for_ref(ref: SourceRef) -> str:
     return instrument_url(ref.source_id)
 
 
-_RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
-_MAX_ATTEMPTS = 4
 
 
 def fetch_boe(ref: SourceRef, http: SnapshotClient) -> Snapshot:
@@ -85,11 +84,5 @@ def fetch_boe(ref: SourceRef, http: SnapshotClient) -> Snapshot:
 
 
 def _get_with_retries(ref: SourceRef, url: str, http: SnapshotClient) -> Snapshot:
-    """GET one URL, retrying the statuses that mean "try again later"."""
-    snapshot = http.get(ref, url, headers=XML_HEADERS)
-    for attempt in range(1, _MAX_ATTEMPTS):
-        if snapshot.http_status not in _RETRY_STATUSES:
-            break
-        time.sleep(2**attempt)
-        snapshot = http.get(ref, url, headers=XML_HEADERS)
-    return snapshot
+    """GET one BOE URL (XML), retrying the statuses that mean "try again later"."""
+    return get_with_retries(http, ref, url, headers=XML_HEADERS, attempts=4)

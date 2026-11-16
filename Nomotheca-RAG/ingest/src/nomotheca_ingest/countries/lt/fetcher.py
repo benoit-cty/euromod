@@ -13,9 +13,10 @@ Source ids used by this adapter (they double as e-tar URL path fragments):
 
 from __future__ import annotations
 
-import time
 import urllib.parse
 from typing import TYPE_CHECKING
+
+from nomotheca_ingest.core.snapshots import get_with_retries
 
 if TYPE_CHECKING:
     from nomotheca_ingest.core.ir import Snapshot, SourceRef
@@ -85,19 +86,12 @@ def url_for_ref(ref: SourceRef) -> str:
 # The API intermittently 500s on its largest rows (observed on the GPMĮ's
 # open-ended consolidation); a plain retry succeeds. Failed attempts still
 # archive their snapshot, which is fine — snapshots are append-only provenance.
-_RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
-_MAX_ATTEMPTS = 5
 
 
 def fetch_tar(ref: SourceRef, http: SnapshotClient) -> Snapshot:
     """Fetch and archive a TAR payload, retrying transient upstream errors."""
     url = url_for_ref(ref)
-    snapshot = http.get(ref, url)
-    for attempt in range(1, _MAX_ATTEMPTS):
-        if snapshot.http_status not in _RETRY_STATUSES:
-            break
-        time.sleep(2**attempt)
-        snapshot = http.get(ref, url)
+    snapshot = get_with_retries(http, ref, url, attempts=5)
     if snapshot.http_status != 200:
         # Nothing downstream checks the status; failing here keeps a 500's HTML
         # body from surfacing as an opaque JSONDecodeError in the parser.

@@ -62,7 +62,7 @@ def test_fetch_sends_the_accept_header_the_api_demands():
 
 
 def test_fetch_boe_retries_transient_upstream_errors(monkeypatch):
-    monkeypatch.setattr("nomotheca_ingest.countries.es.fetcher.time.sleep", lambda _s: None)
+    monkeypatch.setattr("nomotheca_ingest.core.snapshots.time.sleep", lambda _s: None)
     client = _RecordingClient(failures=1)
     snapshot = fetch_boe(_ref(), client)
     assert snapshot.http_status == 200

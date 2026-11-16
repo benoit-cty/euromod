@@ -68,7 +68,7 @@ class _FlakyClient:
 
 
 def test_fetch_tar_retries_transient_upstream_errors(monkeypatch):
-    monkeypatch.setattr("nomotheca_ingest.countries.lt.fetcher.time.sleep", lambda _s: None)
+    monkeypatch.setattr("nomotheca_ingest.core.snapshots.time.sleep", lambda _s: None)
     client = _FlakyClient(failures=1)
     snapshot = fetch_tar(_ref("TAR.C677663D2202"), client)
     assert snapshot.http_status == 200
