@@ -484,12 +484,11 @@ def _known_instruments(cfg: WorkflowConfig, ids: list[str], rules: dict) -> set[
             " UNION SELECT metadata->>%(key)s FROM instruments "
             "WHERE metadata->>%(key)s = ANY(%(ids)s)"
         )
-    try:
-        with psycopg.connect(cfg.database_url) as conn:
-            rows = conn.execute(sql, {"ids": ids, "key": rules.get("known_key")}).fetchall()
-        return {row[0] for row in rows}
-    except Exception:
-        return set()
+    # No except: a database error used to return the empty set, so every
+    # candidate was re-ingested (code audit 4). The ingest needs the same DB.
+    with psycopg.connect(cfg.database_url) as conn:
+        rows = conn.execute(sql, {"ids": ids, "key": rules.get("known_key")}).fetchall()
+    return {row[0] for row in rows}
 
 
 def _proc_failure(what: str, proc: subprocess.CompletedProcess) -> str:

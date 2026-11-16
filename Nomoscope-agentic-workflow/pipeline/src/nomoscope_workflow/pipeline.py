@@ -358,21 +358,17 @@ def critique(ctx: StepContext, state: WorkflowState) -> dict:
                 # clause's chunk may not even have been retrieved. Read the
                 # cited article's FULL text from the corpus.
                 article_text = cited.content if cited else ""
-                if cited is not None:
-                    try:
-                        with retrieval.connect(ctx.cfg) as conn:
-                            siblings = retrieval.unit_chunks(conn, cited.chunk_id)
-                        article_text = " ".join(h.content for h in siblings) or article_text
-                    except Exception:
-                        siblings = []  # DB hiccup: fall back to the retrieved chunk
-                version_start = retrieval.validity_start(cited.validity) if cited else None
+                # No `except Exception` here: a DB error used to fall back to
+                # "no siblings, no provenance" and could flip a correct
+                # proposal to provisional (code audit 4); now it fails the run.
+                siblings = []
                 provenance = None
                 if cited is not None:
-                    try:
-                        with retrieval.connect(ctx.cfg) as conn:
-                            provenance = retrieval.version_provenance(conn, cited.chunk_id)
-                    except Exception:
-                        provenance = None
+                    with retrieval.connect(ctx.cfg) as conn:
+                        siblings = retrieval.unit_chunks(conn, cited.chunk_id)
+                        provenance = retrieval.version_provenance(conn, cited.chunk_id)
+                    article_text = " ".join(h.content for h in siblings) or article_text
+                version_start = retrieval.validity_start(cited.validity) if cited else None
                 retrieval_as_of = state.get("retrieval_as_of", as_of)
                 # The income year, not the system year — everything below
                 # must agree with _income_year_date_issues, which is the
@@ -422,11 +418,8 @@ def critique(ctx: StepContext, state: WorkflowState) -> dict:
                         # clause may sit in a chunk retrieval never
                         # surfaced (LF 2025 art. 10: CDHR in chunk 1, its
                         # 2025 clause in chunk 2).
-                        try:
-                            with retrieval.connect(ctx.cfg) as conn:
-                                alt_siblings = retrieval.unit_chunks(conn, alt.chunk_id)
-                        except Exception:
-                            alt_siblings = [alt]
+                        with retrieval.connect(ctx.cfg) as conn:
+                            alt_siblings = retrieval.unit_chunks(conn, alt.chunk_id) or [alt]
                         known = {h.chunk_id for h in hits}
                         extra_hits = [h for h in alt_siblings if h.chunk_id not in known]
                         alt_text = " ".join(h.content for h in alt_siblings)

@@ -14,8 +14,9 @@ import re
 from datetime import date
 
 from pydantic_ai import Agent
+from pydantic_ai.exceptions import UserError
 from pydantic_ai.settings import ModelSettings
-from tenacity import retry, stop_after_attempt, wait_random_exponential
+from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_random_exponential
 
 from . import prompts
 from .schema import CritiqueFindings, ParameterRecord, ProposalDraft, RetrievalHit
@@ -200,7 +201,19 @@ def run_agent(
     return agent.run_sync(user).output
 
 
-@retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(3), reraise=True)
+#: Retry transient provider failures only. A configuration error (an unknown
+#: provider, a missing key or base URL: `get_model` raises ValueError, and
+#: pydantic-ai a UserError) will not fix itself — until 16 Nov 2026 it was
+#: retried three times with back-off before failing (code audit 4).
+_TRANSIENT = dict(
+    wait=wait_random_exponential(min=1, max=30),
+    stop=stop_after_attempt(3),
+    retry=retry_if_not_exception_type((ValueError, KeyError, TypeError, UserError)),
+    reraise=True,
+)
+
+
+@retry(**_TRANSIENT)
 def propose_with_llm(
     model: str,
     record: ParameterRecord,
@@ -221,7 +234,7 @@ def propose_with_llm(
     )
 
 
-@retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(3), reraise=True)
+@retry(**_TRANSIENT)
 def critique_with_llm(
     model: str,
     record: ParameterRecord,
