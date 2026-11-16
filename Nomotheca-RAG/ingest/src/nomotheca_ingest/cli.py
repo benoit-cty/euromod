@@ -132,18 +132,7 @@ def reparse(
     from nomotheca_ingest.core.pipeline import reparse_snapshots
 
     stats = reparse_snapshots(jurisdiction, database_url, url_like=url_like, limit=limit)
-    typer.echo(
-        json.dumps(
-            {
-                "snapshots": stats.snapshots,
-                "parsed": stats.parsed,
-                "loaded": stats.loaded,
-                "skipped": stats.skipped,
-                "texts_changed": stats.texts_changed,
-            },
-            indent=2,
-        )
-    )
+    typer.echo(json.dumps(stats.as_dict(), indent=2))
 
 
 @app.command()

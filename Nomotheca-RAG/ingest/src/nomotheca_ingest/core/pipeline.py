@@ -13,6 +13,7 @@ from nomotheca_ingest.countries.registry import get_adapter
 from nomotheca_ingest.core.db import fetch_run
 from nomotheca_ingest.core.ir import CitationRef, ParsedDoc, Snapshot, SourceRef, Trigger, WorkItem
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
+from nomotheca_ingest.core.reparse import ReparseStats, reload
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 
@@ -147,17 +148,6 @@ def run_database_ingest(
     return result
 
 
-@dataclass(slots=True)
-class ReparseStats:
-    """What a `reparse` pass did: archive rows seen, parsed, loaded, skipped."""
-
-    snapshots: int = 0
-    parsed: int = 0
-    loaded: int = 0
-    skipped: int = 0
-    texts_changed: int = 0
-
-
 def reparse_snapshots(
     jurisdiction: str,
     database_url: str,
@@ -174,8 +164,8 @@ def reparse_snapshots(
     SourceRef a snapshot was fetched for is stored with it
     (`fetch_snapshots.metadata.source_ref`); for snapshots archived before
     16 Nov 2026 the adapter rebuilds it from the URL (FR only), and the rest
-    are skipped and counted. Contributed documents and Country Reports have
-    their own reparse paths and are never read here. Loading is the ordinary idempotent upsert:
+    are skipped and counted. Contributed documents (`contributed.reparse_documents`,
+    which shares `core.reparse.reload`) and Country Reports are never read here. Loading is the ordinary idempotent upsert:
     unchanged texts keep their hash, changed ones get new chunks, and their
     embeddings turn stale for `embeddings build` to refresh.
     """
@@ -221,32 +211,10 @@ def reparse_snapshots(
             doc = adapter.parse(snapshot.raw_content, ref, snapshot)
             stats.parsed += 1
             if doc.instruments:
-                before = _text_hashes(conn, doc)
-                loader.load(doc)
-                stats.loaded += 1
-                stats.texts_changed += sum(1 for h in _text_hashes(conn, doc) if h not in before)
+                reload(conn, loader, doc, stats)
             if on_progress is not None:
                 on_progress(stats)
     return stats
-
-
-def _text_hashes(conn, doc: ParsedDoc) -> set[str]:
-    """Content hashes of the unit texts a parsed document maps to (change detection)."""
-    hashes: set[str] = set()
-    for instrument in doc.instruments:
-        for unit in instrument.units:
-            for version in unit.versions:
-                for row in conn.execute(
-                    """
-                    SELECT t.content_hash
-                    FROM unit_texts t
-                    JOIN legal_unit_versions v ON v.id = t.version_id
-                    WHERE v.source_version_id = %s AND v.fetch_snapshot_id = %s
-                    """,
-                    (version.source_version_id, version.fetch_snapshot_id),
-                ).fetchall():
-                    hashes.add(row[0])
-    return hashes
 
 
 def _ingest_refs(

@@ -102,7 +102,7 @@ works too. The browser tier is an optional extra, so the default environment
 keeps working without Chromium (the outcome is then the refusal hint):
 
 ```bash
-UV_PROJECT_ENVIRONMENT=.venv-legifrance uv sync --extra legifrance
+UV_PROJECT_ENVIRONMENT=.venv-legifrance uv sync --extra browser
 UV_PROJECT_ENVIRONMENT=.venv-legifrance uv run playwright install chromium
 ```
 

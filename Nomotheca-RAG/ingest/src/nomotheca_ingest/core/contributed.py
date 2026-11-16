@@ -34,6 +34,7 @@ from uuid import UUID
 import psycopg
 
 from nomotheca_ingest.core import extract
+from nomotheca_ingest.core.browser import with_browser
 from nomotheca_ingest.core.db import ensure_source, fetch_run
 from nomotheca_ingest.core.documents import build_document
 from nomotheca_ingest.core.ir import (
@@ -44,6 +45,7 @@ from nomotheca_ingest.core.ir import (
     Trigger,
 )
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
+from nomotheca_ingest.core.reparse import ReparseStats, reload
 from nomotheca_ingest.core.routing import RouteKind, RouteOutcome
 from nomotheca_ingest.core.snapshots import USER_AGENT
 from nomotheca_ingest.core.text import sha256_hex
@@ -482,32 +484,24 @@ def fetch_in_browser(url: str, timeout_ms: int = 60000) -> bytes | None:
     the BMAF and the family-benefit ceilings) to a browser and a
     «Vérification de sécurité» page to httpx; opened in Firefox the same URL
     starts the download with no interaction. Optional (the ``browser``
-    extra: Playwright + ``playwright install firefox``); None when it is
+    extra: Playwright + ``playwright install firefox``, see `core.browser`); None when it is
     absent, when no download starts, or when what arrives is not a PDF —
     a page that wants a human is left to the human.
     """
-    try:
-        from playwright.sync_api import sync_playwright
-    except Exception:
-        return None
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.firefox.launch(headless=True)
+
+    def download(browser) -> bytes:
+        context = browser.new_context(user_agent=BROWSER_USER_AGENT, accept_downloads=True)
+        page = context.new_page()
+        with page.expect_download(timeout=timeout_ms) as started:
             try:
-                context = browser.new_context(user_agent=BROWSER_USER_AGENT, accept_downloads=True)
-                page = context.new_page()
-                with page.expect_download(timeout=timeout_ms) as download:
-                    try:
-                        page.goto(url, timeout=timeout_ms)
-                    except Exception:
-                        pass  # Firefox aborts the navigation when the download starts
-                path = download.value.path()
-                raw = Path(path).read_bytes() if path else b""
-            finally:
-                browser.close()
-    except Exception:
-        return None
-    return raw if raw.startswith(b"%PDF") else None
+                page.goto(url, timeout=timeout_ms)
+            except Exception:
+                pass  # Firefox aborts the navigation when the download starts
+        path = started.value.path()
+        return Path(path).read_bytes() if path else b""
+
+    raw = with_browser("firefox", download)
+    return raw if raw and raw.startswith(b"%PDF") else None
 
 
 def read_input(url: str | None, file_path: str | None) -> SourceDocument:
@@ -774,14 +768,7 @@ def reparse_documents(
                 snapshot_id=snap[0],
             )
             doc = parse_document(document, fields)
-            with conn.transaction():
-                conn.execute(
-                    "DELETE FROM legal_unit_versions v USING legal_units u "
-                    "WHERE v.legal_unit_id = u.id AND u.instrument_id = %s",
-                    (iid,),
-                )
-                conn.execute("DELETE FROM legal_units WHERE instrument_id = %s", (iid,))
-                LegislationLoader(conn).load(doc)
+            reload(conn, LegislationLoader(conn), doc, ReparseStats(), replace_units_of=iid)
             after = sum(1 for unit in doc.instruments[0].units)
             report({"phase": "reparsed", "detail": f"{title}: {before} -> {after} units"})
             done.append((title, before, after))

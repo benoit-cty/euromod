@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Literal
 
+from nomotheca_ingest.core.browser import browser_available, with_browser
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 
 #: The DILA id shapes the FR adapter can fetch (KALI: collective agreements).
@@ -127,13 +128,6 @@ def http_attempt(url: str, timeout: float = 20.0) -> tuple[EliResolution | None,
     return None, response.status_code
 
 
-def browser_available() -> bool:
-    """True when the optional ``legifrance`` extra (Playwright) is installed."""
-    try:
-        import playwright.sync_api  # noqa: F401
-    except Exception:
-        return False
-    return True
 
 
 def resolve_in_browser(url: str, timeout_ms: int = 30000) -> EliResolution | None:
@@ -142,20 +136,14 @@ def resolve_in_browser(url: str, timeout_ms: int = 30000) -> EliResolution | Non
     Purpose-limited: the page is loaded so the redirect resolves, and only
     ``page.url`` is read. No HTML is returned, parsed or stored.
     """
-    try:
-        from playwright.sync_api import sync_playwright
-    except Exception:
-        return None
-    try:
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True)
-            try:
-                page = browser.new_page(user_agent=BROWSER_HEADERS["User-Agent"])
-                page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
-                final_url = page.url
-            finally:
-                browser.close()
-    except Exception:
+
+    def final_url_of(browser) -> str:
+        page = browser.new_page(user_agent=BROWSER_HEADERS["User-Agent"])
+        page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+        return page.url
+
+    final_url = with_browser("chromium", final_url_of)
+    if final_url is None:
         return None
     match = DILA_ID.search(final_url)
     return EliResolution(national_id=match.group(0), tier="browser") if match else None

@@ -16,10 +16,10 @@ dependencies = [
   "typer>=0.12",
   # The three packages whose CLIs the worker runs as subprocesses, installed
   # into this one environment so every job runs from `sys.executable -m …`.
-  # translate: the LLM translator; legifrance: the Playwright tier-3 fallback
-  # of the Legifrance resolver (ADR 0002). torch comes from the gpu or cpu
-  # extra below.
-  "nomotheca-legislation-ingest[translate,legifrance]",
+  # translate: the LLM translator; browser: Playwright, for the tier-3
+  # fallback of the Legifrance resolver (ADR 0002) and contributed PDFs served
+  # to a browser only. torch comes from the gpu or cpu extra below.
+  "nomotheca-legislation-ingest[translate,browser]",
   "nomoscope-agentic-workflow",
   "nomokrisis-evaluation",
 ]

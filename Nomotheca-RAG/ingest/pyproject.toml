@@ -40,18 +40,14 @@ embeddings-cuda = [
 translate = [
   "nomoscope-agentic-workflow",
 ]
-# Tier 3 of the Legifrance ELI resolver only (ADR 0002): a headless browser
-# opens the URL and its final URL is read, nothing else. Optional on purpose —
-# the CPU-only default environment and the validation UI must keep working
-# without Chromium, and without it the resolver simply stops at tier 2.
-#   uv sync --extra legifrance && uv run playwright install chromium
-legifrance = [
-  "playwright>=1.47",
-]
-# Contributed PDFs a portal serves to a browser only (sante.gouv.fr's Bulletin
-# officiel answers httpx with a security-check page): contributed.fetch_in_browser
-# retries such a URL in headless Firefox. Same optional rule as above.
-#   uv sync --extra browser && uv run playwright install firefox
+# The headless browser (core/browser.py), for two narrow uses: tier 3 of the
+# Legifrance ELI resolver (ADR 0002: Chromium opens the URL, only its final URL
+# is read) and contributed PDFs a portal serves to a browser only
+# (sante.gouv.fr's Bulletin officiel; contributed.fetch_in_browser, Firefox).
+# Optional on purpose — the CPU-only default environment and the validation UI
+# keep working without it; the resolver then stops at tier 2 and such a PDF is
+# refused with its hint.
+#   uv sync --extra browser && uv run playwright install chromium firefox
 browser = [
   "playwright>=1.47",
 ]
