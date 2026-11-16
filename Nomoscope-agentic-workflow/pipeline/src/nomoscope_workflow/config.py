@@ -56,13 +56,23 @@ class WorkflowConfig:
     scout_max_rounds: int = 2
 
 
+def load_env_file() -> None:
+    """Load the repo-root .env — the one config file — without overriding the
+    process environment. Every package's config loader calls this (the eval
+    and the worker used their own copies, code audit 2.2). NOMOS_REPO_ROOT
+    points at the checkout when the code is not installed from it.
+    """
+    root = Path(os.environ["NOMOS_REPO_ROOT"]) if os.environ.get("NOMOS_REPO_ROOT") else WORKFLOW_ROOT.parent
+    load_dotenv(root / ".env")
+
+
 def load_config() -> WorkflowConfig:
     """Build the config from the repo-root .env (the one config file) and the process env.
 
     The process environment wins, so the worker's per-job switches and a
     container's env_file are never overridden by a stray file on disk.
     """
-    load_dotenv(WORKFLOW_ROOT.parent / ".env")
+    load_env_file()
     database_url = _env(
         "WORKFLOW_DATABASE_URL", DEFAULT_DATABASE_URL
     )

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from nomoscope_workflow.config import DEFAULT_DATABASE_URL
+from nomoscope_workflow.config import DEFAULT_DATABASE_URL, load_env_file
 
 import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from dotenv import load_dotenv
 
 # Nomokrisis-evaluation_pipeline/ (this file lives in src/nomokrisis_eval/).
 EVAL_ROOT = Path(__file__).resolve().parents[2]
@@ -51,7 +50,7 @@ def git_commit() -> str | None:
 
 def load_eval_config() -> EvalConfig:
     """Build the config from the repo-root .env (the one config file) and the process env."""
-    load_dotenv(REPO_ROOT / ".env")
+    load_env_file()
     return EvalConfig(
         database_url=_env(
             "EVAL_DATABASE_URL",
