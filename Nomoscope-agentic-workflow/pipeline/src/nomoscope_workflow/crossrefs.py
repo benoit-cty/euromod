@@ -11,7 +11,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from .schema import RetrievalHit
-from .corpus import CHUNK_JOINS, HIT_COLUMNS, Scope, scope_codes
+from .corpus import article_label, CHUNK_JOINS, HIT_COLUMNS, Scope, scope_codes
 from .locate import _citation_pattern
 
 #: «article R. 522-2», «articles L. 531-2 et L. 531-3», «art. D. 633-3»: a
@@ -160,7 +160,7 @@ def cross_referenced_articles(
         rows.sort(key=lambda r: rank[r["chunk_id"]])  # the best-ranked hit's references first
         lookups: list[tuple[str, str]] = []
         for row in rows:
-            own = (row["citation"] or "").rsplit("art. ", 1)[-1] if row["is_code"] else ""
+            own = article_label(row["citation"]) if row["is_code"] else ""
             refs = [
                 (iid, token)
                 for iid, token in _code_refs(row["content"] or "", row["instrument_id"] if row["is_code"] else None, codes)
@@ -311,7 +311,7 @@ def same_act_articles(conn: psycopg.Connection, lang: str, chunk_ids: list[str])
     rows.sort(key=lambda r: rank[r["chunk_id"]])
     lookups: list[tuple[str, str, date]] = []
     for row in rows:
-        own = (row["citation"] or "").rsplit("art. ", 1)[-1]
+        own = article_label(row["citation"])
         for token in [t for t in _same_act_refs(row["content"] or "") if t != own][:SAME_ACT_PER_ARTICLE]:
             lookup = (row["instrument_id"], rf"art\. {token}($|[^0-9A-Za-z])", row["valid_from"])
             if lookup not in lookups:
@@ -353,7 +353,7 @@ def _same_act_citing(conn: psycopg.Connection, lang: str, rows: list[dict], seen
     """
     lookups: list[tuple[str, str, date, str, str]] = []
     for row in rows[:SAME_ACT_CITED]:
-        own = (row["citation"] or "").rsplit("art. ", 1)[-1]
+        own = article_label(row["citation"])
         number = re.fullmatch(r"(\d+)(?:\s?er)?", own)
         if number is None:
             continue
@@ -491,7 +491,7 @@ def implementing_acts(
     rank = {chunk_id: i for i, chunk_id in enumerate(chunk_ids)}
     articles: list[tuple[str, str]] = []
     for row in sorted(rows, key=lambda r: rank[r["chunk_id"]]):
-        token = (row["citation"] or "").rsplit("art. ", 1)[-1]
+        token = article_label(row["citation"])
         article = (row["instrument_id"], token)
         if row["is_code"] and re.fullmatch(r"[LRD]\d+(?:-\d+)+", token) and article not in articles:
             articles.append(article)

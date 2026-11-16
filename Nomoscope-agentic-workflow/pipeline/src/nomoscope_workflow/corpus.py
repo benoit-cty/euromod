@@ -186,3 +186,9 @@ def unit_chunks(conn: psycopg.Connection, chunk_id: str) -> list[RetrievalHit]:
     return [RetrievalHit(method="sibling", **row) for row in rows]
 
 
+
+
+def article_label(citation: str | None) -> str:
+    """The article part of a citation — «CGI, art. 197» -> «197» — under the
+    corpus's «…, art. N» convention (FR, KALI); the whole citation otherwise."""
+    return (citation or "").rsplit("art. ", 1)[-1]
