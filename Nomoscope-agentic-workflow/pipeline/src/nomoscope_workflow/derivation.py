@@ -255,7 +255,7 @@ def _check_derivation(
                 issues.append(issue_text.operand_hint(op.name, check.hint))
         elif not _extract_states(op.supporting_extract, op.value):
             issues.append(f"derivation: {where}'s extract does not state {op.value:g}")
-            content = next((h.content for h in hits if h.chunk_id == op.citation_chunk_id), "")
+            content = getattr(quotes.hit_by_id(hits, op.citation_chunk_id), "content", "") or ""
             stating = _stating_passage(content, op.value)
             if stating:
                 issues.append(f"derivation: {where}: its chunk states {op.value:g} in «{stating}» — quote that")

@@ -22,11 +22,6 @@ import psycopg
 from psycopg.rows import dict_row
 
 
-def phoenix_url_from(database_url: str) -> str:
-    """Swap the database name of a Postgres URL for `phoenix` (same instance)."""
-    base, _, _ = database_url.rpartition("/")
-    return f"{base}/phoenix"
-
 # EcoLogits provider keys, from its model registry.
 _ECOLOGITS_PROVIDERS = {"openai", "anthropic", "mistralai", "cohere", "google_genai", "huggingface_hub"}
 

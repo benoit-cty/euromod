@@ -97,13 +97,18 @@ def _fitted(model: str, step: str, before: list[RetrievalHit], after: list[Retri
     return after
 
 
-def model_settings(model: str, temperature: float | None = None) -> ModelSettings:
-    """The request settings every LLM call uses, in one place.
+def model_settings(
+    model: str, temperature: float | None = None, timeout: float | None = None
+) -> ModelSettings:
+    """The request settings every LLM call uses, in one place (the timeout
+    included — `run_agent` used to add it afterwards).
 
     Reasoning models behind the Responses API reject `temperature` outright
     ("Unsupported parameter"), so it is only sent where it is accepted.
     """
     settings: ModelSettings = {}
+    if timeout is not None:
+        settings["timeout"] = timeout
     if temperature is not None and not uses_responses_api(model):
         settings["temperature"] = temperature
     if (cap := max_output_tokens(model)) is not None:
@@ -189,9 +194,7 @@ def run_agent(
     timeout: float | None = None,
 ):
     """One agent run: system + user prompt in, plain text or a schema instance out."""
-    settings = model_settings(model, temperature)
-    if timeout is not None:
-        settings["timeout"] = timeout
+    settings = model_settings(model, temperature, timeout)
     agent = Agent(
         get_model(model),
         output_type=output_type,

@@ -16,6 +16,7 @@ import re
 import uuid
 from datetime import date, datetime, timezone
 from collections.abc import Callable, Iterable
+from contextlib import nullcontext
 from dataclasses import dataclass
 from typing import TypedDict
 
@@ -276,6 +277,26 @@ def propose(ctx: StepContext, state: WorkflowState) -> dict:
     return {"draft": draft, "attempts": state.get("attempts", 0) + 1}
 
 def critique(ctx: StepContext, state: WorkflowState) -> dict:
+    """The mechanical checks and the critic, merged into one CritiqueReport.
+
+    One database connection for the whole step, opened on first use (it
+    used to open up to four, code audit 4).
+    """
+    shared: list = []
+
+    def db():
+        if not shared:
+            shared.append(retrieval.connect(ctx.cfg))
+        return nullcontext(shared[0])
+
+    try:
+        return _critique(ctx, state, db)
+    finally:
+        for conn in shared:
+            getattr(conn, "close", lambda: None)()
+
+
+def _critique(ctx: StepContext, state: WorkflowState, db) -> dict:
     record, as_of, draft, hits = state["record"], state["as_of"], state["draft"], state["hits"]
     info = record.information
     extra_hits: list[RetrievalHit] = []
@@ -293,7 +314,7 @@ def critique(ctx: StepContext, state: WorkflowState) -> dict:
             # The verbatim rule (quotes.check_quote): resolve a mistyped
             # id, re-point a swapped one, verify against the chunk named.
             if draft.supporting_extract:
-                with retrieval.connect(ctx.cfg) as conn:
+                with db() as conn:
                     check = quotes.check_quote(
                         hits,
                         draft.citation_chunk_id,
@@ -317,7 +338,7 @@ def critique(ctx: StepContext, state: WorkflowState) -> dict:
                 # plus the arithmetic. Verified, the critique is told so
                 # (the value is not literally in any extract); failed, the
                 # proposal is rejected exactly like a non-verbatim quote.
-                with retrieval.connect(ctx.cfg) as conn:
+                with db() as conn:
                     derivation_issues, report.operand_offsets, note = _check_derivation(
                         draft,
                         hits,
@@ -344,7 +365,7 @@ def critique(ctx: StepContext, state: WorkflowState) -> dict:
                 # Publication after as_of is EXPECTED here (the finance act
                 # for income year Y arrives in Y+1); the real checks are
                 # back-dating and the budget-act window.
-                cited = next((h for h in hits if h.chunk_id == draft.citation_chunk_id), None)
+                cited = quotes.hit_by_id(hits, draft.citation_chunk_id)
                 # Vintage is proven at ARTICLE level: the value and the
                 # applicability clause ("revenus de l'année 2025") usually
                 # sit in different chunks of the same article — and the
@@ -357,7 +378,7 @@ def critique(ctx: StepContext, state: WorkflowState) -> dict:
                 siblings = []
                 provenance = None
                 if cited is not None:
-                    with retrieval.connect(ctx.cfg) as conn:
+                    with db() as conn:
                         siblings = retrieval.unit_chunks(conn, cited.chunk_id)
                         provenance = retrieval.version_provenance(conn, cited.chunk_id)
                     article_text = " ".join(h.content for h in siblings) or article_text
@@ -411,7 +432,7 @@ def critique(ctx: StepContext, state: WorkflowState) -> dict:
                         # clause may sit in a chunk retrieval never
                         # surfaced (LF 2025 art. 10: CDHR in chunk 1, its
                         # 2025 clause in chunk 2).
-                        with retrieval.connect(ctx.cfg) as conn:
+                        with db() as conn:
                             alt_siblings = retrieval.unit_chunks(conn, alt.chunk_id) or [alt]
                         known = {h.chunk_id for h in hits}
                         extra_hits = [h for h in alt_siblings if h.chunk_id not in known]
@@ -456,7 +477,7 @@ def critique(ctx: StepContext, state: WorkflowState) -> dict:
                         f"another extract"
                     )
             else:
-                cited = next((h for h in hits if h.chunk_id == draft.citation_chunk_id), None)
+                cited = quotes.hit_by_id(hits, draft.citation_chunk_id)
                 later = cited is not None and cited.method == "later_in_year"
                 # A version entering into force later in the system year
                 # may take effect after as_of: the year's value, not 1 July's.
@@ -806,7 +827,7 @@ def _build_proposed_value(state: WorkflowState, cfg: WorkflowConfig) -> Paramete
     draft: ProposalDraft = state["draft"]
     report: CritiqueReport | None = state.get("critique")
     hits: list[RetrievalHit] = state.get("hits", [])
-    cited = next((h for h in hits if h.chunk_id == draft.citation_chunk_id), None)
+    cited = quotes.hit_by_id(hits, draft.citation_chunk_id)
     references = []
     if cited is not None:
         references.append(
@@ -825,7 +846,7 @@ def _build_proposed_value(state: WorkflowState, cfg: WorkflowConfig) -> Paramete
         # reference is kept first and not repeated.
         offsets = (report.operand_offsets if report else None) or []
         for index, operand in enumerate(draft.operands):
-            source = next((h for h in hits if h.chunk_id == operand.citation_chunk_id), None)
+            source = quotes.hit_by_id(hits, operand.citation_chunk_id)
             if source is None or (
                 operand.citation_chunk_id == draft.citation_chunk_id
                 and operand.supporting_extract == draft.supporting_extract

@@ -37,6 +37,11 @@ class Quotable(Protocol):
 Verify = Callable[[str, str], "tuple[int, int] | None"]
 
 
+def hit_by_id(hits: Sequence[Quotable], chunk_id: str | None):
+    """The retrieved chunk with this id, or None."""
+    return next((h for h in hits if h.chunk_id == chunk_id), None)
+
+
 def verify_extract(
     conn: psycopg.Connection, chunk_id: str, extract: str
 ) -> tuple[int, int] | None:
@@ -147,7 +152,7 @@ def repoint_misquoted(hits: Sequence[Quotable], cited: str, extract: str) -> str
     and RSA's «128, 412 %» a Wallis-et-Futuna article — eleven right values
     refused. The quote is still verified, against the chunk it now names.
     """
-    current = next((h for h in hits if h.chunk_id == cited), None)
+    current = hit_by_id(hits, cited)
     if current is None or not current.content or quote_span(current.content, extract):
         return None
     resolved = resolve_chunk_by_extract([h for h in hits if h.chunk_id != cited], extract)
@@ -173,7 +178,7 @@ def resolve_chunk_id(hits: Sequence[Quotable], cited: str, extract: str) -> str 
 
 def misquote_hint(hits: Sequence[Quotable], chunk_id: str, extract: str) -> str | None:
     """The retry's feedback for a non-verbatim extract: what the chunk really says."""
-    content = next((h.content for h in hits if h.chunk_id == chunk_id), "")
+    content = getattr(hit_by_id(hits, chunk_id), "content", "") or ""
     passage = closest_passage(content or "", extract or "")
     if passage is None:
         return None

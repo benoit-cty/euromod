@@ -185,7 +185,7 @@ Suggested fixes, in order of value:
 | medium | Scope, language and query vector are derived again at each entry point. | `pipeline.py:565-567`, `scout.py:901-904`, `retrieval.py:313`, `chat.py:250, 279` |
 | medium | The scout has two ingest loops and two subprocess launchers; `query_encoder._start` and `_start_reranker` are copies. **Partly fixed**: one `query_encoder._spawn_ready` launches both (tested live with the subprocess encoder); the scout's loops remain. | `scout.py:535-551, 759-774, 853-874`, `query_encoder.py:114-211` |
 | medium | Tavily access and the 432 latch are duplicated between scout and chat, and both sniff `"432" in str(exc)`. **Fixed**: one `scout.web_search` with one latch keyed on the HTTP status (`WebSearchUnavailable`), used by discovery, guidance search and chat. | `scout.py:735-744`, `chat.py:331-342` |
-| low | `next(h for h in hits if h.chunk_id == x)` eight times; half-up quantisation three times (**fixed**: `derivation.round_half_up`); two `connect()` helpers with different row factories; `critique` opens up to five connections per call. | `pipeline.py`, `paramdb.py:53`, `retrieval.py:185` |
+| low | `next(h for h in hits if h.chunk_id == x)` eight times (**fixed**: `quotes.hit_by_id`); half-up quantisation three times (**fixed**: `derivation.round_half_up`); two `connect()` helpers with different row factories (kept: paramdb reads tuples, retrieval dicts); `critique` opens up to five connections per call (**fixed**: one shared, lazily opened). | `pipeline.py`, `paramdb.py:53`, `retrieval.py:185` |
 
 ### Size
 
@@ -209,7 +209,7 @@ Suggested fixes, in order of value:
 - **French legal idiom sits in generic modules** (medium). `_CODE_ARTICLE_REF`, `"même code"`, `_SAME_ACT_REF`, the `"art. "` convention, chapter inference, `_APPLICABILITY` and `_NUMBER_WORDS` run for every country and simply do not match elsewhere. Ingest has `countries/<cc>/` adapters; the workflow has none.
 - **Fixed** — DB errors in `_known_instruments` and the income-year check now fail the run instead of silently changing it; LLM calls retry only transient errors (not ValueError/KeyError/TypeError/UserError). — **Broad `except Exception` changes results** (medium). A DB error in `scout._known_instruments` (`scout.py:491`) returns an empty set, so everything is re-ingested. A DB error during the income-year check (`pipeline.py:701, 709, 763`) can flip a correct proposal to `provisional`. `llm.py:203, 224` retries a missing-key error three times with back-off.
 - **Fixed** (the prompt shows `routing.current_value(record, as_of)`, the latest only when nothing is held; prompt 0.14.3) — **Two definitions of "current value"** (low/medium). The prompt shows `record.values[-1]` (`prompts.py:224`); `diff` routes against `_current_value(record, as_of)` (`pipeline.py:896`).
-- **Low**: `COUNTRY_SOURCES` and `GUIDANCE_PUBLISHERS` are dicts of dicts; `temporal_basis` is compared to string literals (**fixed**: `TemporalBasis`); `llm.run_agent` adds `timeout` after `model_settings()`; `impact.py:31-55` is a second place that parses provider strings.
+- **Low**: `COUNTRY_SOURCES` and `GUIDANCE_PUBLISHERS` are dicts of dicts; `temporal_basis` is compared to string literals (**fixed**: `TemporalBasis`); `llm.run_agent` adds `timeout` after `model_settings()` (**fixed**: `model_settings(timeout=)`); `impact.py:31-55` is a second place that parses provider strings (kept: it maps trace providers to EcoLogits keys, a different vocabulary).
 
 ### Dead code
 
@@ -219,7 +219,7 @@ Suggested fixes, in order of value:
 | medium | **Removed** (fields, prompt line, `sibling_text`, `translation_lookup`; prompt 0.14.2) — `ProposalDraft.original_language_quote` and `english_translation` are requested from the model and read nowhere. Every real proposal pays output tokens for them. `retrieval.sibling_text` and the `translation_lookup` plumbing exist only to fill them. | `schema.py:291-292`, `prompts.py:103-104`, `retrieval.py:1394-1408` |
 | medium | Stale schema comments about `data/decisions.jsonl`, `sync-decisions` and `data/queue/<item_id>.json`. **Fixed.** | `pipeline/db/params_schema.sql:26-27, 273, 335-336, 371, 449` |
 | low/medium | View `params.proposal_review` has no reader; table `params.proposal_references` is written on every run and read only by that view. **Fixed**: view dropped; the table kept and documented as the per-run evidence history (the queue keeps only the latest run). | `params_schema.sql:379…`, `paramdb.py:1039-1060` |
-| low | `impact.phoenix_url_from`; `encode_client.score_via_jobs` and `queue_store.load_item` (tests only; **removed**, the latter now a test helper); unused imports `CritiqueFindings`, `ItemStatus` (**removed**); `RetrievalHit.method` value `"fts"` never produced. | — |
+| low | `impact.phoenix_url_from` (**removed**); `encode_client.score_via_jobs` and `queue_store.load_item` (tests only; **removed**, the latter now a test helper); unused imports `CritiqueFindings`, `ItemStatus` (**removed**); `RetrievalHit.method` value `"fts"` never produced. | — |
 | low | Deprecated `--as-of` alias on `run-targets` and `run-country`; legacy `parameter_file` validation alias. **Removed** (no queue row carries the old key). | `cli.py:49-68`, `schema.py:398-400` |
 
 ---
