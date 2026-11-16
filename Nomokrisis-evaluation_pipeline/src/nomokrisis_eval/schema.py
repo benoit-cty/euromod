@@ -11,7 +11,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
 
-from nomoscope_workflow.schema import Bracket, LegalStatus, Routing
+from nomoscope_workflow.schema import Bracket, Routing
 
 
 class Expected(BaseModel):
@@ -22,7 +22,6 @@ class Expected(BaseModel):
     routing: Routing
     value: list[Bracket] | bool | float | str | None = None
     valid_from: date | None = None
-    legal_status: LegalStatus | None = None
     citations: list[str] = Field(
         default_factory=list,
         description='Acceptable pinpoint citations, e.g. ["CGI, art. 197"]; any-of match',

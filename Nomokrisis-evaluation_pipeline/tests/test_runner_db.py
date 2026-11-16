@@ -168,3 +168,32 @@ def test_execute_run_runs_cases_concurrently(db, monkeypatch):
     run_pk, finished = evaldb.load_run(db, manifest.run_id)
     assert finished.status == "complete"
     assert len(evaldb.load_results(db, run_pk)) == 4
+
+
+def test_a_crashed_run_is_marked_failed_and_stays_resumable(db, monkeypatch):
+    import pytest
+
+    cases = [make_case(TEST_PREFIX + "f0"), make_case(TEST_PREFIX + "f1")]
+    cfg = EvalConfig(database_url="unused", phoenix_project="test")
+    monkeypatch.setattr(runner, "_resolved_model_name", lambda model: None)
+    manifest = runner.start_run(db, cfg, cases, date(2025, 6, 1), "mock/extractor", notes="t")
+    manifest = _rename(manifest, db, TEST_PREFIX + manifest.run_id)
+    monkeypatch.setattr(runner, "load_case_record", lambda conn, target: _fake_record(target))
+    monkeypatch.setattr(runner, "_constants_for", lambda conn, cases: (lambda case: {}))
+    monkeypatch.setattr(runner, "setup_tracing", lambda wf_cfg: None)
+
+    def crash(index, total, case, result):  # a failure outside any one case
+        raise RuntimeError("disk full")
+
+    with pytest.raises(RuntimeError, match="disk full"):
+        runner.execute_run(
+            db, cfg, manifest, cases, run_case=lambda *a: fake_item(a[3]), on_case_done=crash
+        )
+    run_pk, stored = evaldb.load_run(db, manifest.run_id)
+    assert stored.status == "failed" and stored.finished_at is not None
+    listed = {r["run_id"]: r for r in runner.list_runs(db)}
+    assert not listed[manifest.run_id]["complete"]  # `resume` still offers it
+
+    _, resumed_cases, done = runner.resume_run(db, manifest.run_id)
+    runner.execute_run(db, cfg, manifest, resumed_cases, done, run_case=lambda *a: fake_item(a[3]))
+    assert evaldb.load_run(db, manifest.run_id)[1].status == "complete"

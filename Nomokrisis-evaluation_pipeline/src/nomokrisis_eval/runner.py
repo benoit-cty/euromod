@@ -209,8 +209,10 @@ def execute_run(
 
     Each result is upserted into eval.results (with the ReviewItem) the moment
     the case is scored, so a Ctrl-C (or a crash) loses at most the cases in
-    flight; the run is flipped to `complete` at the end. `run_case` exists for
-    tests — it replaces the workflow call and nothing else.
+    flight; the run is flipped to `complete` at the end. A crash — an exception
+    that is not a case's own error result — marks it `failed` and re-raises; a
+    Ctrl-C leaves it `running`. Either way `resume` picks it up. `run_case`
+    exists for tests — it replaces the workflow call and nothing else.
 
     `concurrency` cases run their workflow at once, each in its own thread:
     a case is almost all LLM latency (a reasoning model on OpenRouter spends
@@ -225,7 +227,37 @@ def execute_run(
         raise LookupError(f"run {manifest.run_id} is not in eval.runs — start_run first")
     run_pk = loaded[0]
     evaldb.set_run_status(conn, run_pk, "running")
+    try:
+        results = _score_pending(
+            conn, cfg, manifest, run_pk, cases, done_results,
+            on_case_start, on_case_done, run_case, concurrency,
+        )
+    except Exception:
+        try:
+            conn.rollback()
+            evaldb.set_run_status(conn, run_pk, "failed")
+            manifest.status = "failed"
+        except Exception:  # noqa: BLE001 - the original error is the one to raise
+            pass
+        raise
+    evaldb.set_run_status(conn, run_pk, "complete")
+    manifest.status = "complete"
+    return results
 
+
+def _score_pending(
+    conn: psycopg.Connection,
+    cfg: EvalConfig,
+    manifest: RunManifest,
+    run_pk: int,
+    cases: list[GoldenCase],
+    done_results: list[CaseResult] | None,
+    on_case_start: Callable[[int, int, GoldenCase], None] | None,
+    on_case_done: Callable[[int, int, GoldenCase, CaseResult], None] | None,
+    run_case: Callable[[WorkflowConfig, object, ParameterRecord, GoldenCase, date], ReviewItem] | None,
+    concurrency: int,
+) -> list[CaseResult]:
+    """execute_run's case loop: every result scored and upserted as it lands."""
     results = list(done_results or [])
     scored = {r.case_id for r in results}
     pending = [c for c in cases if c.id not in scored]
@@ -313,27 +345,7 @@ def execute_run(
             for result in results:
                 if result.llm_calls is not None:
                     evaldb.upsert_result(conn, run_pk, result)
-    evaldb.set_run_status(conn, run_pk, "complete")
-    manifest.status = "complete"
     return results
-
-
-def run_evaluation(
-    conn: psycopg.Connection,
-    cfg: EvalConfig,
-    cases: list[GoldenCase],
-    as_of: date,
-    model: str,
-    notes: str | None = None,
-    on_case_start: Callable[[int, int, GoldenCase], None] | None = None,
-    on_case_done: Callable[[int, int, GoldenCase, CaseResult], None] | None = None,
-) -> tuple[RunManifest, list[CaseResult]]:
-    """Fresh run: freeze the manifest + case list, then score every case."""
-    manifest = start_run(conn, cfg, cases, as_of, model, notes=notes)
-    results = execute_run(
-        conn, cfg, manifest, cases, on_case_start=on_case_start, on_case_done=on_case_done
-    )
-    return manifest, results
 
 
 def rescore_run(conn: psycopg.Connection, run_id: str) -> tuple[RunManifest, list[CaseResult], list[CaseResult]]:

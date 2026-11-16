@@ -257,18 +257,21 @@ CREATE TABLE IF NOT EXISTS eval.golden_cases (
 );
 CREATE INDEX IF NOT EXISTS golden_cases_country_idx ON eval.golden_cases (country, verified);
 
--- Retrieval-only cases (dataset_embedding/), same treatment.
+-- Retrieval-only cases. `verified` is copied from the golden case a row is
+-- derived from (or set by hand); nobody reviews a retrieval case on its own,
+-- so the reviewed_* columns it was created with were never written.
 CREATE TABLE IF NOT EXISTS eval.embedding_cases (
     id          text PRIMARY KEY,
     country     text NOT NULL,
     language    text NOT NULL,
     "case"      jsonb NOT NULL,
     verified    boolean NOT NULL DEFAULT false,
-    reviewed_by text,
-    reviewed_at timestamptz,
-    review_note text,
     updated_at  timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE eval.embedding_cases
+    DROP COLUMN IF EXISTS reviewed_by,
+    DROP COLUMN IF EXISTS reviewed_at,
+    DROP COLUMN IF EXISTS review_note;
 
 -- A run is resumable from the database alone: its frozen case list and every
 -- result scored so far are rows, appended as they land. eval.runs.status
