@@ -61,18 +61,39 @@ from .scoring import citation_equal, citation_matches
 #: Id prefix of the retrieval cases derived from golden cases.
 GOLDEN_CASE_PREFIX = "golden:"
 
-_CANDIDATES_SQL = """
+#: The chunks a search on (`jurisdictions`, `lang`, `as_of`) ranks: the
+#: candidate set of the database's search_chunks(), spelled once here for the
+#: two questions it cannot answer — how many candidates there are, and which
+#: legal units they belong to. Its `live_version` rule is search_chunks' own:
+#: the version in force on as_of, ONE per unit (the latest start wins —
+#: Legifrance can leave two open versions of one article side by side), never
+#: a 'context' corpus. Keep the two in step.
+_CANDIDATE_CTE = """
+WITH live_version AS MATERIALIZED (
+    SELECT DISTINCT ON (i.id, coalesce(u.citation, u.id::text))
+           v.id AS version_id, u.citation
+    FROM legal_unit_versions v
+    JOIN legal_units u   ON u.id = v.legal_unit_id
+    JOIN instruments i   ON i.id = u.instrument_id
+    JOIN jurisdictions j ON j.id = i.jurisdiction_id
+    WHERE v.validity @> %(as_of)s::date
+      AND j.code = ANY(%(jurisdictions)s::text[])
+      AND i.source_trust_class <> 'context'
+    ORDER BY i.id, coalesce(u.citation, u.id::text), lower(v.validity) DESC
+),
+candidate AS MATERIALIZED (
+    SELECT ch.id AS chunk_id, ch.context_header, lv.citation
+    FROM chunks ch
+    JOIN unit_texts t    ON t.id = ch.unit_text_id
+    JOIN live_version lv ON lv.version_id = t.version_id
+    WHERE t.lang = %(lang)s
+)
+"""
+
+_CANDIDATES_SQL = _CANDIDATE_CTE + """
 SELECT count(*)::int AS chunks, count(e.chunk_id)::int AS embedded
-FROM chunks ch
-JOIN unit_texts t          ON t.id = ch.unit_text_id
-JOIN legal_unit_versions v ON v.id = t.version_id
-JOIN legal_units u         ON u.id = v.legal_unit_id
-JOIN instruments i         ON i.id = u.instrument_id
-JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-LEFT JOIN embeddings e     ON e.chunk_id = ch.id AND e.model_id = %(model_id)s
-WHERE j.code = ANY(%(jurisdictions)s::text[]) AND t.lang = %(lang)s
-  AND v.validity @> %(as_of)s::date
-  AND i.source_trust_class <> 'context'
+FROM candidate c
+LEFT JOIN embeddings e ON e.chunk_id = c.chunk_id AND e.model_id = %(model_id)s
 """
 
 METHODS = ("fts", "vector", "hybrid", "rerank", "pool")
@@ -267,18 +288,8 @@ def _model_name(database_url: str, model_id: int) -> str | None:
 # Cases derived from the golden set
 # --------------------------------------------------------------------------- #
 
-_UNITS_IN_SCOPE_SQL = """
-SELECT DISTINCT u.citation, ch.context_header
-FROM chunks ch
-JOIN unit_texts t          ON t.id = ch.unit_text_id
-JOIN legal_unit_versions v ON v.id = t.version_id
-JOIN legal_units u         ON u.id = v.legal_unit_id
-JOIN instruments i         ON i.id = u.instrument_id
-JOIN jurisdictions j       ON j.id = i.jurisdiction_id
-WHERE j.code = ANY(%(jurisdictions)s::text[]) AND t.lang = %(lang)s
-  AND v.validity @> %(as_of)s::date
-  AND i.source_trust_class <> 'context'
-  AND u.citation IS NOT NULL
+_UNITS_IN_SCOPE_SQL = _CANDIDATE_CTE + """
+SELECT DISTINCT citation, context_header FROM candidate WHERE citation IS NOT NULL
 """
 
 #: Routings with no evidence to find: `derived` short-circuits before retrieval,
