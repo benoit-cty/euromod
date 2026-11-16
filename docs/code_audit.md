@@ -86,7 +86,7 @@ These are behaviour problems, listed first because they outrank the refactoring.
 | Quote matching | `retrieval.py:1411-1458` (`verify_extract`, `quote_span`); `chat.py:412-417` (`_contains`); `rag-ui/src/lib/chat.js:81-93` (`locateExtract`) | **Fixed** (Python): `nomoscope_workflow/quotes.py` holds `verify_extract`, `quote_span`, `closest_passage`, the resolve/re-point helpers and `check_quote`, used by the main citation, every operand and the chat; the JS `locateExtract` port is tracked with the desktop-app work | high |
 | Value parsing | `nomokrisis_eval/scoring.py:176-243`; `paramdb.py:85-126`; `pipeline.py:1229-1293` (a second AST evaluator); `benchmark.py:61-126` | No. `8,17%` parses in `paramdb` only; `100%*$MMS` in `scoring` only | medium |
 | Encode-job submit-and-poll | `nomergon/client.py:25-63`; `nomoscope_workflow/encode_client.py:21-41`; `nomotheca_mcp/encoder.py:97-149`; `ui/src-tauri/src/jobs.rs:247-264` | No. Priority 100 is a literal in each | medium |
-| Job types | `Nomergon-worker/db/ops_schema.sql:21-23` and again `:51-53`; `nomergon/jobs.py:24-35, 206-217, 230-239, 260-372, 449-455`; `nomergon/cli.py:102`; `Home.svelte:71-80`; literals in `IngestTab.svelte:270-296` | Python lists only. Nothing ties Python to SQL or to the UI | medium |
+| Job types | `Nomergon-worker/db/ops_schema.sql:21-23` and again `:51-53`; `nomergon/jobs.py:24-35, 206-217, 230-239, 260-372, 449-455`; `nomergon/cli.py:102`; `Home.svelte:71-80`; literals in `IngestTab.svelte:270-296` | **Fixed** (Python ↔ SQL): `JOB_SPECS` + `tests/test_job_specs.py`; `job_types.json` for the UI | medium |
 | Country tables | `countries/registry.py:13-19`; `core/contributed.py:96-133`; `scout.py:78-155, 205-225, 247`; `retrieval.py:31`; `readiness.py:29`; `ui/src/lib/labels.js:38-45`; `handoff.js:15-23`; `rag-ui/src/lib/chat.js:4` | Scout ↔ adapters and ES regions only | medium |
 | "Value EUROMOD holds on a date" | `pipeline.py:450-455`; `nomokrisis_eval/build_dataset.py:78-82` (byte-identical); `paramdb.py:641, 822`; `benchmark.py:79-86`; `curated_golden.py:65-70` | No | medium |
 | Units and source types | `paramdb.py:262-274`; `schema.py:85-92`; `params_schema.sql:638-646`; `ParameterEditor.svelte:15-24`; `DetailPanel.svelte:41-49` | Python ⊆ SQL only, and only with a live DB | low |
@@ -261,16 +261,16 @@ Suggested fixes, in order of value:
 
 ## 6. Worker — `Nomergon-worker`
 
-- **One job type is spelled in seven places** (medium, see 2.1).
-- **`build_command`** (`jobs.py:246-372`, 127 lines, complexity 36) is one `match` arm per type of hand-built argv. Each payload model could own a `to_argv()` method.
-- **`_run_subprocess`** (`runner.py:161-274`, 114 lines) mixes the pump loop, the cancel poll and outcome mapping.
-- **The `ingest` payload is an opaque argv** (medium): `args: list[str]` passed straight through (`jobs.py:77-80, 278`). It is the only job type the worker does not model, so the UI owns part of the ingest CLI contract and any flag is reachable from the reviewer role.
+- **Fixed** — **One job type is spelled in seven places** (medium, see 2.1). `jobs.JOB_SPECS` is the one table; a test checks the SQL lists against it; `nomergon job-types --write` emits `Nomergon-worker/job_types.json` for the UI.
+- **Fixed** — **`build_command`** (`jobs.py:246-372`, 127 lines, complexity 36) is one `match` arm per type of hand-built argv. Each payload model now owns `to_argv()`.
+- **Fixed** — **`_run_subprocess`** (`runner.py:161-274`, 114 lines) mixes the pump loop, the cancel poll and outcome mapping. Split into `_start_child`, `_ChildOutput`, `_Capture`, `_Interrupt`, `_outcome`.
+- **Fixed** — typed per sub-command; the UI's legacy `{command, args}` form is read through an allow-list (no `--database-url`, `--trigger`, extra positionals). A document/route source must be an http(s) URL or a file under `WORKER_DOCUMENT_DIR` (a pasted path could otherwise ingest `/proc/self/environ`). — **The `ingest` payload is an opaque argv** (medium): `args: list[str]` passed straight through (`jobs.py:77-80, 278`). It is the only job type the worker does not model, so the UI owns part of the ingest CLI contract and any flag is reachable from the reviewer role.
 - **Low**:
-  - `finish_job` has no `AND status = 'running'` guard (`db.py:143-156`).
-  - `JobSlot.run` opens its first connection outside the `try` (`worker.py:159`).
-  - `impact` and `ingest route` return "the last JSON line among the last 20 stdout lines" instead of an `@result` line (`jobs.py:453-470`).
-  - URL redaction is written twice (`runner.py:299-307`, `cli.py:30-35`).
-- **Dead**: `db.set_worker_device` (`db.py:225-226`), `EncodeLane.ready` (`encoder.py:74`, **removed**), and the `scratch_dir is None` branches reached only by tests (`jobs.py:414-416, 426-428`).
+  - **Fixed** — `finish_job` has no `AND status = 'running'` guard (`db.py:143-156`).
+  - **Fixed** — `JobSlot.run` opens its first connection outside the `try` (`worker.py:159`).
+  - **Fixed** — `impact` and `ingest route` return "the last JSON line among the last 20 stdout lines" instead of an `@result` line (`jobs.py:453-470`). Both print `@result` now.
+  - **Fixed** — URL redaction is written twice (`runner.py:299-307`, `cli.py:30-35`). One `config.redact_url`.
+- **Fixed (removed)** — **Dead**: `db.set_worker_device` (`db.py:225-226`), `EncodeLane.ready` (`encoder.py:74`), and the `scratch_dir is None` branches reached only by tests (`jobs.py:414-416, 426-428`).
 - `worker.py`, `db.py` and `client.py` are well sized. The claim path, the heartbeat reconnect and the `@progress` / `@result` protocol are sound and tested.
 
 ---
