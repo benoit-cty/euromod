@@ -23,6 +23,8 @@ The rules that matter (ADR 0001, and the spec's Implementation Decisions):
 
 from __future__ import annotations
 
+from nomotheca_ingest.core.errors import RefusalError
+from nomotheca_ingest.core.ir import NormLevel
 from nomotheca_ingest.core.contributed.fetch import (
     BROWSER_USER_AGENT,
     SourceDocument,
@@ -47,10 +49,10 @@ from nomotheca_ingest.core.contributed.ingest import (
     stored_content_hash,
 )
 from nomotheca_ingest.core.contributed.kinds import (
-    KINDS_BY_JURISDICTION,
+    DEFAULT_KINDS,
     TRUST_CLASS_BY_LEVEL,
     ContributedFields,
-    NormLevel,
+    kinds_by_jurisdiction,
     kinds_for,
     norm_level_for,
     source_code_for,
@@ -62,18 +64,20 @@ __all__ = [
     "BROWSER_USER_AGENT",
     "ID_SYSTEM",
     "IMPLEMENTS_RELATION",
-    "KINDS_BY_JURISDICTION",
+    "DEFAULT_KINDS",
     "SKILL_VERSION",
     "SOURCE_TYPE",
     "TRUST_CLASS_BY_LEVEL",
     "ContributedFields",
     "DocumentResult",
     "NormLevel",
+    "RefusalError",
     "SourceDocument",
     "canonical_url",
     "content_hash",
     "fetch_in_browser",
     "ingest_document",
+    "kinds_by_jurisdiction",
     "kinds_for",
     "national_id_for",
     "norm_level_for",

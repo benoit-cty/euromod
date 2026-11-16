@@ -9,7 +9,15 @@ from nomotheca_ingest.countries.lt.fetcher import fetch_tar
 from nomotheca_ingest.countries.lt.parser import parse_tar_json
 from nomotheca_ingest.countries.lt.resolver import LtResolver, canary_facts
 from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef
+from nomotheca_ingest.core.ir import (
+    CanaryFact,
+    CitationRef,
+    ContributedKinds,
+    NormLevel,
+    ParsedDoc,
+    Snapshot,
+    SourceRef,
+)
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 
@@ -24,6 +32,18 @@ LT_URL_SOURCE = UrlSource(
 
 class LtAdapter(BaseAdapter):
     """Lithuania implementation of the country adapter protocol."""
+
+    #: The kinds a reviewer may state for a contributed document, in the
+    #: country's own words, in hierarchy order (see core.contributed.kinds).
+    contributed_kinds: ContributedKinds = (
+        ("istatymas", NormLevel.STATUTE),
+        ("nutarimas", NormLevel.GOVERNMENT_REGULATION),
+        ("isakymas", NormLevel.MINISTERIAL_ORDER),
+        ("kolektyvine_sutartis", NormLevel.COLLECTIVE_AGREEMENT),
+        ("isaiskinimas", NormLevel.ADMINISTRATIVE_GUIDANCE),
+        ("komentaras", NormLevel.ADMINISTRATIVE_GUIDANCE),
+        ("other", NormLevel.OTHER),
+    )
 
     jurisdiction = "LT"
     url_source = LT_URL_SOURCE

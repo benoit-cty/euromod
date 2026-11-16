@@ -7,7 +7,15 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Callable, Protocol
 
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
+from nomotheca_ingest.core.ir import (
+    CanaryFact,
+    CitationRef,
+    ContributedKinds,
+    ParsedDoc,
+    Snapshot,
+    SourceRef,
+    WorkItem,
+)
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 
@@ -63,6 +71,9 @@ class CountryAdapter(Protocol):
     default_source_code: str
     #: How the country's official portal shows up in a pasted URL; None = never.
     url_source: UrlSource | None
+    #: The kinds a reviewer may state for a contributed document, in the
+    #: country's own words; () = the default table.
+    contributed_kinds: ContributedKinds
 
     def resolve(self, ref: CitationRef, as_of: date) -> list[SourceRef]:
         """Return exact fetchable source ids for a citation at a point in time."""
@@ -98,6 +109,7 @@ class BaseAdapter:
 
     jurisdiction: str = ""
     url_source: UrlSource | None = None
+    contributed_kinds: ContributedKinds = ()
 
     @property
     def default_source_code(self) -> str:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from nomotheca_ingest.core.ir import ContributedKinds
 from nomotheca_ingest.countries.base import CountryAdapter, UrlSource
 from nomotheca_ingest.countries.es.adapter import EsAdapter
 from nomotheca_ingest.countries.fr.adapter import FrAdapter
@@ -29,6 +30,15 @@ def url_sources() -> dict[str, UrlSource]:
         code: adapter_type.url_source
         for code, adapter_type in _ADAPTERS.items()
         if adapter_type.url_source is not None
+    }
+
+
+def contributed_kinds() -> dict[str, ContributedKinds]:
+    """Each adapter's contributed-document kinds, by jurisdiction (those that declare any)."""
+    return {
+        code: adapter_type.contributed_kinds
+        for code, adapter_type in _ADAPTERS.items()
+        if adapter_type.contributed_kinds
     }
 
 

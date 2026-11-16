@@ -11,7 +11,7 @@ import psycopg
 from psycopg import Connection
 from psycopg.types.json import Jsonb
 
-from nomotheca_ingest.core.ir import SourceRef, Trigger
+from nomotheca_ingest.core.ir import RunStatus, SourceRef, Trigger
 
 
 @dataclass(slots=True)
@@ -118,7 +118,7 @@ def create_fetch_run(
         return cur.fetchone()[0]
 
 
-def finish_fetch_run(conn: Connection, run_id: UUID, status: str, stats: dict | None = None) -> None:
+def finish_fetch_run(conn: Connection, run_id: UUID, status: RunStatus, stats: dict | None = None) -> None:
     """Mark a fetch run as finished with a terminal status and optional stats."""
     with conn.cursor() as cur:
         cur.execute(
@@ -181,7 +181,7 @@ def fetch_run(
             yield run
         except BaseException as exc:
             finish_fetch_run(
-                archive, run.id, "failed", {"trigger": trigger.value, "error": str(exc) or type(exc).__name__}
+                archive, run.id, RunStatus.FAILED, {"trigger": trigger.value, "error": str(exc) or type(exc).__name__}
             )
             raise
-        finish_fetch_run(archive, run.id, "succeeded", {"trigger": trigger.value, **run.stats})
+        finish_fetch_run(archive, run.id, RunStatus.SUCCEEDED, {"trigger": trigger.value, **run.stats})

@@ -72,9 +72,10 @@ statute-level trust by accident.
 | administrative guidance | `circulaire`, `doctrine` | `guidance` |
 | other | `other` | `guidance` |
 
-The whole table lives in `core/contributed.py::KINDS_BY_JURISDICTION` (FR, ES,
-NL, IE, LT, plus a country-neutral default) and is what the UI's kind select
-renders — nothing keeps a second copy. Country Reports are `context`: still
+Each adapter declares its country's table (`contributed_kinds` on the adapter
+class); `core.contributed.kinds_by_jurisdiction()` gathers them with the
+country-neutral `DEFAULT_KINDS`, and that is what the UI's kind select renders
+— nothing keeps a second copy. Country Reports are `context`: still
 searchable for query framing, never citable evidence.
 
 **Identity and re-adding.** A URL keys the instrument on its canonical form

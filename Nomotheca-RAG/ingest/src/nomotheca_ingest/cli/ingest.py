@@ -11,7 +11,7 @@ import psycopg
 import typer
 
 from nomotheca_ingest.cli._app import DatabaseUrl, app
-from nomotheca_ingest.core.ir import Trigger
+from nomotheca_ingest.core.ir import IngestMode, Trigger
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.pipeline import PipelineResult, run_database_ingest
 from nomotheca_ingest.core.progress import emit_json
@@ -31,7 +31,7 @@ def instrument(
         identifier=national_id,
         database_url=database_url,
         source_code=source_code,
-        mode="instrument",
+        mode=IngestMode.INSTRUMENT,
         max_items=max_items,
     )
     _print_result(result)
@@ -52,7 +52,7 @@ def citation(
         identifier=citation_text,
         database_url=database_url,
         source_code=source_code,
-        mode="citation",
+        mode=IngestMode.CITATION,
         as_of=date.fromisoformat(as_of),
         max_items=max_items,
     )
@@ -251,9 +251,13 @@ def document(
     instead, so official acts are ingested cleanly by national id; the
     contributed fields are then unused.
     """
-    from nomotheca_ingest.core.contributed import ingest_document
+    from nomotheca_ingest.core.contributed import RefusalError, ingest_document
 
     url, file_path = _document_source(source)
+    try:
+        valid_from_date = date.fromisoformat(valid_from) if valid_from else None
+    except ValueError as exc:
+        raise typer.BadParameter(f"not a YYYY-MM-DD date: {valid_from}", param_hint="--valid-from") from exc
     try:
         result = ingest_document(
             database_url=database_url,
@@ -261,14 +265,16 @@ def document(
             lang=lang,
             title=title,
             kind=kind,
-            valid_from=date.fromisoformat(valid_from) if valid_from else None,
+            valid_from=valid_from_date,
             url=url,
             file_path=file_path,
             implements=implements,
             progress=_document_progress(progress_json),
             trigger=trigger,
         )
-    except ValueError as exc:
+    except RefusalError as exc:
+        # Only a reviewer-facing refusal is reported as a message; any other
+        # error (a parser's ValueError included) fails with its traceback.
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
 
@@ -315,7 +321,7 @@ def route(
     or show a refusal hint. With no source it answers with the kinds table
     alone — what the contributed-document form needs to render itself.
     """
-    from nomotheca_ingest.core.contributed import KINDS_BY_JURISDICTION, TRUST_CLASS_BY_LEVEL
+    from nomotheca_ingest.core.contributed import TRUST_CLASS_BY_LEVEL, kinds_by_jurisdiction
     from nomotheca_ingest.core.contributed import route as route_source
     from nomotheca_ingest.core.contributed import suggest
     from nomotheca_ingest.core.routing import RouteOutcome
@@ -348,7 +354,7 @@ def route(
             }
             for label, level in table
         }
-        for jurisdiction, table in KINDS_BY_JURISDICTION.items()
+        for jurisdiction, table in kinds_by_jurisdiction().items()
     }
     # The worker's job result (the UI's pre-check reads ops.jobs.result).
     typer.echo("@result " + json.dumps(payload, ensure_ascii=False))

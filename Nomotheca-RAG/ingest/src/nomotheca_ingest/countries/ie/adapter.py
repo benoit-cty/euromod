@@ -9,7 +9,15 @@ from nomotheca_ingest.countries.ie.fetcher import SOURCE_CODE_EISB, fetch_ie
 from nomotheca_ingest.countries.ie.parser import act_index_child_metadata, parse_ie
 from nomotheca_ingest.countries.ie.resolver import IeResolver, canary_facts
 from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef
+from nomotheca_ingest.core.ir import (
+    CanaryFact,
+    CitationRef,
+    ContributedKinds,
+    NormLevel,
+    ParsedDoc,
+    Snapshot,
+    SourceRef,
+)
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 
@@ -24,6 +32,18 @@ IE_URL_SOURCE = UrlSource(
 
 class IeAdapter(BaseAdapter):
     """Ireland implementation of the country adapter protocol."""
+
+    #: The kinds a reviewer may state for a contributed document, in the
+    #: country's own words, in hierarchy order (see core.contributed.kinds).
+    contributed_kinds: ContributedKinds = (
+        ("act", NormLevel.STATUTE),
+        ("statutory_instrument", NormLevel.GOVERNMENT_REGULATION),
+        ("regulation", NormLevel.MINISTERIAL_ORDER),
+        ("employment_agreement", NormLevel.COLLECTIVE_AGREEMENT),
+        ("tax_and_duty_manual", NormLevel.ADMINISTRATIVE_GUIDANCE),
+        ("guidance", NormLevel.ADMINISTRATIVE_GUIDANCE),
+        ("other", NormLevel.OTHER),
+    )
 
     jurisdiction = "IE"
     url_source = IE_URL_SOURCE

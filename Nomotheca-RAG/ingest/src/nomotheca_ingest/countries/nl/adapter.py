@@ -9,7 +9,15 @@ from nomotheca_ingest.countries.nl.fetcher import fetch_bwb
 from nomotheca_ingest.countries.nl.parser import parse_bwb_xml
 from nomotheca_ingest.countries.nl.resolver import NlResolver, canary_facts
 from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef
+from nomotheca_ingest.core.ir import (
+    CanaryFact,
+    CitationRef,
+    ContributedKinds,
+    NormLevel,
+    ParsedDoc,
+    Snapshot,
+    SourceRef,
+)
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 
@@ -25,6 +33,18 @@ NL_URL_SOURCE = UrlSource(
 
 class NlAdapter(BaseAdapter):
     """Netherlands implementation of the country adapter protocol."""
+
+    #: The kinds a reviewer may state for a contributed document, in the
+    #: country's own words, in hierarchy order (see core.contributed.kinds).
+    contributed_kinds: ContributedKinds = (
+        ("wet", NormLevel.STATUTE),
+        ("algemene_maatregel_van_bestuur", NormLevel.GOVERNMENT_REGULATION),
+        ("ministeriele_regeling", NormLevel.MINISTERIAL_ORDER),
+        ("cao", NormLevel.COLLECTIVE_AGREEMENT),
+        ("beleidsregel", NormLevel.ADMINISTRATIVE_GUIDANCE),
+        ("besluit", NormLevel.ADMINISTRATIVE_GUIDANCE),
+        ("other", NormLevel.OTHER),
+    )
 
     jurisdiction = "NL"
     url_source = NL_URL_SOURCE

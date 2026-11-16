@@ -13,8 +13,10 @@ from nomotheca_ingest.core import extract
 from nomotheca_ingest.core.contributed.fetch import SourceDocument, read_input
 from nomotheca_ingest.core.contributed.kinds import ContributedFields, stated_fields
 from nomotheca_ingest.core.db import ensure_source, fetch_run
+from nomotheca_ingest.core.errors import RefusalError
 from nomotheca_ingest.core.documents import DocumentSpec, build_document
 from nomotheca_ingest.core.ir import (
+    IngestMode,
     InstrumentRelationIR,
     ParsedDoc,
     SourceRef,
@@ -70,7 +72,7 @@ def _ingest_through_adapter(
         jurisdiction=outcome.jurisdiction,
         identifier=outcome.national_id,
         database_url=database_url,
-        mode="instrument",
+        mode=IngestMode.INSTRUMENT,
         max_items=max_items,
     )
     loaded = LoadStats.total(pipeline_result.loaded)
@@ -208,7 +210,7 @@ def ingest_document(
         report({"phase": "route", "detail": url})
         outcome = route(url, database_url)
         if outcome.kind == "refused":
-            raise ValueError(outcome.hint)
+            raise RefusalError(outcome.hint)
         if outcome.kind == "adapter":
             report(
                 {

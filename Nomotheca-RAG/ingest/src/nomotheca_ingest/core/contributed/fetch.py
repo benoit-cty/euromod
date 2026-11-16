@@ -10,6 +10,7 @@ from uuid import UUID
 
 from nomotheca_ingest.core import extract
 from nomotheca_ingest.core.browser import with_browser
+from nomotheca_ingest.core.errors import RefusalError
 from nomotheca_ingest.core.snapshots import USER_AGENT
 from nomotheca_ingest.core.text import sha256_hex
 
@@ -114,7 +115,7 @@ def read_input(url: str | None, file_path: str | None) -> SourceDocument:
     """
     if bool(url) == bool(file_path):
         msg = "Contribute exactly one of a URL or a file path"
-        raise ValueError(msg)
+        raise RefusalError(msg)
     if url:
         import httpx
 
@@ -134,7 +135,7 @@ def read_input(url: str | None, file_path: str | None) -> SourceDocument:
                 # Never the page in its place: the AGS 2025 rate PDF answered
                 # with the press-release listing, ingested as the release.
                 msg = f"{url} answers with an HTML page, not the PDF; download it and contribute the file"
-                raise ValueError(msg)
+                raise RefusalError(msg)
             raw, content_type = fetched, "application/pdf"
         return SourceDocument(
             raw=raw,

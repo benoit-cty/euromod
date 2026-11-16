@@ -9,7 +9,16 @@ from nomotheca_ingest.countries.es.fetcher import SOURCE_CODE, fetch_boe
 from nomotheca_ingest.countries.es.parser import parse_boe_xml
 from nomotheca_ingest.countries.es.resolver import EsResolver, canary_facts
 from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef, WorkItem
+from nomotheca_ingest.core.ir import (
+    CanaryFact,
+    CitationRef,
+    ContributedKinds,
+    NormLevel,
+    ParsedDoc,
+    Snapshot,
+    SourceRef,
+    WorkItem,
+)
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 
@@ -26,6 +35,18 @@ ES_URL_SOURCE = UrlSource(
 
 class EsAdapter(BaseAdapter):
     """Spain implementation of the country adapter protocol."""
+
+    #: The kinds a reviewer may state for a contributed document, in the
+    #: country's own words, in hierarchy order (see core.contributed.kinds).
+    contributed_kinds: ContributedKinds = (
+        ("ley", NormLevel.STATUTE),
+        ("real_decreto", NormLevel.GOVERNMENT_REGULATION),
+        ("orden", NormLevel.MINISTERIAL_ORDER),
+        ("convenio_colectivo", NormLevel.COLLECTIVE_AGREEMENT),
+        ("circular", NormLevel.ADMINISTRATIVE_GUIDANCE),
+        ("consulta_vinculante", NormLevel.ADMINISTRATIVE_GUIDANCE),
+        ("other", NormLevel.OTHER),
+    )
 
     jurisdiction = "ES"
     url_source = ES_URL_SOURCE

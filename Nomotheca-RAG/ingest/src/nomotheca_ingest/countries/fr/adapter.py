@@ -14,7 +14,15 @@ from nomotheca_ingest.countries.fr.resolver import (
     canary_facts,
     resolve_legifrance_url,
 )
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, ParsedDoc, Snapshot, SourceRef
+from nomotheca_ingest.core.ir import (
+    CanaryFact,
+    CitationRef,
+    ContributedKinds,
+    NormLevel,
+    ParsedDoc,
+    Snapshot,
+    SourceRef,
+)
 from nomotheca_ingest.core.snapshots import SnapshotClient
 
 DILA_ID = re.compile(r"\b(?:LEGI|JORF|KALI)(?:ARTI|TEXT|SCTA)\d{12}\b")
@@ -58,6 +66,18 @@ FR_URL_SOURCE = UrlSource(
 
 class FrAdapter(BaseAdapter):
     """France implementation of the country adapter protocol."""
+
+    #: The kinds a reviewer may state for a contributed document, in the
+    #: country's own words, in hierarchy order (see core.contributed.kinds).
+    contributed_kinds: ContributedKinds = (
+        ("loi", NormLevel.STATUTE),
+        ("decret", NormLevel.GOVERNMENT_REGULATION),
+        ("arrete", NormLevel.MINISTERIAL_ORDER),
+        ("accord_collectif", NormLevel.COLLECTIVE_AGREEMENT),
+        ("circulaire", NormLevel.ADMINISTRATIVE_GUIDANCE),
+        ("doctrine", NormLevel.ADMINISTRATIVE_GUIDANCE),
+        ("other", NormLevel.OTHER),
+    )
 
     jurisdiction = "FR"
     url_source = FR_URL_SOURCE

@@ -16,7 +16,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Footer, Header, Input, Label, RichLog, Select, Static
 
-from nomotheca_ingest.core.ir import SourceRef, Trigger
+from nomotheca_ingest.core.ir import IngestMode, SourceRef, Trigger
 from nomotheca_ingest.core.loader import LoadStats
 from nomotheca_ingest.core.pipeline import FetchEvent, PipelineResult, ingest, run_database_ingest
 from nomotheca_ingest.core.snapshots import SnapshotClient
@@ -49,7 +49,7 @@ class RunConfig:
     """User-selected settings for one TUI pipeline run."""
 
     jurisdiction: str
-    mode: str
+    mode: IngestMode
     identifier: str
     as_of: date | None
     source_code: str | None
@@ -130,8 +130,8 @@ class PipelineTui(App):
             with Horizontal():
                 yield Input(value="FR", placeholder="Jurisdiction", id="jurisdiction", classes="field")
                 yield Select(
-                    (("Instrument id", "instrument"), ("Citation", "citation")),
-                    value="instrument",
+                    (("Instrument id", IngestMode.INSTRUMENT), ("Citation", IngestMode.CITATION)),
+                    value=IngestMode.INSTRUMENT,
                     id="mode",
                     classes="field",
                 )
@@ -181,7 +181,7 @@ class PipelineTui(App):
     def _read_config(self) -> RunConfig:
         """Read and validate current input widgets into a run configuration."""
         jurisdiction = self.query_one("#jurisdiction", Input).value.strip().upper()
-        mode = str(self.query_one("#mode", Select).value)
+        mode = IngestMode(str(self.query_one("#mode", Select).value))
         identifier = self.query_one("#identifier", Input).value.strip()
         as_of_raw = self.query_one("#as_of", Input).value.strip()
         source_code = self.query_one("#source_code", Input).value.strip().upper() or None
@@ -195,7 +195,7 @@ class PipelineTui(App):
         if max_items < 1:
             raise ValueError("max source items must be at least 1")
         as_of = date.fromisoformat(as_of_raw) if as_of_raw else None
-        if mode == "citation" and as_of is None:
+        if mode == IngestMode.CITATION and as_of is None:
             raise ValueError("citation mode requires an as-of date")
         return RunConfig(jurisdiction, mode, identifier, as_of, source_code, database_url, max_items)
 

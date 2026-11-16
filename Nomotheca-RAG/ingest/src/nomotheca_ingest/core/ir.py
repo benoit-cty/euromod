@@ -20,6 +20,47 @@ class Trigger(StrEnum):
     MANUAL = "manual"
 
 
+class IngestMode(StrEnum):
+    """What the identifier handed to an ingest run is."""
+
+    #: A national id the adapter fetches directly (JORFTEXT…, BOE-A-…).
+    INSTRUMENT = "instrument"
+    #: A human citation the adapter's resolver turns into ids, at a date.
+    CITATION = "citation"
+
+
+class RunStatus(StrEnum):
+    """``fetch_runs.status`` (the schema's CHECK constraint lists the same four)."""
+
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    PARTIAL = "partial"
+
+
+class NormLevel(StrEnum):
+    """Where a document sits in the hierarchy of norms.
+
+    The level is the country-neutral fact; the label a reviewer picks from is
+    their own country's word for it (each adapter's `contributed_kinds`).
+    """
+
+    STATUTE = "statute"
+    GOVERNMENT_REGULATION = "government_regulation"
+    MINISTERIAL_ORDER = "ministerial_order"
+    #: An agreement between the social partners (ANI, convention, CAO, convenio)
+    #: — the operative text for contributions such as AGIRC-ARRCO, APEC or a
+    #: CAO pension scheme, whose rates no statute states.
+    COLLECTIVE_AGREEMENT = "collective_agreement"
+    ADMINISTRATIVE_GUIDANCE = "administrative_guidance"
+    OTHER = "other"
+
+
+#: The kinds a reviewer may state for one country's contributed documents, in
+#: that country's words, in hierarchy order: (label, level) pairs.
+ContributedKinds = tuple[tuple[str, NormLevel], ...]
+
+
 class Authenticity(StrEnum):
     """Describes whether a text is legally authentic or derived."""
 
@@ -73,8 +114,27 @@ class SourceRef(BaseModel):
     jurisdiction: str = Field(min_length=2, max_length=8)
     source_code: str
     source_id: str
+    #: What kind of object ``source_id`` names — one of `SOURCE_TYPES`.
+    #: Recorded for provenance and logs; no parser dispatches on it.
     source_type: str
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+#: Every ``SourceRef.source_type`` in use, and what it names. Free text in the
+#: model (a new adapter may need a new word) but listed here, in one place;
+#: `tests/test_ir_vocabulary.py` fails on a value used in code and missing here.
+SOURCE_TYPES: dict[str, str] = {
+    "instrument": "a whole act by its national id (FR JORFTEXT/KALITEXT, ES BOE-A-…, a resolved citation)",
+    "article": "one article version (FR LEGIARTI/JORFARTI/KALIARTI)",
+    "section": "a section of a consolidated text, expanded into its articles (FR LEGISCTA)",
+    "act": "an Irish act in the eISB (IE)",
+    "act_index": "the eISB's list of a year's acts (IE)",
+    "toestand": "one consolidated state of a BWB regulation (NL)",
+    "version_index": "the BWB list of a regulation's states (NL)",
+    "consolidation_index": "the TAR list of an act's consolidated versions (LT)",
+    "consolidation": "one consolidated version of a TAR act (LT)",
+    "contributed_document": "a document a reviewer contributed (core.contributed)",
+}
 
 
 class Snapshot(BaseModel):

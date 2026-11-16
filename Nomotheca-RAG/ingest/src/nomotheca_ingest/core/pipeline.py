@@ -11,7 +11,7 @@ import psycopg
 
 from nomotheca_ingest.countries.registry import get_adapter
 from nomotheca_ingest.core.db import fetch_run
-from nomotheca_ingest.core.ir import CitationRef, ParsedDoc, Snapshot, SourceRef, Trigger, WorkItem
+from nomotheca_ingest.core.ir import CitationRef, IngestMode, ParsedDoc, Snapshot, SourceRef, Trigger, WorkItem
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.reparse import ReparseStats, reload
 from nomotheca_ingest.core.snapshots import SnapshotClient
@@ -91,7 +91,7 @@ def ingest(
     identifier: str,
     http: SnapshotClient,
     *,
-    mode: str = "instrument",
+    mode: IngestMode = IngestMode.INSTRUMENT,
     as_of: date | None = None,
     source_code: str | None = None,
     max_items: int = 500,
@@ -99,11 +99,11 @@ def ingest(
 ) -> PipelineResult:
     """Fetch, parse and expand an instrument id or a citation, without loading."""
     jurisdiction_code = jurisdiction.upper()
-    if mode == "citation":
+    if mode == IngestMode.CITATION:
         if as_of is None:
             raise ValueError("citation ingestion requires as_of")
         return ingest_citation(jurisdiction_code, identifier, as_of, http, max_items=max_items, on_fetch=on_fetch)
-    if mode == "instrument":
+    if mode == IngestMode.INSTRUMENT:
         return ingest_instrument(
             jurisdiction_code, identifier, http, source_code, max_items=max_items, on_fetch=on_fetch
         )
@@ -115,7 +115,7 @@ def run_database_ingest(
     identifier: str,
     database_url: str,
     *,
-    mode: str = "instrument",
+    mode: IngestMode = IngestMode.INSTRUMENT,
     as_of: date | None = None,
     source_code: str | None = None,
     trigger: Trigger = Trigger.MANUAL,
@@ -127,7 +127,7 @@ def run_database_ingest(
     """Fetch, parse, and load one instrument or citation into PostgreSQL."""
     jurisdiction_code = jurisdiction.upper()
     resolved_source_code = source_code or default_source_code(
-        jurisdiction_code, identifier if mode == "instrument" else None
+        jurisdiction_code, identifier if mode == IngestMode.INSTRUMENT else None
     )
     with fetch_run(database_url, resolved_source_code, skill_version, trigger, frozen_label) as run:
         result = ingest(
