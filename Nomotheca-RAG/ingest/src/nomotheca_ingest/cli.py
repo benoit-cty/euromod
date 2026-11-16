@@ -162,6 +162,37 @@ def rechunk(
     typer.echo(json.dumps({"texts": stats.texts, "chunks": stats.chunks}, indent=2))
 
 
+@app.command()
+def canary(
+    database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
+    jurisdiction: Annotated[
+        list[str] | None, typer.Argument(help="Country codes; every registered adapter when omitted.")
+    ] = None,
+) -> None:
+    """Check each adapter's freshness canaries against the corpus.
+
+    A canary is a known fact («CGI art. 197 was rewritten from 16 Feb 2025»):
+    its newest version in the corpus must start on or after that date. Exit
+    code 1 when one is stale or missing.
+    """
+    from nomotheca_ingest.core.canary import check_canaries
+    from nomotheca_ingest.countries.registry import jurisdictions
+
+    codes = [c.upper() for c in jurisdiction] if jurisdiction else jurisdictions()
+    with psycopg.connect(database_url) as conn:
+        results = check_canaries(conn, codes)
+    for r in results:
+        latest = r.latest_start.isoformat() if r.latest_start else "-"
+        typer.echo(
+            f"{r.status:<7} {r.jurisdiction} {r.fact.citation:<34} latest {latest} "
+            f"(needs >= {r.fact.assert_latest_start_gte}) — {r.fact.reason}"
+        )
+    bad = [r for r in results if r.status != "ok"]
+    typer.echo(f"@result {json.dumps({'checked': len(results), 'not_ok': len(bad)})}")
+    if bad:
+        raise typer.Exit(1)
+
+
 @app.command("kali-sync")
 def kali_sync() -> None:
     """Bring the local copy of the DILA KALI dumps (collective agreements) up to date.

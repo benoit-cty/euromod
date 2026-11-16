@@ -32,6 +32,11 @@ def url_sources() -> dict[str, UrlSource]:
     }
 
 
+def jurisdictions() -> list[str]:
+    """Every jurisdiction with an adapter, sorted."""
+    return sorted(_ADAPTERS)
+
+
 def get_adapter(jurisdiction: str) -> CountryAdapter:
     """Return the adapter implementation for a jurisdiction code."""
     try:

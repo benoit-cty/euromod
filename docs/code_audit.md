@@ -162,7 +162,7 @@ Suggested fixes, in order of value:
 | Severity | Item | Where |
 |---|---|---|
 | medium | `_probe_backend_kwargs.py`, `_probe_tokenizer.py`: each is one docstring, "Deprecated temporary probe; safe to delete." | `Nomotheca-RAG/ingest/` |
-| medium | `canary_facts()` in five adapters, `CanaryFact` and the protocol method: about 130 lines that no runner calls. | `countries/*/resolver.py`, `core/ir.py:200-207` |
+| medium | `canary_facts()` in five adapters, `CanaryFact` and the protocol method: about 130 lines that no runner calls. **Fixed by use**: `core/canary.py` + `cli canary [CC…]` check every fact against the corpus (exact folded citation, not trigram); 11/11 OK on the dev DB; live test `tests/test_canary.py`. | `countries/*/resolver.py`, `core/ir.py:200-207` |
 | medium | `FrResolver`, a placeholder whose `resolve` raises `NotImplementedError`; `cli citation FR …` cannot work. | `countries/fr/resolver.py:222-232` |
 | low | TUI modes "bill" and "direct" behave identically; `PipelineTui._log_snapshots` has no caller. **Fixed** (merged into one mode; method removed). | `tui.py:134, 392-399` |
 | low | Test-only functions: `es/fetcher.html_url`, `es/regions.by_nuts2`, `contributed.trust_class_for`. The last means the guidance-publisher test checks a helper, not the production property. | — |
