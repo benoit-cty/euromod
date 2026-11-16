@@ -20,6 +20,8 @@ from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
 
+from nomotheca_ingest.core.text import month_alternation, month_names
+
 #: Content types this path understands, keyed by file suffix.
 CONTENT_TYPE_BY_SUFFIX = {
     ".md": "text/markdown",
@@ -55,16 +57,14 @@ VOID_TAGS = frozenset({"br", "hr", "img", "input", "meta", "link", "source", "co
 
 _HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
 
-_FR_MONTHS = {
-    "janvier": 1, "fevrier": 2, "février": 2, "mars": 3, "avril": 4, "mai": 5, "juin": 6,
-    "juillet": 7, "aout": 8, "août": 8, "septembre": 9, "octobre": 10, "novembre": 11,
-    "decembre": 12, "décembre": 12,
-}
+#: Month names of every language we know: the prefill runs before the
+#: reviewer states the document's language.
+_MONTHS = month_names()
 
 _ISO_DATE = re.compile(r"\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b")
 _DMY_DATE = re.compile(r"\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})\b")
-_FR_DATE = re.compile(
-    r"\b(\d{1,2})(?:er)?\s+(" + "|".join(_FR_MONTHS) + r")\s+(20\d{2})\b", re.IGNORECASE
+_NAMED_MONTH_DATE = re.compile(
+    r"\b(\d{1,2})(?:er)?\s+(" + month_alternation() + r")\s+(20\d{2})\b", re.IGNORECASE
 )
 _YEAR = re.compile(r"\b(19[89]\d|20\d{2})\b")
 
@@ -152,9 +152,9 @@ def _find_date(text: str) -> date | None:
     match = _ISO_DATE.search(text)
     if match:
         return _safe_date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
-    match = _FR_DATE.search(text)
+    match = _NAMED_MONTH_DATE.search(text)
     if match:
-        month = _FR_MONTHS[match.group(2).lower()]
+        month = _MONTHS[match.group(2).lower()]
         return _safe_date(int(match.group(3)), month, int(match.group(1)))
     match = _DMY_DATE.search(text)
     if match:

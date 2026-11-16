@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from hashlib import sha256
 from typing import Protocol
 from uuid import UUID
 
 import httpx
 
 from nomotheca_ingest.core.ir import Snapshot, SourceRef
+from nomotheca_ingest.core.text import sha256_hex
 
 
 #: Default User-Agent for every archive-first fetch, wherever it starts.
@@ -67,7 +67,7 @@ class SnapshotClient:
     def _persist(
         self, ref: SourceRef, url: str, status_code: int, content_type: str | None, content: bytes
     ) -> Snapshot:
-        content_hash = sha256(content).hexdigest()
+        content_hash = sha256_hex(content)
         snapshot_id = self.store.write_snapshot(
             ref=ref,
             url=url,

@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date
-from hashlib import sha256
 from importlib import import_module
 import sys
 from types import ModuleType
@@ -16,6 +15,7 @@ from psycopg import Connection
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
+from nomotheca_ingest.core.text import sha256_hex
 from nomotheca_ingest.core.progress import BatchStats, ProgressCallback, emit
 from nomotheca_ingest.core.embedding_models import (
     DEFAULT_MODEL,
@@ -535,7 +535,7 @@ def embedding_input(context_header: str, content: str) -> str:
 
 def embedding_input_hash(input_text: str) -> str:
     """Hash the exact model input for stale-vector detection."""
-    return sha256(input_text.encode("utf-8")).hexdigest()
+    return sha256_hex(input_text)
 
 
 def halfvec_literal(vector: Sequence[float]) -> str:

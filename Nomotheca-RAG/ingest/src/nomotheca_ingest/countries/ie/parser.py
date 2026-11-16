@@ -26,6 +26,7 @@ from nomotheca_ingest.countries.ie.fetcher import (
     act_eli,
     section_eli,
 )
+from nomotheca_ingest.core.text import UniqueCitations, month_names, path_token, pipe_rows
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
     ParsedDoc,
@@ -82,10 +83,7 @@ _COMMENCEMENT_DATE_RE = re.compile(r"\bon (?:the )?(\d{1,2})(?:st|nd|rd|th)? (\w
 _YEAR_OF_ASSESSMENT_RE = re.compile(
     r"(?:[Aa]s respects|applies (?:for|as respects)) the year of assessment (\d{4})"
 )
-_MONTHS = {
-    "january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6,
-    "july": 7, "august": 8, "september": 9, "october": 10, "november": 11, "december": 12,
-}
+_MONTHS = month_names(["en"])
 
 # Print typography carried as elements rather than characters.
 _ENTITIES = {
@@ -241,6 +239,7 @@ class _UnitBuilder:
         self.leaf_count = 0
         self._ordinal = 0
         self._paths: set[str] = set()
+        self._citations = UniqueCitations()
 
     def walk(self, element: ET.Element, parent_path: str | None) -> None:
         """Emit units for one element's children, recursing into containers."""
@@ -256,13 +255,13 @@ class _UnitBuilder:
         unit_type = _CONTAINER_TAGS[element.tag]
         heading = _element_text(element.find("title")).strip()
         label = _container_label(element, unit_type, heading)
-        path = self._claim_path(parent_path, f"{unit_type}_{_path_token(label)}")
+        path = self._claim_path(parent_path, f"{unit_type}_{path_token(label)}")
         self._ordinal += 1
         self.units.append(
             UnitIR(
                 unit_type=unit_type,
                 path=path,
-                citation=f"{self.short_title}, {unit_type.capitalize()} {label}",
+                citation=self._citations.claim(f"{self.short_title}, {unit_type.capitalize()} {label}"),
                 ordinal=self._ordinal,
                 parent_path=parent_path,
                 is_container=True,
@@ -279,12 +278,12 @@ class _UnitBuilder:
         body = _normalize_space(_element_text(element, skip={"title", "number"}))
 
         label = "s." if unit_type == "section" else "Sch."
-        citation = f"{self.short_title}, {label} {number}"
+        citation = self._citations.claim(f"{self.short_title}, {label} {number}")
         content = f"{unit_type.capitalize()} {number}. {heading}\n{body}".strip()
 
         self.leaf_count += 1
         self._ordinal += 1
-        path = self._claim_path(parent_path, f"{'sect' if unit_type == 'section' else 'sched'}_{_path_token(number)}")
+        path = self._claim_path(parent_path, f"{'sect' if unit_type == 'section' else 'sched'}_{path_token(number)}")
         self.units.append(
             UnitIR(
                 unit_type=unit_type,
@@ -442,11 +441,9 @@ def _render_table(element: ET.Element) -> str:
     (Social Welfare Act 2024's Schedule 1 alone is ~900 cells), and a proposal
     must be able to quote a row verbatim — so the rendering has to be stable.
     """
-    rows = []
-    for row in element.iter("tr"):
-        cells = [" ".join(_element_text(cell).split()) for cell in row.findall("td")]
-        if any(cells):
-            rows.append(" | ".join(cells))
+    rows = pipe_rows(
+        [" ".join(_element_text(cell).split()) for cell in row.findall("td")] for row in element.iter("tr")
+    )
     return "\n" + "\n".join(rows) + "\n" if rows else ""
 
 
@@ -496,12 +493,6 @@ def _parse_compact_date(value: str) -> date:
     except ValueError as exc:
         msg = f"Unparseable eISB enactment date: {value!r}"
         raise ValueError(msg) from exc
-
-
-def _path_token(value: str) -> str:
-    """Sanitize a label into an ltree-compatible path token."""
-    token = re.sub(r"[^0-9A-Za-z]+", "_", value).strip("_").lower()
-    return token or "unknown"
 
 
 def _normalize_space(value: str) -> str:

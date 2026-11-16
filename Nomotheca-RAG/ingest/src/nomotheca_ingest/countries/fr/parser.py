@@ -8,6 +8,7 @@ from datetime import date
 from html import unescape
 from typing import Any
 
+from nomotheca_ingest.core.text import path_token
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
     ParsedDoc,
@@ -114,9 +115,9 @@ def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> 
         if kali
         else _citation(code_cid, article_number)
     )
-    path = f"art_{_path_token(article_number)}"
+    path = f"art_{path_token(article_number)}"
     if annex:
-        path = f"annexe_{_path_token(annex)}_{path}"
+        path = f"annexe_{path_token(annex)}_{path}"
     html = bloc.get("CONTENU") or ""
     content = strip_html(html)
     # Legifrance's NOTA is the article's application note — for a code article
@@ -294,12 +295,6 @@ def _citation(code_cid: str, article_number: str) -> str:
     if code_cid == "LEGITEXT000006069577":
         return f"CGI, art. {article_number}"
     return f"{code_cid}, art. {article_number}"
-
-
-def _path_token(value: str) -> str:
-    """Sanitize an article number into an ltree-compatible path token."""
-    token = re.sub(r"[^0-9A-Za-z]+", "_", value).strip("_").lower()
-    return token or "unknown"
 
 
 def _ordinal(value: str) -> int:

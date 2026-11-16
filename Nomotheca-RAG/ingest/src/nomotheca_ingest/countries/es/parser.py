@@ -23,12 +23,12 @@ LIRPF and the LGSS, see ``Nomotheca-RAG/Spain_sources_analysis.md`` §3):
 from __future__ import annotations
 
 import re
-import unicodedata
 import xml.etree.ElementTree as ET
 from datetime import date, datetime
 from typing import Any
 
 from nomotheca_ingest.countries.es.regions import jurisdiction_for
+from nomotheca_ingest.core.text import UniqueCitations, fold_accents, path_token, pipe_rows
 from nomotheca_ingest.core.ir import InstrumentIR, ParsedDoc, Snapshot, SourceRef, TextIR, UnitIR, VersionIR
 
 
@@ -233,7 +233,7 @@ def _parse_diario_units(
 
     units: list[UnitIR] = []
     stack: list[tuple[int, str]] = []
-    seen_citations: dict[str, int] = {}
+    citations = UniqueCitations()
     seen_paths: set[str] = set()
     for ordinal, (label, tipo, rank, lines) in enumerate(pieces, start=1):
         if tipo == "anexo" or _fold(label).startswith("disposicion"):
@@ -249,7 +249,7 @@ def _parse_diario_units(
             n += 1
             path = f"{base}_{n}"
         seen_paths.add(path)
-        citation = _unique_citation(short_citation, label, tipo, seen_citations)
+        citation = citations.claim(_citation(short_citation, label, tipo))
         content = "\n".join(lines).strip()
         if rank is None and not content:
             continue
@@ -340,7 +340,7 @@ def _parse_units(
 
     units: list[UnitIR] = []
     stack: list[tuple[int, str]] = []  # (rank, path) of open containers
-    seen_citations: dict[str, int] = {}
+    citations = UniqueCitations()
     for ordinal, block in enumerate(texto.findall("bloque"), start=1):
         block_id = block.get("id")
         if not block_id:
@@ -356,7 +356,7 @@ def _parse_units(
 
         parent_path = stack[-1][1] if stack else None
         path = f"{parent_path}.{token}" if parent_path else token
-        citation = _unique_citation(short_citation, titulo, tipo, seen_citations)
+        citation = citations.claim(_citation(short_citation, titulo, tipo))
 
         unit = UnitIR(
             unit_type=_unit_type(tipo, titulo),
@@ -384,21 +384,6 @@ def _parse_units(
         if rank is not None:
             stack.append((rank, path))
     return units
-
-
-def _unique_citation(short_citation: str, titulo: str, tipo: str, seen: dict[str, int]) -> str:
-    """Return a citation unique within the act, suffixing repeats with an index.
-
-    Block titles repeat: an act amended over time accumulates several
-    "Disposición transitoria primera" blocks (BOE distinguishes them only by id
-    — ``dtprimera`` vs ``dtprimera-2``), and headings like "CAPÍTULO I" recur in
-    every título. The loader reconciles units by ``national_id`` *or*
-    ``citation``, so two units sharing a citation silently collapse into one and
-    the second provision's versions are grafted onto the first.
-    """
-    base = _citation(short_citation, titulo, tipo)
-    seen[base] = seen.get(base, 0) + 1
-    return base if seen[base] == 1 else f"{base} ({seen[base]})"
 
 
 def _parse_versions(
@@ -483,13 +468,7 @@ def _render_children(element: ET.Element) -> list[str]:
 
 def _render_table(table: ET.Element) -> list[str]:
     """Render a table as pipe-separated rows, keeping figures with columns."""
-    rows: list[str] = []
-    for row in table.iter("tr"):
-        cells = [_normalize_space(_element_text(cell)) for cell in row]
-        if any(cells):
-            rows.append(" | ".join(cells))
-    return rows
-
+    return pipe_rows([_normalize_space(_element_text(cell)) for cell in row] for row in table.iter("tr"))
 
 def _element_text(element: ET.Element) -> str:
     """Collect an element's text, treating ``<br/>`` as a word separator.
@@ -550,14 +529,12 @@ def _parse_date(value: str | None) -> date | None:
 
 def _fold(value: str) -> str:
     """Lowercase and strip accents so heading matches are accent-insensitive."""
-    decomposed = unicodedata.normalize("NFKD", value.strip().lower())
-    return "".join(char for char in decomposed if not unicodedata.combining(char))
+    return fold_accents(value.strip().lower())
 
 
 def _path_token(value: str) -> str:
-    """Sanitize a label into an ltree-compatible path token."""
-    token = re.sub(r"[^0-9A-Za-z]+", "_", _fold(value)).strip("_").lower()
-    return token or "unknown"
+    """Sanitize a label into an ltree-compatible path token, accents folded."""
+    return path_token(value, fold=True)
 
 
 def _normalize_space(value: str) -> str:

@@ -19,6 +19,7 @@ import xml.etree.ElementTree as ET
 from datetime import date
 from typing import Any
 
+from nomotheca_ingest.core.text import path_token, pipe_rows
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
     ParsedDoc,
@@ -345,12 +346,9 @@ def _table_rows(table: ET.Element) -> list[str]:
     check workable: the LLM's supporting_extract has to match this text
     character for character.
     """
-    rows: list[str] = []
-    for row in table.iter("row"):
-        cells = [_inline_text(entry) for entry in row.findall("entry")]
-        if any(cells):
-            rows.append("| " + " | ".join(cells) + " |")
-    return rows
+    return pipe_rows(
+        ([_inline_text(entry) for entry in row.findall("entry")] for row in table.iter("row")), edges=True
+    )
 
 
 def _inline_text(node: ET.Element | None) -> str:
@@ -392,13 +390,7 @@ def _ltree_path(variabel_deel: str | None, number: str) -> str:
     segments = [segment for segment in (variabel_deel or "").split("/") if segment]
     if not segments:
         segments = [f"Artikel{number}"]
-    return ".".join(_path_token(segment) for segment in segments)
-
-
-def _path_token(value: str) -> str:
-    """Sanitize a label into an ltree-compatible path token."""
-    token = re.sub(r"[^0-9A-Za-z]+", "_", value).strip("_").lower()
-    return token or "unknown"
+    return ".".join(path_token(segment) for segment in segments)
 
 
 def _parse_date(value: str | None) -> date | None:

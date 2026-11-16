@@ -22,7 +22,6 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
-from hashlib import sha256
 from typing import Protocol
 from uuid import UUID
 
@@ -32,6 +31,7 @@ from psycopg.types.json import Jsonb
 
 from nomotheca_ingest.core.chunker import chunk_text
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
+from nomotheca_ingest.core.text import sha256_hex
 from nomotheca_ingest.core.progress import BatchStats, ProgressCallback, emit
 
 #: A version needs a translation when it has no target-language row, or when
@@ -300,7 +300,7 @@ def store_translation(
                 "source": source.id,
                 "source_lang": source.lang,
                 "engine": engine,
-                "hash": sha256(translated.encode("utf-8")).hexdigest(),
+                "hash": sha256_hex(translated),
                 "metadata": Jsonb(
                     {
                         "translated_from_text_id": str(source.id),

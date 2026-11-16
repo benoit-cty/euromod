@@ -18,11 +18,11 @@ Nothing here touches the network or the database.
 from __future__ import annotations
 
 import re
-import unicodedata
 from dataclasses import dataclass
 from datetime import date
 from uuid import UUID
 
+from nomotheca_ingest.core.text import UniqueCitations, fold_accents, month_alternation
 from nomotheca_ingest.core.ir import (
     Authenticity,
     InstrumentIR,
@@ -128,25 +128,25 @@ def find_headings(lines: list[str], pattern: str | re.Pattern[str]) -> list[Head
     return found
 
 
-_MONTHS = (
-    "janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre"
-    "|january|february|march|april|may|june|july|august|september|october|november|december"
-)
-_DATE_OR_YEAR = re.compile(rf"\s*(?:(?:[1-9]|[12]\d|3[01])(?:er)?\s+(?:{_MONTHS})\b|\d{{4,}}\s)", re.IGNORECASE)
+def _date_or_year_re(lang: str) -> re.Pattern[str]:
+    """A day and a month name of the document's language (or English), or a
+    year: «31 décembre 2025», «1er avril», «2024 des plafonds»."""
+    months = month_alternation([lang, "en"])
+    return re.compile(rf"\s*(?:(?:[1-9]|[12]\d|3[01])(?:er)?\s+(?:{months})\b|\d{{4,}}\s)", re.IGNORECASE)
 
 
-def _date_or_year(line: str) -> bool:
+def _date_or_year(line: str, lang: str = "fr") -> bool:
     """A line that starts with a date («31 décembre 2025 (à comparer …)») or a
     four-digit number (a title wrapped onto «2024 des plafonds …»): text, not
     section 31 or section 2024."""
-    return _DATE_OR_YEAR.match(line) is not None
+    return _date_or_year_re(lang).match(line) is not None
 
 
 #: Body text under a numbered heading below which it reads as a table row.
 TABLE_ROW_MAX_BODY = 40
 
 
-def drop_table_rows(headings: list[Heading], lines: list[str]) -> list[Heading]:
+def drop_table_rows(headings: list[Heading], lines: list[str], lang: str = "fr") -> list[Heading]:
     """Numbered "headings" that are table rows, folded back into the body.
 
     A PDF table flattens to lines that start with a count and a word: «1
@@ -204,7 +204,7 @@ def drop_table_rows(headings: list[Heading], lines: list[str]) -> list[Heading]:
             continue
         if not bare(h):
             continue
-        if _date_or_year(lines[h.line_idx]):
+        if _date_or_year(lines[h.line_idx], lang):
             rows.add(i)
             continue
         nxt = headings[i + 1] if i + 1 < len(headings) else None
@@ -225,7 +225,7 @@ def slugify(text: str) -> str:
     numbering = _LEADING_NUM_RE.match(text)
     if numbering:
         return "sec_" + numbering.group(1).replace(".", "_")
-    folded = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+    folded = fold_accents(text).encode("ascii", "ignore").decode()
     words = re.sub(r"[^a-z0-9]+", "_", folded.lower()).strip("_").split("_")
     slug = "_".join(words[:5])[:40].strip("_")
     return slug or "sec"
@@ -290,7 +290,7 @@ def build_document(
     lines = text.splitlines()
     headings = find_headings(lines, compiled)
     if heading_is_body:
-        headings = drop_table_rows(headings, lines)
+        headings = drop_table_rows(headings, lines, lang)
 
     if title_from_heading:
         title = next((h.text for h in headings if h.level == 1), title)
@@ -322,7 +322,7 @@ def build_document(
 
     units: list[UnitIR] = []
     used_paths: set[str] = set()
-    used_citations: set[str] = set()
+    citations = UniqueCitations(max_len=200)
     stack: list[tuple[int, str]] = []          # (level, path) ancestor stack
     child_counts: dict[str | None, int] = {}
 
@@ -362,13 +362,7 @@ def build_document(
         # The loader matches a unit by its citation, so two headings that read
         # alike (or alike in their first 200 characters) would share one unit
         # and keep only the first text.
-        citation = f"{citation_prefix}, \u00a7{heading.text}"[:200]
-        n = 2
-        while citation in used_citations:
-            suffix = f" ({n})"
-            citation = f"{citation_prefix}, \u00a7{heading.text}"[: 200 - len(suffix)] + suffix
-            n += 1
-        used_citations.add(citation)
+        citation = citations.claim(f"{citation_prefix}, \u00a7{heading.text}")
 
         start = heading.line_idx if heading_is_body else heading.content_start
         content = "\n".join(lines[start : heading.content_end]).strip()

@@ -16,6 +16,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from nomotheca_ingest.countries.lt.fetcher import CONSOLIDATION_INDEX_SUFFIX, ORIGINAL_TEXT_SUFFIX
+from nomotheca_ingest.core.text import path_token
 from nomotheca_ingest.core.ir import InstrumentIR, ParsedDoc, Snapshot, SourceRef, TextIR, UnitIR, VersionIR
 
 
@@ -263,7 +264,7 @@ def _split_articles(text: str) -> list[_Section]:
         articles.append(
             _Section(
                 unit_type="straipsnis",
-                path=f"str_{_path_token(number)}",
+                path=f"str_{path_token(number)}",
                 label=f"{number} straipsnis",
                 content=f"{number} straipsnis. {heading}\n{body}".strip(),
                 number=number,
@@ -396,7 +397,7 @@ def _instrument_type(rusis: str | None) -> str:
     mapping = {"įstatymas": "istatymas", "nutarimas": "nutarimas", "įsakymas": "isakymas"}
     if not rusis:
         return "istatymas"
-    return mapping.get(rusis.lower(), _path_token(rusis))
+    return mapping.get(rusis.lower(), path_token(rusis))
 
 
 def _parse_date(value: str | None) -> date | None:
@@ -404,12 +405,6 @@ def _parse_date(value: str | None) -> date | None:
     if not value:
         return None
     return datetime.fromisoformat(value).date()
-
-
-def _path_token(value: str) -> str:
-    """Sanitize a label into an ltree-compatible path token."""
-    token = re.sub(r"[^0-9A-Za-z]+", "_", value).strip("_").lower()
-    return token or "unknown"
 
 
 def _normalize_space(value: str) -> str:

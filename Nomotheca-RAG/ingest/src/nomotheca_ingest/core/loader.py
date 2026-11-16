@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, fields
-from hashlib import sha256
 from typing import Any
 from uuid import UUID
 
@@ -13,6 +12,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
 from nomotheca_ingest.core.chunker import chunk_text
+from nomotheca_ingest.core.text import sha256_hex
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
     InstrumentRelationIR,
@@ -388,7 +388,7 @@ class LegislationLoader:
 
     def _upsert_text(self, version_id: UUID, text: TextIR) -> UUID:
         """Insert or replace a language text for a legal unit version."""
-        content_hash = _sha256_text(text.content)
+        content_hash = sha256_hex(text.content)
         mt_engine = text.metadata.get("mt_engine") if text.authenticity.value == "machine_translation" else None
         with self.conn.cursor() as cur:
             cur.execute(
@@ -561,9 +561,7 @@ def _context_header(instrument: InstrumentIR, unit: UnitIR, version: VersionIR, 
     return f"{title} > {unit.citation} (vig. {version.valid_from.isoformat()})"
 
 
-def _sha256_text(value: str) -> str:
-    """Return the sha256 hex digest of UTF-8 text content."""
-    return sha256(value.encode("utf-8")).hexdigest()
+
 
 
 def _rough_token_count(value: str) -> int:

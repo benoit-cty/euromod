@@ -25,8 +25,9 @@ scoping can exclude it.
 from __future__ import annotations
 
 import re
-import unicodedata
 from typing import NamedTuple
+
+from nomotheca_ingest.core.text import fold_accents
 
 
 class AutonomousCommunity(NamedTuple):
@@ -81,8 +82,7 @@ def by_code(code: str) -> AutonomousCommunity | None:
 
 
 def _fold(value: str) -> str:
-    decomposed = unicodedata.normalize("NFKD", value.strip().casefold())
-    return " ".join("".join(c for c in decomposed if not unicodedata.combining(c)).split())
+    return " ".join(fold_accents(value.strip().casefold()).split())
 
 
 _BY_DEPARTAMENTO = {_fold(ac.departamento): ac for ac in AUTONOMOUS_COMMUNITIES}

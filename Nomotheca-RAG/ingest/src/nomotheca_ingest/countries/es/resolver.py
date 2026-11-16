@@ -3,19 +3,18 @@
 from __future__ import annotations
 
 import re
-import unicodedata
 from collections.abc import Callable
 from datetime import date
 
 from nomotheca_ingest.countries.es.fetcher import SOURCE_CODE
 from nomotheca_ingest.countries.es.parser import KNOWN_ACTS
+from nomotheca_ingest.core.text import fold_accents
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 
 
 def _fold(value: str) -> str:
     """Upper-case and strip accents: 'Aragón' and 'ARAGON' are one key."""
-    decomposed = unicodedata.normalize("NFKD", value.upper())
-    return "".join(c for c in decomposed if not unicodedata.combining(c))
+    return fold_accents(value.upper())
 
 
 # Citation aliases -> BOE identifier. The API has no usable search endpoint

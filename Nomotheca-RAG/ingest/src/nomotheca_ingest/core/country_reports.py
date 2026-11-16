@@ -14,7 +14,6 @@ official Word/PDF report, archived as a fetch_snapshot like any other source.
 from __future__ import annotations
 
 from datetime import date
-from hashlib import sha256
 from pathlib import Path
 from uuid import UUID
 
@@ -29,6 +28,7 @@ from nomotheca_ingest.core.ir import (
     SourceTrustClass,
     Trigger,
 )
+from nomotheca_ingest.core.text import sha256_hex
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 
 INSTRUMENT_TYPE = "country_report"
@@ -100,7 +100,7 @@ def _write_file_snapshot(
         VALUES (%s, (SELECT id FROM sources WHERE code = %s), %s, 'text/markdown', %s, %s)
         RETURNING id
         """,
-        (run_id, source_code, path.resolve().as_uri(), sha256(content).hexdigest(), content),
+        (run_id, source_code, path.resolve().as_uri(), sha256_hex(content), content),
     ).fetchone()
     return row[0]
 

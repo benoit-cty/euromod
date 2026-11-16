@@ -26,7 +26,6 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from datetime import date
 from enum import StrEnum
-from hashlib import sha256
 from pathlib import Path
 from typing import Callable
 from urllib.parse import urlsplit, urlunsplit
@@ -47,6 +46,7 @@ from nomotheca_ingest.core.ir import (
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.routing import RouteKind, RouteOutcome
 from nomotheca_ingest.core.snapshots import USER_AGENT
+from nomotheca_ingest.core.text import sha256_hex
 
 ID_SYSTEM = "contributed"
 SOURCE_TYPE = "contributed_document"
@@ -368,7 +368,7 @@ def canonical_url(url: str) -> str:
 
 def content_hash(raw: bytes) -> str:
     """The sha256 that decides "already present" and keys the version."""
-    return sha256(raw).hexdigest()
+    return sha256_hex(raw)
 
 
 def national_id_for(raw: bytes, url: str | None = None) -> str:
