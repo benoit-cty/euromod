@@ -3,9 +3,13 @@
   // select some, submit a `workflow` job for them (the worker runs
   // run-targets), then jump to the review-queue item or open the run's trace
   // in Phoenix. The expanded row edits the parameter's metadata (ParameterEditor).
-  import { api, submitAndFollow } from '../api.js';
+  import { api } from '../api.js';
   import ParameterEditor from './ParameterEditor.svelte';
-  import { summarize } from '@shared/lib/jobs.js';
+  import { formatDuration } from '@shared/lib/format.js';
+  import { createJobRun } from '../jobRun.svelte.js';
+  import { fromWorkflowLine } from '../progress.js';
+  import JobProgress from './JobProgress.svelte';
+  import JobLog from './JobLog.svelte';
   import { countryName, routingLabel, humanize } from '@shared/lib/labels.js';
   import Icon from '@shared/components/Icon.svelte';
 
@@ -54,54 +58,11 @@
   let includeNa = $state(false);
 
   // --- run state ---
-  let running = $state(false);
-  let jobId = $state(null);
-  let logLines = $state([]);
-  let summary = $state('');
-  let logEl = $state(null);
-  // Liveness: when the run started, when the child last wrote a line, and a
-  // 1 s clock so both ages tick while the pipeline is silent (model loads,
-  // LLM calls) — a hang then looks different from a slow step.
-  let startedAt = $state(0);
-  let lastLogAt = $state(0);
-  let now = $state(0);
-
-  // --- progress state ---
-  // Same bar as the Ingest tab, but fed from the workflow CLI's own console
-  // output instead of `@progress` JSON: `run` prints "[i/N] file.json" per
-  // parameter, tracing prints "  › step" / the final "…: routing=…" line.
-  // Before the first parameter (readiness banner, model load) there is no
-  // total yet, so the bar runs indeterminate like a no-total ingest run.
-  const HEAD_RE = /^\[(\d+)\/(\d+)\]\s*(.*)$/;
-  const STEP_RE = /^\s+›\s+(.+)$/;
-  const ROUTED_RE = /\brouting=(\S+)/;
-  let progress = $state(null); // { done, total, current, detail }
-  let pct = $derived(
-    progress ? (progress.total > 0 ? Math.min(100, Math.round((progress.done / progress.total) * 100)) : 100) : 0
-  );
-
-  function trackProgress(line) {
-    const head = line.match(HEAD_RE);
-    if (head) {
-      // The parameter is starting: done counts the ones already finished.
-      progress = { done: Number(head[1]) - 1, total: Number(head[2]), current: head[3], detail: '' };
-      return;
-    }
-    if (!progress) return;
-    const step = line.match(STEP_RE);
-    if (step) {
-      progress = { ...progress, detail: step[1] };
-      return;
-    }
-    const routed = line.match(ROUTED_RE);
-    if (routed) {
-      progress = {
-        ...progress,
-        done: Math.min(progress.done + 1, progress.total),
-        detail: routed[1],
-      };
-    }
-  }
+  // The workflow CLI prints no `@progress` per parameter: its console is read
+  // instead ("[i/N] target", "  › step", "…: routing=…"; lib/progress.js).
+  // Structured events still count where it emits them (a scout's embeddings
+  // build waiting for the GPU).
+  const job = createJobRun({ fromLine: fromWorkflowLine, workerAlive: () => workerAlive });
 
   const countries = $derived([...new Set(params.map((p) => p.country))].sort());
   const policies = $derived(
@@ -217,46 +178,9 @@
     return refresh();
   }
 
-  const handlers = {
-    onSubmit: (id) => {
-      jobId = id;
-      logLines = [...logLines, { stream: 'system', line: `job #${id} submitted` }];
-    },
-    onLine: (e) => {
-      lastLogAt = Date.now();
-      trackProgress(e.line);
-      logLines = [...logLines, e];
-    },
-    onProgress: (data) => {
-      lastLogAt = Date.now();
-      if (data && data.total > 0) progress = { ...(progress ?? {}), ...data };
-    },
-  };
-
-  // Auto-scroll the log as lines arrive — and when the tab is shown again
-  // (while hidden the pane has no layout, so scrollHeight was 0).
   $effect(() => {
-    logLines.length;
-    if (active && logEl) logEl.scrollTop = logEl.scrollHeight;
+    onrunning?.(job.running);
   });
-
-  $effect(() => {
-    onrunning?.(running);
-  });
-
-  $effect(() => {
-    if (!running) return;
-    const timer = setInterval(() => (now = Date.now()), 1000);
-    return () => clearInterval(timer);
-  });
-
-  function fmtDur(ms) {
-    const s = Math.max(0, Math.round(ms / 1000));
-    if (s < 60) return `${s}s`;
-    const m = Math.floor(s / 60);
-    if (m < 60) return `${m}m ${String(s % 60).padStart(2, '0')}s`;
-    return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
-  }
 
   function toggleAll() {
     const next = { ...selected };
@@ -287,50 +211,27 @@
 
   async function runSelected() {
     const targets = selectedTargets;
-    if (!targets.length || running || !systemYear) return;
+    if (!targets.length || job.running || !systemYear) return;
     const payload = { targets, year: Number(systemYear), model: model || null, force: Boolean(force) };
     // Sent only when ticked: a worker image older than the flag refuses unknown fields.
     if (includeNa) payload.include_na = true;
-    jobId = null;
-    logLines = workerAlive === false
-      ? [{ stream: 'system', line: 'no worker alive — the job waits in the queue until one starts' }]
-      : [];
-    progress = null;
-    summary = '';
-    error = '';
-    running = true;
-    startedAt = lastLogAt = now = Date.now();
-    try {
-      const final = await submitAndFollow('workflow', payload, handlers);
-      const took = fmtDur(Date.now() - startedAt);
-      let line;
+    const year = systemYear;
+    await job.session(async () => {
+      const final = await job.follow('workflow', payload);
+      const took = job.took;
       if (final.status === 'succeeded') {
         const n = final.result?.item_ids?.length ?? targets.length;
         const skipped = final.result?.skipped_na?.length ?? 0;
-        summary = `Finished: ${n} parameter(s) processed in ${took}.`
-          + (skipped ? ` ${skipped} skipped: n/a in EUROMOD ${systemYear}.` : '');
-        line = `✓ finished (${took})`;
-        if (progress) progress = { ...progress, done: progress.total, current: '', detail: 'done' };
+        job.summary = `Finished: ${n} parameter(s) processed in ${took}.`
+          + (skipped ? ` ${skipped} skipped: n/a in EUROMOD ${year}.` : '');
+        job.log(`✓ finished (${took})`);
+        if (job.progress) job.progress = { ...job.progress, done: job.progress.total, current: '', detail: 'done' };
       } else {
-        summary = summarize(final, took);
-        line = `✗ ${summary}`;
+        job.summary = job.summarize(final, took);
+        job.log(`✗ ${job.summary}`, 'stderr');
       }
-      logLines = [...logLines, { stream: final.status === 'succeeded' ? 'system' : 'stderr', line }];
-    } catch (e) {
-      error = String(e.message ?? e);
-    } finally {
-      running = false;
-      await refresh();
-    }
-  }
-
-  async function stop() {
-    if (jobId == null) return;
-    try {
-      await api.cancelJob(jobId);
-    } catch (e) {
-      error = `Could not cancel job #${jobId}: ${e}`;
-    }
+    });
+    await refresh();
   }
 </script>
 <section class="panel params">
@@ -488,11 +389,11 @@
     </table>
   </div>
 
-  <div class="runbar" class:active={selectedTargets.length || running}>
+  <div class="runbar" class:active={selectedTargets.length || job.running}>
     <span class="count">
       {#if selectedTargets.length}
         <strong>{selectedTargets.length}</strong> selected
-        <button class="link" onclick={() => (selected = {})} disabled={running}>clear</button>
+        <button class="link" onclick={() => (selected = {})} disabled={job.running}>clear</button>
       {:else}
         <span class="muted">{filtered.length} of {params.length} shown. Tick parameters to check them.</span>
       {/if}
@@ -531,48 +432,23 @@
         </label>
       </div>
     </details>
-    {#if running}
-      <button onclick={stop} disabled={jobId == null}>Cancel</button>
+    {#if job.running}
+      <button onclick={job.cancel} disabled={job.jobId == null}>Cancel</button>
     {/if}
-    <button class="primary" onclick={runSelected} disabled={running || !selectedTargets.length || !systemYear}>
-      {#if running}<span class="spinner light"></span> Checking… {fmtDur(now - startedAt)}
+    <button class="primary" onclick={runSelected} disabled={job.running || !selectedTargets.length || !systemYear}>
+      {#if job.running}<span class="spinner light"></span> Checking… {formatDuration(job.elapsed)}
       {:else}<Icon name="sparkle" size={16} /> Check with the assistant{/if}
     </button>
   </div>
 
-  {#if running || progress || summary}
+  {#if job.running || job.progress || job.summary || job.error || job.lines.length}
     <div class="progressbox">
-      {#if running || progress}
-        {#if progress}
-          <div class="bar"><div class="fill" style="width: {pct}%"></div></div>
-        {:else}
-          <div class="bar indeterminate"><div class="fill"></div></div>
-        {/if}
-        <div class="pstatus small" class:stale={running && now - lastLogAt > 60000}>
-          {#if progress}
-            {progress.done} of {progress.total} done
-            {#if progress.current} · now: <span class="mono">{progress.current}</span>{/if}
-          {:else}
-            Starting…
-          {/if}
-          {#if running && now - lastLogAt > 60000} · no news for {fmtDur(now - lastLogAt)}{/if}
-        </div>
+      <JobProgress run={job} />
+      {#if job.summary}
+        <p class="small">{job.summary} {#if !job.running}Results are in <button class="link" onclick={() => onopenitem?.(null)}>Review</button>.{/if}</p>
       {/if}
-      {#if summary}
-        <p class="small">{summary} {#if !running}Results are in <button class="link" onclick={() => onopenitem?.(null)}>Review</button>.{/if}</p>
-      {/if}
-      {#if logLines.length}
-        <details class="more">
-          <summary>Technical log <span class="hint">{jobId != null ? `job #${jobId} · ` : ''}{logLines.length} lines</span></summary>
-          <div class="body">
-            <div class="joblog" bind:this={logEl}>
-              {#each logLines as l, i (i)}
-                <div class="line {l.stream}"><span class="mono">{l.line}</span></div>
-              {/each}
-            </div>
-          </div>
-        </details>
-      {/if}
+      {#if job.error}<p class="callout err">{job.error}</p>{/if}
+      <JobLog lines={job.lines} jobId={job.jobId} {active} folded />
     </div>
   {/if}
 </section>
@@ -634,7 +510,4 @@
   .inline select { width: auto; }
   .count { display: inline-flex; gap: 0.5rem; align-items: center; }
   .progressbox { display: flex; flex-direction: column; gap: 0.4rem; }
-  .pstatus { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pstatus.stale { color: var(--err); }
-  .spinner.light { border-color: var(--border-strong); border-top-color: var(--text-bright); }
 </style>

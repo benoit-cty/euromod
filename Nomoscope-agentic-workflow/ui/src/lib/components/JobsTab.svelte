@@ -7,6 +7,8 @@
   import { api } from '../api.js';
   import { TERMINAL, displayStatus } from '@shared/lib/jobs.js';
   import { parseTimestamp } from '@shared/lib/labels.js';
+  import { formatDuration } from '@shared/lib/format.js';
+  import JobLog from './JobLog.svelte';
 
   let { active = true } = $props();
 
@@ -17,7 +19,6 @@
   let selectedId = $state(null);
   let events = $state([]);
   let lastEventId = $state(0);
-  let logEl = $state(null);
 
   const selected = $derived(jobs.find((j) => j.id === selectedId) ?? null);
   const alive = $derived((worker?.workers ?? []).filter((w) => w.alive));
@@ -77,11 +78,6 @@
     }
   }
 
-  $effect(() => {
-    events.length;
-    if (active && logEl) logEl.scrollTop = logEl.scrollHeight;
-  });
-
   async function cancel(job) {
     try {
       await api.cancelJob(job.id);
@@ -101,11 +97,7 @@
     if (!job.started_at) return '';
     // parseTimestamp, not Date.parse: WebKit refuses Postgres' "2026-11-10 12:00:00+00".
     const end = job.finished_at ? parseTimestamp(job.finished_at) : Date.now();
-    const s = Math.max(0, Math.round((end - parseTimestamp(job.started_at)) / 1000));
-    if (Number.isNaN(s)) return '';
-    if (s < 60) return `${s}s`;
-    const m = Math.floor(s / 60);
-    return m < 60 ? `${m}m ${String(s % 60).padStart(2, '0')}s` : `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
+    return formatDuration(end - parseTimestamp(job.started_at));
   }
 
   function progressText(job) {
@@ -214,13 +206,7 @@
             <pre>{JSON.stringify(selected.result, null, 2)}</pre>
           </details>
         {/if}
-        <div class="log" bind:this={logEl}>
-          {#each events as e (e.id)}
-            <div class="line {e.stream}"><span class="mono">{e.line}</span></div>
-          {:else}
-            <div class="muted">No output yet.</div>
-          {/each}
-        </div>
+        <JobLog lines={events} {active} fill empty="No output yet." />
       {/if}
     </div>
   </div>
@@ -251,18 +237,4 @@
   .detail p { margin: 0; display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
   pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 0.8rem; max-height: 10rem; overflow: auto; }
   pre.err { color: var(--err); }
-  .log {
-    flex: 1;
-    min-height: 8rem;
-    overflow: auto;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.5rem 0.7rem;
-    font-size: 0.85rem;
-    line-height: 1.4;
-  }
-  .log .line { white-space: pre-wrap; word-break: break-word; }
-  .log .line.stderr .mono { color: var(--err); }
-  .log .line.system .mono { color: var(--accent); }
 </style>

@@ -5,6 +5,10 @@
   import { onMount } from 'svelte';
   import { api, submitAndFollow } from '../api.js';
   import { summarize } from '@shared/lib/jobs.js';
+  import { formatDuration } from '@shared/lib/format.js';
+  import { createJobRun } from '../jobRun.svelte.js';
+  import JobProgress from './JobProgress.svelte';
+  import JobLog from './JobLog.svelte';
   import { countryName, humanize } from '@shared/lib/labels.js';
   import Icon from '@shared/components/Icon.svelte';
 
@@ -96,24 +100,11 @@
   let trDryRun = $state(false);
 
   // --- run state ---
-  let running = $state(false);
-  let jobId = $state(null);
-  let logLines = $state([]);
-  let summary = $state('');
+  // One job (or a document followed by its embeddings build) at a time; the
+  // ingest, embed and translate CLIs report structured `@progress` events.
+  const job = createJobRun({ workerAlive: () => workerAlive });
+  // Errors outside a run: reading the library's vocabulary, checking a source.
   let error = $state('');
-  let logEl = $state(null);
-
-  // --- progress state ---
-  // The worker turns the CLI's "@progress {json}" lines into progress events
-  // and we render a real bar; ingestion runs (no totals) get an indeterminate
-  // activity bar + elapsed time instead.
-  let progress = $state(null); // { task, phase, done, total, translated?, embedded?, failed?, detail }
-  let startedAt = $state(0);
-  let now = $state(0);
-  let elapsed = $derived(startedAt ? Math.max(0, Math.floor((now - startedAt) / 1000)) : 0);
-  let pct = $derived(
-    progress ? (progress.total > 0 ? Math.min(100, Math.round((progress.done / progress.total) * 100)) : 100) : 0
-  );
 
   // The vocabulary the store actually has: languages it is configured to index
   // (a text stored under any other is invisible to full-text search) and the
@@ -129,13 +120,6 @@
       })
       .catch((e) => (error = `Could not read the library's languages and countries: ${e}`));
     loadWorker().catch((e) => (error = `Could not read the worker status: ${e}`));
-  });
-
-  // Tick the elapsed clock while a run is active.
-  $effect(() => {
-    if (!running) return;
-    const t = setInterval(() => (now = Date.now()), 1000);
-    return () => clearInterval(t);
   });
 
   async function loadWorker() {
@@ -164,12 +148,6 @@
       500,
     );
     return () => clearTimeout(t);
-  });
-
-  // Auto-scroll the log to the bottom as lines arrive.
-  $effect(() => {
-    logLines.length;
-    if (logEl) logEl.scrollTop = logEl.scrollHeight;
   });
 
   // Ask the ingester what this input is, before any run starts: prefill for a
@@ -305,20 +283,8 @@
     };
   }
 
-  const handlers = {
-    onSubmit: (id) => {
-      jobId = id;
-      logLines = [...logLines, { stream: 'system', line: `job #${id} submitted` }];
-    },
-    onLine: (e) => (logLines = [...logLines, e]),
-    onProgress: (data) => {
-      if (data) progress = data;
-    },
-  };
-
   async function run() {
     error = '';
-    summary = '';
     let req;
     try {
       req = buildRequest();
@@ -326,60 +292,27 @@
       error = String(e.message ?? e);
       return;
     }
-    jobId = null;
-    logLines = [];
-    progress = null;
-    startedAt = Date.now();
-    now = startedAt;
-    running = true;
-    try {
-      if (workerAlive === false) {
-        logLines = [{ stream: 'system', line: 'no worker alive — the job waits in the queue until one starts' }];
-      }
-      const final = await submitAndFollow(req.job_type, req.payload, handlers);
-      summary = summarize(final);
+    await job.session(async () => {
+      const final = await job.follow(req.job_type, req.payload);
+      job.summary = summarize(final);
       // A contributed document is only retrievable once its chunks are
       // embedded, so a successful `document` job is followed by an embeddings
       // build. A failed one chains nothing: there is nothing new to embed.
-      if (final.status === 'succeeded' && req.payload.command === 'document') await runFollowUpEmbeddings();
-    } catch (e) {
-      error = String(e.message ?? e);
-    } finally {
-      running = false;
-    }
-  }
-
-  async function runFollowUpEmbeddings() {
-    summary = 'Document loaded. Building embeddings for the new chunks…';
-    progress = null;
-    startedAt = Date.now();
-    now = startedAt;
-    const final = await submitAndFollow('embed', embedPayload(), handlers);
-    summary =
-      final.status === 'succeeded'
-        ? 'Finished successfully; the document is retrievable.'
-        : `Document loaded, but the embeddings build ${summarize(final).toLowerCase()}`;
-  }
-
-  async function stop() {
-    if (jobId == null) return;
-    try {
-      await api.cancelJob(jobId);
-    } catch (e) {
-      error = `Could not cancel job #${jobId}: ${e}`;
-    }
-  }
-
-  function fmtElapsed(seconds) {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return m ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`;
+      if (final.status === 'succeeded' && req.payload.command === 'document') {
+        job.summary = 'Document loaded. Building embeddings for the new chunks…';
+        const embedded = await job.follow('embed', embedPayload());
+        job.summary =
+          embedded.status === 'succeeded'
+            ? 'Finished successfully; the document is retrievable.'
+            : `Document loaded, but the embeddings build ${summarize(embedded).toLowerCase()}`;
+      }
+    });
   }
 </script>
 <section class="ingest">
   <div class="choices">
     {#each ['document', 'ingestion'] as key}
-      <button class="choice" class:active={sub === key} onclick={() => (sub = key)} disabled={running}>
+      <button class="choice" class:active={sub === key} onclick={() => (sub = key)} disabled={job.running}>
         <span class="choice-icon"><Icon name={key === 'document' ? 'plus' : 'book'} size={20} /></span>
         <span class="choice-text">
           <strong>{ACTIONS[key].title}</strong>
@@ -391,7 +324,7 @@
   <div class="maintenance">
     <span class="muted small">Maintenance:</span>
     {#each ['embeddings', 'translation'] as key}
-      <button class="ghost small" class:on={sub === key} onclick={() => (sub = key)} disabled={running}>
+      <button class="ghost small" class:on={sub === key} onclick={() => (sub = key)} disabled={job.running}>
         {ACTIONS[key].title}
       </button>
     {/each}
@@ -464,7 +397,7 @@
           onchange={precheckSource}
           placeholder="https://…"
         />
-        <button onclick={precheckSource} disabled={running || !docSource.trim()}>
+        <button onclick={precheckSource} disabled={job.running || !docSource.trim()}>
           {#if routing}<span class="spinner"></span> Checking…{:else}Check{/if}
         </button>
       </div>
@@ -631,43 +564,22 @@
     {/if}
 
     <div class="runbar">
-      <button class="primary big" onclick={run} disabled={running || (sub === 'document' && !docReady)}>
-        {#if running}<span class="spinner light"></span> Working… {fmtElapsed(elapsed)}{:else}{ACTIONS[sub].run}{/if}
+      <button class="primary big" onclick={run} disabled={job.running || (sub === 'document' && !docReady)}>
+        {#if job.running}<span class="spinner light"></span> Working… {formatDuration(job.elapsed)}{:else}{ACTIONS[sub].run}{/if}
       </button>
-      {#if running}<button onclick={stop} disabled={jobId == null}>Cancel</button>{/if}
-      {#if sub === 'document' && !docReady && !running && !switchingToAdapter}
+      {#if job.running}<button onclick={job.cancel} disabled={job.jobId == null}>Cancel</button>{/if}
+      {#if sub === 'document' && !docReady && !job.running && !switchingToAdapter}
         <span class="muted small">Fill in the link, title, kind and date first.</span>
       {/if}
     </div>
 
-    {#if progress}
-      <div class="progressbox">
-        <div class="bar"><div class="fill" style="width: {pct}%"></div></div>
-        <div class="pstatus muted small">
-          {progress.done} of {progress.total} ({pct}%)
-          {#if progress.failed}<span class="perr"> · {progress.failed} failed</span>{/if}
-          {#if progress.detail} · {progress.detail}{/if}
-        </div>
-      </div>
-    {:else if running}
-      <div class="bar indeterminate"><div class="fill"></div></div>
-    {/if}
+    <JobProgress run={job} />
 
-    {#if summary}<p class="callout {summary.startsWith('Finished') ? 'ok' : summary.startsWith('Failed') ? 'err' : ''}">{summary}</p>{/if}
+    {#if job.summary}<p class="callout {job.summary.startsWith('Finished') ? 'ok' : job.summary.startsWith('Failed') ? 'err' : ''}">{job.summary}</p>{/if}
+    {#if job.error}<p class="callout err">{job.error}</p>{/if}
     {#if error}<p class="callout err">{error}</p>{/if}
 
-    {#if logLines.length}
-      <details class="more">
-        <summary>Technical log <span class="hint">{jobId != null ? `job #${jobId} · ` : ''}{logLines.length} lines</span></summary>
-        <div class="body">
-          <div class="joblog" bind:this={logEl}>
-            {#each logLines as l, i (i)}
-              <div class="line {l.stream}"><span class="mono">{l.line}</span></div>
-            {/each}
-          </div>
-        </div>
-      </details>
-    {/if}
+    <JobLog lines={job.lines} jobId={job.jobId} folded />
   </div>
 </section>
 
@@ -711,9 +623,5 @@
   .result { flex-direction: column; align-items: flex-start; gap: 0.1rem; text-align: left; background: var(--panel-2); border-color: transparent; }
   .result.chosen { border-color: var(--accent); }
   .runbar { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
-  .progressbox { display: flex; flex-direction: column; gap: 0.3rem; }
-  .pstatus { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pstatus .perr { color: var(--err); }
-  .spinner.light { border-color: var(--border-strong); border-top-color: var(--text-bright); }
   @media (max-width: 700px) { .wide { grid-column: auto; } }
 </style>
