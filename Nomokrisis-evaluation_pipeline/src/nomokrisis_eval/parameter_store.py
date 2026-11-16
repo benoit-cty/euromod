@@ -15,6 +15,7 @@ from datetime import date
 
 import psycopg
 
+from nomoscope_workflow import routing
 from nomoscope_workflow import paramdb
 from nomoscope_workflow.schema import ParameterRecord, ParameterValue, Routing
 
@@ -44,11 +45,9 @@ def country_targets(conn: psycopg.Connection, country: str) -> list[str]:
 
 
 def current_value(record: ParameterRecord, as_of: date) -> ParameterValue | None:
-    """The value row in force at `as_of`, if any."""
-    for value in record.values:
-        if value.valid_from <= as_of and (value.valid_to is None or value.valid_to >= as_of):
-            return value
-    return None
+    """The value row in force at `as_of`, if any — the workflow's own rule
+    (routing.current_value), so the eval scores against what `diff` routed on."""
+    return routing.current_value(record, as_of)
 
 
 def comparable(value: ParameterValue | None):
