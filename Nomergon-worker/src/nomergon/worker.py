@@ -124,7 +124,8 @@ def _finish_with_retry(
         try:
             if conn.closed:
                 conn = db.connect(cfg.database_url)
-            db.finish_job(conn, job_id, outcome.status, outcome.result, outcome.error)
+            if not db.finish_job(conn, job_id, outcome.status, outcome.result, outcome.error):
+                log.warning("job %s was no longer running; its final status (%s) was not recorded", job_id, outcome.status)
             return conn
         except Exception as exc:  # noqa: BLE001
             log.warning(
@@ -156,11 +157,11 @@ class JobSlot(threading.Thread):
         self.heartbeat = heartbeat
 
     def run(self) -> None:
-        conn = db.connect(self.cfg.database_url)
+        conn: psycopg.Connection[Any] | None = None
         try:
             while not self.stop_event.is_set():
                 try:
-                    if conn.closed:
+                    if conn is None or conn.closed:
                         conn = db.connect(self.cfg.database_url)
                     job = db.claim_job(
                         conn,
@@ -170,10 +171,11 @@ class JobSlot(threading.Thread):
                     )
                 except Exception:  # noqa: BLE001 - keep polling through a DB hiccup
                     log.exception("%s: claim failed; retrying", self.name)
-                    try:
-                        conn.close()
-                    except Exception:  # noqa: BLE001
-                        pass
+                    if conn is not None:
+                        try:
+                            conn.close()
+                        except Exception:  # noqa: BLE001
+                            pass
                     self.stop_event.wait(self.cfg.poll_seconds)
                     continue
                 if job is None:
@@ -192,7 +194,8 @@ class JobSlot(threading.Thread):
                 finally:
                     self.heartbeat.finished(job_id)
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
 
 
 def serve(cfg: WorkerConfig) -> None:

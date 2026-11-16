@@ -146,13 +146,22 @@ def finish_job(
     status: str,
     result: Any = None,
     error: str | None = None,
-) -> None:
+) -> bool:
+    """Record a running job's final status; False when it was no longer running.
+
+    A job the stale-heartbeat rule already marked ``failed`` (or any job
+    already final) keeps that status: the first final write wins.
+    """
     if status not in FINAL_STATUSES:
         msg = f"not a final status: {status}"
         raise ValueError(msg)
-    conn.execute(
-        "UPDATE ops.jobs SET status = %s, finished_at = now(), result = %s, error = %s WHERE id = %s",
-        (status, Jsonb(result) if result is not None else None, error, job_id),
+    return (
+        conn.execute(
+            "UPDATE ops.jobs SET status = %s, finished_at = now(), result = %s, error = %s"
+            " WHERE id = %s AND status = 'running'",
+            (status, Jsonb(result) if result is not None else None, error, job_id),
+        ).rowcount
+        == 1
     )
 
 

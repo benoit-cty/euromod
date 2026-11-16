@@ -115,6 +115,16 @@ def test_cancel_of_a_queued_job_is_immediate(conn) -> None:
 
 
 
+def test_finish_job_never_overwrites_a_final_status(conn) -> None:
+    """The stale-heartbeat rule marked it failed: a late finish from the slot is ignored."""
+    with conn.transaction():  # never visible queued to a live worker
+        job_id = client.submit(conn, "impact", {})
+        conn.execute("UPDATE ops.jobs SET status = 'failed', error = 'worker died' WHERE id = %s", (job_id,))
+    assert not db.finish_job(conn, job_id, "succeeded", result={"ok": True})
+    row = db.get_job(conn, job_id)
+    assert row["status"] == "failed" and row["error"] == "worker died" and row["result"] is None
+
+
 def test_cancel_by_type_flags_only_those_types(conn) -> None:
     # One transaction: a live worker never sees these jobs queued (it would
     # claim the embed/translate ones and start a real batch).
