@@ -295,7 +295,15 @@ class LegislationLoader:
         return min(version.valid_to, next_start)
 
     def _upsert_version(self, unit_id: UUID, version: VersionIR) -> UUID:
-        """Insert a legal unit version unless its source version already exists."""
+        """Insert a legal unit version, or revise the one already held.
+
+        A version is the same one when its source version id matches, else
+        when it starts on the same day. A re-fetch can know more than the
+        first fetch did — that the version has ended (a repeal, a later
+        consolidation), or a status other than in force — so the held row is
+        revised (`_revise_version`) instead of returned untouched. Until 16 Nov
+        2026 a later-learned end was dropped (code audit, ingest design).
+        """
         if version.source_version_id:
             with self.conn.cursor() as cur:
                 cur.execute(
@@ -307,6 +315,7 @@ class LegislationLoader:
                 )
                 row = cur.fetchone()
             if row is not None:
+                self._revise_version(row[0], version)
                 return row[0]
 
         with self.conn.cursor() as cur:
@@ -317,6 +326,7 @@ class LegislationLoader:
             )
             row = cur.fetchone()
         if row is not None:
+            self._revise_version(row[0], version)
             return row[0]
 
         valid_to = self._chain_versions(unit_id, version)
@@ -343,6 +353,38 @@ class LegislationLoader:
                 ),
             )
             return cur.fetchone()[0]
+
+    def _revise_version(self, version_id: UUID, version: VersionIR) -> None:
+        """Bring a held version up to what the latest fetch says about it.
+
+        Only ever shortens validity (to the fetched `valid_to` when it ends
+        earlier than what is held, or when the held one is open-ended), so the
+        no-overlap constraint cannot be violated; a non-in-force status
+        (repealed, suspended) replaces 'in_force'; the snapshot the text was
+        just loaded from becomes the version's provenance.
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE legal_unit_versions
+                SET validity = CASE
+                        WHEN %(to)s::date IS NOT NULL
+                             AND (upper_inf(validity) OR upper(validity) > %(to)s::date)
+                        THEN daterange(lower(validity), %(to)s::date, '[)')
+                        ELSE validity END,
+                    version_status = CASE
+                        WHEN %(status)s <> 'in_force' THEN %(status)s
+                        ELSE version_status END,
+                    fetch_snapshot_id = %(snapshot)s
+                WHERE id = %(id)s
+                """,
+                {
+                    "id": version_id,
+                    "to": version.valid_to,
+                    "status": version.status.value,
+                    "snapshot": version.fetch_snapshot_id,
+                },
+            )
 
     def _upsert_text(self, version_id: UUID, text: TextIR) -> UUID:
         """Insert or replace a language text for a legal unit version."""
