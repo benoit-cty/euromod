@@ -39,13 +39,17 @@ CREATE TABLE IF NOT EXISTS ops.jobs (
 -- the job-type list of a database created before a type existed. A no-op once
 -- the list is current, so a worker that does not own the table (nomos_admin
 -- does, in a shared deployment) still starts; the admin applies this file
--- once after an upgrade. Keep the list identical to the one above.
+-- once after an upgrade. The three lists here are the job types of
+-- nomergon/jobs.py (JOB_SPECS); tests/test_job_specs.py keeps them equal.
 DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conrelid = 'ops.jobs'::regclass AND conname = 'jobs_job_type_check'
-      AND pg_get_constraintdef(oid) LIKE '%''chat''%'
+      AND (SELECT bool_and(pg_get_constraintdef(oid) LIKE '%''' || t || '''%')
+           FROM unnest(ARRAY[
+               'workflow', 'ingest', 'embed', 'translate', 'translate-params',
+               'encode', 'eval', 'draft-golden', 'impact', 'chat']) AS t)
   ) THEN
     ALTER TABLE ops.jobs DROP CONSTRAINT IF EXISTS jobs_job_type_check;
     ALTER TABLE ops.jobs ADD CONSTRAINT jobs_job_type_check CHECK (job_type IN (

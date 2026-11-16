@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
@@ -21,26 +22,7 @@ INGEST_MODULE = "nomotheca_ingest.cli"
 WORKFLOW_MODULE = "nomoscope_workflow.cli"
 EVAL_MODULE = "nomokrisis_eval.cli"
 
-JOB_TYPES = (
-    "workflow",
-    "ingest",
-    "embed",
-    "translate",
-    "translate-params",
-    "encode",
-    "eval",
-    "draft-golden",
-    "impact",
-    "chat",
-)
-#: Job types answered in-process by the encode lane, never as a subprocess.
-IN_PROCESS_JOB_TYPES = ("encode",)
-#: Batch types that walk a shared backlog (chunks without a vector, texts
-#: without a translation): two at once would do, and bill, the same work
-#: twice, so a worker runs at most one of each. Every other type runs in
-#: parallel up to WORKER_CONCURRENCY. The GPU is guarded separately, by the
-#: advisory lock ``embeddings build`` takes (the scout's builds included).
-SINGLETON_JOB_TYPES = ("embed", "translate", "translate-params")
+#: The encode lane answers query vectors for searches someone is waiting on.
 ENCODE_PRIORITY = 100
 #: A chat turn is interactive: ahead of batches, behind the encode lane.
 CHAT_PRIORITY = 50
@@ -203,40 +185,111 @@ class ChatPayload(_Payload):
         return self
 
 
-PAYLOAD_MODELS: dict[str, type[_Payload]] = {
-    "workflow": WorkflowPayload,
-    "ingest": IngestPayload,
-    "embed": EmbedPayload,
-    "translate": TranslatePayload,
-    "translate-params": TranslateParamsPayload,
-    "encode": EncodePayload,
-    "eval": EvalPayload,
-    "draft-golden": DraftGoldenPayload,
-    "impact": ImpactPayload,
-    "chat": ChatPayload,
+Package = Literal["ingest", "pipeline", "eval"]
+#: Where a succeeded job's ``ops.jobs.result`` comes from: the child's
+#: ``@result`` line, its last ``@progress`` line, or nothing.
+ResultSource = Literal["result_line", "progress", "none"]
+
+
+@dataclass(frozen=True, slots=True)
+class JobSpec:
+    """Everything the worker varies on per job type, in one row.
+
+    The SQL ``CHECK`` on ``ops.jobs.job_type`` and ``job_types.json`` (what
+    the desktop UI imports) are kept equal to this table by tests.
+    """
+
+    name: str
+    payload: type[_Payload]
+    description: str
+    #: The sub-project the job runs from (its cwd); None for an in-process type.
+    package: Package | None
+    result: ResultSource = "none"
+    #: The priority a submitter uses when it gives none (higher runs first).
+    priority: int = 0
+    #: Walks a shared backlog (chunks without a vector, texts without a
+    #: translation): two at once would do, and bill, the same work twice, so a
+    #: worker runs at most one of the type. Every other type runs in parallel
+    #: up to WORKER_CONCURRENCY. The GPU is guarded separately, by the advisory
+    #: lock ``embeddings build`` takes (the scout's builds included).
+    singleton: bool = False
+
+    @property
+    def in_process(self) -> bool:
+        """Answered by the encode lane inside the worker, never as a subprocess."""
+        return self.package is None
+
+
+JOB_SPECS: dict[str, JobSpec] = {
+    spec.name: spec
+    for spec in (
+        JobSpec("workflow", WorkflowPayload, "Agentic workflow run (run-targets / run-country)", "pipeline", "result_line"),
+        JobSpec("ingest", IngestPayload, "Legislation or contributed-document ingest", "ingest", "result_line"),
+        JobSpec("embed", EmbedPayload, "Embed the chunks with no vector", "ingest", "progress", singleton=True),
+        JobSpec("translate", TranslatePayload, "Machine-translate unit texts", "ingest", "progress", singleton=True),
+        JobSpec("translate-params", TranslateParamsPayload, "Translate parameter texts", "pipeline", singleton=True),
+        JobSpec("encode", EncodePayload, "Query vectors for a search (in-process)", None, priority=ENCODE_PRIORITY),
+        JobSpec("eval", EvalPayload, "Evaluation run over the golden set", "eval", "result_line"),
+        JobSpec("draft-golden", DraftGoldenPayload, "Draft golden cases", "eval", "result_line"),
+        JobSpec("impact", ImpactPayload, "Environmental impact report of traced LLM calls", "pipeline", "result_line"),
+        JobSpec("chat", ChatPayload, "One RAG chat turn", "pipeline", "result_line", priority=CHAT_PRIORITY),
+    )
 }
+
+JOB_TYPES = tuple(JOB_SPECS)
+PAYLOAD_MODELS: dict[str, type[_Payload]] = {name: spec.payload for name, spec in JOB_SPECS.items()}
+#: Job types answered in-process by the encode lane, never as a subprocess.
+IN_PROCESS_JOB_TYPES = tuple(name for name, spec in JOB_SPECS.items() if spec.in_process)
+SINGLETON_JOB_TYPES = tuple(name for name, spec in JOB_SPECS.items() if spec.singleton)
+
+
+def job_spec(job_type: str) -> JobSpec:
+    """The spec of one job type (``ValueError`` naming the known ones otherwise)."""
+    try:
+        return JOB_SPECS[job_type]
+    except KeyError:
+        msg = f"unknown job type: {job_type!r} (one of {', '.join(JOB_TYPES)})"
+        raise ValueError(msg) from None
+
+
+def default_priority(job_type: str) -> int:
+    return job_spec(job_type).priority
 
 
 def parse_payload(job_type: str, payload: dict[str, Any] | None) -> _Payload:
     """Validate a job's payload against its type's model (``ValueError`` on a bad one)."""
-    try:
-        model = PAYLOAD_MODELS[job_type]
-    except KeyError:
-        msg = f"unknown job type: {job_type!r} (one of {', '.join(JOB_TYPES)})"
-        raise ValueError(msg) from None
-    return model.model_validate(payload or {})
+    return job_spec(job_type).payload.model_validate(payload or {})
 
 
 def package_dir(job_type: str, cfg: WorkerConfig) -> Path:
     """The sub-project a job runs from (its cwd), so its relative paths resolve."""
-    if job_type in ("ingest", "embed", "translate"):
-        return cfg.ingest_dir
-    if job_type in ("workflow", "translate-params", "impact", "chat"):
-        return cfg.pipeline_dir
-    if job_type in ("eval", "draft-golden"):
-        return cfg.eval_dir
-    msg = f"{job_type} does not run as a subprocess"
-    raise ValueError(msg)
+    package = job_spec(job_type).package
+    if package is None:
+        msg = f"{job_type} does not run as a subprocess"
+        raise ValueError(msg)
+    return {"ingest": cfg.ingest_dir, "pipeline": cfg.pipeline_dir, "eval": cfg.eval_dir}[package]
+
+
+def job_types_document() -> dict[str, Any]:
+    """The job-type table as JSON, for the desktop UI (``nomergon job-types``).
+
+    Written to ``Nomergon-worker/job_types.json`` and kept equal to it by a test.
+    """
+    return {
+        "generated_by": "nomergon job-types --write",
+        "job_types": [
+            {
+                "name": spec.name,
+                "description": spec.description,
+                "priority": spec.priority,
+                "singleton": spec.singleton,
+                "in_process": spec.in_process,
+                "result": spec.result,
+                "payload_schema": spec.payload.model_json_schema(),
+            }
+            for spec in JOB_SPECS.values()
+        ],
+    }
 
 
 def _python(module: str) -> list[str]:
@@ -446,12 +499,13 @@ def extract_result(
     their report as a plain JSON line instead, so it is the last JSON line of
     stdout. ``embed`` and ``translate`` report their final progress.
     """
-    if job_type in ("workflow", "eval", "draft-golden", "chat"):
-        return result_line
-    if job_type in ("embed", "translate"):
-        return last_progress
     if job_type == "impact" or (job_type == "ingest" and getattr(payload, "command", None) == "route"):
         return last_json_line(stdout_tail)
+    source = job_spec(job_type).result
+    if source == "progress":
+        return last_progress
+    if source == "result_line" and job_type != "ingest":
+        return result_line
     return None
 
 

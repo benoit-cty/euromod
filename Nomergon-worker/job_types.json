@@ -1,0 +1,695 @@
+{
+  "generated_by": "nomergon job-types --write",
+  "job_types": [
+    {
+      "name": "workflow",
+      "description": "Agentic workflow run (run-targets / run-country)",
+      "priority": 0,
+      "singleton": false,
+      "in_process": false,
+      "result": "result_line",
+      "payload_schema": {
+        "additionalProperties": false,
+        "description": "Either ``targets`` (run-targets) or a whole ``country`` (run-country), never both.",
+        "properties": {
+          "targets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Targets",
+            "type": "array"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Country"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Limit"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          },
+          "include_na": {
+            "default": false,
+            "title": "Include Na",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "year"
+        ],
+        "title": "WorkflowPayload",
+        "type": "object"
+      }
+    },
+    {
+      "name": "ingest",
+      "description": "Legislation or contributed-document ingest",
+      "priority": 0,
+      "singleton": false,
+      "in_process": false,
+      "result": "result_line",
+      "payload_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "enum": [
+              "instrument",
+              "citation",
+              "document",
+              "route"
+            ],
+            "title": "Command",
+            "type": "string"
+          },
+          "args": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Args",
+            "type": "array"
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "title": "IngestPayload",
+        "type": "object"
+      }
+    },
+    {
+      "name": "embed",
+      "description": "Embed the chunks with no vector",
+      "priority": 0,
+      "singleton": true,
+      "in_process": false,
+      "result": "progress",
+      "payload_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "model_id": {
+            "default": 1,
+            "title": "Model Id",
+            "type": "integer"
+          },
+          "batch_size": {
+            "default": 16,
+            "minimum": 1,
+            "title": "Batch Size",
+            "type": "integer"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Limit"
+          },
+          "dry_run": {
+            "default": false,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "precision": {
+            "default": "auto",
+            "enum": [
+              "auto",
+              "fp32",
+              "fp16",
+              "bf16"
+            ],
+            "title": "Precision",
+            "type": "string"
+          },
+          "authentic_only": {
+            "default": false,
+            "title": "Authentic Only",
+            "type": "boolean"
+          }
+        },
+        "title": "EmbedPayload",
+        "type": "object"
+      }
+    },
+    {
+      "name": "translate",
+      "description": "Machine-translate unit texts",
+      "priority": 0,
+      "singleton": true,
+      "in_process": false,
+      "result": "progress",
+      "payload_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "target_lang": {
+            "default": "en",
+            "title": "Target Lang",
+            "type": "string"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Limit"
+          },
+          "request_timeout": {
+            "default": 120,
+            "minimum": 0,
+            "title": "Request Timeout",
+            "type": "number"
+          },
+          "dry_run": {
+            "default": false,
+            "title": "Dry Run",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "model"
+        ],
+        "title": "TranslatePayload",
+        "type": "object"
+      }
+    },
+    {
+      "name": "translate-params",
+      "description": "Translate parameter texts",
+      "priority": 0,
+      "singleton": true,
+      "in_process": false,
+      "result": "none",
+      "payload_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "lang": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lang"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "batch_size": {
+            "default": 20,
+            "minimum": 1,
+            "title": "Batch Size",
+            "type": "integer"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Limit"
+          },
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "country"
+        ],
+        "title": "TranslateParamsPayload",
+        "type": "object"
+      }
+    },
+    {
+      "name": "encode",
+      "description": "Query vectors for a search (in-process)",
+      "priority": 100,
+      "singleton": false,
+      "in_process": true,
+      "result": "none",
+      "payload_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "sentences": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sentences"
+          },
+          "model_id": {
+            "default": 1,
+            "title": "Model Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "EncodePayload",
+        "type": "object"
+      }
+    },
+    {
+      "name": "eval",
+      "description": "Evaluation run over the golden set",
+      "priority": 0,
+      "singleton": false,
+      "in_process": false,
+      "result": "result_line",
+      "payload_schema": {
+        "additionalProperties": false,
+        "description": "A new run (``as_of`` + ``model``) or the continuation of one (``resume``).",
+        "properties": {
+          "resume": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Resume"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "As Of"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "countries": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Countries",
+            "type": "array"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "include_drafts": {
+            "default": false,
+            "title": "Include Drafts",
+            "type": "boolean"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          }
+        },
+        "title": "EvalPayload",
+        "type": "object"
+      }
+    },
+    {
+      "name": "draft-golden",
+      "description": "Draft golden cases",
+      "priority": 0,
+      "singleton": false,
+      "in_process": false,
+      "result": "result_line",
+      "payload_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "enum": [
+              "openfisca",
+              "curated",
+              "document"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Year"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "As Of"
+          },
+          "limit": {
+            "default": 50,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "fill": {
+            "default": true,
+            "title": "Fill",
+            "type": "boolean"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language"
+          },
+          "targets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Targets",
+            "type": "array"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          }
+        },
+        "required": [
+          "source",
+          "country"
+        ],
+        "title": "DraftGoldenPayload",
+        "type": "object"
+      }
+    },
+    {
+      "name": "impact",
+      "description": "Environmental impact report of traced LLM calls",
+      "priority": 0,
+      "singleton": false,
+      "in_process": false,
+      "result": "result_line",
+      "payload_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "project": {
+            "default": "",
+            "title": "Project",
+            "type": "string"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Since"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Until"
+          },
+          "zone": {
+            "default": "",
+            "title": "Zone",
+            "type": "string"
+          }
+        },
+        "title": "ImpactPayload",
+        "type": "object"
+      }
+    },
+    {
+      "name": "chat",
+      "description": "One RAG chat turn",
+      "priority": 50,
+      "singleton": false,
+      "in_process": false,
+      "result": "result_line",
+      "payload_schema": {
+        "$defs": {
+          "ChatMessage": {
+            "additionalProperties": false,
+            "properties": {
+              "role": {
+                "enum": [
+                  "user",
+                  "assistant"
+                ],
+                "title": "Role",
+                "type": "string"
+              },
+              "content": {
+                "title": "Content",
+                "type": "string"
+              },
+              "quotes": {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "title": "Quotes",
+                "type": "array"
+              }
+            },
+            "required": [
+              "role",
+              "content"
+            ],
+            "title": "ChatMessage",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "One assistant turn of the RAG chat (rag-ui): the whole conversation so far.",
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/$defs/ChatMessage"
+            },
+            "minItems": 1,
+            "title": "Messages",
+            "type": "array"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Conversation Id"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Country"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "As Of"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Model"
+          },
+          "web": {
+            "default": true,
+            "title": "Web",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "messages"
+        ],
+        "title": "ChatPayload",
+        "type": "object"
+      }
+    }
+  ]
+}

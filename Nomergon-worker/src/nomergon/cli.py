@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 import typer
@@ -99,7 +100,7 @@ def submit(
         typer.echo(f"invalid payload: {exc}", err=True)
         raise typer.Exit(2) from None
     if priority is None:
-        priority = {"encode": jobs.ENCODE_PRIORITY, "chat": jobs.CHAT_PRIORITY}.get(job_type, 0)
+        priority = jobs.default_priority(job_type)
 
     cfg = _cfg()
     with _connect(cfg) as conn:
@@ -109,6 +110,27 @@ def submit(
             row = client.wait(conn, job_id, on_event=_print_event)
             _print_final(row)
             raise typer.Exit(0 if row["status"] == "succeeded" else 1)
+
+
+#: What the desktop UI imports instead of keeping its own list of job types.
+JOB_TYPES_JSON = Path(__file__).resolve().parents[2] / "job_types.json"
+
+
+def job_types_json() -> str:
+    """The job-type table, serialised as ``job_types.json`` holds it."""
+    return json.dumps(jobs.job_types_document(), indent=2, ensure_ascii=False) + "\n"
+
+
+@app.command("job-types")
+def job_types(
+    write: bool = typer.Option(False, "--write", help=f"Rewrite {JOB_TYPES_JSON.name} instead of printing"),
+) -> None:
+    """The job types, their priorities and payload JSON Schemas, as JSON."""
+    if write:
+        JOB_TYPES_JSON.write_text(job_types_json(), encoding="utf-8")
+        typer.echo(f"wrote {JOB_TYPES_JSON}")
+    else:
+        typer.echo(job_types_json(), nl=False)
 
 
 def _print_event(event: dict[str, Any]) -> None:
