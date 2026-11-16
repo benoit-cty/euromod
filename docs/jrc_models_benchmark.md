@@ -1,4 +1,4 @@
-# Benchmark of non-OpenAI models for the Nómos workflow (LT, 14–15 Nov 2026)
+# Benchmark of non-OpenAI models for the Nómos workflow (LT 14–15 Nov, FR 16 Nov 2026)
 
 JRC cannot use OpenAI models in production. This benchmark measures whether
 JRC self-hosted models can replace the Azure GPT models
@@ -13,8 +13,13 @@ steps (propose and critique) is correct on **70.1 %** of parameters, against
 OpenRouter provider rejecting long prompts, not wrong answers. Precision stays
 high (93.8 % vs 96.6 %). Mistral Small 3.2 is not usable 
 (7.7 %): it does not reliably return the structured answer on long legal
-prompts. Two fixes followed from the analysis (§7). They are in the code but
-not evaluated.
+prompts. Two fixes followed from the analysis (§7).
+
+**On France** (345 parameters, §9), with those fixes in place, the gap is much
+wider: all-MiniMax is correct on **38.8 %** against **65.2 %** for GPT, and
+its precision falls to **74.6 %** (GPT 88.7 %). The crashes are gone, so the
+gap is wrong values and abstentions. MiniMax is not yet a replacement on a
+country as hard as France.
 
 ---
 
@@ -389,9 +394,176 @@ changes what the model sees. Tests are in `tests/test_llm.py`.
    model's strength.
 6. **Then run FR** (345 cases) with the best configuration. FR is harder
    (income-year rules, guidance documents) and is where the critique's
-   leniency would cost most.
+   leniency would cost most. *Done on 16 Nov 2026 for A and C, see §9: it
+   did cost most.*
 
 For a JRC deployment without OpenAI, **all-MiniMax M2.7 is a viable
 candidate today**: about 8 points behind GPT on LT, with comparable precision,
 a few dollars per country run. Most of the remaining gap is the two
 issues fixed in §7.
+
+## 9. France, 2024→2025 (16 Nov 2026)
+
+### 9.1 Runs
+
+Only runs A and C were repeated on France: B and D were not, on purpose.
+Both runs used commit `5ff0774`, agent 0.9.2 and prompt **0.14.0**, so they are
+the first runs with the §7 fixes in place. They ran on the same day, one after
+the other, on the same corpus.
+
+| Run | Proposes | Critiques | Run id |
+|---|---|---|---|
+| **A** | `azure_openai/gpt-6-luna` | `azure_openai/gpt-6.1-sol` | `eval-20261116T063033Z-gpt-6-luna-65ced1` |
+| **C** | `openrouter/minimax/minimax-m2.7` | `openrouter/minimax/minimax-m2.7` | `eval-20261116T121711Z-minimax-minimax-m2-7-04171d` |
+
+```bash
+EVAL_CRITIQUE_MODEL=<critique model> uv run nomokrisis-eval run-benchmark FR --year 2025 --model <proposer>
+```
+
+- **The task.** It is the same blind Y-1 → Y task as on LT (§2.1). FR
+  has **345 cases**: 188 parameters EUROMOD changed, 152 it kept, and 5
+  national-team or derived ones. The benchmark skipped 399 parameters: 361
+  have no value on 1 July 2025, and 38 are scored inside a bracket schedule.
+- **Model calls.** Phoenix shows that A called only gpt-6-luna (about 1 850
+  calls) and gpt-6.1-sol (about 290). C made 2 364 MiniMax calls and nothing
+  else.
+- **Two incidents, both resumed.**
+  - At `-j 4`, A hit the Azure rate limit on the gpt-6-luna deployment
+    (`429 exceeded token rate limit`) on 54 cases, scattered through the run.
+  - C ran out of OpenRouter credits (`402`) on its last 31 cases.
+  - In both runs those error rows were deleted and the cases re-run with
+    `nomokrisis-eval resume`: A at `-j 2`, C after a top-up. All 85 cases
+    were scored on the re-run.
+  - The figures below are the final ones.
+
+### 9.2 Results
+
+| FR 2024→2025, 345 parameters | A: GPT | C: all-MiniMax | *LT A* | *LT C* |
+|---|---|---|---|---|
+| **correct** | **65.2 %** (225) | 38.8 % (134) | *77.8 %* | *70.1 %* |
+| findings (EUROMOD off the law) | **15** (9 stated, 6 derived) | 9 (9 stated) | *0* | *0* |
+| success (correct + findings) | **69.6 %** (240) | 41.4 % (143) | *77.8 %* | *70.1 %* |
+| coverage | 72.9 % (248/340) | 50.9 % (173/340) | *79.3 %* | *73.0 %* |
+| **precision** | **88.7 %** (220/248) | 74.6 % (129/173) | *96.6 %* | *93.8 %* |
+| change recall | **63.8 %** (120/188) | 31.4 % (59/188) | *44.4 %* | *38.9 %* |
+| unchanged confirmed | 65.8 % (100/152) | 46.1 % (70/152) | *82.8 %* | *74.2 %* |
+| different value + kept Y-1 | 13 | 35 | *3* | *5* |
+| not found | 75 | 110 | *14* | *18* |
+| rejected by the critique | 17 | 54 | *9* | *2* |
+| **error (crash)** | **0** | **3** | *0* | *10* |
+| LLM calls (eval.results) | 1 837 | 2 238 | | |
+| prompt / completion tokens | 57.3 M / 0.95 M | 91.8 M / 2.72 M | | |
+| wall time | ~6 h 25 | ~7 h 00 | | |
+
+```
+                 same  off-law  different  kept-Y-1  not-found  rejected  error
+A changed (188)   120       14          8         0         32        14      0
+A kept    (152)   100        1          5         0         43         3      0
+C changed         59        9         24         3         56        36      1
+C kept            70        0          8         0         54        18      2
+```
+
+- **Wall time.** Both runs ran 4 cases at a time (`-j 4`), and A's resume ran
+  2 at a time. Wall time is therefore not comparable with the sequential LT
+  runs. A's time also includes the waits on the rate limit.
+- **Cost.** At list price, C's tokens cost about **$22**
+  (91.8 M × $0.21 + 2.72 M × $0.84 per million). That fits the credit
+  running out near the end of the run. A's Azure cost was not measured.
+
+### 9.3 Reading the FR results
+
+- **The gap is much wider than on LT.**
+  - On correct answers, MiniMax trails GPT by 26 points, against 8 on LT.
+  - On precision it trails by 14 points, against 3 on LT. A quarter of the
+    values MiniMax commits to are wrong, and its own critique accepted them
+    all.
+  - OpenFisca has a value for 13 of C's disagreements with EUROMOD, and sides
+    with EUROMOD on 12 of them.
+  - Unlike LT, the gap is not crashes.
+- **FR is the first real test of change detection.** LT had only 18 changed
+  parameters, FR has 188. GPT finds 64 % of them, MiniMax 31 %.
+- **FR produces findings, LT produced none.** GPT has 15 values where
+  EUROMOD is exactly one unit off the figure the quoted law states:
+  - 3 in each of `bch00_fr`, `bsa00_fr` and `tinkt_fr`;
+  - 2 in `bchyc_fr`;
+  - 1 in each of `bchba_fr`, `bchcc_fr`, `bched_fr` and `tinty_fr`.
+
+  They are candidates for the EUROMOD team, **not yet checked by a
+  person**.
+- **GPT's misses are mostly abstentions.** Of 105 legislative misses, 75 are
+  "not found" and 17 are rejections. The weakest policies are:
+  - `bhoey_fr` (chèque énergie): 11 of 17 not found;
+  - `tscer_fr`: 9 not found;
+  - `tscse_fr`: 9 not found and 7 wrong rates;
+  - `bsa00_fr` and `sickcomp_fr`: 7 not found each;
+  - `bunmt_fr`: 5 of 6 not found.
+
+  Most "not found" results are corpus problems rather than model problems
+  (see the debug-phoenix-trace skill), so these policies are the next places
+  to look for missing acts. 7 of GPT's 13 wrong values are self-employed
+  contribution rates (`tscse_fr`).
+- **MiniMax gives up on whole policies GPT answers.**
+
+  | Policy | MiniMax | GPT |
+  |---|---|---|
+  | `trewl_fr` | 7 of 10 not found | 10 of 10 right |
+  | `xcc_fr` | 9 of 16 rejected | 16 of 16 right |
+  | `bsa00_fr` | 13 of 20 not found | 7 not found |
+  | `bsawk_fr` | 8 of 14 not found, 5 rejected | 8 of 14 right |
+  | `bunmt_fr` | 6 of 6 not found | 5 of 6 not found |
+
+### 9.4 How MiniMax gets FR values wrong
+
+The 35 wrong values MiniMax's critique accepted fall into three patterns.
+
+- **The later revaluation instead of the 1 July amount.** EUROMOD holds the
+  APL amounts as `(a*9 + b*3)/12`. The scorer accepts `a`, the amount in
+  force on 1 July, and OpenFisca agrees with it. MiniMax proposed `b`, the
+  1 October 2025 revaluation, on 6 `bhotn_fr` parameters. For example,
+  `$bho_rentL_lim1` was proposed as 333.14 where the 1 July amount is 329.71.
+  GPT gave the 1 July amounts.
+- **The right article, the wrong figure in it.**
+  - `$tin_decote_lim1` / `lim2` (décote thresholds 1 964 / 3 248) were
+    answered with the décote amounts 889 / 1 470.
+  - `$bsa00_hp_amt2` was answered with an APL rent ceiling (395.77), and
+    `$bsa00_hp_amt4` with the APL charges amount (59.97).
+  - `$tin_imaxdep_lim1` / `lim2` got wrong figures. OpenFisca agrees with
+    EUROMOD on both.
+- **Older figures on income-year parameters.**
+  - These are `$tinty_dedpens_maxamt` (4 321 for 4 399), `$tscxc_thres4` /
+    `thres6` and `$tintapv_lowlim`.
+  - OpenFisca has a value for three of them, and agrees with EUROMOD on all
+    three.
+  - The income-year rule (`temporal_basis: income_year`) is the
+    hardest FR rule, and a weak critique does not enforce it.
+
+This is the §5.3 leniency at scale: the critique accepts the
+proposer's choice of figure as long as the quote is verbatim. §8 point 6 had
+predicted it.
+
+### 9.5 What FR says about the §7 fixes
+
+- **§7.1 (output cap, prompt trimming) works on long FR prompts.** C's 3
+  errors are all the model's own: 2 `Exceeded maximum output retries` and 1
+  `Model token limit (16384) exceeded before any response`. None is a
+  provider refusing a long prompt, against 10 of 10 in LT run C.
+- **§7.2 (consolidated text over amending acts) cannot be judged from FR.**
+  It needs the LT re-run of §8 point 1.
+
+### 9.6 Consequences
+
+1. **For France, GPT stays the reference.** All-MiniMax M2.7 is not a
+   replacement on a country this hard: it scores 41 % success against 70 %.
+   The LT conclusion ("a viable candidate") holds for LT only.
+2. **A stronger critique is the lever to test first for MiniMax.** Most of
+   C's FR loss is wrong values its own critique accepted (§9.4). Run B
+   (MiniMax proposing, a stronger critique) on FR would measure how much of
+   that a stronger critique recovers.
+3. **Run Azure full-country benchmarks at `-j 2`**, or raise the
+   gpt-6-luna deployment's token-rate quota. At `-j 4`, 16 % of FR cases
+   failed on the rate limit.
+4. **Review the 15 GPT findings** with the EUROMOD team. They are what the
+   project is for.
+5. **Look for corpus gaps in `bhoey_fr`, `tscer_fr`, `tscse_fr`, `bsa00_fr`,
+   `sickcomp_fr` and `bunmt_fr`**, where GPT abstains most. Start with the
+   debug-phoenix-trace skill on their not_found traces.
