@@ -406,7 +406,7 @@ class LegislationLoader:
         lost its 3°, 816 texts in all, from 1 Sep to 3 Nov 2026).
         """
         context_header = _context_header(instrument, unit, version, text.lang)
-        self._write_chunks(text_id, chunk_text(text.content, context_header), stats)
+        self.write_chunks(text_id, chunk_text(text.content, context_header), stats)
 
     def rechunk_truncated(self, jurisdiction: str | None = None) -> LoadStats:
         """Re-chunk the stored authentic texts whose chunks stop short of the end.
@@ -439,11 +439,11 @@ class LegislationLoader:
             rows = cur.fetchall()
         with self.conn.transaction():
             for text_id, content, context_header in rows:
-                self._write_chunks(text_id, chunk_text(content, context_header), stats)
+                self.write_chunks(text_id, chunk_text(content, context_header), stats)
                 stats.texts += 1
         return stats
 
-    def _write_chunks(self, text_id: UUID, chunks: list, stats: LoadStats) -> None:
+    def write_chunks(self, text_id: UUID, chunks: list, stats: LoadStats) -> None:
         """Upsert one text's chunks and drop the seqs this chunking did not produce."""
         seqs = [chunk.seq for chunk in chunks]
         with self.conn.cursor() as cur:

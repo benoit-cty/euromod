@@ -1,9 +1,20 @@
 """Batch machine translation of unit texts into English.
 
-Finds legal_unit_versions that have no English unit_texts row, translates their
-best available source text with an LLM (via nomoscope_workflow.llm), and inserts
-the result as an ordinary unit_texts row flagged authenticity='machine_translation',
-plus its retrieval chunks. Idempotent: already-translated versions are skipped.
+Finds legal_unit_versions that have no English unit_texts row — or whose
+machine translation was made from a source text that has changed since —
+translates their best available source text with an LLM (via
+nomoscope_workflow.llm), and writes the result as an ordinary unit_texts row
+flagged authenticity='machine_translation', plus its retrieval chunks (the
+loader's chunk upsert, so chunk ids, cited chunks and unchanged vectors
+survive). Idempotent: versions translated from their current source are
+skipped.
+
+Staleness: every machine translation records the source text's content hash
+in `metadata.source_content_hash`. A `reparse` that changes the source makes
+the hashes differ and the next run re-translates it. Before 16 Nov 2026 a
+version counted as translated as soon as any English row existed, so the
+English text and chunks kept the pre-reparse wording (code audit D10);
+migration 0006 stamped the existing rows with their source's current hash.
 """
 
 from __future__ import annotations
@@ -20,6 +31,21 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
 from nomotheca_ingest.core.chunker import chunk_text
+from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
+
+#: A version needs a translation when it has no target-language row, or when
+#: its machine translation was made from another state of this source text.
+#: `t` is the candidate source row; `%(target)s` the target language.
+_NEEDS_TRANSLATION = """
+    t.lang <> %(target)s
+    AND NOT EXISTS (
+        SELECT 1 FROM unit_texts e
+        WHERE e.version_id = t.version_id AND e.lang = %(target)s
+          AND NOT (e.authenticity = 'machine_translation'
+                   AND e.translation_of = t.id
+                   AND e.metadata ->> 'source_content_hash' IS DISTINCT FROM t.content_hash)
+    )
+"""
 
 DEFAULT_TARGET_LANG = "en"
 DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS = 120.0
@@ -59,6 +85,7 @@ class TextForTranslation:
     version_id: UUID
     lang: str
     content: str
+    content_hash: str
     citation: str
     title: dict[str, str]
     valid_from: date | None
@@ -187,14 +214,10 @@ def count_texts_needing_translation(
     Same WHERE clause as the iterator (which keeps one source row per
     version), so a progress display can know the total upfront.
     """
-    query = """
+    query = f"""
         SELECT count(DISTINCT t.version_id)
         FROM unit_texts t
-        WHERE t.lang <> %(target)s
-          AND NOT EXISTS (
-              SELECT 1 FROM unit_texts e
-              WHERE e.version_id = t.version_id AND e.lang = %(target)s
-          )
+        WHERE {_NEEDS_TRANSLATION}
     """
     with conn.cursor() as cur:
         cur.execute(query, {"target": target_lang})
@@ -213,19 +236,15 @@ def iter_texts_needing_translation(
     One candidate per version: authentic texts win over official translations,
     which win over machine translations; ties (BE fr+nl) break on lang order.
     """
-    query = """
+    query = f"""
         SELECT DISTINCT ON (t.version_id)
-               t.id, t.version_id, t.lang, t.content,
+               t.id, t.version_id, t.lang, t.content, t.content_hash,
                u.citation, i.title, lower(v.validity) AS valid_from
         FROM unit_texts t
         JOIN legal_unit_versions v ON v.id = t.version_id
         JOIN legal_units u ON u.id = v.legal_unit_id
         JOIN instruments i ON i.id = u.instrument_id
-        WHERE t.lang <> %(target)s
-          AND NOT EXISTS (
-              SELECT 1 FROM unit_texts e
-              WHERE e.version_id = t.version_id AND e.lang = %(target)s
-          )
+        WHERE {_NEEDS_TRANSLATION}
         ORDER BY t.version_id,
                  CASE t.authenticity
                      WHEN 'authentic' THEN 0
@@ -244,6 +263,7 @@ def iter_texts_needing_translation(
                 version_id=row["version_id"],
                 lang=row["lang"],
                 content=row["content"],
+                content_hash=row["content_hash"],
                 citation=row["citation"],
                 title=row["title"],
                 valid_from=row["valid_from"],
@@ -274,7 +294,13 @@ def store_translation(
     target_lang: str,
     engine: str,
 ) -> UUID | None:
-    """Insert the machine_translation unit_texts row and its retrieval chunks."""
+    """Write the machine_translation unit_texts row and its retrieval chunks.
+
+    A new translation of a changed source replaces the stale row in place
+    (same id); its chunks go through the loader's upsert, so chunk ids stay
+    stable, cited chunks are retained and an unchanged chunk keeps its vector.
+    Returns None when a concurrent run already wrote this exact translation.
+    """
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -282,54 +308,44 @@ def store_translation(
               (version_id, lang, authenticity, content, search_config,
                translation_of, source_lang, mt_engine, content_hash, metadata)
             VALUES (
-              %s, %s, 'machine_translation', %s,
-              (SELECT config FROM lang_fts_config WHERE lang = %s),
-              %s, %s, %s, %s, %s
+              %(version)s, %(target)s, 'machine_translation', %(content)s,
+              (SELECT config FROM lang_fts_config WHERE lang = %(target)s),
+              %(source)s, %(source_lang)s, %(engine)s, %(hash)s, %(metadata)s
             )
-            ON CONFLICT (version_id, lang, authenticity) DO NOTHING
+            ON CONFLICT (version_id, lang, authenticity) DO UPDATE
+            SET content = EXCLUDED.content,
+                translation_of = EXCLUDED.translation_of,
+                source_lang = EXCLUDED.source_lang,
+                mt_engine = EXCLUDED.mt_engine,
+                content_hash = EXCLUDED.content_hash,
+                metadata = unit_texts.metadata || EXCLUDED.metadata
+            WHERE unit_texts.metadata ->> 'source_content_hash'
+                  IS DISTINCT FROM EXCLUDED.metadata ->> 'source_content_hash'
             RETURNING id
             """,
-            (
-                source.version_id,
-                target_lang,
-                translated,
-                target_lang,
-                source.id,
-                source.lang,
-                engine,
-                sha256(translated.encode("utf-8")).hexdigest(),
-                Jsonb({"translated_from_text_id": str(source.id)}),
-            ),
+            {
+                "version": source.version_id,
+                "target": target_lang,
+                "content": translated,
+                "source": source.id,
+                "source_lang": source.lang,
+                "engine": engine,
+                "hash": sha256(translated.encode("utf-8")).hexdigest(),
+                "metadata": Jsonb(
+                    {
+                        "translated_from_text_id": str(source.id),
+                        "source_content_hash": source.content_hash,
+                    }
+                ),
+            },
         )
         row = cur.fetchone()
-        if row is None:  # a concurrent run already inserted this translation
-            return None
-        text_id = row[0]
-
-        context_header = _context_header(source, target_lang)
-        for chunk in chunk_text(translated, context_header):
-            cur.execute(
-                """
-                INSERT INTO chunks
-                  (unit_text_id, seq, char_start, char_end, content, context_header,
-                   search_config, token_count)
-                VALUES (
-                  %s, %s, %s, %s, %s, %s,
-                  (SELECT search_config FROM unit_texts WHERE id = %s),
-                  %s
-                )
-                """,
-                (
-                    text_id,
-                    chunk.seq,
-                    chunk.char_start,
-                    chunk.char_end,
-                    chunk.content,
-                    chunk.context_header,
-                    text_id,
-                    len(chunk.content.split()),
-                ),
-            )
+    if row is None:  # a concurrent run already wrote this translation
+        return None
+    text_id = row[0]
+    LegislationLoader(conn).write_chunks(
+        text_id, chunk_text(translated, _context_header(source, target_lang)), LoadStats()
+    )
     return text_id
 
 
