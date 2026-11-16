@@ -36,7 +36,7 @@ from nomoscope_workflow.tracing import setup_tracing
 from . import eval_version
 from . import db as evaldb
 from .config import EvalConfig, git_commit
-from .golden_store import golden_set_hash
+from .golden_store import golden_set_hash, load_cases
 from .parameter_store import db_constants, load_case_record
 from .schema import CaseResult, GoldenCase, RunManifest
 from .scoring import score_item
@@ -156,6 +156,17 @@ def resume_run(
             f"run {run_id} predates resumable runs (no rows in eval.run_cases) — start a new run"
         )
     return manifest, cases, evaldb.load_results(conn, run_pk)
+
+
+def golden_set_drift(conn: psycopg.Connection, manifest: RunManifest) -> str | None:
+    """Today's verified golden-set hash when it differs from the one the run
+    froze, else None. A resumed run replays its frozen case list either way;
+    this only says the golden set moved since. A benchmark run's cases come
+    from the params DB, not the golden set, so it never drifts."""
+    if manifest.blind_before is not None:
+        return None
+    current = golden_set_hash(load_cases(conn, verified_only=True))
+    return current if current != manifest.dataset_version else None
 
 
 def _workflow_config(cfg: EvalConfig, manifest: RunManifest) -> WorkflowConfig:

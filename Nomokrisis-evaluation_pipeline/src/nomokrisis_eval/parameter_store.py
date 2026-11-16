@@ -34,6 +34,15 @@ def load_case_record(conn: psycopg.Connection, parameter_target: str) -> Paramet
     return paramdb.load_record(conn, parameter_target)
 
 
+def country_targets(conn: psycopg.Connection, country: str) -> list[str]:
+    """Every parameter of a country in the params DB, in EUROMOD's spine order."""
+    rows = conn.execute(
+        "SELECT model_target FROM params.parameters WHERE country = %s ORDER BY spine_order, model_target",
+        (country.upper(),),
+    ).fetchall()
+    return [row[0] for row in rows]
+
+
 def current_value(record: ParameterRecord, as_of: date) -> ParameterValue | None:
     """The value row in force at `as_of`, if any."""
     for value in record.values:

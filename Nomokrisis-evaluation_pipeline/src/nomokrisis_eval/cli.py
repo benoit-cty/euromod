@@ -53,9 +53,10 @@ from .import_golden import (
     import_golden,
 )
 from .labels import DraftedLabels, draft_labels
-from .parameter_store import load_case_record
+from .parameter_store import country_targets, load_case_record
 from .runner import (
     execute_run,
+    golden_set_drift,
     latest_incomplete_run,
     list_runs,
     rescore_run,
@@ -217,14 +218,7 @@ def build_dataset_cmd(
     source_text = source_file.read_text(encoding="utf-8")
 
     with evaldb.connect(cfg.database_url) as conn:
-        targets = list(target or [])
-        if not targets:
-            targets = [
-                row[0] for row in conn.execute(
-                    "SELECT model_target FROM params.parameters WHERE country = %s ORDER BY spine_order, model_target",
-                    (country.upper(),),
-                ).fetchall()
-            ]
+        targets = list(target or []) or country_targets(conn, country)
         if not targets:
             typer.echo(f"no parameters for {country.upper()} in the params DB (ingest-params first)")
             raise typer.Exit(1)
@@ -661,9 +655,8 @@ def resume(
             typer.echo(f"cannot resume: {exc}")
             raise typer.Exit(1) from exc
 
-        current = golden_store.golden_set_hash(golden_store.load_cases(conn, verified_only=True))
-        # A benchmark run's cases come from the params DB, not the golden set.
-        if manifest.blind_before is None and current != manifest.dataset_version:
+        current = golden_set_drift(conn, manifest)
+        if current is not None:
             typer.echo(
                 f"! golden set is {current} today, this run froze {manifest.dataset_version}; "
                 "replaying the run's frozen case list"
