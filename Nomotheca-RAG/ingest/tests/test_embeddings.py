@@ -123,7 +123,7 @@ def test_build_embeddings_skips_chunks_removed_by_a_concurrent_ingest() -> None:
     ]
     conn = _FakeConn(candidates, live_chunk_ids={"live-chunk"})
 
-    stats = build_embeddings(conn, _ConstantBackend(), batch_size=2)
+    stats = build_embeddings(conn, _ConstantBackend(), batch_size=2, lock=False)
 
     assert stats.scanned == 2
     assert stats.done == 1

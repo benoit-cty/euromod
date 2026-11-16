@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 from typing import Any
 
-from nomotheca_ingest.core.embeddings import processor_kwargs_for
+from nomotheca_ingest.core.embedding_backend import processor_kwargs_for
 
 
 TORCH_EXPORT_DEVICE = "cpu"

@@ -13,7 +13,7 @@ import sys
 from importlib import import_module
 from typing import Any
 
-from nomotheca_ingest.core.embeddings import (
+from nomotheca_ingest.core.embedding_backend import (
     cuda_oom_errors,
     is_cuda_device,
     raise_for_unsupported_cuda_arch,

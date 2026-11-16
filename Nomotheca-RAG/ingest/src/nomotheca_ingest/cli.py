@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from contextlib import ExitStack
 from datetime import date
 from typing import Annotated
 
@@ -13,6 +14,7 @@ import typer
 
 from nomotheca_ingest.core.embedding_models import MODELS, get_model
 from nomotheca_ingest.core.embeddings import (
+    embedding_build_lock,
     DEFAULT_MAX_SEQ_LENGTH,
     EMBEDDING_BACKENDS,
     PRECISIONS,
@@ -406,76 +408,6 @@ def list_embedding_models() -> None:
             typer.echo(f"    {spec.notes}")
 
 
-#: pg advisory lock key held by every non-dry-run ``embeddings build``.
-EMBEDDING_BUILD_LOCK_KEY = 0x656D6264  # "embd"
-_embedding_lock_conn: psycopg.Connection | None = None
-
-
-#: Seconds between two tries of the lock while another build holds it.
-EMBEDDING_LOCK_POLL_SECONDS = 5.0
-
-
-def embedding_lock_application_name() -> str:
-    """How this build's lock connection names itself in ``pg_stat_activity``,
-    so a waiting build can say who it waits for: the worker job it runs under
-    (``WORKER_JOB_ID``; a scout build inherits its workflow/eval job's), else
-    the host process."""
-    job = os.environ.get("WORKER_JOB_ID")
-    where = f"job #{job}" if job else f"pid {os.getpid()} on {os.uname().nodename}"
-    return f"embeddings build ({where})"[:63]  # NAMEDATALEN - 1
-
-
-def _embedding_lock_holder(conn: psycopg.Connection) -> str:
-    """Describe the session holding the build lock (empty when none does)."""
-    row = conn.execute(
-        """
-        SELECT a.application_name, host(a.client_addr), a.backend_start
-          FROM pg_locks l
-          JOIN pg_stat_activity a ON a.pid = l.pid
-         WHERE l.locktype = 'advisory' AND l.granted
-           AND l.classid = 0 AND l.objid = %s AND l.objsubid = 1
-        """,
-        (EMBEDDING_BUILD_LOCK_KEY,),
-    ).fetchone()
-    if row is None:
-        return ""
-    name, addr, since = row
-    who = name or f"a connection from {addr or 'an unknown host'}"
-    return f"{who}, since {since:%H:%M:%S %Z}" if since else who
-
-
-def _hold_embedding_build_lock(database_url: str, progress_json: bool = False) -> None:
-    """Block until no other ``embeddings build`` runs, then hold the lock for
-    the life of this process (released when its connection closes).
-
-    While it waits it says so — on stderr, and as a ``phase: waiting``
-    progress line under ``--progress-json`` naming the holder, so the worker's
-    job row reads "waiting" rather than "running". It polls rather than
-    blocking in ``pg_advisory_lock`` so a change of holder is reported too.
-    """
-    global _embedding_lock_conn  # noqa: PLW0603 - one lock per CLI process
-    if _embedding_lock_conn is not None:
-        return
-    conn = psycopg.connect(database_url, autocommit=True, application_name=embedding_lock_application_name())
-    reported = None
-    waited = False
-    while not conn.execute("SELECT pg_try_advisory_lock(%s)", (EMBEDDING_BUILD_LOCK_KEY,)).fetchone()[0]:
-        holder = _embedding_lock_holder(conn)
-        if holder != reported:
-            detail = f"waiting for the GPU: another embeddings build holds it — {holder or 'just released'}"
-            typer.echo(detail + "…", err=True)
-            if progress_json:
-                emit_json({"task": "embeddings", "phase": "waiting", "detail": detail})
-            reported = holder
-        waited = True
-        time.sleep(EMBEDDING_LOCK_POLL_SECONDS)
-    if waited:
-        typer.echo("embeddings build lock acquired", err=True)
-        if progress_json:
-            emit_json({"task": "embeddings", "phase": "starting", "detail": "lock acquired, loading model"})
-    _embedding_lock_conn = conn
-
-
 @embeddings_app.command("build")
 def build_chunk_embeddings(
     database_url: Annotated[str, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")],
@@ -556,82 +488,86 @@ def build_chunk_embeddings(
         "langs": langs or None,
         "in_force_on": [date.fromisoformat(day) for day in in_force_on] if in_force_on else None,
     }
-    if not dry_run:
-        # One build at a time, whoever starts it (an embed job, the scout's
-        # cache-miss build inside a workflow/eval job, a hand-run build): two
-        # BGE-M3 copies overflow the GPU next to the worker's encode lane, and
-        # both would embed the same backlog.
-        _hold_embedding_build_lock(database_url, progress_json)
-    embedding_backend = (
-        _DryRunEmbeddingBackend()
-        if dry_run
-        else SentenceTransformerBackend(
-            model_path=model_path,
-            device=device,
-            backend=backend,
-            fix_mistral_regex=fix_mistral_regex,
-            slow_tokenizer=slow_tokenizer,
-            encode_batch_size=encode_batch_size or batch_size,
-            spec=spec,
-            precision=precision,
-            max_seq_length=max_seq_length,
+    with ExitStack() as held:
+        if not dry_run:
+            # Before the model loads: a second BGE-M3 copy is what the lock
+            # keeps off the GPU. build_embeddings takes it again (re-entrant).
+            held.enter_context(embedding_build_lock(database_url, _lock_progress if progress_json else None))
+        embedding_backend = (
+            _DryRunEmbeddingBackend()
+            if dry_run
+            else SentenceTransformerBackend(
+                model_path=model_path,
+                device=device,
+                backend=backend,
+                fix_mistral_regex=fix_mistral_regex,
+                slow_tokenizer=slow_tokenizer,
+                encode_batch_size=encode_batch_size or batch_size,
+                spec=spec,
+                precision=precision,
+                max_seq_length=max_seq_length,
+            )
         )
-    )
-    if not dry_run:
-        # stderr: stdout carries the '@progress' protocol a wrapping UI parses.
-        typer.echo(embedding_backend.description, err=True)
-    started = time.monotonic()
-    with psycopg.connect(database_url) as conn:
-        with batch_progress(
-            EMBEDDINGS,
-            json_total=(
-                (lambda: count_chunks_needing_embeddings(conn, model_id=model_id, limit=limit, **scope))
-                if progress_json
-                else None
-            ),
-            show=show_progress,
-            limit=limit,
-            dry_run=dry_run,
-        ) as progress:
-            stats = build_embeddings(
-                conn,
-                embedding_backend,
-                model_id=model_id,
-                batch_size=batch_size,
+        if not dry_run:
+            # stderr: stdout carries the '@progress' protocol a wrapping UI parses.
+            typer.echo(embedding_backend.description, err=True)
+        started = time.monotonic()
+        with psycopg.connect(database_url) as conn:
+            with batch_progress(
+                EMBEDDINGS,
+                json_total=(
+                    (lambda: count_chunks_needing_embeddings(conn, model_id=model_id, limit=limit, **scope))
+                    if progress_json
+                    else None
+                ),
+                show=show_progress,
                 limit=limit,
                 dry_run=dry_run,
-                progress=progress,
-                commit_each_batch=True,
-                **scope,
-            )
-        conn.commit()
-    elapsed = time.monotonic() - started
-    if dry_run:
-        typer.echo(
-            f"scanned={stats.scanned} would_embed={stats.done} "
-            f"model_id={model_id} backend={backend} dry_run=True"
-        )
-    else:
-        typer.echo(
-            f"scanned={stats.scanned} embedded={stats.done} skipped={stats.skipped} "
-            f"model={spec.key} model_id={model_id} backend={backend} device={embedding_backend.device} "
-            f"seconds={elapsed:.0f} dry_run=False"
-        )
-        if stats.skipped:
+            ) as progress:
+                stats = build_embeddings(
+                    conn,
+                    embedding_backend,
+                    model_id=model_id,
+                    batch_size=batch_size,
+                    limit=limit,
+                    dry_run=dry_run,
+                    progress=progress,
+                    commit_each_batch=True,
+                    **scope,
+                )
+            conn.commit()
+        elapsed = time.monotonic() - started
+        if dry_run:
             typer.echo(
-                f"note: {stats.skipped} chunk(s) were re-chunked by a concurrent ingest "
-                "during this run; re-run the build to embed the replacements."
+                f"scanned={stats.scanned} would_embed={stats.done} "
+                f"model_id={model_id} backend={backend} dry_run=True"
             )
-        result = {
-            "model": spec.key,
-            "model_id": model_id,
-            "embedded": stats.done,
-            "seconds": round(elapsed, 1),
-            "chunks_per_second": round(stats.done / elapsed, 2) if elapsed and stats.done else None,
-            "backend": embedding_backend.description,
-            "peak_vram_gib": _peak_vram_gib(embedding_backend),
-        }
-        typer.echo("@result " + json.dumps(result))
+        else:
+            typer.echo(
+                f"scanned={stats.scanned} embedded={stats.done} skipped={stats.skipped} "
+                f"model={spec.key} model_id={model_id} backend={backend} device={embedding_backend.device} "
+                f"seconds={elapsed:.0f} dry_run=False"
+            )
+            if stats.skipped:
+                typer.echo(
+                    f"note: {stats.skipped} chunk(s) were re-chunked by a concurrent ingest "
+                    "during this run; re-run the build to embed the replacements."
+                )
+            result = {
+                "model": spec.key,
+                "model_id": model_id,
+                "embedded": stats.done,
+                "seconds": round(elapsed, 1),
+                "chunks_per_second": round(stats.done / elapsed, 2) if elapsed and stats.done else None,
+                "backend": embedding_backend.description,
+                "peak_vram_gib": _peak_vram_gib(embedding_backend),
+            }
+            typer.echo("@result " + json.dumps(result))
+
+
+def _lock_progress(phase: str, detail: str) -> None:
+    """The lock's waiting/starting lines, as the worker reads them."""
+    emit_json({"task": "embeddings", "phase": phase, "detail": detail})
 
 
 def _translate_model(model: str | None) -> str:
