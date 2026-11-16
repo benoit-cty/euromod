@@ -51,12 +51,11 @@ from nomoscope_workflow.schema import (
 )
 from nomoscope_workflow import paramdb
 
-from .build_dataset import _current_value
-from .golden_drafting import GROUP_PREFIX, entry_case_id, golden_case_id
+from .golden_drafting import entry_case_id, golden_case_id
+from .parameter_store import GROUP_PREFIX, current_value, db_constants, route_against_current
 from .golden_store import delete_case, load_case, save_drafted_case
 from .labels import draft_labels
 from .schema import Expected, GoldenCase
-from .scoring import normalise_value, values_equal
 
 _BRACKET_COMPONENT = re.compile(r"^brackets\[(\d+)\]\.(\w+)$")
 
@@ -267,79 +266,6 @@ def _load_record(conn: psycopg.Connection, entry: dict) -> tuple[ParameterRecord
     return record, record.information.model_target
 
 
-def db_constants(conn: psycopg.Connection, country: str, as_of: date) -> dict[str, object]:
-    """$-constant resolution map for value normalisation, from the params DB.
-
-    Every parameter of the country, keyed by casefolded constant name, valued
-    by its value in force at as_of — the numeric scalar when the store has one,
-    else the raw EUROMOD string (scoring.normalise_value evaluates those
-    recursively, so '$csg_red_thres = $PSS * 4' resolves through '$PSS')."""
-    rows = conn.execute(
-        """
-        SELECT p.model_target, v.value_numeric, v.raw_euromod_value
-        FROM params.parameters p
-        JOIN LATERAL (
-            SELECT mv.value_numeric, mv.raw_euromod_value
-            FROM params.model_values mv
-            WHERE mv.parameter_id = p.id
-              AND mv.valid_from <= %s
-              AND (mv.valid_to IS NULL OR mv.valid_to >= %s)
-            ORDER BY mv.valid_from DESC
-            LIMIT 1
-        ) v ON true
-        WHERE p.country = %s
-        """,
-        (as_of, as_of, country),
-    ).fetchall()
-    constants: dict[str, object] = {}
-    for model_target, numeric, raw in rows:
-        name = model_target.rsplit("/", 1)[-1].lstrip("$").casefold()
-        value = numeric if numeric is not None else raw
-        if value is not None:
-            constants[name] = value
-    return constants
-
-
-def route_against_current(
-    current,
-    expected_value,
-    constants: Mapping[str, object] | None = None,
-) -> tuple[Routing, None] | tuple[None, str]:
-    """Deterministic routing of a drafted value against the recorded one.
-
-    Returns (routing, None), or (None, skip reason) when refusing to guess.
-    Formula and weighted-average ("FYA") values are normalised first
-    (scoring.normalise_value: arithmetic, $-references via `constants`, period
-    suffixes); formula rows materialize with value null, so the raw string is
-    read back from lineage.model_answer. Two situations still refuse to guess:
-    a raw string normalisation cannot read, and a formula value that normalises
-    but DIFFERS from the drafted point value — an FYA average never equals a
-    point value even when EUROMOD is right by convention, so 'changed' would be
-    a fabricated ground truth. Both route to the curation file, where an
-    explicit `routing:` on the entry overrides."""
-    if current is None:
-        return Routing.NEW, None
-    comparable = current.value
-    if comparable is None and current.lineage is not None:
-        comparable = current.lineage.model_answer
-    if comparable is None:
-        return None, "has no scalar and no raw string"
-    if isinstance(comparable, str) and normalise_value(comparable, constants) is None:
-        return None, (
-            f"cannot be normalised ({comparable!r}) "
-            "— set an explicit `routing:` in the selection file to include it"
-        )
-    if values_equal(comparable, expected_value, constants):
-        return Routing.UNCHANGED, None
-    if isinstance(comparable, str):
-        return None, (
-            f"is a formula/weighted average ({comparable!r}) that differs from the "
-            f"drafted point value ({expected_value!r}) — ambiguous by convention "
-            "(FYA); set an explicit `routing:` in the selection file"
-        )
-    return Routing.CHANGED, None
-
-
 def draft_case(
     conn: psycopg.Connection,
     entry: dict,
@@ -392,7 +318,7 @@ def draft_case(
 
     # Routing is deterministic: the drafted value against the value EUROMOD
     # currently holds (an explicit `routing:` on the entry overrides).
-    current = _current_value(record, as_of)
+    current = current_value(record, as_of)
     explicit = entry.get("routing")
     if explicit:
         routing = Routing(explicit)

@@ -17,9 +17,7 @@ from datetime import date
 from nomoscope_workflow import paramdb
 from nomoscope_workflow.queue_store import slugify
 
-#: `parameter_target` prefix of a bracket schedule assembled from
-#: params.parameter_groups (`group:<group_id>`).
-GROUP_PREFIX = "group:"
+from .parameter_store import GROUP_PREFIX
 
 
 def case_slug(model_target: str, country: str) -> str:

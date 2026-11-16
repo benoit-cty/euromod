@@ -44,7 +44,6 @@ import psycopg
 
 from nomoscope_workflow.schema import Bracket, Routing, SourceType, TemporalBasis
 
-from .build_dataset import _current_value
 from .golden_drafting import golden_case_id
 from .golden_store import save_drafted_case
 from .labels import draft_labels
@@ -52,22 +51,10 @@ from .openfisca_golden import (
     DraftOutcome,
     _load_record,
     _retire_skipped,
-    db_constants,
-    route_against_current,
 )
+from .parameter_store import comparable as _comparable, current_value, db_constants, route_against_current
 from .schema import Expected, GoldenCase
 from .scoring import PERIOD_TO_MONTHLY, normalise_value
-
-# The value the store holds at as_of, in the form the scorer compares: the
-# scalar when there is one, else the raw EUROMOD string ('140#m*$sw_weeks',
-# '4.1%'), which formula rows keep in their lineage.
-def _comparable(current) -> object | None:
-    if current is None:
-        return None
-    if current.value is not None:
-        return current.value
-    return current.lineage.model_answer if current.lineage is not None else None
-
 
 def _expected_value(entry: dict) -> object | None:
     """The selection's curated value, with a bracket schedule promoted to Brackets."""
@@ -118,7 +105,7 @@ def draft_case(
         outcome.skipped = f"parameter not available: {exc}"
         return outcome
 
-    current = _current_value(record, as_of)
+    current = current_value(record, as_of)
     comparable = _comparable(current)
     expected_value = _expected_value(entry)
     scored = "expected_value" in entry and expected_value is not None

@@ -42,7 +42,8 @@ from .golden_store import (
     save_embedding_case,
     save_selection,
 )
-from .golden_drafting import GROUP_PREFIX, entry_case_id
+from .golden_drafting import entry_case_id
+from .parameter_store import GROUP_PREFIX
 from .schema import EmbeddingCase, GoldenCase
 
 DEFAULT_DATASET_DIR = EVAL_ROOT / "dataset"

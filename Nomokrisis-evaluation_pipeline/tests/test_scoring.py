@@ -359,7 +359,7 @@ def test_normalise_value_shapes():
 
 def test_runner_builds_constants_from_the_params_db():
     """`_constants_for` reads a case's country's $-constants in force at the
-    case's own as_of from params.* (openfisca_golden.db_constants), keyed by
+    case's own as_of from params.* (parameter_store.db_constants), keyed by
     casefolded name; a formula row keeps its raw EUROMOD string so
     normalise_value can evaluate it."""
     from nomokrisis_eval.runner import _constants_for

@@ -34,12 +34,11 @@ from datetime import date
 import psycopg
 
 from nomoscope_workflow import paramdb, retrieval
-from nomoscope_workflow.pipeline import _current_value, _derived_refs
+from nomoscope_workflow.pipeline import _derived_refs
 from nomoscope_workflow.schema import (
     system_year_anchor,
     Bracket,
     ParameterRecord,
-    ParameterValue,
     Routing,
     SourceType,
     TemporalBasis,
@@ -47,8 +46,8 @@ from nomoscope_workflow.schema import (
     start_of_year_as_of,
 )
 
-from .openfisca_golden import db_constants, external_parameter, schedule_at, value_at
-from .runner import GROUP_PREFIX, load_case_record
+from .openfisca_golden import external_parameter, schedule_at, value_at
+from .parameter_store import GROUP_PREFIX, comparable, current_value, db_constants, load_case_record
 from .schema import CaseResult, Expected, GoldenCase
 from .scoring import normalise_value, values_equal
 
@@ -74,16 +73,6 @@ def anchor_date(year: int) -> date:
 
 def case_id(country: str, year: int, target: str) -> str:
     return f"{CASE_PREFIX}:{country.upper()}:{year}:{target}"
-
-
-def comparable(value: ParameterValue | None):
-    """The value as scoring compares it: the scalar/schedule, else the raw
-    EUROMOD string (formula and weighted-average rows materialise as null)."""
-    if value is None:
-        return None
-    if value.value is not None:
-        return value.value
-    return value.lineage.model_answer if value.lineage is not None else None
 
 
 def is_missing(value) -> bool:
@@ -134,14 +123,14 @@ def expected_routing(
 ) -> Routing:
     """What a correct run on the blind record routes: the pipeline's own
     pre-retrieval short-circuits first, then the value against Y-1."""
-    baseline = _current_value(blind, as_of)
+    baseline = current_value(blind, as_of)
     if baseline is not None and baseline.source_type == SourceType.NATIONAL_TEAM:
         return Routing.NATIONAL_TEAM_SOURCE
     if _derived_refs(blind, baseline):
         return Routing.DERIVED
     if baseline is None:
         return Routing.NEW
-    before, now = comparable(baseline), comparable(_current_value(record, as_of))
+    before, now = comparable(baseline), comparable(current_value(record, as_of))
     if not is_missing(before) and values_equal(before, now, constants):
         return Routing.UNCHANGED
     return Routing.CHANGED
@@ -211,7 +200,7 @@ def build_case(
     info = record.information
     as_of = anchor_date(year)
     blind = paramdb.blind_record(record, date(year, 1, 1))
-    target = comparable(_current_value(record, as_of))
+    target = comparable(current_value(record, as_of))
     if is_missing(target):
         raise ValueError(f"no EUROMOD value in force on {as_of}")
 

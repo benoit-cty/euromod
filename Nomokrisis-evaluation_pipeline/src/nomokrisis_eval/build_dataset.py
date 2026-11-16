@@ -19,9 +19,10 @@ from datetime import date
 from pydantic import BaseModel, ConfigDict
 
 from nomoscope_workflow.llm import run_agent
-from nomoscope_workflow.schema import Bracket, ParameterRecord, ParameterValue, Routing
+from nomoscope_workflow.schema import Bracket, ParameterRecord, Routing
 
-from .golden_drafting import GROUP_PREFIX, golden_case_id
+from .golden_drafting import golden_case_id
+from .parameter_store import GROUP_PREFIX, current_value
 from .labels import draft_labels
 from .schema import Expected, GoldenCase
 from .scoring import values_equal
@@ -74,16 +75,9 @@ def check_builder_model(model: str) -> str:
     return model
 
 
-def _current_value(record: ParameterRecord, as_of: date) -> ParameterValue | None:
-    for value in record.values:
-        if value.valid_from <= as_of and (value.valid_to is None or value.valid_to >= as_of):
-            return value
-    return None
-
-
 def _build_user_prompt(record: ParameterRecord, as_of: date, source_text: str) -> str:
     info = record.information
-    current = _current_value(record, as_of)
+    current = current_value(record, as_of)
     return (
         f"Reference date (as_of): {as_of.isoformat()}\n\n"
         f"Parameter definition:\n{info.model_dump_json(indent=2, exclude_none=True)}\n\n"
@@ -114,7 +108,7 @@ def to_golden_case(
 ) -> GoldenCase:
     """Deterministic routing vs the recorded value; the model never decides routing."""
     info = record.information
-    current = _current_value(record, as_of)
+    current = current_value(record, as_of)
     value = draft.value_brackets if draft.value_brackets is not None else draft.value_scalar
 
     if not draft.found or value is None:

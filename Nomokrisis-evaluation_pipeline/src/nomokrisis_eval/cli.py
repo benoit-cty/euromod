@@ -53,11 +53,11 @@ from .import_golden import (
     import_golden,
 )
 from .labels import DraftedLabels, draft_labels
+from .parameter_store import load_case_record
 from .runner import (
     execute_run,
     latest_incomplete_run,
     list_runs,
-    load_case_record,
     rescore_run,
     resume_run,
     start_run,

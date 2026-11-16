@@ -348,7 +348,7 @@ def cases_from_golden(
     """
     from nomoscope_workflow import pipeline
 
-    from .runner import load_case_record
+    from .parameter_store import load_case_record
 
     out = GoldenCaseDerivation()
     for case in golden:

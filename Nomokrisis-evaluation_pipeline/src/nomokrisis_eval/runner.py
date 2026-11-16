@@ -38,12 +38,9 @@ from . import EVAL_VERSION
 from . import db as evaldb
 from .config import REPO_ROOT, EvalConfig
 from .golden_store import golden_set_hash
-from .openfisca_golden import db_constants
+from .parameter_store import db_constants, load_case_record
 from .schema import CaseResult, GoldenCase, RunManifest
 from .scoring import score_item
-
-GROUP_PREFIX = "group:"
-
 
 def _git_commit() -> str | None:
     try:
@@ -57,15 +54,6 @@ def _git_commit() -> str | None:
 
 def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
-
-
-def load_case_record(conn: psycopg.Connection, parameter_target: str) -> ParameterRecord:
-    """The parameter under test, from the params DB: `group:<group_id>` is a
-    bracket schedule assembled from params.parameter_groups, anything else a
-    model_target (or parameter_key) in params.parameters."""
-    if parameter_target.startswith(GROUP_PREFIX):
-        return paramdb.load_group_record(conn, parameter_target[len(GROUP_PREFIX):])
-    return paramdb.load_record(conn, parameter_target)
 
 
 def _constants_for(
