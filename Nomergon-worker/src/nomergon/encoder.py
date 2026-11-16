@@ -61,6 +61,22 @@ def load_backend(model_path: str | None, model_id: int = 1) -> Any:
     return SentenceTransformerBackend(model_path=model_path, backend="torch", device="cpu", spec=spec)
 
 
+RECONNECT_MIN_SECONDS = 1.0
+RECONNECT_MAX_SECONDS = 30.0
+
+
+def _first_line(exc: BaseException) -> str:
+    return (str(exc).splitlines() or [type(exc).__name__])[0]
+
+
+def _close(conn: Any) -> None:
+    if conn is not None:
+        try:
+            conn.close()
+        except Exception:  # noqa: BLE001
+            pass
+
+
 class EncodeLane(threading.Thread):
     """Polls ``encode`` jobs and answers them with the warm model."""
 
@@ -71,26 +87,42 @@ class EncodeLane(threading.Thread):
         self.backend: Any = None
         self.extra_backends: dict[int, Any] = {}
         self.load_error: str | None = None
-        self.ready = threading.Event()
         self._next_load_attempt = 0.0
 
     def run(self) -> None:
-        conn = db.connect(self.cfg.database_url)
+        """Claim and answer encode jobs until stopped.
+
+        The lane owns one connection and replaces it whenever it breaks: after
+        a Postgres restart the old one is dead for good, and before 16 Nov 2026
+        the lane logged a traceback every second while the heartbeat still
+        reported a live worker (code audit D12).
+        """
+        conn: Any = None
+        backoff = RECONNECT_MIN_SECONDS
         try:
             self._ensure_backend()
             while not self.stop_event.is_set():
+                if conn is None or conn.closed:
+                    try:
+                        conn = db.connect(self.cfg.database_url)
+                        backoff = RECONNECT_MIN_SECONDS
+                    except Exception as exc:  # noqa: BLE001 - the database is down: wait for it
+                        log.warning("encode lane: cannot connect (%s); retry in %.0fs", _first_line(exc), backoff)
+                        self.stop_event.wait(backoff)
+                        backoff = min(backoff * 2, RECONNECT_MAX_SECONDS)
+                        continue
                 try:
                     job = db.claim_encode_job(conn, self.cfg.worker_id)
-                except Exception:  # noqa: BLE001 - keep polling through a DB hiccup
-                    log.exception("encode lane: claim failed")
-                    time.sleep(1.0)
-                    continue
-                if job is None:
-                    time.sleep(self.cfg.encode_poll_seconds)
-                    continue
-                self._answer(conn, job)
+                    if job is None:
+                        self.stop_event.wait(self.cfg.encode_poll_seconds)
+                        continue
+                    self._answer(conn, job)
+                except Exception as exc:  # noqa: BLE001 - reconnect on the next turn
+                    log.warning("encode lane: database error (%s); reconnecting", _first_line(exc))
+                    _close(conn)
+                    conn = None
         finally:
-            conn.close()
+            _close(conn)
 
     def _ensure_backend(self) -> bool:
         if self.backend is not None:
@@ -108,7 +140,6 @@ class EncodeLane(threading.Thread):
                 getattr(self.backend, "description", "?"),
                 time.monotonic() - started,
             )
-            self.ready.set()
             return True
         except Exception as exc:  # noqa: BLE001 - reported per job, retried later
             self.load_error = f"{type(exc).__name__}: {exc}"
