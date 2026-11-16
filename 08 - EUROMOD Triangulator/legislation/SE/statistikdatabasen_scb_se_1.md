@@ -1,1 +1,0 @@
-Prisbasbeloppet (Basbeloppet). År 1960 - 2026. PxWeb

@@ -1,1 +1,0 @@
-Konsumentprisindex (KPI), totalt, 1980=100 (uppdateras ej efter 2025M12). Månad 1980M01 - 2025M12. PxWeb

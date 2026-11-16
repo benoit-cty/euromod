@@ -15,7 +15,7 @@ only openfisca-france), so there is no corpus drafter: expected values in
 `golden_sources/nl.json` are hand-curated from the fourteen ingested acts, every one located
 in the corpus at `as_of` 2025-06-01 before being written down, and every drafted case stays
 `verified: false` until a human confirms it (`nomokrisis-eval verify <id> --reviewer …` or
-the UI's Golden set tab). The Country Report (`08 - EUROMOD Triangulator/country-reports/
+the UI's Golden set tab). The Country Report (`Nomotheca-RAG/country_reports/
 Y16/NL_Y16.md`, *Main policy changes between 2024 and 2025*) was used to find where 2025
 moved; it is context, never evidence — and for NL it is also the source of the set's
 sharpest trap (the 35.82 % combined rate, see case 2).

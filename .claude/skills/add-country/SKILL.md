@@ -14,8 +14,8 @@ Before any code, produce `Nomotheca-RAG/<Country>_sources_analysis.md` following
 Hands-on verification is mandatory, not optional:
 - Probe the candidate API live (`curl`) and record exact URL patterns, one real payload, and its structure in the doc.
 - Verify **point-in-time capability**: can you enumerate dated consolidated versions of the country's PIT law and fetch one by id? Map the version-validity fields onto `legal_unit_versions.validity`.
-- Identify the country's "art. 197 equivalent" — one fact you know changed at a known date (a bracket threshold, an allowance amount) from the EUROMOD Country Report (`08 - EUROMOD Triangulator/country-reports/Y16/<CC>_Y16.md`, sections 2.2 "Main policy changes"). This becomes the freshness canary.
-- Check the Triangulator's prior art: `08 - EUROMOD Triangulator/.claude/skills/law-scraper/scripts/scrape_<CC>.py` and `legislation/<CC>/PENDING.md` record which portals 403 plain HTTP clients.
+- Identify the country's "art. 197 equivalent" — one fact you know changed at a known date (a bracket threshold, an allowance amount) from the EUROMOD Country Report (`Nomotheca-RAG/country_reports/Y16/<CC>_Y16.md`, sections 2.2 "Main policy changes"). This becomes the freshness canary.
+- Check the Triangulator's prior art: `08 - EUROMOD Triangulator/.claude/skills/law-scraper/scripts/scrape_<CC>.py` (on the `archive/triangulator` branch) and `legislation/<CC>/PENDING.md` record which portals 403 plain HTTP clients.
 
 ## Step 1 — Seed rows (rows, not DDL)
 

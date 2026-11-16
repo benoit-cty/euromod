@@ -150,7 +150,7 @@ Unlike FR (resolve and fetch on different sources) and like LT (one API, two que
 cd Nomotheca-RAG/ingest
 
 # Ingest the Country Report (context, never evidence)
-uv run python -m nomotheca_ingest.cli country-report es "../../08 - EUROMOD Triangulator/country-reports/Y16/ES_Y16.md" -d postgresql://jrc:jrc@localhost:5434/legislation
+uv run python -m nomotheca_ingest.cli country-report es "../../Nomotheca-RAG/country_reports/Y16/ES_Y16.md" -d postgresql://jrc:jrc@localhost:5434/legislation
 
 # Ingest the legislation
 export EUROMOD_DATABASE_URL=postgresql://jrc:jrc@localhost:5434/legislation

@@ -44,9 +44,10 @@ routes `changed` for `--year 2024` and `provisional` for `--year 2025` when the
 corpus holds only the LF-2025 consolidation (= 2024-income values); CDHR routes
 `not_found` while its article is absent from the corpus.
 
-Parameters always come from the parameter store — `data/parameters/` holds only
-records materialized from it, so ingest first (`ingest-params` + `curate-params`,
-see below) and reach for `run-targets` rather than adding a file by hand.
+Parameters always come from the parameter store (`params.*`): ingest first
+(`ingest-params` + `curate-params`, see below) and run `run-targets`; nothing
+is materialized to disk. (`data/parameters/` survives only as part of the
+golden-set seed fixtures `nomokrisis-eval import-golden` reads.)
 
 Real LLM: add `--force --model anthropic/claude-sonnet-5` to either command
 (or `azure_openai/…`, `openai/…`, `openrouter/…`, `together/…` — see the repo-root `.env.example`).
@@ -250,9 +251,8 @@ above 1 (`$tin_MaxLimit_coef3` = 60 average wages) out.
 
 The unit must be one the export itself uses (`/1`, `currency`,
 `currency/{day,week,month,year}`); anything else is rejected as a typo.
-Materialized parameter files carry the unit, so rebuild them after curating
-(`run-targets` for `data/parameters/db/`, `nomokrisis-eval build-*-dataset`
-for the golden set). The defect itself is reported to the economists team — the
+Runs read the unit from the store, so a re-run picks a curation up; rebuild
+the golden set after curating (`nomokrisis-eval build-*-dataset`). The defect itself is reported to the economists team — the
 overlay is a bridge until a corrected export lands, not a replacement for one.
 
 ## 2. Orchestrator: plain Python + PydanticAI (thin)
@@ -298,10 +298,10 @@ schema can evolve pipeline-side without lockstep releases.
 - **Parameters** — every parameter in the `params` schema (see
   `ingest-params`), filterable by country / policy / run state / text, with
   the current model value and the latest agentic run per row. Select
-  parameters and **launch an agentic update from the UI**: it spawns
-  `nomoscope-workflow run-targets <model_target>… --year …` (each target is
-  materialized from the DB as an Activity 1 file under
-  `data/parameters/db/`), streams the CLI output live, then refreshes.
+  parameters and **launch an agentic update from the UI**: it submits a
+  `workflow` job the worker runs as `nomoscope-workflow run-targets
+  <model_target>… --year …` (records read straight from the DB), streams the
+  job's events live, then refreshes.
   Each run row links to the **review-queue item** and deep-links to the
   run's **trace in Phoenix** (`/projects/<gid>/traces/<trace_id>`; the
   project gid is resolved from the `phoenix` DB in the shared Postgres).

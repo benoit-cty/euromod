@@ -24,7 +24,7 @@ Verified example, Finance Act 2024 (`2024/act/43`) s. 3, quoted from the live eI
 > (f) in section 466A(2), by the substitution of "€1,950" for "€1,800",
 > (g) in section 468(2) … "€1,950" for "€1,650" … "€3,900" for "€3,300"
 
-That **single section** carries essentially the entire EUROMOD IE personal-income-tax parameter set for system year 2025, and it matches the Country Report's Budget 2025 list item for item (`08 - EUROMOD Triangulator/country-reports/Y16/IE_Y16.md` §2.2 "Budget 2025"). The same act's s. 2 carries the USC bands (€12,012 / €15,370 / €42,662 / remainder at 0.5 / 2 / 3 / 8 %) and the €25,760 → €27,382 substitution.
+That **single section** carries essentially the entire EUROMOD IE personal-income-tax parameter set for system year 2025, and it matches the Country Report's Budget 2025 list item for item (`Nomotheca-RAG/country_reports/Y16/IE_Y16.md` §2.2 "Budget 2025"). The same act's s. 2 carries the USC bands (€12,012 / €15,370 / €42,662 / remainder at 0.5 / 2 / 3 / 8 %) and the €25,760 → €27,382 substitution.
 
 Social Welfare Act 2024 (`2024/act/36`) is the same shape for benefits, and states commencement **per section**:
 
@@ -113,7 +113,7 @@ That is machine-extractable provenance per amended fragment. It cannot reconstru
 
 - **Revenue Notes for Guidance to the TCA 1997** (`revenue.ie/en/tax-professionals/legislation/notes-for-guidance/taxes-consolidation-act-tca.aspx`) — per-Part PDFs, republished annually "as amended up to and including Finance Act 2025". This is the closest thing to a consolidated TCA that exists publicly, but it is **guidance, not authentic text**. Same hazard class as EUROMOD Country Reports: usable as context, never as the cited evidence for a parameter value.
 - **Revenue** rates/credits/bands pages, **DSP SW19** rates booklet, **budget.gov.ie** — fast authoritative statements of applied values, useful as canary cross-checks. `revenue.ie` serves plain clients (200).
-- The Triangulator's prior art (`08 - EUROMOD Triangulator/legislation/IE/PENDING.md`) records what actually blocks: `welfare.ie` 503s, `tara.tcd.ie` 403s, several `cso.ie` URLs 404. **Neither irishstatutebook.ie nor revisedacts.lawreform.ie appears in the IE blocked list** — Ireland has no Anubis/Datadome problem. `scrape_IE.py` never touched the Statute Book at all; it scraped `citizensinformation.ie` for benefit descriptions.
+- The Triangulator's prior art (`08 - EUROMOD Triangulator/legislation/IE/PENDING.md` (on the `archive/triangulator` branch)) records what actually blocks: `welfare.ie` 503s, `tara.tcd.ie` 403s, several `cso.ie` URLs 404. **Neither irishstatutebook.ie nor revisedacts.lawreform.ie appears in the IE blocked list** — Ireland has no Anubis/Datadome problem. `scrape_IE.py` never touched the Statute Book at all; it scraped `citizensinformation.ie` for benefit descriptions.
 
 ### F. Internal asset — Hannes's Ireland JSON DB prototype
 
@@ -185,7 +185,7 @@ uv run python -m nomotheca_ingest.cli instrument ie 1997/act/39   # TCA 1997
 uv run python -m nomotheca_ingest.cli instrument ie 2005/act/26   # SWCA 2005
 
 # Country Report as context (never evidence)
-uv run python -m nomotheca_ingest.cli country-report ie "../../08 - EUROMOD Triangulator/country-reports/Y16/IE_Y16.md"
+uv run python -m nomotheca_ingest.cli country-report ie "../../Nomotheca-RAG/country_reports/Y16/IE_Y16.md"
 
 # Derived rows
 uv run --extra embeddings python -m nomotheca_ingest.cli embeddings build \

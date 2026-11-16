@@ -14,7 +14,7 @@ their own diario oficial.
 ## Method
 
 1. Extract the `**Legal sources**` block from each region's subsection of the
-   Country Report (`08 - EUROMOD Triangulator/country-reports/Y16/ES_Y16.md`,
+   Country Report (`Nomotheca-RAG/country_reports/Y16/ES_Y16.md`,
    `bsarg_es` starts line 9191, `bchrg_es` line 6497). These name the acts.
 2. For each named act, find its BOE id. The open-data `query=` endpoint is
    dead (HTTP 500), so use the boe.es web search over legislación consolidada

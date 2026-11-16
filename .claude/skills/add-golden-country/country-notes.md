@@ -65,7 +65,7 @@ and open points: `Nomotheca-RAG/Spain_sources_analysis.md` §5–6.
 year, EUROMOD system year Y states year Y. Record it in the overlay header and
 the selection's `conventions`.
 
-**Country Report.** `08 - EUROMOD Triangulator/country-reports/Y16/ES_Y16.md`,
+**Country Report.** `Nomotheca-RAG/country_reports/Y16/ES_Y16.md`,
 section *Main policy changes between 2024-2025* (around line 2510). Ingested
 as `country_report` (224 chunks).
 
@@ -134,6 +134,6 @@ since the set was built (2026-09-08): `$xcc_amt` + 296 `$tco_t_*` national_team,
 
 **Temporal basis.** `in_force`.
 
-**Country Report.** `08 - EUROMOD Triangulator/country-reports/Y16/NL_Y16.md`,
+**Country Report.** `Nomotheca-RAG/country_reports/Y16/NL_Y16.md`,
 section *Main policy changes between 2024 and 2025* (around line 1105).
 Ingested as `country_report` (125 units).

@@ -40,7 +40,7 @@ is the one to read before trusting any number shown in the validation UI.
 | **Nomergon** | The worker ("work of the law"): the one process that executes every job the UI or a developer submits through `ops.jobs`, and the only one holding model credentials or loading a model ([ADR 0004](docs/adr/0004-model-access-lives-only-in-a-worker-fed-by-a-postgres-job-table.md)). Directory [Nomergon-worker/](Nomergon-worker/), package `nomergon`. |
 | **Job** / **Job type** / **Worker** / **Workstation** | The execution vocabulary, defined in [CONTEXT.md](CONTEXT.md#execution). |
 | **Activity 1–5** | The five contractual deliverables ([00_project-overview.md](00_project-overview.md)): 1 parameter format, 2 RAG architecture, 3 agentic workflow, 4 validation, 5 technical report. |
-| **Triangulator** | An earlier prototype kept for harvesting, [08 - EUROMOD Triangulator/](08%20-%20EUROMOD%20Triangulator/). "Triangulation" there = cross-checking a parameter across **three** sources: the EUROMOD XML, the Country Report and the national legislation. |
+| **Triangulator** | An earlier prototype kept for harvesting, kept on the `archive/triangulator` branch (removed from `main` on 17 Nov 2026; its Country Reports live on in `Nomotheca-RAG/country_reports/Y16/`). "Triangulation" there = cross-checking a parameter across **three** sources: the EUROMOD XML, the Country Report and the national legislation. |
 
 The three packages depend on each other in a line — **ingest → agentic workflow → evaluation** —
 and all read/write one shared Postgres.

@@ -39,7 +39,7 @@ The anchor acts, resolved to their BWB identifiers and live-verified in force at
 
 ### A. wetten.overheid.nl portal (HTML) ✘ not the fetch source
 
-The human-facing portal. Serves the same consolidations behind Juriconnect URLs carrying both temporal axes — `https://wetten.overheid.nl/jci1.3:c:BWBR0011353&artikel=2.10&z=2025-01-01&g=2025-01-01`. The Triangulator project scraped it in July 2026 and had to reach for **`curl_cffi` browser impersonation to avoid HTTP 429** (`08 - EUROMOD Triangulator/.claude/skills/law-scraper/scripts/scrape_NL.py`), and resolved law titles by scraping *Yahoo* because the portal has no usable search API. That is exactly the fragile scraping the archive-first design exists to avoid.
+The human-facing portal. Serves the same consolidations behind Juriconnect URLs carrying both temporal axes — `https://wetten.overheid.nl/jci1.3:c:BWBR0011353&artikel=2.10&z=2025-01-01&g=2025-01-01`. The Triangulator project scraped it in July 2026 and had to reach for **`curl_cffi` browser impersonation to avoid HTTP 429** (`08 - EUROMOD Triangulator/.claude/skills/law-scraper/scripts/scrape_NL.py` (on the `archive/triangulator` branch)), and resolved law titles by scraping *Yahoo* because the portal has no usable search API. That is exactly the fragile scraping the archive-first design exists to avoid.
 
 **Use wetten.overheid.nl URLs only as the canonical human-readable citation recorded in provenance, never as the fetch source.** The Juriconnect reference is worth constructing and storing precisely because it is the citation a Dutch lawyer recognises.
 
@@ -199,7 +199,7 @@ cd Nomotheca-RAG/ingest
 export EUROMOD_DATABASE_URL=postgresql://jrc:jrc@localhost:5434/legislation
 
 # Ingest the Country Report (context, never evidence)
-uv run python -m nomotheca_ingest.cli country-report nl "../../08 - EUROMOD Triangulator/country-reports/Y16/NL_Y16.md"
+uv run python -m nomotheca_ingest.cli country-report nl "../../Nomotheca-RAG/country_reports/Y16/NL_Y16.md"
 
 # Ingest the legislation
 for id in BWBR0011353 BWBR0002471 BWBR0018472 BWBR0018451 BWBR0008659 BWBR0022751 \

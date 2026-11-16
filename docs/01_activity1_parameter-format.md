@@ -31,7 +31,7 @@ Rationale: T2 keeps rigor where it matters (nothing enters the model unvalidated
 
 Core tables (detailed in `08_schema-proposal-for-validation.md`):
 
-- `parameters` — identity & addressing: country, model target (EUROMOD system/policy/function/parameter path), labels, unit, value type (scalar / bracket_schedule / boolean / formula).
+- `parameters` — identity & addressing: country, model target (EUROMOD system/policy/function/parameter path), labels, unit, value type (scalar / bracket_schedule / boolean / formula), and `temporal_basis` (`in_force` default | `income_year` | `start_of_year`). `income_year` marks the FR income-tax family: system year Y holds the barème the law labels "income Y−1" (`schema.income_year_for`); `start_of_year` marks parameters EUROMOD holds at their 1 January value. Curated knowledge — never derivable from the EUROMOD export, never overwritten by re-ingest.
 - `parameter_values` — one row per (parameter, `valid_from`): typed value, `valid_to` (nullable = still valid), `legal_status`, `source_type`, dates (effective / publication / signature, all distinct), confidence.
 - `value_references` — 0..n per value row: instrument title, pinpoint (article), URL/ELI, `supporting_extract` (verbatim original-language sentence), optional FK + offsets into the RAG's `legal_units` chunks (enables automated supportedness checks).
 - `extraction_runs` — lineage: run id, model, prompt version, retrieval trace; FK from value rows proposed by the pipeline.

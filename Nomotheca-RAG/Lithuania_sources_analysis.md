@@ -31,7 +31,7 @@ Two identifier systems coexist: the **e-tar document id** (`dokumento_id`, e.g. 
 
 ### A. e-tar.lt portal (HTML) ✘ blocked
 
-The official portal (`www.e-tar.lt/portal/lt/legalAct/{id}` and `.../asr` for the current consolidation) **403s every plain HTTP client** — verified independently by the Triangulator project (July 2026: all 14 e-tar URLs in the LT country report failed with 403; see `08 - EUROMOD Triangulator/legislation/LT/PENDING.md`) and reconfirmed by probing. Browser-impersonation (curl_cffi) works but is exactly the fragile scraping the archive-first design avoids. **Use e-tar.lt URLs only as the canonical citation recorded in provenance, never as the fetch source.**
+The official portal (`www.e-tar.lt/portal/lt/legalAct/{id}` and `.../asr` for the current consolidation) **403s every plain HTTP client** — verified independently by the Triangulator project (July 2026: all 14 e-tar URLs in the LT country report failed with 403; see `08 - EUROMOD Triangulator/legislation/LT/PENDING.md` (on the `archive/triangulator` branch)) and reconfirmed by probing. Browser-impersonation (curl_cffi) works but is exactly the fragile scraping the archive-first design avoids. **Use e-tar.lt URLs only as the canonical citation recorded in provenance, never as the fetch source.**
 
 ### B. **data.gov.lt Spinta open-data API** ✔ the fetch source
 
@@ -112,7 +112,7 @@ Scale check: 6 acts × ~10 consolidations ≈ 60 requests of 100–300 KB — tr
 cd Nomotheca-RAG/ingest/src/
 
 # Ingest the Country Report
-uv run python -m nomotheca_ingest.cli country-report lt "../../08 - EUROMOD Triangulator/country-reports/Y16/LT_Y16.md"  -d postgresql://jrc:jrc@localhost:5434/legislation
+uv run python -m nomotheca_ingest.cli country-report lt "../../Nomotheca-RAG/country_reports/Y16/LT_Y16.md"  -d postgresql://jrc:jrc@localhost:5434/legislation
 
 # Ingest the legislation (fast)
 export EUROMOD_DATABASE_URL=postgresql://jrc:jrc@localhost:5434/legislation

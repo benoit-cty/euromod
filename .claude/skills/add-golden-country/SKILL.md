@@ -120,7 +120,7 @@ with paramdb.connect(load_config()) as conn:
 
 Then read, as context never evidence: the Country Report's *Main policy
 changes between 2024-2025* section
-(`08 - EUROMOD Triangulator/country-reports/Y16/<CC>_Y16.md`) for parameters
+(`Nomotheca-RAG/country_reports/Y16/<CC>_Y16.md`) for parameters
 where EUROMOD may be stale, and the *Open points* of
 `Nomotheca-RAG/<Country>_sources_analysis.md` for the country's own hazards
 (instrument classes not ingested, effect-date quirks, state-vs-total rates).

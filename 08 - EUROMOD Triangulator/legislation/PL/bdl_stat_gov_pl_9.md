@@ -1,1 +1,0 @@
-GUS - Bank Danych Lokalnych
