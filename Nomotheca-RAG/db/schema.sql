@@ -540,3 +540,23 @@ FROM fts FULL OUTER JOIN vec USING (chunk_id)
 ORDER BY 2 DESC, chunk_id
 LIMIT p_k
 $$;
+
+-- ----------------------------------------------------------------------------
+-- schema_migrations — which db/migrations/*.sql this database has. A fresh
+-- database is built at the latest state, so every migration is recorded as
+-- applied here; `make migrate` applies the rest to an existing one.
+-- tests/test_migrations.py (ingest) checks this list against the directory.
+-- ----------------------------------------------------------------------------
+CREATE TABLE schema_migrations (
+    name       text PRIMARY KEY,
+    applied_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO schema_migrations (name) VALUES
+  ('0001_instrument_source_trust_class'),
+  ('0002_es_autonomous_communities'),
+  ('0003_fr_kali_source'),
+  ('0004_search_chunks'),
+  ('0005_hnsw_every_model'),
+  ('0006_translation_source_hash'),
+  ('0007_drop_unused_objects'),
+  ('0008_schema_migrations');

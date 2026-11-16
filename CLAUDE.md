@@ -42,7 +42,7 @@ docker compose logs -f worker # what the worker is doing; `nomergon status` for 
 
 **Podman** works too ([docs/podman.md](docs/podman.md)): `podman-compose`, and the GPU worker is the CDI service `worker-cdi` (profile `gpu-cdi`, container `nomergon-worker-cdi`); the Makefile picks Podman when `docker` is absent (`ENGINE=podman` to force). Keep image names fully qualified (`docker.io/…`) and bind mounts `:ro,z` in the compose file — Docker ignores both, Podman needs them.
 
-The worker needs the params and eval schemas too (`nomoscope-workflow init-param-db`, `nomokrisis-eval init-db`, idempotent). Roles for a shared deployment are in `Nomergon-worker/db/roles.sql` (worker role, `nomos_reviewer` group, one login per analyst; the dev stack keeps the single `jrc` superuser).
+The worker needs the params and eval schemas too (`nomoscope-workflow init-param-db`, `nomokrisis-eval init-db`, idempotent; ordinary commands no longer apply them, they refuse to run without them). An existing legislation DB gets new `Nomotheca-RAG/db/migrations/*.sql` with `make migrate` (recorded in `schema_migrations`; a fresh volume starts with all recorded). `seed.sql` holds reference rows only; the old demo corpus is the opt-in `db/demo.sql`. Roles for a shared deployment are in `Nomergon-worker/db/roles.sql` (worker role, `nomos_reviewer` group, one login per analyst; the dev stack keeps the single `jrc` superuser).
 
 Postgres is on host port **5434** (not 5432, to avoid clashing with a local PG). Default DB URL: `postgresql://jrc:jrc@localhost:5434/legislation`. pgAdmin admin@euromod.eu / admin.
 

@@ -55,9 +55,24 @@ def connect(cfg: WorkflowConfig) -> psycopg.Connection:
 
 
 def apply_schema(conn: psycopg.Connection) -> None:
-    """Create/refresh the params schema (idempotent)."""
+    """Create/refresh the params schema (idempotent). `init-param-db` only."""
     conn.execute(SCHEMA_SQL.read_text(encoding="utf-8"))
     conn.commit()
+
+
+def require_schema(conn: psycopg.Connection) -> None:
+    """Refuse to run on a database without the params schema.
+
+    Ordinary commands (ingest-params, curate-params, the OpenFisca and
+    translation commands) used to apply the whole schema file on every run —
+    dropping and re-adding a constraint and replacing the SECURITY DEFINER
+    functions, which a DML-only worker role (roles.sql) may not do (code audit
+    2.3). Applying it is `nomoscope-workflow init-param-db`'s job.
+    """
+    present = conn.execute("SELECT to_regclass('params.parameters') IS NOT NULL").fetchone()[0]
+    if not present:
+        msg = "the params schema is missing: run `nomoscope-workflow init-param-db` first"
+        raise RuntimeError(msg)
 
 
 # ---------------------------------------------------------------------------

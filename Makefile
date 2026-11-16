@@ -33,7 +33,7 @@ TAURI_ENV = $(if $(shell grep -qi microsoft /proc/version 2>/dev/null && echo ws
 .DEFAULT_GOAL := help
 .PHONY: help up-gpu up-cpu up down logs status jobs init-db \
         update ui rag-ui embed translate batch stop-batch _worker \
-        sync test test-python test-apps
+        sync test test-python test-apps migrate
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -99,6 +99,24 @@ batch: translate embed ## The nightly batch: translate, then embed (originals an
 # batch resumes where this one stopped, and no batch running is not an error.
 stop-batch: _worker ## Stop the nightly batch: cancel queued/running translate and embed jobs
 	$(ENGINE) exec $(WORKER) $(BIN)/nomergon cancel --type translate --type translate-params --type embed
+
+# ---------------------------------------------------------------- migrations --
+# Apply, in order, each Nomotheca-RAG/db/migrations/*.sql the database has not
+# recorded in schema_migrations, and record it. Fresh databases (schema.sql)
+# start with every migration recorded.
+
+DB_CONTAINER ?= nomotheca-legislation-db
+PSQL = $(ENGINE) exec -i $(DB_CONTAINER) psql -U jrc -d legislation -v ON_ERROR_STOP=1 -q
+
+migrate: ## Apply the legislation-DB migrations this database has not recorded
+	@$(PSQL) -c "CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())"
+	@for f in Nomotheca-RAG/db/migrations/*.sql; do \
+	  name=$$(basename $$f .sql); \
+	  applied=$$($(PSQL) -Atc "SELECT 1 FROM schema_migrations WHERE name = '$$name'"); \
+	  if [ -z "$$applied" ]; then echo "applying $$name"; \
+	    $(PSQL) < $$f && $(PSQL) -c "INSERT INTO schema_migrations (name) VALUES ('$$name') ON CONFLICT DO NOTHING"; \
+	  fi; \
+	done; echo "migrations up to date"
 
 # --------------------------------------------------------------------- tests --
 # Every suite, on the host. Python runs on the one workspace lock (root

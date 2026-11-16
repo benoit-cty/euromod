@@ -303,7 +303,7 @@ def ingest_params(
     """Ingest enriched parameter exports into params.parameters/model_values/parameter_usage."""
     cfg = load_config()
     with paramdb.connect(cfg) as conn:
-        paramdb.apply_schema(conn)
+        paramdb.require_schema(conn)
         for path in files:
             stats = paramdb.ingest_file(conn, path)
             typer.echo(
@@ -326,7 +326,7 @@ def curate_params(
     cfg = load_config()
     exit_code = 0
     with paramdb.connect(cfg) as conn:
-        paramdb.apply_schema(conn)
+        paramdb.require_schema(conn)
         for path in files:
             stats = paramdb.apply_curation(conn, path)
             typer.echo(
@@ -352,7 +352,7 @@ def ingest_openfisca(
         typer.echo(f"not a directory: {parameters_dir}")
         raise typer.Exit(1)
     with paramdb.connect(cfg) as conn:
-        paramdb.apply_schema(conn)
+        paramdb.require_schema(conn)
         stats = openfisca.ingest_corpus(
             conn, parameters_dir, country.upper(), kind=kind, license=license, echo=typer.echo
         )
@@ -385,7 +385,7 @@ def match_openfisca(
     cfg = load_config()
     scales = tuple(float(f) for f in factors.split(",") if f.strip())
     with paramdb.connect(cfg) as conn:
-        paramdb.apply_schema(conn)
+        paramdb.require_schema(conn)
         links = openfisca_match.fingerprint_candidates(
             conn, country.upper(), kind=kind, min_years=min_years, factors=scales
         )
@@ -432,7 +432,7 @@ def translate_params(
         typer.echo("translate-params needs a real model — set WORKFLOW_MODEL or pass --model")
         raise typer.Exit(1)
     with paramdb.connect(cfg) as conn:
-        paramdb.apply_schema(conn)
+        paramdb.require_schema(conn)
         stats = translate.translate_country(
             conn, chosen, country.upper(), lang,
             batch_size=batch_size, limit=limit, force=force, echo=typer.echo,
