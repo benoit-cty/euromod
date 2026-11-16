@@ -117,7 +117,7 @@ Suggested fixes, in order of value:
 
 ### 2.4 Tooling
 
-- **No shared lint, format, type-check or CI configuration** (medium). There is no `[tool.ruff]`, mypy, pyright, pre-commit or workflow file. The Makefile has no `test` or `lint` target; eight suites are run by hand from eight directories. 28 skip sites depend on a live database. **Partly fixed**: `make test` (and `make sync`) runs all eight suites; tests that raced a live worker now skip when one is alive.
+- **No shared lint, format, type-check or CI configuration** (medium). There is no `[tool.ruff]`, mypy, pyright, pre-commit or workflow file. The Makefile has no `test` or `lint` target; eight suites are run by hand from eight directories. 28 skip sites depend on a live database. **Fixed**: root `ruff.toml` (pyflakes + syntax, clean today) with `make lint`; `make test` (and `make sync`) runs all eight suites; `.github/workflows/ci.yml` runs lint, the Python suites and the apps' JS tests; tests that raced a live worker now skip when one is alive. No type checker yet.
 - **Fixed** — **Five independent `uv.lock` files** (high, see D6). A uv workspace with one root lock removes the drift.
 - **Packages only work as editable installs** (low): SQL files, curation YAML and the repo root are found by walking up from `__file__`.
 - **Fixed** — `pytest` and `textual` are runtime dependencies of ingest, so both ship in the worker image. Now: `pytest` in the dev group, `textual` in a `tui` extra (and the dev group); the CLI imports the TUI lazily.

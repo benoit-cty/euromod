@@ -1,0 +1,15 @@
+# One lint configuration for the five Python packages (code audit 2.4).
+# Deliberately small: what is enforced must pass today, and grows from there.
+#   make lint
+target-version = "py312"
+line-length = 120
+extend-exclude = [".venv*", "**/.venv*", "**/node_modules", "**/target", ".claude/worktrees"]
+
+[lint]
+# F: pyflakes (undefined names, unused imports — the class of bug that slipped
+# through in the 16 Nov 2026 refactor); E9: syntax errors.
+select = ["F", "E9"]
+
+[lint.per-file-ignores]
+# Tests import after fixtures and module-level setup on purpose.
+"**/tests/**" = ["F401", "F811", "E402"]

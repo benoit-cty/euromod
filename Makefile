@@ -33,7 +33,7 @@ TAURI_ENV = $(if $(shell grep -qi microsoft /proc/version 2>/dev/null && echo ws
 .DEFAULT_GOAL := help
 .PHONY: help up-gpu up-cpu up down logs status jobs init-db \
         update ui rag-ui embed translate batch stop-batch _worker \
-        sync test test-python test-apps migrate
+        sync test test-python test-apps migrate lint
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -127,6 +127,9 @@ PY_PACKAGES = Nomotheca-RAG/ingest Nomoscope-agentic-workflow/pipeline \
 
 sync: ## Install every Python package into the workspace .venv (one lock)
 	uv sync --all-packages --extra embeddings
+
+lint: ## Lint the five Python packages (root ruff.toml)
+	uvx ruff@0.15.0 check $(PY_PACKAGES)
 
 test: test-python test-apps ## Run every test suite (Python packages, both Tauri apps)
 

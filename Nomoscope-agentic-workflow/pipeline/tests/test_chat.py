@@ -99,6 +99,5 @@ def test_a_chat_quote_gets_the_split_ligature_rule() -> None:
     from nomoscope_workflow import quotes as q
 
     content = "revalorisation des prestati ons familiales au 1er avril 2025."
-    sources = {CHUNK_B: {"content": content}}
     hits = [type("H", (), {"chunk_id": CHUNK_B, "citation": None, "content": content})()]
     assert q.resolve_chunk_by_extract(hits, "revalorisation des prestations familiales") == CHUNK_B

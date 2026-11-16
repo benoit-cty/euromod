@@ -244,7 +244,7 @@ def test_selection_export_import_round_trip_through_the_cli(db, tmp_path):
     result = runner.invoke(app, ["selections"])
     assert result.exit_code == 0
     me = db.execute("SELECT current_user").fetchone()[0]
-    assert f"ZZ  curated   entries=2" in result.output and me in result.output
+    assert "ZZ  curated   entries=2" in result.output and me in result.output
 
 
 def test_embedding_case_round_trip(db):

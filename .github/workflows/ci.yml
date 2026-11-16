@@ -1,0 +1,27 @@
+# Minimal CI (code audit 2.4): lint and every Python suite on the one
+# workspace lock. Suites that need the stack skip their live tests when no
+# database answers; the desktop apps' JS tests run too.
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.7"
+      - run: uv sync --all-packages --frozen
+      - run: make lint
+      - run: make test-python
+  apps-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: cd Nomoscope-agentic-workflow/ui && npm ci && npm test
+      - run: cd Nomoscope-agentic-workflow/rag-ui && npm ci && npm test
