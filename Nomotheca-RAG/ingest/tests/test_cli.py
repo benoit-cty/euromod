@@ -35,10 +35,9 @@ def test_both_batch_commands_expose_progress_json() -> None:
 
 def test_translation_json_progress_emits_prefixed_json(capsys) -> None:
     """Each translation event becomes one parseable '@progress' stdout line."""
-    from nomotheca_ingest.cli import _translation_json_progress
+    from nomotheca_ingest.core.progress import TRANSLATIONS, BatchStats, emit, json_progress
 
-    update = _translation_json_progress(total=10)
-    update({"phase": "translated", "scanned": 3, "translated": 2, "failed": 1, "detail": "CGI art. 197"})
+    emit(json_progress(TRANSLATIONS, total=10), "translated", BatchStats(3, 2, 0, 1), detail="CGI art. 197")
 
     out = capsys.readouterr().out.strip()
     assert out.startswith(PROGRESS_PREFIX)
@@ -56,11 +55,11 @@ def test_translation_json_progress_emits_prefixed_json(capsys) -> None:
 
 def test_embedding_json_progress_skips_per_chunk_candidate_events(capsys) -> None:
     """Only batch-level events are emitted, so stdout stays small on big corpora."""
-    from nomotheca_ingest.cli import _embedding_json_progress
+    from nomotheca_ingest.core.progress import EMBEDDINGS, BatchStats, emit, json_progress
 
-    update = _embedding_json_progress(total=100)
-    update({"phase": "candidate", "scanned": 1, "embedded": 0, "batch_size": 1})
-    update({"phase": "embedded", "scanned": 16, "embedded": 16, "batch_size": 16})
+    update = json_progress(EMBEDDINGS, total=100)
+    emit(update, "candidate", BatchStats(scanned=1), batch_size=1)
+    emit(update, "embedded", BatchStats(scanned=16, done=16), batch_size=16)
 
     lines = capsys.readouterr().out.strip().splitlines()
     assert len(lines) == 1
@@ -68,6 +67,7 @@ def test_embedding_json_progress_skips_per_chunk_candidate_events(capsys) -> Non
     assert payload["task"] == "embeddings"
     assert payload["done"] == 16
     assert payload["total"] == 100
+    assert payload["embedded"] == 16
 
 
 def test_translate_run_help_exposes_request_timeout_option() -> None:
@@ -81,12 +81,11 @@ def test_translate_run_help_exposes_request_timeout_option() -> None:
 
 def test_embedding_progress_status_mentions_encoding_batch() -> None:
     """Progress status exposes batch-level movement during slow model calls."""
-    from nomotheca_ingest.cli import _embedding_progress_status
+    from nomotheca_ingest.core.progress import EMBEDDINGS, BatchStats, emit, status_line
 
-    status = _embedding_progress_status(
-        {"phase": "encoding", "scanned": 32, "embedded": 16, "batch_size": 16},
-        dry_run=False,
-    )
+    events: list = []
+    emit(events.append, "encoding", BatchStats(scanned=32, done=16), batch_size=16)
+    status = status_line(EMBEDDINGS, events[0], dry_run=False)
 
     assert "encoding batch=16" in status
     assert "embedded=16" in status

@@ -9,10 +9,10 @@ from types import ModuleType, SimpleNamespace
 
 import pytest
 
+from nomotheca_ingest.core.progress import ProgressCallback
 from nomotheca_ingest.core.embeddings import (
     BGE_M3_DIM,
     EMBEDDING_BACKENDS,
-    EmbeddingProgressCallback,
     SentenceTransformerBackend,
     arch_list_supports,
     build_embeddings,
@@ -126,7 +126,7 @@ def test_build_embeddings_skips_chunks_removed_by_a_concurrent_ingest() -> None:
     stats = build_embeddings(conn, _ConstantBackend(), batch_size=2)
 
     assert stats.scanned == 2
-    assert stats.embedded == 1
+    assert stats.done == 1
     assert stats.skipped == 1
     assert conn.inserted == ["live-chunk"]
 
@@ -405,7 +405,7 @@ def test_openvino_npu_compiler_loader_failure_is_explained() -> None:
 def test_embedding_progress_event_shape() -> None:
     """Progress callbacks receive compact state updates from the builder."""
     events: list[dict[str, int | str]] = []
-    callback: EmbeddingProgressCallback = events.append
+    callback: ProgressCallback = events.append
 
     callback({"phase": "encoding", "scanned": 32, "embedded": 16, "batch_size": 16})
 

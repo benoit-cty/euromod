@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date
 from hashlib import sha256
@@ -16,6 +16,7 @@ from psycopg import Connection
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
+from nomotheca_ingest.core.progress import BatchStats, ProgressCallback, emit
 from nomotheca_ingest.core.embedding_models import (
     DEFAULT_MODEL,
     STORED_DIM,
@@ -55,18 +56,6 @@ class ChunkForEmbedding:
     id: UUID
     input_text: str
     input_hash: str
-
-
-@dataclass(frozen=True, slots=True)
-class EmbeddingBuildStats:
-    """Counts returned by an embedding build run."""
-
-    scanned: int = 0
-    embedded: int = 0
-    skipped: int = 0
-
-
-EmbeddingProgressCallback = Callable[[dict[str, int | str]], None]
 
 
 class EmbeddingBackend(Protocol):
@@ -350,12 +339,12 @@ def build_embeddings(
     batch_size: int = 16,
     limit: int | None = None,
     dry_run: bool = False,
-    progress: EmbeddingProgressCallback | None = None,
+    progress: ProgressCallback | None = None,
     commit_each_batch: bool = False,
     authentic_only: bool = False,
     langs: Sequence[str] | None = None,
     in_force_on: Sequence[date] | None = None,
-) -> EmbeddingBuildStats:
+) -> BatchStats:
     """Embed chunks missing a fresh row for the requested model.
 
     With commit_each_batch, every embedded batch is committed as it lands so a
@@ -372,7 +361,7 @@ def build_embeddings(
         if commit_each_batch:
             conn.commit()  # the model row must survive even if the first batch doesn't
 
-    stats = EmbeddingBuildStats()
+    stats = BatchStats()
     batch: list[ChunkForEmbedding] = []
 
     chunks = iter_chunks_needing_embeddings(
@@ -384,39 +373,27 @@ def build_embeddings(
         in_force_on=in_force_on,
     )
     for chunk in chunks:
-        stats = EmbeddingBuildStats(stats.scanned + 1, stats.embedded, stats.skipped)
+        stats = stats.plus(scanned=1)
         batch.append(chunk)
-        _emit_progress(progress, "candidate", stats, len(batch))
+        emit(progress, "candidate", stats, batch_size=len(batch))
         if len(batch) >= batch_size:
-            _emit_progress(progress, "encoding", stats, len(batch))
+            emit(progress, "encoding", stats, batch_size=len(batch))
             embedded, skipped = _embed_batch(conn, backend, batch, model_id=model_id, dry_run=dry_run)
             if commit_each_batch and not dry_run:
                 conn.commit()
-            stats = EmbeddingBuildStats(stats.scanned, stats.embedded + embedded, stats.skipped + skipped)
-            _emit_progress(progress, "embedded", stats, embedded)
+            stats = stats.plus(done=embedded, skipped=skipped)
+            emit(progress, "embedded", stats, batch_size=embedded)
             batch = []
 
     if batch:
-        _emit_progress(progress, "encoding", stats, len(batch))
+        emit(progress, "encoding", stats, batch_size=len(batch))
         embedded, skipped = _embed_batch(conn, backend, batch, model_id=model_id, dry_run=dry_run)
-        stats = EmbeddingBuildStats(stats.scanned, stats.embedded + embedded, stats.skipped + skipped)
-        _emit_progress(progress, "embedded", stats, embedded)
+        stats = stats.plus(done=embedded, skipped=skipped)
+        emit(progress, "embedded", stats, batch_size=embedded)
 
-    _emit_progress(progress, "done", stats)
+    emit(progress, "done", stats)
 
     return stats
-
-
-def _emit_progress(
-    progress: EmbeddingProgressCallback | None,
-    phase: str,
-    stats: EmbeddingBuildStats,
-    batch_size: int = 0,
-) -> None:
-    """Emit a progress event if a callback is registered."""
-    if progress is None:
-        return
-    progress({"phase": phase, "scanned": stats.scanned, "embedded": stats.embedded, "batch_size": batch_size})
 
 
 _SCOPE_FILTER = """

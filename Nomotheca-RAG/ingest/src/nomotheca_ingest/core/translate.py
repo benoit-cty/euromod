@@ -19,7 +19,7 @@ migration 0006 stamped the existing rows with their source's current hash.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from hashlib import sha256
@@ -32,6 +32,7 @@ from psycopg.types.json import Jsonb
 
 from nomotheca_ingest.core.chunker import chunk_text
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
+from nomotheca_ingest.core.progress import BatchStats, ProgressCallback, emit
 
 #: A version needs a translation when it has no target-language row, or when
 #: its machine translation was made from another state of this source text.
@@ -91,18 +92,6 @@ class TextForTranslation:
     valid_from: date | None
 
 
-@dataclass(frozen=True, slots=True)
-class TranslationBuildStats:
-    """Counts returned by a translation build run."""
-
-    scanned: int = 0
-    translated: int = 0
-    failed: int = 0
-
-
-TranslationProgressCallback = Callable[[dict[str, int | str]], None]
-
-
 class TranslationBackend(Protocol):
     """Minimal interface used by the database translation builder."""
 
@@ -154,53 +143,34 @@ def build_translations(
     target_lang: str = DEFAULT_TARGET_LANG,
     limit: int | None = None,
     dry_run: bool = False,
-    progress: TranslationProgressCallback | None = None,
-) -> TranslationBuildStats:
+    progress: ProgressCallback | None = None,
+) -> BatchStats:
     """Translate every version lacking a target-language text, one row per version.
 
     Commits after each stored translation so an interrupted run keeps the
     LLM output already paid for.
     """
-    stats = TranslationBuildStats()
+    stats = BatchStats()
 
     for source in iter_texts_needing_translation(conn, target_lang=target_lang, limit=limit):
-        stats = TranslationBuildStats(stats.scanned + 1, stats.translated, stats.failed)
-        _emit_progress(progress, "translating", stats, source.citation)
+        stats = stats.plus(scanned=1)
+        emit(progress, "translating", stats, detail=source.citation)
         if dry_run:
+            stats = stats.plus(done=1)  # would translate
             continue
         try:
             translated = translate_content(backend, source.content, source.lang, target_lang)
             store_translation(conn, source, translated, target_lang=target_lang, engine=backend.engine)
             conn.commit()
-            stats = TranslationBuildStats(stats.scanned, stats.translated + 1, stats.failed)
-            _emit_progress(progress, "translated", stats, source.citation)
+            stats = stats.plus(done=1)
+            emit(progress, "translated", stats, detail=source.citation)
         except Exception as exc:  # keep the batch going; report failures at the end
             conn.rollback()
-            stats = TranslationBuildStats(stats.scanned, stats.translated, stats.failed + 1)
-            _emit_progress(progress, "failed", stats, f"{source.citation}: {exc}")
+            stats = stats.plus(failed=1)
+            emit(progress, "failed", stats, detail=f"{source.citation}: {exc}")
 
-    _emit_progress(progress, "done", stats, "")
+    emit(progress, "done", stats)
     return stats
-
-
-def _emit_progress(
-    progress: TranslationProgressCallback | None,
-    phase: str,
-    stats: TranslationBuildStats,
-    detail: str,
-) -> None:
-    """Emit a progress event if a callback is registered."""
-    if progress is None:
-        return
-    progress(
-        {
-            "phase": phase,
-            "scanned": stats.scanned,
-            "translated": stats.translated,
-            "failed": stats.failed,
-            "detail": detail,
-        }
-    )
 
 
 def count_texts_needing_translation(

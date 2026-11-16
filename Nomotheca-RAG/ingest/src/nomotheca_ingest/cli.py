@@ -10,7 +10,6 @@ from typing import Annotated
 
 import psycopg
 import typer
-from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from nomotheca_ingest.core.embedding_models import MODELS, get_model
 from nomotheca_ingest.core.embeddings import (
@@ -24,6 +23,13 @@ from nomotheca_ingest.core.embeddings import (
 from nomotheca_ingest.core.ir import Trigger
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.pipeline import PipelineResult, run_database_ingest
+from nomotheca_ingest.core.progress import (
+    EMBEDDINGS,
+    PROGRESS_PREFIX,  # noqa: F401 - re-exported for wrappers
+    TRANSLATIONS,
+    batch_progress,
+    emit_json,
+)
 from nomotheca_ingest.core.translate import (
     DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS,
     DEFAULT_TARGET_LANG,
@@ -32,10 +38,6 @@ from nomotheca_ingest.core.translate import (
     count_texts_needing_translation,
 )
 
-# Sentinel prefix for machine-readable progress lines (--progress-json). A
-# wrapping UI (the Tauri Ingest tab) matches this prefix on stdout and renders
-# a real progress bar instead of scrolling log text.
-PROGRESS_PREFIX = "@progress "
 
 
 app = typer.Typer(help="Archive-first legislation ingestion commands.")
@@ -474,14 +476,14 @@ def _hold_embedding_build_lock(database_url: str, progress_json: bool = False) -
             detail = f"waiting for the GPU: another embeddings build holds it — {holder or 'just released'}"
             typer.echo(detail + "…", err=True)
             if progress_json:
-                _emit_json_progress({"task": "embeddings", "phase": "waiting", "detail": detail})
+                emit_json({"task": "embeddings", "phase": "waiting", "detail": detail})
             reported = holder
         waited = True
         time.sleep(EMBEDDING_LOCK_POLL_SECONDS)
     if waited:
         typer.echo("embeddings build lock acquired", err=True)
         if progress_json:
-            _emit_json_progress({"task": "embeddings", "phase": "starting", "detail": "lock acquired, loading model"})
+            emit_json({"task": "embeddings", "phase": "starting", "detail": "lock acquired, loading model"})
     _embedding_lock_conn = conn
 
 
@@ -591,8 +593,17 @@ def build_chunk_embeddings(
         typer.echo(embedding_backend.description, err=True)
     started = time.monotonic()
     with psycopg.connect(database_url) as conn:
-        if progress_json:
-            total = count_chunks_needing_embeddings(conn, model_id=model_id, limit=limit, **scope)
+        with batch_progress(
+            EMBEDDINGS,
+            json_total=(
+                (lambda: count_chunks_needing_embeddings(conn, model_id=model_id, limit=limit, **scope))
+                if progress_json
+                else None
+            ),
+            show=show_progress,
+            limit=limit,
+            dry_run=dry_run,
+        ) as progress:
             stats = build_embeddings(
                 conn,
                 embedding_backend,
@@ -600,31 +611,20 @@ def build_chunk_embeddings(
                 batch_size=batch_size,
                 limit=limit,
                 dry_run=dry_run,
-                progress=_embedding_json_progress(total),
+                progress=progress,
                 commit_each_batch=True,
-                **scope,
-            )
-        else:
-            stats = _build_embeddings_with_optional_progress(
-                conn=conn,
-                embedding_backend=embedding_backend,
-                model_id=model_id,
-                batch_size=batch_size,
-                limit=limit,
-                dry_run=dry_run,
-                show_progress=show_progress,
                 **scope,
             )
         conn.commit()
     elapsed = time.monotonic() - started
     if dry_run:
         typer.echo(
-            f"scanned={stats.scanned} would_embed={stats.embedded} "
+            f"scanned={stats.scanned} would_embed={stats.done} "
             f"model_id={model_id} backend={backend} dry_run=True"
         )
     else:
         typer.echo(
-            f"scanned={stats.scanned} embedded={stats.embedded} skipped={stats.skipped} "
+            f"scanned={stats.scanned} embedded={stats.done} skipped={stats.skipped} "
             f"model={spec.key} model_id={model_id} backend={backend} device={embedding_backend.device} "
             f"seconds={elapsed:.0f} dry_run=False"
         )
@@ -636,9 +636,9 @@ def build_chunk_embeddings(
         result = {
             "model": spec.key,
             "model_id": model_id,
-            "embedded": stats.embedded,
+            "embedded": stats.done,
             "seconds": round(elapsed, 1),
-            "chunks_per_second": round(stats.embedded / elapsed, 2) if elapsed and stats.embedded else None,
+            "chunks_per_second": round(stats.done / elapsed, 2) if elapsed and stats.done else None,
             "backend": embedding_backend.description,
             "peak_vram_gib": _peak_vram_gib(embedding_backend),
         }
@@ -702,28 +702,28 @@ def run_translations(
     timeout = None if request_timeout == 0 else request_timeout
     backend = None if dry_run else LLMTranslationBackend(_translate_model(model), request_timeout=timeout)
     with psycopg.connect(database_url) as conn:
-        if progress_json:
-            total = count_texts_needing_translation(conn, target_lang=target_lang, limit=limit)
+        with batch_progress(
+            TRANSLATIONS,
+            json_total=(
+                (lambda: count_texts_needing_translation(conn, target_lang=target_lang, limit=limit))
+                if progress_json
+                else None
+            ),
+            show=show_progress,
+            limit=limit,
+            dry_run=dry_run,
+        ) as progress:
             stats = build_translations(
                 conn,
                 backend,
                 target_lang=target_lang,
                 limit=limit,
                 dry_run=dry_run,
-                progress=_translation_json_progress(total),
-            )
-        else:
-            stats = _build_translations_with_optional_progress(
-                conn=conn,
-                backend=backend,
-                target_lang=target_lang,
-                limit=limit,
-                dry_run=dry_run,
-                show_progress=show_progress,
+                progress=progress,
             )
     action = "would_translate" if dry_run else "translated"
     typer.echo(
-        f"scanned={stats.scanned} {action}={stats.scanned if dry_run else stats.translated} "
+        f"scanned={stats.scanned} {action}={stats.done} "
         f"failed={stats.failed} model={model} target_lang={target_lang} dry_run={dry_run}"
     )
     if stats.failed:
@@ -743,7 +743,7 @@ def _document_progress(progress_json: bool):
         typer.echo(f"{phase}: {detail}" if detail else phase, err=True)
         if progress_json:
             done = DOCUMENT_PHASES.index(phase) + 1 if phase in DOCUMENT_PHASES else 0
-            _emit_json_progress(
+            emit_json(
                 {
                     "task": "document",
                     "phase": phase,
@@ -754,116 +754,6 @@ def _document_progress(progress_json: bool):
             )
 
     return update
-
-
-def _emit_json_progress(payload: dict[str, object]) -> None:
-    """Print one '@progress {json}' line; typer.echo flushes so lines stream live."""
-    typer.echo(PROGRESS_PREFIX + json.dumps(payload, ensure_ascii=False))
-
-
-def _translation_json_progress(total: int):
-    """Progress callback emitting one JSON line per translation event."""
-
-    def update(event: dict[str, int | str]) -> None:
-        phase = str(event["phase"])
-        if phase == "failed":
-            typer.echo(f"failed {event['detail']}", err=True)
-        _emit_json_progress(
-            {
-                "task": "translate",
-                "phase": phase,
-                "done": int(event["scanned"]),
-                "total": total,
-                "translated": int(event["translated"]),
-                "failed": int(event["failed"]),
-                "detail": str(event["detail"]),
-            }
-        )
-
-    return update
-
-
-def _embedding_json_progress(total: int):
-    """Progress callback emitting JSON lines per embedding batch.
-
-    Skips the per-chunk 'candidate' events — one line per encoded batch is
-    plenty for a UI bar and keeps stdout small on large corpora.
-    """
-
-    def update(event: dict[str, int | str]) -> None:
-        phase = str(event["phase"])
-        if phase == "candidate":
-            return
-        _emit_json_progress(
-            {
-                "task": "embeddings",
-                "phase": phase,
-                "done": int(event["scanned"]),
-                "total": total,
-                "embedded": int(event["embedded"]),
-                "detail": "",
-            }
-        )
-
-    return update
-
-
-def _build_translations_with_optional_progress(
-    *,
-    conn: psycopg.Connection,
-    backend: LLMTranslationBackend | None,
-    target_lang: str,
-    limit: int | None,
-    dry_run: bool,
-    show_progress: bool,
-):
-    """Build translations with an optional Rich progress display."""
-    if not show_progress:
-
-        def report_failures(event: dict[str, int | str]) -> None:
-            if event["phase"] == "failed":
-                typer.echo(f"failed {event['detail']}", err=True)
-
-        return build_translations(
-            conn,
-            backend,
-            target_lang=target_lang,
-            limit=limit,
-            dry_run=dry_run,
-            progress=report_failures,
-        )
-
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TextColumn("{task.fields[status]}"),
-        TimeElapsedColumn(),
-    ) as progress:
-        task_id = progress.add_task("translating texts", total=limit, status="starting")
-
-        def update(event: dict[str, int | str]) -> None:
-            phase = str(event["phase"])
-            scanned = int(event["scanned"])
-            translated = int(event["translated"])
-            failed = int(event["failed"])
-            detail = str(event["detail"])
-            action = "would translate" if dry_run else "translated"
-            counts = f"found={scanned} {action}={scanned if dry_run else translated} failed={failed}"
-            if phase == "failed":
-                progress.console.print(f"[red]failed[/red] {detail}")
-            status = counts if phase == "done" else f"{counts} [{detail}]"
-            total = scanned if phase == "done" and limit is None else limit
-            progress.update(task_id, completed=scanned, total=total, status=status)
-
-        return build_translations(
-            conn,
-            backend,
-            target_lang=target_lang,
-            limit=limit,
-            dry_run=dry_run,
-            progress=update,
-        )
 
 
 class _DryRunEmbeddingBackend:
@@ -879,80 +769,6 @@ def _peak_vram_gib(embedding_backend: object) -> float | None:
     if torch is None:
         return None
     return round(torch.cuda.max_memory_allocated() / 1024**3, 2)
-
-
-def _build_embeddings_with_optional_progress(
-    *,
-    conn: psycopg.Connection,
-    embedding_backend: object,
-    model_id: int,
-    batch_size: int,
-    limit: int | None,
-    dry_run: bool,
-    show_progress: bool,
-    authentic_only: bool = False,
-    langs: list[str] | None = None,
-    in_force_on: list[date] | None = None,
-):
-    """Build embeddings with an optional Rich progress display."""
-    scope = {"authentic_only": authentic_only, "langs": langs, "in_force_on": in_force_on}
-    if not show_progress:
-        return build_embeddings(
-            conn,
-            embedding_backend,
-            model_id=model_id,
-            batch_size=batch_size,
-            limit=limit,
-            dry_run=dry_run,
-            commit_each_batch=True,
-            **scope,
-        )
-
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TextColumn("{task.fields[status]}"),
-        TimeElapsedColumn(),
-    ) as progress:
-        task_id = progress.add_task("embedding chunks", total=limit, status="starting")
-
-        def update(event: dict[str, int | str]) -> None:
-            status = _embedding_progress_status(event, dry_run=dry_run)
-            scanned = int(event["scanned"])
-            embedded = int(event["embedded"])
-            phase = str(event["phase"])
-            completed = scanned if phase != "done" else embedded
-            total = scanned if phase == "done" and limit is None else limit
-            progress.update(task_id, completed=completed, total=total, status=status)
-
-        return build_embeddings(
-            conn,
-            embedding_backend,
-            model_id=model_id,
-            batch_size=batch_size,
-            limit=limit,
-            dry_run=dry_run,
-            progress=update,
-            commit_each_batch=True,
-            **scope,
-        )
-
-
-def _embedding_progress_status(event: dict[str, int | str], *, dry_run: bool) -> str:
-    """Return compact status text for the embedding progress bar."""
-    action = "would embed" if dry_run else "embedded"
-    phase = str(event["phase"])
-    scanned = int(event["scanned"])
-    embedded = int(event["embedded"])
-    batch_size = int(event["batch_size"])
-    if phase == "candidate":
-        return f"found={scanned} {action}={embedded} queued={batch_size}"
-    if phase == "encoding":
-        return f"encoding batch={batch_size} found={scanned} {action}={embedded}"
-    if phase == "embedded":
-        return f"found={scanned} {action}={embedded} last_batch={batch_size}"
-    return f"done found={scanned} {action}={embedded}"
 
 
 def _print_result(result: PipelineResult) -> None:
