@@ -15,8 +15,8 @@ from datetime import date
 
 from nomoscope_workflow.schema import Lineage, ParameterValue, Routing, income_year_for
 
+from nomokrisis_eval.golden_drafting import case_slug as _case_slug
 from nomokrisis_eval.openfisca_golden import (
-    _case_slug,
     route_against_current,
     schedule_at,
     value_at,

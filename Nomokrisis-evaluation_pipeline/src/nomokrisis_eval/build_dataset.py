@@ -18,11 +18,10 @@ from datetime import date
 
 from pydantic import BaseModel, ConfigDict
 
-from nomoscope_workflow import paramdb
 from nomoscope_workflow.llm import run_agent
-from nomoscope_workflow.queue_store import slugify
 from nomoscope_workflow.schema import Bracket, ParameterRecord, ParameterValue, Routing
 
+from .golden_drafting import GROUP_PREFIX, golden_case_id
 from .labels import draft_labels
 from .schema import Expected, GoldenCase
 from .scoring import values_equal
@@ -82,18 +81,6 @@ def _current_value(record: ParameterRecord, as_of: date) -> ParameterValue | Non
     return None
 
 
-def case_slug(model_target: str, country: str) -> str:
-    """euromod://FR/tinkt_fr/def_const/$tin_upthres1 -> 'tinkt_tin_upthres1'.
-
-    The country prefixes the case id already and `def_const` is the only
-    function in the export, so both are noise in a case id.
-    """
-    parts = paramdb.parse_model_target(model_target)
-    policy = (parts["policy"] or "").removesuffix(f"_{country.lower()}")
-    name = (parts["name"] or model_target).lstrip("$")
-    return slugify(f"{policy}_{name}") if policy else slugify(name)
-
-
 def _build_user_prompt(record: ParameterRecord, as_of: date, source_text: str) -> str:
     info = record.information
     current = _current_value(record, as_of)
@@ -140,12 +127,6 @@ def to_golden_case(
     else:
         routing = Routing.CHANGED
 
-    country = info.country.lower()
-    slug = (
-        case_slug(info.model_target, country)
-        if not parameter_target.startswith("group:")
-        else slugify(parameter_target.removeprefix("group:"))
-    )
     notes = " | ".join(filter(None, [draft.notes, f"quote: {draft.quote}" if draft.quote else None]))
     drafted = draft_labels(
         value=value,
@@ -154,7 +135,11 @@ def to_golden_case(
         is_bracket_table=bool(draft.value_brackets),
     )
     return GoldenCase(
-        id=f"{country}_{slug}_{as_of.isoformat()}",
+        id=golden_case_id(
+            info.country,
+            as_of,
+            parameter_target if parameter_target.startswith(GROUP_PREFIX) else info.model_target,
+        ),
         country=info.country,
         language=language,
         parameter_target=parameter_target,

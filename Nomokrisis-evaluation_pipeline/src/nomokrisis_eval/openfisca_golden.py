@@ -41,7 +41,6 @@ from datetime import date
 
 import psycopg
 
-from nomoscope_workflow.queue_store import slugify
 from nomoscope_workflow.schema import (
     Bracket,
     ParameterRecord,
@@ -52,18 +51,14 @@ from nomoscope_workflow.schema import (
 )
 from nomoscope_workflow import paramdb
 
-from .build_dataset import _current_value, case_slug
+from .build_dataset import _current_value
+from .golden_drafting import GROUP_PREFIX, entry_case_id, golden_case_id
 from .golden_store import delete_case, load_case, save_drafted_case
 from .labels import draft_labels
 from .schema import Expected, GoldenCase
 from .scoring import normalise_value, values_equal
 
-GROUP_PREFIX = "group:"
-
 _BRACKET_COMPONENT = re.compile(r"^brackets\[(\d+)\]\.(\w+)$")
-
-#: Kept under its old name for the callers (and tests) that import it here.
-_case_slug = case_slug
 
 
 @dataclass
@@ -503,9 +498,8 @@ def draft_case(
         temporal_basis=record.information.temporal_basis,
         is_bracket_table=component == "brackets",
     )
-    slug = entry.get("id") or _case_slug(record.information.model_target, country)
     case = GoldenCase(
-        id=f"{country.lower()}_{slug}_{as_of.isoformat()}",
+        id=golden_case_id(country, as_of, parameter_target, entry.get("id")),
         country=country.upper(),
         language=language,
         parameter_target=parameter_target,
@@ -641,17 +635,6 @@ def build_dataset(
     return outcomes
 
 
-def stale_case_id(entry: dict, as_of: date, country: str) -> str | None:
-    """The id the entry's case carries (or would carry), from the entry alone."""
-    target = entry.get("model_target") or entry.get("group_id")
-    if not target:
-        return None
-    slug = entry.get("id") or (
-        _case_slug(target, country) if target.startswith("euromod://") else slugify(target)
-    )
-    return f"{country.lower()}_{slug}_{as_of.isoformat()}"
-
-
 def _retire_skipped(
     conn: psycopg.Connection, outcomes: list[DraftOutcome], as_of: date, country: str
 ) -> None:
@@ -667,7 +650,7 @@ def _retire_skipped(
     for outcome in outcomes:
         if outcome.case is not None or not outcome.skipped:
             continue
-        case_id = stale_case_id(outcome.entry, as_of, country)
+        case_id = entry_case_id(outcome.entry, as_of, country)
         if case_id is None:
             continue
         existing = load_case(conn, case_id)

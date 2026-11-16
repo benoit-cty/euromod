@@ -42,15 +42,14 @@ from datetime import date
 
 import psycopg
 
-from nomoscope_workflow.queue_store import slugify
 from nomoscope_workflow.schema import Bracket, Routing, SourceType, TemporalBasis
 
 from .build_dataset import _current_value
+from .golden_drafting import golden_case_id
 from .golden_store import save_drafted_case
 from .labels import draft_labels
 from .openfisca_golden import (
     DraftOutcome,
-    _case_slug,
     _load_record,
     _retire_skipped,
     db_constants,
@@ -204,12 +203,6 @@ def draft_case(
         note_parts.append(entry["note"])
     note_parts.extend(f"drafting warning: {warning}" for warning in outcome.warnings)
 
-    target = entry.get("model_target") or entry.get("group_id") or ""
-    slug = entry.get("id") or (
-        _case_slug(record.information.model_target, country)
-        if target.startswith("euromod://")
-        else slugify(target)
-    )
     corpus_available = entry.get("corpus_available")
     if corpus_available is False:
         note_parts.append(
@@ -227,7 +220,7 @@ def draft_case(
         is_bracket_table=bool(entry.get("group_id")),
     )
     outcome.case = GoldenCase(
-        id=f"{country.lower()}_{slug}_{as_of.isoformat()}",
+        id=golden_case_id(country, as_of, parameter_target, entry.get("id")),
         country=country.upper(),
         language=language,
         parameter_target=parameter_target,

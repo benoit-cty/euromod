@@ -20,7 +20,7 @@ Mapping `parameter_file` -> `parameter_target`, in order:
    `group_id` is `<cc>:<policy>:<name>`.
 2. The file is missing: the case id (`<cc>_<slug>_<as_of>`) is matched against
    the slug every selection entry of that country would produce
-   (`openfisca_golden.stale_case_id`), and the entry's `model_target` /
+   (`golden_drafting.entry_case_id`), and the entry's `model_target` /
    `group_id` gives the target.
 3. Neither: the case is reported as unresolved and skipped.
 """
@@ -42,7 +42,7 @@ from .golden_store import (
     save_embedding_case,
     save_selection,
 )
-from .openfisca_golden import GROUP_PREFIX, stale_case_id
+from .golden_drafting import GROUP_PREFIX, entry_case_id
 from .schema import EmbeddingCase, GoldenCase
 
 DEFAULT_DATASET_DIR = EVAL_ROOT / "dataset"
@@ -160,7 +160,7 @@ def target_from_selection(
         if sel_country != country.upper():
             continue
         for entry in entries:
-            if stale_case_id(entry, as_of, country) == case_id:
+            if entry_case_id(entry, as_of, country) == case_id:
                 if entry.get("group_id"):
                     return f"{GROUP_PREFIX}{entry['group_id']}"
                 return entry.get("model_target")
