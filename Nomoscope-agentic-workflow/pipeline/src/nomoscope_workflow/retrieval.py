@@ -81,6 +81,19 @@ def version_provenance(conn: psycopg.Connection, chunk_id: str) -> dict | None:
 # the seeded 2025 barème at 11 497 next to the ingested 2026 one at 11 600).
 # Both then compete in the ranking and the superseded text can win. Keep the one
 # with the latest start — the article as consolidated on the reference date.
+#: The RetrievalHit columns every hit query selects (aliases: ch chunks,
+#: t unit_texts, v legal_unit_versions, u legal_units, i instruments), and the
+#: joins from a chunk up to its instrument. One place to add a hit field —
+#: the column list used to be written out in every query (code audit 4).
+HIT_COLUMNS = (
+    "ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,\n"
+    "       v.validity::text AS validity, v.version_status, i.source_trust_class"
+)
+CHUNK_JOINS = """JOIN unit_texts t          ON t.id = ch.unit_text_id
+JOIN legal_unit_versions v ON v.id = t.version_id
+JOIN legal_units u         ON u.id = v.legal_unit_id
+JOIN instruments i         ON i.id = u.instrument_id"""
+
 _LIVE_VERSION_CTE = """
 live_version AS (
   SELECT DISTINCT ON (i.id, coalesce(u.citation, u.id::text)) v.id AS version_id
@@ -103,8 +116,7 @@ live_version AS (
 
 _CITATION_SQL = f"""
 WITH {_LIVE_VERSION_CTE}
-SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status, i.source_trust_class,
+SELECT {HIT_COLUMNS},
        similarity(u.citation, %(cit)s)::float8 AS score
 FROM legal_units u
 JOIN instruments i         ON i.id = u.instrument_id
@@ -121,17 +133,13 @@ LIMIT %(k)s
 # Hybrid search is the database's search_chunks() (Nomotheca-RAG/db/schema.sql):
 # one implementation for the workflow, the eval, the review UI and the MCP
 # server — live version, trust class, OR-of-terms FTS, RRF + vector top-3 slot.
-_HYBRID_SQL = """
-SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status, i.source_trust_class,
+_HYBRID_SQL = f"""
+SELECT {HIT_COLUMNS},
        s.score
-FROM search_chunks(%(q)s, {qvec}, %(model_id)s, %(jurisdictions)s::text[],
+FROM search_chunks(%(q)s, {{qvec}}, %(model_id)s, %(jurisdictions)s::text[],
                    ARRAY[%(lang)s]::text[], %(as_of)s::date, %(k)s, %(use_fts)s) s
 JOIN chunks ch             ON ch.id = s.chunk_id
-JOIN unit_texts t          ON t.id = ch.unit_text_id
-JOIN legal_unit_versions v ON v.id = t.version_id
-JOIN legal_units u         ON u.id = v.legal_unit_id
-JOIN instruments i         ON i.id = u.instrument_id
+{CHUNK_JOINS}
 ORDER BY s.score DESC, s.chunk_id
 """
 
@@ -400,8 +408,7 @@ LIMIT 3
 
 _NAMED_UNIT_SQL = f"""
 WITH {_LIVE_VERSION_CTE}
-SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status, i.source_trust_class,
+SELECT {HIT_COLUMNS},
        word_similarity(i.title_search, %(need)s)::float8 AS score
 FROM legal_units u
 JOIN instruments i         ON i.id = u.instrument_id
@@ -423,15 +430,14 @@ RECENT_EXTRA = 3
 
 # Step 4: the need's words, any of them, ranked over the chunks of versions in
 # force on as_of that entered into force within RECENT_LOOKBACK of it.
-_RECENT_FTS_SQL = """
+_RECENT_FTS_SQL = f"""
 WITH q AS (
   SELECT to_tsquery(c.config, string_agg(quote_literal(l.lexeme), ' | ')) AS tq
   FROM lang_fts_config c, unnest(to_tsvector(c.config, %(need)s)) AS l
   WHERE c.lang = %(lang)s
   GROUP BY c.config
 )
-SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status, i.source_trust_class,
+SELECT {HIT_COLUMNS},
        ts_rank_cd(ch.tsv, q.tq, 1|32)::float8 AS score
 FROM q, chunks ch
 JOIN unit_texts t          ON t.id = ch.unit_text_id AND t.lang = %(lang)s
@@ -454,8 +460,7 @@ def _entered_since(validity: str | None, since: date) -> bool:
 
 _NAMED_INSTRUMENT_FTS_SQL = f"""
 WITH {_LIVE_VERSION_CTE}
-SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status, i.source_trust_class,
+SELECT {HIT_COLUMNS},
        -- Content only: chunks.tsv carries the context header at weight A, and
        -- the header repeats the act's title in every chunk of the act.
        ts_rank_cd(to_tsvector(ch.search_config, ch.content),
@@ -604,14 +609,11 @@ _CODE_ARTICLE_REF = re.compile(r"\b([LRD])\.?\s?(\d+(?:-\d+)+)\b")
 CROSS_REF_PER_ARTICLE = 4
 CROSS_REF_MAX = 8
 
-_REF_CHUNKS_SQL = """
+_REF_CHUNKS_SQL = f"""
 SELECT ch.id::text AS chunk_id, ch.content, u.citation, i.id::text AS instrument_id,
        i.instrument_type = 'code' AS is_code
 FROM chunks ch
-JOIN unit_texts t          ON t.id = ch.unit_text_id
-JOIN legal_unit_versions v ON v.id = t.version_id
-JOIN legal_units u         ON u.id = v.legal_unit_id
-JOIN instruments i         ON i.id = u.instrument_id
+{CHUNK_JOINS}
 WHERE ch.id = ANY(%(ids)s::uuid[])
 """
 
@@ -1019,9 +1021,8 @@ ORDER BY ch.id
 
 
 # The chunks of one act in force on as_of, nearest to the query vector first.
-_ACT_NEAREST_SQL = """
-SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status, i.source_trust_class, 0.0::float8 AS score
+_ACT_NEAREST_SQL = f"""
+SELECT {HIT_COLUMNS}, 0.0::float8 AS score
 FROM legal_units u
 JOIN instruments i         ON i.id = u.instrument_id
 JOIN legal_unit_versions v ON v.legal_unit_id = u.id
@@ -1263,15 +1264,11 @@ def locate_named_units(
     return found
 
 
-_CR_SEARCH_SQL = """
-SELECT ch.id::text AS chunk_id, u.citation, ch.context_header, ch.content, t.lang,
-       v.validity::text AS validity, v.version_status, i.source_trust_class,
+_CR_SEARCH_SQL = f"""
+SELECT {HIT_COLUMNS},
        ts_rank_cd(ch.tsv, websearch_to_tsquery(ch.search_config, %(fts_q)s), 1|32)::float8 AS score
 FROM chunks ch
-JOIN unit_texts t          ON t.id = ch.unit_text_id
-JOIN legal_unit_versions v ON v.id = t.version_id
-JOIN legal_units u         ON u.id = v.legal_unit_id
-JOIN instruments i         ON i.id = u.instrument_id
+{CHUNK_JOINS}
 JOIN jurisdictions j       ON j.id = i.jurisdiction_id
 WHERE i.source_trust_class = 'context'
   AND j.code = %(country)s
