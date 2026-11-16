@@ -92,9 +92,10 @@ def load_case(conn: psycopg.Connection, case_id: str) -> GoldenCase | None:
     return _merge(row) if row else None
 
 
-def save_case(conn: psycopg.Connection, case: GoldenCase) -> None:
+def save_case(conn: psycopg.Connection, case: GoldenCase, *, commit: bool = True) -> None:
     """Upsert the case body. The verdict columns are deliberately NOT written:
-    an existing row keeps its verdict, a new row starts unreviewed."""
+    an existing row keeps its verdict, a new row starts unreviewed.
+    ``commit=False`` leaves the write in the caller's transaction."""
     conn.execute(
         """
         INSERT INTO eval.golden_cases (id, country, language, as_of, "case")
@@ -108,7 +109,8 @@ def save_case(conn: psycopg.Connection, case: GoldenCase) -> None:
         """,
         (case.id, case.country.upper(), case.language.lower(), case.as_of, Jsonb(case_payload(case))),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def delete_case(conn: psycopg.Connection, case_id: str) -> bool:
@@ -180,29 +182,35 @@ def save_drafted_case(conn: psycopg.Connection, case: GoldenCase) -> bool:
     Returns True when a previous verdict was reset. On return `case` carries
     the verdict now on the row, so a caller can report it.
     """
-    previous = load_case(conn, case.id)
     reset = False
-    save_case(conn, case)
-    if previous is not None and (previous.verified or previous.reviewed_by):
-        if _ground_truth(previous) == _ground_truth(case):
-            case.verified = previous.verified
-            case.reviewed_by = previous.reviewed_by
-            case.reviewed_at = previous.reviewed_at
-            case.review_note = previous.review_note
-        else:
-            reset = True
-            conn.execute(
-                """
-                UPDATE eval.golden_cases
-                SET verified = false, reviewed_by = NULL, reviewed_at = NULL,
-                    review_note = NULL, updated_at = now()
-                WHERE id = %s
-                """,
-                (case.id,),
-            )
-            conn.commit()
-            case.verified = False
-            case.reviewed_by = case.reviewed_at = case.review_note = None
+    # One transaction: the new ground truth and the verdict reset land
+    # together. Before 16 Nov 2026 the case was committed first and the
+    # verdict reset in a second statement, so a crash between the two left a
+    # changed expectation carrying the old approval (code audit D13).
+    conn.commit()  # end any implicit transaction so the block below is the outer one
+    with conn.transaction():
+        conn.execute("SELECT 1 FROM eval.golden_cases WHERE id = %s FOR UPDATE", (case.id,))
+        previous = load_case(conn, case.id)
+        save_case(conn, case, commit=False)
+        if previous is not None and (previous.verified or previous.reviewed_by):
+            if _ground_truth(previous) == _ground_truth(case):
+                case.verified = previous.verified
+                case.reviewed_by = previous.reviewed_by
+                case.reviewed_at = previous.reviewed_at
+                case.review_note = previous.review_note
+            else:
+                reset = True
+                conn.execute(
+                    """
+                    UPDATE eval.golden_cases
+                    SET verified = false, reviewed_by = NULL, reviewed_at = NULL,
+                        review_note = NULL, updated_at = now()
+                    WHERE id = %s
+                    """,
+                    (case.id,),
+                )
+                case.verified = False
+                case.reviewed_by = case.reviewed_at = case.review_note = None
     return reset
 
 

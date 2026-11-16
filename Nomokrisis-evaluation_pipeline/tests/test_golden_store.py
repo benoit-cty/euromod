@@ -136,6 +136,25 @@ def test_carry_over_keeps_the_verdict_only_while_the_ground_truth_stands(db):
     assert reset.expected.value == 47200.0
 
 
+def test_a_failed_verdict_reset_leaves_the_old_ground_truth(db, monkeypatch):
+    """The new expectation and the verdict reset commit together, or not at all (D13)."""
+    golden_store.save_case(db, make_case())
+    golden_store.set_verified(db, TEST_PREFIX + "fr_pss", True, "ok")
+    real_execute = db.execute
+
+    def crash_on_reset(query, *args, **kwargs):
+        if "SET verified = false" in str(query):
+            raise RuntimeError("crash between the two writes")
+        return real_execute(query, *args, **kwargs)
+
+    monkeypatch.setattr(db, "execute", crash_on_reset)
+    with pytest.raises(RuntimeError):
+        golden_store.save_drafted_case(db, make_case(value=47200.0))
+    monkeypatch.undo()
+    kept = golden_store.load_case(db, TEST_PREFIX + "fr_pss")
+    assert kept.verified and kept.expected.value == 47100.0
+
+
 def test_selection_round_trip(db):
     header = {"country": "ZZ", "language": "zz", "corpus": "curated", "description": "test"}
     entries = [{"model_target": "euromod://ZZ/x_zz/def_const/$x", "expected_value": 1.0}]
