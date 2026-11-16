@@ -1432,3 +1432,13 @@ def test_routed_issues_are_recognised_from_their_own_wording():
     assert it.code_of(it.operand_hint("b", it.misquote_hint("x"))) in it.MISQUOTE
     assert it.code_of(it.operand_not_retrieved("b")) not in it.MISQUOTE
     assert it.code_of("note: derived") is None
+
+
+def test_one_value_parser_reads_every_spelling():
+    """paramdb, scoring and the derivation check share values.py (code audit 2.1)."""
+    from nomoscope_workflow import paramdb, values
+
+    assert values.percent_literal("8,17%") == paramdb.percent_literal("8.17%") == 0.0817
+    assert values.normalise_value("4,1%").magnitude == pytest.approx(0.041)
+    assert values.normalise_value("100%*$MMS", {"mms": 1038}).magnitude == 1038
+    assert values.normalise_value("$PSS * 4#y", {"pss": 47100}).period == "y"

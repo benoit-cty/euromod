@@ -117,28 +117,11 @@ def normalise_value(value) -> tuple[float | None, str]:
     return None, "expression"
 
 
-_PERCENT_LITERAL = re.compile(r"^\s*([-+]?\d+(?:[.,]\d+)?)\s*%\s*$")
-
-
-def percent_literal(value: str | None) -> float | None:
-    """`8.17%` -> 0.0817: EUROMOD's own spelling for a rate, read as a fraction.
-
-    The NL and LT exports state every rate as a percent literal and the IE export
-    a few (`4.1%`); `normalized.value` is null for all of them, so without this
-    the store held no scalar, `_current_value` had nothing to route against and
-    a correct 0.495 proposal came back `changed`. The fraction is the "/1" form
-    the rest of the store uses (and that the curation overlays give these
-    parameters), the same reading `nomokrisis_eval.scoring.normalise_value`
-    applies on the golden side.
-    """
-    if not isinstance(value, str):
-        return None
-    match = _PERCENT_LITERAL.match(value)
-    if not match:
-        return None
-    # Round away the binary noise of the division (8.17 / 100 is not 0.0817 in
-    # floating point); 12 significant digits is far below any EUROMOD precision.
-    return float(f"{float(match.group(1).replace(',', '.')) / 100.0:.12g}")
+# `8.17%` -> 0.0817: the NL and LT exports state every rate as a percent
+# literal and the IE export a few (`4.1%`); without reading them the store held
+# no scalar and a correct 0.495 proposal came back `changed`. The parser is
+# values.percent_literal, shared with the eval's scoring.
+from .values import percent_literal  # noqa: E402,F401
 
 
 def derive_system_year(valid_from: str, valid_to: str | None) -> int | None:

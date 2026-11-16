@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import ast
 import math
-import operator
 import re
 from decimal import ROUND_HALF_UP, Decimal
 
 from . import issues as issue_text
 from . import quotes
+from .values import eval_arith
 from .schema import ParameterValue, ProposalDraft, RetrievalHit
 
 #: Figures a derivation may use without quoting them: calendar and scaling
@@ -41,12 +41,6 @@ DERIVATION_CONSTANTS = frozenset(
 #: «Les taux ainsi appelés sont arrondis au centième» (AGIRC-ARRCO art. 36: 6,20 %
 #: × 127 % = 7,874 % → 7,87 %), «arrondi à l'euro le plus proche».
 DERIVATION_MAX_DIGITS = 8
-_DERIVATION_OPS = {
-    ast.Add: operator.add,
-    ast.Sub: operator.sub,
-    ast.Mult: operator.mul,
-    ast.Div: operator.truediv,
-}
 
 
 def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
@@ -62,9 +56,7 @@ def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
     except SyntaxError as exc:
         raise ValueError(f"derivation is not an arithmetic expression ({exc.msg})") from None
 
-    def ev(node: ast.AST) -> float:
-        if isinstance(node, ast.Expression):
-            return ev(node.body)
+    def leaf(node: ast.AST) -> float:
         if (
             isinstance(node, ast.Constant)
             and isinstance(node.value, (int, float))
@@ -80,11 +72,6 @@ def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
             if node.id not in operands:
                 raise ValueError(f"operand {node.id!r} is not listed in operands")
             return operands[node.id]
-        if isinstance(node, ast.BinOp) and type(node.op) in _DERIVATION_OPS:
-            return _DERIVATION_OPS[type(node.op)](ev(node.left), ev(node.right))
-        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
-            value = ev(node.operand)
-            return -value if isinstance(node.op, ast.USub) else value
         if (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Name)
@@ -106,6 +93,11 @@ def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
         raise ValueError(
             "only + - * / and round(x, n) over operand names and calendar constants are allowed"
         )
+
+    def ev(node: ast.AST) -> float:
+        # The one arithmetic evaluator (values.eval_arith) with the
+        # derivation's whitelist as its leaves.
+        return eval_arith(node, leaf)
 
     try:
         return float(ev(tree))

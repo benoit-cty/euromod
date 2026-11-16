@@ -50,10 +50,8 @@ no tolerance between EUROMOD and the law — a one-unit difference is a finding
 
 from __future__ import annotations
 
-import ast
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
 from math import isclose
 
 from nomoscope_workflow.derivation import extract_states as _extract_states
@@ -115,132 +113,17 @@ def citation_equal(expected: str, candidate: str | None) -> bool:
 # EUROMOD raw-value normalisation (FR_parameter_matching.md §1.1–1.2)
 # ---------------------------------------------------------------------------
 
-#: EUROMOD period suffix -> factor converting the magnitude to the monthly
-#: basis (the conversion table in FR_parameter_matching.md §1.1). '#c'
-#: (capital) has no time basis; like '#m' it is left unconverted.
-PERIOD_TO_MONTHLY: dict[str, float] = {
-    "m": 1.0,
-    "y": 1 / 12,
-    "q": 1 / 3,
-    "w": 4.34,
-    "d": 30.5,
-    "l": 21.73,
-    "s": 26.07,
-    "c": 1.0,
-}
-
-_SUFFIX_RE = re.compile(r"\s*#\s*([myqwdlsc])\s*$")
-#: A percent literal anywhere in the expression ('4.1%', '100%*$MMS'). Rewritten
-#: to a division so the arithmetic below sees a plain number.
-_PERCENT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*%")
-_CONST_RE = re.compile(r"\$([A-Za-z_]\w*)")
-_ALLOWED_BINOPS = (ast.Add, ast.Sub, ast.Mult, ast.Div)
-_ALLOWED_UNARY = (ast.UAdd, ast.USub)
+# The parser is the workflow's (nomoscope_workflow.values), shared with the
+# parameter store and the derivation check.
+from nomoscope_workflow.values import (  # noqa: E402,F401  (re-exported)
+    PERIOD_TO_MONTHLY,
+    NormalisedValue,
+    normalise_value,
+)
 
 #: Relative tolerance for normalised comparisons: float noise only. One cent
 #: on the largest FR amounts (~1e6 €) is 1e-8 relative, so 1e-9 never hides it.
 _REL_TOL = 1e-9
-
-
-@dataclass(frozen=True)
-class NormalisedValue:
-    """A numeric magnitude plus the period basis its raw form stated, if any."""
-
-    magnitude: float
-    period: str | None = None  # 'm', 'y', … (no '#'); None = basis unstated
-
-    def monthly(self) -> float:
-        return self.magnitude * PERIOD_TO_MONTHLY.get(self.period or "m", 1.0)
-
-
-def _eval_expr(node: ast.AST) -> float:
-    if isinstance(node, ast.Expression):
-        return _eval_expr(node.body)
-    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
-        return float(node.value)
-    if isinstance(node, ast.BinOp) and isinstance(node.op, _ALLOWED_BINOPS):
-        left, right = _eval_expr(node.left), _eval_expr(node.right)
-        if isinstance(node.op, ast.Add):
-            return left + right
-        if isinstance(node.op, ast.Sub):
-            return left - right
-        if isinstance(node.op, ast.Mult):
-            return left * right
-        return left / right
-    if isinstance(node, ast.UnaryOp) and isinstance(node.op, _ALLOWED_UNARY):
-        operand = _eval_expr(node.operand)
-        return operand if isinstance(node.op, ast.UAdd) else -operand
-    raise ValueError(f"unsupported expression node: {ast.dump(node)}")
-
-
-def normalise_value(
-    value,
-    constants: Mapping[str, object] | None = None,
-    _resolving: frozenset[str] = frozenset(),
-) -> NormalisedValue | None:
-    """Normalise a scalar to (magnitude, period), or None when it has neither.
-
-    Accepts plain numbers and raw EUROMOD strings: an optional trailing period
-    suffix ('#m', '#y', …) over an arithmetic expression that may reference
-    other parameters ('$PSS * 4'), with percent literals read as the rate they
-    denote ('4.1%' -> 0.041, '100%*$MMS' -> the value of $MMS). References
-    resolve through `constants`
-    (casefolded name without '$' -> number or raw string, resolved recursively
-    with a cycle guard); a reference's own period suffix is dropped — EUROMOD
-    formulas operate on the stored magnitude. Returns None for 'n/a', unknown
-    constants, multiplicative unit suffixes ('×1000'), a period marker inside an
-    expression ('242#w*$sw_weeks') or anything else that is not a scalar —
-    callers then fall back to strict equality.
-    """
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return NormalisedValue(float(value))
-    if not isinstance(value, str):
-        return None
-
-    text = value.strip()
-    period = None
-    if m := _SUFFIX_RE.search(text):
-        period = m.group(1)
-        text = text[: m.start()].strip()
-    if not text or text.casefold() in ("n/a", "na"):
-        return None
-    # A '#' that survived the suffix strip is a period marker inside the
-    # expression ('242#w*$sw_weeks'). It is NOT arithmetic this function can
-    # read, and leaving it in is actively dangerous: '#' opens a comment in
-    # Python's grammar, so ast.parse would silently evaluate the prefix and
-    # return 242 for a value that means 242 a week. Refuse instead, and let the
-    # caller fall back to strict equality.
-    if "#" in text:
-        return None
-    # EUROMOD stores some rates as percent literals ('4.1%', '8.72%') where
-    # OpenFisca and the rest of the store use the unit-/1 form (0.041), and
-    # writes some values as a percentage OF another parameter ('100%*$MMS').
-    # Both spellings denote the same quantity, so rewrite every percent literal
-    # to a division and let the expression evaluator do the rest: without this
-    # the two sides fall back to string equality and a correct value scores as
-    # a difference.
-    text = _PERCENT_RE.sub(r"((\1)/100)", text)
-
-    def substitute(match: re.Match[str]) -> str:
-        name = match.group(1).casefold()
-        if name in _resolving:
-            raise ValueError(f"circular $-reference: {name}")
-        resolved = (constants or {}).get(name)
-        if resolved is None:
-            raise ValueError(f"unknown constant: ${match.group(1)}")
-        inner = normalise_value(resolved, constants, _resolving | {name})
-        if inner is None:
-            raise ValueError(f"unresolvable constant: ${match.group(1)}")
-        return f"({inner.magnitude!r})"
-
-    try:
-        text = _CONST_RE.sub(substitute, text)
-        magnitude = _eval_expr(ast.parse(text, mode="eval"))
-    except (ValueError, SyntaxError, ZeroDivisionError):
-        return None
-    return NormalisedValue(magnitude, period)
 
 
 def _num_equal(x: float | None, y: float | None) -> bool:
