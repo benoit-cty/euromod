@@ -508,11 +508,26 @@ def count_chunks_needing_embeddings(
     return min(total, limit) if limit is not None else total
 
 
+def hnsw_index_sql(model_id: int) -> str:
+    """The partial HNSW index every embedding model gets (schema.sql's rule).
+
+    `model_id` is an int from the registry, never user input.
+    """
+    model_id = int(model_id)
+    return (
+        f"CREATE INDEX IF NOT EXISTS emb_hnsw_m{model_id} ON embeddings "
+        "USING hnsw (embedding halfvec_cosine_ops) WITH (m = 16, ef_construction = 200) "
+        f"WHERE model_id = {model_id}"
+    )
+
+
 def ensure_embedding_model(conn: Connection, spec: EmbeddingModelSpec) -> None:
-    """Ensure the model's `embedding_models` row exists (BGE-M3 is the default).
+    """Ensure the model's `embedding_models` row and partial HNSW index exist.
 
     An existing row is left alone: `is_default` is an operator's decision and
-    the seeded BGE-M3 row predates the registry's config keys.
+    the seeded BGE-M3 row predates the registry's config keys. Until 16 Nov
+    2026 only the row was inserted, so models 2, 5, 6 and 8 had no index
+    (code audit D16).
     """
     row = spec.registry_row()
     with conn.cursor() as cur:
@@ -533,7 +548,7 @@ def ensure_embedding_model(conn: Connection, spec: EmbeddingModelSpec) -> None:
                 Jsonb(row["config"]),
             ),
         )
-
+        cur.execute(hnsw_index_sql(spec.id))
 
 
 def embedding_input(context_header: str, content: str) -> str:

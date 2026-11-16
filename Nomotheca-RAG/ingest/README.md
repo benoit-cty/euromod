@@ -286,9 +286,8 @@ UV_PROJECT_ENVIRONMENT=.venv-cuda uv run python -m nomotheca_ingest.cli embeddin
 The last stdout line is `@result {…}` with throughput and peak VRAM. Score it with
 `nomokrisis-eval run-embeddings --embedding-model-id <id>` and
 `compare-embeddings` (see the Nomokrisis README). Switching production to a
-model is `WORKFLOW_EMBEDDING_MODEL_ID=<id>` once its vectors cover the corpus, plus
-an HNSW index for its id (`CREATE INDEX … WHERE model_id = <id>`, as seed.sql does
-for BGE-M3). `--precision auto` keeps fp32 on Pascal (fp16 measured 4x slower
+model is `WORKFLOW_EMBEDDING_MODEL_ID=<id>` once its vectors cover the corpus (the
+build creates the model's partial HNSW index with its registry row). `--precision auto` keeps fp32 on Pascal (fp16 measured 4x slower
 end to end on the 1080 Ti) and never picks fp16 for bf16-trained Qwen3/Gemma.
 
 See below if you want Nvidia GPU acceleration or even lower for Intel CPU acceleration.
