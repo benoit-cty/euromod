@@ -25,6 +25,13 @@ from .schema import ParameterValue, ProposalDraft, RetrievalHit
 #: derivations of the 5 Nov run were refused for the bare 3 alone.
 #: Everything else is a fact about the law and must be an operand quoted
 #: verbatim from a retrieved chunk — that is what keeps a derived value inside
+
+def round_half_up(value: float, digits: int) -> float:
+    """Round half-up to `digits` decimals, as legal texts do (2.5 -> 3), via
+    the exact decimal of the float's repr — the one rounding of this module."""
+    return float(Decimal(repr(value)).quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))
+
+
 #: the anti-hallucination contract.
 DERIVATION_CONSTANTS = frozenset(
     {1.0, 2.0, 3.0, 4.0, 6.0, 9.0, 12.0, 13.0, 52.0, 100.0, 365.0, 366.0, 1000.0}
@@ -95,8 +102,7 @@ def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
                 raise ValueError(
                     f"round's digits must be an integer literal from 0 to {DERIVATION_MAX_DIGITS}"
                 )
-            value = Decimal(repr(ev(node.args[0])))
-            return float(value.quantize(Decimal(1).scaleb(-digits.value), rounding=ROUND_HALF_UP))
+            return round_half_up(ev(node.args[0]), digits.value)
         raise ValueError(
             "only + - * / and round(x, n) over operand names and calendar constants are allowed"
         )
@@ -340,16 +346,14 @@ def _round_like_held(
         draft.value_scalar = derived
         return note
     source = draft.value_scalar if derived is None else derived
-    value = Decimal(repr(source))
-    rounded = float(value.quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))
+    rounded = round_half_up(source, digits)
     if rounded == draft.value_scalar:
         return None
     note = (
         f"note: derived {source:g} rounded half-up to {rounded:g}, "
         f"{'whole units' if digits == 0 else f'{digits} decimals'} like the value held"
     )
-    typed = Decimal(repr(draft.value_scalar)).quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP)
-    if float(typed) != rounded:
+    if round_half_up(draft.value_scalar, digits) != rounded:
         note += f" (the proposal said {draft.value_scalar:g})"
     draft.value_scalar = rounded
     return note

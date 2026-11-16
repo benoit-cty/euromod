@@ -9,6 +9,7 @@ from datetime import date
 from .regions import region_key
 from .routing import current_value
 from .schema import (
+    TemporalBasis,
     ParameterRecord,
     ProposalDraft,
     RetrievalHit,
@@ -227,7 +228,7 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
     # for 2025 showed the model a 2026 value (code audit 4).
     current = current_value(record, as_of) or (record.values[-1] if record.values else None)
     temporal_note = ""
-    if info.temporal_basis == "income_year":
+    if info.temporal_basis == TemporalBasis.INCOME_YEAR:
         # NOT as_of.year. EUROMOD system year Y holds the value the law labels
         # income year Y-1 ("impôt 2025 sur les revenus 2024") — EUROMOD applies it
         # to Y incomes, but the text names Y-1 — and `income_year_for` is the
@@ -259,7 +260,7 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
             f"year: one extract stating the value plus another extract of the same act naming "
             f"income year {year} is sufficient evidence to propose the value."
         )
-    elif info.temporal_basis == "start_of_year":
+    elif info.temporal_basis == TemporalBasis.START_OF_YEAR:
         reference = start_of_year_as_of(as_of)
         temporal_note = (
             f"\nTemporal basis: START OF YEAR — EUROMOD system year {as_of.year} holds the value in "

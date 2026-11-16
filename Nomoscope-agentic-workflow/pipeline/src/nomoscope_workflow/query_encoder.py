@@ -155,27 +155,31 @@ def embedding_process(directory: Path | None, module: str, *args: str) -> Embedd
     return EmbeddingProcess(command=command, env=env, cuda=cuda, cwd=directory)
 
 
-def _start(model_id: int = DEFAULT_MODEL_ID) -> subprocess.Popen:
-    spec = embedding_process(ingest_dir(), "nomotheca_ingest.query_embeddings", "--model", str(model_id))
-    load_note = "GPU" if spec.cuda else "expect high CPU"
-    print(
-        f"[retrieval] starting query encoder for embedding model {model_id} "
-        f"(first query — model load can take minutes, {load_note})…",
-        flush=True,
-    )
-    started = time.monotonic()
+def _spawn_ready(module: str, *args: str, what: str) -> subprocess.Popen:
+    """Start one JSON-lines subprocess of the ingest package and wait for its
+    {"ready": true} line — the one launcher of the encoder and the reranker."""
+    spec = embedding_process(ingest_dir(), module, *args)
     process = subprocess.Popen(
-        spec.command,
-        cwd=spec.cwd,
-        env=spec.env,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        text=True,
+        spec.command, cwd=spec.cwd, env=spec.env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True
     )
     ready = json.loads(process.stdout.readline() or "{}")
     if not ready.get("ready"):
         process.kill()
-        raise EncoderStartError(f"encoder failed to initialize: {ready}")
+        raise EncoderStartError(f"{what} failed to initialize: {ready}")
+    return process
+
+
+def _start(model_id: int = DEFAULT_MODEL_ID) -> subprocess.Popen:
+    cuda = (ingest_dir() or Path(".")).joinpath(CUDA_ENVIRONMENT, "pyvenv.cfg").is_file()
+    print(
+        f"[retrieval] starting query encoder for embedding model {model_id} "
+        f"(first query — model load can take minutes, {'GPU' if cuda else 'expect high CPU'})…",
+        flush=True,
+    )
+    started = time.monotonic()
+    process = _spawn_ready(
+        "nomotheca_ingest.query_embeddings", "--model", str(model_id), what="encoder"
+    )
     print(f"[retrieval] query encoder ready ({time.monotonic() - started:.0f}s)", flush=True)
     return process
 
@@ -239,16 +243,8 @@ _rerankers: dict[str, _Channel] = {}
 
 
 def _start_reranker(model: str) -> subprocess.Popen:
-    spec = embedding_process(ingest_dir(), "nomotheca_ingest.rerank", "--model", model)
     print(f"[retrieval] starting reranker {model}…", flush=True)
-    process = subprocess.Popen(
-        spec.command, cwd=spec.cwd, env=spec.env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True
-    )
-    ready = json.loads(process.stdout.readline() or "{}")
-    if not ready.get("ready"):
-        process.kill()
-        raise RuntimeError(f"reranker failed to initialize: {ready}")
-    return process
+    return _spawn_ready("nomotheca_ingest.rerank", "--model", model, what="reranker")
 
 
 def rerank(query: str, passages: list[str], model: str) -> list[float]:

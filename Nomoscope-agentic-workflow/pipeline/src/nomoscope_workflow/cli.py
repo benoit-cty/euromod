@@ -34,7 +34,7 @@ from . import (
     translate,
 )
 from .config import WorkflowConfig, load_config
-from .schema import ParameterRecord, system_year_anchor
+from .schema import ParameterRecord, TemporalBasis, system_year_anchor
 from .tracing import setup_tracing
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -64,7 +64,7 @@ def _countries_in(records: list[ParameterRecord]) -> tuple[dict[str, int], dict[
     for record in records:
         info = record.information
         totals[info.country] = totals.get(info.country, 0) + 1
-        if info.temporal_basis == "income_year":
+        if info.temporal_basis == TemporalBasis.INCOME_YEAR:
             income_year[info.country] = income_year.get(info.country, 0) + 1
     return totals, income_year
 
