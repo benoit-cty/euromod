@@ -8,7 +8,6 @@
 
   let {
     chunk,
-    dbUrl,
     label = '',
     extract = '',
     verified = null,
@@ -17,15 +16,14 @@
     open = false,
   } = $props();
 
-  let expanded = $state(false);
+  // Follows `open` (the quote selected in the answer); the reader's own
+  // Full text / Collapse overrides it until `open` changes again.
+  let expanded = $derived(open);
   let renderings = $state(null);
   let renderingIdx = $state(0);
   let loadError = $state('');
   let card = $state(null);
 
-  $effect(() => {
-    expanded = open;
-  });
   $effect(() => {
     if (active && card) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
@@ -39,7 +37,7 @@
   async function loadRenderings() {
     loadError = '';
     try {
-      const res = await api.chunkRenderings(dbUrl, chunk.chunk_id);
+      const res = await api.chunkRenderings(chunk.chunk_id);
       renderings = res.renderings;
       renderingIdx = 0;
     } catch (e) {

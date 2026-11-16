@@ -10,12 +10,12 @@ export const TERMINAL = new Set(['succeeded', 'failed', 'cancelled']);
  * onLine(event), onStatus(row). Resolves with the final status row; events
  * printed just before exit are drained before resolving.
  */
-export async function submitAndFollow(dbUrl, jobType, payload, handlers = {}, pollMs = 800) {
-  const { id } = await api.submitJob(dbUrl, jobType, payload, handlers.priority ?? 0);
+export async function submitAndFollow(jobType, payload, handlers = {}, pollMs = 800) {
+  const { id } = await api.submitJob(jobType, payload, handlers.priority ?? 0);
   handlers.onSubmit?.(id);
   let after = 0;
   const drain = async () => {
-    const res = await api.jobEvents(dbUrl, id, after);
+    const res = await api.jobEvents(id, after);
     for (const event of res.events ?? []) {
       if (event.id <= after) continue;
       after = event.id;
@@ -25,7 +25,7 @@ export async function submitAndFollow(dbUrl, jobType, payload, handlers = {}, po
   };
   for (;;) {
     await drain();
-    const status = await api.jobStatus(dbUrl, id);
+    const status = await api.jobStatus(id);
     handlers.onStatus?.(status);
     if (TERMINAL.has(status.status)) {
       await drain();

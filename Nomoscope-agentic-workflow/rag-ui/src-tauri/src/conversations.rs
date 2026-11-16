@@ -3,26 +3,24 @@
 //! and whose result is the answer. Listing and reopening a conversation is a
 //! read of the caller's own jobs; there is no local copy to keep in sync.
 
-use crate::pg::{connect, describe, rows_to_json};
+use crate::pg::{describe, rows_to_json};
+use postgres::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
 #[derive(Deserialize)]
 pub struct ListPayload {
-    pub db_url: String,
     pub limit: Option<i64>,
 }
 
 #[derive(Deserialize)]
 pub struct ConversationPayload {
-    pub db_url: String,
     pub conversation_id: String,
 }
 
 
 /// The caller's conversations, newest first: first question, turn count, last activity.
-pub fn list(payload: &ListPayload) -> Result<Value, String> {
-    let mut client = connect(&payload.db_url)?;
+pub fn list(client: &mut Client, payload: &ListPayload) -> Result<Value, String> {
     let limit = payload.limit.unwrap_or(40).clamp(1, 200);
     let rows = client
         .query(
@@ -49,8 +47,7 @@ pub fn list(payload: &ListPayload) -> Result<Value, String> {
 
 /// Every turn of one conversation, oldest first: the question (the last
 /// message of that job's payload), the job's status, and its result.
-pub fn turns(payload: &ConversationPayload) -> Result<Value, String> {
-    let mut client = connect(&payload.db_url)?;
+pub fn turns(client: &mut Client, payload: &ConversationPayload) -> Result<Value, String> {
     let rows = client
         .query(
             "SELECT id, status, payload, result, error,
@@ -109,7 +106,7 @@ mod tests {
             return;
         };
         let id: i64 = row.get(0);
-        let listed = super::list(&super::ListPayload { db_url: url.clone(), limit: Some(200) });
+        let listed = super::list(&mut client, &super::ListPayload { limit: Some(200) });
         client.execute("DELETE FROM ops.jobs WHERE id = $1", &[&id]).unwrap();
         assert!(listed
             .unwrap()["conversations"]

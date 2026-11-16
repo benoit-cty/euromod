@@ -2,13 +2,13 @@
 //! the Evaluation tab: runs with whole-run KPI rates, and one run's breakdown
 //! and case results. Read-only.
 
-use crate::pg::{connect, describe, rows_to_json};
+use crate::pg::{describe, rows_to_json};
+use postgres::Client;
 use serde_json::{json, Value};
 
 /// All evaluation runs with whole-run KPI rates (averaged across languages).
 /// Errors with a hint if `nomokrisis-eval init-db` has not been run yet.
-pub fn eval_runs(db_url: &str) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
+pub fn eval_runs(client: &mut Client) -> Result<Value, String> {
     let rows = client
         .query(
             "SELECT r.id, r.run_id, r.created_at::text AS created_at, r.as_of::text AS as_of,
@@ -47,8 +47,7 @@ pub fn eval_runs(db_url: &str) -> Result<Value, String> {
 }
 
 /// Per-(language, country) KPI breakdown plus all case results for one run.
-pub fn eval_run_detail(db_url: &str, run_pk: i64) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
+pub fn eval_run_detail(client: &mut Client, run_pk: i64) -> Result<Value, String> {
 
     let summary = client
         .query(
@@ -94,18 +93,15 @@ mod tests {
     /// stack; silently skipped when the DB is down or `init-db` hasn't run.
     #[test]
     fn eval_queries_smoke() {
-        let url = url();
-        if super::connect(&url).is_err() {
-            return;
-        }
-        let runs = match super::eval_runs(&url) {
+        let Ok(mut client) = crate::pg::connect(&url()) else { return };
+        let runs = match super::eval_runs(&mut client) {
             Ok(v) => v,
             Err(e) if e.contains("init-db") => return,
             Err(e) => panic!("eval_runs failed: {e}"),
         };
         if let Some(first) = runs["runs"].as_array().unwrap().first() {
             let pk = first["id"].as_i64().unwrap();
-            let detail = super::eval_run_detail(&url, pk).unwrap();
+            let detail = super::eval_run_detail(&mut client, pk).unwrap();
             assert!(detail["summary"].is_array());
             assert!(detail["cases"].is_array());
         }

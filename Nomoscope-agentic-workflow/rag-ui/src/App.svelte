@@ -85,9 +85,9 @@
   }
 
   async function refreshWorker() {
-    if (!config.db_url || config.db_error) return;
+    if (config.db_error) return;
     try {
-      const res = await api.workerStatus(config.db_url);
+      const res = await api.workerStatus();
       worker = { alive: res.workers.some((w) => w.alive), models: res.models };
       if (!model || !worker.models.some((m) => m.model === model)) {
         model = (llmModels.find((m) => m.is_default) ?? llmModels[0])?.model ?? '';
@@ -99,7 +99,7 @@
 
   async function loadConversations() {
     try {
-      conversations = (await api.listConversations(config.db_url)).conversations;
+      conversations = (await api.listConversations()).conversations;
     } catch {
       conversations = [];
     }
@@ -108,7 +108,7 @@
   async function send(event) {
     event?.preventDefault();
     const question = input.trim();
-    if (!question || busy || !config.db_url) return;
+    if (!question || busy || !config.user) return;
     const payload = {
       conversation_id: conversationId,
       messages: buildMessages(turns, question),
@@ -122,7 +122,7 @@
     input = '';
     await scrollDown();
     try {
-      const final = await submitAndFollow(config.db_url, 'chat', payload, {
+      const final = await submitAndFollow('chat', payload, {
         priority: CHAT_PRIORITY,
         onSubmit: (id) => (turns[index].jobId = id),
         onProgress: (data) => {
@@ -145,7 +145,12 @@
 
   async function cancel(index) {
     const id = turns[index].jobId;
-    if (id) await api.cancelJob(config.db_url, id).catch((e) => (error = String(e)));
+    if (!id) return;
+    try {
+      await api.cancelJob(id);
+    } catch (e) {
+      error = `Could not stop job #${id}: ${e}`;
+    }
   }
 
   function select(index, quote = null) {
@@ -171,7 +176,7 @@
   async function openConversation(id) {
     if (busy) return;
     try {
-      const res = await api.conversationTurns(config.db_url, id);
+      const res = await api.conversationTurns(id);
       conversationId = id;
       turns = res.turns.map((t) => ({
         question: t.question,
@@ -349,7 +354,7 @@
             onkeydown={onKeydown}
             rows="2"
             placeholder={busy ? 'Waiting for the answer…' : 'Ask about a rate, a threshold, an article… (Enter to send, Shift+Enter for a new line)'}
-            disabled={!config.db_url || !!config.db_error}
+            disabled={!config.user}
           ></textarea>
           <button class="primary" disabled={busy || !input.trim()}><Icon name="send" size={15} /> Send</button>
         </form>
@@ -376,7 +381,6 @@
               {#each panelResult.quotes as q, i (i)}
                 <ChunkCard
                   chunk={sourceById[q.chunk_id] ?? { chunk_id: q.chunk_id, citation: q.citation, validity: q.validity, source_trust_class: q.source_trust_class }}
-                  dbUrl={config.db_url}
                   label={`[${i + 1}]`}
                   extract={q.extract}
                   verified={q.verified}
@@ -386,15 +390,15 @@
               {/each}
               {#if otherSources.length}<h3>Also retrieved</h3>{/if}
               {#each otherSources as s (s.chunk_id)}
-                <ChunkCard chunk={s} dbUrl={config.db_url} />
+                <ChunkCard chunk={s} />
               {/each}
             {/if}
           </div>
           <div hidden={tab !== 'web'}>
-            <WebPanel result={panelResult} dbUrl={config.db_url} />
+            <WebPanel result={panelResult} />
           </div>
           <div hidden={tab !== 'search'}>
-            <SearchPanel dbUrl={config.db_url} {country} {asOf} />
+            <SearchPanel {country} {asOf} />
           </div>
         </div>
       </aside>

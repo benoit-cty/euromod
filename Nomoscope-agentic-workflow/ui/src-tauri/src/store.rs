@@ -13,7 +13,7 @@
 //! in the pipeline without lockstep releases of the UI.
 
 use chrono::Utc;
-use crate::pg::{connect, describe};
+use crate::pg::describe;
 use postgres::Client;
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -40,8 +40,7 @@ fn str_field(value: &Value, key: &str) -> String {
 }
 
 /// Every queue item, newest first, with the filter facets the list offers.
-pub fn load_queue(db_url: &str) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
+pub fn load_queue(client: &mut Client) -> Result<Value, String> {
     let rows = client
         .query(
             "SELECT item_id, status, item FROM params.review_queue ORDER BY created_at DESC, item_id",
@@ -208,7 +207,7 @@ fn read_item(client: &mut Client, item_id: &str) -> Result<Value, String> {
 /// the same again inside `decide_review_item`).
 #[allow(clippy::too_many_arguments)]
 pub fn prepare_decision(
-    db_url: &str,
+    client: &mut Client,
     item_id: &str,
     seen_run_id: Option<&str>,
     action: &str,
@@ -217,8 +216,7 @@ pub fn prepare_decision(
     edited_value: Option<&Value>,
     edited_fields: Option<&Value>,
 ) -> Result<(Value, Value), String> {
-    let mut client = connect(db_url)?;
-    let item = read_item(&mut client, item_id)?;
+    let item = read_item(client, item_id)?;
     check_seen_run(&item, item_id, seen_run_id)?;
     compute_decision(item, item_id, action, reviewer, note, edited_value, edited_fields)
 }
@@ -238,8 +236,7 @@ pub fn check_seen_run(item: &Value, item_id: &str, seen_run_id: Option<&str>) ->
 /// Record the decision: one call, one transaction, audit row + queue item.
 /// Returns the audit row id, or null when that exact decision (item,
 /// decided_at) was already recorded — a replay is a no-op.
-pub fn commit_decision(db_url: &str, item_id: &str, item: &Value, entry: &Value) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
+pub fn commit_decision(client: &mut Client, item_id: &str, item: &Value, entry: &Value) -> Result<Value, String> {
     let row = client
         .query_one(
             "SELECT params.decide_review_item($1, $2::jsonb, $3::jsonb)",
@@ -256,13 +253,12 @@ pub fn commit_decision(db_url: &str, item_id: &str, item: &Value, entry: &Value)
 /// Identity and values are not editable: the function refuses them. Returns the
 /// edit id, or null when the value already was the store's.
 pub fn edit_parameter(
-    db_url: &str,
+    client: &mut Client,
     model_target: &str,
     field: &str,
     value: &Value,
     note: Option<&str>,
 ) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
     let row = client
         .query_one(
             "SELECT params.edit_parameter($1, $2, $3::jsonb, $4)",
@@ -278,8 +274,7 @@ pub fn edit_parameter(
 /// changed parameter from `params.euromod_change_set`, the view the CLI export
 /// reads too: metadata edits as `{field: {from, to, …}}` and only the value
 /// rows a human accepted as a change or edited — no history, no untouched field.
-pub fn export_records(db_url: &str) -> Result<BTreeMap<String, Vec<Value>>, String> {
-    let mut client = connect(db_url)?;
+pub fn export_records(client: &mut Client) -> Result<BTreeMap<String, Vec<Value>>, String> {
     let rows = client
         .query(
             "SELECT country, model_target, parameter_key, metadata, \"values\"
@@ -468,7 +463,7 @@ mod tests {
     fn decision_round_trip_smoke() {
         let url = std::env::var("WORKFLOW_DATABASE_URL")
             .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
-        let Ok(mut client) = connect(&url) else { return };
+        let Ok(mut client) = crate::pg::connect(&url) else { return };
         if client.execute("SELECT 1 FROM params.review_queue LIMIT 0", &[]).is_err() {
             return; // `nomoscope-workflow init-param-db` not run (or old schema)
         }
@@ -491,21 +486,21 @@ mod tests {
             .unwrap();
 
         // the queue lists it, pending
-        let queue = load_queue(&url).unwrap();
+        let queue = load_queue(&mut client).unwrap();
         let listed = queue["items"].as_array().unwrap().iter().find(|i| i["id"] == item_id).unwrap();
         assert_eq!(listed["status"], "pending");
 
         // a decision on a run the reviewer did not see is refused, by the UI and by the database
-        let stale = prepare_decision(&url, item_id, Some("run-0"), "accepted", "cargo-test", None, None, None);
+        let stale = prepare_decision(&mut client, item_id, Some("run-0"), "accepted", "cargo-test", None, None, None);
         assert!(stale.unwrap_err().contains("re-run since it was opened"));
         let (stale_item, mut stale_entry) =
-            prepare_decision(&url, item_id, None, "accepted", "cargo-test", None, None, None).unwrap();
+            prepare_decision(&mut client, item_id, None, "accepted", "cargo-test", None, None, None).unwrap();
         stale_entry["run_id"] = json!("run-0");
-        let refused = commit_decision(&url, item_id, &stale_item, &stale_entry).unwrap_err();
+        let refused = commit_decision(&mut client, item_id, &stale_item, &stale_entry).unwrap_err();
         assert!(refused.contains("re-run since it was opened"), "{refused}");
 
         let (item, entry) =
-            prepare_decision(&url, item_id, None, "edited", "cargo-test", Some("smoke"), Some(&json!(0.25)), None).unwrap();
+            prepare_decision(&mut client, item_id, None, "edited", "cargo-test", Some("smoke"), Some(&json!(0.25)), None).unwrap();
         // nothing recorded yet
         let pending: String = client
             .query_one("SELECT status FROM params.review_queue WHERE item_id = $1", &[&item_id])
@@ -513,9 +508,9 @@ mod tests {
             .get(0);
         assert_eq!(pending, "pending");
 
-        let first = commit_decision(&url, item_id, &item, &entry).unwrap();
+        let first = commit_decision(&mut client, item_id, &item, &entry).unwrap();
         assert!(first["id"].is_i64(), "first decision writes an audit row: {first}");
-        let again = commit_decision(&url, item_id, &item, &entry).unwrap();
+        let again = commit_decision(&mut client, item_id, &item, &entry).unwrap();
         assert!(again["id"].is_null(), "replaying the same decision is a no-op");
 
         let row = client
@@ -540,7 +535,7 @@ mod tests {
         assert_eq!(decisions[0].get::<_, Option<Value>>("edited_value"), Some(json!(0.25)));
 
         // the change set sees it, under its country: the edited value only
-        let groups = export_records(&url).unwrap();
+        let groups = export_records(&mut client).unwrap();
         let changes = groups.get("ZZ").expect("the edited item is a change");
         assert_eq!(changes.len(), 1);
         assert_eq!(changes[0]["values"].as_array().unwrap().len(), 1);
@@ -548,7 +543,7 @@ mod tests {
 
         // a vanished item fails outright
         cleanup(&mut client);
-        let error = commit_decision(&url, item_id, &item, &entry).unwrap_err();
+        let error = commit_decision(&mut client, item_id, &item, &entry).unwrap_err();
         assert!(error.contains("not in the queue"), "{error}");
     }
 }

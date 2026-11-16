@@ -8,7 +8,7 @@
   // EUROMOD change set ("Export changes…").
   import { api } from '../api.js';
 
-  let { dbUrl = '', param, onsaved = null } = $props();
+  let { param, onsaved = null } = $props();
 
   // Mirrors paramdb.KNOWN_UNITS and schema.SourceType; the database refuses
   // anything else (a pytest keeps the SQL lists in step with the Python ones).
@@ -87,7 +87,7 @@
       // stops here with the earlier ones recorded (the error says which).
       for (const [field, value] of changes) {
         try {
-          await api.editParameter(dbUrl, param.model_target, field, value, note);
+          await api.editParameter(param.model_target, field, value, note);
         } catch (e) {
           throw new Error(`${field}: ${e.message ?? e}`);
         }
@@ -104,7 +104,7 @@
 
   async function loadHistory() {
     try {
-      history = await api.parameterEdits(dbUrl, param.model_target);
+      history = await api.parameterEdits(param.model_target);
       historyError = '';
     } catch (e) {
       historyError = String(e);
@@ -112,7 +112,7 @@
   }
 
   $effect(() => {
-    if (dbUrl && param.model_target && param.edit_count) loadHistory();
+    if (param.model_target && param.edit_count) loadHistory();
   });
 
   function show(v) {

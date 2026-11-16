@@ -5,7 +5,7 @@
   // official translations, machine translations), fetched on demand.
   import { api } from '../api.js';
 
-  let { trace = [], extract = null, citedChunkId = null, dbUrl = '' } = $props();
+  let { trace = [], extract = null, citedChunkId = null } = $props();
 
   // chunk_id -> { loading, error, renderings[] } ; chunk_id -> unit_text_id
   let langs = $state({});
@@ -22,11 +22,11 @@
   };
 
   async function loadLangs(chunkId) {
-    if (!dbUrl || !chunkId || requested.has(chunkId)) return;
+    if (!chunkId || requested.has(chunkId)) return;
     requested.add(chunkId);
     langs[chunkId] = { loading: true, error: '', renderings: [] };
     try {
-      const res = await api.chunkRenderings(dbUrl, chunkId);
+      const res = await api.chunkRenderings(chunkId);
       langs[chunkId] = { loading: false, error: '', renderings: res.renderings };
     } catch (e) {
       langs[chunkId] = { loading: false, error: String(e), renderings: [] };
@@ -35,7 +35,7 @@
 
   // the cited hit is open on arrival, so its languages load without a click
   $effect(() => {
-    if (citedChunkId && dbUrl) loadLangs(citedChunkId);
+    if (citedChunkId) loadLangs(citedChunkId);
   });
 
   // explicit pick, else the cited rendering from the DB (which also fills in

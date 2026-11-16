@@ -5,13 +5,13 @@
 //! `params.decide_review_item` and edits only by `params.edit_parameter`
 //! (store.rs); this module never writes.
 
-use crate::pg::{connect, describe, rows_to_json};
+use crate::pg::{describe, rows_to_json};
+use postgres::Client;
 use serde_json::{json, Value};
 
 /// All parameters in the `params` schema, each with its most recent model
 /// value and its most recent agentic extraction run (Parameters tab).
-pub fn params_list(db_url: &str) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
+pub fn params_list(client: &mut Client) -> Result<Value, String> {
     let rows = client
         .query(
             "SELECT p.country, p.model_target, p.policy, p.function, p.name,
@@ -89,8 +89,7 @@ pub fn params_list(db_url: &str) -> Result<Value, String> {
 /// EUROMOD texts, its law-language texts and the values EUROMOD has held —
 /// for the hand-off prompt to an external assistant. A `group:<id>` target
 /// returns every member of that bracket schedule, in schedule order.
-pub fn parameter_context(db_url: &str, model_target: &str) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
+pub fn parameter_context(client: &mut Client, model_target: &str) -> Result<Value, String> {
     let group = model_target.strip_prefix("group:");
     let rows = client
         .query(
@@ -131,8 +130,7 @@ pub fn parameter_context(db_url: &str, model_target: &str) -> Result<Value, Stri
 }
 
 /// One parameter's metadata edits (`params.parameter_edits`), newest first.
-pub fn parameter_edits(db_url: &str, model_target: &str) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
+pub fn parameter_edits(client: &mut Client, model_target: &str) -> Result<Value, String> {
     let rows = client
         .query(
             "SELECT id, field, value, previous, reviewer, note, edited_at::text AS edited_at
@@ -146,8 +144,7 @@ pub fn parameter_edits(db_url: &str, model_target: &str) -> Result<Value, String
 
 /// The audit log (`params.review_decisions`, the system of record), newest
 /// first: the History tab's data source.
-pub fn load_decisions(db_url: &str, limit: i64) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
+pub fn load_decisions(client: &mut Client, limit: i64) -> Result<Value, String> {
     let rows = client
         .query(
             "SELECT id, proposal_pk, item_id, run_id, model_target, as_of::text AS as_of,
@@ -180,13 +177,13 @@ mod tests {
         if client.execute("SELECT 1 FROM params.review_decisions LIMIT 0", &[]).is_err() {
             return;
         }
-        let listed = super::params_list(&url()).unwrap();
+        let listed = super::params_list(&mut client).unwrap();
         assert!(listed["system_years"].is_object());
         if let Some(first) = listed["parameters"].as_array().unwrap().first() {
-            let target = first["model_target"].as_str().unwrap();
-            assert!(super::parameter_context(&url(), target).unwrap()["parameters"].is_array());
-            assert!(super::parameter_edits(&url(), target).unwrap().is_array());
+            let target = first["model_target"].as_str().unwrap().to_string();
+            assert!(super::parameter_context(&mut client, &target).unwrap()["parameters"].is_array());
+            assert!(super::parameter_edits(&mut client, &target).unwrap().is_array());
         }
-        assert!(super::load_decisions(&url(), 5).unwrap()["decisions"].is_array());
+        assert!(super::load_decisions(&mut client, 5).unwrap()["decisions"].is_array());
     }
 }

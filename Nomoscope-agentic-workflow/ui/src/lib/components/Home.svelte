@@ -7,7 +7,7 @@
   import { countryName, formatCount, relativeTime, humanize } from '../labels.js';
   import { countryReadiness } from '../readiness.js';
 
-  let { dbUrl = '', items = [], loading = false, reviewer = null, onnavigate, onexport } = $props();
+  let { items = [], loading = false, reviewer = null, onnavigate, onexport } = $props();
 
   let stats = $state(null);
   let jobs = $state([]);
@@ -49,9 +49,8 @@
   });
 
   async function load() {
-    if (!dbUrl) return;
     try {
-      const [s, j] = await Promise.all([api.dbStats(dbUrl), api.listJobs(dbUrl, 5).catch(() => ({ jobs: [] }))]);
+      const [s, j] = await Promise.all([api.dbStats(), api.listJobs(5).catch(() => ({ jobs: [] }))]);
       stats = s;
       jobs = j.jobs ?? [];
       loadError = '';
@@ -60,9 +59,7 @@
     }
   }
 
-  $effect(() => {
-    if (dbUrl) load();
-  });
+  load();
 
   export function reload() {
     return load();

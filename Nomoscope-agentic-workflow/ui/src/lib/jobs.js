@@ -36,12 +36,12 @@ const defaultTransport = {
  * Events that land between the last event poll and the terminal status are
  * drained before resolving, so nothing printed at exit is lost.
  */
-export async function followJob(dbUrl, id, handlers = {}, pollMs = 1000, transport = defaultTransport) {
+export async function followJob(id, handlers = {}, pollMs = 1000, transport = defaultTransport) {
   const { onLine, onProgress, onStatus } = handlers;
   let after = 0;
 
   const drain = async () => {
-    const res = await transport.jobEvents(dbUrl, id, after);
+    const res = await transport.jobEvents(id, after);
     for (const event of res.events ?? []) {
       if (event.id <= after) continue; // never deliver twice
       after = event.id;
@@ -52,7 +52,7 @@ export async function followJob(dbUrl, id, handlers = {}, pollMs = 1000, transpo
 
   for (;;) {
     await drain();
-    const status = await transport.jobStatus(dbUrl, id);
+    const status = await transport.jobStatus(id);
     onStatus?.(status);
     if (TERMINAL.has(status.status)) {
       await drain();
@@ -63,10 +63,10 @@ export async function followJob(dbUrl, id, handlers = {}, pollMs = 1000, transpo
 }
 
 /** Submit a job and follow it. Resolves with the final status row; `onSubmit(id)` fires first. */
-export async function submitAndFollow(dbUrl, jobType, payload, handlers = {}, pollMs = 1000, transport = defaultTransport) {
-  const { id } = await transport.submitJob(dbUrl, jobType, payload, handlers.priority ?? 0);
+export async function submitAndFollow(jobType, payload, handlers = {}, pollMs = 1000, transport = defaultTransport) {
+  const { id } = await transport.submitJob(jobType, payload, handlers.priority ?? 0);
   handlers.onSubmit?.(id);
-  return followJob(dbUrl, id, handlers, pollMs, transport);
+  return followJob(id, handlers, pollMs, transport);
 }
 
 const PROGRESS_PREFIX = '@progress ';

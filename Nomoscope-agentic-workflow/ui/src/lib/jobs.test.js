@@ -14,11 +14,11 @@ function fakeTransport({ pages, statuses }) {
   return {
     seenAfter,
     submitted,
-    submitJob: async (dbUrl, jobType, payload, priority) => {
-      submitted.push({ dbUrl, jobType, payload, priority });
+    submitJob: async (jobType, payload, priority) => {
+      submitted.push({ jobType, payload, priority });
       return { id: 42 };
     },
-    jobEvents: async (dbUrl, id, after) => {
+    jobEvents: async (id, after) => {
       seenAfter.push(after);
       const page = pages[Math.min(eventCalls, pages.length - 1)];
       eventCalls += 1;
@@ -45,7 +45,7 @@ test('events are delivered once, in order, and the cursor advances past the last
   const lines = [];
   const progress = [];
   const statuses = [];
-  const result = await followJob('db', 42, {
+  const result = await followJob(42, {
     onLine: (e) => lines.push(`${e.stream}:${e.line}`),
     onProgress: (d) => progress.push(d),
     onStatus: (s) => statuses.push(s.status),
@@ -66,7 +66,7 @@ test('a progress event without parsed data falls back to the raw line', async ()
     statuses: [{ id: 7, status: 'succeeded' }],
   });
   const progress = [];
-  await followJob('db', 7, { onProgress: (d) => progress.push(d) }, 0, fake);
+  await followJob(7, { onProgress: (d) => progress.push(d) }, 0, fake);
   assert.deepEqual(progress, [{ done: 3, total: 3 }]);
   assert.equal(parseProgress('not json'), null);
 });
@@ -74,9 +74,9 @@ test('a progress event without parsed data falls back to the raw line', async ()
 test('submitAndFollow submits with the priority and reports the id before following', async () => {
   const fake = fakeTransport({ pages: [[]], statuses: [{ id: 42, status: 'failed', error: 'a\nb\nlast line' }] });
   let seenId = null;
-  const result = await submitAndFollow('db', 'impact', { zone: 'EEE' }, { onSubmit: (id) => (seenId = id) }, 0, fake);
+  const result = await submitAndFollow('impact', { zone: 'EEE' }, { onSubmit: (id) => (seenId = id) }, 0, fake);
   assert.equal(seenId, 42);
-  assert.deepEqual(fake.submitted, [{ dbUrl: 'db', jobType: 'impact', payload: { zone: 'EEE' }, priority: 0 }]);
+  assert.deepEqual(fake.submitted, [{ jobType: 'impact', payload: { zone: 'EEE' }, priority: 0 }]);
   assert.equal(result.status, 'failed');
   assert.equal(summarize(result, '3s'), 'Failed after 3s: last line');
   assert.equal(summarize({ status: 'cancelled' }), 'Cancelled.');

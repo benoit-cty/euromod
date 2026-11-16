@@ -12,14 +12,13 @@
 //! do: the dataset schema evolves in the Python package and the UI must not
 //! need a lockstep release.
 
-use crate::pg::{connect, describe};
+use crate::pg::describe;
 use postgres::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
 #[derive(Deserialize)]
 pub struct GoldenVerifyPayload {
-    pub db_url: String,
     pub id: String,
     pub verified: bool,
     pub note: Option<String>,
@@ -70,7 +69,7 @@ fn case_row(r: &postgres::Row) -> Value {
 /// columns the Parameters tab lists (db::params::params_list), but the value in
 /// force at `as_of` rather than the newest. A `group:<id>` target has no
 /// single parameter row: it is reported as such.
-fn parameter_summary(client: &mut Client, case: &Value) -> Result<Value, String> {
+fn parameter_summary(client: &mut Client, case: &Value, params_schema: bool) -> Result<Value, String> {
     let Some(target) = case.get("parameter_target").and_then(Value::as_str) else {
         return Ok(Value::Null);
     };
@@ -78,10 +77,6 @@ fn parameter_summary(client: &mut Client, case: &Value) -> Result<Value, String>
         return Ok(json!({ "group": group, "model_target": target }));
     }
     let as_of = case.get("as_of").and_then(Value::as_str).unwrap_or("");
-    let params_schema: bool = client
-        .query_one("SELECT to_regclass('params.parameters') IS NOT NULL", &[])
-        .map_err(describe)?
-        .get(0);
     if !params_schema {
         return Ok(json!({ "missing": target }));
     }
@@ -130,18 +125,21 @@ fn parameter_summary(client: &mut Client, case: &Value) -> Result<Value, String>
     }))
 }
 
-pub fn load_cases(db_url: &str) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
+pub fn load_cases(client: &mut Client) -> Result<Value, String> {
     let rows = client
         .query(
             &format!("SELECT {CASE_COLUMNS} FROM eval.golden_cases ORDER BY country, id"),
             &[],
         )
         .map_err(|e| format!("golden cases query failed (has `nomokrisis-eval init-db` been run?): {}", describe(e)))?;
+    let params_schema: bool = client
+        .query_one("SELECT to_regclass('params.parameters') IS NOT NULL", &[])
+        .map_err(describe)?
+        .get(0);
     let mut cases = Vec::with_capacity(rows.len());
     for r in &rows {
         let mut case = case_row(r);
-        let summary = parameter_summary(&mut client, &case)?;
+        let summary = parameter_summary(client, &case, params_schema)?;
         case["_parameter"] = summary;
         cases.push(case);
     }
@@ -160,8 +158,7 @@ pub fn load_cases(db_url: &str) -> Result<Value, String> {
 /// rejecting leaves it false but stamps `reviewed_by` (always `current_user`),
 /// so an evaluation run (verified-only by default) skips it either way while
 /// the audit trail keeps "a human said no" distinct from "nobody has looked".
-pub fn set_verified(payload: &GoldenVerifyPayload) -> Result<Value, String> {
-    let mut client = connect(&payload.db_url)?;
+pub fn set_verified(client: &mut Client, payload: &GoldenVerifyPayload) -> Result<Value, String> {
     let note = payload.note.as_deref().map(str::trim).filter(|n| !n.is_empty());
     let row = client
         .query_opt(
@@ -208,7 +205,7 @@ mod tests {
     fn verdict_round_trip_smoke() {
         let url = std::env::var("WORKFLOW_DATABASE_URL")
             .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
-        let Ok(mut client) = connect(&url) else { return };
+        let Ok(mut client) = crate::pg::connect(&url) else { return };
         if client.execute("SELECT 1 FROM eval.golden_cases LIMIT 0", &[]).is_err() {
             return; // `nomokrisis-eval init-db` not run (or old schema)
         }
@@ -230,14 +227,13 @@ mod tests {
             )
             .unwrap();
 
-        let loaded = load_cases(&url).unwrap();
+        let loaded = load_cases(&mut client).unwrap();
         let mine = loaded["cases"].as_array().unwrap().iter().find(|c| c["id"] == id).unwrap();
         assert_eq!(mine["verified"], false);
         assert!(mine["reviewed_by"].is_null());
         assert_eq!(mine["_parameter"]["missing"], "euromod://ZZ/none/def_const/$missing");
 
-        let rejected = set_verified(&GoldenVerifyPayload {
-            db_url: url.clone(),
+        let rejected = set_verified(&mut client, &GoldenVerifyPayload {
             id: id.into(),
             verified: false,
             note: Some("threshold looks like the previous year".into()),
@@ -249,8 +245,7 @@ mod tests {
         assert_eq!(rejected["case"]["review_note"], "threshold looks like the previous year");
         assert_eq!(rejected["case"]["expected"]["value"], json!(0.25));
 
-        let accepted = set_verified(&GoldenVerifyPayload {
-            db_url: url.clone(),
+        let accepted = set_verified(&mut client, &GoldenVerifyPayload {
             id: id.into(),
             verified: true,
             note: Some("  ".into()),
@@ -271,11 +266,11 @@ mod tests {
                 &[&id],
             )
             .unwrap();
-        let loaded = load_cases(&url).unwrap();
+        let loaded = load_cases(&mut client).unwrap();
         let mine = loaded["cases"].as_array().unwrap().iter().find(|c| c["id"] == id).unwrap();
         assert_eq!(mine["_parameter"]["group"], "FR:tinkt_fr:tin_schedule");
 
-        let missing = set_verified(&GoldenVerifyPayload { db_url: url.clone(), id: "zz_nope".into(), verified: true, note: None })
+        let missing = set_verified(&mut client, &GoldenVerifyPayload { id: "zz_nope".into(), verified: true, note: None })
             .unwrap_err();
         assert!(missing.contains("does not exist"));
         cleanup(&mut client);

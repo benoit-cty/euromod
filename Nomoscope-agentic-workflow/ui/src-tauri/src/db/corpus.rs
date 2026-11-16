@@ -2,14 +2,14 @@
 //! statistics and per-country readiness, and the instruments a contributed
 //! document can be said to implement. Read-only.
 
-use crate::pg::{connect, describe, row_to_json, rows_to_json};
+use crate::pg::{describe, row_to_json, rows_to_json};
+use postgres::Client;
 use serde_json::{json, Value};
 
 /// Corpus totals, per-jurisdiction breakdown, embedding coverage and the
 /// per-country readiness of the two non-legislative inputs (Country Report,
 /// enriched parameter store).
-pub fn stats(db_url: &str) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
+pub fn stats(client: &mut Client) -> Result<Value, String> {
 
     let totals = client
         .query_one(
@@ -180,12 +180,11 @@ fn split_key(mut row: Value, key: &str) -> (String, Value) {
 /// instruments are excluded: a Country Report describes the EUROMOD model, so
 /// nothing implements one.
 pub fn search_instruments(
-    db_url: &str,
+    client: &mut Client,
     country: &str,
     query: &str,
     limit: i64,
 ) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
     let pattern = format!("%{}%", query.trim());
     let rows = client
         .query(
@@ -212,18 +211,17 @@ pub fn search_instruments(
 
 #[cfg(test)]
 mod tests {
-    fn url() -> String {
-        std::env::var("WORKFLOW_DATABASE_URL")
-            .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string())
+    fn client() -> Option<postgres::Client> {
+        let url = std::env::var("WORKFLOW_DATABASE_URL")
+            .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
+        crate::pg::connect(&url).ok()
     }
 
     /// The statistics' row→JSON mapping against the live stack.
     #[test]
     fn stats_smoke() {
-        if super::connect(&url()).is_err() {
-            return;
-        }
-        let stats = match super::stats(&url()) {
+        let Some(mut client) = client() else { return };
+        let stats = match super::stats(&mut client) {
             Ok(stats) => stats,
             // a container whose /dev/shm is too small for the parallel joins
             Err(e) if e.contains("shared memory") => return eprintln!("skipped: {e}"),
@@ -236,10 +234,8 @@ mod tests {
 
     #[test]
     fn instrument_search_excludes_context_instruments() {
-        if super::connect(&url()).is_err() {
-            return;
-        }
-        let result = super::search_instruments(&url(), "FR", "", 50).unwrap();
+        let Some(mut client) = client() else { return };
+        let result = super::search_instruments(&mut client, "FR", "", 50).unwrap();
 
         let classes: Vec<String> = result["instruments"]
             .as_array()

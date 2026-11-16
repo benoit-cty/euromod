@@ -55,8 +55,7 @@ pub fn connect(db_url: &str) -> Result<Client, String> {
 
 /// The login the app connected with: the reviewer identity everywhere
 /// (`decide_review_item`, `ops.jobs.submitted_by`, golden verdicts).
-pub fn current_user(db_url: &str) -> Result<String, String> {
-    let mut client = connect(db_url)?;
+pub fn current_user(client: &mut Client) -> Result<String, String> {
     client
         .query_one("SELECT current_user", &[])
         .map_err(describe)

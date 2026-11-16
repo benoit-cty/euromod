@@ -14,7 +14,6 @@
     siblings = [],
     onselectrun = () => {},
     ondecide,
-    dbUrl = '',
     phoenixEndpoint = 'http://localhost:6006',
     phoenixGid = '',
   } = $props();
@@ -64,7 +63,7 @@
     handoffBusy = true;
     let context = null;
     try {
-      context = await api.parameterContext(dbUrl, item.model_target);
+      context = await api.parameterContext(item.model_target);
     } catch (e) {
       console.warn('parameter context unavailable; prompt built from the queue item alone', e);
     }
@@ -82,6 +81,8 @@
   }
 
   let note = $state('');
+  // Why a decision could not be sent (shown in the decision bar, not alert()).
+  let formError = $state('');
   // The correction form is folded away until needed; a blocked Accept opens it.
   let editOpen = $state(false);
   // The proposal is always editable — including after a decision — so the
@@ -143,6 +144,7 @@
     void seedKey;
     untrack(resetForm);
     note = '';
+    formError = '';
     handoffText = '';
     handoffOpen = false;
     handoffStatus = '';
@@ -275,6 +277,7 @@
   }
 
   function submit(action) {
+    formError = '';
     if (!form) {
       ondecide(action, note);
       return;
@@ -286,8 +289,9 @@
     let value;
     try {
       value = parsedValue();
-    } catch {
-      alert('Bracket value is not valid JSON');
+    } catch (e) {
+      formError = `The bracket value is not valid JSON (${e.message ?? e}): correct it under “Correct the proposal”.`;
+      editOpen = true;
       return;
     }
     // an edited proposal that the reviewer signs off on is logged as "edited"
@@ -481,7 +485,7 @@
           <span class="hint">{item.retrieval_trace?.length ?? 0} passages, with the quote highlighted</span>
         </summary>
         <div class="body">
-          <SourceViewer trace={item.retrieval_trace} {extract} {citedChunkId} {dbUrl} />
+          <SourceViewer trace={item.retrieval_trace} {extract} {citedChunkId} />
         </div>
       </details>
 
@@ -677,6 +681,7 @@
         <button class="danger" onclick={() => submit('rejected')}>Reject</button>
         <button onclick={() => submit('escalated')} title="Escalate to the national team">Send to national team</button>
       </div>
+      {#if formError}<p class="callout err">{formError}</p>{/if}
       {#if !gate.ok && item.routing !== 'not_found'}
         <p class="muted small">
           Accept is not possible: {gate.reason}.

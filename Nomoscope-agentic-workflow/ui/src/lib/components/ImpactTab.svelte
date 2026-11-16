@@ -6,15 +6,12 @@
   import { api } from '../api.js';
   import { submitAndFollow, summarize } from '../jobs.js';
 
-  let { dbUrl = '' } = $props();
-
   let report = $state(null);
   let projects = $state([]);
   let project = $state('');
   let zone = $state('EEE');
   let loading = $state(false);
   let error = $state('');
-  let loadedOnce = $state(false);
   let jobId = $state(null);
 
   const zones = [
@@ -23,17 +20,12 @@
     { value: 'FRA', label: 'France (FRA)' },
   ];
 
-  $effect(() => {
-    if (dbUrl && !loadedOnce) {
-      loadedOnce = true;
-      loadProjects();
-      load();
-    }
-  });
+  loadProjects();
+  load();
 
   async function loadProjects() {
     try {
-      const res = await api.phoenixProjects(dbUrl);
+      const res = await api.phoenixProjects();
       projects = res.projects ?? [];
     } catch {
       projects = []; // phoenix DB absent: the filter just stays empty
@@ -45,7 +37,6 @@
     error = '';
     try {
       const final = await submitAndFollow(
-        dbUrl,
         'impact',
         { project, since: null, until: null, zone },
         { onSubmit: (id) => (jobId = id) },
@@ -62,7 +53,12 @@
   }
 
   async function cancel() {
-    if (jobId != null) await api.cancelJob(dbUrl, jobId);
+    if (jobId == null) return;
+    try {
+      await api.cancelJob(jobId);
+    } catch (e) {
+      error = `Could not cancel job #${jobId}: ${e}`;
+    }
   }
 
   // Target of the shell's Reload button while this tab is showing.

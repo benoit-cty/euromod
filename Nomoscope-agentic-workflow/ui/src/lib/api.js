@@ -2,67 +2,65 @@
 //
 // The UI is remote (ADR 0004): every call here is a database round trip. Work
 // that needs a model or the internet is a job (submitJob → ops.jobs) the
-// worker runs; lib/jobs.js follows one to completion.
+// worker runs; lib/jobs.js follows one to completion. The database URL lives
+// on the Rust side (Tauri state): no call carries it, and setDbUrl is the one
+// way to point the whole app at another database.
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-shell';
 
 export const api = {
+  // { reviewer, db_error, db_url (password masked), phoenix_endpoint, phoenix_project }
   getEnvConfig: () => invoke('get_env_config'),
+  // Checked before it is taken: resolves { db_url, reviewer } or rejects and
+  // changes nothing. A masked password (as getEnvConfig shows it) keeps the current one.
+  setDbUrl: (dbUrl) => invoke('set_db_url', { payload: { db_url: dbUrl } }),
   // Review queue (params.review_queue) and decisions (params.decide_review_item).
-  loadQueue: (dbUrl) => invoke('load_queue', { payload: { db_url: dbUrl } }),
+  loadQueue: () => invoke('load_queue'),
   saveDecision: (payload) => invoke('save_decision', { payload }),
-  loadDecisions: (dbUrl, limit = 200) =>
-    invoke('load_decisions', { payload: { db_url: dbUrl, limit } }),
+  loadDecisions: (limit = 200) => invoke('load_decisions', { payload: { limit } }),
   // The EUROMOD change set — metadata edits and accepted value changes only —
   // one file per country, into a folder the reviewer picks: { count, paths, canceled }.
-  exportChanges: (dbUrl) => invoke('export_changes', { payload: { db_url: dbUrl } }),
+  exportChanges: () => invoke('export_changes'),
   // Metadata edits (params.edit_parameter, ADR 0005): unit, source_type or a
   // {lang: text} field. Resolves { id } (null = already the store's value).
-  editParameter: (dbUrl, modelTarget, field, value, note = null) =>
-    invoke('edit_parameter', { payload: { db_url: dbUrl, model_target: modelTarget, field, value, note } }),
-  parameterEdits: (dbUrl, modelTarget) =>
-    invoke('parameter_edits', { payload: { db_url: dbUrl, model_target: modelTarget } }),
+  editParameter: (modelTarget, field, value, note = null) =>
+    invoke('edit_parameter', { payload: { model_target: modelTarget, field, value, note } }),
+  parameterEdits: (modelTarget) => invoke('parameter_edits', { payload: { model_target: modelTarget } }),
   // A parameter's EUROMOD texts, law-language texts and value history (every
   // member for a `group:` target), for the review page's hand-off prompt.
-  parameterContext: (dbUrl, modelTarget) =>
-    invoke('parameter_context', { payload: { db_url: dbUrl, model_target: modelTarget } }),
-  dbStats: (dbUrl) => invoke('db_stats', { payload: { db_url: dbUrl } }),
+  parameterContext: (modelTarget) => invoke('parameter_context', { payload: { model_target: modelTarget } }),
+  dbStats: () => invoke('db_stats'),
   // Vector/hybrid modes encode the query on the worker; `notice` is set when
   // no worker was alive and the search fell back to full text.
   searchArticles: (payload) => invoke('search_articles', { payload }),
   // Cosine of each sentence against the query (one BGE-M3 batch on the
   // worker), so the Database tab can tint the sentence of a hit that most
   // likely answers.
-  scoreSentences: (dbUrl, query, sentences) =>
-    invoke('score_sentences', { payload: { db_url: dbUrl, query, sentences } }),
+  scoreSentences: (query, sentences) => invoke('score_sentences', { payload: { query, sentences } }),
   // Contributed documents: the instruments a document can be said to implement
   // (title or national-id fragment, `context` instruments excluded).
-  searchInstruments: (dbUrl, country, query, limit = 20) =>
-    invoke('search_instruments', { payload: { db_url: dbUrl, country, query, limit } }),
+  searchInstruments: (country, query, limit = 20) =>
+    invoke('search_instruments', { payload: { country, query, limit } }),
   // Every language rendering (authentic / official / machine translation) of the
   // legal-unit version a cited chunk belongs to.
-  chunkRenderings: (dbUrl, chunkId) =>
-    invoke('chunk_renderings', { payload: { db_url: dbUrl, chunk_id: chunkId } }),
+  chunkRenderings: (chunkId) => invoke('chunk_renderings', { payload: { chunk_id: chunkId } }),
   // Golden set: drafted evaluation cases (eval.golden_cases) and the reviewer's verdict.
-  goldenCases: (dbUrl) => invoke('golden_cases', { payload: { db_url: dbUrl } }),
-  setGoldenVerified: ({ db_url, id, verified, note }) =>
-    invoke('set_golden_verified', { payload: { db_url, id, verified, note } }),
-  evalRuns: (dbUrl) => invoke('eval_runs', { payload: { db_url: dbUrl } }),
-  evalRunDetail: (dbUrl, runPk) =>
-    invoke('eval_run_detail', { payload: { db_url: dbUrl, run_pk: runPk } }),
+  goldenCases: () => invoke('golden_cases'),
+  setGoldenVerified: ({ id, verified, note }) => invoke('set_golden_verified', { payload: { id, verified, note } }),
+  evalRuns: () => invoke('eval_runs'),
+  evalRunDetail: (runPk) => invoke('eval_run_detail', { payload: { run_pk: runPk } }),
   // Parameters tab: params-schema listing and Phoenix trace-link resolution.
-  paramsList: (dbUrl) => invoke('params_list', { payload: { db_url: dbUrl } }),
-  phoenixProjects: (dbUrl) => invoke('phoenix_projects', { payload: { db_url: dbUrl } }),
+  paramsList: () => invoke('params_list'),
+  phoenixProjects: () => invoke('phoenix_projects'),
 
   // --- jobs (ops.jobs): the only way the UI makes anything run ---
-  submitJob: (dbUrl, jobType, payload, priority = 0) =>
-    invoke('submit_job', { payload: { db_url: dbUrl, job_type: jobType, payload, priority } }),
-  jobStatus: (dbUrl, id) => invoke('job_status', { payload: { db_url: dbUrl, id } }),
-  jobEvents: (dbUrl, id, after = 0) =>
-    invoke('job_events', { payload: { db_url: dbUrl, id, after } }),
-  cancelJob: (dbUrl, id) => invoke('cancel_job', { payload: { db_url: dbUrl, id } }),
-  listJobs: (dbUrl, limit = 100) => invoke('list_jobs', { payload: { db_url: dbUrl, limit } }),
+  submitJob: (jobType, payload, priority = 0) =>
+    invoke('submit_job', { payload: { job_type: jobType, payload, priority } }),
+  jobStatus: (id) => invoke('job_status', { payload: { id } }),
+  jobEvents: (id, after = 0) => invoke('job_events', { payload: { id, after } }),
+  cancelJob: (id) => invoke('cancel_job', { payload: { id } }),
+  listJobs: (limit = 100) => invoke('list_jobs', { payload: { limit } }),
   // { workers: [{ alive, device, … }], models: [{ model, kind, is_default }] }
-  workerStatus: (dbUrl) => invoke('worker_status', { payload: { db_url: dbUrl } }),
+  workerStatus: () => invoke('worker_status'),
   openExternal: (url) => open(url),
 };

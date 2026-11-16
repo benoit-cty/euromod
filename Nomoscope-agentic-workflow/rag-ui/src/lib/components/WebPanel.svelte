@@ -8,7 +8,7 @@
   import { ingestPayload } from '../chat.js';
   import { lastLine, submitAndFollow } from '../jobs.js';
 
-  let { result, dbUrl } = $props();
+  let { result } = $props();
 
   // instrument_id -> { phase: ingesting | embedding | done | failed, jobId, message }
   let ingests = $state({});
@@ -20,7 +20,7 @@
     const key = d.instrument_id;
     ingests[key] = { phase: 'ingesting', jobId: null, message: '' };
     try {
-      const done = await submitAndFollow(dbUrl, 'ingest', ingestPayload(d), {
+      const done = await submitAndFollow('ingest', ingestPayload(d), {
         onSubmit: (id) => (ingests[key].jobId = id),
       });
       if (done.status !== 'succeeded') {
@@ -28,7 +28,7 @@
         return;
       }
       ingests[key] = { phase: 'embedding', jobId: null, message: '' };
-      const embedded = await submitAndFollow(dbUrl, 'embed', {}, {
+      const embedded = await submitAndFollow('embed', {}, {
         onSubmit: (id) => (ingests[key].jobId = id),
       });
       ingests[key] =

@@ -6,7 +6,7 @@
   import { api } from '../api.js';
   import ChunkCard from './ChunkCard.svelte';
 
-  let { dbUrl, country = '', asOf = '' } = $props();
+  let { country = '', asOf = '' } = $props();
 
   let query = $state('');
   let mode = $state('hybrid');
@@ -24,7 +24,6 @@
     error = '';
     try {
       const res = await api.searchArticles({
-        db_url: dbUrl,
         query: query.trim(),
         country: country || null,
         as_of: asOf || null,
@@ -61,7 +60,7 @@
 {#if error}<p class="banner err small">{error}</p>{/if}
 {#if searched && !results.length}<p class="muted">No passage matches.</p>{/if}
 {#each results as r (r.chunk_id)}
-  <ChunkCard chunk={r} {dbUrl} headline={r.headline} />
+  <ChunkCard chunk={r} headline={r.headline} />
 {/each}
 
 <style>

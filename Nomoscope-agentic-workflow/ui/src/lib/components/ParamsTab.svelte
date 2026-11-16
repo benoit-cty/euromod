@@ -13,7 +13,6 @@
   // launched run keeps streaming; `active` re-triggers the log auto-scroll on
   // return and `onrunning` lets the shell show a run indicator on the tab.
   let {
-    dbUrl = '',
     phoenixEndpoint = 'http://localhost:6006',
     onopenitem = null,
     active = true,
@@ -184,10 +183,9 @@
   });
 
   async function refresh() {
-    if (!dbUrl) return;
     loading = true;
     try {
-      const res = await api.paramsList(dbUrl);
+      const res = await api.paramsList();
       params = res.parameters;
       systemYears = res.system_years ?? {};
       error = '';
@@ -197,13 +195,13 @@
       loading = false;
     }
     try {
-      const res = await api.phoenixProjects(dbUrl);
+      const res = await api.phoenixProjects();
       gids = Object.fromEntries(res.projects.map((p) => [p.name, p.gid]));
     } catch {
       gids = {}; // Phoenix links degrade to the projects page
     }
     try {
-      const status = await api.workerStatus(dbUrl);
+      const status = await api.workerStatus();
       workerAlive = (status.workers ?? []).some((w) => w.alive);
       models = (status.models ?? []).filter((m) => m.kind === 'llm');
       if (model && !models.some((m) => m.model === model)) model = '';
@@ -212,9 +210,7 @@
     }
   }
 
-  $effect(() => {
-    if (dbUrl) refresh();
-  });
+  refresh();
 
   // Target of the shell's Reload button while this tab is showing.
   export function reload() {
@@ -305,7 +301,7 @@
     running = true;
     startedAt = lastLogAt = now = Date.now();
     try {
-      const final = await submitAndFollow(dbUrl, 'workflow', payload, handlers);
+      const final = await submitAndFollow('workflow', payload, handlers);
       const took = fmtDur(Date.now() - startedAt);
       let line;
       if (final.status === 'succeeded') {
@@ -329,7 +325,12 @@
   }
 
   async function stop() {
-    if (jobId != null) await api.cancelJob(dbUrl, jobId);
+    if (jobId == null) return;
+    try {
+      await api.cancelJob(jobId);
+    } catch (e) {
+      error = `Could not cancel job #${jobId}: ${e}`;
+    }
   }
 </script>
 <section class="panel params">
@@ -462,7 +463,7 @@
                     </dd>
                   {/if}
                 </dl>
-                <ParameterEditor {dbUrl} param={p} onsaved={refresh} />
+                <ParameterEditor param={p} onsaved={refresh} />
               </td>
             </tr>
           {/if}

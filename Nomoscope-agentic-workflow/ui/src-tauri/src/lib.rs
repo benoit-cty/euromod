@@ -1,32 +1,37 @@
 //! Tauri command layer for the EUROMOD parameter-review UI.
 //!
 //! Command pattern (from tauri_outdated_parameters_app): a single `payload`
-//! JSON argument, deserialised into a typed struct, returning
-//! `Result<serde_json::Value, String>` so the frontend gets either data or a
-//! rejected promise with the error string.
+//! JSON argument where the command needs input, deserialised into a typed
+//! struct, returning `Result<serde_json::Value, String>` so the frontend gets
+//! either data or a rejected promise with the error string.
 //!
 //! The UI is fully remote (ADR 0004): it spawns nothing and reads no data
-//! directory. Its one credential is the analyst's Postgres login; everything
-//! that needs a model or the internet is a row in `ops.jobs` (jobs.rs) that
-//! the worker picks up. The only file it ever writes is the EUROMOD export.
-//! Besides decisions and jobs, the one thing it changes in the database is a
-//! parameter's metadata, through `params.edit_parameter` (ADR 0005).
+//! directory. Its one credential is the analyst's Postgres login, which lives
+//! in Tauri state ([pool::Db]) and never travels through the webview: every
+//! command takes a pooled connection from it, and `set_db_url` is the one way
+//! to point the app at another database. Everything that needs a model or the
+//! internet is a row in `ops.jobs` (jobs.rs) that the worker picks up. The
+//! only file it ever writes is the EUROMOD export. Besides decisions and jobs,
+//! the one thing it changes in the database is a parameter's metadata,
+//! through `params.edit_parameter` (ADR 0005).
 
 mod db;
 mod golden;
 mod jobs;
 mod pg;
+mod pool;
 mod store;
 
 use golden::GoldenVerifyPayload;
 use jobs::{EncodePayload, EventsPayload, JobPayload, ListPayload, SubmitPayload};
+use pool::Db;
 
 use serde::Deserialize;
 use serde_json::{json, Value};
+use tauri::State;
 
 #[derive(Deserialize)]
 struct DecisionPayload {
-    db_url: String,
     item_id: String,
     /// The run of the item the reviewer had on screen (`item.run_id`). A
     /// decision on an item re-run since then is refused (code audit D7).
@@ -44,7 +49,6 @@ struct DecisionPayload {
 
 #[derive(Deserialize)]
 struct EditPayload {
-    db_url: String,
     model_target: String,
     /// unit | source_type | label | short_label | description | explanation;
     /// anything else (identity, values) is refused by the database.
@@ -55,36 +59,31 @@ struct EditPayload {
 
 #[derive(Deserialize)]
 struct TargetPayload {
-    db_url: String,
     model_target: String,
 }
 
 #[derive(Deserialize)]
 struct DecisionsPayload {
-    db_url: String,
     limit: Option<usize>,
 }
 
 #[derive(Deserialize)]
-struct DbPayload {
+struct UrlPayload {
     db_url: String,
 }
 
 #[derive(Deserialize)]
 struct ChunkPayload {
-    db_url: String,
     chunk_id: String,
 }
 
 #[derive(Deserialize)]
 struct EvalRunPayload {
-    db_url: String,
     run_pk: i64,
 }
 
 #[derive(Deserialize)]
 struct InstrumentSearchPayload {
-    db_url: String,
     country: String,
     query: String,
     limit: Option<i64>,
@@ -92,7 +91,6 @@ struct InstrumentSearchPayload {
 
 #[derive(Deserialize)]
 struct SentenceScorePayload {
-    db_url: String,
     query: String,
     sentences: Vec<String>,
 }
@@ -107,20 +105,32 @@ where
         .map_err(|e| e.to_string())?
 }
 
+/// Run `f` on a pooled connection of the app's database, off the async runtime.
+async fn with_client<T, F>(db: State<'_, Db>, f: F) -> Result<T, String>
+where
+    T: Send + 'static,
+    F: FnOnce(&mut postgres::Client) -> Result<T, String> + Send + 'static,
+{
+    let db = db.inner().clone();
+    blocking(move || {
+        let mut client = db.client()?;
+        f(&mut client)
+    })
+    .await
+}
+
 /// Connection settings plus the reviewer identity, which is the database's
-/// `current_user` (the per-analyst login), never an environment guess.
+/// `current_user` (the per-analyst login), never an environment guess. The
+/// URL is shown with its password masked.
 #[tauri::command]
-async fn get_env_config() -> Result<Value, String> {
-    let db_url = std::env::var("WORKFLOW_DATABASE_URL")
-        .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
+async fn get_env_config(db: State<'_, Db>) -> Result<Value, String> {
     let phoenix_endpoint = std::env::var("PHOENIX_COLLECTOR_ENDPOINT")
         .unwrap_or_else(|_| "http://localhost:6006".to_string());
     // same default as the pipeline's config.py, so trace deep-links resolve
     let phoenix_project = std::env::var("PHOENIX_PROJECT_NAME")
         .unwrap_or_else(|_| "nomoscope-agentic-workflow".to_string());
-    let url = db_url.clone();
-    let reviewer = blocking(move || pg::current_user(&url)).await;
-    let (reviewer, db_error) = match reviewer {
+    let db_url = pool::redact(&db.url());
+    let (reviewer, db_error) = match with_client(db, |client| pg::current_user(client)).await {
         Ok(user) => (Some(user), None),
         Err(e) => (None, Some(e)),
     };
@@ -133,19 +143,34 @@ async fn get_env_config() -> Result<Value, String> {
     }))
 }
 
+/// Point the whole app at another database. The URL may keep the masked
+/// password it was shown with (the current one is kept behind the mask). It
+/// is checked first: a database that does not answer changes nothing.
 #[tauri::command]
-async fn golden_cases(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || golden::load_cases(&payload.db_url)).await
+async fn set_db_url(db: State<'_, Db>, payload: UrlPayload) -> Result<Value, String> {
+    let db = db.inner().clone();
+    blocking(move || {
+        let url = pool::unredact(payload.db_url.trim(), &db.url());
+        let reviewer = pg::current_user(&mut pg::connect(&url)?)?;
+        db.set_url(url.clone());
+        Ok(json!({ "db_url": pool::redact(&url), "reviewer": reviewer }))
+    })
+    .await
 }
 
 #[tauri::command]
-async fn set_golden_verified(payload: GoldenVerifyPayload) -> Result<Value, String> {
-    blocking(move || golden::set_verified(&payload)).await
+async fn golden_cases(db: State<'_, Db>) -> Result<Value, String> {
+    with_client(db, golden::load_cases).await
 }
 
 #[tauri::command]
-async fn load_queue(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || store::load_queue(&payload.db_url)).await
+async fn set_golden_verified(db: State<'_, Db>, payload: GoldenVerifyPayload) -> Result<Value, String> {
+    with_client(db, move |client| golden::set_verified(client, &payload)).await
+}
+
+#[tauri::command]
+async fn load_queue(db: State<'_, Db>) -> Result<Value, String> {
+    with_client(db, store::load_queue).await
 }
 
 /// Record a reviewer decision: read the item, compute the decided item and
@@ -157,11 +182,11 @@ async fn load_queue(payload: DbPayload) -> Result<Value, String> {
 /// takes it again. That is deliberate — a decision the audit log never
 /// received must not look accepted in the UI.
 #[tauri::command]
-async fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
-    blocking(move || {
+async fn save_decision(db: State<'_, Db>, payload: DecisionPayload) -> Result<Value, String> {
+    with_client(db, move |client| {
         let reviewer = payload.reviewer.clone().unwrap_or_else(|| "reviewer".to_string());
         let (item, entry) = store::prepare_decision(
-            &payload.db_url,
+            client,
             &payload.item_id,
             payload.run_id.as_deref(),
             &payload.action,
@@ -170,7 +195,7 @@ async fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
             payload.edited_value.as_ref(),
             payload.edited_fields.as_ref(),
         )?;
-        let decision = store::commit_decision(&payload.db_url, &payload.item_id, &item, &entry).map_err(|e| {
+        let decision = store::commit_decision(client, &payload.item_id, &item, &entry).map_err(|e| {
             // The ways this fails look very different to a reviewer: a
             // stopped container, or a database that never had the params
             // schema applied (fresh stack / after `docker compose down -v`).
@@ -192,19 +217,19 @@ async fn save_decision(payload: DecisionPayload) -> Result<Value, String> {
 
 /// The audit log from params.review_decisions.
 #[tauri::command]
-async fn load_decisions(payload: DecisionsPayload) -> Result<Value, String> {
-    let limit = payload.limit.unwrap_or(200);
-    blocking(move || db::params::load_decisions(&payload.db_url, limit as i64)).await
+async fn load_decisions(db: State<'_, Db>, payload: DecisionsPayload) -> Result<Value, String> {
+    let limit = payload.limit.unwrap_or(200) as i64;
+    with_client(db, move |client| db::params::load_decisions(client, limit)).await
 }
 
 /// Correct one metadata field of a parameter (ADR 0005). One database call
 /// validates, audits (reviewer = current_user) and applies it; a refused edit
 /// changes nothing.
 #[tauri::command]
-async fn edit_parameter(payload: EditPayload) -> Result<Value, String> {
-    blocking(move || {
+async fn edit_parameter(db: State<'_, Db>, payload: EditPayload) -> Result<Value, String> {
+    with_client(db, move |client| {
         store::edit_parameter(
-            &payload.db_url,
+            client,
             &payload.model_target,
             &payload.field,
             &payload.value,
@@ -216,24 +241,24 @@ async fn edit_parameter(payload: EditPayload) -> Result<Value, String> {
 
 /// A parameter's metadata edit history, newest first.
 #[tauri::command]
-async fn parameter_edits(payload: TargetPayload) -> Result<Value, String> {
-    blocking(move || db::params::parameter_edits(&payload.db_url, &payload.model_target)).await
+async fn parameter_edits(db: State<'_, Db>, payload: TargetPayload) -> Result<Value, String> {
+    with_client(db, move |client| db::params::parameter_edits(client, &payload.model_target)).await
 }
 
 /// A parameter's texts and EUROMOD value history (or a schedule's members'),
 /// for the review page's hand-off prompt. Read-only.
 #[tauri::command]
-async fn parameter_context(payload: TargetPayload) -> Result<Value, String> {
-    blocking(move || db::params::parameter_context(&payload.db_url, &payload.model_target)).await
+async fn parameter_context(db: State<'_, Db>, payload: TargetPayload) -> Result<Value, String> {
+    with_client(db, move |client| db::params::parameter_context(client, &payload.model_target)).await
 }
 
 /// Export the change set for EUROMOD — metadata edits and accepted value
 /// changes only — one JSON file per country, into a folder the reviewer picks.
 /// The only file the UI writes.
 #[tauri::command]
-async fn export_changes(app_handle: tauri::AppHandle, payload: DbPayload) -> Result<Value, String> {
+async fn export_changes(app_handle: tauri::AppHandle, db: State<'_, Db>) -> Result<Value, String> {
     use tauri_plugin_dialog::DialogExt;
-    let groups = blocking(move || store::export_records(&payload.db_url)).await?;
+    let groups = with_client(db, store::export_records).await?;
     if groups.is_empty() {
         return Ok(json!({ "count": 0, "paths": [], "canceled": false }));
     }
@@ -258,43 +283,45 @@ async fn export_changes(app_handle: tauri::AppHandle, payload: DbPayload) -> Res
 }
 
 #[tauri::command]
-async fn db_stats(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || db::corpus::stats(&payload.db_url)).await
+async fn db_stats(db: State<'_, Db>) -> Result<Value, String> {
+    with_client(db, db::corpus::stats).await
 }
 
 #[tauri::command]
-async fn eval_runs(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || db::eval::eval_runs(&payload.db_url)).await
+async fn eval_runs(db: State<'_, Db>) -> Result<Value, String> {
+    with_client(db, db::eval::eval_runs).await
 }
 
 #[tauri::command]
-async fn eval_run_detail(payload: EvalRunPayload) -> Result<Value, String> {
-    blocking(move || db::eval::eval_run_detail(&payload.db_url, payload.run_pk)).await
+async fn eval_run_detail(db: State<'_, Db>, payload: EvalRunPayload) -> Result<Value, String> {
+    with_client(db, move |client| db::eval::eval_run_detail(client, payload.run_pk)).await
 }
 
-/// Article search (`db::search`: encode on the worker, then `search_chunks`).
+/// Article search (`db::search::search`: encode on the worker, then `search_chunks`).
 #[tauri::command]
-async fn search_articles(payload: db::search::SearchPayload) -> Result<Value, String> {
-    blocking(move || db::search::search(&payload, 25)).await
+async fn search_articles(db: State<'_, Db>, payload: db::search::SearchPayload) -> Result<Value, String> {
+    with_client(db, move |client| db::search::search(client, &payload, 25)).await
 }
 
 /// Cosine of each sentence against the query, one BGE-M3 batch on the
 /// worker. The Database tab uses it to tint, inside a hit, the sentence that
 /// most likely answers.
 #[tauri::command]
-async fn score_sentences(payload: SentenceScorePayload) -> Result<Vec<f64>, String> {
+async fn score_sentences(db: State<'_, Db>, payload: SentenceScorePayload) -> Result<Vec<f64>, String> {
     if payload.sentences.is_empty() {
         return Ok(Vec::new());
     }
     let expected = payload.sentences.len();
-    blocking(move || {
-        let model_id = db::search::default_model_id(&mut pg::connect(&payload.db_url)?)?;
-        let result = jobs::encode_query(&EncodePayload {
-            db_url: payload.db_url,
-            query: payload.query,
-            sentences: Some(payload.sentences),
-            model_id: Some(model_id),
-        })?;
+    with_client(db, move |client| {
+        let model_id = db::search::default_model_id(client)?;
+        let result = jobs::encode_query(
+            client,
+            &EncodePayload {
+                query: payload.query,
+                sentences: Some(payload.sentences),
+                model_id: Some(model_id),
+            },
+        )?;
         let similarities = result
             .get("similarities")
             .and_then(Value::as_array)
@@ -314,71 +341,71 @@ async fn score_sentences(payload: SentenceScorePayload) -> Result<Vec<f64>, Stri
 }
 
 #[tauri::command]
-async fn search_instruments(payload: InstrumentSearchPayload) -> Result<Value, String> {
-    blocking(move || {
-        db::corpus::search_instruments(
-            &payload.db_url,
-            &payload.country,
-            &payload.query,
-            payload.limit.unwrap_or(20),
-        )
+async fn search_instruments(db: State<'_, Db>, payload: InstrumentSearchPayload) -> Result<Value, String> {
+    with_client(db, move |client| {
+        db::corpus::search_instruments(client, &payload.country, &payload.query, payload.limit.unwrap_or(20))
     })
     .await
 }
 
 #[tauri::command]
-async fn params_list(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || db::params::params_list(&payload.db_url)).await
+async fn params_list(db: State<'_, Db>) -> Result<Value, String> {
+    with_client(db, db::params::params_list).await
 }
 
 #[tauri::command]
-async fn chunk_renderings(payload: ChunkPayload) -> Result<Value, String> {
-    blocking(move || db::search::chunk_renderings(&payload.db_url, &payload.chunk_id)).await
+async fn chunk_renderings(db: State<'_, Db>, payload: ChunkPayload) -> Result<Value, String> {
+    with_client(db, move |client| db::search::chunk_renderings(client, &payload.chunk_id)).await
 }
 
+/// Phoenix lives in its own database on the same server, so this one
+/// connects by URL rather than through the pool.
 #[tauri::command]
-async fn phoenix_projects(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || db::phoenix::phoenix_projects(&payload.db_url)).await
+async fn phoenix_projects(db: State<'_, Db>) -> Result<Value, String> {
+    let url = db.url();
+    blocking(move || db::phoenix::phoenix_projects(&url)).await
 }
 
 // ---------------------------------------------------------------- jobs ----
 
 #[tauri::command]
-async fn submit_job(payload: SubmitPayload) -> Result<Value, String> {
-    blocking(move || jobs::submit_job(&payload)).await
+async fn submit_job(db: State<'_, Db>, payload: SubmitPayload) -> Result<Value, String> {
+    with_client(db, move |client| jobs::submit_job(client, &payload)).await
 }
 
 #[tauri::command]
-async fn job_status(payload: JobPayload) -> Result<Value, String> {
-    blocking(move || jobs::job_status(&payload)).await
+async fn job_status(db: State<'_, Db>, payload: JobPayload) -> Result<Value, String> {
+    with_client(db, move |client| jobs::job_status(client, &payload)).await
 }
 
 #[tauri::command]
-async fn job_events(payload: EventsPayload) -> Result<Value, String> {
-    blocking(move || jobs::job_events(&payload)).await
+async fn job_events(db: State<'_, Db>, payload: EventsPayload) -> Result<Value, String> {
+    with_client(db, move |client| jobs::job_events(client, &payload)).await
 }
 
 #[tauri::command]
-async fn cancel_job(payload: JobPayload) -> Result<Value, String> {
-    blocking(move || jobs::cancel_job(&payload)).await
+async fn cancel_job(db: State<'_, Db>, payload: JobPayload) -> Result<Value, String> {
+    with_client(db, move |client| jobs::cancel_job(client, &payload)).await
 }
 
 #[tauri::command]
-async fn list_jobs(payload: ListPayload) -> Result<Value, String> {
-    blocking(move || jobs::list_jobs(&payload)).await
+async fn list_jobs(db: State<'_, Db>, payload: ListPayload) -> Result<Value, String> {
+    with_client(db, move |client| jobs::list_jobs(client, &payload)).await
 }
 
 #[tauri::command]
-async fn worker_status(payload: DbPayload) -> Result<Value, String> {
-    blocking(move || jobs::worker_status(&payload.db_url)).await
+async fn worker_status(db: State<'_, Db>) -> Result<Value, String> {
+    with_client(db, jobs::worker_status).await
 }
 
 pub fn run() {
     tauri::Builder::default()
+        .manage(Db::from_env())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             get_env_config,
+            set_db_url,
             load_queue,
             save_decision,
             load_decisions,

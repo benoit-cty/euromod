@@ -1,9 +1,10 @@
 <script>
   import { api } from '../api.js';
+  import DbUrlField from './DbUrlField.svelte';
 
-  let { dbUrl = '' } = $props();
+  // dbUrl: the app's database, password masked; onchangedb switches the whole app.
+  let { dbUrl = '', onchangedb } = $props();
 
-  let url = $state(''); // seeded from dbUrl by the $effect below once config loads
   let runs = $state(null);
   let error = $state('');
   let loading = $state(false);
@@ -27,18 +28,14 @@
   ];
 
   $effect(() => {
-    if (dbUrl && !url) url = dbUrl;
-  });
-
-  $effect(() => {
-    if (url && !runs && !loading && !error) loadRuns();
+    if (!runs && !loading && !error) loadRuns();
   });
 
   async function loadRuns() {
     loading = true;
     error = '';
     try {
-      runs = (await api.evalRuns(url)).runs;
+      runs = (await api.evalRuns()).runs;
       if (selectedPk && !runs.some((r) => r.id === selectedPk)) {
         selectedPk = null;
         detail = null;
@@ -57,7 +54,7 @@
     detailError = '';
     detailLoading = true;
     try {
-      detail = await api.evalRunDetail(url, pk);
+      detail = await api.evalRunDetail(pk);
     } catch (e) {
       detailError = String(e);
     } finally {
@@ -112,13 +109,8 @@
 {/snippet}
 
 <section class="panel eval">
-  <div class="row">
-    <label class="grow">
-      Database URL
-      <input bind:value={url} class="mono" />
-    </label>
-    <button onclick={loadRuns} disabled={loading}>{loading ? 'Loading…' : 'Refresh runs'}</button>
-  </div>
+  <DbUrlField {dbUrl} {onchangedb} />
+  <div><button onclick={loadRuns} disabled={loading}>{loading ? 'Loading…' : 'Refresh runs'}</button></div>
 
   {#if error}<p class="error">{error}</p>{/if}
 
@@ -269,8 +261,6 @@
 
 <style>
   .eval { overflow: auto; display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
-  .row { display: flex; gap: 0.5rem; align-items: end; flex-wrap: wrap; }
-  .grow { flex: 1; min-width: 16rem; }
   label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }
   label input { width: 100%; }
   label.inline { display: inline-flex; flex-direction: row; align-items: center; gap: 0.35rem;

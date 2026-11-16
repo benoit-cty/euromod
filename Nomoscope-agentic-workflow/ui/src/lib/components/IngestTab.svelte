@@ -15,9 +15,6 @@
     translation: { run: 'Translate', title: 'Translate texts', blurb: 'Add English versions of texts that only exist in the national language.' },
   };
 
-  let { dbUrl = '' } = $props();
-
-  let url = $state(''); // seeded from dbUrl by the $effect below once config loads
   // What the reviewer is adding. A found document is the common case, so it comes first.
   let sub = $state('document'); // document | ingestion | embeddings | translation
 
@@ -49,6 +46,7 @@
   // jurisdiction -> { kind: { norm_level, source_trust_class } }, straight from
   // the ingester's own table (`route`), so the UI keeps no copy of the mapping.
   let kindTable = $state({});
+  let kindTableError = $state('');     // why the kinds could not be read
   let routeOutcome = $state(null);     // { outcome, source, national_id, hint, ... }
   let routing = $state(false);
 
@@ -117,24 +115,20 @@
     progress ? (progress.total > 0 ? Math.min(100, Math.round((progress.done / progress.total) * 100)) : 100) : 0
   );
 
-  $effect(() => {
-    if (dbUrl && !url) url = dbUrl;
-  });
-
   // The vocabulary the store actually has: languages it is configured to index
   // (a text stored under any other is invisible to full-text search) and the
-  // jurisdictions it holds.
-  $effect(() => {
-    if (!url.trim()) return;
+  // jurisdictions it holds. A failure is shown: the pickers would otherwise
+  // sit on their seeds with no word of why.
+  onMount(() => {
     api
-      .dbStats(url.trim())
+      .dbStats()
       .then((stats) => {
         if (stats?.languages?.length) languages = stats.languages;
         const codes = (stats?.by_country ?? []).map((row) => row.code).filter(Boolean);
         if (codes.length) jurisdictions = codes;
       })
-      .catch(() => {});
-    loadWorker().catch(() => {});
+      .catch((e) => (error = `Could not read the library's languages and countries: ${e}`));
+    loadWorker().catch((e) => (error = `Could not read the worker status: ${e}`));
   });
 
   // Tick the elapsed clock while a run is active.
@@ -145,7 +139,7 @@
   });
 
   async function loadWorker() {
-    const status = await api.workerStatus(url.trim());
+    const status = await api.workerStatus();
     workerAlive = (status.workers ?? []).some((w) => w.alive);
     models = (status.models ?? []).filter((m) => m.kind === 'llm');
     if (!models.some((m) => m.model === model)) {
@@ -163,8 +157,12 @@
   }
 
   onMount(() => {
-    // needs a worker: the table comes back as a job result
-    const t = setTimeout(() => loadKindTable().catch(() => {}), 500);
+    // needs a worker: the table comes back as a job result. Without one the
+    // Kind select says why instead of waiting forever.
+    const t = setTimeout(
+      () => loadKindTable().catch((e) => (kindTableError = String(e.message ?? e))),
+      500,
+    );
     return () => clearTimeout(t);
   });
 
@@ -181,7 +179,7 @@
   async function routeSource(source) {
     if (workerAlive === null) await loadWorker();
     if (!workerAlive) throw new Error('no worker is running — the source cannot be checked');
-    const final = await submitAndFollow(url.trim(), 'ingest', {
+    const final = await submitAndFollow('ingest', {
       command: 'route',
       args: source ? [source] : [],
     });
@@ -196,7 +194,10 @@
     routing = true;
     try {
       routeOutcome = await routeSource(source);
-      if (routeOutcome?.kinds) kindTable = routeOutcome.kinds;
+      if (routeOutcome?.kinds) {
+        kindTable = routeOutcome.kinds;
+        kindTableError = '';
+      }
       const suggestions = routeOutcome?.suggestions ?? {};
       if (suggestions.title && !docTitle.trim()) docTitle = suggestions.title;
       if (suggestions.valid_from && !docValidFrom) docValidFrom = suggestions.valid_from;
@@ -221,7 +222,7 @@
       return;
     }
     try {
-      const res = await api.searchInstruments(url.trim(), docJurisdiction.trim(), implementsQuery.trim());
+      const res = await api.searchInstruments(docJurisdiction.trim(), implementsQuery.trim());
       implementsResults = res.instruments ?? [];
     } catch (e) {
       error = String(e);
@@ -318,10 +319,6 @@
   async function run() {
     error = '';
     summary = '';
-    if (!url.trim()) {
-      error = 'Database URL is required';
-      return;
-    }
     let req;
     try {
       req = buildRequest();
@@ -339,7 +336,7 @@
       if (workerAlive === false) {
         logLines = [{ stream: 'system', line: 'no worker alive — the job waits in the queue until one starts' }];
       }
-      const final = await submitAndFollow(url.trim(), req.job_type, req.payload, handlers);
+      const final = await submitAndFollow(req.job_type, req.payload, handlers);
       summary = summarize(final);
       // A contributed document is only retrievable once its chunks are
       // embedded, so a successful `document` job is followed by an embeddings
@@ -357,7 +354,7 @@
     progress = null;
     startedAt = Date.now();
     now = startedAt;
-    const final = await submitAndFollow(url.trim(), 'embed', embedPayload(), handlers);
+    const final = await submitAndFollow('embed', embedPayload(), handlers);
     summary =
       final.status === 'succeeded'
         ? 'Finished successfully; the document is retrievable.'
@@ -365,7 +362,12 @@
   }
 
   async function stop() {
-    if (jobId != null) await api.cancelJob(url.trim(), jobId);
+    if (jobId == null) return;
+    try {
+      await api.cancelJob(jobId);
+    } catch (e) {
+      error = `Could not cancel job #${jobId}: ${e}`;
+    }
   }
 
   function fmtElapsed(seconds) {
@@ -504,7 +506,7 @@
               {#each Object.keys(docKinds) as label (label)}
                 <option value={label}>{humanize(label)}</option>
               {:else}
-                <option value="">waiting for the worker…</option>
+                <option value="">{kindTableError ? 'unavailable: see below' : 'waiting for the worker…'}</option>
               {/each}
             </select>
           </label>
@@ -513,6 +515,9 @@
             <input type="date" bind:value={docValidFrom} />
           </label>
         </div>
+        {#if kindTableError && !Object.keys(docKinds).length}
+          <p class="callout err">The document kinds could not be read: {kindTableError}</p>
+        {/if}
         {#if docTrustClass}
           <p class="small trust">
             <span class="badge {docTrustClass}">{docTrustClass === 'evidence' ? 'Legislation' : humanize(docTrustClass)}</span>

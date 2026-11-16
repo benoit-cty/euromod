@@ -14,7 +14,7 @@
 //! evolve worker-side (nomergon/jobs.py validates them) without a lockstep
 //! release of the UI.
 
-use crate::pg::{connect, describe, row_to_json, rows_to_json};
+use crate::pg::{describe, row_to_json, rows_to_json};
 use postgres::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -28,7 +28,6 @@ pub const ENCODE_PRIORITY: i16 = 100;
 
 #[derive(Deserialize)]
 pub struct SubmitPayload {
-    pub db_url: String,
     pub job_type: String,
     pub payload: Option<Value>,
     pub priority: Option<i16>,
@@ -36,13 +35,11 @@ pub struct SubmitPayload {
 
 #[derive(Deserialize)]
 pub struct JobPayload {
-    pub db_url: String,
     pub id: i64,
 }
 
 #[derive(Deserialize)]
 pub struct EventsPayload {
-    pub db_url: String,
     pub id: i64,
     /// Last event id already seen; 0 for everything.
     pub after: Option<i64>,
@@ -50,13 +47,11 @@ pub struct EventsPayload {
 
 #[derive(Deserialize)]
 pub struct ListPayload {
-    pub db_url: String,
     pub limit: Option<i64>,
 }
 
 #[derive(Deserialize)]
 pub struct EncodePayload {
-    pub db_url: String,
     pub query: String,
     pub sentences: Option<Vec<String>>,
     /// The embedding model to encode with (`embedding_models.id`); the
@@ -85,10 +80,9 @@ pub fn submit(client: &mut Client, job_type: &str, payload: &Value, priority: i1
     Ok(row.get(0))
 }
 
-pub fn submit_job(payload: &SubmitPayload) -> Result<Value, String> {
-    let mut client = connect(&payload.db_url)?;
+pub fn submit_job(client: &mut Client, payload: &SubmitPayload) -> Result<Value, String> {
     let body = payload.payload.clone().unwrap_or_else(|| json!({}));
-    let id = submit(&mut client, &payload.job_type, &body, payload.priority.unwrap_or(0))?;
+    let id = submit(client, &payload.job_type, &body, payload.priority.unwrap_or(0))?;
     Ok(json!({ "id": id }))
 }
 
@@ -100,9 +94,8 @@ fn status_row(client: &mut Client, id: i64) -> Result<Value, String> {
     row_to_json(&row)
 }
 
-pub fn job_status(payload: &JobPayload) -> Result<Value, String> {
-    let mut client = connect(&payload.db_url)?;
-    status_row(&mut client, payload.id)
+pub fn job_status(client: &mut Client, payload: &JobPayload) -> Result<Value, String> {
+    status_row(client, payload.id)
 }
 
 fn events_after(client: &mut Client, job_id: i64, after: i64) -> Result<Vec<Value>, String> {
@@ -116,17 +109,15 @@ fn events_after(client: &mut Client, job_id: i64, after: i64) -> Result<Vec<Valu
     rows_to_json(&rows)
 }
 
-pub fn job_events(payload: &EventsPayload) -> Result<Value, String> {
-    let mut client = connect(&payload.db_url)?;
-    let events = events_after(&mut client, payload.id, payload.after.unwrap_or(0))?;
+pub fn job_events(client: &mut Client, payload: &EventsPayload) -> Result<Value, String> {
+    let events = events_after(client, payload.id, payload.after.unwrap_or(0))?;
     Ok(json!({ "events": events }))
 }
 
 /// Ask the worker to stop a job that has not finished. Under the reviewer
 /// role's RLS this only reaches the caller's own rows; `cancelled` says whether
 /// a row was flagged at all.
-pub fn cancel_job(payload: &JobPayload) -> Result<Value, String> {
-    let mut client = connect(&payload.db_url)?;
+pub fn cancel_job(client: &mut Client, payload: &JobPayload) -> Result<Value, String> {
     let n = client
         .execute(
             "UPDATE ops.jobs SET cancel_requested = true
@@ -137,8 +128,7 @@ pub fn cancel_job(payload: &JobPayload) -> Result<Value, String> {
     Ok(json!({ "id": payload.id, "cancelled": n > 0 }))
 }
 
-pub fn list_jobs(payload: &ListPayload) -> Result<Value, String> {
-    let mut client = connect(&payload.db_url)?;
+pub fn list_jobs(client: &mut Client, payload: &ListPayload) -> Result<Value, String> {
     let limit = payload.limit.unwrap_or(100).clamp(1, 1000);
     let rows = client
         .query(
@@ -157,7 +147,7 @@ pub fn list_jobs(payload: &ListPayload) -> Result<Value, String> {
 }
 
 /// `ops.workers` with an `alive` flag, and the models the worker serves.
-pub fn worker_status_with(client: &mut Client) -> Result<Value, String> {
+pub fn worker_status(client: &mut Client) -> Result<Value, String> {
     let workers = client
         .query(
             "SELECT worker_id, hostname, started_at::text AS started_at,
@@ -182,11 +172,6 @@ pub fn worker_status_with(client: &mut Client) -> Result<Value, String> {
     }))
 }
 
-pub fn worker_status(db_url: &str) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
-    worker_status_with(&mut client)
-}
-
 fn any_worker_alive(client: &mut Client) -> Result<bool, String> {
     let row = client
         .query_one(
@@ -206,12 +191,11 @@ pub const NO_WORKER: &str = "no worker is running (ops.workers heartbeat stale)"
 /// tab can fall back to full-text search without waiting out the timeout.
 ///
 /// Returns the job's `result`: `{"halfvec": "[…]"}` or `{"similarities": […]}`.
-pub fn encode_query(payload: &EncodePayload) -> Result<Value, String> {
+pub fn encode_query(client: &mut Client, payload: &EncodePayload) -> Result<Value, String> {
     if payload.query.trim().is_empty() {
         return Err("query must not be empty".to_string());
     }
-    let mut client = connect(&payload.db_url)?;
-    if !any_worker_alive(&mut client)? {
+    if !any_worker_alive(client)? {
         return Err(NO_WORKER.to_string());
     }
     let mut body = match &payload.sentences {
@@ -221,7 +205,7 @@ pub fn encode_query(payload: &EncodePayload) -> Result<Value, String> {
     if let Some(model_id) = payload.model_id {
         body["model_id"] = json!(model_id);
     }
-    let id = submit(&mut client, "encode", &body, ENCODE_PRIORITY)?;
+    let id = submit(client, "encode", &body, ENCODE_PRIORITY)?;
     let started = Instant::now();
     loop {
         let row = client
@@ -261,9 +245,7 @@ mod tests {
     use super::*;
 
     fn test_client() -> Option<Client> {
-        let url = std::env::var("WORKFLOW_DATABASE_URL")
-            .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
-        let mut client = connect(&url).ok()?;
+        let mut client = crate::pg::connect(&url()).ok()?;
         // `ops` not applied yet (nomergon init-db) → skip
         client.execute("SELECT 1 FROM ops.jobs LIMIT 0", &[]).ok()?;
         Some(client)
@@ -279,15 +261,13 @@ mod tests {
     #[test]
     fn job_round_trip_smoke() {
         let Some(mut client) = test_client() else { return };
-        let db_url = url();
         // A live worker would claim the job and race the assertions.
         if any_worker_alive(&mut client).unwrap_or(true) {
             eprintln!("skipped: a worker is running");
             return;
         }
 
-        let submitted = submit_job(&SubmitPayload {
-            db_url: db_url.clone(),
+        let submitted = submit_job(&mut client, &SubmitPayload {
             job_type: "impact".into(),
             payload: Some(json!({ "project": "", "zone": "EEE", "_test": "zz_jobs_smoke" })),
             priority: None,
@@ -295,7 +275,7 @@ mod tests {
         .unwrap();
         let id = submitted["id"].as_i64().expect("submit returns the new id");
 
-        let status = job_status(&JobPayload { db_url: db_url.clone(), id }).unwrap();
+        let status = job_status(&mut client, &JobPayload { id }).unwrap();
         assert_eq!(status["status"], "queued");
         assert_eq!(status["job_type"], "impact");
         assert_eq!(status["priority"], 0);
@@ -315,9 +295,9 @@ mod tests {
                     .get(0)
             })
             .collect();
-        let all = job_events(&EventsPayload { db_url: db_url.clone(), id, after: None }).unwrap();
+        let all = job_events(&mut client, &EventsPayload { id, after: None }).unwrap();
         assert_eq!(all["events"].as_array().unwrap().len(), 3);
-        let tail = job_events(&EventsPayload { db_url: db_url.clone(), id, after: Some(ids[0]) }).unwrap();
+        let tail = job_events(&mut client, &EventsPayload { id, after: Some(ids[0]) }).unwrap();
         let lines: Vec<&str> = tail["events"]
             .as_array()
             .unwrap()
@@ -326,16 +306,16 @@ mod tests {
             .collect();
         assert_eq!(lines, vec!["two", "three"]);
 
-        let listed = list_jobs(&ListPayload { db_url: db_url.clone(), limit: Some(5) }).unwrap();
+        let listed = list_jobs(&mut client, &ListPayload { limit: Some(5) }).unwrap();
         assert_eq!(listed["jobs"][0]["id"], id, "newest first");
 
-        let cancelled = cancel_job(&JobPayload { db_url: db_url.clone(), id }).unwrap();
+        let cancelled = cancel_job(&mut client, &JobPayload { id }).unwrap();
         assert_eq!(cancelled["cancelled"], true);
-        let status = job_status(&JobPayload { db_url: db_url.clone(), id }).unwrap();
+        let status = job_status(&mut client, &JobPayload { id }).unwrap();
         assert_eq!(status["cancel_requested"], true);
 
         // worker status reads even when nobody has ever published
-        let ws = worker_status(&db_url).unwrap();
+        let ws = worker_status(&mut client).unwrap();
         assert!(ws["workers"].is_array());
         assert!(ws["models"].is_array());
 
@@ -354,7 +334,7 @@ mod tests {
         // Other tests in this binary insert jobs concurrently, so count only
         // the row this call would have written, not the whole table.
         let query = format!("zz_encode_refusal_{}", std::process::id());
-        let error = encode_query(&EncodePayload { db_url: url(), query: query.clone(), sentences: None, model_id: None })
+        let error = encode_query(&mut client, &EncodePayload { query: query.clone(), sentences: None, model_id: None })
             .unwrap_err();
         assert_eq!(error, NO_WORKER);
         let left_behind: i64 = client

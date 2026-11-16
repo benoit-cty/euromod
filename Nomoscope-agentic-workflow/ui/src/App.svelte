@@ -15,7 +15,8 @@
   import brandBackground from './assets/brand_background_EUROMOD.jpg';
 
   // The UI is remote (ADR 0004): its one credential is the database login,
-  // and `reviewer` is that login's current_user as the server sees it.
+  // and `reviewer` is that login's current_user as the server sees it. The
+  // URL stays in Rust; `db_url` here is for display (password masked).
   let config = $state({
     reviewer: null,
     db_error: null,
@@ -37,6 +38,9 @@
   // must not lose a followed job's log or reset filters/selections.
   let visited = $state({ home: true });
   let paramsRunning = $state(false);
+  // Bumped when the app is pointed at another database: every page is
+  // remounted, so none keeps rows read from the previous one.
+  let dbGeneration = $state(0);
   let error = $state('');
   let statusMsg = $state('');
   let workerAlive = $state(null);
@@ -125,7 +129,7 @@
     queueLoading = false;
     pollWorker();
     try {
-      const res = await api.phoenixProjects(config.db_url);
+      const res = await api.phoenixProjects();
       const project =
         res.projects.find((p) => p.name === config.phoenix_project) ?? res.projects[0];
       phoenixGid = project?.gid ?? '';
@@ -136,7 +140,7 @@
 
   async function pollWorker() {
     try {
-      const status = await api.workerStatus(config.db_url);
+      const status = await api.workerStatus();
       workerAlive = (status.workers ?? []).some((w) => w.alive);
     } catch {
       workerAlive = null;
@@ -150,7 +154,7 @@
 
   async function refresh() {
     try {
-      const res = await api.loadQueue(config.db_url);
+      const res = await api.loadQueue();
       items = res.items;
       facets = res.facets;
       error = '';
@@ -164,7 +168,6 @@
   async function decide(action, note, editedValue, editedFields) {
     try {
       const res = await api.saveDecision({
-        db_url: config.db_url,
         item_id: selected.id,
         // The run on screen: a decision on an item re-run since is refused.
         run_id: selected.run_id ?? null,
@@ -188,7 +191,7 @@
 
   async function exportChanges() {
     try {
-      const res = await api.exportChanges(config.db_url);
+      const res = await api.exportChanges();
       if (res.canceled) statusMsg = 'Export cancelled.';
       else if (res.count === 0) statusMsg = 'Nothing to export yet: no accepted change and no corrected parameter.';
       else statusMsg = `${res.count} changed parameter(s) exported to ${res.paths.join(', ')}`;
@@ -209,8 +212,28 @@
     tab = 'review';
   }
 
+  // The one way to change database (Legislation and Evaluation pages offer
+  // it): checked by the backend first, then the whole app is reloaded on it.
+  async function changeDb(url) {
+    const res = await api.setDbUrl(url);
+    config.db_url = res.db_url;
+    config.reviewer = res.reviewer;
+    config.db_error = null;
+    error = '';
+    items = [];
+    decisions = [];
+    selectedId = null;
+    visited = { home: true, [tab]: true };
+    dbGeneration += 1;
+    queueLoading = true;
+    await refresh();
+    queueLoading = false;
+    pollWorker();
+    statusMsg = `Connected to ${res.db_url} as ${res.reviewer}.`;
+  }
+
   async function loadDecisions() {
-    const res = await api.loadDecisions(config.db_url);
+    const res = await api.loadDecisions();
     decisions = res.decisions;
   }
 
@@ -349,10 +372,10 @@
       <div class="callout ok banner"><span>{statusMsg}</span></div>
     {/if}
 
+    {#key dbGeneration}
     <main hidden={tab !== 'home'} class="single">
       <Home
         bind:this={homePage}
-        dbUrl={config.db_url}
         {items}
         loading={queueLoading}
         reviewer={config.reviewer}
@@ -368,7 +391,6 @@
           {siblings}
           onselectrun={(id) => (selectedId = id)}
           ondecide={decide}
-          dbUrl={config.db_url}
           phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
           {phoenixGid}
         />
@@ -378,7 +400,6 @@
       <main class="single" hidden={tab !== 'params'}>
         <ParamsTab
           bind:this={paramsTab}
-          dbUrl={config.db_url}
           phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
           onopenitem={openReviewItem}
           active={tab === 'params'}
@@ -393,34 +414,35 @@
     {/if}
     {#if visited.database}
       <main class="single" hidden={tab !== 'database'}>
-        <DatabaseTab bind:this={dbTab} dbUrl={config.db_url} />
+        <DatabaseTab bind:this={dbTab} dbUrl={config.db_url} onchangedb={changeDb} />
       </main>
     {/if}
     {#if visited.ingest}
       <main class="single" hidden={tab !== 'ingest'}>
-        <IngestTab dbUrl={config.db_url} />
+        <IngestTab />
       </main>
     {/if}
     {#if visited.golden}
       <main class="single" hidden={tab !== 'golden'}>
-        <GoldenTab bind:this={goldenTab} dbUrl={config.db_url} />
+        <GoldenTab bind:this={goldenTab} />
       </main>
     {/if}
     {#if visited.eval}
       <main class="single" hidden={tab !== 'eval'}>
-        <EvalTab bind:this={evalTab} dbUrl={config.db_url} />
+        <EvalTab bind:this={evalTab} dbUrl={config.db_url} onchangedb={changeDb} />
       </main>
     {/if}
     {#if visited.impact}
       <main class="single" hidden={tab !== 'impact'}>
-        <ImpactTab bind:this={impactTab} dbUrl={config.db_url} />
+        <ImpactTab bind:this={impactTab} />
       </main>
     {/if}
     {#if visited.jobs}
       <main class="single" hidden={tab !== 'jobs'}>
-        <JobsTab bind:this={jobsTab} dbUrl={config.db_url} active={tab === 'jobs'} />
+        <JobsTab bind:this={jobsTab} active={tab === 'jobs'} />
       </main>
     {/if}
+    {/key}
   </div>
 
   <footer class="statusbar">

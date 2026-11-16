@@ -13,8 +13,6 @@
   // database's current_user.
   import { api } from '../api.js';
 
-  let { dbUrl = '' } = $props();
-
   let cases = $state(null);
   let error = $state('');
   let loading = $state(false);
@@ -49,14 +47,14 @@
   });
 
   $effect(() => {
-    if (dbUrl && !cases && !loading && !error) load();
+    if (!cases && !loading && !error) load();
   });
 
   async function load() {
     loading = true;
     error = '';
     try {
-      const res = await api.goldenCases(dbUrl);
+      const res = await api.goldenCases();
       cases = res.cases;
       if (selectedId && !cases.some((c) => c.id === selectedId)) selectedId = null;
     } catch (e) {
@@ -128,7 +126,6 @@
     saving = true;
     try {
       const res = await api.setGoldenVerified({
-        db_url: dbUrl,
         id: selected.id,
         verified,
         note: note || null,

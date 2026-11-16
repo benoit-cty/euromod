@@ -4,13 +4,14 @@
   import { countryName, formatCount, humanize, trustLabel } from '../labels.js';
   import { countryReadiness } from '../readiness.js';
   import Icon from './Icon.svelte';
+  import DbUrlField from './DbUrlField.svelte';
 
   const LANGUAGES = { en: 'English', fr: 'French', nl: 'Dutch', es: 'Spanish', lt: 'Lithuanian' };
   const langName = (code) => LANGUAGES[code] ?? code;
 
-  let { dbUrl = '' } = $props();
+  // dbUrl: the app's database, password masked, for the technical section.
+  let { dbUrl = '', onchangedb } = $props();
 
-  let url = $state(''); // seeded from dbUrl by the $effect below once config loads
   let stats = $state(null);
   let error = $state('');
   let loading = $state(false);
@@ -46,15 +47,11 @@
   const formatScore = (value, digits = 5) => value == null ? '—' : Number(value).toFixed(digits);
   const vectorSimilarity = (distance) => distance == null ? null : 1 - Number(distance);
 
-  $effect(() => {
-    if (dbUrl && !url) url = dbUrl;
-  });
-
   async function loadStats() {
     loading = true;
     error = '';
     try {
-      stats = await api.dbStats(url);
+      stats = await api.dbStats();
     } catch (e) {
       error = String(e);
       stats = null;
@@ -70,7 +67,6 @@
     error = '';
     try {
       results = await api.searchArticles({
-        db_url: url,
         query,
         country: country || null,
         as_of: asOf || null,
@@ -101,7 +97,7 @@
     for (const { hit } of plan) sentenceScores[hit.chunk_id] = { status: 'loading' };
     const batch = plan.flatMap(({ sentences, indices }) => indices.map((i) => sentences[i].text));
     try {
-      const similarities = await api.scoreSentences(url, forQuery, batch);
+      const similarities = await api.scoreSentences(forQuery, batch);
       if (token !== searchToken) return; // a newer search replaced these hits
       let offset = 0;
       for (const { hit, sentences, indices } of plan) {
@@ -122,7 +118,7 @@
   const scoringCount = $derived(Object.values(sentenceScores).filter((s) => s.status === 'loading').length);
 
   $effect(() => {
-    if (url && !stats && !loading && !error) loadStats();
+    if (!stats && !loading && !error) loadStats();
   });
 
   // Target of the shell's Reload button while this tab is showing: stats plus
@@ -321,13 +317,8 @@
         <details class="more nested">
           <summary>Technical statistics <span class="hint">for the people maintaining the library</span></summary>
           <div class="body">
-            <div class="row">
-              <label class="field grow">
-                Database URL
-                <input bind:value={url} class="mono" />
-              </label>
-              <button onclick={loadStats} disabled={loading}>{loading ? 'Loading…' : 'Reload statistics'}</button>
-            </div>
+            <DbUrlField {dbUrl} {onchangedb} />
+            <div><button onclick={loadStats} disabled={loading}>{loading ? 'Loading…' : 'Reload statistics'}</button></div>
             <div class="cards">
               {#each Object.entries(stats.totals) as [key, count]}
                 <div class="card">
@@ -454,13 +445,8 @@
           </div>
         </details>
       {:else if !loading}
-        <div class="row">
-          <label class="field grow">
-            Database URL
-            <input bind:value={url} class="mono" />
-          </label>
-          <button onclick={loadStats}>Load statistics</button>
-        </div>
+        <DbUrlField {dbUrl} {onchangedb} />
+        <div><button onclick={loadStats}>Load statistics</button></div>
       {/if}
     </div>
   </details>

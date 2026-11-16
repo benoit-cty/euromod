@@ -8,7 +8,7 @@
   import { TERMINAL, displayStatus } from '../jobs.js';
   import { parseTimestamp } from '../labels.js';
 
-  let { dbUrl = '', active = true } = $props();
+  let { active = true } = $props();
 
   let jobs = $state([]);
   let currentUser = $state('');
@@ -23,23 +23,28 @@
   const alive = $derived((worker?.workers ?? []).filter((w) => w.alive));
   const llmModels = $derived((worker?.models ?? []).filter((m) => m.kind === 'llm'));
 
-  async function refresh() {
-    if (!dbUrl) return;
-    try {
-      const [list, status] = await Promise.all([api.listJobs(dbUrl, 200), api.workerStatus(dbUrl)]);
-      jobs = list.jobs;
-      currentUser = list.current_user;
-      worker = status;
-      error = '';
-    } catch (e) {
-      error = String(e);
-    }
-    if (selectedId != null) await tail();
+  // The 5 s poll and the Refresh button share this; a refresh still running
+  // when the next tick comes (a slow database) is joined, not doubled.
+  let inFlight = null;
+  function refresh() {
+    inFlight ??= (async () => {
+      try {
+        const [list, status] = await Promise.all([api.listJobs(200), api.workerStatus()]);
+        jobs = list.jobs;
+        currentUser = list.current_user;
+        worker = status;
+        error = '';
+      } catch (e) {
+        error = String(e);
+      }
+      if (selectedId != null) await tail();
+    })().finally(() => (inFlight = null));
+    return inFlight;
   }
 
   // Poll while the tab is on screen; a hidden tab costs nothing.
   $effect(() => {
-    if (!active || !dbUrl) return;
+    if (!active) return;
     refresh();
     const timer = setInterval(refresh, 5000);
     return () => clearInterval(timer);
@@ -61,7 +66,7 @@
   async function tail() {
     if (selectedId == null) return;
     try {
-      const res = await api.jobEvents(dbUrl, selectedId, lastEventId);
+      const res = await api.jobEvents(selectedId, lastEventId);
       const fresh = (res.events ?? []).filter((e) => e.id > lastEventId);
       if (fresh.length) {
         events = [...events, ...fresh];
@@ -79,7 +84,7 @@
 
   async function cancel(job) {
     try {
-      await api.cancelJob(dbUrl, job.id);
+      await api.cancelJob(job.id);
       await refresh();
     } catch (e) {
       error = String(e);

@@ -3,7 +3,7 @@
 //! (the chat compiles this file in with `#[path]`, so the two cannot drift).
 //! Read-only.
 
-use crate::pg::{connect, describe, rows_to_json};
+use crate::pg::{describe, rows_to_json};
 use postgres::Client;
 use serde_json::{json, Value};
 
@@ -44,7 +44,6 @@ impl SearchMode {
 /// What the Database tab (and the RAG chat's search box) sends.
 #[derive(serde::Deserialize)]
 pub struct SearchPayload {
-    pub db_url: String,
     pub query: String,
     pub country: Option<String>,
     pub as_of: Option<String>,
@@ -69,13 +68,12 @@ pub fn default_model_id(client: &mut Client) -> Result<i32, String> {
 /// query encoded by the worker (an `encode` job, with the corpus's default
 /// model); when no worker is alive the search degrades to full text and says
 /// so in `notice`, rather than failing.
-pub fn search(payload: &SearchPayload, default_limit: i64) -> Result<Value, String> {
+pub fn search(client: &mut Client, payload: &SearchPayload, default_limit: i64) -> Result<Value, String> {
     let mut mode = SearchMode::parse(payload.mode.as_deref().unwrap_or("hybrid"))?;
-    let model_id = default_model_id(&mut connect(&payload.db_url)?)?;
+    let model_id = default_model_id(client)?;
     let mut notice: Option<String> = None;
     let query_vector = if mode.uses_vector() {
-        match crate::jobs::encode_query(&crate::jobs::EncodePayload {
-            db_url: payload.db_url.clone(),
+        match crate::jobs::encode_query(client, &crate::jobs::EncodePayload {
             query: payload.query.clone(),
             sentences: None,
             model_id: Some(model_id),
@@ -99,7 +97,7 @@ pub fn search(payload: &SearchPayload, default_limit: i64) -> Result<Value, Stri
         None
     };
     let mut result = search_articles(
-        &payload.db_url,
+        client,
         &payload.query,
         payload.country.as_deref(),
         payload.as_of.as_deref(),
@@ -120,7 +118,7 @@ pub fn search(payload: &SearchPayload, default_limit: i64) -> Result<Value, Stri
 /// Reports are included; every hit carries its `source_trust_class`.
 #[allow(clippy::too_many_arguments)]
 pub fn search_articles(
-    db_url: &str,
+    client: &mut Client,
     query: &str,
     country: Option<&str>,
     as_of: Option<&str>,
@@ -140,18 +138,14 @@ pub fn search_articles(
         return Err(format!("{} search requires a query vector", mode.as_str()));
     }
 
-    let mut client = connect(db_url)?;
-    client
-        .batch_execute(
-            "SET default_transaction_read_only = on;
-             SET statement_timeout = '30s';",
-        )
-        .map_err(describe)?;
+    // Transaction-local: the connection goes back to the pool afterwards.
+    let mut tx = client.build_transaction().read_only(true).start().map_err(describe)?;
+    tx.batch_execute("SET LOCAL statement_timeout = '30s'").map_err(describe)?;
     let language_filter = languages.map(|values| values.to_vec());
     let use_full_text = mode.uses_full_text();
     let use_vector = mode.uses_vector();
     let vector = if use_vector { query_vector } else { None };
-    let rows = client
+    let rows = tx
         .query(
             "WITH found AS (
                 SELECT s.*, t.version_id, ch.seq,
@@ -202,6 +196,7 @@ pub fn search_articles(
             ],
         )
         .map_err(describe)?;
+    tx.commit().map_err(describe)?;
 
     Ok(json!({
         "query": query,
@@ -233,15 +228,11 @@ pub fn search_articles(
 /// translations) are the other `unit_texts` rows of the same `version_id`.
 /// Translations are chunked independently, so the sibling chunk is matched on
 /// `seq` and we fall back to the full version text when there is none.
-pub fn chunk_renderings(db_url: &str, chunk_id: &str) -> Result<Value, String> {
-    let mut client = connect(db_url)?;
-    client
-        .batch_execute(
-            "SET default_transaction_read_only = on;
-             SET statement_timeout = '15s';",
-        )
-        .map_err(describe)?;
-    let rows = client
+pub fn chunk_renderings(client: &mut Client, chunk_id: &str) -> Result<Value, String> {
+    // Transaction-local: the connection goes back to the pool afterwards.
+    let mut tx = client.build_transaction().read_only(true).start().map_err(describe)?;
+    tx.batch_execute("SET LOCAL statement_timeout = '15s'").map_err(describe)?;
+    let rows = tx
         .query(
             "SELECT t.id::text                     AS unit_text_id,
                     t.lang,
@@ -268,6 +259,7 @@ pub fn chunk_renderings(db_url: &str, chunk_id: &str) -> Result<Value, String> {
             &[&chunk_id],
         )
         .map_err(|e| format!("chunk renderings query failed: {}", describe(e)))?;
+    tx.commit().map_err(describe)?;
 
     Ok(json!({
         "chunk_id": chunk_id,
@@ -299,8 +291,7 @@ mod tests {
 
     #[test]
     fn search_queries_smoke() {
-        let url = url();
-        let Ok(mut client) = super::connect(&url) else {
+        let Ok(mut client) = crate::pg::connect(&url()) else {
             return;
         };
         let vector: String = client
@@ -314,7 +305,7 @@ mod tests {
         for mode in [SearchMode::FullText, SearchMode::Vector, SearchMode::Hybrid] {
             let query_vector = mode.uses_vector().then_some(vector.as_str());
             let result = super::search_articles(
-                &url,
+                &mut client,
                 "income tax brackets",
                 None,
                 Some("2025-06-01"),
