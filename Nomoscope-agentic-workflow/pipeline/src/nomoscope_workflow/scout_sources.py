@@ -45,7 +45,7 @@ class GuidancePublisher:
 # the scout reaches the ingester by subprocess. A copy guarantees nothing on its
 # own, so two tests hold it in place — one per suite, because each catches the
 # edit made on its own side:
-#   tests/test_workflow.py::test_scout_portal_facts_still_match_the_adapters_that_own_them
+#   Nomoscope-agentic-workflow/pipeline/tests/test_scout.py::test_scout_portal_facts_still_match_the_adapters_that_own_them
 #   Nomotheca-RAG/ingest/tests/test_routing.py::test_the_nomoscope_scout_copies_these_portals_without_altering_them
 # Change a domain or an id shape here and you must change the adapter too.
 #
