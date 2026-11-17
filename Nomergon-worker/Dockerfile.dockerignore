@@ -5,6 +5,7 @@
 !pyproject.toml
 !uv.lock
 !mcp-server/
+!nomos-llm/
 !Nomotheca-RAG/ingest/
 !Nomoscope-agentic-workflow/pipeline/
 !Nomokrisis-evaluation_pipeline/

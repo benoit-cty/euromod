@@ -6,7 +6,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from dotenv import load_dotenv
 
 # Nomoscope-agentic-workflow/ directory (this file lives in pipeline/src/nomoscope_workflow/).
 WORKFLOW_ROOT = Path(__file__).resolve().parents[3]
@@ -17,8 +16,7 @@ def _env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 
 
-#: The dev stack's database (docker compose, host port 5434) — the one default.
-DEFAULT_DATABASE_URL = "postgresql://jrc:jrc@localhost:5434/legislation"
+from nomos_llm.env import DEFAULT_DATABASE_URL, load_env_file  # noqa: E402,F401  (re-exported)
 #: The in-SQL deterministic embedder of the seed demo corpus (seed.sql's
 #: `placeholder_embedding`): queries are embedded in SQL, never by an encoder.
 PLACEHOLDER_MODEL_ID = 99
@@ -54,16 +52,6 @@ class WorkflowConfig:
     #: order, which names another) instead of giving up after one hop. Each round
     #: costs an ingest + an embedding pass, hence the low default.
     scout_max_rounds: int = 2
-
-
-def load_env_file() -> None:
-    """Load the repo-root .env — the one config file — without overriding the
-    process environment. Every package's config loader calls this (the eval
-    and the worker used their own copies, code audit 2.2). NOMOS_REPO_ROOT
-    points at the checkout when the code is not installed from it.
-    """
-    root = Path(os.environ["NOMOS_REPO_ROOT"]) if os.environ.get("NOMOS_REPO_ROOT") else WORKFLOW_ROOT.parent
-    load_dotenv(root / ".env")
 
 
 def load_config() -> WorkflowConfig:

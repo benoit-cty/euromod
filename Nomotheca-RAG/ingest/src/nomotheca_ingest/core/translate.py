@@ -3,7 +3,7 @@
 Finds legal_unit_versions that have no English unit_texts row — or whose
 machine translation was made from a source text that has changed since —
 translates their best available source text with an LLM (via
-nomoscope_workflow.llm), and writes the result as an ordinary unit_texts row
+nomos_llm.providers), and writes the result as an ordinary unit_texts row
 flagged authenticity='machine_translation', plus its retrieval chunks (the
 loader's chunk upsert, so chunk ids, cited chunks and unchanged vectors
 survive). Idempotent: versions translated from their current source are
@@ -51,7 +51,7 @@ _NEEDS_TRANSLATION = """
 DEFAULT_TARGET_LANG = "en"
 DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS = 120.0
 # Newline-aware split size for LLM calls; keeps each completion well under
-# the 8k max_tokens configured in nomoscope_workflow.llm.run_agent.
+# the 8k max_tokens configured in nomos_llm.providers.run_agent.
 TRANSLATION_SEGMENT_CHARS = 6_000
 
 LANG_NAMES = {
@@ -102,18 +102,18 @@ class TranslationBackend(Protocol):
 
 
 class LLMTranslationBackend:
-    """Translate through nomoscope_workflow.llm's provider-prefixed PydanticAI agents."""
+    """Translate through nomos_llm.providers's provider-prefixed PydanticAI agents."""
 
     def __init__(self, model: str, *, request_timeout: float | None = DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS) -> None:
         """Load .env credentials and keep the provider-prefixed model name."""
         try:
-            from nomoscope_workflow.config import load_config
-            from nomoscope_workflow.llm import run_agent
+            from nomos_llm.env import load_env_file
+            from nomos_llm.providers import run_agent
         except ImportError as exc:  # pragma: no cover - exercised by operator environment
             msg = "Install translation dependencies with: uv sync --extra translate"
             raise RuntimeError(msg) from exc
 
-        load_config()  # side effect: load_dotenv() for the provider API keys
+        load_env_file()  # the provider API keys
         self.engine = model
         self._run_agent = run_agent
         self._request_timeout = request_timeout

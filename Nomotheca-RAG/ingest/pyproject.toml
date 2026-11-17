@@ -37,8 +37,9 @@ embeddings-cuda = [
   "sentence-transformers[openvino]>=3.0",
   "torch>=2.13.0",
 ]
+# The LLM translator: provider access only (nomos-llm), not the whole workflow.
 translate = [
-  "nomoscope-agentic-workflow",
+  "nomos-llm",
 ]
 # The headless browser (core/browser.py), for two narrow uses: tier 3 of the
 # Legifrance ELI resolver (ADR 0002: Chromium opens the URL, only its final URL
@@ -70,4 +71,4 @@ torch = [
   { index = "pytorch_cpu", extra = "embeddings" },
   { index = "pytorch_cu126", extra = "embeddings-cuda" },
 ]
-nomoscope-agentic-workflow = { workspace = true }
+nomos-llm = { workspace = true }

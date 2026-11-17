@@ -122,7 +122,7 @@ migrate: ## Apply the legislation-DB migrations this database has not recorded
 # Every suite, on the host. Python runs on the one workspace lock (root
 # uv.lock); suites needing the stack skip their live tests when it is down.
 
-PY_PACKAGES = Nomotheca-RAG/ingest Nomoscope-agentic-workflow/pipeline \
+PY_PACKAGES = nomos-llm Nomotheca-RAG/ingest Nomoscope-agentic-workflow/pipeline \
               Nomokrisis-evaluation_pipeline Nomergon-worker mcp-server
 
 sync: ## Install every Python package into the workspace .venv (one lock)

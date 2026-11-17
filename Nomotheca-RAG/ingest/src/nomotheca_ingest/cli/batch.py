@@ -209,16 +209,16 @@ def _lock_progress(phase: str, detail: str) -> None:
 def _translate_model(model: str | None) -> str:
     """The translation model: --model, else EUROMOD_TRANSLATE_MODEL, else WORKFLOW_MODEL.
 
-    The root .env is only loaded once the workflow package is imported, after
+    The root .env is only loaded on demand, after
     typer has read its envvars — hence the second look here.
     """
     if model:
         return model
     try:
-        from nomoscope_workflow.config import load_config
+        from nomos_llm.env import load_env_file
     except ImportError as exc:  # pragma: no cover - operator environment
         raise typer.BadParameter("Install translation dependencies with: uv sync --extra translate") from exc
-    load_config()  # side effect: loads the repo-root .env
+    load_env_file()  # the repo-root .env
     resolved = os.environ.get("EUROMOD_TRANSLATE_MODEL") or os.environ.get("WORKFLOW_MODEL")
     if not resolved or resolved.startswith("mock/"):
         raise typer.BadParameter(
@@ -238,7 +238,7 @@ def run_translations(
             "--model",
             "-m",
             envvar="EUROMOD_TRANSLATE_MODEL",
-            help="Provider-prefixed model (see nomoscope_workflow.llm); "
+            help="Provider-prefixed model (see nomos_llm.providers); "
             "default EUROMOD_TRANSLATE_MODEL, else WORKFLOW_MODEL, from the root .env.",
         ),
     ] = None,

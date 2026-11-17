@@ -41,6 +41,7 @@ WORKDIR /app
 # One `uv sync` of the worker package installs all four into /app/.venv (torch
 # from the index of the chosen extra).
 COPY pyproject.toml uv.lock /app/
+COPY nomos-llm /app/nomos-llm
 COPY Nomotheca-RAG/ingest /app/Nomotheca-RAG/ingest
 COPY Nomoscope-agentic-workflow/pipeline /app/Nomoscope-agentic-workflow/pipeline
 COPY Nomokrisis-evaluation_pipeline /app/Nomokrisis-evaluation_pipeline
