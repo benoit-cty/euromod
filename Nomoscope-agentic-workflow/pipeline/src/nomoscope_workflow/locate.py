@@ -8,10 +8,9 @@ import re
 from datetime import date, timedelta
 
 import psycopg
-from psycopg.rows import dict_row
 
 from .schema import RetrievalHit
-from .corpus import HIT_COLUMNS, Scope, _LIVE_VERSION_CTE, _fts_query, scope_codes
+from .corpus import HIT_COLUMNS, Scope, _LIVE_VERSION_CTE, _fts_query, fetch_dicts, scope_codes
 
 # ---------------------------------------------------------------------------
 # Locating a source the analyst named
@@ -203,8 +202,7 @@ def gap_articles(
         "lang": lang,
         "max_gap": max_gap,
     }
-    with conn.cursor(row_factory=dict_row) as cur:
-        rows = cur.execute(_GAP_ARTICLES_SQL, params).fetchall()
+    rows = fetch_dicts(conn, _GAP_ARTICLES_SQL, params)
     # The ordinal is coarse for code articles (D621-1 … D621-9 are all 621), so
     # cap the gap by how many units it actually holds.
     units_per_gap: dict[tuple, set[str]] = {}
@@ -225,21 +223,21 @@ def instruments_of_chunks(conn: psycopg.Connection, chunk_ids: list[str], limit:
     """The acts a set of retrieved chunks mostly comes from, most chunks first."""
     if not chunk_ids:
         return []
-    with conn.cursor(row_factory=dict_row) as cur:
-        rows = cur.execute(
-            """
-            SELECT u.instrument_id::text AS instrument_id
-            FROM chunks ch
-            JOIN unit_texts t          ON t.id = ch.unit_text_id
-            JOIN legal_unit_versions v ON v.id = t.version_id
-            JOIN legal_units u         ON u.id = v.legal_unit_id
-            WHERE ch.id = ANY(%(ids)s::uuid[])
-            GROUP BY u.instrument_id
-            ORDER BY count(*) DESC
-            LIMIT %(limit)s
-            """,
-            {"ids": chunk_ids, "limit": limit},
-        ).fetchall()
+    rows = fetch_dicts(
+        conn,
+        """
+        SELECT u.instrument_id::text AS instrument_id
+        FROM chunks ch
+        JOIN unit_texts t          ON t.id = ch.unit_text_id
+        JOIN legal_unit_versions v ON v.id = t.version_id
+        JOIN legal_units u         ON u.id = v.legal_unit_id
+        WHERE ch.id = ANY(%(ids)s::uuid[])
+        GROUP BY u.instrument_id
+        ORDER BY count(*) DESC
+        LIMIT %(limit)s
+        """,
+        {"ids": chunk_ids, "limit": limit},
+    )
     return [row["instrument_id"] for row in rows]
 
 
@@ -314,23 +312,23 @@ def locate_named_units(
     """
     jurisdictions = scope_codes(country)
     base = {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of, "need": need}
-    with conn.cursor(row_factory=dict_row) as cur:
-        acts = cur.execute(
-            _NAMED_INSTRUMENTS_SQL,
-            {**base, "min_score": NAMED_ACT_MIN_SCORE, "numbers": act_numbers(need)},
-        ).fetchall()
+    acts = fetch_dicts(
+        conn,
+        _NAMED_INSTRUMENTS_SQL,
+        {**base, "min_score": NAMED_ACT_MIN_SCORE, "numbers": act_numbers(need)},
+    )
     # An act the need names by number is the act: drop title look-alikes.
     if any(act["by_number"] for act in acts):
         acts = [act for act in acts if act["by_number"]]
     act_ids = [act["instrument_id"] for act in acts] or None
     search_acts = acts
     if not acts and held_instrument_ids:
-        with conn.cursor(row_factory=dict_row) as cur:
-            search_acts = cur.execute(
-                "SELECT id::text AS instrument_id, title_search FROM instruments "
-                "WHERE id = ANY(%(ids)s::uuid[]) AND source_trust_class <> 'context'",
-                {"ids": held_instrument_ids},
-            ).fetchall()
+        search_acts = fetch_dicts(
+            conn,
+            "SELECT id::text AS instrument_id, title_search FROM instruments "
+            "WHERE id = ANY(%(ids)s::uuid[]) AND source_trust_class <> 'context'",
+            {"ids": held_instrument_ids},
+        )
     hits: dict[str, RetrievalHit] = {}
 
     def lookup(token: str, scoped: bool) -> None:
@@ -340,8 +338,7 @@ def locate_named_units(
             "instrument_ids": act_ids if scoped else None,
             "k": k,
         }
-        with conn.cursor(row_factory=dict_row) as cur:
-            rows = cur.execute(_NAMED_UNIT_SQL, params).fetchall()
+        rows = fetch_dicts(conn, _NAMED_UNIT_SQL, params)
         for row in rows:
             hits.setdefault(row["chunk_id"], RetrievalHit(method="located", **row))
 
@@ -365,8 +362,7 @@ def locate_named_units(
             queries.append(_fts_query(need))
             for fts_q in queries:
                 params = {**base, "instrument_id": act["instrument_id"], "fts_q": fts_q, "k": 3}
-                with conn.cursor(row_factory=dict_row) as cur:
-                    rows = cur.execute(_NAMED_INSTRUMENT_FTS_SQL, params).fetchall()
+                rows = fetch_dicts(conn, _NAMED_INSTRUMENT_FTS_SQL, params)
                 if rows:
                     for row in rows:
                         hits.setdefault(row["chunk_id"], RetrievalHit(method="located", **row))
@@ -375,8 +371,7 @@ def locate_named_units(
     recent_found = any(_entered_since(h.validity, since) for h in hits.values())
     found = list(hits.values())[:k]
     params = {**base, "since": since, "k": k}
-    with conn.cursor(row_factory=dict_row) as cur:
-        recent = [r for r in cur.execute(_RECENT_FTS_SQL, params).fetchall() if r["chunk_id"] not in hits]
+    recent = [r for r in fetch_dicts(conn, _RECENT_FTS_SQL, params) if r["chunk_id"] not in hits]
     # Nothing recent found: this year's texts fill the slots. Something
     # recent found: they still get RECENT_EXTRA slots of their own — the
     # PAJE arrêté of December 2024 is recent, and the ceiling table of

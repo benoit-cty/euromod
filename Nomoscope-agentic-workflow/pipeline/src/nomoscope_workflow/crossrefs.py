@@ -8,11 +8,19 @@ import re
 from datetime import date, timedelta
 
 import psycopg
-from psycopg.rows import dict_row
 
 from .schema import RetrievalHit
 from . import idiom
-from .corpus import article_label, CHUNK_JOINS, HIT_COLUMNS, Scope, scope_codes
+from .corpus import (
+    CHUNK_JOINS,
+    HIT_COLUMNS,
+    Scope,
+    add_unseen,
+    article_label,
+    fetch_dicts,
+    located,
+    scope_codes,
+)
 from .locate import _citation_pattern
 
 _CODE_ARTICLE_REF = idiom.FR_CODE_ARTICLE_REF
@@ -147,14 +155,12 @@ def cross_referenced_articles(
     "located".
     """
     base = {"jurisdictions": scope_codes(country), "lang": lang, "as_of": as_of, "need": ""}
-    with conn.cursor(row_factory=dict_row) as cur:
-        codes = {r["instrument_id"]: r["title"] for r in cur.execute(_SCOPE_CODES_SQL, base).fetchall()}
+    codes = {r["instrument_id"]: r["title"] for r in fetch_dicts(conn, _SCOPE_CODES_SQL, base)}
     found: dict[str, RetrievalHit] = {}
     seen = set(chunk_ids)
     frontier = list(chunk_ids)
     for hop in range(2):
-        with conn.cursor(row_factory=dict_row) as cur:
-            rows = cur.execute(_REF_CHUNKS_SQL, {"ids": frontier}).fetchall()
+        rows = fetch_dicts(conn, _REF_CHUNKS_SQL, {"ids": frontier})
         rank = {chunk_id: i for i, chunk_id in enumerate(frontier)}
         rows.sort(key=lambda r: rank[r["chunk_id"]])  # the best-ranked hit's references first
         lookups: list[tuple[str, str]] = []
@@ -181,25 +187,22 @@ def cross_referenced_articles(
                 ]
         frontier = []
         if lookups:
-            with conn.cursor(row_factory=dict_row) as cur:
-                hits = cur.execute(
-                    _REFERENCED_UNITS_SQL,
-                    {
-                        **base,
-                        "instrument_ids": [iid for iid, _ in lookups],
-                        "patterns": [pattern for _, pattern in lookups],
-                    },
-                ).fetchall()
+            hits = fetch_dicts(
+                conn,
+                _REFERENCED_UNITS_SQL,
+                {
+                    **base,
+                    "instrument_ids": [iid for iid, _ in lookups],
+                    "patterns": [pattern for _, pattern in lookups],
+                },
+            )
         else:
             hits = []
-        for hit in hits:
-            if hit["chunk_id"] in seen:
-                continue
-            seen.add(hit["chunk_id"])
-            frontier.append(hit["chunk_id"])
-            found[hit["chunk_id"]] = RetrievalHit(method="located", **hit)
-            if len(found) >= CROSS_REF_MAX:
-                return list(found.values())
+        for hit in add_unseen(located(hits), seen, CROSS_REF_MAX - len(found)):
+            frontier.append(hit.chunk_id)
+            found[hit.chunk_id] = hit
+        if len(found) >= CROSS_REF_MAX:
+            return list(found.values())
         if not frontier:
             break
     return list(found.values())
@@ -298,8 +301,7 @@ def same_act_articles(conn: psycopg.Connection, lang: str, chunk_ids: list[str])
     """
     if not chunk_ids:
         return []
-    with conn.cursor(row_factory=dict_row) as cur:
-        rows = cur.execute(_CITING_CHUNKS_SQL, {"ids": chunk_ids}).fetchall()
+    rows = fetch_dicts(conn, _CITING_CHUNKS_SQL, {"ids": chunk_ids})
     rank = {chunk_id: i for i, chunk_id in enumerate(chunk_ids)}
     rows.sort(key=lambda r: rank[r["chunk_id"]])
     lookups: list[tuple[str, str, date]] = []
@@ -311,25 +313,18 @@ def same_act_articles(conn: psycopg.Connection, lang: str, chunk_ids: list[str])
                 lookups.append(lookup)
     if not lookups:
         return []
-    with conn.cursor(row_factory=dict_row) as cur:
-        hits = cur.execute(
-            _SAME_ACT_UNITS_SQL,
-            {
-                "lang": lang,
-                "instrument_ids": [l[0] for l in lookups],
-                "patterns": [l[1] for l in lookups],
-                "dates": [l[2] for l in lookups],
-            },
-        ).fetchall()
+    hits = fetch_dicts(
+        conn,
+        _SAME_ACT_UNITS_SQL,
+        {
+            "lang": lang,
+            "instrument_ids": [l[0] for l in lookups],
+            "patterns": [l[1] for l in lookups],
+            "dates": [l[2] for l in lookups],
+        },
+    )
     seen = set(chunk_ids)
-    found: list[RetrievalHit] = []
-    for hit in hits:
-        if hit["chunk_id"] in seen:
-            continue
-        seen.add(hit["chunk_id"])
-        found.append(RetrievalHit(method="located", **hit))
-        if len(found) >= SAME_ACT_MAX:
-            break
+    found = add_unseen(located(hits), seen, SAME_ACT_MAX)
     return found + _same_act_citing(conn, lang, rows, seen)
 
 
@@ -356,17 +351,17 @@ def _same_act_citing(conn: psycopg.Connection, lang: str, rows: list[dict], seen
             lookups.append(lookup)
     if not lookups:
         return []
-    with conn.cursor(row_factory=dict_row) as cur:
-        hits = cur.execute(
-            _SAME_ACT_CITING_SQL,
-            {
-                "lang": lang,
-                "instrument_ids": [l[0] for l in lookups],
-                "patterns": [l[1] for l in lookups],
-                "dates": [l[2] for l in lookups],
-                "owns": [l[3] for l in lookups],
-            },
-        ).fetchall()
+    hits = fetch_dicts(
+        conn,
+        _SAME_ACT_CITING_SQL,
+        {
+            "lang": lang,
+            "instrument_ids": [l[0] for l in lookups],
+            "patterns": [l[1] for l in lookups],
+            "dates": [l[2] for l in lookups],
+            "owns": [l[3] for l in lookups],
+        },
+    )
     def distance(hit: dict) -> tuple[int, int]:
         # Nearest article first: the rule for art. 35 sits in art. 36, not in
         # art. 13 or 49, which name it too.
@@ -478,9 +473,8 @@ def implementing_acts(
     2025 fixing the 2026 PAJE ceilings names L. 531-2 too.
     """
     base = {"jurisdictions": scope_codes(country), "lang": lang, "as_of": as_of}
-    with conn.cursor(row_factory=dict_row) as cur:
-        rows = cur.execute(_REF_CHUNKS_SQL, {"ids": chunk_ids}).fetchall()
-        codes = {r["instrument_id"]: r["title"] for r in cur.execute(_SCOPE_CODES_SQL, base).fetchall()}
+    rows = fetch_dicts(conn, _REF_CHUNKS_SQL, {"ids": chunk_ids})
+    codes = {r["instrument_id"]: r["title"] for r in fetch_dicts(conn, _SCOPE_CODES_SQL, base)}
     rank = {chunk_id: i for i, chunk_id in enumerate(chunk_ids)}
     articles: list[tuple[str, str]] = []
     for row in sorted(rows, key=lambda r: rank[r["chunk_id"]]):
@@ -492,11 +486,11 @@ def implementing_acts(
     if not articles or not codes:
         return []
     patterns = sorted({rf"\m{t[0]}\.? ?{re.escape(t[1:])}($|[^0-9-])" for _, t in articles})
-    with conn.cursor(row_factory=dict_row) as cur:
-        candidates = cur.execute(
-            _IMPLEMENTING_SQL,
-            {**base, "since": as_of - IMPLEMENTING_LOOKBACK, "patterns": patterns},
-        ).fetchall()
+    candidates = fetch_dicts(
+        conn,
+        _IMPLEMENTING_SQL,
+        {**base, "since": as_of - IMPLEMENTING_LOOKBACK, "patterns": patterns},
+    )
     candidates.sort(key=lambda r: r["validity"], reverse=True)  # '[2025-03-30,)' sorts by its start
     named = [(row, set(_code_refs(row["content"] or "", None, codes))) for row in candidates]
     matched: list[dict] = []
@@ -507,35 +501,25 @@ def implementing_acts(
         # Twenty articles name more acts than the caps keep: the nearest to
         # the query win — the prime d'activité decree (L. 842-3, 19th
         # article) over the family-benefit arrêtés of the first six.
-        with conn.cursor(row_factory=dict_row) as cur:
-            distance = {
-                r["chunk_id"]: r["d"]
-                for r in cur.execute(
-                    _CHUNK_DISTANCE_SQL,
-                    {"ids": [r["chunk_id"] for r in matched], "qvec": query_vector, "model_id": model_id},
-                ).fetchall()
-            }
+        distance = {
+            r["chunk_id"]: r["d"]
+            for r in fetch_dicts(
+                conn,
+                _CHUNK_DISTANCE_SQL,
+                {"ids": [r["chunk_id"] for r in matched], "qvec": query_vector, "model_id": model_id},
+            )
+        }
         matched.sort(key=lambda r: distance.get(r["chunk_id"], 2.0))
     known = set(chunk_ids)
-    found: list[RetrievalHit] = []
-    instruments: list[str] = []
-    for row in matched:
-        # An act already retrieved still brings its nearest chunks: the
-        # instruction's «Textes de référence» chunk ranked, its ceilings did not.
-        if row["instrument_id"] not in instruments:
-            instruments.append(row["instrument_id"])
-        if row["chunk_id"] in known:
-            continue
-        known.add(row["chunk_id"])
-        found.append(RetrievalHit(method="located", **{c: v for c, v in row.items() if c != "instrument_id"}))
-    found = found[:IMPLEMENTING_MAX]
+    # An act already retrieved still brings its nearest chunks: the
+    # instruction's «Textes de référence» chunk ranked, its ceilings did not.
+    instruments = list(dict.fromkeys(row["instrument_id"] for row in matched))
+    found = add_unseen(
+        located({c: v for c, v in row.items() if c != "instrument_id"} for row in matched), known
+    )[:IMPLEMENTING_MAX]
     if query_vector is not None:
         for instrument in instruments[:IMPLEMENTING_NEAREST_ACTS]:
             params = {**base, "instrument_id": instrument, "qvec": query_vector, "model_id": model_id,
                       "k": IMPLEMENTING_NEAREST + 1}
-            with conn.cursor(row_factory=dict_row) as cur:
-                near = [r for r in cur.execute(_ACT_NEAREST_SQL, params).fetchall() if r["chunk_id"] not in known]
-            for row in near[:IMPLEMENTING_NEAREST]:
-                known.add(row["chunk_id"])
-                found.append(RetrievalHit(method="located", **row))
+            found += add_unseen(located(fetch_dicts(conn, _ACT_NEAREST_SQL, params)), known, IMPLEMENTING_NEAREST)
     return found

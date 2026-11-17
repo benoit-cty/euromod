@@ -5,7 +5,7 @@ code audit 4)."""
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from datetime import date
 
 import psycopg
@@ -116,6 +116,38 @@ def connect(cfg: WorkflowConfig) -> psycopg.Connection:
     return psycopg.connect(cfg.database_url, row_factory=dict_row)
 
 
+def add_unseen(
+    candidates: Iterable[RetrievalHit], seen: set[str], cap: int | None = None
+) -> list[RetrievalHit]:
+    """The candidates whose chunk is not in `seen`, in order, at most `cap`.
+
+    Each one kept is added to `seen`, so a chunk is offered once however many
+    lookups return it. Lazy over `candidates`: nothing past the cap is built.
+    """
+    kept: list[RetrievalHit] = []
+    if cap is not None and cap <= 0:
+        return kept
+    for hit in candidates:
+        if hit.chunk_id in seen:
+            continue
+        seen.add(hit.chunk_id)
+        kept.append(hit)
+        if cap is not None and len(kept) >= cap:
+            break
+    return kept
+
+
+def located(rows: Iterable[dict]) -> Iterator[RetrievalHit]:
+    """Rows of a lookup query as "located" hits (lazily)."""
+    return (RetrievalHit(method="located", **row) for row in rows)
+
+
+def fetch_dicts(conn: psycopg.Connection, sql: str, params: dict | None = None) -> list[dict]:
+    """Every row of one query, as dicts, whatever the connection's row factory."""
+    with conn.cursor(row_factory=dict_row) as cur:
+        return cur.execute(sql, params).fetchall()
+
+
 Scope = str | Sequence[str]
 
 
@@ -167,7 +199,8 @@ def unit_chunks(conn: psycopg.Connection, chunk_id: str) -> list[RetrievalHit]:
     whole article — e.g. LF 2025 art. 10 states the CDHR mechanism in chunk 1
     and its "revenus de l'année 2025" applicability clause in chunk 2.
     """
-    rows = conn.execute(
+    rows = fetch_dicts(
+        conn,
         """
         SELECT c2.id::text AS chunk_id, u.citation, c2.context_header, c2.content,
                t.lang, v.validity::text AS validity, v.version_status,
@@ -182,7 +215,7 @@ def unit_chunks(conn: psycopg.Connection, chunk_id: str) -> list[RetrievalHit]:
         ORDER BY c2.seq
         """,
         {"chunk_id": chunk_id},
-    ).fetchall()
+    )
     return [RetrievalHit(method="sibling", **row) for row in rows]
 
 

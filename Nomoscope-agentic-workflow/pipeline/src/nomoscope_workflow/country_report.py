@@ -10,7 +10,7 @@ from datetime import date
 import psycopg
 
 from .schema import RetrievalHit
-from .corpus import CHUNK_JOINS, HIT_COLUMNS, _fts_query
+from .corpus import CHUNK_JOINS, HIT_COLUMNS, _fts_query, fetch_dicts
 
 _CR_SEARCH_SQL = f"""
 SELECT {HIT_COLUMNS},
@@ -38,10 +38,11 @@ def country_report_search(
     must never be offered to propose/critique as citable evidence. CRs are
     English, so no per-country lang mapping applies.
     """
-    rows = conn.execute(
+    rows = fetch_dicts(
+        conn,
         _CR_SEARCH_SQL,
         {"country": country, "as_of": as_of, "fts_q": _fts_query(query), "k": k},
-    ).fetchall()
+    )
     return [RetrievalHit(method="country_report", **row) for row in rows]
 
 

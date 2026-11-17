@@ -20,7 +20,6 @@ from collections.abc import Iterable
 from datetime import date
 
 import psycopg
-from psycopg.rows import dict_row
 
 from . import query_encoder
 from .quotes import closest_passage, quote_span, verify_extract  # noqa: F401  (re-exported)
@@ -33,7 +32,9 @@ from .corpus import (  # noqa: F401  (re-exported: retrieval is the facade)
     Scope,
     _LIVE_VERSION_CTE,
     _fts_query,
+    add_unseen,
     connect,
+    fetch_dicts,
     jurisdiction_scope,
     law_language,
     record_scope,
@@ -106,11 +107,11 @@ def citation_fast_path(
     hits: dict[str, RetrievalHit] = {}
     jurisdictions = scope_codes(country)
     for cit in citations:
-        with conn.cursor(row_factory=dict_row) as cur:
-            rows = cur.execute(
-                _CITATION_SQL,
-                {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of, "cit": cit, "k": k},
-            ).fetchall()
+        rows = fetch_dicts(
+            conn,
+            _CITATION_SQL,
+            {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of, "cit": cit, "k": k},
+        )
         for row in rows:
             hits.setdefault(row["chunk_id"], RetrievalHit(method="citation", **row))
     return list(hits.values())
@@ -153,8 +154,7 @@ def hybrid_search(
     }
     # Rows are unpacked by name: bind the row factory here rather than relying on
     # the caller's connection (a plain `psycopg.connect` yields tuples).
-    with conn.cursor(row_factory=dict_row) as cur:
-        rows = cur.execute(sql, params).fetchall()
+    rows = fetch_dicts(conn, sql, params)
     # "fts": the vector leg was unavailable (encoder down or paused) — the
     # review item's retrieval trace, and the eval, record the degradation.
     if not use_fts:
@@ -264,8 +264,8 @@ def locate_sources(
 ) -> tuple[list[RetrievalHit], list[str]]:
     """Look the analyst's named sources up in the corpus we already hold.
 
-    The complement of the scout's `run`: that one fetches what is missing, this one finds
-    what is present but was ranked out. Nothing here weakens the contract —
+    The complement of the scout's `run`: that one fetches what is missing,
+    this one finds what is present but was ranked out. Nothing here weakens the contract —
     the chunks come from the database like any retrieved chunk and the
     verbatim-quote check still applies to whatever gets cited from them.
     Returns the new chunks (not already among `known_chunk_ids`) and the
@@ -276,7 +276,6 @@ def locate_sources(
     info = record.information
     seen = set(known_chunk_ids)
     hits: list[RetrievalHit] = []
-    citations: list[str] = []
     with connect(cfg) as conn:
         scope = record_scope(conn, info)
         lang = law_language(scope)
@@ -285,17 +284,14 @@ def locate_sources(
         # between 35 and 38), then the code articles the retrieved ones send
         # the reader to (R. 531-1 → R. 522-2), come first: they need no named
         # source at all.
-        for hit in [
-            *gap_articles(conn, scope, lang, as_of, list(seen)),
-            *cross_referenced_articles(conn, scope, lang, as_of, list(seen)),
-            *same_act_articles(conn, lang, list(seen)),
-        ]:
-            if hit.chunk_id in seen:
-                continue
-            seen.add(hit.chunk_id)
-            hits.append(hit)
-            if hit.citation and hit.citation not in citations:
-                citations.append(hit.citation)
+        hits += add_unseen(
+            [
+                *gap_articles(conn, scope, lang, as_of, list(seen)),
+                *cross_referenced_articles(conn, scope, lang, as_of, list(seen)),
+                *same_act_articles(conn, lang, list(seen)),
+            ],
+            seen,
+        )
         for need in needs[:5]:
             found = locate_named_units(
                 conn, scope, lang, as_of, need, held_instrument_ids=held
@@ -308,11 +304,6 @@ def locate_sources(
                     )
                     if (validity_start(hit.validity) or date.min) > as_of
                 ]
-            for hit in found:
-                if hit.chunk_id in seen:
-                    continue
-                seen.add(hit.chunk_id)
-                hits.append(hit)
-                if hit.citation and hit.citation not in citations:
-                    citations.append(hit.citation)
+            hits += add_unseen(found, seen)
+    citations = list(dict.fromkeys(hit.citation for hit in hits if hit.citation))
     return hits, citations
