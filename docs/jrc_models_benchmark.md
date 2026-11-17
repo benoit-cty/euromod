@@ -21,6 +21,16 @@ its precision falls to **74.6 %** (GPT 88.7 %). The crashes are gone, so the
 gap is wrong values and abstentions. MiniMax is not yet a replacement on a
 country as hard as France.
 
+**Update, 17 Nov 2026** (§10). Three fixes to the quote check and the prompts
+and a GPT critique in place of its own bring MiniMax M2.7 from 32 % to 62 %
+of parameters *ready to accept* on a sample of 40 French parameters. An
+open-weight model smaller than MiniMax, DeepSeek V4 Flash 0731, reaches 72 %
+on the same sample, also under a GPT critique, the score GPT had on 16 Nov. These are 40-case results and need confirming on the 200-case panel
+defined in §10.2. GPT has been run on that panel: **64 %** of parameters ready
+to accept over four countries, from 89 % in Lithuania and 84 % in France to
+28 % in Ireland (§10.6).
+MiniMax and DeepSeek have not yet been run on it.
+
 ---
 
 ## 1. Runs compared
@@ -567,3 +577,285 @@ predicted it.
 5. **Look for corpus gaps in `bhoey_fr`, `tscer_fr`, `tscse_fr`, `bsa00_fr`,
    `sickcomp_fr` and `bunmt_fr`**, where GPT abstains most. Start with the
    debug-phoenix-trace skill on their not_found traces.
+
+## 10. Fixes, a headline metric, one dataset and newer models (17 Nov 2026)
+
+### 10.1 One number for the client: "ready to accept"
+
+The five rates of §2.4 do not answer the question a country team asks: what
+share of the yearly update can the agent handle? From now on the report leads
+with two numbers.
+
+- **Ready to accept.** The share of legislation-based parameters for which the
+  agent proposes the right value with its legal quote. In the terms of §2.4:
+  (same value + EUROMOD off the law) / legislative parameters.
+- **Wrong proposals.** The share of the proposals the agent stands behind
+  whose value is wrong: (different value + kept Y-1 value) / proposals. It must
+  always be shown next to the first number, because the analyst cannot tell in
+  advance which proposals are the wrong ones.
+
+How each kind of case counts:
+
+- A finding (the agent follows the law, EUROMOD is one unit off) is ready to
+  accept. Findings have not yet been checked by a person.
+- Parameters that are not set by legislation are in neither number. The agent
+  does no work on them.
+- A rejected proposal, an abstention and a crash are all "left to the
+  analyst": a manual lookup, as today.
+- "Wrong" means different from EUROMOD by more than one unit, so the second
+  number is an upper bound on real errors.
+
+The earlier full-country runs, restated:
+
+| Run | Ready to accept | Wrong proposals |
+|---|---|---|
+| FR, GPT (16 Nov) | **69.1 %** (235/340) | 5.2 % (13/248) |
+| FR, all-MiniMax (16 Nov) | **40.6 %** (138/340) | 20.2 % (35/173) |
+| LT, GPT (14 Nov) | **76.6 %** (85/111) | 3.4 % (3/88) |
+| LT, all-MiniMax (14 Nov) | **68.5 %** (76/111) | 6.2 % (5/81) |
+
+Limits of the metric: it certifies the value and a verbatim quote, not the
+start date. It counts every parameter as one unit of work. France is 55 %
+changed parameters and Lithuania 16 %, so two countries are only comparable
+with that split in view. A single "analyst time saved" figure would need the
+time it takes to check a proposal, which has not been measured.
+
+`benchmark-report` prints both numbers first (`summarize_benchmark` in
+`nomokrisis_eval/benchmark.py`). The older "precision" counts a finding as a
+miss and is kept only as a diagnostic.
+
+### 10.2 Which dataset: the golden set, the country benchmark, the panel
+
+Three datasets exist. They answer different questions, and only the third is
+meant for comparing models and for communication.
+
+| Dataset | Cases | Ground truth | Use |
+|---|---|---|---|
+| **Golden set** | 113 hand-picked parameters over FR (59), ES (17), NL (15), IE (11) and LT (11) | A value a person verified against the law | Regression test of the pipeline on known hard cases. Not a measure of the job. |
+| **Country benchmark** | Every parameter of one country: FR 345, LT 117 (§2.1) | EUROMOD's own value for the year | The full picture for one country. Costly: FR is 6 to 7 hours per model. |
+| **Panel** (new) | **200**: 50 each of FR, ES, IE and LT | EUROMOD's own value for the year | The one dataset every model is compared on. |
+
+The panel is a fixed draw from the country benchmarks, so it is the same blind
+Y-1 → Y task as §2.1:
+
+- **Stratified.** Each country's 50 parameters keep that country's own mix of
+  changed and unchanged parameters, so the panel score estimates the
+  full-country score.
+- **Fixed.** The seed is a constant (`benchmark.PANEL_SEED`). Every model gets
+  the same 200 cases as long as the parameter store is unchanged, and each run
+  records the hash of the cases it froze.
+- **Composition for 2025.** FR: 24 changed, 22 unchanged, 3 new, 1 not
+  legislative. ES: 9, 40, 0, 1. IE: 8, 36, 3, 3. LT: 7, 40, 0, 3.
+
+```bash
+uv run nomokrisis-eval run-benchmark panel --year 2025 --model <proposer>
+```
+
+The report adds one line per country. Only GPT has been run on the panel so
+far (§10.6). The Netherlands can be added with `run-benchmark FR,ES,IE,LT,NL`.
+
+### 10.3 Three fixes for the right values that were being refused
+
+In the 16 Nov French run, about 38 of MiniMax's 54 rejected proposals had the
+right value. Most were refused by the verbatim-quote check.
+
+- **Typographic variants are one character.** The law reads «l’accueil»,
+  the model types «l'accueil». The check now treats the variants of an
+  apostrophe, a quotation mark or a dash as equal. Letters, digits and every
+  other sign still match one for one. 7 of MiniMax's 20 final misquotes
+  differed by nothing else, 6 of them with the right value (`quotes.py`).
+- **A misquote of a circular gets its extra attempt.** A proposal refused for
+  nothing but a misquote earns one more attempt. The informational line
+  "supported by guidance only" was counted as an objection and cancelled it,
+  on 31 of the 54 rejections: circulars and instructions are where the PDF
+  tables are (`issues.py`).
+- **Quoting a table.** A PDF table is often extracted one cell per line, a
+  column at a time. MiniMax glued a row label to its figure («3 enfants
+  ≤ 85 111») although other cells sit between them. The proposer is now told
+  to quote one run of consecutive characters, the cell alone if need be, and
+  the critique to read the table itself (prompt **0.15.0**).
+
+The anti-hallucination guarantee is unchanged: a quote must still be found in
+the cited chunk.
+
+Trimming prompts to MiniMax's window (§7.1) is not a cause of its
+abstentions: it hid the chunk GPT cited in only 4 of the 345 cases.
+
+### 10.4 Newer open-weight models
+
+Candidates were chosen on published specifications: open weights, a licence
+a public body can use, a context window of 200k tokens or more, tool calling,
+and a hosting footprint no larger than MiniMax M2.7.
+
+| Model | Size on disk | Licence | Context | OpenRouter price in / out ($/M tokens) |
+|---|---|---|---|---|
+| MiniMax M2.7 (JRC today) | 230 GB | MiniMax non-commercial | 196k | 0.21 / 0.84 |
+| DeepSeek V4 Flash 0731 | 167 GB | MIT | 1M | 0.06 / 0.18 |
+| GLM-5.3-Flash | 204 GB at 4-bit, 328 GB at 8-bit | MIT | 1M | 0.04 / 0.078 |
+| Qwen3.8-27B | 31 GB, one GPU | Apache 2.0 | 262k | 0.15 / 1.875 |
+| Gemma 4 31B | 33 GB at 4-bit, one GPU | Apache 2.0 | 262k | 0.20 / 0.40 |
+
+Not tested: MiniMax M3.1 Flash (larger than M2.7, and public benchmarks show
+it answering almost every question rather than abstaining), the Qwen Max
+models (no open weights), DeepSeek V4.1 and Kimi K3 (two to ten times the
+size).
+
+### 10.5 Results on 40 French parameters
+
+All runs use the same 40 parameters (`--sample 40 --seed 1`, France,
+2024 → 2025). The two 16 Nov rows are those runs restricted to the same 40
+cases.
+
+**The critique model differs between rows.** In the 17 Nov runs the model
+under test proposes and **gpt-6.1-sol critiques** (the `.env` default was left
+in place; `eval.runs.resolved_critique_model` records it). The 16 Nov MiniMax
+run was all-MiniMax. The 17 Nov rows therefore measure each model as a
+proposer under a GPT critique, not a configuration JRC can deploy. The panel
+runs of the open models use the model as its own critique.
+
+![Ready to accept, wrong proposals and left to the analyst, per model](jrc_models_ready_to_accept.svg)
+
+| Model | Code | Ready to accept | Wrong proposals | Not found | Rejected | Crash | Prompt / completion tokens |
+|---|---|---|---|---|---|---|---|
+| GPT (luna + sol) | 16 Nov | 72.5 % (29/40) | 6.5 % (2/31) | 7 | 2 | 0 | 6.4 M / 0.09 M |
+| **DeepSeek V4 Flash 0731** | 17 Nov | **72.5 %** (29/40) | 3.3 % (1/30) | 3 | 2 | 5 | 5.9 M / 0.41 M |
+| **MiniMax M2.7** | 17 Nov | **62.5 %** (25/40) | 3.8 % (1/26) | 8 | 6 | 0 | 6.5 M / 0.17 M |
+| GLM-5.3-Flash | 17 Nov | 60.0 % (24/40) | 0 % (0/24) | 1 | 4 | 11 | 4.7 M / 0.55 M |
+| Qwen3.8-27B | 17 Nov | 56.8 % (21/37) | 0 % (0/21) | 5 | 10 | 1 | 7.2 M / 0.82 M |
+| MiniMax M2.7 | 16 Nov | 32.5 % (13/40) | 27.8 % (5/18) | 16 | 5 | 1 | 9.7 M / 0.32 M |
+| Gemma 4 31B | 17 Nov | 2.5 % (1/40) | 0 % (0/1) | 4 | 35 | 0 | 17.2 M / 0.63 M |
+
+Run ids: `eval-20261117T064637Z-minimax-minimax-m2-7-b691f2`,
+`eval-20261117T072603Z-deepseek-deepseek-v4-flash-0731-50f7fd`,
+`eval-20261117T075821Z-z-ai-glm-5-3-flash-826142`,
+`eval-20261117T083952Z-google-gemma-4-31b-it-07b62b`,
+`eval-20261117T100323Z-qwen-qwen3-8-27b-776a40`.
+
+Reading the table:
+
+- **MiniMax M2.7 nearly doubles, but two things changed.** Wrong proposals
+  fall from 5 to 1 and abstentions from 16 to 8. The 17 Nov run has a GPT
+  critique where the 16 Nov run had MiniMax's own, and §5.3 and §9.4 showed
+  MiniMax's critique is lenient: the fall in wrong proposals may be the
+  critique's doing. The 17 Nov code is also 105 commits later and includes
+  three earlier prompt revisions (0.14.1 to 0.14.3). The gain cannot be
+  attributed to §10.3.
+- **DeepSeek V4 Flash matches GPT's 16 Nov score** with 5 cases crashed.
+- **The DeepSeek, GLM and one Qwen crash are a setting.** All are "token limit
+  (16384) exceeded before any response": these are reasoning models and their
+  thinking counts against the output cap of §7.1. The cap is now 65,536 for
+  DeepSeek and GLM (`ROUTED_MAX_OUTPUT` in `nomos_llm/providers.py`). The
+  crashed cases have not been re-run.
+- **Qwen3.8-27B is the first single-GPU model that works** on this task. Its
+  last 3 cases failed on the OpenRouter budget and are left out (37 cases).
+- **Gemma 4 31B does not fill the answer structure.** 35 of 40 proposals were
+  rejected for a missing start date, a missing chunk id or a value outside its
+  unit's range, though 12 of them carried the right value. It fails as
+  Mistral Small 3.2 did (§6).
+
+Limits:
+
+- 40 cases, one run per model. One case is 2.5 points, so only the large
+  differences mean anything.
+- GPT was not re-run on the 17 Nov code. "DeepSeek equals GPT" compares two
+  code versions.
+- The 17 Nov rows have a GPT critique (see above). No open model has yet been
+  measured on the 17 Nov code doing both steps.
+- OpenRouter providers were not pinned (§8 point 2). Quantisation and limits
+  differ between providers of the same model.
+- France only. No Lithuanian, Spanish or Irish text was tested with the new
+  models.
+
+### 10.6 The panel with GPT (17 Nov)
+
+GPT (gpt-6-luna proposing, gpt-6.1-sol critiquing) is the first model run on
+the panel, on the 17 Nov code. First run, without web search, run id:
+`eval-20261117T112603Z-gpt-6-luna-ecfcd0`, 21.4 M prompt tokens and 0.38 M
+completion tokens.
+
+| Country | Ready to accept | Wrong proposals | Not found | Rejected |
+|---|---|---|---|---|
+| **All four** | **63.0 %** (121/192) | 6.2 % (8/129) | 57 | 6 |
+| France | 85.7 % (42/49) | 8.7 % (4/46) | 2 | 1 |
+| Lithuania | 83.0 % (39/47) | 0 % (0/39) | 5 | 3 |
+| Spain | 57.1 % (28/49) | 6.7 % (2/30) | 18 | 1 |
+| Ireland | 25.5 % (12/47) | 14.3 % (2/14) | 32 | 1 |
+
+Reading the table:
+
+- **The country matters more than the model.** France and Lithuania are above
+  80 %. Spain and Ireland are held back by "not found", which is a corpus
+  problem, not a wrong answer.
+- **Ireland: the corpus is thin.** It holds 45 Irish acts, and 32 of 47
+  parameters were not found.
+- **Spain: the regional texts.** Most of the 18 not-found cases ask for an
+  autonomous community's text on ceded taxes (Aragón, Cantabria, Murcia,
+  Castilla y León…).
+- **Web search was unavailable for this run.** The Tavily pay-as-you-go
+  limit was spent (HTTP 433) on all 102 cases that tried a search, so no
+  missing act could be fetched. The 17 Nov runs of §10.5 had the same
+  handicap. A second run with web search follows below.
+
+**A regression found by this run, and fixed.** On the first pass Lithuania
+scored 57.4 % (27/47): ten parameters GPT had right on 14 Nov were not found.
+Three Lithuanian acts ingested since then were stored under the title
+«LIETUVOS RESPUBLIKOS», because the parser dropped a lower-case title line
+(«LIETUVOS RESPUBLIKOS / socialinių paslaugų / ĮSTATYMAS»). That title is
+contained in every Lithuanian request, so the lookup of a named source
+returned the wrong act. Two fixes:
+
+- The lookup ignores a title that is only the first words of another
+  candidate's title, or that several candidates share (`locate.named_acts`).
+- The Lithuanian parser keeps the whole title block.
+
+The 18 Lithuanian not-found cases were then re-run in the same run: 12 were
+answered correctly. The table above is the result after that re-run. About a
+dozen Lithuanian acts still carry a wrong stored title until they are
+refetched; the lookup fix makes this harmless.
+
+**Second run, with web search restored.** Same panel, same code plus the
+Lithuanian fix, run id `eval-20261117T154224Z-gpt-6-luna-f86a84` (20.0 M
+prompt tokens, 0.44 M completion tokens). **This is the GPT reference for the
+panel.**
+
+![Ready to accept, wrong proposals and left to the analyst, per country, GPT](jrc_models_panel_gpt.svg)
+
+| Country | Ready to accept | Wrong proposals | Not found | Rejected |
+|---|---|---|---|---|
+| **All four** | **64.1 %** (123/192) | 6.1 % (8/131) | 55 | 6 |
+| France | 83.7 % (41/49) | 8.9 % (4/45) | 2 | 2 |
+| Lithuania | 89.4 % (42/47) | 0 % (0/42) | 4 | 1 |
+| Spain | 55.1 % (27/49) | 6.9 % (2/29) | 18 | 2 |
+| Ireland | 27.7 % (13/47) | 13.3 % (2/15) | 31 | 1 |
+
+- **Web search changes almost nothing**: 64.1 % against 63.0 %. The two runs
+  differ by one or two cases per country, which also shows the run-to-run
+  noise of the panel (about 2 points per country).
+- **Ireland is not a missing-act problem.** The scout fetched acts for 27
+  Irish cases and 31 were still not found. Ireland publishes acts as enacted,
+  with no consolidated text in the corpus. The model finds the figure in a
+  Finance Act (the €13,000 USC exemption threshold in Finance Act 2015) and
+  then declines it under the rule of §7.2 and prompt 0.14.0: an old amending
+  provision is not the law in force. For Ireland that rule needs either the
+  Law Reform Commission's Revised Acts in the corpus, or an exception.
+- **Spain is unchanged** with web search: 18 not found, the regional texts.
+
+### 10.7 Next steps
+
+1. **Run the panel** (§10.2) with MiniMax M2.7 and DeepSeek V4 Flash 0731,
+   each as its own critique. Started on 17 Nov. This gives the first
+   like-for-like comparison on four countries and one code version.
+2. **Ireland**: ingest consolidated texts (the Revised Acts), or let an
+   amending Finance Act be evidence where no consolidated text exists.
+3. **Spain**: check that regional parameters are searched in their
+   community's texts.
+4. The crashed DeepSeek and GLM sample cases (§10.5) are not re-run: the
+   panel replaces that sample.
+5. **If the panel confirms it, propose DeepSeek V4 Flash 0731 to JRC**: MIT
+   licence, 167 GB against 230 GB, 1M-token context. Its chat template and
+   tool-call parser need checking on JRC's serving stack (vLLM or SGLang)
+   first.
+6. **Remaining lever for every model: the choice of figure.** A weak critique
+   still accepts the 1 October revaluation for the 1 July amount (§9.4). Where
+   EUROMOD holds «(a\*9 + b\*3)/12» for year Y-1, `b` is the amount in force
+   at the start of year Y, which a mechanical check could use.
