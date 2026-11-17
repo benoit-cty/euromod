@@ -119,3 +119,23 @@ def test_diff_routes_unchanged_and_not_found(ctx):
     nothing = _state(ProposalDraft(found=False))
     nothing.update(pipeline.critique(ctx, nothing))
     assert pipeline.diff(ctx, nothing)["routing"] == Routing.NOT_FOUND
+
+
+def test_critique_runs_the_income_year_vintage_check(ctx, monkeypatch):
+    """The income-year branch (_check_dates) with the corpus faked: a cited
+    article naming the income year proves the vintage."""
+    ctx, _ = ctx
+    from nomoscope_workflow.schema import TemporalBasis
+
+    text = "Le taux est de 11 %. Ces dispositions s'appliquent à l'impôt dû au titre de l'année 2024."
+    hit = _hit(chunk_id="rsa", content=text, validity="[2025-02-16,)", citation="CGI, art. 197")
+    monkeypatch.setattr(retrieval, "unit_chunks", lambda conn, chunk_id: [hit])
+    monkeypatch.setattr(quotes, "verify_extract", lambda conn, chunk_id, extract: (0, len(extract)))
+    record = _record(0.11)
+    record.information.temporal_basis = TemporalBasis.INCOME_YEAR
+    state = {"record": record, "as_of": AS_OF, "retrieval_as_of": date(2025, 7, 1), "hits": [hit],
+             "run_id": "r", "attempts": 1,
+             "draft": _draft(value_scalar=0.11, valid_from=date(2024, 1, 1), supporting_extract="Le taux est de 11 %")}
+    out = pipeline.critique(ctx, state)
+    assert out["critique"].schema_valid
+    assert not any("predates the budget-act window" in i for i in out["critique"].issues)
