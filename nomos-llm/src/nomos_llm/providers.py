@@ -57,6 +57,18 @@ ROUTED_MAX_TOKENS = 16_384
 CONTEXT_WINDOWS: dict[str, int] = {
     "minimax/minimax-m2.7": 196_608,
     "mistralai/mistral-small-3.2-24b-instruct": 128_000,
+    "google/gemma-4-31b-it": 262_144,
+    "qwen/qwen3.8-27b": 262_144,  # native; OpenRouter's 1M is YaRN-extended
+}
+
+#: Reasoning models whose thinking counts against the output cap: on the
+#: 17 Nov 2026 FR sample DeepSeek V4 Flash crashed 5 cases of 40 and
+#: GLM-5.3-Flash 11 with "Model token limit (16384) exceeded before any
+#: response". Both have 1M-token windows, so a larger reservation costs the
+#: prompt nothing.
+ROUTED_MAX_OUTPUT: dict[str, int] = {
+    "deepseek/deepseek-v4-flash-0731": 65_536,
+    "z-ai/glm-5.3-flash": 65_536,
 }
 
 #: Characters per prompt token, on the safe side: MiniMax M2.7 measured
@@ -72,7 +84,7 @@ def max_output_tokens(model: str) -> int | None:
     if provider == "anthropic":
         return ANTHROPIC_MAX_TOKENS
     if provider == "openrouter":
-        return ROUTED_MAX_TOKENS
+        return ROUTED_MAX_OUTPUT.get(model.partition("/")[2], ROUTED_MAX_TOKENS)
     return None
 
 

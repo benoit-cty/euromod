@@ -364,32 +364,42 @@ def _header_subject(text: str) -> str | None:
 
 
 def _header_title(text: str) -> str | None:
-    """Extract the act title: an uppercase block starting "LIETUVOS RESPUBLIKOS".
+    """Extract the act title: the block of lines starting "LIETUVOS RESPUBLIKOS".
 
     Editorial notes precede it (gazette reference, "Nauja redakcija" amendments),
     and some acts open with a stray lone "LIETUVOS RESPUBLIKOS" line before those
     notes — so collect every candidate block and prefer the one that actually
-    ends with the act-type word ("… ĮSTATYMAS").
+    ends with the act-type word ("… ĮSTATYMAS"). A block runs to the next blank
+    line whatever the case of its lines: TAR prints «LIETUVOS RESPUBLIKOS /
+    socialinių paslaugų / ĮSTATYMAS», and while only uppercase lines counted
+    three acts were titled «LIETUVOS RESPUBLIKOS» — a title every Lithuanian
+    need contains (17 Nov 2026, see workflow `locate.named_acts`). A lone
+    issuer line is no title: None, so the caller falls back.
     """
     blocks: list[list[str]] = []
     current: list[str] | None = None
     for line in text.splitlines()[:80]:
         stripped = line.replace("\xa0", " ").strip()
-        uppercase = bool(stripped) and stripped == stripped.upper()
         if current is None:
-            if uppercase and stripped.startswith("LIETUVOS RESPUBLIKOS"):
+            if stripped == stripped.upper() and stripped.startswith("LIETUVOS RESPUBLIKOS"):
                 current = [stripped]
-        elif uppercase:
+        elif stripped and not ENACTMENT_RE.match(stripped):
             current.append(stripped)
         else:
             blocks.append(current)
             current = None
     if current:
         blocks.append(current)
-    for block in blocks:
-        if block[-1].endswith("ĮSTATYMAS"):
-            return " ".join(block)
-    return " ".join(max(blocks, key=len)) if blocks else None
+    titles = [_SPACED_ACT_WORD.sub("ĮSTATYMAS", " ".join(block)) for block in blocks]
+    for title in titles:
+        if title.upper().endswith("ĮSTATYMAS"):
+            return title
+    best = max(titles, key=len, default=None)
+    return best if best and len(best.split()) > 2 else None
+
+
+#: «Į S T A T Y M A S», letter-spaced in older acts.
+_SPACED_ACT_WORD = re.compile(r"Į\s+S\s+T\s+A\s+T\s+Y\s+M\s+A\s+S")
 
 
 def _instrument_type(rusis: str | None) -> str:

@@ -66,13 +66,14 @@ def run(
 
 @app.command("run-benchmark")
 def run_benchmark(
-    country: str = typer.Argument(..., help="ISO country code, e.g. FR"),
+    country: str = typer.Argument(..., help="ISO country code, e.g. FR — or `panel`, the shared 200-case panel (50 each of FR, ES, IE, LT), or a comma list (FR,LT) for a panel of those"),
     year: int = typer.Option(..., "--year", help="System year to find, starting blind from the year before"),
     model: str = typer.Option(..., "--model", help="Provider-prefixed model, e.g. azure_openai/gpt-5.6-luna or mock/extractor"),
     sample: int = typer.Option(None, "--sample", help="Run N parameters drawn at random"),
     seed: int = typer.Option(None, "--seed", help="Seed for --sample (reproducible draw)"),
     exclude_policy: list[str] = typer.Option(None, "--exclude-policy", help="Skip a whole policy, e.g. tco_fr"),
     target: list[str] = typer.Option(None, "--target", help="Only these refs (model_target or group:<id>)"),
+    per_country: int = typer.Option(benchmark.PANEL_PER_COUNTRY, "--per-country", help="Panel only: parameters drawn per country, in its own mix of changed and unchanged"),
     notes: str = typer.Option(None, "--notes"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Build and list the cases, run nothing"),
     verbose: bool = verbose_option(),
@@ -81,22 +82,45 @@ def run_benchmark(
     """Every parameter of a country, updated blind from EUROMOD Y-1 and scored
     against EUROMOD Y and OpenFisca Y (see `benchmark`).
 
+    `run-benchmark panel --year 2025 --model …` runs the shared panel instead:
+    the same 200 cases for every model (`benchmark.build_panel`; --seed
+    changes the draw, which makes it another dataset).
+
     A normal evaluation run with `blind_before` = 1 January of Y: resumable
     with `nomokrisis-eval resume`, summarised with `benchmark-report`. Ends
     with `@result {"run_id": …}`.
     """
     cfg = load_eval_config()
     with evaldb.connect(cfg.database_url) as conn:
-        build = benchmark.build_cases(
-            conn, country, year, sample=sample, seed=seed,
-            exclude_policies=exclude_policy or None, targets=target or None,
-        )
+        panel = country.lower() == "panel" or "," in country
+        if panel:
+            if sample is not None or target:
+                raise typer.BadParameter("--sample and --target do not apply to a panel; use --per-country")
+            countries = (
+                benchmark.PANEL_COUNTRIES if country.lower() == "panel"
+                else tuple(c.strip().upper() for c in country.split(",") if c.strip())
+            )
+            build = benchmark.build_panel(
+                conn, year, countries=countries, per_country=per_country,
+                seed=benchmark.PANEL_SEED if seed is None else seed,
+                exclude_policies=exclude_policy or None,
+            )
+            country = "panel " + "+".join(countries)
+        else:
+            build = benchmark.build_cases(
+                conn, country, year, sample=sample, seed=seed,
+                exclude_policies=exclude_policy or None, targets=target or None,
+            )
         routings = Counter(c.expected.routing.value for c in build.cases)
         typer.echo(
             f"{country.upper()} {year - 1} -> {year}: {len(build.cases)} case(s) "
             f"({', '.join(f'{k} {v}' for k, v in sorted(routings.items()))}); "
             f"{len(build.skipped)} skipped"
         )
+        if panel:
+            for cc, n in sorted(Counter(c.country for c in build.cases).items()):
+                mix = Counter(c.expected.routing.value for c in build.cases if c.country == cc)
+                typer.echo(f"  {cc} {n:>4}  " + ", ".join(f"{k} {v}" for k, v in sorted(mix.items())))
         for reason, count in Counter(build.skipped.values()).most_common(8):
             typer.echo(f"  skipped {count:>4}  {reason}")
         if dry_run:
@@ -134,6 +158,13 @@ def _echo_benchmark(results: list[CaseResult]) -> None:
         typer.echo(f"  {side:<18} " + " ".join(f"{counts.get(o, 0):>{width}}" for o in benchmark.OUTCOMES))
     if summary["not_legislative"]:
         typer.echo(f"  national team / derived: {summary['not_legislative']}")
+    if len(summary["by_country"]) > 1:
+        typer.echo("\n  per country")
+        for cc, row in summary["by_country"].items():
+            typer.echo(
+                f"    {cc}  ready to accept {row['ready to accept']:<18} "
+                f"wrong proposals {row['wrong proposals']}"
+            )
     if summary["arbitration"]:
         typer.echo("\n  disagreements")
         for who, count in sorted(summary["arbitration"].items(), key=lambda kv: -kv[1]):

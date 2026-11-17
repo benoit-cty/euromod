@@ -88,7 +88,9 @@ uv run nomokrisis-eval resume                              # continue an interru
                                                            # run / run-benchmark / resume run -j 4 cases at once (EVAL_CONCURRENCY;
                                                            #   a case is ~all LLM wait; scout ingests and GPU builds stay serialised)
 uv run nomokrisis-eval run-benchmark FR --year 2025 --model … --sample 20 --seed 1   # blind EUROMOD Y-1 -> Y over every parameter
-uv run nomokrisis-eval benchmark-report <run-id>           # change matrix + OpenFisca arbitration
+uv run nomokrisis-eval run-benchmark panel --year 2025 --model …   # THE dataset for comparing models: 200 cases, 50 each of FR/ES/IE/LT,
+                                                           #   a fixed stratified draw (benchmark.build_panel)
+uv run nomokrisis-eval benchmark-report <run-id>           # 'ready to accept' + 'wrong proposals' first, then the change matrix
 uv run nomokrisis-eval report
 ```
 

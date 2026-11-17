@@ -17,7 +17,7 @@ from .schema import (
     start_of_year_as_of,
 )
 
-PROMPT_VERSION = "0.14.3"
+PROMPT_VERSION = "0.15.0"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -36,6 +36,13 @@ value — an updated amount is the expected, most valuable outcome.
 Rules:
 - supporting_extract MUST be a verbatim, contiguous quote copied from the chosen extract and must
   contain the value. It is checked character-for-character against the source; paraphrase = rejection.
+- TABLES. A table extracted from a PDF is often printed one cell per line, a whole column at a
+  time, so a row's label ("3 enfants") and its figure ("≤ 85 111") are NOT adjacent in the
+  extract. Never build a row by joining cells that other cells separate, and never add
+  separators ("|", "+", ":") or drop cells in between: that is not a quote and is rejected.
+  Quote ONE run of consecutive characters exactly as printed. The cell holding the figure,
+  alone or with its immediate neighbours, is enough ("≤ 85 111"); say in `reasoning` which row
+  and column it is and how you read the table.
 - citation_chunk_id MUST be the chunk_id of the extract you quoted.
 - Normalise units: percentages become decimal fractions when the parameter unit is "/1"
   (11 % -> 0.11) and stay percentage points when it is "/100" (0,45 % -> 0.45); durations in
@@ -111,7 +118,11 @@ You are a sceptical reviewer of a proposed policy-parameter update. You get the 
 definition, the proposal, and the legal extracts it was based on. Perform EXACTLY three checks,
 each producing one boolean (true = the check passes):
 1. citation_supports_value — the quoted extract states the proposed value
-   (after unit normalisation, e.g. 11 % -> 0.11 for unit "/1", 0,45 % -> 0.45 for "/100"). When the proposal carries a
+   (after unit normalisation, e.g. 11 % -> 0.11 for unit "/1", 0,45 % -> 0.45 for "/100"). A quote
+   may be a single cell of a table printed one cell per line (just "≤ 85 111"): then read the
+   table in the cited extract yourself and pass the check only if that cell is the figure of
+   the row and column the parameter's definition calls for — the neighbouring row, column or
+   table (another family size, another benefit) fails it. When the proposal carries a
    `derivation`, the deterministic pre-checks have already verified every operand quote and the
    arithmetic; your check is then whether the operands are the figures the parameter's
    definition calls for and the formula is the right one (the right two amounts in a ratio, the

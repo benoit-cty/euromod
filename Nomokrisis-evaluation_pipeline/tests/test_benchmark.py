@@ -143,6 +143,10 @@ def test_matrix_cells():
     assert summary["not_legislative"] == {"routed as expected": 1}
     assert summary["headline"]["change recall"] == "25.0% (1/4)"
     assert summary["headline"]["coverage"] == "80.0% (4/5)"
+    # The client's two numbers: the national-team parameter is in neither.
+    assert summary["headline"]["READY TO ACCEPT"] == "40.0% (2/5)"
+    assert summary["headline"]["WRONG PROPOSALS"] == "50.0% (2/4)"
+    assert summary["by_country"]["FR"]["ready to accept"] == "40.0% (2/5)"
     assert summary["by_policy"]["bhotn_fr"]["cases"] == 6
 
 
@@ -166,3 +170,23 @@ def test_euromod_off_the_law_is_its_own_column_and_success():
     assert headline["correct (same value, or routed around as expected)"] == "33.3% (1/3)"
     assert headline["EUROMOD off the law (findings)"] == "1 (1 stated, 0 derived)"
     assert headline["success (correct + findings)"] == "66.7% (2/3)"
+
+
+def test_panel_draw_keeps_the_country_mix_and_ignores_order():
+    def case(i: int, routing: Routing) -> GoldenCase:
+        made = bench_case(1.0, routing=routing)
+        return made.model_copy(update={"id": f"bench:FR:2025:{i:03d}"})
+
+    cases = [case(i, Routing.CHANGED) for i in range(18)] + [
+        case(i, Routing.UNCHANGED) for i in range(18, 111)
+    ] + [case(i, Routing.NATIONAL_TEAM_SOURCE) for i in range(111, 117)]
+    drawn = benchmark.stratified_sample(cases, 50, seed=1)
+    mix = {}
+    for c in drawn:
+        mix[c.expected.routing] = mix.get(c.expected.routing, 0) + 1
+    # 18/117, 93/117 and 6/117 of 50, by largest remainder
+    assert mix == {Routing.CHANGED: 8, Routing.UNCHANGED: 40, Routing.NATIONAL_TEAM_SOURCE: 2}
+    assert len({c.id for c in drawn}) == 50
+    assert [c.id for c in benchmark.stratified_sample(cases[::-1], 50, seed=1)] == [c.id for c in drawn]
+    assert [c.id for c in benchmark.stratified_sample(cases, 50, seed=2)] != [c.id for c in drawn]
+    assert len(benchmark.stratified_sample(cases[:10], 50, seed=1)) == 10

@@ -311,3 +311,21 @@ def test_a_consolidated_order_reads_its_kind_from_the_header():
     (unit,) = instrument.units
     assert unit.citation == "2024 m. lapkričio 29 d. įsakymas Nr. A1-835"
     assert "450 eurų" in unit.versions[0].texts[0].content
+
+
+def test_a_title_with_a_mixed_case_line_is_kept_whole():
+    """TAR prints the Social Services Act's title on three lines, the middle one
+    in lower case; the parser kept «LIETUVOS RESPUBLIKOS» (17 Nov 2026)."""
+    from nomotheca_ingest.countries.lt.parser import _header_title
+
+    header = (
+        "Suvestinė redakcija nuo 2026-05-01 iki 2026-05-21\n\xa0\n"
+        "Įstatymas paskelbtas: Žin. 2006, Nr. 17-589, i. k. 1061010ISTA000X-493\n\xa0\n"
+        "LIETUVOS RESPUBLIKOS\nsocialinių paslaugų\nĮSTATYMAS\n\xa0\n"
+        "2006 m. sausio 19 d. Nr. X-493\nVilnius\n"
+    )
+    assert _header_title(header) == "LIETUVOS RESPUBLIKOS socialinių paslaugų ĮSTATYMAS"
+    spaced = "LIETUVOS RESPUBLIKOS PAVELDIMO TURTO MOKESČIO\nĮ S T A T Y M A S\n\n2002 m."
+    assert _header_title(spaced) == "LIETUVOS RESPUBLIKOS PAVELDIMO TURTO MOKESČIO ĮSTATYMAS"
+    # a lone issuer line is not a title: the caller falls back
+    assert _header_title("LIETUVOS RESPUBLIKOS\n\n1 straipsnis. Paskirtis\n") is None

@@ -83,3 +83,12 @@ def test_routed_issues_are_recognised_from_their_own_wording():
     assert it.code_of(it.operand_hint("b", it.misquote_hint("x"))) in it.MISQUOTE
     assert it.code_of(it.operand_not_retrieved("b")) not in it.MISQUOTE
     assert it.code_of("note: derived") is None
+
+
+def test_guidance_line_does_not_cost_the_extra_attempt():
+    # Informational, like a note: a misquote of a circular is still "nothing but a misquote".
+    from nomoscope_workflow import issues
+
+    assert misquoted_only([issues.NOT_VERBATIM, issues.misquote_hint("≤ 85 111"), issues.GUIDANCE_ONLY])
+    assert not misquoted_only([issues.GUIDANCE_ONLY])
+    assert not misquoted_only([issues.NOT_VERBATIM, issues.GUIDANCE_ONLY, "values fail sanity checks"])

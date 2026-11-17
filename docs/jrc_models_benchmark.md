@@ -845,8 +845,10 @@ panel.**
 1. **Run the panel** (§10.2) with MiniMax M2.7 and DeepSeek V4 Flash 0731,
    each as its own critique. Started on 17 Nov. This gives the first
    like-for-like comparison on four countries and one code version.
-2. **Ireland**: ingest consolidated texts (the Revised Acts), or let an
-   amending Finance Act be evidence where no consolidated text exists.
+2. **Ireland**: ingest the Law Reform Commission's Revised Acts
+   (consolidated texts). Decided on 17 Nov, and to be done only after the
+   three panel runs of step 1, so that all three models are scored on the
+   same corpus. The panel is then re-run to measure the gain.
 3. **Spain**: check that regional parameters are searched in their
    community's texts.
 4. The crashed DeepSeek and GLM sample cases (§10.5) are not re-run: the

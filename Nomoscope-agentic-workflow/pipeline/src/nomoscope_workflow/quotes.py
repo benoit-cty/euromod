@@ -74,6 +74,9 @@ def quote_span(content: str, extract: str) -> tuple[int, int] | None:
     idx = content.find(extract)
     if idx >= 0:
         return (idx, idx + len(extract))
+    # One character for one, so the offsets found are offsets into `content`.
+    content = content.translate(_TYPOGRAPHY)
+    extract = _ESCAPED_WHITESPACE.sub(" ", extract.translate(_TYPOGRAPHY))
     for quote in dict.fromkeys((extract, extract.strip(_QUOTE_EDGE_PUNCTUATION))):
         if not quote.strip():
             continue
@@ -83,6 +86,22 @@ def quote_span(content: str, extract: str) -> tuple[int, int] | None:
             return (match.start(), match.end())
     return None
 
+
+#: Typographic variants of one character, folded on both sides: the chunk reads
+#: «l’accueil collectif», the model types «l'accueil collectif» — 7 of the 20
+#: final misquotes of MiniMax M2.7's FR run (16 Nov 2026), six of them with the
+#: right value, differed by nothing else. Letters, digits and every other
+#: punctuation mark still match one for one.
+_TYPOGRAPHY = str.maketrans(
+    {
+        "’": "'", "‘": "'", "ʼ": "'", "′": "'",
+        "“": '"', "”": '"', "„": '"',
+        "‐": "-", "‑": "-", "–": "-", "—": "-", "−": "-",
+    }
+)
+#: A line break the model wrote as the two characters backslash-n (it copies a
+#: table out of a JSON string): whitespace, like the break it stands for.
+_ESCAPED_WHITESPACE = re.compile(r"\\[nrt]")
 
 #: Punctuation a quote may end (or start) on that the text does not: the model
 #: closes «… deux personnes ; 3° A 16,5 %» on a full stop, or wraps it in «».
@@ -258,5 +277,9 @@ def misquoted_only(issues: list[str]) -> bool:
     …» was refused with the right passage in hand ($bsa00_hp_amt5, 5 Nov).
     The extract check itself is unchanged.
     """
-    objections = [i for i in issues if not i.startswith("note:")]
+    objections = [
+        i
+        for i in issues
+        if not i.startswith("note:") and issue_text.code_of(i) not in issue_text.INFORMATIONAL
+    ]
     return bool(objections) and all(issue_text.code_of(i) in issue_text.MISQUOTE for i in objections)

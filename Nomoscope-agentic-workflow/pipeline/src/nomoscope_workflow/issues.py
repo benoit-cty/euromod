@@ -23,6 +23,7 @@ class IssueCode(str, Enum):
     OPERAND_MISQUOTE_HINT = "operand_misquote_hint"
     PREDATES_BUDGET_WINDOW = "predates_budget_window"
     NEVER_NAMES_INCOME_YEAR = "never_names_income_year"
+    GUIDANCE_ONLY = "guidance_only"
 
 
 CITATION_NOT_RETRIEVED = "citation_chunk_id missing or not among retrieved chunks"
@@ -30,6 +31,7 @@ NOT_VERBATIM = "supporting_extract is not a verbatim quote of the cited chunk"
 MISQUOTE_HINT_PREFIX = "the cited chunk reads: «"
 PREDATES_BUDGET_WINDOW = "predates the budget-act window"
 NEVER_NAMES_INCOME_YEAR = "never names income year"
+GUIDANCE_ONLY = "supported by guidance only: no legislation among the cited sources"
 
 
 def misquote_hint(passage: str) -> str:
@@ -57,6 +59,7 @@ _PATTERNS: tuple[tuple[re.Pattern[str], IssueCode], ...] = (
     (re.compile(re.escape(operand_hint("NAME", MISQUOTE_HINT_PREFIX)).replace("NAME", r"\w+")), IssueCode.OPERAND_MISQUOTE_HINT),
     (re.compile(re.escape(PREDATES_BUDGET_WINDOW)), IssueCode.PREDATES_BUDGET_WINDOW),
     (re.compile(re.escape(NEVER_NAMES_INCOME_YEAR)), IssueCode.NEVER_NAMES_INCOME_YEAR),
+    (re.compile(re.escape(GUIDANCE_ONLY) + "$"), IssueCode.GUIDANCE_ONLY),
 )
 
 #: The corpus lacks the establishing text: worth a gap-fill round.
@@ -72,6 +75,12 @@ MISQUOTE = frozenset(
         IssueCode.OPERAND_MISQUOTE_HINT,
     }
 )
+#: Shown to the reviewer, never an objection: the verdict ignores it, and so
+#: must every decision taken on "nothing but …". Until 17 Nov 2026 the
+#: guidance line had no code, so a misquote of a circular or an instruction —
+#: the PDF tables where models misquote most — never earned its extra attempt
+#: (31 of MiniMax M2.7's 54 FR rejections on 16 Nov carried both lines).
+INFORMATIONAL = frozenset({IssueCode.GUIDANCE_ONLY})
 
 
 def code_of(issue: str) -> IssueCode | None:

@@ -21,6 +21,9 @@ CASES = [
     ("NL", "de tabel in artikel 2.10, eerste lid, van de Wet inkomstenbelasting 2001, zoals geldend voor 2025", "Wet IB 2001, artikel 2.10"),
     ("FR", "article D. 633-3 du code de la sécurité sociale, in the version applicable to contribution periods beginning 1 January 2025", "LEGITEXT000006073189, art. D633-3"),
     ("FR", "l'arrêté fixant le plafond de la sécurité sociale pour 2025", "JORFTEXT000050854392"),
+    # 17 Nov panel: three acts titled «LIETUVOS RESPUBLIKOS» outranked the act named.
+    ("LT", "Lietuvos Respublikos išmokų vaikams įstatymo 6 straipsnis (2025-07-01 galiojusi suvestinė redakcija)", "IVĮ 6 straipsnis"),
+    ("LT", "Lietuvos Respublikos nedarbo socialinio draudimo įstatymo 8 straipsnis (2025-07-01 galiojusi suvestinė redakcija)", "NSDĮ 8 straipsnis"),
     ("IE", "the provision of the Finance Act 2024 (or other 2025 Budget implementing legislation) amending section 461 of the Taxes Consolidation Act 1997 to set the personal tax credit", "Finance Act 2024, s. 3"),
 ]
 
@@ -196,3 +199,23 @@ def test_implementing_acts_are_ranked_by_the_query_not_the_article_order(conn):
     ids = [r["id"] for r in sorted(start, key=lambda r: r["citation"].endswith("L842-3"))]
     hits = retrieval.implementing_acts(conn, scope, "fr", date(2025, 7, 1), ids, qvec["v"])
     assert "JORFTEXT000051393100, art. 1" in [h.citation for h in hits[: retrieval.IMPLEMENTING_MAX]]
+
+
+def test_a_header_fragment_is_not_the_act_named():
+    from nomoscope_workflow.locate import named_acts
+
+    def act(national_id, title, by_number=False):
+        return {"instrument_id": national_id, "title_search": title, "by_number": by_number}
+
+    candidates = [
+        act("X-493", "LIETUVOS RESPUBLIKOS"),
+        act("XIII-198", "LIETUVOS RESPUBLIKOS"),
+        act("I-621", "LIETUVOS RESPUBLIKOS IŠMOKŲ VAIKAMS ĮSTATYMAS"),
+        act("TAR.1", "LIETUVOS RESPUBLIKOS VYRIAUSYBĖ"),
+        act("TAR.2", "LIETUVOS RESPUBLIKOS VYRIAUSYBĖ"),
+        act("XIV-352", "LIETUVOS RESPUBLIKOS VIENIŠO ASMENS IŠMOKOS ĮSTATYMAS"),
+    ]
+    assert [a["instrument_id"] for a in named_acts(candidates)] == ["I-621", "XIV-352"]
+    # An act named by number stays, whatever its title.
+    numbered = [act("X-493", "LIETUVOS RESPUBLIKOS", by_number=True), *candidates[2:]]
+    assert named_acts(numbered)[0]["instrument_id"] == "X-493"

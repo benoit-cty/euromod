@@ -283,6 +283,64 @@ def build_cases(
     return build
 
 
+#: The shared panel: the four countries every model is compared on, 50
+#: parameters each. One fixed draw, so two runs differ by the model alone.
+PANEL_COUNTRIES = ("FR", "ES", "IE", "LT")
+PANEL_PER_COUNTRY = 50
+PANEL_SEED = 2025
+
+
+def stratified_sample(cases: list[GoldenCase], size: int, seed: int) -> list[GoldenCase]:
+    """`size` cases drawn at random in the proportions of the expected routing.
+
+    A country's yearly job is its own mix of changed and unchanged parameters
+    (FR 55 % changed, LT 16 %): a plain draw of 50 can land far from it, and
+    then the panel's score says more about the draw than about the country.
+    Each routing gets its share by largest remainder; the draw inside it
+    depends only on (seed, routing) and the case ids, never on their order.
+    """
+    if size >= len(cases):
+        return sorted(cases, key=lambda c: c.id)
+    strata: dict[str, list[GoldenCase]] = {}
+    for case in sorted(cases, key=lambda c: c.id):
+        strata.setdefault(case.expected.routing.value, []).append(case)
+    exact = {name: size * len(members) / len(cases) for name, members in strata.items()}
+    quota = {name: int(share) for name, share in exact.items()}
+    by_remainder = sorted(strata, key=lambda name: (quota[name] - exact[name], name))
+    for name in by_remainder[: size - sum(quota.values())]:
+        quota[name] += 1
+    drawn: list[GoldenCase] = []
+    for name, members in strata.items():
+        drawn += random.Random(f"{seed}:{name}").sample(members, quota[name])
+    return sorted(drawn, key=lambda c: c.id)
+
+
+def build_panel(
+    conn: psycopg.Connection,
+    year: int,
+    *,
+    countries: tuple[str, ...] | list[str] = PANEL_COUNTRIES,
+    per_country: int = PANEL_PER_COUNTRY,
+    seed: int = PANEL_SEED,
+    exclude_policies: list[str] | None = None,
+) -> BenchmarkBuild:
+    """The multi-country panel: `per_country` benchmark cases of each country.
+
+    Same cases as `build_cases` (blind Y-1 -> Y, EUROMOD's own Y value as
+    ground truth), a stratified draw per country. With the defaults it is the
+    200-case panel of FR, ES, IE and LT — one run costs about what a
+    Lithuanian full-country run does, and every model sees the same cases as
+    long as the parameter store is unchanged (the run records the hash of the
+    cases it froze).
+    """
+    panel = BenchmarkBuild()
+    for country in countries:
+        build = build_cases(conn, country, year, exclude_policies=exclude_policies)
+        panel.cases += stratified_sample(build.cases, per_country, seed)
+        panel.skipped.update(build.skipped)
+    return panel
+
+
 def group_members(conn: psycopg.Connection, country: str) -> dict[str, str]:
     """model_target -> `group:<id>` for every member of a bracket schedule."""
     rows = conn.execute(
@@ -410,9 +468,19 @@ def summarize_benchmark(results: list[CaseResult]) -> dict:
     )
     mid_year = [r for r in scored if "mid_year_change" in r.hazards]
     with_openfisca = [r for r in scored if r.openfisca_value is not None]
+    ready = sum(
+        counts[o] for counts in (changed, kept) for o in ("same value", "EUROMOD off the law")
+    )
+    wrong = sum(counts[o] for counts in (changed, kept) for o in ("different value", "kept Y-1 value"))
     headline = {
         "parameters": len(results),
         "legislative": len(scored),
+        # The two numbers for the client. Ready to accept: the right value
+        # with its legal quote (a finding is the law's figure), over the
+        # parameters there is a value to find for. Wrong proposals: what the
+        # reviewer meets in the queue, over the proposals the critique passed.
+        "READY TO ACCEPT": _pct(ready, len(scored)),
+        "WRONG PROPOSALS": _pct(wrong, len(answered)),
         "correct (same value, or routed around as expected)": _pct(correct, len(results)),
         # 'derived' rests on the derivation's rounding as well as on quoted
         # operands, so the two kinds stay countable apart.
@@ -431,8 +499,22 @@ def summarize_benchmark(results: list[CaseResult]) -> dict:
             sum(1 for r in with_openfisca if r.euromod_openfisca_agree), len(with_openfisca)
         ),
     }
+    by_country: dict[str, dict] = {}
+    for country in sorted({r.country for r in results if r.country}):
+        mine = [r for r in scored if r.country == country]
+        proposals = [r for r in answered if r.country == country]
+        hits = sum(1 for r in mine if outcome(r) in ("same value", "EUROMOD off the law"))
+        by_country[country] = {
+            "legislative": len(mine),
+            "ready to accept": _pct(hits, len(mine)),
+            "wrong proposals": _pct(
+                sum(1 for r in proposals if outcome(r) in ("different value", "kept Y-1 value")),
+                len(proposals),
+            ),
+        }
     return {
         "headline": headline,
+        "by_country": by_country,
         "matrix": {side: dict(counts) for side, counts in matrix.items()},
         "not_legislative": dict(not_legislative),
         "arbitration": dict(arbitrations),

@@ -58,8 +58,36 @@ WHERE j.code = ANY(%(jurisdictions)s::text[])
        OR EXISTS (SELECT 1 FROM unnest(%(numbers)s::text[]) n
                   WHERE i.title_search ~ ('(^|[^0-9])' || n || '([^0-9]|$)')))
 ORDER BY by_number DESC, score DESC
-LIMIT 3
+LIMIT %(limit)s
 """
+
+#: Acts kept as "the act the need names".
+NAMED_ACT_LIMIT = 3
+#: Title candidates read before the header fragments among them are dropped.
+_NAMED_ACT_CANDIDATES = 15
+
+
+def named_acts(candidates: list[dict], limit: int = NAMED_ACT_LIMIT) -> list[dict]:
+    """The acts a need names, without the titles that are no name at all.
+
+    `word_similarity(title, need)` asks how much of the TITLE the need contains,
+    so a title that is only the head of a real one scores 1.0 against every
+    need: three Lithuanian acts stored as «LIETUVOS RESPUBLIKOS» (the parser
+    kept the header's first line) outranked «LIETUVOS RESPUBLIKOS IŠMOKŲ
+    VAIKAMS ĮSTATYMAS» (0.93) for «… išmokų vaikams įstatymo 6 straipsnis», the
+    lookup returned art. 6 of the Social Services Act, and ten Lithuanian
+    parameters proposed on 14 Nov 2026 were not_found on the 17 Nov panel.
+    A candidate is dropped when its title is the leading words of another
+    candidate's longer title, or when several candidates share it — a title
+    two acts carry names neither. An act named by number is never dropped.
+    """
+    words = [tuple((c.get("title_search") or "").lower().split()) for c in candidates]
+    kept = []
+    for candidate, title in zip(candidates, words):
+        fragment = any(len(other) > len(title) and other[: len(title)] == title for other in words)
+        if candidate.get("by_number") or (title and not fragment and words.count(title) == 1):
+            kept.append(candidate)
+    return kept[:limit]
 
 _NAMED_UNIT_SQL = f"""
 WITH {_LIVE_VERSION_CTE}
@@ -312,10 +340,17 @@ def locate_named_units(
     """
     jurisdictions = scope_codes(country)
     base = {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of, "need": need}
-    acts = fetch_dicts(
-        conn,
-        _NAMED_INSTRUMENTS_SQL,
-        {**base, "min_score": NAMED_ACT_MIN_SCORE, "numbers": act_numbers(need)},
+    acts = named_acts(
+        fetch_dicts(
+            conn,
+            _NAMED_INSTRUMENTS_SQL,
+            {
+                **base,
+                "min_score": NAMED_ACT_MIN_SCORE,
+                "numbers": act_numbers(need),
+                "limit": _NAMED_ACT_CANDIDATES,
+            },
+        )
     )
     # An act the need names by number is the act: drop title look-alikes.
     if any(act["by_number"] for act in acts):

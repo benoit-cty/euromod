@@ -120,3 +120,19 @@ def test_check_quote_is_the_one_sequence_for_every_quote():
     tidied = check_quote(hits, "a", "Le plafond est majoré de 25 % au plus", verify)
     assert tidied.status == "misquoted" and tidied.hint and "majoré de 25 %" in tidied.hint
     assert check_quote(hits, "nowhere", "absent", verify).status == "not_retrieved"
+
+
+def test_typographic_variants_of_one_character_are_equal():
+    from nomoscope_workflow.quotes import quote_span
+
+    chunk = "soit : \n 0,50 €/heure pour l’accueil collectif conventionnée avec la Caf, – au plus"
+    quote = "0,50 €/heure pour l'accueil collectif conventionnée avec la Caf"
+    span = quote_span(chunk, quote)
+    assert span is not None and chunk[span[0] : span[1]].startswith("0,50 €/heure pour l’accueil")
+    assert quote_span(chunk, "avec la Caf, - au plus") is not None
+    # a line break typed as backslash-n is the whitespace it stands for
+    assert quote_span("Tranche 1  \n(≤ 1 PSS) 6,20 %", "Tranche 1\\n(≤ 1 PSS) 6,20 %") is not None
+    # nothing else is folded: another digit, another word, a skipped cell
+    assert quote_span(chunk, "0,55 €/heure pour l'accueil collectif") is None
+    assert quote_span(chunk, "0,50 €/heure pour l'accueil familial") is None
+    assert quote_span("3 enfants \n4 enfants \n≤ 78 565 \n≤ 85 111", "3 enfants ≤ 85 111") is None

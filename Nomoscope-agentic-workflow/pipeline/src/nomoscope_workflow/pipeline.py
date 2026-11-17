@@ -78,7 +78,7 @@ MAX_PROPOSAL_ATTEMPTS = 2
 #: visible in every decision record without blocking circular-governed schemes:
 #: it never changes the verdict, the routing, or the reviewer's ability to
 #: Accept — it only says what the value rests on.
-GUIDANCE_ONLY_ISSUE = "supported by guidance only: no legislation among the cited sources"
+GUIDANCE_ONLY_ISSUE = issues.GUIDANCE_ONLY
 
 
 def cited_classes(
