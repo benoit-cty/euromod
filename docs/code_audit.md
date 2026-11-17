@@ -290,46 +290,46 @@ Suggested fixes, in order of value:
 
 | Severity | Finding | Where |
 |---|---|---|
-| high | `rag-ui` copies the front-end it shares with `ui`, while the Rust is shared. `styles.css` lines 1–346 are a copy (four diff lines); `Icon.svelte`, `jobs.js` and `api.js` are forks; about 110 lines of shell CSS and the ribbon markup are duplicated. The `rag-ui` copy of `jobs.js` has no tests. | `rag-ui/src/styles.css`, `rag-ui/src/lib/`, both `App.svelte` |
-| high | "Run a job and show its progress" is built three times, each with the same state, clock, progress bar, technical log and scoped CSS. | `IngestTab.svelte:100-118, 318-375, 628-665`; `ParamsTab.svelte:57-82, 251-333, 533-575`; `JobsTab.svelte:60-78, 209-259` |
+| high | **Fixed** (`Nomoscope-agentic-workflow/shared/`, Vite alias `@shared`: styles, `AppShell`, Icon, labels, api core, jobs; rag-ui's copies and unused rules/icons removed) — `rag-ui` copies the front-end it shares with `ui`, while the Rust is shared. `styles.css` lines 1–346 are a copy (four diff lines); `Icon.svelte`, `jobs.js` and `api.js` are forks; about 110 lines of shell CSS and the ribbon markup are duplicated. The `rag-ui` copy of `jobs.js` has no tests. | `rag-ui/src/styles.css`, `rag-ui/src/lib/`, both `App.svelte` |
+| high | **Fixed** (`createJobRun` + `<JobProgress>`/`<JobLog>`; progress rules in a tested `progress.js`) — "Run a job and show its progress" is built three times, each with the same state, clock, progress bar, technical log and scoped CSS. | `IngestTab.svelte:100-118, 318-375, 628-665`; `ParamsTab.svelte:57-82, 251-333, 533-575`; `JobsTab.svelte:60-78, 209-259` |
 | medium | `search_articles` and its payload structs are copied verbatim into `rag-ui`'s command layer, which is the drift `#[path]` was meant to prevent. **Fixed**: `db::search` + `db::SearchPayload`, called by both apps. | `rag-ui/src-tauri/src/lib.rs:121-163` against `ui/src-tauri/src/lib.rs:283-325` |
-| medium | Worker status and the model picker are fetched and rendered in five places, with different defaults. | `App.svelte:137-149`, `ParamsTab.svelte:205-212`, `IngestTab.svelte:147-154`, `JobsTab.svelte:28`, `rag-ui/src/App.svelte:87-98` |
-| medium | Row-to-JSON mapping: 207 `r.get::<_, T>("col")` calls in 27 `json!` blocks, every column named in SQL and again in the mapping. `connect()` is defined five times, identically. (`connect()` **fixed**: one `pg.rs`.) | `ui/src-tauri/src/db.rs`; `db.rs:8`, `jobs.rs:63`, `store.rs:31`, `golden.rs:27`, `conversations.rs:22` |
-| medium | Component `<style>` blocks re-declare global rules: `.row`/`.grow`/`.spacer` in seven tabs, `.error` in five, cards in three. Errors are shown as `callout err` in four tabs and `p.error` in six. | `ui/src/lib/components/*.svelte` |
-| medium/low | `dbStats` fetched by three tabs (it runs two 7-table `count(DISTINCT)` joins); duration formatting three times; number formatting four times; keyboard list navigation twice; `SOURCE_TYPES` twice; the `<<HL>>` parser twice. | `Home`, `DatabaseTab`, `IngestTab`, `QueueList`, `GoldenTab` |
+| medium | Worker status and the model picker are fetched and rendered in five places, with different defaults. **Fixed**: one polled worker state and `<ModelPicker>` (tested `pickModel`). | `App.svelte:137-149`, `ParamsTab.svelte:205-212`, `IngestTab.svelte:147-154`, `JobsTab.svelte:28`, `rag-ui/src/App.svelte:87-98` |
+| medium | **Fixed** (`pg::row_to_json`, NULL-safe by column type; `connect()` once in `pg.rs`) — Row-to-JSON mapping: 207 `r.get::<_, T>("col")` calls in 27 `json!` blocks, every column named in SQL and again in the mapping. `connect()` is defined five times, identically. (`connect()` **fixed**: one `pg.rs`.) | `ui/src-tauri/src/db.rs`; `db.rs:8`, `jobs.rs:63`, `store.rs:31`, `golden.rs:27`, `conversations.rs:22` |
+| medium | **Fixed** (global layout rules; every error a `callout err`) — Component `<style>` blocks re-declare global rules: `.row`/`.grow`/`.spacer` in seven tabs, `.error` in five, cards in three. Errors are shown as `callout err` in four tabs and `p.error` in six. | `ui/src/lib/components/*.svelte` |
+| medium/low | **Fixed** (shared `library.svelte.js`, `format.js`, `keynav.js`, `vocabulary.js`, `headline.js`) — `dbStats` fetched by three tabs (it runs two 7-table `count(DISTINCT)` joins); duration formatting three times; number formatting four times; keyboard list navigation twice; `SOURCE_TYPES` twice; the `<<HL>>` parser twice. | `Home`, `DatabaseTab`, `IngestTab`, `QueueList`, `GoldenTab` |
 
 Suggested fixes: a `shared/` directory (or a Vite alias) for `styles.css`, `Icon.svelte`, `jobs.js`, an api core and an `AppShell.svelte`; a `createJobRun()` rune module with `<JobProgress>` and `<JobLog>`; one polled worker state with a `<ModelPicker>`; one `format.js`.
 
 ### Size
 
-- **`db.rs`** (1 066 lines). Its module doc says "read-only access to the legislation DB … and the eval schema"; it also holds the params queries and Phoenix. The damage shows: a doc comment cut in two by an inserted block (lines 695-696 and 740-741), and a `mod tests` in the middle of the file. Split into `corpus`, `search`, `eval`, `params` and `phoenix` modules. `rag-ui` could then include only `search` and `corpus`, and drop its blanket `#[allow(dead_code)]` and its `base64` dependency.
-- **`DetailPanel.svelte`** (780 lines) mixes six concerns: run switcher, hand-off prompt, critique summary, proposal editor, accept gate (pure, testable) and decision bar.
-- **`IngestTab.svelte`** (714 lines) is four unrelated forms sharing about 35 prefixed `$state` variables (`doc*`, `ing*`, `emb*`, `tr*`).
-- **`ParamsTab.svelte`** (639 lines): filters, table, row detail, run bar. Its progress parser reads the CLI's console text (`[i/N]`, `routing=`) where `IngestTab` uses structured `@progress` events.
-- **`App.svelte`** in both apps (581 and 601 lines): shell chrome, page state and 110–150 lines of shell CSS.
-- **`DatabaseTab.svelte`** (529 lines): article search and library status are unrelated.
+- **Fixed** (`db/{corpus,search,eval,params,phoenix}.rs`; rag-ui compiles in only `db/search.rs`, its `base64` is gone) — **`db.rs`** (1 066 lines). Its module doc says "read-only access to the legislation DB … and the eval schema"; it also holds the params queries and Phoenix. The damage shows: a doc comment cut in two by an inserted block (lines 695-696 and 740-741), and a `mod tests` in the middle of the file. Split into `corpus`, `search`, `eval`, `params` and `phoenix` modules. `rag-ui` could then include only `search` and `corpus`, and drop its blanket `#[allow(dead_code)]` and its `base64` dependency.
+- **Fixed** (`RunSwitcher`, `HandoffPrompt`, `CritiqueSummary`, `ProposalEditor`, `DecisionBar`; the accept gate is a tested `proposal.js`) — **`DetailPanel.svelte`** (780 lines) mixes six concerns: run switcher, hand-off prompt, critique summary, proposal editor, accept gate (pure, testable) and decision bar.
+- **Fixed** (`LawForm`, `DocumentForm`, `EmbedForm`, `TranslateForm`) — **`IngestTab.svelte`** (714 lines) is four unrelated forms sharing about 35 prefixed `$state` variables (`doc*`, `ing*`, `emb*`, `tr*`).
+- **Partly fixed** (its run uses `createJobRun`; its console-line progress parser is a tested pure function, because `run-targets` emits no per-parameter `@progress`; not split) — **`ParamsTab.svelte`** (639 lines): filters, table, row detail, run bar. Its progress parser reads the CLI's console text (`[i/N]`, `routing=`) where `IngestTab` uses structured `@progress` events.
+- **Fixed** (shell CSS in `shared/AppShell`) — **`App.svelte`** in both apps (581 and 601 lines): shell chrome, page state and 110–150 lines of shell CSS.
+- **Fixed** (`ArticleSearch`, `LibraryStatus`) — **`DatabaseTab.svelte`** (529 lines): article search and library status are unrelated.
 
 ### Design
 
-- **`db_url`, password included, round-trips through the webview on every call**, and every command opens a fresh connection (medium). `save_decision` opens two; `golden::load_cases` runs two extra queries per case. The URL is editable in `DatabaseTab` and `EvalTab`, so those tabs can point at a different database from the rest of the app. Both apps set `"csp": null`. Keep the URL and a pool in `tauri::State`.
-- **`Row::get` is an unchecked unwrap** (medium): about 280 calls that panic on NULL into a non-`Option`. `conversations.rs:48` is fragile today, since a JSON `null` passes the `?` filter and `->>` yields SQL NULL.
-- **Enums rendered raw instead of through `labels.js`** (medium). `trustLabel` and `verdictLabel` exist and are used nowhere; the pages roll their own.
+- **Fixed** (URL and a small pool in `tauri::State`, masked in the webview, `set_db_url` only; restrictive CSP in both apps — not yet checked in `tauri dev`) — **`db_url`, password included, round-trips through the webview on every call**, and every command opens a fresh connection (medium). `save_decision` opens two; `golden::load_cases` runs two extra queries per case. The URL is editable in `DatabaseTab` and `EvalTab`, so those tabs can point at a different database from the rest of the app. Both apps set `"csp": null`. Keep the URL and a pool in `tauri::State`.
+- **Fixed** (`row_to_json`; the fragile conversations filter uses `->> IS NOT NULL`) — **`Row::get` is an unchecked unwrap** (medium): about 280 calls that panic on NULL into a non-`Option`. `conversations.rs:48` is fragile today, since a JSON `null` passes the `?` filter and `->>` yields SQL NULL.
+- **Fixed** (every listed site; `trustLabel`/`verdictLabel` used; rag-ui uses the shared labels) — **Enums rendered raw instead of through `labels.js`** (medium). `trustLabel` and `verdictLabel` exist and are used nowhere; the pages roll their own.
   - Everyday pages: `DetailPanel.svelte:460, 574`; `IngestTab.svelte:518-524, 557`; `SourceViewer.svelte:92`; `ParamsTab.svelte:346-351, 367, 446, 450`; `ParameterEditor.svelte:146, 190`; `AuditLog.svelte:49`; `Home.svelte:71-87`.
   - `rag-ui` has no `labels.js` at all.
-- **Runes** (low/medium). There is no legacy syntax and every interval is cleaned up. Weak spots:
+- **Fixed** (no prop mirrors, `JobsTab.refresh` guarded; `dbUrl` no longer drilled) — **Runes** (low/medium). There is no legacy syntax and every interval is cleaned up. Weak spots:
   - props mirrored into state by `$effect` (`DatabaseTab:49-51`, `EvalTab:29-31`, `IngestTab:120-122`, `ChunkCard:26-28`);
   - `dbUrl` drilled into every component;
   - seven tabs driven through `bind:this` and an exported `reload()`;
   - `JobsTab.refresh` not guarded against overlap.
-- **Swallowed errors** (low/medium): `cancelJob` handlers with no try/catch; `.catch(() => {})` at `IngestTab.svelte:136-137, 167` leaves the kind select on "waiting for the worker…" forever; `alert()` at `DetailPanel.svelte:282`.
+- **Fixed** — **Swallowed errors** (low/medium): `cancelJob` handlers with no try/catch; `.catch(() => {})` at `IngestTab.svelte:136-137, 167` leaves the kind select on "waiting for the worker…" forever; `alert()` at `DetailPanel.svelte:282`.
 
 ### Dead code
 
 - **Fixed (removed)** — **Tauri command `encode_query`** is registered and wrapped by `api.encodeQuery`, which nothing calls (`ui/src-tauri/src/lib.rs:420-423, 455`; `ui/src/lib/api.js:68`). All other 35 commands have a caller.
-- **JS**: `verdictLabel`, `trustLabel` and their tables are unused. Use them rather than delete them.
-- **CSS**: `tr.selectable`, `--button-cancel`, and in `rag-ui` the copied rules it never uses (`.segmented`, `.joblog`, `.bar`, `.field`, the routing and status badges).
-- **Icons**: `moon` and `sun` in `ui`; 17 of the copied paths in `rag-ui`.
-- **Dependencies**: `@tauri-apps/plugin-dialog` is never imported in JS, and the `dialog:default` capability is unneeded since the dialog is opened from Rust; `chrono`'s `serde` feature; `base64` in `rag-ui`.
+- **Fixed (now used)** — **JS**: `verdictLabel`, `trustLabel` and their tables are unused. Use them rather than delete them.
+- **Fixed (removed)** — **CSS**: `tr.selectable`, `--button-cancel`, and in `rag-ui` the copied rules it never uses (`.segmented`, `.joblog`, `.bar`, `.field`, the routing and status badges).
+- **Fixed (removed)** — **Icons**: `moon` and `sun` in `ui`; 17 of the copied paths in `rag-ui`.
+- **Fixed** (JS package, capability, chrono `serde`, rag-ui `base64` removed; the Rust dialog plugin stays for the export picker) — **Dependencies**: `@tauri-apps/plugin-dialog` is never imported in JS, and the `dialog:default` capability is unneeded since the dialog is opened from Rust; `chrono`'s `serde` feature; `base64` in `rag-ui`.
 
 ---
 

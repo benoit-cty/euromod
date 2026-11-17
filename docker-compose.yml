@@ -55,6 +55,10 @@ services:
   db:
     image: docker.io/pgvector/pgvector:pg17
     container_name: nomotheca-legislation-db
+    # Docker's default /dev/shm (64 MB) is too small for Postgres's parallel
+    # hash joins: the UI's corpus statistics failed with "could not resize
+    # shared memory segment".
+    shm_size: 1gb
     environment:
       POSTGRES_DB: legislation
       POSTGRES_USER: jrc
