@@ -110,7 +110,9 @@
       case 'workflow':
         return `${p.country ? `${p.country}, every parameter${p.limit ? ` (≤ ${p.limit})` : ''}` : `${(p.targets ?? []).length} target(s)`} · ${p.year ?? '?'}${p.model ? ` · ${p.model}` : ''}${p.force ? ' · force' : ''}`;
       case 'ingest':
-        return `${p.command} ${(p.args ?? []).slice(0, 2).join(' ')}`;
+        // The worker's typed payload (jurisdiction, national_id, citation, source…),
+        // or the legacy {command, args} form.
+        return `${p.command} ${p.args ? p.args.slice(0, 2).join(' ') : [p.jurisdiction, p.national_id ?? p.citation ?? p.source].filter(Boolean).join(' ')}`;
       case 'embed':
         return `model ${p.model_id} · batch ${p.batch_size}${p.limit ? ` · limit ${p.limit}` : ''}${p.dry_run ? ' · dry run' : ''}`;
       case 'translate':

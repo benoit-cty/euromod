@@ -71,6 +71,7 @@ const JOB_TYPE = {
   encode: { label: 'Search', hint: 'A query encoded for the meaning search.' },
   impact: { label: 'Impact estimate', hint: 'Energy and carbon of the traced model calls.' },
   chat: { label: 'Chat question', hint: 'A question to the legislation chat.' },
+  'draft-golden': { label: 'Golden-set draft', hint: 'Draft golden cases built for review.' },
 };
 
 const JOB_STATUS = {
