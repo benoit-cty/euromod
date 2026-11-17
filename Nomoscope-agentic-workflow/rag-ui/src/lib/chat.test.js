@@ -81,3 +81,10 @@ test('markdown tables, lists and fences', () => {
   assert.ok(html.includes('<ul><li>one</li><li>two</li></ul>'));
   assert.ok(html.includes('<pre><code>&lt;b&gt;</code></pre>'));
 });
+
+test('locateExtract applies the split-ligature and edge-punctuation rules (quotes.py)', () => {
+  const content = 'revalorisation des prestati ons familiales ; 3° A 16,5 % du revenu';
+  assert.equal(locateExtract(content, 'des prestations familiales').match, 'des prestati ons familiales');
+  assert.equal(locateExtract(content, '3° A 16,5 %.').match, '3° A 16,5 %');
+  assert.equal(locateExtract('taux 2 5 %', '25 %'), null); // never between digits
+});

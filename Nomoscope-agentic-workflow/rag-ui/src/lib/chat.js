@@ -78,18 +78,58 @@ export function stepLabel(step) {
  * run matching any other (the same tolerance as retrieval.verify_extract).
  * Returns { before, match, after } or null.
  */
+/** Where a quote sits in its chunk, under the workflow's own rules
+ *  (nomoscope_workflow/quotes.py `quote_span`): whitespace runs are equal,
+ *  whitespace between two LETTERS is absent (a PDF's split ligature:
+ *  «prestati ons»), never between digits, and punctuation at the quote's two
+ *  ends is not part of the match. Until 16 Nov 2026 this only had the first
+ *  rule, so a quote the server verified could fail to highlight. */
 export function locateExtract(content, extract) {
   if (!content || !extract?.trim()) return null;
   let start = content.indexOf(extract);
   let length = extract.length;
   if (start < 0) {
-    const pattern = extract.trim().split(/\s+/).map(escapeRegExp).join('\\s+');
-    const m = new RegExp(pattern).exec(content);
+    const m = findQuote(content, extract);
     if (!m) return null;
     start = m.index;
     length = m[0].length;
   }
   return { before: content.slice(0, start), match: content.slice(start, start + length), after: content.slice(start + length) };
+}
+
+const EDGE_PUNCTUATION = ' \t\n.;:,«»"“”\'’';
+
+function stripEdges(text) {
+  let a = 0;
+  let b = text.length;
+  while (a < b && EDGE_PUNCTUATION.includes(text[a])) a += 1;
+  while (b > a && EDGE_PUNCTUATION.includes(text[b - 1])) b -= 1;
+  return text.slice(a, b);
+}
+
+const isLetter = (c) => /\p{L}/u.test(c);
+
+function splitWordPattern(quote) {
+  return quote
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => {
+      const chars = [...word];
+      return chars
+        .map((c, i) => escapeRegExp(c) + (i + 1 < chars.length && isLetter(c) && isLetter(chars[i + 1]) ? '\\s*' : ''))
+        .join('');
+    })
+    .join('\\s+');
+}
+
+function findQuote(content, extract) {
+  for (const quote of new Set([extract, stripEdges(extract)])) {
+    if (!quote.trim()) continue;
+    const plain = quote.trim().split(/\s+/).map(escapeRegExp).join('\\s+');
+    const m = new RegExp(plain, 'u').exec(content) ?? new RegExp(splitWordPattern(quote), 'u').exec(content);
+    if (m) return m;
+  }
+  return null;
 }
 
 function escapeRegExp(text) {
