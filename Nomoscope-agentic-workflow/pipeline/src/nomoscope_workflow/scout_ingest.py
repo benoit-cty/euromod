@@ -28,7 +28,7 @@ def embed_timeout() -> int:
     return int(os.environ.get("WORKFLOW_SCOUT_EMBED_TIMEOUT", "1800"))
 
 
-def known_instruments(cfg: WorkflowConfig, ids: list[str], rules: dict) -> set[str]:
+def known_instruments(cfg: WorkflowConfig, ids: list[str], known_key: str | None = None) -> set[str]:
     """Ids already in the legislation DB — re-ingesting them cannot add chunks.
 
     Article-level ids (FR LEGIARTI…/JORFARTI…) are stored as legal_units under
@@ -36,7 +36,7 @@ def known_instruments(cfg: WorkflowConfig, ids: list[str], rules: dict) -> set[s
     every re-run re-ingests the same article forever. Where the scouted id is
     not the stored national_id at all (LT keys instruments by official number
     and files the TAR id under metadata.dokumento_id), `known_key` says which
-    metadata key to match instead.
+    metadata key to match instead (`CountrySource.known_key`).
     """
     import psycopg
 
@@ -44,7 +44,7 @@ def known_instruments(cfg: WorkflowConfig, ids: list[str], rules: dict) -> set[s
         "SELECT national_id FROM instruments WHERE national_id = ANY(%(ids)s) "
         "UNION SELECT national_id FROM legal_units WHERE national_id = ANY(%(ids)s)"
     )
-    if rules.get("known_key"):
+    if known_key:
         sql += (
             " UNION SELECT metadata->>%(key)s FROM instruments "
             "WHERE metadata->>%(key)s = ANY(%(ids)s)"
@@ -52,7 +52,7 @@ def known_instruments(cfg: WorkflowConfig, ids: list[str], rules: dict) -> set[s
     # No except: a database error used to return the empty set, so every
     # candidate was re-ingested (code audit 4). The ingest needs the same DB.
     with psycopg.connect(cfg.database_url) as conn:
-        rows = conn.execute(sql, {"ids": ids, "key": rules.get("known_key")}).fetchall()
+        rows = conn.execute(sql, {"ids": ids, "key": known_key}).fetchall()
     return {row[0] for row in rows}
 
 

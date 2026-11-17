@@ -79,7 +79,7 @@ def _publisher_listing(country: str) -> str:
     publishers = GUIDANCE_PUBLISHERS.get(country)
     if not publishers:
         return ""
-    names = ", ".join(f"{p['name']} ({p['kind']}, {p['domain']})" for p in publishers)
+    names = ", ".join(f"{p.name} ({p.kind}, {p.domain})" for p in publishers)
     return (
         "\n\nSome values are published by an administration rather than in an act — for "
         f"{country}: {names}. A resource ceiling or benefit amount revalued every year is often "
@@ -252,7 +252,7 @@ def run(
             SCOUT_SYSTEM.format(
                 country=info.country,
                 id_hint=ID_HINTS.get(info.country, "exact official id"),
-                act_kinds=rules.get("act_kinds", "act, decree or order"),
+                act_kinds=rules.act_kinds,
             )
             + _publisher_listing(info.country),
             (
@@ -278,13 +278,13 @@ def run(
         result.queries = [need[:_NEED_CHARS] for need in result.needs[:2]]
         result.errors.append("scout proposed nothing; searching the stated needs verbatim")
 
-    pattern: re.Pattern = rules["id_pattern"]
+    pattern = rules.id_pattern
     ids = [m for text in suggestion.instrument_ids for m in pattern.findall(text)]
     titles: dict[str, str] = {}  # instrument id -> best search-result title
     if cfg.scout == "tavily" and cfg.tavily_api_key:
         for query in result.queries:
             try:
-                for hit in web_search(cfg.tavily_api_key, query, rules["domains"]):
+                for hit in web_search(cfg.tavily_api_key, query, list(rules.domains)):
                     url = hit.get("url", "")
                     result.urls.append(url)
                     for found in pattern.findall(url):
@@ -302,14 +302,14 @@ def run(
     result.candidate_ids = list(dict.fromkeys(ids))
     if len(result.candidate_ids) > 1 and titles:
         result.candidate_ids = _rank_candidates(cfg, info, result.candidate_ids, titles)
-    known = scout_ingest.known_instruments(cfg, result.candidate_ids, rules) | set(attempted or ())
+    known = scout_ingest.known_instruments(cfg, result.candidate_ids, rules.known_key) | set(attempted or ())
     to_ingest = [i for i in result.candidate_ids if i not in known][: cfg.scout_max_ingest]
     if result.candidate_ids:
         progress(
             f"  [scout] {len(result.candidate_ids)} candidate instrument(s), "
             f"{len(known)} already in DB, {len(to_ingest)} to ingest"
         )
-    suffix = rules.get("ingest_suffix", "")
+    suffix = rules.ingest_suffix
     jobs = [
         _IngestJob(
             key=instrument_id,
@@ -364,7 +364,7 @@ def _search_guidance(
     if not queries:
         queries = [n[:_NEED_CHARS] for n in result.needs if _GUIDANCE_HINT.search(n)][:1]
     documents: dict[str, GuidanceDocument] = {}
-    domains = [p["domain"] for p in publishers]
+    domains = [p.domain for p in publishers]
     for query in queries:
         result.queries.append(query)
         try:
@@ -406,7 +406,7 @@ def _guidance_jobs(
         return []
     urls = [d.url for d in documents]
     result.candidate_ids += [u for u in urls if u not in result.candidate_ids]
-    known = scout_ingest.known_instruments(cfg, urls, {}) | attempted
+    known = scout_ingest.known_instruments(cfg, urls) | attempted
     fresh = [d for d in documents if d.url not in known][:GUIDANCE_MAX_INGEST]
     progress(
         f"  [scout] {len(documents)} guidance document(s) "

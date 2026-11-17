@@ -229,7 +229,8 @@ def _scout_portals(scout: Path) -> dict[str, tuple[tuple[str, ...], str]]:
         raise AssertionError(f"{scout} declares no COUNTRY_SOURCES")
     portals = {}
     for country, rules in zip(table.keys, table.values):
-        by_key = {key.value: value for key, value in zip(rules.keys, rules.values)}
+        # Each row is `CountrySource(domains=(...), id_pattern=re.compile(...), ...)`.
+        by_key = {kw.arg: kw.value for kw in rules.keywords}
         portals[country.value] = (
             tuple(ast.literal_eval(by_key["domains"])),
             # Always `re.compile(r"...")`; compare the pattern text.
@@ -366,7 +367,8 @@ def test_every_scout_guidance_publisher_kind_is_a_guidance_kind() -> None:
     kinds = []
     for country, publishers in zip(table.keys, table.values):
         for publisher in publishers.elts:
-            by_key = {key.value: value for key, value in zip(publisher.keys, publisher.values)}
+            # Each entry is `GuidancePublisher(name=..., kind=..., ...)`.
+            by_key = {kw.arg: kw.value for kw in publisher.keywords}
             kinds.append((country.value, by_key["kind"].value))
     assert kinds
     for country, kind in kinds:

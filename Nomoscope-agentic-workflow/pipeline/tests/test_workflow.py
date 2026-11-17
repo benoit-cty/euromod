@@ -312,19 +312,19 @@ def test_scout_country_rules_are_complete_and_render_the_prompt():
     from nomoscope_workflow.scout import COUNTRY_SOURCES, ID_HINTS, SCOUT_SYSTEM
 
     for country, rules in COUNTRY_SOURCES.items():
-        assert rules["domains"] and rules["id_pattern"]
+        assert rules.domains and rules.id_pattern
         # A country without an id hint would be asked for "exact official id",
         # which is how the LLM starts inventing identifiers.
         assert country in ID_HINTS
         SCOUT_SYSTEM.format(
-            country=country, id_hint=ID_HINTS[country], act_kinds=rules["act_kinds"]
+            country=country, id_hint=ID_HINTS[country], act_kinds=rules.act_kinds
         )
 
 
 def test_scout_lt_ids_are_harvested_from_e_seimas_urls():
     from nomoscope_workflow.scout import COUNTRY_SOURCES
 
-    pattern = COUNTRY_SOURCES["LT"]["id_pattern"]
+    pattern = COUNTRY_SOURCES["LT"].id_pattern
     # Both TAR id generations, as they appear in portal URLs.
     legacy = "https://e-seimas.lrs.lt/portal/legalAct/lt/TAD/TAR.C677663D2202/asr"
     modern = "https://e-seimas.lrs.lt/portal/legalAct/lt/TAD/ce0f95d090d111e4bb408baba2bdddf3?jfwid=-1c37ov9nb"
@@ -332,13 +332,13 @@ def test_scout_lt_ids_are_harvested_from_e_seimas_urls():
     assert pattern.findall(modern) == ["ce0f95d090d111e4bb408baba2bdddf3"]
     # The consolidation index is what gets ingested: the as-published text alone
     # carries no value history.
-    assert COUNTRY_SOURCES["LT"]["ingest_suffix"] == "/asr"
+    assert COUNTRY_SOURCES["LT"].ingest_suffix == "/asr"
 
 
 def test_scout_fr_ids_still_exclude_whole_codes():
     from nomoscope_workflow.scout import COUNTRY_SOURCES
 
-    pattern = COUNTRY_SOURCES["FR"]["id_pattern"]
+    pattern = COUNTRY_SOURCES["FR"].id_pattern
     assert pattern.findall(
         "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000051521140"
     ) == ["LEGIARTI000051521140"]
@@ -349,7 +349,7 @@ def test_scout_fr_keeps_collective_agreements_but_not_whole_conventions():
     # ADR 0006: the AGIRC-ARRCO ANI is evidence; its /conv_coll/ ids used to be dropped.
     from nomoscope_workflow.scout import COUNTRY_SOURCES
 
-    pattern = COUNTRY_SOURCES["FR"]["id_pattern"]
+    pattern = COUNTRY_SOURCES["FR"].id_pattern
     assert pattern.findall(
         "https://www.legifrance.gouv.fr/conv_coll/id/KALIARTI000036731900"
     ) == ["KALIARTI000036731900"]
@@ -408,8 +408,8 @@ def test_scout_portal_facts_still_match_the_adapters_that_own_them():
         adapter = directory / "src" / "nomotheca_ingest" / "countries" / country.lower() / "adapter.py"
         assert adapter.is_file(), f"{country} is in COUNTRY_SOURCES but has no adapter to ingest it"
         domains, id_pattern = _adapter_url_source(adapter)
-        assert tuple(rules["domains"]) == domains, f"{country}: scout domains differ from {adapter}"
-        assert rules["id_pattern"].pattern == id_pattern, (
+        assert tuple(rules.domains) == domains, f"{country}: scout domains differ from {adapter}"
+        assert rules.id_pattern.pattern == id_pattern, (
             f"{country}: scout id_pattern differs from {adapter}"
         )
 
@@ -1053,7 +1053,7 @@ def test_scout_ingests_a_cnav_circular_as_guidance(monkeypatch):
             guidance_queries=["circulaire Cnav 2025 plafonds ASI revalorisation"],
         ),
     )
-    monkeypatch.setattr(scout_ingest, "known_instruments", lambda cfg, ids, rules: set())
+    monkeypatch.setattr(scout_ingest, "known_instruments", lambda cfg, ids, known_key=None: set())
     monkeypatch.setattr(scout_ingest, "run_ingest_cli", lambda cfg, args, what: ran.append(args))
     monkeypatch.setattr(scout_ingest, "build_embeddings", lambda cfg: None)
 

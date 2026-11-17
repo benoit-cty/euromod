@@ -330,8 +330,8 @@ def web_search(
     if not deps.cfg.tavily_api_key:
         return {"error": "web search is not configured on the worker (no TAVILY_API_KEY)"}
     code = _countries(deps, country)[0] if (country or deps.country) else None
-    rules = scout.COUNTRY_SOURCES.get(code or "", {})
-    domains = rules.get("domains", []) if official_only else []
+    rules = scout.COUNTRY_SOURCES.get(code or "")
+    domains = list(rules.domains) if rules and official_only else []
     emit({"event": "tool", "status": "start", "tool": "web_search",
           "args": {"query": query, "country": code, "domains": domains}})
     try:
@@ -342,13 +342,13 @@ def web_search(
         emit({"event": "tool", "status": "done", "tool": "web_search", "summary": f"failed: {exc}"})
         return {"error": f"web search failed: {exc}"}
 
-    pattern = rules.get("id_pattern")
+    pattern = rules.id_pattern if rules else None
     ids_by_url = {
         r.get("url", ""): list(dict.fromkeys(pattern.findall(r.get("url", "")))) if pattern else []
         for r in results
     }
     all_ids = [i for ids in ids_by_url.values() for i in ids]
-    known = scout.known_instruments(deps.cfg, all_ids, rules) if all_ids else set()
+    known = scout.known_instruments(deps.cfg, all_ids, rules.known_key) if all_ids else set()
     out = []
     for r in results:
         url = r.get("url", "")
@@ -364,7 +364,7 @@ def web_search(
                 deps.discoveries.setdefault(i, {
                     "country": code,
                     "instrument_id": i,
-                    "ingest_id": i + rules.get("ingest_suffix", ""),
+                    "ingest_id": i + rules.ingest_suffix,
                     "title": row["title"],
                     "url": url,
                 })
