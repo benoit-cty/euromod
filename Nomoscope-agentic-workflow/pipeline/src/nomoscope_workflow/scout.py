@@ -18,162 +18,32 @@ years).
 
 from __future__ import annotations
 
-import os
 import re
 import subprocess
-import threading
 import time
-from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import date
-from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import llm, retrieval
+from . import llm, retrieval, scout_ingest, web
 from .config import PLACEHOLDER_MODEL_ID, WorkflowConfig
-from .query_encoder import embedding_process, ingest_dir, nomos_python
-from .schema import ParameterRecord, RetrievalHit
+from .schema import ParameterRecord
+from .scout_ingest import INGEST_TIMEOUT, embed_timeout, known_instruments  # noqa: F401
+from .scout_sources import (  # noqa: F401  (re-exported: scout is the facade)
+    COUNTRY_SOURCES,
+    GUIDANCE_PUBLISHERS,
+    ID_HINTS,
+    GuidanceDocument,
+    canonical_url,
+    guidance_document,
+)
 from .tracing import progress
+from .web import QUOTA_EXHAUSTED, WebSearchUnavailable, web_search  # noqa: F401
 
-INGEST_TIMEOUT = 600  # a single arrêté is seconds; a loi de finances, minutes
-# The embedding pass covers the whole backlog of unembedded chunks, not just the
-# scouted instrument (the CLI has no per-instrument scope), and BGE-M3 on CPU
-# runs at roughly one chunk per second — a freshly ingested loi de finances
-# alone is ~10 minutes (roughly 20x faster when the .venv-cuda GPU environment
-# is installed). The build commits per batch, so even a timeout here keeps the
-# vectors computed so far; the retry then resumes where it stopped.
-def embed_timeout() -> int:
-    """WORKFLOW_SCOUT_EMBED_TIMEOUT, read at call time so a .env value counts
-    (it was read at import, before any .env was loaded)."""
-    return int(os.environ.get("WORKFLOW_SCOUT_EMBED_TIMEOUT", "1800"))
-
-#: Set once the web-search provider has refused for good in this process —
-#: Tavily answers HTTP 432 when the plan's usage limit is spent. Both eval runs
-#: of 2026-09-09 (212 cases) hit it on every single query and the only trace
-#: was a per-item error string: the scout ran blind for a whole evaluation and
-#: nobody saw. Remember it, say it once, and stop paying a round trip per query.
-_web_search_unavailable: str | None = None
-
-# Per-country discovery rules: the official domains web search is restricted
-# to, and the id shapes the archive-first ingester can fetch directly.
-#
-# The first two are a DELIBERATE COPY of what each ingest adapter declares as
-# its `countries.base.UrlSource` — the same domains and the same id regex the
-# ingester's URL router uses. Nothing imports them across: the dependency
-# between the two packages runs one way only (nomotheca-ingest may import this
-# package, as its optional `translate` extra; never the reverse), which is why
-# the scout reaches the ingester by subprocess. A copy guarantees nothing on its
-# own, so two tests hold it in place — one per suite, because each catches the
-# edit made on its own side:
-#   tests/test_workflow.py::test_scout_portal_facts_still_match_the_adapters_that_own_them
-#   Nomotheca-RAG/ingest/tests/test_routing.py::test_the_nomoscope_scout_copies_these_portals_without_altering_them
-# Change a domain or an id shape here and you must change the adapter too.
-#
-# Keys:
-#   domains      — official domains the web search is restricted to (adapter's)
-#   id_pattern   — id shapes harvested from result URLs and from the LLM's
-#                  answer (adapter's; it is also what `cli instrument` accepts)
-#   act_kinds    — the country's own words for the acts that fix values (prompt)
-#   ingest_suffix— appended to a bare id to make it what the ingester should fetch
-#   known_key    — instruments.metadata key holding this id, when national_id is
-#                  something else (else the known-check misses and we re-ingest)
-COUNTRY_SOURCES: dict[str, dict] = {
-    "FR": {
-        "domains": ["legifrance.gouv.fr"],
-        # JORF instruments (lois, décrets, arrêtés), single consolidated
-        # code articles (LEGIARTI — where most rates actually live once
-        # codified) and collective agreements (KALITEXT/KALIARTI, Légifrance
-        # /conv_coll/ URLs — ADR 0006) — deliberately not LEGITEXT or KALICONT:
-        # ingesting a whole code or convention by accident is not a gap-fill.
-        "id_pattern": re.compile(r"\b(?:JORFTEXT|LEGIARTI|KALITEXT|KALIARTI)\d{12}\b"),
-        # The social partners, not the State, set the AGIRC-ARRCO, APEC and
-        # cadres' prévoyance rates: on the 3 Nov benchmark 14 of 34 FR misses
-        # asked for exactly those agreements, and the web search found their
-        # /conv_coll/ pages only for the id filter to drop them.
-        "act_kinds": (
-            "loi, décret or arrêté — or, for contributions the social partners set "
-            "(retraite complémentaire AGIRC-ARRCO, APEC, prévoyance des cadres), the "
-            "accord national interprofessionnel or its avenant"
-        ),
-    },
-    "ES": {
-        # boe.es is both the official gazette and the consolidated-legislation
-        # service; the same domain serves the human view and the open-data API
-        # Nomotheca fetches, so one domain covers discovery and ingestion.
-        "domains": ["boe.es"],
-        # The BOE analytical id, as it appears in /buscar/act.php?id=… and
-        # /diario_boe/txt.php?id=… URLs. Restricted to the -A- series: that is
-        # the "disposiciones generales" series, and the only one the
-        # legislacion-consolidada API serves (-B- and -S- are not consolidated).
-        "id_pattern": re.compile(r"\bBOE-A-\d{4}-\d+\b"),
-        # The LPGE was prorogued for 2024 and 2025, so recent values arrive via
-        # ordinary laws and decree-laws rather than the budget law — the scout
-        # must not look only for "Ley de Presupuestos".
-        "act_kinds": "ley, real decreto-ley, real decreto legislativo or real decreto",
-        # No ingest_suffix: a bare BOE id is exactly what EsResolver returns and
-        # what the API serves in full (metadata + every block + every version).
-        # No known_key: instruments.national_id *is* the BOE id.
-    },
-    "NL": {
-        # wetten.overheid.nl is the human-facing portal for the Basiswettenbestand;
-        # it rate-limits plain clients, but the scout only harvests BWB ids from
-        # the URLs, it never reads the page. The repository host Nomotheca
-        # actually fetches from serves no search results, so it is not listed.
-        "domains": ["wetten.overheid.nl"],
-        # The BWB regulation id, as it appears both in the plain path
-        # (/BWBR0011353/2025-01-01) and in the Juriconnect form
-        # (/jci1.3:c:BWBR0011353&artikel=2.10&z=2025-01-01). BWBV… ids are
-        # treaties, deliberately excluded.
-        "id_pattern": re.compile(r"\bBWBR\d{7}\b"),
-        # Dutch fiscal values are usually fixed by the annual Belastingplan or by
-        # a December bijstellingsregeling in the Staatscourant, not by the
-        # substantive act itself.
-        "act_kinds": "wet, algemene maatregel van bestuur or ministeriële regeling",
-        # No ingest_suffix: a bare BWB id is exactly what NlResolver returns, and
-        # the repository serves it as the act's manifest — the version index
-        # listing every dated toestand. No known_key: instruments.national_id
-        # *is* the BWB id.
-    },
-    "IE": {
-        # eISB (electronic Irish Statute Book) is the official statute book;
-        # the ELI act id in its URLs is exactly what the IE adapter fetches
-        # (irishstatutebook.ie/eli/<year>/act/<no>/enacted/en/xml) and what it
-        # stores as instruments.national_id (e.g. 1997/act/39 = TCA 1997).
-        # oireachtas.ie only serves bill pages and the act index — useful
-        # search context, but no harvestable instrument id in its URLs.
-        "domains": ["irishstatutebook.ie"],
-        # The eISB ELI act id: the <year>/act/<number> path segment. Acts of
-        # the Oireachtas only — the IE fetcher builds act URLs; statutory
-        # instruments (/eli/<year>/si/<no>) are not ingestible yet. Group is
-        # non-capturing on purpose: findall must return the whole id.
-        "id_pattern": re.compile(r"\b(?:19|20)\d{2}/act/\d{1,3}\b"),
-        # Fiscal values arrive via annual amending acts (never consolidated,
-        # never repealed): PIT/USC via the Finance Act, welfare rates and PRSI
-        # via the Social Welfare Act(s) of the preceding December.
-        "act_kinds": "Finance Act, Social Welfare Act or other Act of the Oireachtas",
-        # No ingest_suffix: `instrument ie <year>/act/<no>` is the exact CLI
-        # form. No known_key: instruments.national_id *is* the ELI act id.
-    },
-    "LT": {
-        # e-seimas is the register's public portal; e-tar.lt serves the same
-        # acts. Both put the TAR document id in the /legalAct/ URL path, which
-        # is the id the Spinta open-data API (what Nomotheca fetches) keys on.
-        "domains": ["e-seimas.lrs.lt", "e-tar.lt"],
-        # Two id generations coexist in TAR: "TAR." + 12 uppercase hex for acts
-        # migrated into the register in 2014, and a 32-lowercase-hex
-        # registration id for everything since.
-        "id_pattern": re.compile(r"\b(?:TAR\.[0-9A-F]{12}|[0-9a-f]{32})\b"),
-        "act_kinds": "įstatymas, Vyriausybės nutarimas or ministro įsakymas",
-        # A bare id fetches the act as published; its value history lives in the
-        # dated consolidations listed by the /asr index — the same reference
-        # LtResolver returns for a citation. Ingest the index, not the original.
-        "ingest_suffix": "/asr",
-        # LT instruments are keyed by official number (IX-1007); the TAR id the
-        # scout harvests is kept in instruments.metadata.
-        "known_key": "dokumento_id",
-    },
-}
+#: The corpus-side lookup of the analyst's named sources; it touches neither
+#: web nor ingest and lives with the rest of retrieval.
+locate = retrieval.locate_sources
 
 SCOUT_SYSTEM = """You are a legal-sources librarian for {country} tax-benefit legislation
 (collective agreements included: where the social partners set a rate, the agreement IS
@@ -203,159 +73,6 @@ Return:
 - instrument_ids: official database identifiers of the act, ONLY if you are certain of the
   exact identifier ({id_hint}). NEVER guess or reconstruct an identifier.
 - reasoning: one sentence on what kind of act sets this value."""
-
-ID_HINTS = {
-    "ES": (
-        "for Spain the BOE-A-YYYY-NNNNN identifier shown in boe.es "
-        "/buscar/act.php?id=<id> and /diario_boe/txt.php?id=<id> URLs "
-        "(note the ELI URL, boe.es/eli/es/l/2006/11/28/35, does NOT contain it)"
-    ),
-    "FR": (
-        "for France the JORFTEXT############ id shown in Légifrance JORF URLs, "
-        "the LEGIARTI############ id of the consolidated code article, or for a "
-        "collective agreement the KALITEXT############ (agreement) or "
-        "KALIARTI############ (article) id of its Légifrance /conv_coll/id/ URL"
-    ),
-    "NL": (
-        "for the Netherlands the BWBR####### identifier shown in wetten.overheid.nl "
-        "URLs — either /BWBR0011353/<date> or the Juriconnect form jci1.3:c:BWBR0011353"
-    ),
-    "IE": (
-        "for Ireland the eISB ELI act id — the <year>/act/<number> path segment of "
-        "irishstatutebook.ie/eli/<year>/act/<number>/… URLs (e.g. 1997/act/39 for the "
-        "Taxes Consolidation Act 1997)"
-    ),
-    "LT": (
-        "for Lithuania the TAR document id shown in e-seimas /portal/legalAct/lt/TAD/<id> "
-        "URLs — either TAR.############ or a 32-character hexadecimal id"
-    ),
-}
-
-
-#: Official publishers of administrative guidance, per country (ADR 0001). Some
-#: values are published by an administration, not in any act: the Cnav circular
-#: gives the year's ASPA/ASI resource ceilings after the 1 April revaluation, an
-#: Unédic circular the unemployment-benefit amounts, BOFiP the tax doctrine.
-#: Their documents carry no official id, so they are discovered by URL and enter
-#: as contributed documents with the kind fixed HERE, never chosen by the model.
-#: Every kind is a guidance kind: a web-discovered document is never granted
-#: evidence (Nomotheca-RAG/ingest/tests/test_routing.py checks each kind against
-#: the ingester's kinds table).
-#:
-#: `document` matches the URL of one document — not a listing or a news page —
-#: and names what the title and the validity date are read from, so nothing is
-#: guessed: no full date in the URL, no ingest.
-#:   title — format string over the match's groups
-#:   date  — groups dd + (mm | month, in the country's own words) + yyyy
-GUIDANCE_PUBLISHERS: dict[str, list[dict]] = {
-    "FR": [
-        {
-            "name": "Cnav",
-            "domain": "legislation.lassuranceretraite.fr",
-            "kind": "circulaire",
-            # …/Pdf/circulaire_cnav_2025_13_03042025.pdf = Circulaire Cnav 2025/13 du 03/04/2025
-            "document": re.compile(
-                r"https://legislation\.lassuranceretraite\.fr/(?:[\w/]+/)?Pdf/circulaire_cnav_"
-                r"(?P<year>\d{4})_(?P<num>\d+)_(?P<dd>\d{2})(?P<mm>\d{2})(?P<yyyy>\d{4})\.pdf",
-                re.IGNORECASE,
-            ),
-            "title": "Circulaire Cnav {year}/{num} du {dd}/{mm}/{yyyy}",
-        },
-        {
-            "name": "Unédic",
-            "domain": "unedic.org",
-            "kind": "circulaire",
-            # …/PRE-CIRC-Circulaire_n_2025-03_du_1er_avril_2025_uid_….pdf
-            "document": re.compile(
-                r"https://www\.unedic\.org/storage/uploads/[\d/]+/PRE-CIRC-Circulaire_n_"
-                r"(?P<year>\d{4})-(?P<num>\d+)_du_(?P<dd>\d{1,2})(?:er)?_(?P<month>[a-zéû]+)_(?P<yyyy>\d{4})"
-                r"[\w-]*\.pdf",
-                re.IGNORECASE,
-            ),
-            "title": "Circulaire Unédic n° {year}-{num} du {dd} {month} {yyyy}",
-        },
-        {
-            "name": "BOFiP",
-            "domain": "bofip.impots.gouv.fr",
-            "kind": "doctrine",
-            # …/bofip/2491-PGP.html/identifiant=BOI-IR-LIQ-20-20-10-20250414: the
-            # suffix is the date this version of the commentary was published.
-            "document": re.compile(
-                r"https://bofip\.impots\.gouv\.fr/bofip/\d+-PGP\.html/identifiant="
-                r"(?P<boi>BOI-[A-Z0-9-]+?)-(?P<yyyy>\d{4})(?P<mm>\d{2})(?P<dd>\d{2})(?![\d-])"
-            ),
-            "title": "{boi} du {dd}/{mm}/{yyyy}",
-        },
-    ],
-}
-
-#: Month names a publisher spells out in its URLs.
-_MONTHS = {
-    "FR": {
-        name: number
-        for number, name in enumerate(
-            ("janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet",
-             "aout", "septembre", "octobre", "novembre", "decembre"),
-            start=1,
-        )
-    },
-}
-
-#: At most this many guidance documents ingested per round (each is one PDF).
-GUIDANCE_MAX_INGEST = 2
-
-
-@dataclass(frozen=True)
-class GuidanceDocument:
-    """A publisher's document found by URL, with what the URL itself states."""
-
-    url: str
-    publisher: str
-    kind: str
-    title: str
-    valid_from: date
-
-
-def guidance_document(country: str, url: str) -> GuidanceDocument | None:
-    """The publisher document a result URL is, or None (a listing, a news page…)."""
-    for publisher in GUIDANCE_PUBLISHERS.get(country, []):
-        match = publisher["document"].match(url)
-        if not match:
-            continue
-        groups = match.groupdict()
-        if groups.get("mm"):
-            month = int(groups["mm"])
-        else:
-            plain = groups["month"].lower().translate(str.maketrans("éû", "eu"))
-            month = _MONTHS.get(country, {}).get(plain)
-            if month is None:
-                return None
-        try:
-            valid_from = date(int(groups["yyyy"]), month, int(groups["dd"]))
-        except ValueError:
-            return None
-        return GuidanceDocument(
-            url=canonical_url(url),
-            publisher=publisher["name"],
-            kind=publisher["kind"],
-            title=publisher["title"].format(**groups),
-            valid_from=valid_from,
-        )
-    return None
-
-
-def canonical_url(url: str) -> str:
-    """The contributed document's national_id for a URL.
-
-    A copy of `nomotheca_ingest.core.contributed.canonical_url` (the packages do
-    not import each other): lowercased scheme and host, no fragment, no trailing
-    slash — what the "already held" check must compare against.
-    """
-    from urllib.parse import urlsplit, urlunsplit
-
-    parts = urlsplit(url.strip())
-    path = parts.path.rstrip("/") or "/"
-    return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), path, parts.query, ""))
 
 
 def _publisher_listing(country: str) -> str:
@@ -449,143 +166,6 @@ def merge_results(results: list["ScoutResult"]) -> "ScoutResult":
     return merged
 
 
-QUOTA_EXHAUSTED = (
-    "web search unavailable: the Tavily plan's usage limit is exhausted "
-    "(HTTP 432) — discovery runs on the model's own instrument ids and "
-    "the corpus lookup only until the quota resets or TAVILY_API_KEY changes"
-)
-
-
-class WebSearchUnavailable(RuntimeError):
-    """Web search is off for the rest of this process (Tavily quota spent)."""
-
-
-def web_search(api_key: str, query: str, domains: list[str]) -> list[dict]:
-    """Tavily search on `domains`, with the one process-wide quota latch.
-
-    HTTP 432 (plan limit spent) is recognised by status code, sets the latch
-    and raises WebSearchUnavailable; every later call raises it at once. Other
-    failures raise as they are. The scout and the RAG chat both call this —
-    until 16 Nov 2026 each had its own latch and sniffed "432" in the
-    exception text (code audit 4).
-    """
-    global _web_search_unavailable
-    import httpx  # dependency of pydantic-ai
-
-    if _web_search_unavailable:
-        raise WebSearchUnavailable(_web_search_unavailable)
-    try:
-        return _tavily_search(api_key, query, domains)
-    except httpx.HTTPStatusError as exc:
-        if exc.response.status_code == 432:
-            _web_search_unavailable = QUOTA_EXHAUSTED
-            raise WebSearchUnavailable(QUOTA_EXHAUSTED) from exc
-        raise
-
-
-def _tavily_search(api_key: str, query: str, domains: list[str]) -> list[dict]:
-    import httpx  # dependency of pydantic-ai
-
-    response = httpx.post(
-        "https://api.tavily.com/search",
-        json={
-            "api_key": api_key,
-            "query": query,
-            "include_domains": domains,
-            "max_results": 5,
-        },
-        timeout=30.0,
-    )
-    response.raise_for_status()
-    return response.json().get("results", [])
-
-
-def known_instruments(cfg: WorkflowConfig, ids: list[str], rules: dict) -> set[str]:
-    """Ids already in the legislation DB — re-ingesting them cannot add chunks.
-
-    Article-level ids (FR LEGIARTI…/JORFARTI…) are stored as legal_units under
-    their parent code instrument, not as instruments — check both tables, or
-    every re-run re-ingests the same article forever. Where the scouted id is
-    not the stored national_id at all (LT keys instruments by official number
-    and files the TAR id under metadata.dokumento_id), `known_key` says which
-    metadata key to match instead.
-    """
-    import psycopg
-
-    sql = (
-        "SELECT national_id FROM instruments WHERE national_id = ANY(%(ids)s) "
-        "UNION SELECT national_id FROM legal_units WHERE national_id = ANY(%(ids)s)"
-    )
-    if rules.get("known_key"):
-        sql += (
-            " UNION SELECT metadata->>%(key)s FROM instruments "
-            "WHERE metadata->>%(key)s = ANY(%(ids)s)"
-        )
-    # No except: a database error used to return the empty set, so every
-    # candidate was re-ingested (code audit 4). The ingest needs the same DB.
-    with psycopg.connect(cfg.database_url) as conn:
-        rows = conn.execute(sql, {"ids": ids, "key": rules.get("known_key")}).fetchall()
-    return {row[0] for row in rows}
-
-
-def _proc_failure(what: str, proc: subprocess.CompletedProcess) -> str:
-    """Failure text with exit code and the tail of BOTH streams.
-
-    stderr alone is not enough: the benign BGE-M3 tokenizer warning always
-    lands there and would mask the real error when it went to stdout, and a
-    negative returncode (killed by a signal, e.g. memory pressure) leaves no
-    traceback at all — the exit code is then the only evidence.
-    """
-    parts = []
-    for stream, text in (("stderr", proc.stderr), ("stdout", proc.stdout)):
-        lines = (text or "").strip().splitlines()
-        if lines:
-            parts.append(f"{stream}: {' | '.join(lines[-4:])}")
-    detail = "; ".join(parts) or "no output"
-    signal_hint = " — killed by a signal, likely memory pressure" if proc.returncode < 0 else ""
-    return f"{what} failed (exit {proc.returncode}{signal_hint}): {detail}"
-
-
-def _ingest_instrument(cfg: WorkflowConfig, country: str, instrument_id: str) -> str | None:
-    """Archive-first ingest of one instrument via the Nomotheca CLI; error text on failure.
-
-    Inside the worker (`NOMOS_PYTHON` set) the CLI runs from that interpreter
-    in the current directory; otherwise through `uv run` in the ingest package.
-    """
-    args = ["instrument", country.lower(), instrument_id, "--database-url", cfg.database_url]
-    return _run_ingest_cli(cfg, args, instrument_id)
-
-
-#: One scout ingest at a time per process: an eval runs several cases in
-#: threads, and two of them may scout the same act — two loaders writing one
-#: instrument at once would trip the version/chunk constraints.
-_INGEST_LOCK = threading.Lock()
-
-
-def _run_ingest_cli(cfg: WorkflowConfig, args: list[str], what: str) -> str | None:
-    """Run one Nomotheca CLI command; error text on failure."""
-    with _INGEST_LOCK:
-        return _run_ingest_cli_unlocked(cfg, args, what)
-
-
-def _run_ingest_cli_unlocked(cfg: WorkflowConfig, args: list[str], what: str) -> str | None:
-    env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
-    env["PYTHONUNBUFFERED"] = "1"
-    python = nomos_python()
-    if python:
-        command, cwd = [python, "-m", "nomotheca_ingest.cli", *args], Path.cwd()
-    else:
-        cwd = ingest_dir()
-        if cwd is None:
-            return "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR or NOMOS_PYTHON)"
-        command = ["uv", "run", "python", "-m", "nomotheca_ingest.cli", *args]
-    proc = subprocess.run(
-        command, cwd=cwd, env=env, capture_output=True, text=True, timeout=INGEST_TIMEOUT
-    )
-    if proc.returncode != 0:
-        return _proc_failure(f"{what}: ingest", proc)
-    return None
-
 
 def _rank_candidates(
     cfg: WorkflowConfig, info, candidates: list[str], titles: dict[str, str]
@@ -614,60 +194,6 @@ def _rank_candidates(
     picked = [i for i in selection.instrument_ids if i in candidates]
     return picked + [i for i in candidates if i not in picked]
 
-
-def _build_embeddings(cfg: WorkflowConfig) -> str | None:
-    """Embed chunks that are missing vectors (incremental) so the vector leg
-    of the retrieval retry covers what the scout just ingested."""
-    directory = ingest_dir()
-    if nomos_python():
-        # The worker's interpreter, current directory: no local model export to
-        # point at, so the CLI falls back to the Hugging Face id and its own
-        # device selection.
-        model_args: list[str] = []
-    elif directory is None:
-        return "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR or NOMOS_PYTHON)"
-    else:
-        model_args = _embedding_model_args(directory, cuda=_cuda_available(directory))
-    spec = embedding_process(
-        directory,
-        "nomotheca_ingest.cli",
-        "embeddings",
-        "build",
-        "--database-url",
-        cfg.database_url,
-        # Rich's live progress is noise in captured output and can bury the
-        # real error; the per-batch commits do not depend on it.
-        "--no-progress",
-        *model_args,
-    )
-    proc = subprocess.run(
-        spec.command, cwd=spec.cwd, env=spec.env, capture_output=True, text=True, timeout=embed_timeout()
-    )
-    if proc.returncode != 0:
-        return _proc_failure("embeddings build", proc)
-    return None
-
-
-def _cuda_available(directory: Path) -> bool:
-    """Return whether the ingest package has its GPU environment installed."""
-    return embedding_process(directory, "nomotheca_ingest.cli").cuda
-
-
-def _embedding_model_args(directory: Path, *, cuda: bool) -> list[str]:
-    """Pick the local model for the environment we are about to run in.
-
-    The OpenVINO IR only loads under the OpenVINO backend, so on the GPU we ask
-    for the Torch export if one was downloaded and otherwise let the CLI fall
-    back to the Hugging Face id (device selection is the CLI's own job).
-    """
-    if cuda:
-        torch_model = directory / "models" / "bge-m3"
-        if (torch_model / "config.json").is_file():
-            return ["--model-path", "models/bge-m3"]
-        return []
-    if (directory / "models" / "bge-m3-openvino").is_dir():
-        return ["--backend", "openvino", "--model-path", "models/bge-m3-openvino"]
-    return []
 
 
 #: Cap on how much of the analyst's account is quoted into the scout prompt.
@@ -777,7 +303,7 @@ def run(
     result.candidate_ids = list(dict.fromkeys(ids))
     if len(result.candidate_ids) > 1 and titles:
         result.candidate_ids = _rank_candidates(cfg, info, result.candidate_ids, titles)
-    known = known_instruments(cfg, result.candidate_ids, rules) | set(attempted or ())
+    known = scout_ingest.known_instruments(cfg, result.candidate_ids, rules) | set(attempted or ())
     to_ingest = [i for i in result.candidate_ids if i not in known][: cfg.scout_max_ingest]
     if result.candidate_ids:
         progress(
@@ -792,7 +318,7 @@ def run(
         )
         started = time.monotonic()
         try:
-            error = _ingest_instrument(cfg, info.country, instrument_id + suffix)
+            error = scout_ingest.ingest_instrument(cfg, info.country, instrument_id + suffix)
         except subprocess.TimeoutExpired:
             error = f"{instrument_id}: ingest timed out after {INGEST_TIMEOUT}s"
         if error is None:
@@ -811,7 +337,7 @@ def run(
         )
         started = time.monotonic()
         try:
-            error = _build_embeddings(cfg)
+            error = scout_ingest.build_embeddings(cfg)
         except subprocess.TimeoutExpired:
             error = f"embeddings build timed out after {embed_timeout()}s (partial vectors kept)"
         if error:
@@ -821,6 +347,9 @@ def run(
             progress(f"  [scout] ✓ embeddings up to date ({time.monotonic() - started:.0f}s)")
     return result
 
+
+#: At most this many guidance documents ingested per round (each is one PDF).
+GUIDANCE_MAX_INGEST = 2
 
 #: Words in the analyst's needs that point at a publisher's document rather than an act.
 _GUIDANCE_HINT = re.compile(r"(?i)circulaire|instruction|doctrine|BOFiP|BOI-|Cnav|Unédic|Unedic")
@@ -836,7 +365,7 @@ def _search_guidance(
     are kept only when the URL is one document of a listed publisher.
     """
     publishers = GUIDANCE_PUBLISHERS.get(country)
-    if not publishers or cfg.scout != "tavily" or not cfg.tavily_api_key or _web_search_unavailable:
+    if not publishers or cfg.scout != "tavily" or not cfg.tavily_api_key or web.unavailable():
         return []
     queries = [q for q in suggestion.guidance_queries if q.strip()][:2]
     if not queries:
@@ -874,7 +403,7 @@ def _ingest_guidance(
         return
     urls = [d.url for d in documents]
     result.candidate_ids += [u for u in urls if u not in result.candidate_ids]
-    known = known_instruments(cfg, urls, {}) | attempted
+    known = scout_ingest.known_instruments(cfg, urls, {}) | attempted
     fresh = [d for d in documents if d.url not in known][:GUIDANCE_MAX_INGEST]
     progress(
         f"  [scout] {len(documents)} guidance document(s) "
@@ -895,7 +424,7 @@ def _ingest_guidance(
             "--trigger", "cache_miss",
         ]
         try:
-            error = _run_ingest_cli(cfg, args, document.title)
+            error = scout_ingest.run_ingest_cli(cfg, args, document.title)
         except subprocess.TimeoutExpired:
             error = f"{document.title}: ingest timed out after {INGEST_TIMEOUT}s"
         if error is None:
@@ -905,66 +434,3 @@ def _ingest_guidance(
             result.errors.append(error)
             progress(f"  [scout] ✗ {error}")
 
-
-def locate(
-    cfg: WorkflowConfig,
-    record: ParameterRecord,
-    as_of: date,
-    needs: list[str],
-    known_chunk_ids: Iterable[str],
-    later_until: date | None = None,
-) -> tuple[list[RetrievalHit], list[str]]:
-    """Look the analyst's named sources up in the corpus we already hold.
-
-    The complement of `run`: that one fetches what is missing, this one finds
-    what is present but was ranked out. Nothing here weakens the contract —
-    the chunks come from the database like any retrieved chunk and the
-    verbatim-quote check still applies to whatever gets cited from them.
-    Returns the new chunks (not already among `known_chunk_ids`) and the
-    citations they belong to, for the ScoutResult and the reviewer. With
-    `later_until`, a named source whose version starts after `as_of` and by
-    that date is found too, as a "later_in_year" hit (retrieval.later_in_year).
-    """
-    info = record.information
-    seen = set(known_chunk_ids)
-    hits: list[RetrievalHit] = []
-    citations: list[str] = []
-    with retrieval.connect(cfg) as conn:
-        scope = retrieval.record_scope(conn, info)
-        lang = retrieval.law_language(scope)
-        held = retrieval.instruments_of_chunks(conn, list(seen))
-        # Articles missing between two retrieved ones (AGIRC-ARRCO art. 36
-        # between 35 and 38), then the code articles the retrieved ones send
-        # the reader to (R. 531-1 → R. 522-2), come first: they need no named
-        # source at all.
-        for hit in [
-            *retrieval.gap_articles(conn, scope, lang, as_of, list(seen)),
-            *retrieval.cross_referenced_articles(conn, scope, lang, as_of, list(seen)),
-            *retrieval.same_act_articles(conn, lang, list(seen)),
-        ]:
-            if hit.chunk_id in seen:
-                continue
-            seen.add(hit.chunk_id)
-            hits.append(hit)
-            if hit.citation and hit.citation not in citations:
-                citations.append(hit.citation)
-        for need in needs[:5]:
-            found = retrieval.locate_named_units(
-                conn, scope, lang, as_of, need, held_instrument_ids=held
-            )
-            if later_until is not None and later_until > as_of:
-                found += [
-                    hit.model_copy(update={"method": "later_in_year"})
-                    for hit in retrieval.locate_named_units(
-                        conn, scope, lang, later_until, need, held_instrument_ids=held
-                    )
-                    if (retrieval.validity_start(hit.validity) or date.min) > as_of
-                ]
-            for hit in found:
-                if hit.chunk_id in seen:
-                    continue
-                seen.add(hit.chunk_id)
-                hits.append(hit)
-                if hit.citation and hit.citation not in citations:
-                    citations.append(hit.citation)
-    return hits, citations

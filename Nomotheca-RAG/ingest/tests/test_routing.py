@@ -197,7 +197,7 @@ def test_a_portal_declared_by_an_adapter_is_all_the_router_needs() -> None:
 
 
 def _scout_module() -> Path | None:
-    """Locate the Nomoscope scout's source file, if that package is checked out."""
+    """Locate the Nomoscope scout's source tables, if that package is checked out."""
     for ancestor in Path(__file__).resolve().parents:
         candidate = (
             ancestor
@@ -205,7 +205,7 @@ def _scout_module() -> Path | None:
             / "pipeline"
             / "src"
             / "nomoscope_workflow"
-            / "scout.py"
+            / "scout_sources.py"
         )
         if candidate.is_file():
             return candidate

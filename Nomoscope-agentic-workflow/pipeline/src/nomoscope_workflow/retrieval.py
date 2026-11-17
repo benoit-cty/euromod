@@ -16,6 +16,7 @@ job when WORKFLOW_ENCODER=db) and falls back to FTS-only when the encoder is una
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import date
 
 import psycopg
@@ -24,7 +25,7 @@ from psycopg.rows import dict_row
 from . import query_encoder
 from .quotes import closest_passage, quote_span, verify_extract  # noqa: F401  (re-exported)
 from .config import PLACEHOLDER_MODEL_ID, WorkflowConfig
-from .schema import RetrievalHit
+from .schema import ParameterRecord, RetrievalHit
 from .corpus import (  # noqa: F401  (re-exported: retrieval is the facade)
     CHUNK_JOINS,
     HIT_COLUMNS,
@@ -252,3 +253,66 @@ def later_in_year(
     ]
     return later[:LATER_MAX_HITS]
 
+
+def locate_sources(
+    cfg: WorkflowConfig,
+    record: ParameterRecord,
+    as_of: date,
+    needs: list[str],
+    known_chunk_ids: Iterable[str],
+    later_until: date | None = None,
+) -> tuple[list[RetrievalHit], list[str]]:
+    """Look the analyst's named sources up in the corpus we already hold.
+
+    The complement of the scout's `run`: that one fetches what is missing, this one finds
+    what is present but was ranked out. Nothing here weakens the contract —
+    the chunks come from the database like any retrieved chunk and the
+    verbatim-quote check still applies to whatever gets cited from them.
+    Returns the new chunks (not already among `known_chunk_ids`) and the
+    citations they belong to, for the ScoutResult and the reviewer. With
+    `later_until`, a named source whose version starts after `as_of` and by
+    that date is found too, as a "later_in_year" hit (`later_in_year`).
+    """
+    info = record.information
+    seen = set(known_chunk_ids)
+    hits: list[RetrievalHit] = []
+    citations: list[str] = []
+    with connect(cfg) as conn:
+        scope = record_scope(conn, info)
+        lang = law_language(scope)
+        held = instruments_of_chunks(conn, list(seen))
+        # Articles missing between two retrieved ones (AGIRC-ARRCO art. 36
+        # between 35 and 38), then the code articles the retrieved ones send
+        # the reader to (R. 531-1 → R. 522-2), come first: they need no named
+        # source at all.
+        for hit in [
+            *gap_articles(conn, scope, lang, as_of, list(seen)),
+            *cross_referenced_articles(conn, scope, lang, as_of, list(seen)),
+            *same_act_articles(conn, lang, list(seen)),
+        ]:
+            if hit.chunk_id in seen:
+                continue
+            seen.add(hit.chunk_id)
+            hits.append(hit)
+            if hit.citation and hit.citation not in citations:
+                citations.append(hit.citation)
+        for need in needs[:5]:
+            found = locate_named_units(
+                conn, scope, lang, as_of, need, held_instrument_ids=held
+            )
+            if later_until is not None and later_until > as_of:
+                found += [
+                    hit.model_copy(update={"method": "later_in_year"})
+                    for hit in locate_named_units(
+                        conn, scope, lang, later_until, need, held_instrument_ids=held
+                    )
+                    if (validity_start(hit.validity) or date.min) > as_of
+                ]
+            for hit in found:
+                if hit.chunk_id in seen:
+                    continue
+                seen.add(hit.chunk_id)
+                hits.append(hit)
+                if hit.citation and hit.citation not in citations:
+                    citations.append(hit.citation)
+    return hits, citations

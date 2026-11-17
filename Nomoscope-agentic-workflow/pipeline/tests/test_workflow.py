@@ -12,10 +12,10 @@ from nomoscope_workflow import mock
 from nomoscope_workflow.query_encoder import embedding_process
 from nomoscope_workflow.scout import (
     ScoutResult,
-    _embedding_model_args,
     _evidence_block,
     merge_results,
 )
+from nomoscope_workflow.scout_ingest import _embedding_model_args
 from nomoscope_workflow.pipeline import (
     GUIDANCE_ONLY_ISSUE,
     cited_classes,
@@ -476,7 +476,7 @@ def test_embedding_process_uses_nomos_python_in_the_current_directory(tmp_path: 
 
 def test_scout_ingest_uses_nomos_python(tmp_path: Path, monkeypatch) -> None:
     """The scout's archive-first ingest follows the same switch."""
-    from nomoscope_workflow import scout as scout_mod
+    from nomoscope_workflow import scout_ingest
     from nomoscope_workflow.config import WorkflowConfig
 
     monkeypatch.setenv("NOMOS_PYTHON", "/opt/worker/bin/python")
@@ -491,10 +491,10 @@ def test_scout_ingest_uses_nomos_python(tmp_path: Path, monkeypatch) -> None:
         calls.append({"command": command, **kwargs})
         return _Done()
 
-    monkeypatch.setattr(scout_mod.subprocess, "run", fake_run)
+    monkeypatch.setattr(scout_ingest.subprocess, "run", fake_run)
     cfg = WorkflowConfig(database_url="postgresql://u@h/db")
 
-    assert scout_mod._ingest_instrument(cfg, "FR", "JORFTEXT000051168007") is None
+    assert scout_ingest.ingest_instrument(cfg, "FR", "JORFTEXT000051168007") is None
     assert calls[0]["command"] == [
         "/opt/worker/bin/python", "-m", "nomotheca_ingest.cli",
         "instrument", "fr", "JORFTEXT000051168007", "--database-url", "postgresql://u@h/db",
@@ -502,7 +502,7 @@ def test_scout_ingest_uses_nomos_python(tmp_path: Path, monkeypatch) -> None:
     assert calls[0]["cwd"] == Path.cwd()
     assert "VIRTUAL_ENV" not in calls[0]["env"]
 
-    assert scout_mod._build_embeddings(cfg) is None
+    assert scout_ingest.build_embeddings(cfg) is None
     assert calls[1]["command"] == [
         "/opt/worker/bin/python", "-m", "nomotheca_ingest.cli", "embeddings", "build",
         "--database-url", "postgresql://u@h/db", "--no-progress",
@@ -1026,6 +1026,7 @@ def test_scout_reads_a_publisher_document_off_its_url():
 def test_scout_ingests_a_cnav_circular_as_guidance(monkeypatch):
     """The ASI ceiling case: the analyst names the Cnav circular, the scout fetches it."""
     from nomoscope_workflow import scout as scout_mod
+    from nomoscope_workflow import scout_ingest, web
     from nomoscope_workflow.config import WorkflowConfig
 
     url = "https://legislation.lassuranceretraite.fr/Pdf/circulaire_cnav_2025_13_03042025.pdf"
@@ -1041,8 +1042,8 @@ def test_scout_ingests_a_cnav_circular_as_guidance(monkeypatch):
             ]
         return []
 
-    monkeypatch.setattr(scout_mod, "_web_search_unavailable", None)
-    monkeypatch.setattr(scout_mod, "_tavily_search", fake_search)
+    monkeypatch.setattr(web, "_web_search_unavailable", None)
+    monkeypatch.setattr(web, "_tavily_search", fake_search)
     monkeypatch.setattr(
         scout_mod.llm,
         "run_agent",
@@ -1051,9 +1052,9 @@ def test_scout_ingests_a_cnav_circular_as_guidance(monkeypatch):
             guidance_queries=["circulaire Cnav 2025 plafonds ASI revalorisation"],
         ),
     )
-    monkeypatch.setattr(scout_mod, "known_instruments", lambda cfg, ids, rules: set())
-    monkeypatch.setattr(scout_mod, "_run_ingest_cli", lambda cfg, args, what: ran.append(args))
-    monkeypatch.setattr(scout_mod, "_build_embeddings", lambda cfg: None)
+    monkeypatch.setattr(scout_ingest, "known_instruments", lambda cfg, ids, rules: set())
+    monkeypatch.setattr(scout_ingest, "run_ingest_cli", lambda cfg, args, what: ran.append(args))
+    monkeypatch.setattr(scout_ingest, "build_embeddings", lambda cfg: None)
 
     cfg = WorkflowConfig(database_url="postgresql://u@h/db", scout="tavily", tavily_api_key="k")
     record = _record("scalar", "currency/year", 17000.0)
@@ -1406,7 +1407,7 @@ def test_tavily_432_latches_by_status_code(monkeypatch):
     """One latch for scout and chat, keyed on the HTTP status (code audit 4)."""
     import httpx
 
-    from nomoscope_workflow import scout as scout_mod
+    from nomoscope_workflow import web
 
     calls = []
 
@@ -1415,11 +1416,11 @@ def test_tavily_432_latches_by_status_code(monkeypatch):
         request = httpx.Request("POST", "https://api.tavily.com/search")
         raise httpx.HTTPStatusError("432", request=request, response=httpx.Response(432, request=request))
 
-    monkeypatch.setattr(scout_mod, "_web_search_unavailable", None)
-    monkeypatch.setattr(scout_mod, "_tavily_search", quota_spent)
+    monkeypatch.setattr(web, "_web_search_unavailable", None)
+    monkeypatch.setattr(web, "_tavily_search", quota_spent)
     for _ in range(2):
-        with pytest.raises(scout_mod.WebSearchUnavailable):
-            scout_mod.web_search("k", "q", [])
+        with pytest.raises(web.WebSearchUnavailable):
+            web.web_search("k", "q", [])
     assert calls == ["q"]  # latched: no second request
 
 
