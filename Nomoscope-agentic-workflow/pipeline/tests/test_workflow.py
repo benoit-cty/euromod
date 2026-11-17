@@ -494,7 +494,8 @@ def test_scout_ingest_uses_nomos_python(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(scout_ingest.subprocess, "run", fake_run)
     cfg = WorkflowConfig(database_url="postgresql://u@h/db")
 
-    assert scout_ingest.ingest_instrument(cfg, "FR", "JORFTEXT000051168007") is None
+    args = scout_ingest.instrument_args(cfg, "FR", "JORFTEXT000051168007")
+    assert scout_ingest.run_ingest_cli(cfg, args, "JORFTEXT000051168007") is None
     assert calls[0]["command"] == [
         "/opt/worker/bin/python", "-m", "nomotheca_ingest.cli",
         "instrument", "fr", "JORFTEXT000051168007", "--database-url", "postgresql://u@h/db",

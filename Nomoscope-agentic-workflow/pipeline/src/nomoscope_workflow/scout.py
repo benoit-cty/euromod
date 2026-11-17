@@ -19,7 +19,6 @@ years).
 from __future__ import annotations
 
 import re
-import subprocess
 import time
 from dataclasses import dataclass, field
 from datetime import date
@@ -311,23 +310,20 @@ def run(
             f"{len(known)} already in DB, {len(to_ingest)} to ingest"
         )
     suffix = rules.get("ingest_suffix", "")
-    for instrument_id in to_ingest:
-        progress(
-            f"  [scout] ingesting {instrument_id}{suffix} "
-            f"(archive-first: fetch → snapshot → parse → chunk; up to {INGEST_TIMEOUT}s)…"
+    jobs = [
+        _IngestJob(
+            key=instrument_id,
+            label=instrument_id + suffix,
+            args=scout_ingest.instrument_args(cfg, info.country, instrument_id + suffix),
+            announce=(
+                f"{instrument_id}{suffix} "
+                f"(archive-first: fetch → snapshot → parse → chunk; up to {INGEST_TIMEOUT}s)"
+            ),
         )
-        started = time.monotonic()
-        try:
-            error = scout_ingest.ingest_instrument(cfg, info.country, instrument_id + suffix)
-        except subprocess.TimeoutExpired:
-            error = f"{instrument_id}: ingest timed out after {INGEST_TIMEOUT}s"
-        if error is None:
-            result.ingested.append(instrument_id)
-            progress(f"  [scout] ✓ {instrument_id} ingested ({time.monotonic() - started:.0f}s)")
-        else:
-            result.errors.append(error)
-            progress(f"  [scout] ✗ {error}")
-    _ingest_guidance(cfg, info.country, documents, result, set(attempted or ()))
+        for instrument_id in to_ingest
+    ]
+    jobs += _guidance_jobs(cfg, info.country, documents, result, set(attempted or ()))
+    _ingest_all(cfg, jobs, result)
     if not result.candidate_ids and not result.errors:
         progress("  [scout] no candidate instrument found for the stated needs")
     if result.ingested and cfg.embedding_model_id != PLACEHOLDER_MODEL_ID:
@@ -336,10 +332,7 @@ def run(
             f"(~1 chunk/s on CPU — expect high CPU, up to {embed_timeout()}s)…"
         )
         started = time.monotonic()
-        try:
-            error = scout_ingest.build_embeddings(cfg)
-        except subprocess.TimeoutExpired:
-            error = f"embeddings build timed out after {embed_timeout()}s (partial vectors kept)"
+        error = scout_ingest.build_embeddings(cfg)
         if error:
             result.errors.append(error)  # FTS still covers the new chunks
             progress(f"  [scout] ✗ {error}")
@@ -391,16 +384,26 @@ def _search_guidance(
     return list(documents.values())
 
 
-def _ingest_guidance(
+@dataclass(frozen=True)
+class _IngestJob:
+    """One archive-first ingest the scout decided on."""
+
+    key: str  # what `ScoutResult.ingested` records: the instrument id or the URL
+    label: str  # what progress and error lines name
+    args: list[str]  # the Nomotheca CLI command
+    announce: str  # the "ingesting …" progress line
+
+
+def _guidance_jobs(
     cfg: WorkflowConfig,
     country: str,
     documents: list[GuidanceDocument],
     result: ScoutResult,
     attempted: set[str],
-) -> None:
-    """Ingest the new guidance documents as contributed documents of their publisher's kind."""
+) -> list[_IngestJob]:
+    """The new guidance documents, as contributed documents of their publisher's kind."""
     if not documents:
-        return
+        return []
     urls = [d.url for d in documents]
     result.candidate_ids += [u for u in urls if u not in result.candidate_ids]
     known = scout_ingest.known_instruments(cfg, urls, {}) | attempted
@@ -411,26 +414,35 @@ def _ingest_guidance(
         f"{len(documents) - len([d for d in documents if d.url not in known])} already in DB, "
         f"{len(fresh)} to ingest"
     )
-    for document in fresh:
-        progress(f"  [scout] ingesting {document.title} as {document.kind} (guidance)…")
-        args = [
-            "document", document.url,
-            "--database-url", cfg.database_url,
-            "--jurisdiction", country,
-            "--lang", retrieval.LANG_BY_COUNTRY.get(country, "en"),
-            "--title", document.title,
-            "--kind", document.kind,
-            "--valid-from", document.valid_from.isoformat(),
-            "--trigger", "cache_miss",
-        ]
-        try:
-            error = scout_ingest.run_ingest_cli(cfg, args, document.title)
-        except subprocess.TimeoutExpired:
-            error = f"{document.title}: ingest timed out after {INGEST_TIMEOUT}s"
+    return [
+        _IngestJob(
+            key=document.url,
+            label=document.title,
+            args=[
+                "document", document.url,
+                "--database-url", cfg.database_url,
+                "--jurisdiction", country,
+                "--lang", retrieval.LANG_BY_COUNTRY.get(country, "en"),
+                "--title", document.title,
+                "--kind", document.kind,
+                "--valid-from", document.valid_from.isoformat(),
+                "--trigger", "cache_miss",
+            ],
+            announce=f"{document.title} as {document.kind} (guidance)",
+        )
+        for document in fresh
+    ]
+
+
+def _ingest_all(cfg: WorkflowConfig, jobs: list[_IngestJob], result: ScoutResult) -> None:
+    """The scout's one ingest loop: instruments and guidance documents alike."""
+    for job in jobs:
+        progress(f"  [scout] ingesting {job.announce}…")
+        started = time.monotonic()
+        error = scout_ingest.run_ingest_cli(cfg, job.args, job.label)
         if error is None:
-            result.ingested.append(document.url)
-            progress(f"  [scout] ✓ {document.title} ingested")
+            result.ingested.append(job.key)
+            progress(f"  [scout] ✓ {job.label} ingested ({time.monotonic() - started:.0f}s)")
         else:
             result.errors.append(error)
             progress(f"  [scout] ✗ {error}")
-

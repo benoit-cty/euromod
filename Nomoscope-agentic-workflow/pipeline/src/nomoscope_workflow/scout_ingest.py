@@ -13,7 +13,7 @@ import threading
 from pathlib import Path
 
 from .config import WorkflowConfig
-from .query_encoder import embedding_process, ingest_dir, nomos_python
+from .query_encoder import EmbeddingProcess, embedding_process, ingest_dir, nomos_python
 
 INGEST_TIMEOUT = 600  # a single arrêté is seconds; a loi de finances, minutes
 # The embedding pass covers the whole backlog of unembedded chunks, not just the
@@ -74,14 +74,29 @@ def _proc_failure(what: str, proc: subprocess.CompletedProcess) -> str:
     return f"{what} failed (exit {proc.returncode}{signal_hint}): {detail}"
 
 
-def ingest_instrument(cfg: WorkflowConfig, country: str, instrument_id: str) -> str | None:
-    """Archive-first ingest of one instrument via the Nomotheca CLI; error text on failure.
+_NO_INGEST_DIR = "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR or NOMOS_PYTHON)"
 
-    Inside the worker (`NOMOS_PYTHON` set) the CLI runs from that interpreter
-    in the current directory; otherwise through `uv run` in the ingest package.
+
+def _launch(spec: EmbeddingProcess, what: str, timeout: int, timeout_note: str = "") -> str | None:
+    """Run one ingest-package subprocess to completion; error text on failure.
+
+    The one launcher of the scout: a non-zero exit becomes `_proc_failure`, a
+    timeout `"<what> timed out after <n>s<note>"`.
     """
-    args = ["instrument", country.lower(), instrument_id, "--database-url", cfg.database_url]
-    return run_ingest_cli(cfg, args, instrument_id)
+    try:
+        proc = subprocess.run(
+            spec.command, cwd=spec.cwd, env=spec.env, capture_output=True, text=True, timeout=timeout
+        )
+    except subprocess.TimeoutExpired:
+        return f"{what} timed out after {timeout}s{timeout_note}"
+    if proc.returncode != 0:
+        return _proc_failure(what, proc)
+    return None
+
+
+def instrument_args(cfg: WorkflowConfig, country: str, instrument_id: str) -> list[str]:
+    """The Nomotheca CLI arguments that ingest one instrument, archive-first."""
+    return ["instrument", country.lower(), instrument_id, "--database-url", cfg.database_url]
 
 
 #: One scout ingest at a time per process: an eval runs several cases in
@@ -91,12 +106,11 @@ _INGEST_LOCK = threading.Lock()
 
 
 def run_ingest_cli(cfg: WorkflowConfig, args: list[str], what: str) -> str | None:
-    """Run one Nomotheca CLI command; error text on failure."""
-    with _INGEST_LOCK:
-        return _run_ingest_cli_unlocked(cfg, args, what)
+    """Run one Nomotheca CLI command; error text on failure.
 
-
-def _run_ingest_cli_unlocked(cfg: WorkflowConfig, args: list[str], what: str) -> str | None:
+    Inside the worker (`NOMOS_PYTHON` set) the CLI runs from that interpreter
+    in the current directory; otherwise through `uv run` in the ingest package.
+    """
     env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
     env["PYTHONUNBUFFERED"] = "1"
     python = nomos_python()
@@ -105,15 +119,11 @@ def _run_ingest_cli_unlocked(cfg: WorkflowConfig, args: list[str], what: str) ->
     else:
         cwd = ingest_dir()
         if cwd is None:
-            return "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR or NOMOS_PYTHON)"
+            return _NO_INGEST_DIR
         command = ["uv", "run", "python", "-m", "nomotheca_ingest.cli", *args]
-    proc = subprocess.run(
-        command, cwd=cwd, env=env, capture_output=True, text=True, timeout=INGEST_TIMEOUT
-    )
-    if proc.returncode != 0:
-        return _proc_failure(f"{what}: ingest", proc)
-    return None
-
+    spec = EmbeddingProcess(command=command, env=env, cuda=False, cwd=cwd)
+    with _INGEST_LOCK:
+        return _launch(spec, f"{what}: ingest", INGEST_TIMEOUT)
 
 
 def build_embeddings(cfg: WorkflowConfig) -> str | None:
@@ -126,7 +136,7 @@ def build_embeddings(cfg: WorkflowConfig) -> str | None:
         # device selection.
         model_args: list[str] = []
     elif directory is None:
-        return "could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR or NOMOS_PYTHON)"
+        return _NO_INGEST_DIR
     else:
         model_args = _embedding_model_args(directory, cuda=_cuda_available(directory))
     spec = embedding_process(
@@ -141,12 +151,7 @@ def build_embeddings(cfg: WorkflowConfig) -> str | None:
         "--no-progress",
         *model_args,
     )
-    proc = subprocess.run(
-        spec.command, cwd=spec.cwd, env=spec.env, capture_output=True, text=True, timeout=embed_timeout()
-    )
-    if proc.returncode != 0:
-        return _proc_failure("embeddings build", proc)
-    return None
+    return _launch(spec, "embeddings build", embed_timeout(), " (partial vectors kept)")
 
 
 def _cuda_available(directory: Path) -> bool:
