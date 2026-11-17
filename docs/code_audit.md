@@ -235,6 +235,8 @@ Suggested fixes, in order of value:
 
 ### Size
 
+**Status (17 Nov 2026):** `score_item` is split into its legs (`_score_value`, `_score_date`, `_score_evidence`, `_score_critique`; re-scoring 973 stored cases gives identical results); `execute_run` is 49 lines; the two `draft_case` (122, 157) and `run_embedding_eval` (99) keep their size — the shared half of the drafters moved to `golden_drafting`, what remains is source-specific.
+
 | Function | Where | Lines |
 |---|---|---|
 | `draft_case` (OpenFisca) | `openfisca_golden.py:348-529` | 182 |

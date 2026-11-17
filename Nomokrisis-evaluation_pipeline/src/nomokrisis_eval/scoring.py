@@ -171,7 +171,11 @@ def score_item(
     constants: Mapping[str, object] | None = None,
 ) -> CaseResult:
     """Score one case. `constants` feeds $-reference resolution in values_equal
-    (casefolded constant name -> value in force for the case's country)."""
+    (casefolded constant name -> value in force for the case's country).
+
+    The legs, in order: value (and OpenFisca), date, evidence (citation,
+    recall, vector leg), then the critique, which can withdraw credit.
+    """
     expected = case.expected
     proposed = item.proposed_value
 
@@ -199,6 +203,15 @@ def score_item(
     )
 
     on_basis = _on_parameter_basis(proposed.value, item) if proposed is not None else None
+    _score_value(result, expected, proposed, on_basis, constants)
+    _score_date(result, expected, item, proposed)
+    _score_evidence(result, expected, item, proposed)
+    _score_critique(result, expected, item, proposed, on_basis, constants)
+    return result
+
+
+def _score_value(result: CaseResult, expected, proposed, on_basis, constants) -> None:
+    """value_correct (incl. accepted alternatives) and the OpenFisca comparison."""
     if expected.value is not None:
         result.value_correct = proposed is not None and values_equal(
             on_basis, expected.value, constants
@@ -220,6 +233,9 @@ def score_item(
                 expected.value, reference, constants
             ) or any(values_equal(a, reference, constants) for a in expected.accept or [])
 
+
+
+def _score_date(result: CaseResult, expected, item: ReviewItem, proposed) -> None:
     # The date leg is only meaningful when the pipeline is dating a change.
     # On an `unchanged` verdict `pipeline._unchanged_window` deliberately keeps
     # the validity window EUROMOD already holds — the citation re-confirms the
@@ -232,6 +248,9 @@ def score_item(
     if expected.valid_from is not None and not both_unchanged:
         result.date_correct = proposed is not None and proposed.valid_from == expected.valid_from
 
+
+
+def _score_evidence(result: CaseResult, expected, item: ReviewItem, proposed) -> None:
     # The evidence legs are only meaningful when the pipeline is looking for
     # evidence. On a `derived` verdict `pipeline._derived_refs` short-circuits to
     # the anchor parameter BEFORE retrieval and before any LLM call — a value
@@ -259,6 +278,9 @@ def score_item(
     if ranked:
         result.vector_leg = ranked != {"fts"}
 
+
+
+def _score_critique(result: CaseResult, expected, item: ReviewItem, proposed, on_basis, constants) -> None:
     if proposed is not None:
         critique = item.critique
         # Mechanical only: `extract_offsets` is set by the verbatim check in
@@ -297,7 +319,6 @@ def score_item(
         # the flag to tell "refused to guess" apart from "guessed wrong".
         result.abstained = item.routing == Routing.NOT_FOUND
 
-    return result
 
 
 def _held_unit(value: float) -> float | None:
