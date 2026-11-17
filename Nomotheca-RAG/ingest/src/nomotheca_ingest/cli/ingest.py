@@ -7,7 +7,6 @@ import json
 from datetime import date
 from typing import Annotated
 
-import psycopg
 import typer
 
 from nomotheca_ingest.cli._app import DatabaseUrl, app
@@ -15,6 +14,7 @@ from nomotheca_ingest.core.ir import IngestMode, Trigger
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.pipeline import PipelineResult, run_database_ingest
 from nomotheca_ingest.core.progress import emit_json
+from nomotheca_ingest.core.db import connect
 
 
 @app.command()
@@ -118,7 +118,7 @@ def rechunk(
     chunk. This re-chunks every authentic text whose chunks stop short of its
     content; run `embeddings build` afterwards for the restored chunks.
     """
-    with psycopg.connect(database_url) as conn:
+    with connect(database_url) as conn:
         stats = LegislationLoader(conn).rechunk_truncated(jurisdiction.upper() if jurisdiction else None)
     typer.echo(json.dumps({"texts": stats.texts, "chunks": stats.chunks}, indent=2))
 
@@ -140,7 +140,7 @@ def canary(
     from nomotheca_ingest.countries.registry import jurisdictions
 
     codes = [c.upper() for c in jurisdiction] if jurisdiction else jurisdictions()
-    with psycopg.connect(database_url) as conn:
+    with connect(database_url) as conn:
         results = check_canaries(conn, codes)
     for r in results:
         latest = r.latest_start.isoformat() if r.latest_start else "-"

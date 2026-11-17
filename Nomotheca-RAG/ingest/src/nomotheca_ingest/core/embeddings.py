@@ -49,6 +49,7 @@ from nomotheca_ingest.core.embedding_backend import (  # noqa: F401
 from nomotheca_ingest.core.embedding_models import DEFAULT_MODEL, EmbeddingModelSpec, get_model
 from nomotheca_ingest.core.progress import BatchStats, ProgressCallback, emit
 from nomotheca_ingest.core.text import sha256_hex
+from nomotheca_ingest.core.db import connect
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,7 +128,7 @@ def embedding_build_lock(conninfo: str, on_wait: LockWaitCallback | None = None)
     if _embedding_lock_conn is not None:
         yield
         return
-    conn = psycopg.connect(conninfo, autocommit=True, application_name=embedding_lock_application_name())
+    conn = connect(conninfo, autocommit=True, application_name=embedding_lock_application_name())
     try:
         reported = None
         waited = False
@@ -166,7 +167,6 @@ def build_embeddings(
     limit: int | None = None,
     dry_run: bool = False,
     progress: ProgressCallback | None = None,
-    commit_each_batch: bool = False,
     authentic_only: bool = False,
     langs: Sequence[str] | None = None,
     in_force_on: Sequence[date] | None = None,
@@ -177,9 +177,9 @@ def build_embeddings(
     A real build (not a dry run) holds `embedding_build_lock` throughout,
     so two builds never share the GPU; ``lock=False`` is for tests only.
 
-    With commit_each_batch, every embedded batch is committed as it lands so a
-    killed or timed-out run keeps the vectors already computed — embedding is
-    minutes of CPU work, and the input-hash check makes re-runs resume cleanly.
+    Every embedded batch is committed as it lands, so a killed or timed-out
+    run keeps the vectors already computed — embedding is minutes of GPU or
+    CPU work, and the input-hash check makes re-runs resume cleanly.
 
     `authentic_only` / `langs` / `in_force_on` narrow the build to what
     evidence retrieval searches (the law's own text, in the country's
@@ -189,7 +189,7 @@ def build_embeddings(
     scope = {"authentic_only": authentic_only, "langs": langs, "in_force_on": in_force_on}
     run = lambda: _build(  # noqa: E731
         conn, backend, model_id=model_id, batch_size=batch_size, limit=limit, dry_run=dry_run,
-        progress=progress, commit_each_batch=commit_each_batch, **scope,
+        progress=progress, **scope,
     )
     if dry_run or not lock:
         return run()
@@ -210,15 +210,13 @@ def _build(
     limit: int | None,
     dry_run: bool,
     progress: ProgressCallback | None,
-    commit_each_batch: bool,
     authentic_only: bool,
     langs: Sequence[str] | None,
     in_force_on: Sequence[date] | None,
 ) -> BatchStats:
     if not dry_run:
         ensure_embedding_model(conn, get_model(model_id))
-        if commit_each_batch:
-            conn.commit()  # the model row must survive even if the first batch doesn't
+        conn.commit()  # the model row must survive even if the first batch doesn't
 
     stats = BatchStats()
     batch: list[ChunkForEmbedding] = []
@@ -238,7 +236,7 @@ def _build(
         if len(batch) >= batch_size:
             emit(progress, "encoding", stats, batch_size=len(batch))
             embedded, skipped = _embed_batch(conn, backend, batch, model_id=model_id, dry_run=dry_run)
-            if commit_each_batch and not dry_run:
+            if not dry_run:
                 conn.commit()
             stats = stats.plus(done=embedded, skipped=skipped)
             emit(progress, "embedded", stats, batch_size=embedded)

@@ -25,6 +25,7 @@ from typing import Literal
 
 from nomotheca_ingest.core.browser import browser_available, with_browser
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
+from nomotheca_ingest.core.db import connect
 
 #: The DILA id shapes the FR adapter can fetch (KALI: collective agreements).
 DILA_ID = re.compile(r"\b(?:JORFTEXT|LEGIARTI|KALITEXT|KALIARTI)\d{12}\b")
@@ -80,11 +81,9 @@ def resolve_from_database(url: str, database_url: str | None) -> EliResolution |
     """Tier 1: the act may already be ingested, with this ELI stored on it."""
     if not database_url:
         return None
-    import psycopg
-
     normalised = eli_url_for(url)
     nor_match = NOR.search(url)
-    with psycopg.connect(database_url) as conn:
+    with connect(database_url) as conn:
         row = conn.execute(
             """
             SELECT national_id FROM instruments

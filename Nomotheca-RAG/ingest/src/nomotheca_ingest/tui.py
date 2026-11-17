@@ -213,16 +213,17 @@ class PipelineTui(App):
             on_fetch = partial(self._on_fetch, config.max_items)
             if config.database_url is None:
                 self.call_from_thread(self._log, "[cyan]run:[/cyan] Preview mode; snapshots stay in memory")
-                result = ingest(
-                    config.jurisdiction,
-                    config.identifier,
-                    SnapshotClient(InMemorySnapshotStore()),
-                    mode=config.mode,
-                    as_of=config.as_of,
-                    source_code=config.source_code,
-                    max_items=config.max_items,
-                    on_fetch=on_fetch,
-                )
+                with SnapshotClient(InMemorySnapshotStore()) as http:
+                    result = ingest(
+                        config.jurisdiction,
+                        config.identifier,
+                        http,
+                        mode=config.mode,
+                        as_of=config.as_of,
+                        source_code=config.source_code,
+                        max_items=config.max_items,
+                        on_fetch=on_fetch,
+                    )
                 self._finish_fetch(result, config)
                 self._set_step_threadsafe("load", "skipped", "Preview mode; no database URL")
                 self.call_from_thread(self._log, "[yellow]load:[/yellow] Skipped database load in preview mode")

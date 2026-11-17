@@ -7,10 +7,8 @@ from dataclasses import dataclass, field
 from datetime import date
 from uuid import UUID
 
-import psycopg
-
 from nomotheca_ingest.countries.registry import get_adapter
-from nomotheca_ingest.core.db import fetch_run
+from nomotheca_ingest.core.db import connect, fetch_run
 from nomotheca_ingest.core.ir import CitationRef, IngestMode, ParsedDoc, Snapshot, SourceRef, Trigger, WorkItem
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.reparse import ReparseStats, reload
@@ -130,18 +128,19 @@ def run_database_ingest(
         jurisdiction_code, identifier if mode == IngestMode.INSTRUMENT else None
     )
     with fetch_run(database_url, resolved_source_code, skill_version, trigger, frozen_label) as run:
-        result = ingest(
-            jurisdiction_code,
-            identifier,
-            SnapshotClient(run.store),
-            mode=mode,
-            as_of=as_of,
-            source_code=resolved_source_code,
-            max_items=max_items,
-            on_fetch=on_fetch,
-        )
+        with SnapshotClient(run.store) as http:
+            result = ingest(
+                jurisdiction_code,
+                identifier,
+                http,
+                mode=mode,
+                as_of=as_of,
+                source_code=resolved_source_code,
+                max_items=max_items,
+                on_fetch=on_fetch,
+            )
         result.run_id = run.id
-        with psycopg.connect(database_url) as conn:
+        with connect(database_url) as conn:
             loader = LegislationLoader(conn)
             result.loaded = [loader.load(doc) for doc in result.parsed]
         run.stats = _result_stats(result, trigger)
@@ -172,7 +171,7 @@ def reparse_snapshots(
     jurisdiction_code = jurisdiction.upper()
     adapter = get_adapter(jurisdiction_code)
     stats = ReparseStats()
-    with psycopg.connect(database_url) as conn:
+    with connect(database_url) as conn:
         rows = conn.execute(
             """
             SELECT fs.id, fs.url, fs.http_status, fs.content_type, fs.content_hash, fs.raw_content,

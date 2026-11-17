@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 from uuid import UUID
 
@@ -39,6 +39,27 @@ class SnapshotClient:
     store: SnapshotStore
     user_agent: str = USER_AGENT
     timeout_seconds: float = 30.0
+    #: One HTTP client for every request of a run (connection reuse), opened
+    #: on the first request and closed by `close` / the ``with`` block.
+    _client: httpx.Client | None = field(default=None, init=False, repr=False)
+
+    def __enter__(self) -> SnapshotClient:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+    def close(self) -> None:
+        if self._client is not None:
+            self._client.close()
+            self._client = None
+
+    def _http(self) -> httpx.Client:
+        if self._client is None:
+            self._client = httpx.Client(
+                timeout=self.timeout_seconds, headers={"User-Agent": self.user_agent}, follow_redirects=True
+            )
+        return self._client
 
     def get(self, ref: SourceRef, url: str, headers: dict[str, str] | None = None) -> Snapshot:
         """Fetch a URL, persist the raw response, and return snapshot metadata.
@@ -48,9 +69,7 @@ class SnapshotClient:
         BOE API 400s unless ``Accept: application/xml`` is sent). They are
         merged over the default User-Agent, which callers may also override.
         """
-        headers = {"User-Agent": self.user_agent, **(headers or {})}
-        with httpx.Client(timeout=self.timeout_seconds, headers=headers, follow_redirects=True) as client:
-            response = client.get(url)
+        response = self._http().get(url, headers=headers)
         return self._persist(
             ref, str(response.url), response.status_code, response.headers.get("content-type"), response.content
         )

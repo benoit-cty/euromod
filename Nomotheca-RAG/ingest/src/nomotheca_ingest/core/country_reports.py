@@ -19,7 +19,7 @@ from uuid import UUID
 
 import psycopg
 
-from nomotheca_ingest.core.db import ensure_source, fetch_run
+from nomotheca_ingest.core.db import connect, ensure_source, fetch_run
 from nomotheca_ingest.core.documents import DocumentSpec, build_document
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
@@ -147,7 +147,7 @@ def ingest_country_report(
             source_id=instrument.national_id or file_path.name,
             source_type=INSTRUMENT_TYPE,
         )
-        with psycopg.connect(database_url) as conn:
+        with connect(database_url) as conn:
             stats = LegislationLoader(conn).load(ParsedDoc(ref=ref, instruments=[instrument]))
         run.stats = {"file": file_path.name, **stats.as_dict()}
     return stats

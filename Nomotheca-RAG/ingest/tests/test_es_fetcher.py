@@ -96,8 +96,12 @@ def test_snapshot_client_merges_adapter_headers_over_the_user_agent():
         def __exit__(self, *exc):
             return False
 
-        def get(self, url):
+        def get(self, url, headers=None):
+            captured["request_headers"] = headers
             return _Response()
+
+        def close(self):
+            pass
 
     class _Store:
         def write_snapshot(self, **kwargs):
@@ -112,7 +116,7 @@ def test_snapshot_client_merges_adapter_headers_over_the_user_agent():
     finally:
         snapshots_module.httpx.Client = original
 
-    assert captured["headers"]["Accept"] == "application/xml"
+    assert captured["request_headers"]["Accept"] == "application/xml"
     assert "User-Agent" in captured["headers"]
 
 

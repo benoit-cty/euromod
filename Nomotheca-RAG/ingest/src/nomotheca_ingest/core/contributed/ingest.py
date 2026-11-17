@@ -12,7 +12,7 @@ import psycopg
 from nomotheca_ingest.core import extract
 from nomotheca_ingest.core.contributed.fetch import SourceDocument, read_input
 from nomotheca_ingest.core.contributed.kinds import ContributedFields, stated_fields
-from nomotheca_ingest.core.db import ensure_source, fetch_run
+from nomotheca_ingest.core.db import connect, ensure_source, fetch_run
 from nomotheca_ingest.core.errors import RefusalError
 from nomotheca_ingest.core.documents import DocumentSpec, build_document
 from nomotheca_ingest.core.ir import (
@@ -276,7 +276,7 @@ def ingest_document(
         )
         result.snapshot_id = document.snapshot_id
 
-        with psycopg.connect(database_url) as conn:
+        with connect(database_url) as conn:
             stored = stored_content_hash(conn, fields.source_code, document.national_id)
             if stored == document.content_hash:
                 report({"phase": "already_present", "detail": document.national_id})
@@ -340,7 +340,7 @@ def reparse_documents(
     """
     report = progress or (lambda event: None)
     done: list[tuple[str, int, int]] = []
-    with psycopg.connect(database_url) as conn:
+    with connect(database_url) as conn:
         rows = conn.execute(
             """
             SELECT i.id, j.code, i.national_id, i.title, i.metadata,

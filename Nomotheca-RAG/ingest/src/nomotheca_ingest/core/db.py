@@ -131,6 +131,21 @@ def finish_fetch_run(conn: Connection, run_id: UUID, status: RunStatus, stats: d
         )
 
 
+#: How this package's sessions name themselves in ``pg_stat_activity``.
+APPLICATION_NAME = "nomotheca-ingest"
+
+
+def connect(database_url: str, **kwargs) -> Connection:
+    """Open a connection to the legislation database.
+
+    The one place the package connects: keyword arguments go to
+    ``psycopg.connect`` (``autocommit``, ``application_name``…); sessions are
+    named `APPLICATION_NAME` unless the caller names them.
+    """
+    kwargs.setdefault("application_name", APPLICATION_NAME)
+    return psycopg.connect(database_url, **kwargs)
+
+
 @dataclass(slots=True)
 class FetchRun:
     """An open fetch run: its id, the archive connection and the stats to record.
@@ -169,7 +184,7 @@ def fetch_run(
     `failed` with the error, and the exception propagates. `setup` runs on
     the archive connection before the run row is created (`ensure_source`).
     """
-    with psycopg.connect(database_url, autocommit=True) as archive:
+    with connect(database_url, autocommit=True) as archive:
         if setup is not None:
             setup(archive)
         run = FetchRun(

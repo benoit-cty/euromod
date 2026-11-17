@@ -93,7 +93,7 @@ def test_reparse_reads_the_stored_source_ref(monkeypatch):
             parsed.append(ref.source_id)
             return ParsedDoc(ref=ref, instruments=[])
 
-    monkeypatch.setattr(pipeline.psycopg, "connect", lambda url: Conn())
+    monkeypatch.setattr(pipeline, "connect", lambda url: Conn())
     monkeypatch.setattr(pipeline, "get_adapter", lambda cc: Adapter())
     monkeypatch.setattr(pipeline, "LegislationLoader", lambda conn: None)
     stats = pipeline.reparse_snapshots("NL", "postgresql://unused")

@@ -9,7 +9,6 @@ from contextlib import ExitStack
 from datetime import date
 from typing import Annotated
 
-import psycopg
 import typer
 
 from nomotheca_ingest.cli._app import DatabaseUrl, embeddings_app, translate_app
@@ -31,6 +30,7 @@ from nomotheca_ingest.core.translate import (
     build_translations,
     count_texts_needing_translation,
 )
+from nomotheca_ingest.core.db import connect
 
 
 @embeddings_app.command("models")
@@ -149,7 +149,7 @@ def build_chunk_embeddings(
             # stderr: stdout carries the '@progress' protocol a wrapping UI parses.
             typer.echo(embedding_backend.description, err=True)
         started = time.monotonic()
-        with psycopg.connect(database_url) as conn:
+        with connect(database_url) as conn:
             with batch_progress(
                 EMBEDDINGS,
                 json_total=(
@@ -169,7 +169,6 @@ def build_chunk_embeddings(
                     limit=limit,
                     dry_run=dry_run,
                     progress=progress,
-                    commit_each_batch=True,
                     **scope,
                 )
             conn.commit()
@@ -263,7 +262,7 @@ def run_translations(
     """Translate every unit text version missing a target-language rendering."""
     timeout = None if request_timeout == 0 else request_timeout
     backend = None if dry_run else LLMTranslationBackend(_translate_model(model), request_timeout=timeout)
-    with psycopg.connect(database_url) as conn:
+    with connect(database_url) as conn:
         with batch_progress(
             TRANSLATIONS,
             json_total=(
