@@ -2,6 +2,22 @@
 
 Date: 15 November 2026, on the working tree of `main` at `1880a77` (plus uncommitted changes to the Makefile, compose file, worker Dockerfile and READMEs).
 
+## Fix status (16–17 November 2026)
+
+Every finding below carries its outcome inline (**Fixed**, **Partly fixed** or **Kept**, with the reason). In short:
+
+- **All 18 defects (D1–D18) are fixed**, each with a test; two more found while fixing are in section 13 (N1 fixed, N2 open: repealed ES acts loaded open-ended).
+- **Search, quotes, values, job types** each have one implementation: `search_chunks()` in SQL, `quotes.py`, `values.py`, `JobSpec`. Tests keep the copies that must stay separate (encode priority, vocabularies, country tables) in step.
+- **Structure**: the pipeline steps are module-level and tested directly. These were split up: `pipeline.py`, `retrieval.py`, `scout.py`, `critique`, the eval CLI and `score_item`, the ingest CLI, contributed, embeddings and the ES parser, and the UI's `db.rs` and large components.
+- **Repository**: one uv workspace and lockfile, plus `nomos-llm` for provider access. Also new: `make test` / `make lint` / `make migrate`, a CI workflow, migration tracking and a reference/demo seed split. The Triangulator is kept on branch `archive/triangulator`.
+- **Deliberately not done**:
+  - Per-country adapters for the workflow's French idiom: it is grouped in `idiom.py` instead.
+  - Importing ingest in-process from the scout: the subprocess boundary is kept for GPU, lock and cancel isolation.
+  - Renaming the five database env vars.
+  - A type checker.
+  - Splitting `ParamsTab.svelte` and the two `draft_case` functions.
+- **Run locally**: `make test` is green (Python suites, both apps' JS and Rust tests). The worker image was rebuilt from the final tree and runs mock workflow jobs. The Tauri apps and their new CSP were built and tested but not launched; check once with `npm run tauri dev`.
+
 ## Scope and method
 
 The audit looks for four things: missing factorization, files and functions that are too large, weak or wrong design patterns, and dead code. It covers the five Python packages, the SQL schemas, the two Tauri/Svelte apps and the repository layout. `08 - EUROMOD Triangulator` was inventoried, not audited.
