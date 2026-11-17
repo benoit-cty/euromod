@@ -52,7 +52,7 @@ The main weaknesses are at the edges of that design:
 
 ### 1. An `ingest` job can read worker files and environment into the corpus
 
-**Where:** [jobs.py](../Nomergon-worker/src/nomergon/jobs.py) (`IngestPayload.args` is a free list of strings), [cli.py](../Nomotheca-RAG/ingest/src/nomotheca_ingest/cli.py) (`document` takes "URL, or path to a file"), [contributed.py](../Nomotheca-RAG/ingest/src/nomotheca_ingest/core/contributed.py) (`read_input` reads any path).
+**Where:** [jobs.py](../Nomergon-worker/src/nomergon/jobs.py) (`IngestPayload.args` is a free list of strings), [cli/ingest.py](../Nomotheca-RAG/ingest/src/nomotheca_ingest/cli/ingest.py) (`document` takes "URL, or path to a file"), [contributed/fetch.py](../Nomotheca-RAG/ingest/src/nomotheca_ingest/core/contributed/fetch.py) (`read_input` reads any path; the worker now admits only URLs or files under `WORKER_DOCUMENT_DIR`).
 
 **What:** The reviewer role may insert rows in `ops.jobs`. For an `ingest` job the worker passes `args` straight to the ingest CLI. With the `document` command, a first argument that does not start with `http` is read as a path on the worker. Any readable file is accepted (an unknown type falls back to `text/plain`), archived as a snapshot and loaded as unit texts, which every reviewer can then read with `SELECT`.
 
@@ -98,7 +98,7 @@ The Python side uses psycopg, which follows `sslmode` in the URL: set `sslmode=v
 
 ### 4. Contributed URLs are fetched without restriction (SSRF)
 
-**Where:** `read_input` and `fetch_in_browser` in [contributed.py](../Nomotheca-RAG/ingest/src/nomotheca_ingest/core/contributed.py).
+**Where:** `read_input` and `fetch_in_browser` in [contributed/fetch.py](../Nomotheca-RAG/ingest/src/nomotheca_ingest/core/contributed/fetch.py).
 
 **What:** An `ingest`/`document` job fetches any `http(s)` URL from inside the worker, follows redirects, and stores the response where reviewers can read it. The worker sits inside the hosting network, so this reaches addresses an analyst's workstation cannot: `http://phoenix:6006`, a cloud metadata service (`169.254.169.254`), internal JRC services. A `.pdf` URL that answers with HTML is also opened in a headless Firefox.
 
