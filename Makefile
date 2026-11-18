@@ -10,9 +10,9 @@ MODEL   ?=
 LIMIT   ?=
 FORCE   ?=
 
-# The container engine: Docker when it is installed, else Podman (docs/podman.md).
-# Force one with ENGINE=podman / ENGINE=docker.
-ENGINE  ?= $(if $(shell command -v docker 2>/dev/null),docker,podman)
+# The container engine: Podman when it is installed (docs/podman.md), else Docker
+# (docs/docker.md). Force one with ENGINE=podman / ENGINE=docker.
+ENGINE  ?= $(if $(shell command -v podman 2>/dev/null),podman,docker)
 # Podman goes through podman-compose (it maps `devices: nvidia.com/gpu=all` to CDI)
 # and starts the GPU worker as the CDI service; Docker uses its device reservation.
 ifeq ($(ENGINE),podman)

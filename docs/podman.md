@@ -1,7 +1,8 @@
-# Running the stack with Podman (no Docker)
+# Running the stack with Podman (the default)
 
-The stack runs on Podman as well as Docker: the same [docker-compose.yml](../docker-compose.yml),
-the same `make` targets. Podman runs rootless and needs no daemon, which is often
+Podman is the project's default container engine: the README and CLAUDE.md give
+Podman commands. Docker runs the same [docker-compose.yml](../docker-compose.yml)
+and the same `make` targets ([docker.md](docker.md)). Podman runs rootless and needs no daemon, which is often
 what a locked-down workstation or a RHEL server allows.
 
 ## What differs from Docker
@@ -21,8 +22,7 @@ GPU worker.
 
 Podman keeps its own images, containers and volumes: a database created under
 Docker is **not** visible to Podman. To move one, back it up under Docker and
-restore it under Podman (README, *Backup and restore*; replace `docker` by `podman`
-in those commands — container names are the same).
+restore it under Podman (README, *Backup and restore*).
 
 ## Install
 
@@ -59,8 +59,8 @@ NVIDIA GPU, use the CPU worker (`make up-cpu`).
 
 ## Run
 
-The Makefile picks Podman when `docker` is not installed; force it with
-`ENGINE=podman` on a box that has both (`make help` shows the engine in use).
+The Makefile picks Podman when it is installed, else Docker; force one with
+`ENGINE=podman` / `ENGINE=docker` (`make help` shows the engine in use).
 
 ```sh
 cp .env.example .env          # the worker's keys, as with Docker
@@ -71,8 +71,7 @@ make update COUNTRY=FR YEAR=2025
 make status / make jobs / make logs / make down
 ```
 
-With both engines installed, put `ENGINE=podman` in your environment
-(`export ENGINE=podman`) rather than on each command. Do not run the two stacks at
+Do not run the two stacks at
 once: they publish the same ports (5434, 5050, 6006, 4317).
 
 The desktop apps (`make ui`, `make rag-ui`), pgAdmin (http://localhost:5050) and
@@ -81,7 +80,7 @@ Phoenix (http://localhost:6006) work unchanged: they only talk to
 
 ## Docker commands, translated
 
-| Docker (in the docs) | Podman |
+| Docker (older notes, [docker.md](docker.md)) | Podman |
 |---|---|
 | `docker compose --profile gpu up -d` | `podman-compose --profile gpu-cdi up -d` |
 | `docker compose exec worker nomergon …` | `podman exec nomergon-worker-cdi /app/.venv/bin/nomergon …` (or `make` targets) |
