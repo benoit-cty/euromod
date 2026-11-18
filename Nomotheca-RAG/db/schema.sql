@@ -559,4 +559,5 @@ INSERT INTO schema_migrations (name) VALUES
   ('0005_hnsw_every_model'),
   ('0006_translation_source_hash'),
   ('0007_drop_unused_objects'),
-  ('0008_schema_migrations');
+  ('0008_schema_migrations'),
+  ('0009_ie_lrc_source');

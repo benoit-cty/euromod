@@ -113,6 +113,11 @@ services:
     environment:
       PHOENIX_WORKING_DIR: /mnt/data
       PHOENIX_SQL_DATABASE_URL: postgresql://jrc:jrc@db:5432/phoenix
+      # Since v21 Phoenix turns authentication on by default whenever it binds a
+      # non-loopback address, and its image binds `::` — so a fresh `:latest`
+      # answered 401 to every OTLP export (the clients send no API key). The dev
+      # stack is local and single-user: keep it open.
+      PHOENIX_ENABLE_AUTH: "false"
     ports:
       - "6006:6006"   # web UI + OTLP HTTP collector
       - "4317:4317"   # OTLP gRPC collector

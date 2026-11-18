@@ -17,7 +17,7 @@ INSERT INTO jurisdictions (code, parent_id, name, official_langs, metadata) VALU
   ('ES-AR', (SELECT id FROM jurisdictions WHERE code = 'ES'), 'Aragón', '{es}', '{"nuts2": "ES24", "eli": "es-ar", "boe_departamento": "Comunidad Autónoma de Aragón"}'),
   ('ES-AS', (SELECT id FROM jurisdictions WHERE code = 'ES'), 'Principado de Asturias', '{es}', '{"nuts2": "ES12", "eli": "es-as", "boe_departamento": "Comunidad Autónoma del Principado de Asturias"}'),
   ('ES-CB', (SELECT id FROM jurisdictions WHERE code = 'ES'), 'Cantabria', '{es}', '{"nuts2": "ES13", "eli": "es-cb", "boe_departamento": "Comunidad Autónoma de Cantabria"}'),
-  ('ES-CL', (SELECT id FROM jurisdictions WHERE code = 'ES'), 'Castilla y León', '{es}', '{"nuts2": "ES41", "eli": "es-cl", "boe_departamento": "Comunidad Autónoma de Castilla y León"}'),
+  ('ES-CL', (SELECT id FROM jurisdictions WHERE code = 'ES'), 'Castilla y León', '{es}', '{"nuts2": "ES41", "eli": "es-cl", "boe_departamento": "Comunidad de Castilla y León"}'),
   ('ES-CM', (SELECT id FROM jurisdictions WHERE code = 'ES'), 'Castilla-La Mancha', '{es}', '{"nuts2": "ES42", "eli": "es-cm", "boe_departamento": "Comunidad Autónoma de Castilla-La Mancha"}'),
   ('ES-CN', (SELECT id FROM jurisdictions WHERE code = 'ES'), 'Canarias', '{es}', '{"nuts2": "ES70", "eli": "es-cn", "boe_departamento": "Comunidad Autónoma de Canarias"}'),
   ('ES-CT', (SELECT id FROM jurisdictions WHERE code = 'ES'), 'Cataluña', '{es,ca}', '{"nuts2": "ES51", "eli": "es-ct", "boe_departamento": "Comunidad Autónoma de Cataluña"}'),
