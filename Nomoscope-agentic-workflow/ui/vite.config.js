@@ -15,6 +15,9 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     fs: { allow: [searchForWorkspaceRoot(process.cwd()), shared] },
+    // src-tauri is Tauri's to watch; its target/ holds ~20k Cargo files and
+    // exhausts the inotify limit (ENOSPC) if Vite watches it too.
+    watch: { ignored: ['**/src-tauri/**'] },
   },
   build: { target: 'es2021' },
 });
