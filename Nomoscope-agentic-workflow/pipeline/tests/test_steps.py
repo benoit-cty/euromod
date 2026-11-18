@@ -121,6 +121,17 @@ def test_diff_routes_unchanged_and_not_found(ctx):
     assert pipeline.diff(ctx, nothing)["routing"] == Routing.NOT_FOUND
 
 
+def test_a_missing_start_date_blocks_a_change_but_not_a_confirmation(ctx):
+    ctx, _ = ctx
+    confirmed = _state(_draft(valid_from=None), held=646.52)
+    confirmed.update(pipeline.critique(ctx, confirmed))
+    assert confirmed["critique"].verdict == "pass", confirmed["critique"].issues
+    assert pipeline.diff(ctx, confirmed)["routing"] == Routing.UNCHANGED
+    changed = pipeline.critique(ctx, _state(_draft(valid_from=None)))["critique"]
+    assert changed.verdict == "fail"
+    assert "valid_from missing or inconsistent with legal_status/as_of" in changed.issues
+
+
 def test_critique_runs_the_income_year_vintage_check(ctx, monkeypatch):
     """The income-year branch (_check_dates) with the corpus faked: a cited
     article naming the income year proves the vintage."""

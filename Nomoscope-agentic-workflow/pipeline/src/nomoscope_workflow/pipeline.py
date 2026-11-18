@@ -491,6 +491,15 @@ def _check_dates(
         report.dates_consistent = draft.valid_from is not None and (
             draft.legal_status != "enacted_in_force" or draft.valid_from <= latest
         )
+        # A confirmation exports no date, so a missing one blocks nothing:
+        # DeepSeek V4 Flash left valid_from empty on 14 right values of the
+        # 18 Nov panel run, 11 of them the value already held.
+        if draft.valid_from is None and _confirms_held(draft, _current_value(record, as_of)):
+            report.dates_consistent = True
+            report.issues.append(
+                "note: no valid_from given; the value is the one already held, "
+                "and a confirmation carries no start date"
+            )
         if not report.dates_consistent:
             report.issues.append(
                 "valid_from missing or inconsistent with legal_status/as_of"
