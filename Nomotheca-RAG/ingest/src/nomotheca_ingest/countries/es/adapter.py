@@ -29,7 +29,11 @@ ES_URL_SOURCE = UrlSource(
     domains=("boe.es",),
     # The analytical id, -A- series only: "disposiciones generales", the only
     # series the legislacion-consolidada API serves.
-    id_pattern=re.compile(r"\bBOE-A-\d{4}-\d+\b"),
+    # BOE-A-…, and the regional-gazette ids BOE keeps for a community's act it
+    # consolidates without having published it itself: BOA-d-2005-90006 is
+    # Aragón's consolidated tax text, BOCM-m-2010-90068 Madrid's. Until 18 Nov
+    # 2026 only BOE-A was accepted and no regional income-tax scale was held.
+    id_pattern=re.compile(r"\b(?:BOE-A|(?:BO[A-Z]{1,3}|DO[A-Z]{1,2})-[a-z])-\d{4}-\d+\b"),
 )
 
 

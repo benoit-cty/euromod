@@ -7,6 +7,7 @@ from datetime import date
 
 from nomotheca_ingest.countries.ie.fetcher import SOURCE_CODE_EISB, fetch_ie
 from nomotheca_ingest.countries.ie.parser import act_index_child_metadata, parse_ie
+from nomotheca_ingest.countries.ie.revised import SOURCE_CODE_LRC, is_revised
 from nomotheca_ingest.countries.ie.resolver import IeResolver, canary_facts
 from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
 from nomotheca_ingest.core.ir import (
@@ -49,6 +50,10 @@ class IeAdapter(BaseAdapter):
     url_source = IE_URL_SOURCE
     default_source_code = SOURCE_CODE_EISB
 
+    def source_code_for(self, national_id: str) -> str:
+        """A ``…/revised`` id is the Law Reform Commission's text, the rest eISB."""
+        return SOURCE_CODE_LRC if is_revised(national_id) else self.default_source_code
+
     def __init__(self, resolver: IeResolver | None = None) -> None:
         """Create the adapter with an optional resolver implementation."""
         self._resolver = resolver or IeResolver()
@@ -58,7 +63,7 @@ class IeAdapter(BaseAdapter):
         return self._resolver.resolve(ref, as_of)
 
     def fetch(self, ref: SourceRef, http: SnapshotClient) -> Snapshot:
-        """Fetch an act from eISB or an act index from the Oireachtas API."""
+        """Fetch an act from eISB, a Revised Act from the LRC, or an act index."""
         return fetch_ie(ref, http)
 
     def parse(self, snapshot_bytes: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:

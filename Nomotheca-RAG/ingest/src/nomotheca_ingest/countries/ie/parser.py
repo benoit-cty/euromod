@@ -1,8 +1,9 @@
 """Parser for Irish payloads into legislation IR.
 
-Two payload shapes, distinguished by the source id (see ``fetcher.py``): the
-Oireachtas act index for one year (JSON, discovery only), and one act's
-as-enacted eISB XML.
+Three payload shapes, distinguished by the source id (see ``fetcher.py``): the
+Oireachtas act index for one year (JSON, discovery only), one act's
+as-enacted eISB XML, and one act's consolidated text from the Law Reform
+Commission (HTML, ``revised.py``).
 
 The eISB XML is print-derived: structure lives in ``<part>``/``<chapter>``
 containers wrapping ``<sect>`` and ``<schedule>`` leaves, while typography rides
@@ -26,6 +27,7 @@ from nomotheca_ingest.countries.ie.fetcher import (
     act_eli,
     section_eli,
 )
+from nomotheca_ingest.countries.ie.revised import is_revised, parse_revised
 from nomotheca_ingest.core.text import UniqueCitations, month_names, path_token, pipe_rows
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
@@ -43,9 +45,9 @@ from nomotheca_ingest.core.ir import (
 # as-enacted baselines and their validity is closed here — see BASELINE_ACTS.
 EUROMOD_WINDOW_START = date(2022, 1, 1)
 
-# Principal consolidation acts. Ireland publishes no consolidated version of
-# them (the LRC Revised Acts do not cover the TCA at all, and offer no dated
-# history for the SWCA), so their as-enacted text is decades out of date for
+# Principal consolidation acts, as enacted. The LRC Revised Acts do not cover
+# the TCA at all; the SWCA's consolidated text is ingested from there as its
+# own instrument («… (Revised)», ``revised.py``). The as-enacted text is decades out of date for
 # every fiscal provision — TCA 1997 s. 15 still states the bands in Irish
 # pounds. Loading that open-ended would let `validity @> as_of` answer a 2025
 # question with a 1997 answer, so these acts are loaded as structure only:
@@ -112,6 +114,8 @@ def parse_ie(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
     """Parse an archived Irish payload into a parsed document IR."""
     if ref.source_id.startswith(ACT_INDEX_PREFIX):
         return _parse_act_index(payload, ref)
+    if is_revised(ref.source_id):
+        return parse_revised(payload, ref, snapshot)
     return _parse_act_xml(payload, ref, snapshot)
 
 

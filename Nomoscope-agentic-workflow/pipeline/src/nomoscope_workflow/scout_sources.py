@@ -85,7 +85,10 @@ COUNTRY_SOURCES: dict[str, CountrySource] = {
         # /diario_boe/txt.php?id=… URLs. Restricted to the -A- series: that is
         # the "disposiciones generales" series, and the only one the
         # legislacion-consolidada API serves (-B- and -S- are not consolidated).
-        id_pattern=re.compile(r"\bBOE-A-\d{4}-\d+\b"),
+        # A community's act BOE consolidates but did not publish keeps its
+        # regional-gazette id there (BOA-d-2005-90006, BOCM-m-2010-90068): the
+        # consolidated regional tax texts, where the income-tax scales live.
+        id_pattern=re.compile(r"\b(?:BOE-A|(?:BO[A-Z]{1,3}|DO[A-Z]{1,2})-[a-z])-\d{4}-\d+\b"),
         # The LPGE was prorogued for 2024 and 2025, so recent values arrive via
         # ordinary laws and decree-laws rather than the budget law — the scout
         # must not look only for "Ley de Presupuestos".
@@ -157,7 +160,9 @@ COUNTRY_SOURCES: dict[str, CountrySource] = {
 ID_HINTS = {
     "ES": (
         "for Spain the BOE-A-YYYY-NNNNN identifier shown in boe.es "
-        "/buscar/act.php?id=<id> and /diario_boe/txt.php?id=<id> URLs "
+        "/buscar/act.php?id=<id> and /diario_boe/txt.php?id=<id> URLs, or for an "
+        "autonomous community's consolidated act the regional-gazette id of that "
+        "same URL (BOA-d-2005-90006, BOCM-m-2010-90068) "
         "(note the ELI URL, boe.es/eli/es/l/2006/11/28/35, does NOT contain it)"
     ),
     "FR": (

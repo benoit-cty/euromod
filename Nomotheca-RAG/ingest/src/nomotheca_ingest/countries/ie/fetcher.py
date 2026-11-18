@@ -16,6 +16,8 @@ Source ids used by this adapter:
 
 - ``2024/act/43``  -> one act's as-enacted XML on eISB          (``IE-EISB``)
 - ``index/2024``   -> the year's enacted acts on the API        (``IE-OIREACHTAS``)
+- ``2005/act/26/revised`` -> the Law Reform Commission's consolidated text of
+  one act, one HTML page (``IE-LRC``, see ``revised.py``)
 """
 
 from __future__ import annotations
@@ -23,6 +25,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nomotheca_ingest.core.snapshots import get_with_retries
+from nomotheca_ingest.countries.ie.revised import is_revised, revised_url
 
 if TYPE_CHECKING:
     from nomotheca_ingest.core.ir import Snapshot, SourceRef
@@ -66,6 +69,8 @@ def url_for_ref(ref: SourceRef) -> str:
     """Map an IE source reference onto the URL that serves it."""
     if ref.source_id.startswith(ACT_INDEX_PREFIX):
         return act_index_url(ref.source_id.removeprefix(ACT_INDEX_PREFIX))
+    if is_revised(ref.source_id):
+        return revised_url(ref.source_id)
     return act_url(ref.source_id)
 
 

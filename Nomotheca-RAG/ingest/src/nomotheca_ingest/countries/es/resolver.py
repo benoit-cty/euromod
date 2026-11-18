@@ -88,7 +88,8 @@ _ALIASES: dict[str, str] = {
 }
 
 # A citation may simply carry the BOE id itself.
-BOE_ID_RE = re.compile(r"\bBOE-[A-Z]-\d{4}-\d+\b", re.IGNORECASE)
+# …or a regional-gazette id of BOE's consolidated collection (BOA-d-2005-90006).
+BOE_ID_RE = re.compile(r"\b(?:BOE-[A-Z]|(?:BO[A-Z]{1,3}|DO[A-Z]{1,2})-[a-z])-\d{4}-\d+\b", re.IGNORECASE)
 
 # …or a BOE ELI path, state (``es``) or regional (``es-cn``):
 # ``https://www.boe.es/eli/es-cn/l/2022/12/19/5/con``. BOE's ELI pages are the
@@ -176,7 +177,11 @@ class EsResolver:
         """Return the BOE id a citation names, by id, ELI, alias, or official number."""
         direct = BOE_ID_RE.search(citation)
         if direct:
-            return direct.group(0).upper()
+            # BOE-A-… is upper case; a regional-gazette id keeps its lower-case
+            # series letter (BOA-d-…), and the API is case-sensitive.
+            prefix, series, rest = direct.group(0).split("-", 2)
+            prefix = prefix.upper()
+            return f"{prefix}-{series.upper() if prefix == 'BOE' else series.lower()}-{rest}"
         eli = ELI_PATH_RE.search(citation)
         if eli:
             boe_id, consolidated = boe_id_from_eli(eli.group(1).lower(), self._eli_lookup)

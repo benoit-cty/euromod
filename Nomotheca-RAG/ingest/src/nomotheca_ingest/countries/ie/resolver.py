@@ -11,6 +11,7 @@ from nomotheca_ingest.countries.ie.fetcher import (
     SOURCE_CODE_OIREACHTAS,
 )
 from nomotheca_ingest.countries.ie.parser import BASELINE_ACTS
+from nomotheca_ingest.countries.ie.revised import SOURCE_CODE_LRC, is_revised
 from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 
 
@@ -27,7 +28,7 @@ _ALIASES: dict[str, str] = {
     "SOCIAL WELFARE CONSOLIDATION ACT 2005": "2005/act/26",
 }
 
-_ACT_ID_RE = re.compile(r"^\d{4}/act/\d+$")
+_ACT_ID_RE = re.compile(r"^\d{4}/act/\d+(?:/revised)?$")
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
 
@@ -56,10 +57,10 @@ class IeResolver:
         """Build a reference to one act's as-enacted text on eISB."""
         return SourceRef(
             jurisdiction=jurisdiction,
-            source_code=SOURCE_CODE_EISB,
+            source_code=SOURCE_CODE_LRC if is_revised(act_id) else SOURCE_CODE_EISB,
             source_id=act_id,
             source_type="act",
-            metadata={"short_title": short_title},
+            metadata={} if is_revised(act_id) else {"short_title": short_title},
         )
 
     def _index_ref(self, jurisdiction: str, year: int, citation: str) -> SourceRef:
