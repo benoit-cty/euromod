@@ -104,6 +104,17 @@ systemctl --user enable --now podman-restart.service
 loginctl enable-linger "$USER"     # start them at boot, before you log in
 ```
 
+## Restore backup
+
+```sh
+podman exec -i nomotheca-legislation-db pg_restore -U jrc -d legislation --clean --if-exists < ../backups/legislation_$(date +%Y%m%d).dump
+podman stop nomoscope-phoenix
+podman exec -i nomotheca-legislation-db psql -U jrc -d postgres -c "DROP DATABASE IF EXISTS phoenix;"
+podman exec -i nomotheca-legislation-db psql -U jrc -d postgres -c "CREATE DATABASE phoenix OWNER jrc;"
+podman exec -i nomotheca-legislation-db pg_restore -U jrc -d phoenix < ../backups/phoenix_$(date +%Y%m%d).dump
+podman start nomoscope-phoenix
+```
+
 ## Troubleshooting
 
 - **`unresolvable CDI devices nvidia.com/gpu=all`** — no CDI spec: run the
