@@ -25,11 +25,16 @@ country as hard as France.
 and a GPT critique in place of its own bring MiniMax M2.7 from 32 % to 62 %
 of parameters *ready to accept* on a sample of 40 French parameters. An
 open-weight model smaller than MiniMax, DeepSeek V4 Flash 0731, reaches 72 %
-on the same sample, also under a GPT critique, the score GPT had on 16 Nov. These are 40-case results and need confirming on the 200-case panel
-defined in §10.2. GPT has been run on that panel: **64 %** of parameters ready
-to accept over four countries, from 89 % in Lithuania and 84 % in France to
-28 % in Ireland (§10.6).
-MiniMax and DeepSeek have not yet been run on it.
+on the same sample, also under a GPT critique, the score GPT had on 16 Nov. These are 40-case results.
+
+**Update, 18 Nov 2026** (§10.7). On the 200-case panel over four countries,
+each open model checking its own proposals, the three models are close:
+GPT **64 %** of parameters ready to accept, DeepSeek V4 Flash 0731 **62 %**,
+MiniMax M2.7 **60 %**. The differences are within the noise of one run. The
+open models make more wrong proposals (9 % and 11 % of their answers, against
+6 % for GPT). The 40-case lead of DeepSeek over MiniMax is not confirmed as a
+clear lead: the case for DeepSeek now rests on its licence, size and context
+window, not on its score.
 
 ---
 
@@ -840,23 +845,88 @@ panel.**
   Law Reform Commission's Revised Acts in the corpus, or an exception.
 - **Spain is unchanged** with web search: 18 not found, the regional texts.
 
-### 10.7 Next steps
+### 10.7 The three models on the panel (18 Nov)
 
-1. **Run the panel** (§10.2) with MiniMax M2.7 and DeepSeek V4 Flash 0731,
-   each as its own critique. Started on 17 Nov. This gives the first
-   like-for-like comparison on four countries and one code version.
-2. **Ireland**: ingest the Law Reform Commission's Revised Acts
-   (consolidated texts). Decided on 17 Nov, and to be done only after the
-   three panel runs of step 1, so that all three models are scored on the
-   same corpus. The panel is then re-run to measure the gain.
-3. **Spain**: check that regional parameters are searched in their
+Same panel, same code and corpus as the second GPT run of §10.6. MiniMax M2.7
+and DeepSeek V4 Flash 0731 each propose **and** check their own proposals, as
+they would on a server that hosts one model. GPT keeps its second, stronger
+model as critique.
+
+| Model | Ready to accept | Wrong proposals | Not found | Rejected | Error |
+|---|---|---|---|---|---|
+| GPT (gpt-6-luna + gpt-6.1-sol) | **64.1 %** (123/192) | 6.1 % (8/131) | 55 | 6 | 0 |
+| DeepSeek V4 Flash 0731 | **62.0 %** (119/192) | 9.2 % (12/131) | 57 | 1 | 3 |
+| MiniMax M2.7 | **59.9 %** (115/192) | 10.9 % (14/129) | 57 | 4 | 2 |
+
+Ready to accept, per country:
+
+| Country | GPT | DeepSeek V4 Flash | MiniMax M2.7 |
+|---|---|---|---|
+| Lithuania (47) | 89.4 % (42) | 78.7 % (37) | 76.6 % (36) |
+| France (49) | 83.7 % (41) | 77.6 % (38) | 71.4 % (35) |
+| Spain (49) | 55.1 % (27) | 57.1 % (28) | 53.1 % (26) |
+| Ireland (47) | 27.7 % (13) | 34.0 % (16) | 38.3 % (18) |
+
+![Ready to accept, wrong proposals and left to the analyst, per country, three models](jrc_models_panel.svg)
+
+Runs: `eval-20261117T154224Z-gpt-6-luna-f86a84`,
+`eval-20261117T182122Z-minimax-minimax-m2-7-27c681`,
+`eval-20261118T082143Z-deepseek-deepseek-v4-flash-0731-8860ce`. For both open
+models `eval.runs.resolved_critique_model` is the model itself.
+
+What the runs show:
+
+- **The three models are within a few points.** Four cases separate DeepSeek
+  from GPT and four separate MiniMax from DeepSeek, out of 192. Two GPT runs
+  of the same panel already differed by two cases (§10.6), so this run does
+  not rank DeepSeek above MiniMax with any confidence.
+- **Where the corpus is good, GPT is ahead.** In Lithuania and France GPT
+  leads by 6 to 13 points. In Spain the three are level: the limit there is
+  the missing regional texts, not the model.
+- **The open models make more wrong proposals**: 9 % and 11 % of their
+  answers against 6 % for GPT. In Lithuania none of the three makes any.
+- **Ireland favours the open models for a bad reason.** In the eight Irish
+  cases MiniMax answered and GPT declined, MiniMax quotes old acts (Pensions
+  (Amendment) Act 2002, Social Welfare Act 2006, Finance Act 2011, the
+  repealed 1993 Consolidation Act). Its own critique does not apply the rule
+  that an old amending provision is not the law in force. Six of the eight
+  are right and two are wrong.
+- **DeepSeek leaves the start date empty.** On its first pass DeepSeek scored
+  55.2 % (106/192): 14 proposals with the right value were refused because
+  `valid_from` was missing, which never happened with GPT or MiniMax. A
+  missing start date no longer blocks a proposal that confirms the value
+  already held, since a confirmation exports no date
+  (`pipeline._check_dates`). The 14 cases were run again: 13 passed, 4 of
+  them through the new rule and 9 because DeepSeek gave a date this time. So
+  those 14 cases had a second draw that the other models' failed cases did
+  not have, and the fair figure for DeepSeek lies between 57 % and 62 %.
+- **Errors.** DeepSeek: three cases stopped on the 65,536-token output limit
+  before any answer. MiniMax: two cases stopped on a malformed structured
+  answer. None was re-run.
+- **Cost and speed.** DeepSeek writes five times more output than MiniMax
+  (5.6 M tokens against 1.1 M; GPT 0.44 M) and is the slowest per case
+  through OpenRouter (221 s on average, MiniMax 197 s, GPT 95 s). Speed on
+  JRC's own hardware was not measured.
+
+### 10.8 Next steps
+
+1. **Ireland**: ingest the Law Reform Commission's Revised Acts
+   (consolidated texts). Decided on 17 Nov, to be done now that the three
+   panel runs are complete. The panel is then re-run with all three models:
+   the runs of §10.7 are the "before" figures.
+2. **Spain**: check that regional parameters are searched in their
    community's texts.
-4. The crashed DeepSeek and GLM sample cases (§10.5) are not re-run: the
+3. **Model choice for JRC.** The panel does not show DeepSeek V4 Flash 0731
+   scoring clearly above MiniMax M2.7. Its other advantages stand: MIT
+   licence, 167 GB against 230 GB, 1M-token context. Before proposing the
+   switch, repeat the panel once per model to measure the noise, and check
+   DeepSeek's chat template and tool-call parser on JRC's serving stack (vLLM
+   or SGLang). Its long outputs may also make it slower there.
+4. **Make the self-critique apply the amending-provision rule** mechanically
+   (the cited version's start date is known), instead of leaving it to the
+   critique model: it is the rule the open models do not apply.
+5. The crashed DeepSeek and GLM sample cases (§10.5) are not re-run: the
    panel replaces that sample.
-5. **If the panel confirms it, propose DeepSeek V4 Flash 0731 to JRC**: MIT
-   licence, 167 GB against 230 GB, 1M-token context. Its chat template and
-   tool-call parser need checking on JRC's serving stack (vLLM or SGLang)
-   first.
 6. **Remaining lever for every model: the choice of figure.** A weak critique
    still accepts the 1 October revaluation for the 1 July amount (§9.4). Where
    EUROMOD holds «(a\*9 + b\*3)/12» for year Y-1, `b` is the amount in force
