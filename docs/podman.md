@@ -128,3 +128,9 @@ podman start nomoscope-phoenix
 - **`podman ps` shows nothing after a reboot** — see *Restart after a reboot*.
 - **Rootless and ports** — rootless Podman cannot publish ports below 1024; ours are
   all above, so nothing to do.
+- **Phoenix answers `401 Unauthorized` to `POST /v1/traces`** — a fresh pull of
+  `phoenix:latest` (v21+) enables auth by default on a non-loopback bind, and
+  the image binds `::`; the compose file sets `PHOENIX_ENABLE_AUTH: "false"`.
+  An older container lacks it: recreate Phoenix alone
+  (`podman stop nomoscope-phoenix && podman rm nomoscope-phoenix && podman-compose up -d --no-deps phoenix`).
+  Its banner must read `Authentication ➖ Disabled` (`podman logs nomoscope-phoenix`).
