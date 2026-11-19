@@ -25,9 +25,9 @@ from nomotheca_ingest.core.snapshots import SnapshotClient
 IE_URL_SOURCE = UrlSource(
     name="electronic Irish Statute Book",
     domains=("irishstatutebook.ie",),
-    # The eISB ELI act id: Acts of the Oireachtas only. Statutory instruments
-    # (/eli/<year>/si/<no>) are not ingestible yet.
-    id_pattern=re.compile(r"\b(?:19|20)\d{2}/act/\d{1,3}\b"),
+    # The eISB ELI id of an Act (<year>/act/<no>) or of a statutory
+    # instrument as made (<year>/si/<no>, see si.py).
+    id_pattern=re.compile(r"\b(?:19|20)\d{2}/(?:act/\d{1,3}|si/\d{1,4})\b"),
 )
 
 

@@ -129,6 +129,7 @@ SOURCE_TYPES: dict[str, str] = {
     "section": "a section of a consolidated text, expanded into its articles (FR LEGISCTA)",
     "act": "an Irish act in the eISB (IE)",
     "act_index": "the eISB's list of a year's acts (IE)",
+    "statutory_instrument": "an Irish statutory instrument as made, in the eISB (IE)",
     "toestand": "one consolidated state of a BWB regulation (NL)",
     "version_index": "the BWB list of a regulation's states (NL)",
     "consolidation_index": "the TAR list of an act's consolidated versions (LT)",

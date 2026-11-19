@@ -931,3 +931,117 @@ What the runs show:
    still accepts the 1 October revaluation for the 1 July amount (§9.4). Where
    EUROMOD holds «(a\*9 + b\*3)/12» for year Y-1, `b` is the amount in force
    at the start of year Y, which a mechanical check could use.
+
+### 10.9 Ireland and Spain run again with consolidated texts (18 Nov, evening)
+
+Two corpus changes, then the 50 Irish and the 50 Spanish panel cases run
+again with the three models (same prompt, same cases; runs 238–243).
+
+- **Ireland.** The Law Reform Commission publishes Revised Acts: one page per
+  act, current state only. Three are ingested as their own instruments
+  (source `IE-LRC`): Social Welfare Consolidation Act 2005, Finance (Local
+  Property Tax) Act 2012, Childcare Support Act 2018. The Taxes Consolidation
+  Act 1997 is not published there.
+- **Spain.** BOE's consolidated API also serves the autonomous communities'
+  consolidated tax texts under regional gazette ids (`BOA-d-2005-90006`). The
+  adapter and the scout accepted `BOE-A-…` only, so the scout found these
+  texts and dropped them. About 35 regional acts are now loaded.
+
+Ready to accept, before → after (wrong proposals after):
+
+| | GPT | MiniMax M2.7 | DeepSeek V4 Flash |
+|---|---|---|---|
+| Ireland (47) | 13 → 11 (1 of 12) | 18 → 21 (3 of 24) | 16 → 19 (2 of 21) |
+| Spain (49) | 27 → 28 (4 of 32) | 26 → 29 (2 of 31) | 28 → 27 (2 of 29) |
+| Panel (192) | 123 → 122, 63.5 % | 115 → 121, 63.0 % | 119 → 120, 62.5 % |
+
+Panel wrong proposals are now 9 for each model (GPT 9 of 131, MiniMax 9 of
+130, DeepSeek 9 of 130). The three models are within one point: the model is
+no longer what limits the score.
+
+What the re-runs show:
+
+- **A current-state consolidation helps and hurts.** GPT gains 5 Irish
+  social-welfare cases and loses 7 it had right, 6 of them Local Property
+  Tax. Revised section 17 already carries the 2025 amendment (in force
+  2 July 2025, after the reference date). GPT now sees that a consolidated
+  text exists, and refuses the 2021 amending provision it accepted before.
+  The open models apply that rule less strictly and keep these cases. The
+  Commission's page links no earlier revision.
+- **Spain moves by one to three cases, inside the noise.** Of GPT's 12
+  regional cases still not ready: two are EUROMOD padding slots (a 9th or
+  10th rate where the scale has five), several are yearly amounts that the
+  consolidated text does not state (Balearic guaranteed income), and
+  Cantabria, Valencia and Murcia's scales are still not held (two BOE ids
+  loaded with no article, three do not exist in the API).
+- No traces for the Irish GPT and MiniMax runs: Phoenix v21 turned
+  authentication on by default (fixed in `docker-compose.yml`,
+  `PHOENIX_ENABLE_AUTH: "false"`).
+
+Open choice: let an older amending provision count when the consolidated
+article held starts after the reference date. It would recover GPT's
+property-tax cases, changes the prompt version, and so needs the panel run
+again for the three models.
+
+Client charts: `jrc_summary_simple.svg` (one bar per model) and
+`jrc_summary_by_country.svg` (per country).
+
+### 10.10 Ireland after the held-figure search and statutory instruments (19 Nov)
+
+Two changes, then the 50 Irish panel cases run again with the three models
+(prompt unchanged; runs 244–246, against 238–240).
+
+- **Search for the figure EUROMOD holds** (`heldvalue.py`, last leg of
+  `retrieve`). An Act that amends by substitution names the old figure and
+  shares no word with the parameter's description: Finance Act 2024 s. 3,
+  «the substitution of “€2,000” for “€1,875”». Retrieval now adds up to 4
+  passages of texts entered into force in the year before the reference
+  date, or by year end, that state the held figure. It applies to every
+  country; only Ireland was run again.
+- **Statutory instruments** (`countries/ie/si.py`). eISB serves them as one
+  print page with no structure markup; the text is cut on the regulations'
+  own numbering and on «SCHEDULE n». 43 are loaded (the ones the scout had
+  found in runs 238–240), and the scout now accepts `2024/si/747` ids. An
+  S.I. is held **as made**: a later amendment or revocation is not marked.
+
+Ready to accept, before → after (wrong proposals after):
+
+| | GPT | MiniMax M2.7 | DeepSeek V4 Flash |
+|---|---|---|---|
+| Ireland (47) | 11 → 15 (3 of 18) | 21 → 27 (6 of 33) | 19 → 23 (4 of 27) |
+| Panel (192) | 122 → 126, 65.6 % | 121 → 127, 66.1 % | 120 → 124, 64.6 % |
+
+Panel wrong proposals: GPT 11, MiniMax 12, DeepSeek 11 (they were 9 each).
+
+What changed, case by case:
+
+- **Cases won through a statutory instrument**, by all three models: the
+  childcare subsidy maximum (S.I. 378 of 2019), the qualified-child income
+  limit, and `$bma_thres1` (S.I. 747 of 2024, the yearly Change in Rates
+  regulations). The HAP rent limits (S.I. 56 of 2017) are won by MiniMax
+  (two) and DeepSeek (one); GPT still refuses them.
+- **Cases won through the held figure**: the personal tax credit (GPT and
+  MiniMax; DeepSeek found it and its own check rejected it).
+- **Two new "wrong" proposals where the law probably is right.** All three
+  models propose €191.10 for `$bunct_Rate3`, quoting Social Welfare Act 2024
+  «the substitution of “€191.10” for “€181.70”»; EUROMOD holds 191.9, which
+  reads like a typing slip. All three propose 2.11 % for
+  `$tscer_prsiB_rate`, quoting S.I. 534 of 2024 (PRSI up 0.1 point on
+  1 October 2024); EUROMOD still holds 2.01 %. Neither is one unit of
+  precision away, so neither counts as an «EUROMOD off the law» finding.
+  They are worth sending to the Irish national team.
+- **One new wrong proposal caused by the as-made rule.** For
+  `$bdict_suppl_4`, GPT and DeepSeek quote S.I. 677 of 2025, the 2026 rates:
+  it comes into operation on 29 December 2025, so it falls inside system
+  year 2025 («later in year»). GPT's check rejects its proposal; DeepSeek's
+  passes. MiniMax reads the wrong row of the 2024 table. Irish weekly rates start in the first payment week of January,
+  which can begin in late December.
+- GPT loses three cases it had (two property-tax charges, the disability
+  schedule) and wins three others in the same families: run-to-run
+  variation.
+
+Still not ready for any model: 17 of 47 (25 before). Two of them are the
+probable EUROMOD errors above. The largest groups left are the HAP
+thresholds and deduction (set by a scheme, not by an S.I.), one-off lump
+sums and the energy credit (Budget measures), and the standard rate band
+and the employer PRSI schedule (in the corpus, still not found).

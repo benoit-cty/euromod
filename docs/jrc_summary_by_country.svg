@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 622" width="940" height="622" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Share of parameters ready to accept on the four-country panel, three models</title>
+<desc id="d">Per 100 legislation-based parameters: ready to accept, wrong proposals, and left to the analyst, for GPT, MiniMax M2.7 and DeepSeek V4 Flash on the 200-case panel (France, Spain, Ireland, Lithuania), 2024 to 2025, in total and per country.</desc>
+<rect width="940" height="622" fill="#fcfcfb"/>
+<text x="24" y="34" font-size="18" font-weight="600" fill="#0b0b0b">The result depends on the country more than on the model</text>
+<text x="24" y="56" font-size="13" fill="#52514e">Per 100 legislation-based parameters · panel of 200 parameters, system year 2024 → 2025 · 17–19 Nov 2026</text>
+<rect x="24" y="76" width="12" height="12" rx="2" fill="#2a78d6"/><text x="42" y="87" font-size="12.5" fill="#52514e">Ready to accept: right value with its legal quote</text>
+<rect x="387" y="76" width="12" height="12" rx="2" fill="#d03b3b"/><text x="405" y="87" font-size="12.5" fill="#52514e">Wrong proposal</text>
+<rect x="519" y="76" width="12" height="12" rx="2" fill="#c3c2b7"/><text x="537" y="87" font-size="12.5" fill="#52514e">Left to the analyst: not found, rejected or error</text>
+<line x1="330.0" y1="110" x2="330.0" y2="534" stroke="#e1e0d9" stroke-width="1"/>
+<text x="330.0" y="550" font-size="11.5" fill="#898781" text-anchor="middle">0</text>
+<line x1="465.0" y1="110" x2="465.0" y2="534" stroke="#e1e0d9" stroke-width="1"/>
+<text x="465.0" y="550" font-size="11.5" fill="#898781" text-anchor="middle">25</text>
+<line x1="600.0" y1="110" x2="600.0" y2="534" stroke="#e1e0d9" stroke-width="1"/>
+<text x="600.0" y="550" font-size="11.5" fill="#898781" text-anchor="middle">50</text>
+<line x1="735.0" y1="110" x2="735.0" y2="534" stroke="#e1e0d9" stroke-width="1"/>
+<text x="735.0" y="550" font-size="11.5" fill="#898781" text-anchor="middle">75</text>
+<line x1="870.0" y1="110" x2="870.0" y2="534" stroke="#e1e0d9" stroke-width="1"/>
+<text x="870.0" y="550" font-size="11.5" fill="#898781" text-anchor="middle">100</text>
+<text x="24" y="131" font-size="13.5" font-weight="600" fill="#0b0b0b">All four countries</text>
+<text x="24" y="148" font-size="11.5" fill="#52514e">192 parameters</text>
+<text x="318" y="131" font-size="12" fill="#52514e" text-anchor="end">GPT (baseline)</text>
+<rect x="330.0" y="118" width="354.4" height="18" rx="3" fill="#2a78d6"><title>All four countries, GPT (baseline): 126 of 192 ready to accept</title></rect>
+<text x="507.2" y="131.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">66</text>
+<rect x="686.4" y="118" width="28.9" height="18" rx="3" fill="#d03b3b"><title>All four countries, GPT (baseline): 11 of 192 wrong</title></rect>
+<text x="700.8" y="131.5" font-size="11.5" font-weight="400" fill="#ffffff" text-anchor="middle">6</text>
+<rect x="717.3" y="118" width="152.7" height="18" rx="3" fill="#c3c2b7"><title>All four countries, GPT (baseline): 55 of 192 left to the analyst</title></rect>
+<text x="793.7" y="131.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">29</text>
+<text x="318" y="153" font-size="12" fill="#52514e" text-anchor="end">MiniMax M2.7</text>
+<rect x="330.0" y="140" width="357.2" height="18" rx="3" fill="#2a78d6"><title>All four countries, MiniMax M2.7: 127 of 192 ready to accept</title></rect>
+<text x="508.6" y="153.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">66</text>
+<rect x="689.2" y="140" width="31.8" height="18" rx="3" fill="#d03b3b"><title>All four countries, MiniMax M2.7: 12 of 192 wrong</title></rect>
+<text x="705.1" y="153.5" font-size="11.5" font-weight="400" fill="#ffffff" text-anchor="middle">6</text>
+<rect x="722.9" y="140" width="147.1" height="18" rx="3" fill="#c3c2b7"><title>All four countries, MiniMax M2.7: 53 of 192 left to the analyst</title></rect>
+<text x="796.5" y="153.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">28</text>
+<text x="318" y="175" font-size="12" fill="#52514e" text-anchor="end">DeepSeek V4 Flash</text>
+<rect x="330.0" y="162" width="348.8" height="18" rx="3" fill="#2a78d6"><title>All four countries, DeepSeek V4 Flash: 124 of 192 ready to accept</title></rect>
+<text x="504.4" y="175.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">65</text>
+<rect x="680.8" y="162" width="28.9" height="18" rx="3" fill="#d03b3b"><title>All four countries, DeepSeek V4 Flash: 11 of 192 wrong</title></rect>
+<text x="695.2" y="175.5" font-size="11.5" font-weight="400" fill="#ffffff" text-anchor="middle">6</text>
+<rect x="711.7" y="162" width="158.3" height="18" rx="3" fill="#c3c2b7"><title>All four countries, DeepSeek V4 Flash: 57 of 192 left to the analyst</title></rect>
+<text x="790.8" y="175.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">30</text>
+<text x="24" y="217" font-size="13.5" font-weight="600" fill="#0b0b0b">Lithuania</text>
+<text x="24" y="234" font-size="11.5" fill="#52514e">47 parameters</text>
+<text x="24" y="250" font-size="11.5" font-style="italic" fill="#52514e">Consolidated law in the corpus</text>
+<text x="318" y="217" font-size="12" fill="#52514e" text-anchor="end">GPT (baseline)</text>
+<rect x="330.0" y="204" width="482.6" height="18" rx="3" fill="#2a78d6"><title>Lithuania, GPT (baseline): 42 of 47 ready to accept</title></rect>
+<text x="571.3" y="217.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">89</text>
+<rect x="814.6" y="204" width="55.4" height="18" rx="3" fill="#c3c2b7"><title>Lithuania, GPT (baseline): 5 of 47 left to the analyst</title></rect>
+<text x="842.3" y="217.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">11</text>
+<text x="318" y="239" font-size="12" fill="#52514e" text-anchor="end">MiniMax M2.7</text>
+<rect x="330.0" y="226" width="413.6" height="18" rx="3" fill="#2a78d6"><title>Lithuania, MiniMax M2.7: 36 of 47 ready to accept</title></rect>
+<text x="536.8" y="239.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">77</text>
+<rect x="745.6" y="226" width="124.4" height="18" rx="3" fill="#c3c2b7"><title>Lithuania, MiniMax M2.7: 11 of 47 left to the analyst</title></rect>
+<text x="807.8" y="239.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">23</text>
+<text x="318" y="261" font-size="12" fill="#52514e" text-anchor="end">DeepSeek V4 Flash</text>
+<rect x="330.0" y="248" width="425.1" height="18" rx="3" fill="#2a78d6"><title>Lithuania, DeepSeek V4 Flash: 37 of 47 ready to accept</title></rect>
+<text x="542.6" y="261.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">79</text>
+<rect x="757.1" y="248" width="112.9" height="18" rx="3" fill="#c3c2b7"><title>Lithuania, DeepSeek V4 Flash: 10 of 47 left to the analyst</title></rect>
+<text x="813.6" y="261.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">21</text>
+<text x="24" y="303" font-size="13.5" font-weight="600" fill="#0b0b0b">France</text>
+<text x="24" y="320" font-size="11.5" fill="#52514e">49 parameters</text>
+<text x="24" y="336" font-size="11.5" font-style="italic" fill="#52514e">Consolidated codes in the corpus</text>
+<text x="318" y="303" font-size="12" fill="#52514e" text-anchor="end">GPT (baseline)</text>
+<rect x="330.0" y="290" width="451.8" height="18" rx="3" fill="#2a78d6"><title>France, GPT (baseline): 41 of 49 ready to accept</title></rect>
+<text x="555.9" y="303.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">84</text>
+<rect x="783.8" y="290" width="42.1" height="18" rx="3" fill="#d03b3b"><title>France, GPT (baseline): 4 of 49 wrong</title></rect>
+<text x="804.9" y="303.5" font-size="11.5" font-weight="400" fill="#ffffff" text-anchor="middle">8</text>
+<rect x="827.9" y="290" width="42.1" height="18" rx="3" fill="#c3c2b7"><title>France, GPT (baseline): 4 of 49 left to the analyst</title></rect>
+<text x="849.0" y="303.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">8</text>
+<text x="318" y="325" font-size="12" fill="#52514e" text-anchor="end">MiniMax M2.7</text>
+<rect x="330.0" y="312" width="385.7" height="18" rx="3" fill="#2a78d6"><title>France, MiniMax M2.7: 35 of 49 ready to accept</title></rect>
+<text x="522.9" y="325.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">71</text>
+<rect x="717.7" y="312" width="42.1" height="18" rx="3" fill="#d03b3b"><title>France, MiniMax M2.7: 4 of 49 wrong</title></rect>
+<text x="738.8" y="325.5" font-size="11.5" font-weight="400" fill="#ffffff" text-anchor="middle">8</text>
+<rect x="761.8" y="312" width="108.2" height="18" rx="3" fill="#c3c2b7"><title>France, MiniMax M2.7: 10 of 49 left to the analyst</title></rect>
+<text x="815.9" y="325.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">20</text>
+<text x="318" y="347" font-size="12" fill="#52514e" text-anchor="end">DeepSeek V4 Flash</text>
+<rect x="330.0" y="334" width="418.8" height="18" rx="3" fill="#2a78d6"><title>France, DeepSeek V4 Flash: 38 of 49 ready to accept</title></rect>
+<text x="539.4" y="347.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">78</text>
+<rect x="750.8" y="334" width="53.1" height="18" rx="3" fill="#d03b3b"><title>France, DeepSeek V4 Flash: 5 of 49 wrong</title></rect>
+<text x="777.3" y="347.5" font-size="11.5" font-weight="400" fill="#ffffff" text-anchor="middle">10</text>
+<rect x="805.9" y="334" width="64.1" height="18" rx="3" fill="#c3c2b7"><title>France, DeepSeek V4 Flash: 6 of 49 left to the analyst</title></rect>
+<text x="837.9" y="347.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">12</text>
+<text x="24" y="389" font-size="13.5" font-weight="600" fill="#0b0b0b">Spain</text>
+<text x="24" y="406" font-size="11.5" fill="#52514e">49 parameters</text>
+<text x="24" y="422" font-size="11.5" font-style="italic" fill="#52514e">Regional texts only in part</text>
+<text x="318" y="389" font-size="12" fill="#52514e" text-anchor="end">GPT (baseline)</text>
+<rect x="330.0" y="376" width="308.6" height="18" rx="3" fill="#2a78d6"><title>Spain, GPT (baseline): 28 of 49 ready to accept</title></rect>
+<text x="484.3" y="389.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">57</text>
+<rect x="640.6" y="376" width="42.1" height="18" rx="3" fill="#d03b3b"><title>Spain, GPT (baseline): 4 of 49 wrong</title></rect>
+<text x="661.6" y="389.5" font-size="11.5" font-weight="400" fill="#ffffff" text-anchor="middle">8</text>
+<rect x="684.7" y="376" width="185.3" height="18" rx="3" fill="#c3c2b7"><title>Spain, GPT (baseline): 17 of 49 left to the analyst</title></rect>
+<text x="777.3" y="389.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">35</text>
+<text x="318" y="411" font-size="12" fill="#52514e" text-anchor="end">MiniMax M2.7</text>
+<rect x="330.0" y="398" width="319.6" height="18" rx="3" fill="#2a78d6"><title>Spain, MiniMax M2.7: 29 of 49 ready to accept</title></rect>
+<text x="489.8" y="411.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">59</text>
+<rect x="651.6" y="398" width="20.0" height="18" rx="3" fill="#d03b3b"><title>Spain, MiniMax M2.7: 2 of 49 wrong</title></rect>
+<rect x="673.6" y="398" width="196.4" height="18" rx="3" fill="#c3c2b7"><title>Spain, MiniMax M2.7: 18 of 49 left to the analyst</title></rect>
+<text x="771.8" y="411.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">37</text>
+<text x="318" y="433" font-size="12" fill="#52514e" text-anchor="end">DeepSeek V4 Flash</text>
+<rect x="330.0" y="420" width="297.6" height="18" rx="3" fill="#2a78d6"><title>Spain, DeepSeek V4 Flash: 27 of 49 ready to accept</title></rect>
+<text x="478.8" y="433.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">55</text>
+<rect x="629.6" y="420" width="20.0" height="18" rx="3" fill="#d03b3b"><title>Spain, DeepSeek V4 Flash: 2 of 49 wrong</title></rect>
+<rect x="651.6" y="420" width="218.4" height="18" rx="3" fill="#c3c2b7"><title>Spain, DeepSeek V4 Flash: 20 of 49 left to the analyst</title></rect>
+<text x="760.8" y="433.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">41</text>
+<text x="24" y="475" font-size="13.5" font-weight="600" fill="#0b0b0b">Ireland</text>
+<text x="24" y="492" font-size="11.5" fill="#52514e">47 parameters</text>
+<text x="24" y="508" font-size="11.5" font-style="italic" fill="#52514e">Regulations added, held as made</text>
+<text x="318" y="475" font-size="12" fill="#52514e" text-anchor="end">GPT (baseline)</text>
+<rect x="330.0" y="462" width="172.3" height="18" rx="3" fill="#2a78d6"><title>Ireland, GPT (baseline): 15 of 47 ready to accept</title></rect>
+<text x="416.2" y="475.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">32</text>
+<rect x="504.3" y="462" width="32.5" height="18" rx="3" fill="#d03b3b"><title>Ireland, GPT (baseline): 3 of 47 wrong</title></rect>
+<text x="520.6" y="475.5" font-size="11.5" font-weight="400" fill="#ffffff" text-anchor="middle">6</text>
+<rect x="538.8" y="462" width="331.2" height="18" rx="3" fill="#c3c2b7"><title>Ireland, GPT (baseline): 29 of 47 left to the analyst</title></rect>
+<text x="704.4" y="475.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">62</text>
+<text x="318" y="497" font-size="12" fill="#52514e" text-anchor="end">MiniMax M2.7</text>
+<rect x="330.0" y="484" width="310.2" height="18" rx="3" fill="#2a78d6"><title>Ireland, MiniMax M2.7: 27 of 47 ready to accept</title></rect>
+<text x="485.1" y="497.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">57</text>
+<rect x="642.2" y="484" width="66.9" height="18" rx="3" fill="#d03b3b"><title>Ireland, MiniMax M2.7: 6 of 47 wrong</title></rect>
+<text x="675.7" y="497.5" font-size="11.5" font-weight="400" fill="#ffffff" text-anchor="middle">13</text>
+<rect x="711.1" y="484" width="158.9" height="18" rx="3" fill="#c3c2b7"><title>Ireland, MiniMax M2.7: 14 of 47 left to the analyst</title></rect>
+<text x="790.6" y="497.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">30</text>
+<text x="318" y="519" font-size="12" fill="#52514e" text-anchor="end">DeepSeek V4 Flash</text>
+<rect x="330.0" y="506" width="264.3" height="18" rx="3" fill="#2a78d6"><title>Ireland, DeepSeek V4 Flash: 23 of 47 ready to accept</title></rect>
+<text x="462.1" y="519.5" font-size="11.5" font-weight="600" fill="#ffffff" text-anchor="middle">49</text>
+<rect x="596.3" y="506" width="44.0" height="18" rx="3" fill="#d03b3b"><title>Ireland, DeepSeek V4 Flash: 4 of 47 wrong</title></rect>
+<text x="618.2" y="519.5" font-size="11.5" font-weight="400" fill="#ffffff" text-anchor="middle">9</text>
+<rect x="642.2" y="506" width="227.8" height="18" rx="3" fill="#c3c2b7"><title>Ireland, DeepSeek V4 Flash: 20 of 47 left to the analyst</title></rect>
+<text x="756.1" y="519.5" font-size="11.5" font-weight="400" fill="#0b0b0b" text-anchor="middle">43</text>
+<text x="24" y="574" font-size="11.5" fill="#898781">Ground truth is EUROMOD&#x27;s own 2025 value. One run per model; about 50 cases per country, so one case is 2 points.</text>
+<text x="24" y="590" font-size="11.5" fill="#898781">GPT: gpt-6-luna proposes, gpt-6.1-sol checks. MiniMax and DeepSeek each check their own proposals, as on a one-model server.</text>
+<text x="24" y="606" font-size="11.5" fill="#898781">Spain was run again on 18 Nov (regional codes); Ireland on 19 Nov, after adding 43 statutory instruments and the search for the held figure.</text>
+</svg>

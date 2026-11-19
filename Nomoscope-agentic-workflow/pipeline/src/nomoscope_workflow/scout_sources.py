@@ -125,15 +125,15 @@ COUNTRY_SOURCES: dict[str, CountrySource] = {
         # oireachtas.ie only serves bill pages and the act index — useful
         # search context, but no harvestable instrument id in its URLs.
         domains=("irishstatutebook.ie",),
-        # The eISB ELI act id: the <year>/act/<number> path segment. Acts of
-        # the Oireachtas only — the IE fetcher builds act URLs; statutory
-        # instruments (/eli/<year>/si/<no>) are not ingestible yet. Group is
+        # The eISB ELI id: <year>/act/<number>, or <year>/si/<number> for a
+        # statutory instrument (ministerial regulations and orders, where
+        # «as may be prescribed» amounts live; ingested as made). Groups are
         # non-capturing on purpose: findall must return the whole id.
-        id_pattern=re.compile(r"\b(?:19|20)\d{2}/act/\d{1,3}\b"),
+        id_pattern=re.compile(r"\b(?:19|20)\d{2}/(?:act/\d{1,3}|si/\d{1,4})\b"),
         # Fiscal values arrive via annual amending acts (never consolidated,
         # never repealed): PIT/USC via the Finance Act, welfare rates and PRSI
         # via the Social Welfare Act(s) of the preceding December.
-        act_kinds="Finance Act, Social Welfare Act or other Act of the Oireachtas",
+        act_kinds="Finance Act, Social Welfare Act, other Act of the Oireachtas, or statutory instrument (S.I., for amounts an Act leaves to regulations)",
         # No ingest_suffix: `instrument ie <year>/act/<no>` is the exact CLI
         # form. No known_key: instruments.national_id *is* the ELI act id.
     ),

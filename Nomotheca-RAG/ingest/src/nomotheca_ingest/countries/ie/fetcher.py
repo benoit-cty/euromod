@@ -18,6 +18,8 @@ Source ids used by this adapter:
 - ``index/2024``   -> the year's enacted acts on the API        (``IE-OIREACHTAS``)
 - ``2005/act/26/revised`` -> the Law Reform Commission's consolidated text of
   one act, one HTML page (``IE-LRC``, see ``revised.py``)
+- ``2007/si/142``  -> one statutory instrument as made, one HTML page on
+  eISB (``IE-EISB``, see ``si.py``)
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ from typing import TYPE_CHECKING
 
 from nomotheca_ingest.core.snapshots import get_with_retries
 from nomotheca_ingest.countries.ie.revised import is_revised, revised_url
+from nomotheca_ingest.countries.ie.si import is_si, si_url
 
 if TYPE_CHECKING:
     from nomotheca_ingest.core.ir import Snapshot, SourceRef
@@ -71,6 +74,8 @@ def url_for_ref(ref: SourceRef) -> str:
         return act_index_url(ref.source_id.removeprefix(ACT_INDEX_PREFIX))
     if is_revised(ref.source_id):
         return revised_url(ref.source_id)
+    if is_si(ref.source_id):
+        return si_url(ref.source_id)
     return act_url(ref.source_id)
 
 

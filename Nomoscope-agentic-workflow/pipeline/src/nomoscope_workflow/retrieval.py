@@ -16,7 +16,7 @@ job when WORKFLOW_ENCODER=db) and falls back to FTS-only when the encoder is una
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from datetime import date
 
 import psycopg
@@ -60,6 +60,7 @@ from .crossrefs import (  # noqa: F401
     implementing_acts,
     same_act_articles,
 )
+from .heldvalue import held_figures, held_value_passages  # noqa: F401
 from .locate import (  # noqa: F401
     _article_tokens,
     _citation_pattern,
@@ -174,6 +175,7 @@ def retrieve(
     query: str,
     citations: list[str],
     later_until: date | None = None,
+    held_patterns: Sequence[str] = (),
 ) -> list[RetrievalHit]:
     """Citation fast path first, then hybrid; dedup by chunk_id, fast-path wins.
 
@@ -182,6 +184,8 @@ def retrieve(
     of the same act they name (``same_act_articles``). With ``later_until``,
     up to LATER_MAX_HITS versions that enter into force
     after ``as_of`` and by that date follow the k hits (see ``later_in_year``).
+    With ``held_patterns`` (``held_figures``), the recent texts stating the
+    figure EUROMOD holds follow too (``held_value_passages``).
 
     ``country`` is a jurisdiction scope (see ``jurisdiction_scope``); the
     law language is the country's, i.e. the scope's first code.
@@ -209,6 +213,10 @@ def retrieve(
             conn, country, lang, as_of, later_until, query, cfg.embedding_model_id,
             cfg.retrieval_k, query_vector, known={h.chunk_id for h in hits},
         )
+    hits += held_value_passages(
+        conn, country, lang, as_of, later_until or as_of, held_patterns,
+        cfg.embedding_model_id, query_vector, known={h.chunk_id for h in hits},
+    )
     hits += same_act_articles(conn, lang, [h.chunk_id for h in hits])
     return hits
 

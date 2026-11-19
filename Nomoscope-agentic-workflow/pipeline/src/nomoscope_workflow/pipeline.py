@@ -221,6 +221,12 @@ def frame(ctx: StepContext, state: WorkflowState) -> dict:
         set_output(span, framed)
     return {"query": framed["query"], "citations": framed["citations"], "attempts": 0}
 
+def _held_patterns(record: ParameterRecord, as_of: date) -> list[str]:
+    """What to search recent amending texts for: the figures of the value held."""
+    held = _current_value(record, as_of) or (record.values[-1] if record.values else None)
+    return retrieval.held_figures(held, record.information.unit)
+
+
 def retrieve(ctx: StepContext, state: WorkflowState) -> dict:
     info = state["record"].information
     retrieval_as_of = state.get("retrieval_as_of", state["as_of"])
@@ -246,6 +252,7 @@ def retrieve(ctx: StepContext, state: WorkflowState) -> dict:
             hits = retrieval.retrieve(
                 conn, ctx.cfg, scope, retrieval_as_of, state["query"], state["citations"],
                 later_until=_later_until(state["record"], state["as_of"]),
+                held_patterns=_held_patterns(state["record"], state["as_of"]),
             )
         span.set_attribute("retrieval.jurisdictions", json.dumps(scope))
         for i, hit in enumerate(hits):

@@ -28,6 +28,7 @@ from nomotheca_ingest.countries.ie.fetcher import (
     section_eli,
 )
 from nomotheca_ingest.countries.ie.revised import is_revised, parse_revised
+from nomotheca_ingest.countries.ie.si import is_si, parse_si
 from nomotheca_ingest.core.text import UniqueCitations, month_names, path_token, pipe_rows
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
@@ -116,6 +117,8 @@ def parse_ie(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
         return _parse_act_index(payload, ref)
     if is_revised(ref.source_id):
         return parse_revised(payload, ref, snapshot)
+    if is_si(ref.source_id):
+        return parse_si(payload, ref, snapshot)
     return _parse_act_xml(payload, ref, snapshot)
 
 

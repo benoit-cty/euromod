@@ -28,7 +28,7 @@ _ALIASES: dict[str, str] = {
     "SOCIAL WELFARE CONSOLIDATION ACT 2005": "2005/act/26",
 }
 
-_ACT_ID_RE = re.compile(r"^\d{4}/act/\d+(?:/revised)?$")
+_ACT_ID_RE = re.compile(r"^\d{4}/(?:act/\d+(?:/revised)?|si/\d+)$")
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 
 
@@ -59,8 +59,8 @@ class IeResolver:
             jurisdiction=jurisdiction,
             source_code=SOURCE_CODE_LRC if is_revised(act_id) else SOURCE_CODE_EISB,
             source_id=act_id,
-            source_type="act",
-            metadata={} if is_revised(act_id) else {"short_title": short_title},
+            source_type="statutory_instrument" if "/si/" in act_id else "act",
+            metadata={} if is_revised(act_id) or "/si/" in act_id else {"short_title": short_title},
         )
 
     def _index_ref(self, jurisdiction: str, year: int, citation: str) -> SourceRef:
