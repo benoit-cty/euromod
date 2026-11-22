@@ -1,15 +1,40 @@
-# One lint configuration for the five Python packages (code audit 2.4).
-# Deliberately small: what is enforced must pass today, and grows from there.
-#   make lint
+# One lint + format configuration for the Python packages (code audit 2.4).
+# What is enforced must pass today, and grows from there.
+#   make lint      # ruff check + ruff format --check
+#   make fmt       # ruff format + ruff check --fix
+# Runs on every commit through .pre-commit-config.yaml.
 target-version = "py312"
 line-length = 120
 extend-exclude = [".venv*", "**/.venv*", "**/node_modules", "**/target", ".claude/worktrees"]
 
 [lint]
-# F: pyflakes (undefined names, unused imports — the class of bug that slipped
-# through in the 16 Nov 2026 refactor); E9: syntax errors.
-select = ["F", "E9"]
+select = [
+  "F",    # pyflakes: undefined names, unused imports (the 16 Nov 2026 refactor slip)
+  "E",    # pycodestyle errors
+  "W",    # pycodestyle warnings
+  "I",    # isort
+  "UP",   # pyupgrade, to the py312 target
+  "B",    # flake8-bugbear: likely bugs
+  "SIM",  # flake8-simplify
+  "RUF",  # ruff-specific
+]
+ignore = [
+  "E501",    # line length is the formatter's job; long string literals stay
+  "B008",    # typer declares CLI options as call defaults
+  "B905",    # zip(strict=) — decide per call site, not by blanket rule
+  "RUF005",  # [*a, b] vs a + [b]: a matter of taste
+  "UP042",   # StrEnum changes str(member); the str+Enum classes rely on the old one
+  "RUF001",  # ambiguous unicode: legal texts are full of «», ’, nbsp, ė, š …
+  "RUF002",
+  "RUF003",
+  "SIM105",  # contextlib.suppress is not clearer than try/except/pass
+  "SIM108",  # a ternary is not always clearer
+  "SIM117",  # nested with-blocks are often clearer for DB cursors
+]
 
 [lint.per-file-ignores]
 # Tests import after fixtures and module-level setup on purpose.
-"**/tests/**" = ["F401", "F811", "E402"]
+"**/tests/**" = ["F401", "F811", "E402", "B017"]
+
+[format]
+quote-style = "double"

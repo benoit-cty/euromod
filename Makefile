@@ -33,7 +33,7 @@ TAURI_ENV = $(if $(shell grep -qi microsoft /proc/version 2>/dev/null && echo ws
 .DEFAULT_GOAL := help
 .PHONY: help up-gpu up-cpu up down logs status jobs init-db \
         update ui rag-ui embed translate batch stop-batch _worker \
-        sync test test-python test-apps migrate lint
+        sync test test-python test-apps migrate lint fmt rust-fmt rust-clippy
 
 help: ## List the targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -128,8 +128,31 @@ PY_PACKAGES = nomos-llm Nomotheca-RAG/ingest Nomoscope-agentic-workflow/pipeline
 sync: ## Install every Python package into the workspace .venv (one lock)
 	uv sync --all-packages --extra embeddings
 
-lint: ## Lint the five Python packages (root ruff.toml)
-	uvx ruff@0.15.0 check $(PY_PACKAGES)
+# ---------------------------------------------------------------------- lint --
+# The same checks as .pre-commit-config.yaml (`uvx pre-commit install` once).
+# JS tools come from the root package.json: `npm ci` at the repo root first.
+
+RUFF        = uvx ruff@0.15.0
+TAURI_CRATES = Nomoscope-agentic-workflow/ui/src-tauri Nomoscope-agentic-workflow/rag-ui/src-tauri
+
+lint: ## Check Python (ruff), JS/Svelte (ESLint, Prettier), Rust (rustfmt, clippy)
+	$(RUFF) check .
+	$(RUFF) format --check .
+	npm run -s lint
+	@for c in $(TAURI_CRATES); do (cd $$c && cargo fmt --check) || exit 1; done
+	$(MAKE) --no-print-directory rust-clippy
+
+fmt: ## Apply every formatter and safe auto-fix (ruff, Prettier, ESLint, rustfmt)
+	$(RUFF) check --fix .
+	$(RUFF) format .
+	npm run -s fmt
+	$(MAKE) --no-print-directory rust-fmt
+
+rust-fmt:
+	@for c in $(TAURI_CRATES); do (cd $$c && cargo fmt) || exit 1; done
+
+rust-clippy:
+	@for c in $(TAURI_CRATES); do (cd $$c && cargo clippy --all-targets --quiet -- -D warnings) || exit 1; done
 
 test: test-python test-apps ## Run every test suite (Python packages, both Tauri apps)
 

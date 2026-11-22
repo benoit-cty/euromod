@@ -1,0 +1,19 @@
+{
+  "name": "nomos-dev-tooling",
+  "private": true,
+  "description": "Lint/format tooling for the Svelte apps (ui, rag-ui, shared). Not an app: the apps keep their own package.json.",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint Nomoscope-agentic-workflow eslint.config.js && prettier --check \"Nomoscope-agentic-workflow/{ui,rag-ui,shared}/**/*.{js,svelte,css}\" eslint.config.js",
+    "fmt": "prettier --write \"Nomoscope-agentic-workflow/{ui,rag-ui,shared}/**/*.{js,svelte,css}\" eslint.config.js && eslint --fix Nomoscope-agentic-workflow eslint.config.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.15.0",
+    "eslint-plugin-svelte": "3.24.1",
+    "globals": "17.14.0",
+    "prettier": "3.10.1",
+    "prettier-plugin-svelte": "4.2.0",
+    "svelte": "5.59.1"
+  }
+}

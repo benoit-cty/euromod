@@ -10,3 +10,6 @@ Nomoscope-agentic-workflow/rag-ui/ui/src-tauri/target/*
 # personal Claude Code permissions
 .claude/settings.local.json
 .claude/worktrees/
+
+# root dev tooling (ESLint, Prettier)
+/node_modules/

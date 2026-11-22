@@ -1,0 +1,68 @@
+# Code checks run on every commit: Python (ruff), JS/Svelte (ESLint + Prettier),
+# Rust (rustfmt + clippy), plus a few repository-hygiene checks.
+#
+# One-time setup, from the repo root:
+#   npm ci                          # ESLint + Prettier (root package.json, dev tooling only)
+#   uvx pre-commit install          # installs the git hook
+# Run by hand on everything:        uvx pre-commit run --all-files
+# Same checks without pre-commit:   make lint   (make fmt applies the fixes)
+#
+# Keep the ruff rev in step with RUFF in the Makefile.
+default_install_hook_types: [pre-commit]
+exclude: '(^|/)(node_modules|dist|target|\.venv[^/]*)/'
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+      - id: detect-private-key
+      - id: check-yaml
+      - id: check-toml
+      - id: check-case-conflict
+      # A file with both CRLF and LF is fixed to its majority ending; a
+      # consistently CRLF file is left alone. EUROMOD's exports are read-only.
+      - id: mixed-line-ending
+        exclude: ^extracted_parameters/
+
+  # Python — config in ruff.toml
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  # JS / Svelte — config in eslint.config.js and .prettierrc.json; versions in
+  # the root package-lock.json (run `npm ci` once).
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        language: system
+        entry: npx --no-install prettier --write --ignore-unknown
+        files: ^(Nomoscope-agentic-workflow/(ui|rag-ui|shared)/.*\.(js|svelte|css)|eslint\.config\.js)$
+      - id: eslint
+        name: eslint
+        language: system
+        entry: npx --no-install eslint --fix --max-warnings=0
+        files: ^(Nomoscope-agentic-workflow/(ui|rag-ui|shared)/.*\.(js|svelte)|eslint\.config\.js)$
+
+  # Rust — the two Tauri crates. rag-ui compiles some of ui's modules through
+  # #[path], so a change in either crate checks both.
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        language: system
+        entry: make rust-fmt
+        files: ^Nomoscope-agentic-workflow/(ui|rag-ui)/src-tauri/.*\.rs$
+        pass_filenames: false
+      - id: cargo-clippy
+        name: cargo clippy
+        language: system
+        entry: make rust-clippy
+        files: ^Nomoscope-agentic-workflow/(ui|rag-ui)/src-tauri/.*\.(rs|toml)$
+        pass_filenames: false

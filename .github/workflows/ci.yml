@@ -6,6 +6,23 @@ on:
   push:
   pull_request:
 jobs:
+  # The pre-commit hooks (.pre-commit-config.yaml). Clippy is skipped here:
+  # compiling the Tauri crates needs the WebKitGTK system libraries.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.7"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: npm ci
+      - run: SKIP=cargo-clippy uvx pre-commit run --all-files --show-diff-on-failure
   python:
     runs-on: ubuntu-latest
     steps:
@@ -14,7 +31,6 @@ jobs:
         with:
           version: "0.12.7"
       - run: uv sync --all-packages --frozen
-      - run: make lint
       - run: make test-python
   apps-js:
     runs-on: ubuntu-latest

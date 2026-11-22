@@ -95,6 +95,10 @@ uv run nomokrisis-eval benchmark-report <run-id>           # 'ready to accept' +
 uv run nomokrisis-eval report
 ```
 
+## Lint and format
+
+Pre-commit runs ruff (check + format, root `ruff.toml`), ESLint + Prettier on the Svelte apps (root `eslint.config.js`, `.prettierrc.json`; the root `package.json` is dev tooling only) and rustfmt + clippy `-D warnings` on both Tauri crates. Once: `npm ci && uvx pre-commit install` at the repo root. `make lint` runs the same checks, `make fmt` applies the fixes; CI runs the hooks minus clippy.
+
 ## Tests
 
 ```bash
