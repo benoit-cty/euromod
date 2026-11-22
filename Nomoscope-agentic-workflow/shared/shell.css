@@ -4,7 +4,11 @@
    own tabs and ribbon groups into the shell through snippets, and their side
    panels reuse the tab look. */
 
-.app { display: flex; flex-direction: column; height: 100vh; }
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
 
 /* --- Tab strip (EUROMOD: logo disc, then light-blue tabs) --- */
 .tabstrip {
@@ -30,7 +34,12 @@
   font-weight: 700;
   flex: none;
 }
-.tabstrip .tabs { display: flex; gap: 3px; overflow-x: auto; min-width: 0; }
+.tabstrip .tabs {
+  display: flex;
+  gap: 3px;
+  overflow-x: auto;
+  min-width: 0;
+}
 .tab {
   border: 1px solid var(--border-strong);
   border-bottom: 0;
@@ -42,8 +51,17 @@
   white-space: nowrap;
   flex: none;
 }
-.tab:hover:not(:disabled) { background: var(--tab-hover); border-color: var(--border-strong); box-shadow: none; }
-.tab.active { background: var(--panel); position: relative; top: 1px; padding-bottom: calc(0.5rem + 1px); }
+.tab:hover:not(:disabled) {
+  background: var(--tab-hover);
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+.tab.active {
+  background: var(--panel);
+  position: relative;
+  top: 1px;
+  padding-bottom: calc(0.5rem + 1px);
+}
 
 /* --- Ribbon: groups of commands, each captioned underneath --- */
 .ribbon {
@@ -61,9 +79,21 @@
   border-right: 1px solid var(--border-strong);
   flex: none;
 }
-.ribbon .group.spacer { flex: 1; }
-.ribbon .cmds { flex: 1; display: flex; gap: 0.3rem; padding: 0.4rem 0.6rem; align-items: stretch; }
-.ribbon .cmds.col { flex-direction: column; gap: 0.35rem; justify-content: center; }
+.ribbon .group.spacer {
+  flex: 1;
+}
+.ribbon .cmds {
+  flex: 1;
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.4rem 0.6rem;
+  align-items: stretch;
+}
+.ribbon .cmds.col {
+  flex-direction: column;
+  gap: 0.35rem;
+  justify-content: center;
+}
 .ribbon .group-label {
   text-align: center;
   font-size: 12px;
@@ -81,15 +111,42 @@
   border-color: transparent;
 }
 /* EUROMOD ribbon buttons: flat until hovered, then a border and a 1px shadow. */
-.big-cmd:hover:not(:disabled) { border-color: var(--border-strong); }
-.big-cmd.on { background: var(--accent-soft); border-color: var(--border-strong); }
-.ribbon .inline { display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; color: var(--muted); }
-.ribbon .inline strong { color: var(--text); }
-.ribbon .inline select, .ribbon .inline input[type='date'] { padding: 0.2rem 0.4rem; }
-.ribbon .toggle { cursor: pointer; }
-.ribbon .dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--border-strong); }
-.ribbon .dot.on { background: var(--ok); }
-.ribbon .dot.off { background: var(--err); }
+.big-cmd:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+.big-cmd.on {
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
+}
+.ribbon .inline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.ribbon .inline strong {
+  color: var(--text);
+}
+.ribbon .inline select,
+.ribbon .inline input[type='date'] {
+  padding: 0.2rem 0.4rem;
+}
+.ribbon .toggle {
+  cursor: pointer;
+}
+.ribbon .dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+.ribbon .dot.on {
+  background: var(--ok);
+}
+.ribbon .dot.off {
+  background: var(--err);
+}
 
 /* --- Content over the brand star --- */
 .app > .content {
@@ -113,8 +170,16 @@
   pointer-events: none;
 }
 /* A one-line message across the page (error, status, warning). */
-.callout.banner { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.5rem 0.9rem; }
-.callout.banner button { padding: 0.2rem; }
+.callout.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.5rem 0.9rem;
+}
+.callout.banner button {
+  padding: 0.2rem;
+}
 
 /* --- Status bar --- */
 .statusbar {

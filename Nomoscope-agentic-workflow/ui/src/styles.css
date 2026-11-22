@@ -1,21 +1,62 @@
 /* The review UI's own rules, over the shared base (../../shared/styles.css,
    imported first by main.js). */
 
-tr.selected td, tr.selected:hover td { background: var(--accent-soft); }
+tr.selected td,
+tr.selected:hover td {
+  background: var(--accent-soft);
+}
 
 /* Pipeline enums (labels.js words them; the class keeps the raw value). */
-.badge.changed { background: var(--warn-soft); color: var(--warn); }
-.badge.unchanged { background: var(--ok-soft); color: var(--ok); }
-.badge.new, .badge.derived { background: var(--accent-soft); color: var(--accent); }
-.badge.not_found { background: var(--err-soft); color: var(--err); }
-.badge.provisional { background: var(--info-soft); color: var(--info); }
-.badge.national_team_source { background: var(--info-soft); color: var(--info); }
-.badge.pass { background: var(--ok-soft); color: var(--ok); }
-.badge.fail { background: var(--err-soft); color: var(--err); }
-.badge.pending { background: var(--panel-2); color: var(--muted); }
-.badge.accepted, .badge.edited { background: var(--ok-soft); color: var(--ok); }
-.badge.rejected { background: var(--err-soft); color: var(--err); }
-.badge.escalated { background: var(--info-soft); color: var(--info); }
+.badge.changed {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.badge.unchanged {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.badge.new,
+.badge.derived {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.badge.not_found {
+  background: var(--err-soft);
+  color: var(--err);
+}
+.badge.provisional {
+  background: var(--info-soft);
+  color: var(--info);
+}
+.badge.national_team_source {
+  background: var(--info-soft);
+  color: var(--info);
+}
+.badge.pass {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.badge.fail {
+  background: var(--err-soft);
+  color: var(--err);
+}
+.badge.pending {
+  background: var(--panel-2);
+  color: var(--muted);
+}
+.badge.accepted,
+.badge.edited {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.badge.rejected {
+  background: var(--err-soft);
+  color: var(--err);
+}
+.badge.escalated {
+  background: var(--info-soft);
+  color: var(--info);
+}
 
 .law-text {
   white-space: pre-wrap;
@@ -46,7 +87,9 @@ details.more > summary {
   font-weight: 600;
   user-select: none;
 }
-details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::-webkit-details-marker {
+  display: none;
+}
 details.more > summary::before {
   content: '';
   width: 0.45rem;
@@ -57,16 +100,40 @@ details.more > summary::before {
   transition: transform 0.15s;
   margin-right: 0.15rem;
 }
-details.more[open] > summary::before { transform: rotate(45deg); }
-details.more > summary .hint { font-weight: 400; color: var(--muted); font-size: 0.88rem; }
-details.more > summary:hover { background: var(--button-hover); border-radius: var(--radius); }
-details.more > .body { padding: 0.2rem 0.9rem 0.9rem; display: flex; flex-direction: column; gap: 0.7rem; }
+details.more[open] > summary::before {
+  transform: rotate(45deg);
+}
+details.more > summary .hint {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+details.more > summary:hover {
+  background: var(--button-hover);
+  border-radius: var(--radius);
+}
+details.more > .body {
+  padding: 0.2rem 0.9rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
 
 /* --- Page scaffolding --------------------------------------------------- */
-.page-intro { color: var(--muted); margin: 0; max-width: 60rem; }
+.page-intro {
+  color: var(--muted);
+  margin: 0;
+  max-width: 60rem;
+}
 
 /* Segmented control: a small set of mutually exclusive views. */
-.segmented { display: inline-flex; background: var(--panel-2); border-radius: var(--radius); padding: 3px; gap: 2px; }
+.segmented {
+  display: inline-flex;
+  background: var(--panel-2);
+  border-radius: var(--radius);
+  padding: 3px;
+  gap: 2px;
+}
 .segmented button {
   border: 0;
   background: transparent;
@@ -74,16 +141,54 @@ details.more > .body { padding: 0.2rem 0.9rem 0.9rem; display: flex; flex-direct
   padding: 0.32rem 0.8rem;
   color: var(--muted);
 }
-.segmented button.active { background: var(--panel); color: var(--text); box-shadow: var(--shadow); font-weight: 600; }
-.segmented .count { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+.segmented button.active {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-weight: 600;
+}
+.segmented .count {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 500;
+}
 
 /* A form's fields on a grid (Add sources); .wide takes two columns. */
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.7rem; align-items: end; }
-.form-grid .wide { grid-column: span 2; }
-@media (max-width: 700px) { .form-grid .wide { grid-column: auto; } }
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.7rem;
+  align-items: end;
+}
+.form-grid .wide {
+  grid-column: span 2;
+}
+@media (max-width: 700px) {
+  .form-grid .wide {
+    grid-column: auto;
+  }
+}
 
 /* Form fields: a label above its control. */
-.field { display: flex; flex-direction: column; gap: 0.3rem; color: var(--muted); font-size: 0.88rem; }
-.field input, .field select, .field textarea { color: var(--text); font-size: 0.95rem; width: 100%; }
-.field.check { flex-direction: row; align-items: center; gap: 0.45rem; }
-.field.check input { width: auto; }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+.field input,
+.field select,
+.field textarea {
+  color: var(--text);
+  font-size: 0.95rem;
+  width: 100%;
+}
+.field.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+}
+.field.check input {
+  width: auto;
+}

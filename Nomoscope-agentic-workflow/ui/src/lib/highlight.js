@@ -110,7 +110,7 @@ export function tintLevels(similarities) {
 export function renderView(content, headline, similarities) {
   const sentences = splitSentences(content);
   const spans = lexicalSpans(headline, content);
-  const sims = sentences.map((s, i) => (s.scorable && similarities ? similarities[i] ?? null : null));
+  const sims = sentences.map((s, i) => (s.scorable && similarities ? (similarities[i] ?? null) : null));
   const levels = tintLevels(sims);
   return sentences.map((seg, i) => ({
     level: levels[i],

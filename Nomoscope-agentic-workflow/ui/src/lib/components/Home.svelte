@@ -97,17 +97,23 @@
   <section class="tiles">
     <button class="tile" onclick={() => onnavigate('review')}>
       <span class="tile-icon warn"><Icon name="review" size={20} /></span>
-      <span class="num">{#if loading}<span class="spinner"></span>{:else}{formatCount(pending.length)}{/if}</span>
+      <span class="num">
+        {#if loading}<span class="spinner"></span>{:else}{formatCount(pending.length)}{/if}
+      </span>
       <span class="label">To review</span>
     </button>
     <button class="tile" onclick={() => onnavigate('audit')}>
       <span class="tile-icon ok"><Icon name="check" size={20} /></span>
-      <span class="num">{#if loading}<span class="spinner"></span>{:else}{formatCount(decidedToday)}{/if}</span>
+      <span class="num">
+        {#if loading}<span class="spinner"></span>{:else}{formatCount(decidedToday)}{/if}
+      </span>
       <span class="label">Decided today</span>
     </button>
     <button class="tile" onclick={onexport} title="Export the accepted changes for EUROMOD">
       <span class="tile-icon accent"><Icon name="download" size={20} /></span>
-      <span class="num">{#if loading}<span class="spinner"></span>{:else}{formatCount(acceptedChanges)}{/if}</span>
+      <span class="num">
+        {#if loading}<span class="spinner"></span>{:else}{formatCount(acceptedChanges)}{/if}
+      </span>
       <span class="label">Accepted changes to export</span>
     </button>
     <button class="tile" onclick={() => onnavigate('database')}>
@@ -137,7 +143,9 @@
               </span>
             </div>
             <div class="muted small">
-              {formatCount(c.laws)} law{c.laws === 1 ? '' : 's'} · {formatCount(c.params)} parameter{c.params === 1 ? '' : 's'}
+              {formatCount(c.laws)} law{c.laws === 1 ? '' : 's'} · {formatCount(c.params)} parameter{c.params === 1
+                ? ''
+                : 's'}
               {#if pendingByCountry[c.code]}· <strong class="pend">{pendingByCountry[c.code]} to review</strong>{/if}
             </div>
             {#if c.problems.length}
@@ -157,11 +165,16 @@
       <ul class="activity">
         {#each jobs as job (job.id)}
           <li>
-            <span class="badge {job.status === 'succeeded' ? 'pass' : job.status === 'failed' ? 'fail' : 'pending'}" title={job.status}>
+            <span
+              class="badge {job.status === 'succeeded' ? 'pass' : job.status === 'failed' ? 'fail' : 'pending'}"
+              title={job.status}
+            >
               {jobStatusLabel(job.status).label}
             </span>
             <span title={job.job_type}>{jobTypeLabel(job.job_type).label}</span>
-            <span class="muted small">{job.submitted_by ? `by ${job.submitted_by} · ` : ''}{relativeTime(job.submitted_at)}</span>
+            <span class="muted small">
+              {job.submitted_by ? `by ${job.submitted_by} · ` : ''}{relativeTime(job.submitted_at)}
+            </span>
           </li>
         {/each}
       </ul>
@@ -170,9 +183,15 @@
 </div>
 
 <style>
-  .home { display: flex; flex-direction: column; gap: 1rem; overflow: auto; }
+  .home {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow: auto;
+  }
   /* The brand star shows through the Overview's panels. */
-  .home :global(.panel), .tile {
+  .home :global(.panel),
+  .tile {
     background: var(--panel-glass);
     backdrop-filter: blur(3px);
   }
@@ -188,9 +207,19 @@
     backdrop-filter: blur(3px);
     border: 1px solid var(--border);
   }
-  .hero h2 { font-size: 1.3rem; margin: 0 0 0.25rem; }
-  .lead { font-size: 1.05rem; margin: 0; }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.8rem; }
+  .hero h2 {
+    font-size: 1.3rem;
+    margin: 0 0 0.25rem;
+  }
+  .lead {
+    font-size: 1.05rem;
+    margin: 0;
+  }
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.8rem;
+  }
   .tile {
     flex-direction: column;
     align-items: flex-start;
@@ -211,14 +240,43 @@
     color: var(--muted);
     margin-bottom: 0.3rem;
   }
-  .tile-icon.warn { background: var(--warn-soft); color: var(--warn); }
-  .tile-icon.ok { background: var(--ok-soft); color: var(--ok); }
-  .tile-icon.accent { background: var(--accent-soft); color: var(--accent); }
-  .num { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
-  .label { color: var(--muted); font-size: 0.9rem; }
-  .countries { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.7rem; }
-  .country { border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 0.9rem; }
-  .country-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; }
+  .tile-icon.warn {
+    background: var(--warn-soft);
+    color: var(--warn);
+  }
+  .tile-icon.ok {
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+  .tile-icon.accent {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .num {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .label {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .countries {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    gap: 0.7rem;
+  }
+  .country {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+  }
+  .country-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+  }
   .code {
     font-size: 0.72rem;
     font-weight: 700;
@@ -227,14 +285,50 @@
     padding: 0.1rem 0.35rem;
     color: var(--muted);
   }
-  .state { margin-left: auto; display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; font-weight: 600; }
-  .state.ready { color: var(--ok); }
-  .state.partial { color: var(--warn); }
-  .state.missing { color: var(--muted); }
-  .pend { color: var(--accent); }
-  .problems { margin: 0.4rem 0 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.82rem; }
-  .activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-  .activity li { display: flex; align-items: center; gap: 0.7rem; padding: 0.45rem 0; border-bottom: 1px solid var(--border); }
-  .activity li:last-child { border-bottom: 0; }
-  .activity .small { margin-left: auto; }
+  .state {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .state.ready {
+    color: var(--ok);
+  }
+  .state.partial {
+    color: var(--warn);
+  }
+  .state.missing {
+    color: var(--muted);
+  }
+  .pend {
+    color: var(--accent);
+  }
+  .problems {
+    margin: 0.4rem 0 0;
+    padding-left: 1.1rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+  .activity {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .activity li {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .activity li:last-child {
+    border-bottom: 0;
+  }
+  .activity .small {
+    margin-left: auto;
+  }
 </style>

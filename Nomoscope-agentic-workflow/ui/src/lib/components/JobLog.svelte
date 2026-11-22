@@ -28,7 +28,9 @@
 {#if folded}
   {#if lines.length}
     <details class="more">
-      <summary>Technical log <span class="hint">{jobId != null ? `job #${jobId} · ` : ''}{lines.length} lines</span></summary>
+      <summary>
+        Technical log <span class="hint">{jobId != null ? `job #${jobId} · ` : ''}{lines.length} lines</span>
+      </summary>
       <div class="body">{@render logBox()}</div>
     </details>
   {/if}
@@ -48,8 +50,19 @@
     font-size: 0.85rem;
     line-height: 1.4;
   }
-  .joblog.fill { flex: 1; max-height: none; min-height: 8rem; }
-  .line { white-space: pre-wrap; word-break: break-word; }
-  .line.stderr .mono { color: var(--err); }
-  .line.system .mono { color: var(--accent); }
+  .joblog.fill {
+    flex: 1;
+    max-height: none;
+    min-height: 8rem;
+  }
+  .line {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .line.stderr .mono {
+    color: var(--err);
+  }
+  .line.system .mono {
+    color: var(--accent);
+  }
 </style>

@@ -38,11 +38,7 @@
   // hits whose trace stored no content)
   function selected(hit) {
     const list = langs[hit.chunk_id]?.renderings ?? [];
-    return (
-      list.find((r) => r.unit_text_id === chosen[hit.chunk_id]) ??
-      list.find((r) => r.is_cited) ??
-      null
-    );
+    return list.find((r) => r.unit_text_id === chosen[hit.chunk_id]) ?? list.find((r) => r.is_cited) ?? null;
   }
 
   function shownText(hit) {
@@ -50,10 +46,7 @@
   }
 
   function esc(text) {
-    return text
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;');
+    return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   }
 
   function highlight(hit) {
@@ -87,7 +80,10 @@
         <span class="muted">
           <span title={retrievalLabel(hit.method).hint}>{retrievalLabel(hit.method).label}</span>
           · {hit.lang?.toUpperCase()} · {hit.validity}
-          · <span title={versionStatusLabel(hit.version_status).hint}>{versionStatusLabel(hit.version_status).label}</span>
+          ·
+          <span title={versionStatusLabel(hit.version_status).hint}>
+            {versionStatusLabel(hit.version_status).label}
+          </span>
           {#if hit.score != null}· score {formatFixed(hit.score, 3)}{/if}
         </span>
         {#if hit.chunk_id === citedChunkId}<span class="badge pass">cited</span>{/if}
@@ -120,8 +116,8 @@
 
       {#if selected(hit) && !selected(hit).is_cited}
         <p class="muted">
-          Showing a {authenticityLabel(selected(hit).authenticity).label.toLowerCase()} —
-          the verbatim extract is highlighted in the cited rendering only.
+          Showing a {authenticityLabel(selected(hit).authenticity).label.toLowerCase()} — the verbatim extract is highlighted
+          in the cited rendering only.
           {#if !selected(hit).aligned}
             No chunk with this offset in that language: the full version text is shown.
           {/if}
@@ -129,6 +125,7 @@
       {/if}
 
       {#if shownText(hit)}
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -- highlight() escapes the text first -->
         <div class="law-text">{@html highlight(hit)}</div>
       {:else}
         <p class="muted">content not stored in trace</p>
@@ -141,9 +138,28 @@
 </div>
 
 <style>
-  details { margin-bottom: 0.6rem; }
-  summary { cursor: pointer; display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
-  p { margin: 0.25rem 0; }
-  .langs { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; margin: 0.35rem 0; }
-  .langs button { font-size: 0.8rem; padding: 0.15rem 0.45rem; }
+  details {
+    margin-bottom: 0.6rem;
+  }
+  summary {
+    cursor: pointer;
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+  p {
+    margin: 0.25rem 0;
+  }
+  .langs {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    margin: 0.35rem 0;
+  }
+  .langs button {
+    font-size: 0.8rem;
+    padding: 0.15rem 0.45rem;
+  }
 </style>

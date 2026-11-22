@@ -46,7 +46,9 @@
             {#if technical}
               <td><span class="badge {d.routing}" title={d.routing}>{routingLabel(d.routing).label}</span></td>
               <td>{d.confidence ?? '—'}</td>
-              <td title={d.critique_verdict ?? ''}>{d.critique_verdict ? verdictLabel(d.critique_verdict).label : '—'}</td>
+              <td title={d.critique_verdict ?? ''}>
+                {d.critique_verdict ? verdictLabel(d.critique_verdict).label : '—'}
+              </td>
             {/if}
             <td>{d.note ?? ''}</td>
           </tr>
@@ -66,8 +68,24 @@
 </section>
 
 <style>
-  .log { display: flex; flex-direction: column; min-height: 0; gap: 0.8rem; }
-  .bar-row { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
-  .search { flex: 1; min-width: 14rem; }
-  .scroll { overflow: auto; flex: 1; }
+  .log {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 0.8rem;
+  }
+  .bar-row {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search {
+    flex: 1;
+    min-width: 14rem;
+  }
+  .scroll {
+    overflow: auto;
+    flex: 1;
+  }
 </style>

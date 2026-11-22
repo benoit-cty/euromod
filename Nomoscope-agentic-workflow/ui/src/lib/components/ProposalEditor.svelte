@@ -55,9 +55,7 @@
     type="button"
     class="was"
     disabled={isRestored(field)}
-    title={isRestored(field)
-      ? 'Same as the current EUROMOD value'
-      : `Restore the current EUROMOD value (${shown})`}
+    title={isRestored(field) ? 'Same as the current EUROMOD value' : `Restore the current EUROMOD value (${shown})`}
     onclick={() => restore(field)}
   >
     ↩ was {shown}
@@ -167,17 +165,13 @@
             <textarea rows="4" bind:value={ref.supporting_extract}></textarea>
           </label>
           {#if ref.supporting_extract !== ref._extract_orig}
-            <p class="warn-text">
-              Quote edited by hand: the automatic word-for-word check no longer covers it.
-            </p>
+            <p class="warn-text">Quote edited by hand: the automatic word-for-word check no longer covers it.</p>
           {/if}
           <label class="field">
             Reviewer note
             <input bind:value={ref.reviewer_note} />
           </label>
-          <button class="link danger" onclick={() => form.references.splice(i, 1)}>
-            remove reference
-          </button>
+          <button class="link danger" onclick={() => form.references.splice(i, 1)}> remove reference </button>
         </div>
       {/each}
     </div>
@@ -186,7 +180,12 @@
 </details>
 
 <style>
-  .edit h4 { margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+  .edit h4 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
   .refs h4 {
     font-size: 0.78rem;
     font-weight: 600;
@@ -194,9 +193,22 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.6rem 0.8rem; }
-  .field input[readonly] { color: var(--muted); background: var(--panel-2); cursor: default; }
-  .cap { display: flex; align-items: baseline; gap: 0.4rem; justify-content: space-between; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.6rem 0.8rem;
+  }
+  .field input[readonly] {
+    color: var(--muted);
+    background: var(--panel-2);
+    cursor: default;
+  }
+  .cap {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    justify-content: space-between;
+  }
   button.was {
     color: var(--accent);
     background: none;
@@ -209,9 +221,22 @@
     max-width: 60%;
     display: inline;
   }
-  button.was:disabled { color: var(--muted); cursor: default; opacity: 1; }
-  .refs { display: flex; flex-direction: column; gap: 0.5rem; }
-  .trust { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); }
+  button.was:disabled {
+    color: var(--muted);
+    cursor: default;
+    opacity: 1;
+  }
+  .refs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .trust {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--muted);
+  }
   .ref {
     display: flex;
     flex-direction: column;
@@ -220,6 +245,13 @@
     border-radius: 8px;
     background: var(--panel-2);
   }
-  .warn-text { color: var(--warn); margin: 0; font-size: 0.85rem; }
-  button.link.danger { color: var(--err); align-self: flex-start; }
+  .warn-text {
+    color: var(--warn);
+    margin: 0;
+    font-size: 0.85rem;
+  }
+  button.link.danger {
+    color: var(--err);
+    align-self: flex-start;
+  }
 </style>

@@ -36,24 +36,40 @@ const ev = (id, stream, line, data) => ({ id, at: 't', stream, line, data: data 
 
 test('events are delivered once, in order, and the cursor advances past the last id', async () => {
   const log = [ev(1, 'system', 'started'), ev(2, 'stdout', 'one')];
-  const later = [...log, ev(3, 'stderr', 'warn'), ev(4, 'progress', '@progress {"done":1,"total":2}', { done: 1, total: 2 })];
+  const later = [
+    ...log,
+    ev(3, 'stderr', 'warn'),
+    ev(4, 'progress', '@progress {"done":1,"total":2}', { done: 1, total: 2 }),
+  ];
   const final = [...later, ev(5, 'stdout', 'bye')];
   const fake = fakeTransport({
     pages: [log, later, final, final],
-    statuses: [{ id: 42, status: 'running' }, { id: 42, status: 'succeeded', result: { ok: true } }],
+    statuses: [
+      { id: 42, status: 'running' },
+      { id: 42, status: 'succeeded', result: { ok: true } },
+    ],
   });
   const lines = [];
   const progress = [];
   const statuses = [];
-  const result = await followJob(42, {
-    onLine: (e) => lines.push(`${e.stream}:${e.line}`),
-    onProgress: (d) => progress.push(d),
-    onStatus: (s) => statuses.push(s.status),
-  }, 0, fake);
+  const result = await followJob(
+    42,
+    {
+      onLine: (e) => lines.push(`${e.stream}:${e.line}`),
+      onProgress: (d) => progress.push(d),
+      onStatus: (s) => statuses.push(s.status),
+    },
+    0,
+    fake,
+  );
 
   assert.equal(result.status, 'succeeded');
   assert.deepEqual(result.result, { ok: true });
-  assert.deepEqual(lines, ['system:started', 'stdout:one', 'stderr:warn', 'stdout:bye'], 'trailing event drained after the terminal status');
+  assert.deepEqual(
+    lines,
+    ['system:started', 'stdout:one', 'stderr:warn', 'stdout:bye'],
+    'trailing event drained after the terminal status',
+  );
   assert.deepEqual(progress, [{ done: 1, total: 2 }]);
   assert.deepEqual(statuses, ['running', 'succeeded']);
   // poll 1 from 0, poll 2 after id 2, final drain after id 4
@@ -62,7 +78,10 @@ test('events are delivered once, in order, and the cursor advances past the last
 
 test('a progress event without parsed data falls back to the raw line', async () => {
   const fake = fakeTransport({
-    pages: [[ev(1, 'progress', '@progress {"done":3,"total":3}')], [ev(1, 'progress', '@progress {"done":3,"total":3}')]],
+    pages: [
+      [ev(1, 'progress', '@progress {"done":3,"total":3}')],
+      [ev(1, 'progress', '@progress {"done":3,"total":3}')],
+    ],
     statuses: [{ id: 7, status: 'succeeded' }],
   });
   const progress = [];

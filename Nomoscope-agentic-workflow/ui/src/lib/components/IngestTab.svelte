@@ -19,10 +19,26 @@
   import Icon from '@shared/components/Icon.svelte';
 
   const ACTIONS = {
-    document: { run: 'Add this document', title: 'A document or web page', blurb: 'A circular, decree, guidance page or PDF you found.' },
-    ingestion: { run: 'Import this law', title: 'An official law', blurb: 'From the national legal portal, by its reference.' },
-    embeddings: { run: 'Make texts searchable', title: 'Make new texts searchable', blurb: 'Index texts added recently so the assistant can find them.' },
-    translation: { run: 'Translate', title: 'Translate texts', blurb: 'Add English versions of texts that only exist in the national language.' },
+    document: {
+      run: 'Add this document',
+      title: 'A document or web page',
+      blurb: 'A circular, decree, guidance page or PDF you found.',
+    },
+    ingestion: {
+      run: 'Import this law',
+      title: 'An official law',
+      blurb: 'From the national legal portal, by its reference.',
+    },
+    embeddings: {
+      run: 'Make texts searchable',
+      title: 'Make new texts searchable',
+      blurb: 'Index texts added recently so the assistant can find them.',
+    },
+    translation: {
+      run: 'Translate',
+      title: 'Translate texts',
+      blurb: 'Add English versions of texts that only exist in the national language.',
+    },
   };
 
   // What the reviewer is adding. A found document is the common case, so it comes first.
@@ -79,6 +95,7 @@
     });
   }
 </script>
+
 <section class="ingest">
   <div class="choices">
     {#each ['document', 'ingestion'] as key}
@@ -121,14 +138,19 @@
 
     <div class="runbar">
       <button class="primary big" onclick={run} disabled={job.running || (sub === 'document' && !documentReady)}>
-        {#if job.running}<span class="spinner light"></span> Working… {formatDuration(job.elapsed)}{:else}{ACTIONS[sub].run}{/if}
+        {#if job.running}<span class="spinner light"></span> Working… {formatDuration(job.elapsed)}{:else}{ACTIONS[sub]
+            .run}{/if}
       </button>
       {#if job.running}<button onclick={job.cancel} disabled={job.jobId == null}>Cancel</button>{/if}
     </div>
 
     <JobProgress run={job} />
 
-    {#if job.summary}<p class="callout {job.summary.startsWith('Finished') ? 'ok' : job.summary.startsWith('Failed') ? 'err' : ''}">{job.summary}</p>{/if}
+    {#if job.summary}<p
+        class="callout {job.summary.startsWith('Finished') ? 'ok' : job.summary.startsWith('Failed') ? 'err' : ''}"
+      >
+        {job.summary}
+      </p>{/if}
     {#if job.error}<p class="callout err">{job.error}</p>{/if}
     {#if error}<p class="callout err">{error}</p>{/if}
 
@@ -137,8 +159,19 @@
 </section>
 
 <style>
-  .ingest { overflow: auto; display: flex; flex-direction: column; gap: 0.9rem; min-height: 0; max-width: 60rem; }
-  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.8rem; }
+  .ingest {
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    min-height: 0;
+    max-width: 60rem;
+  }
+  .choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.8rem;
+  }
   .choice {
     justify-content: flex-start;
     align-items: flex-start;
@@ -150,7 +183,10 @@
     text-align: left;
     box-shadow: var(--shadow);
   }
-  .choice.active { border-color: var(--accent); background: var(--accent-soft); }
+  .choice.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
   .choice-icon {
     width: 2.3rem;
     height: 2.3rem;
@@ -161,9 +197,30 @@
     place-items: center;
     flex: none;
   }
-  .choice-text { display: flex; flex-direction: column; gap: 0.15rem; }
-  .maintenance { display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
-  .maintenance .on { background: var(--accent-soft); color: var(--accent); }
-  .form { display: flex; flex-direction: column; gap: 0.9rem; }
-  .runbar { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+  .choice-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .maintenance {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+  }
+  .maintenance .on {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .runbar {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+  }
 </style>

@@ -8,15 +8,7 @@
   import { authenticityLabel, countryName, trustLabel } from '@shared/lib/labels.js';
   import { locateExtract } from '../chat.js';
 
-  let {
-    chunk,
-    label = '',
-    extract = '',
-    verified = null,
-    headline = null,
-    active = false,
-    open = false,
-  } = $props();
+  let { chunk, label = '', extract = '', verified = null, headline = null, active = false, open = false } = $props();
 
   // Follows `open` (the quote selected in the answer); the reader's own
   // Full text / Collapse overrides it until `open` changes again.
@@ -31,7 +23,7 @@
   });
 
   const shown = $derived(renderings ? renderings[renderingIdx] : null);
-  const content = $derived(shown ? shown.content : chunk.content ?? '');
+  const content = $derived(shown ? shown.content : (chunk.content ?? ''));
   const located = $derived(extract ? locateExtract(content, extract) : null);
   const runs = $derived(!extract && headline && !shown ? headlineRuns(headline) : null);
   const preview = $derived((chunk.content ?? '').slice(0, 220));
@@ -59,8 +51,12 @@
   <header>
     {#if label}<span class="label">{label}</span>{/if}
     <strong class="cit">{chunk.citation ?? chunk.context_header ?? 'passage'}</strong>
-    {#if verified === true}<span class="badge ok" title="found character-for-character in this chunk">verbatim ✓</span>{/if}
-    {#if verified === false}<span class="badge err" title="not found in the chunk — do not rely on it">not verbatim ✗</span>{/if}
+    {#if verified === true}<span class="badge ok" title="found character-for-character in this chunk">
+        verbatim ✓
+      </span>{/if}
+    {#if verified === false}<span class="badge err" title="not found in the chunk — do not rely on it">
+        not verbatim ✗
+      </span>{/if}
     {#if chunk.source_trust_class && chunk.source_trust_class !== 'evidence'}
       {@const trust = trustLabel(chunk.source_trust_class)}
       <span class="badge {trust.raw}" title="{trust.hint} ({trust.raw})">{trust.label}</span>
@@ -81,20 +77,36 @@
     {#if renderings}
       <div class="langs">
         {#each renderings as r, i (r.unit_text_id)}
-          <button class:on={i === renderingIdx} onclick={() => (renderingIdx = i)} title={r.mt_engine ? `${authenticityLabel(r.authenticity).label} (${r.mt_engine})` : authenticityLabel(r.authenticity).label}>
+          <button
+            class:on={i === renderingIdx}
+            onclick={() => (renderingIdx = i)}
+            title={r.mt_engine
+              ? `${authenticityLabel(r.authenticity).label} (${r.mt_engine})`
+              : authenticityLabel(r.authenticity).label}
+          >
             {r.lang}{r.authenticity === 'machine_translation' ? ' (MT)' : ''}
           </button>
         {/each}
       </div>
     {/if}
     <div class="text">
-      {#if located}{located.before}<mark>{located.match}</mark>{located.after}{:else if runs}{#each runs as run}{#if run.hit}<mark>{run.text}</mark>{:else}{run.text}{/if}{/each}{:else}{content}{/if}
+      {#if located}{located.before}<mark>
+          {located.match}
+        </mark>{located.after}{:else if runs}{#each runs as run}{#if run.hit}<mark>
+              {run.text}
+            </mark>{:else}{run.text}{/if}{/each}{:else}{content}{/if}
     </div>
     {#if extract && !located}
       <p class="muted small">The extract does not occur in this rendering.</p>
     {/if}
   {:else if !extract}
-    <div class="text clamp">{#if runs}{#each runs as run}{#if run.hit}<mark>{run.text}</mark>{:else}{run.text}{/if}{/each}{:else}{preview}{(chunk.content ?? '').length > 220 ? '…' : ''}{/if}</div>
+    <div class="text clamp">
+      {#if runs}{#each runs as run}{#if run.hit}<mark>{run.text}</mark>{:else}{run.text}{/if}{/each}{:else}{preview}{(
+          chunk.content ?? ''
+        ).length > 220
+          ? '…'
+          : ''}{/if}
+    </div>
   {/if}
 
   <footer>
@@ -116,17 +128,70 @@
     padding: 0.55rem 0.7rem;
     margin-bottom: 0.5rem;
   }
-  .card.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-  header { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
-  .label { font-weight: 600; color: var(--accent); }
-  .cit { font-size: 0.95em; }
-  .meta { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 0.15rem 0 0.3rem; }
-  .extract { margin: 0.3rem 0; padding: 0.3rem 0.6rem; border-left: 3px solid var(--accent); background: var(--panel-2); border-radius: 0 var(--radius) var(--radius) 0; white-space: pre-wrap; }
-  .text { white-space: pre-wrap; line-height: 1.45; font-size: 0.92em; max-height: 28rem; overflow-y: auto; }
-  .text.clamp { max-height: 5.5rem; overflow: hidden; color: var(--muted); }
-  .langs { display: flex; gap: 0.3rem; margin-bottom: 0.3rem; }
-  .langs button { padding: 0.05rem 0.45rem; font-size: 0.8em; }
-  .langs button.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
-  footer { display: flex; gap: 0.8rem; align-items: center; margin-top: 0.3rem; }
-  footer .mono { margin-left: auto; }
+  .card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+  }
+  .label {
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .cit {
+    font-size: 0.95em;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin: 0.15rem 0 0.3rem;
+  }
+  .extract {
+    margin: 0.3rem 0;
+    padding: 0.3rem 0.6rem;
+    border-left: 3px solid var(--accent);
+    background: var(--panel-2);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    white-space: pre-wrap;
+  }
+  .text {
+    white-space: pre-wrap;
+    line-height: 1.45;
+    font-size: 0.92em;
+    max-height: 28rem;
+    overflow-y: auto;
+  }
+  .text.clamp {
+    max-height: 5.5rem;
+    overflow: hidden;
+    color: var(--muted);
+  }
+  .langs {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 0.3rem;
+  }
+  .langs button {
+    padding: 0.05rem 0.45rem;
+    font-size: 0.8em;
+  }
+  .langs button.on {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  footer {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    margin-top: 0.3rem;
+  }
+  footer .mono {
+    margin-left: auto;
+  }
 </style>

@@ -49,7 +49,8 @@
   </button>
   <span class="muted small">
     {#if handoffStatus === 'copied'}
-      Paste it into Claude (or another assistant). If it finds the law, add the text under <em>Add sources</em> and check the parameter again.
+      Paste it into Claude (or another assistant). If it finds the law, add the text under <em>Add sources</em> and check
+      the parameter again.
     {:else if needsHandoff}
       Let a web-connected assistant search the law for this value.
     {/if}
@@ -59,16 +60,37 @@
   <details class="more" bind:open={handoffOpen}>
     <summary>
       The prompt
-      <span class="hint">{handoffStatus === 'manual' ? 'the clipboard is not available — select it and copy' : 'what was copied'}</span>
+      <span class="hint">
+        {handoffStatus === 'manual' ? 'the clipboard is not available — select it and copy' : 'what was copied'}
+      </span>
     </summary>
     <div class="body">
-      <textarea class="handoff-text mono" rows="14" readonly value={handoffText} onfocus={(e) => e.currentTarget.select()}></textarea>
+      <textarea
+        class="handoff-text mono"
+        rows="14"
+        readonly
+        value={handoffText}
+        onfocus={(e) => e.currentTarget.select()}></textarea>
     </div>
   </details>
 {/if}
 
 <style>
-  .handoff { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-top: -0.3rem; }
-  .handoff button { display: inline-flex; align-items: center; gap: 0.4rem; }
-  .handoff-text { width: 100%; font-size: 0.8rem; resize: vertical; }
+  .handoff {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-top: -0.3rem;
+  }
+  .handoff button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .handoff-text {
+    width: 100%;
+    font-size: 0.8rem;
+    resize: vertical;
+  }
 </style>

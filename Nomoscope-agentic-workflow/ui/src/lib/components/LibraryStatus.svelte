@@ -50,7 +50,9 @@
     {#if stats}
       <table class="summary-table">
         <thead>
-          <tr><th>Country</th><th>Laws and texts</th><th>Searchable</th><th>Available in English</th><th>Status</th></tr>
+          <tr>
+            <th>Country</th><th>Laws and texts</th><th>Searchable</th><th>Available in English</th><th>Status</th>
+          </tr>
         </thead>
         <tbody>
           {#each countryRows as c (c.row.code)}
@@ -61,8 +63,12 @@
               <td>{c.englishPct == null ? '—' : `${c.englishPct}%`}</td>
               <td>
                 {#if c.level === 'ready'}<span class="badge pass">Ready</span>
-                {:else}<span class="badge {c.level === 'partial' ? 'changed' : 'pending'}" title={c.problems.join('; ')}>
-                  {c.problems[0]}</span>{/if}
+                {:else}<span
+                    class="badge {c.level === 'partial' ? 'changed' : 'pending'}"
+                    title={c.problems.join('; ')}
+                  >
+                    {c.problems[0]}
+                  </span>{/if}
               </td>
             </tr>
           {/each}
@@ -73,7 +79,9 @@
         <summary>Technical statistics <span class="hint">for the people maintaining the library</span></summary>
         <div class="body">
           <DbUrlField {dbUrl} {onchangedb} />
-          <div><button onclick={loadStats} disabled={loading}>{loading ? 'Loading…' : 'Reload statistics'}</button></div>
+          <div>
+            <button onclick={loadStats} disabled={loading}>{loading ? 'Loading…' : 'Reload statistics'}</button>
+          </div>
           <div class="stats">
             {#each Object.entries(stats.totals) as [key, count]}
               <div class="stat">
@@ -88,7 +96,11 @@
               <h3>By jurisdiction</h3>
               <table>
                 <thead>
-                  <tr><th>Code</th><th>Instr.</th><th>Units</th><th>Versions</th><th>In force</th><th>Texts</th><th>Chunks</th><th>Embedded</th></tr>
+                  <tr>
+                    <th>Code</th><th>Instr.</th><th>Units</th><th>Versions</th><th>In force</th><th>Texts</th><th>
+                      Chunks
+                    </th><th>Embedded</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {#each stats.by_country as row}
@@ -127,9 +139,8 @@
             <div class="wide">
               <h3>Model inputs</h3>
               <p class="muted note">
-                The two non-legislative inputs each country needs: its EUROMOD Country Report
-                (context for framing and display, never cited as evidence) and the enriched
-                parameter store loaded by <code>ingest-params</code>.
+                The two non-legislative inputs each country needs: its EUROMOD Country Report (context for framing and
+                display, never cited as evidence) and the enriched parameter store loaded by <code>ingest-params</code>.
               </p>
               <table>
                 <thead>
@@ -181,7 +192,9 @@
             <div>
               <h3>Embedding models</h3>
               <table>
-                <thead><tr><th>Id</th><th>Name</th><th>Provider</th><th>Dim</th><th>Default</th><th>Embedded chunks</th></tr></thead>
+                <thead>
+                  <tr><th>Id</th><th>Name</th><th>Provider</th><th>Dim</th><th>Default</th><th>Embedded chunks</th></tr>
+                </thead>
                 <tbody>
                   {#each stats.embedding_models as m}
                     <tr>
@@ -207,10 +220,29 @@
 </details>
 
 <style>
-  .summary-table td, .summary-table th { padding: 0.45rem 0.6rem; }
-  .nested { margin-top: 0.4rem; }
-  .tables { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
-  .tables .wide { grid-column: 1 / -1; }
-  .note { margin: 0 0 0.4rem; font-size: 0.82rem; }
-  @media (max-width: 1100px) { .tables { grid-template-columns: 1fr; } }
+  .summary-table td,
+  .summary-table th {
+    padding: 0.45rem 0.6rem;
+  }
+  .nested {
+    margin-top: 0.4rem;
+  }
+  .tables {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+  .tables .wide {
+    grid-column: 1 / -1;
+  }
+  .note {
+    margin: 0 0 0.4rem;
+    font-size: 0.82rem;
+  }
+  @media (max-width: 1100px) {
+    .tables {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

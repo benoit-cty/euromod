@@ -28,9 +28,20 @@ test('buildMessages keeps answered turns and their verified quotes only', () => 
 
 test('applyStep pairs a done event with its open start', () => {
   const steps = [];
-  applyStep(steps, { event: 'tool', status: 'start', tool: 'search_legislation', args: { query: 'q', countries: ['FR'] } });
+  applyStep(steps, {
+    event: 'tool',
+    status: 'start',
+    tool: 'search_legislation',
+    args: { query: 'q', countries: ['FR'] },
+  });
   applyStep(steps, { event: 'tool', status: 'start', tool: 'web_search', args: { query: 'w' } });
-  applyStep(steps, { event: 'tool', status: 'done', tool: 'search_legislation', summary: '8 passage(s)', chunk_ids: ['c'] });
+  applyStep(steps, {
+    event: 'tool',
+    status: 'done',
+    tool: 'search_legislation',
+    summary: '8 passage(s)',
+    chunk_ids: ['c'],
+  });
   assert.equal(steps.length, 2);
   assert.equal(steps[0].done, true);
   assert.equal(steps[0].summary, '8 passage(s)');
@@ -53,7 +64,10 @@ test('locateExtract tolerates whitespace runs like verify_extract', () => {
 });
 
 test('ingestPayload mirrors the scout: lower-case country, suffixed id', () => {
-  assert.deepEqual(ingestPayload({ country: 'LT', instrument_id: 'abc', ingest_id: 'abc/asr' }).args.slice(0, 2), ['lt', 'abc/asr']);
+  assert.deepEqual(ingestPayload({ country: 'LT', instrument_id: 'abc', ingest_id: 'abc/asr' }).args.slice(0, 2), [
+    'lt',
+    'abc/asr',
+  ]);
 });
 
 test('markdown escapes HTML before adding any markup', () => {
@@ -65,7 +79,9 @@ test('markdown escapes HTML before adding any markup', () => {
 });
 
 test('citation markers become buttons, links stay links, code stays literal', () => {
-  const html = renderInline(escapeHtml('rate [1] and [2, 3], see [Légifrance](https://www.legifrance.gouv.fr/x) `[4]`'));
+  const html = renderInline(
+    escapeHtml('rate [1] and [2, 3], see [Légifrance](https://www.legifrance.gouv.fr/x) `[4]`'),
+  );
   assert.equal((html.match(/class="cite"/g) ?? []).length, 3);
   assert.ok(html.includes('data-href="https://www.legifrance.gouv.fr/x"'));
   assert.ok(html.includes('<code>[4]</code>'));
@@ -74,7 +90,9 @@ test('citation markers become buttons, links stay links, code stays literal', ()
 
 test('markdown tables, lists and fences', () => {
   const html = renderMarkdown(
-    ['| Tranche | Taux |', '|---|---|', '| 0 – 11 497 | 0 % [1] |', '', '- one', '- two', '', '```', '<b>', '```'].join('\n'),
+    ['| Tranche | Taux |', '|---|---|', '| 0 – 11 497 | 0 % [1] |', '', '- one', '- two', '', '```', '<b>', '```'].join(
+      '\n',
+    ),
   );
   assert.ok(html.includes('<th>Tranche</th>'));
   assert.ok(html.includes('<td>0 % <button type="button" class="cite" data-cite="1">1</button></td>'));

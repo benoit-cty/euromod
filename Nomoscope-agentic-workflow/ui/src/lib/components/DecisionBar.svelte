@@ -64,7 +64,17 @@
     gap: 0.45rem;
     background: var(--panel);
   }
-  .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-  .note { flex: 1; min-width: 12rem; }
-  .decided { margin: 0; }
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .note {
+    flex: 1;
+    min-width: 12rem;
+  }
+  .decided {
+    margin: 0;
+  }
 </style>

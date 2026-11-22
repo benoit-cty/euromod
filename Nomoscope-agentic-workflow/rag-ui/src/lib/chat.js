@@ -58,7 +58,12 @@ const TOOL_LABELS = {
 
 export function stepLabel(step) {
   const a = step.args ?? {};
-  const where = a.countries?.length === 1 ? ` (${a.countries[0]}${a.region ? ' + ' + a.region : ''})` : a.country ? ` (${a.country})` : '';
+  const where =
+    a.countries?.length === 1
+      ? ` (${a.countries[0]}${a.region ? ' + ' + a.region : ''})`
+      : a.country
+        ? ` (${a.country})`
+        : '';
   switch (step.tool) {
     case 'search_legislation':
       return `${TOOL_LABELS.search_legislation}${where}${a.language === 'en' ? ', English' : ''}: «${a.query ?? ''}»`;
@@ -94,7 +99,11 @@ export function locateExtract(content, extract) {
     start = m.index;
     length = m[0].length;
   }
-  return { before: content.slice(0, start), match: content.slice(start, start + length), after: content.slice(start + length) };
+  return {
+    before: content.slice(0, start),
+    match: content.slice(start, start + length),
+    after: content.slice(start + length),
+  };
 }
 
 const EDGE_PUNCTUATION = ' \t\n.;:,«»"“”\'’';

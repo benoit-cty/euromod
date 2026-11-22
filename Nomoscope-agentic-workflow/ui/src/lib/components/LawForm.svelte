@@ -34,8 +34,8 @@
 
 <div class="subform">
   <p class="muted">
-    Give the law’s official reference; the importer fetches it from the national portal with all its
-    articles and versions.
+    Give the law’s official reference; the importer fetches it from the national portal with all its articles and
+    versions.
   </p>
   <div class="form-grid">
     <label class="field">
@@ -85,6 +85,12 @@
 </div>
 
 <style>
-  .subform { display: flex; flex-direction: column; gap: 0.9rem; }
-  .subform > p.muted { margin: 0; }
+  .subform {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .subform > p.muted {
+    margin: 0;
+  }
 </style>

@@ -38,9 +38,7 @@
     return 'unreviewed';
   }
 
-  const visible = $derived(
-    (cases ?? []).filter((c) => filter === 'all' || status(c) === filter),
-  );
+  const visible = $derived((cases ?? []).filter((c) => filter === 'all' || status(c) === filter));
   const selected = $derived((cases ?? []).find((c) => c.id === selectedId) ?? null);
   const counts = $derived({
     total: cases?.length ?? 0,
@@ -141,9 +139,7 @@
   function fmt(value) {
     if (value == null) return '—';
     if (Array.isArray(value)) {
-      return value
-        .map((b) => `${b.threshold ?? 0} → ${b.rate ?? b.amount ?? '—'}`)
-        .join('  |  ');
+      return value.map((b) => `${b.threshold ?? 0} → ${b.rate ?? b.amount ?? '—'}`).join('  |  ');
     }
     return String(value);
   }
@@ -179,7 +175,9 @@
 
 <section class="panel golden" bind:this={sectionEl}>
   <div class="row bottom">
-    <span class="muted grow">Drafted cases in <span class="mono">eval.golden_cases</span> — accept or reject each against the value EUROMOD holds.</span>
+    <span class="muted grow">
+      Drafted cases in <span class="mono">eval.golden_cases</span> — accept or reject each against the value EUROMOD holds.
+    </span>
     <button onclick={load} disabled={loading}>{loading ? 'Loading…' : 'Reload cases'}</button>
   </div>
 
@@ -243,7 +241,9 @@
           {:else if selected._parameter?.missing}
             <h3>Parameter under test</h3>
             <p class="mono small">{selected._parameter.missing}</p>
-            <p class="muted small">not in the parameter store — run <span class="mono">ingest-params</span> for this country</p>
+            <p class="muted small">
+              not in the parameter store — run <span class="mono">ingest-params</span> for this country
+            </p>
           {:else if selected._parameter}
             <h3>Parameter under test</h3>
             <p class="mono small">{selected._parameter.model_target}</p>
@@ -279,7 +279,9 @@
               </tr>
               <tr>
                 <th>Routing</th>
-                <td colspan="2"><strong title={selected.expected?.routing}>{routingLabel(selected.expected?.routing).label}</strong></td>
+                <td colspan="2">
+                  <strong title={selected.expected?.routing}>{routingLabel(selected.expected?.routing).label}</strong>
+                </td>
               </tr>
               <tr>
                 <th>Citations</th>
@@ -322,15 +324,12 @@
             <input bind:value={note} />
           </label>
           <div class="row">
-            <button class="primary" disabled={saving} onclick={() => decide(true)}>
-              Accept as ground truth
-            </button>
+            <button class="primary" disabled={saving} onclick={() => decide(true)}> Accept as ground truth </button>
             <button disabled={saving} onclick={() => decide(false)}>Reject</button>
           </div>
           <p class="muted small">
-            Accepting sets <span class="mono">verified = true</span> on the row, stamped with your
-            database login; evaluation runs score verified cases only and record the golden-set
-            hash of exactly the cases they ran.
+            Accepting sets <span class="mono">verified = true</span> on the row, stamped with your database login; evaluation
+            runs score verified cases only and record the golden-set hash of exactly the cases they ran.
           </p>
         {/if}
       </div>
@@ -341,10 +340,26 @@
 <style>
   /* The panel itself never scrolls: the list and the detail pane each own their
      own scrollbar, so running down a long worklist leaves the detail in place. */
-  .golden { overflow: hidden; display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
-  .filters { display: flex; gap: 0.3rem; }
-  label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }
-  label input { width: 100%; }
+  .golden {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    min-height: 0;
+  }
+  .filters {
+    display: flex;
+    gap: 0.3rem;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    color: var(--muted);
+  }
+  label input {
+    width: 100%;
+  }
   .split {
     display: grid;
     grid-template-columns: minmax(24rem, 2fr) 3fr;
@@ -352,25 +367,78 @@
     flex: 1;
     min-height: 0;
   }
-  .split > * { min-height: 0; }
-  .scroll { overflow: auto; }
-  .list tbody tr { cursor: pointer; }
-  .list tbody tr:hover { background: var(--panel-2); }
+  .split > * {
+    min-height: 0;
+  }
+  .scroll {
+    overflow: auto;
+  }
+  .list tbody tr {
+    cursor: pointer;
+  }
+  .list tbody tr:hover {
+    background: var(--panel-2);
+  }
   /* The selected row doubles as the keyboard cursor, so it gets a marker the
      hover highlight does not have. */
-  .list tbody tr.selected { background: var(--accent-soft); }
-  .list tbody tr.selected td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
-  .detail { border-left: 1px solid var(--border); padding-left: 0.8rem; overflow: auto; }
-  .detail h2 { margin: 0; }
-  .detail h3 { margin: 0.9rem 0 0.3rem; }
-  .compare th { text-align: left; color: var(--muted); font-weight: 400; padding-right: 0.8rem; }
-  .num { font-variant-numeric: tabular-nums; }
-  .num.strong { font-weight: 700; }
-  .small { font-size: 0.85em; }
-  .tick.ok { color: var(--ok); }
-  .tick.bad { color: var(--err); font-weight: 700; }
-  .notes { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.85em; }
-  .notes li { overflow-wrap: anywhere; }
-  .links { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-  button.link { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0; }
+  .list tbody tr.selected {
+    background: var(--accent-soft);
+  }
+  .list tbody tr.selected td:first-child {
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .detail {
+    border-left: 1px solid var(--border);
+    padding-left: 0.8rem;
+    overflow: auto;
+  }
+  .detail h2 {
+    margin: 0;
+  }
+  .detail h3 {
+    margin: 0.9rem 0 0.3rem;
+  }
+  .compare th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 400;
+    padding-right: 0.8rem;
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .num.strong {
+    font-weight: 700;
+  }
+  .small {
+    font-size: 0.85em;
+  }
+  .tick.ok {
+    color: var(--ok);
+  }
+  .tick.bad {
+    color: var(--err);
+    font-weight: 700;
+  }
+  .notes {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--muted);
+    font-size: 0.85em;
+  }
+  .notes li {
+    overflow-wrap: anywhere;
+  }
+  .links {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  button.link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 0;
+  }
 </style>

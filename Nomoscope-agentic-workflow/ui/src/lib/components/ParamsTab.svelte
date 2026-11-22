@@ -17,12 +17,7 @@
   // The component stays mounted (hidden) while other tabs are shown, so a
   // launched run keeps streaming; `active` re-triggers the log auto-scroll on
   // return and `onrunning` lets the shell show a run indicator on the tab.
-  let {
-    phoenixEndpoint = 'http://localhost:6006',
-    onopenitem = null,
-    active = true,
-    onrunning = null,
-  } = $props();
+  let { phoenixEndpoint = 'http://localhost:6006', onopenitem = null, active = true, onrunning = null } = $props();
 
   let params = $state([]);
   let gids = $state({}); // phoenix project name -> GraphQL gid (for trace deep-links)
@@ -65,7 +60,14 @@
 
   const countries = $derived([...new Set(params.map((p) => p.country))].sort());
   const policies = $derived(
-    [...new Set(params.filter((p) => !country || p.country === country).map((p) => p.policy).filter(Boolean))].sort()
+    [
+      ...new Set(
+        params
+          .filter((p) => !country || p.country === country)
+          .map((p) => p.policy)
+          .filter(Boolean),
+      ),
+    ].sort(),
   );
   // Parameter groups (bracket_schedule, rate_table, …) seen on the loaded rows.
   const groups = $derived.by(() => {
@@ -114,9 +116,7 @@
   });
 
   const selectedTargets = $derived(Object.keys(selected).filter((t) => selected[t]));
-  const allFilteredSelected = $derived(
-    filtered.length > 0 && filtered.every((p) => selected[p.model_target])
-  );
+  const allFilteredSelected = $derived(filtered.length > 0 && filtered.every((p) => selected[p.model_target]));
 
   // Years offered = those defined for every country in the run. Selecting
   // across countries intersects them, so the run can never be anchored on a
@@ -187,9 +187,7 @@
   function traceUrl(p) {
     if (!p.last_trace_id) return null;
     const gid = gids[p.last_phoenix_project];
-    return gid
-      ? `${phoenixEndpoint}/projects/${gid}/traces/${p.last_trace_id}`
-      : `${phoenixEndpoint}/projects`;
+    return gid ? `${phoenixEndpoint}/projects/${gid}/traces/${p.last_trace_id}` : `${phoenixEndpoint}/projects`;
   }
 
   function fmtValue(p) {
@@ -213,8 +211,9 @@
       if (final.status === 'succeeded') {
         const n = final.result?.item_ids?.length ?? targets.length;
         const skipped = final.result?.skipped_na?.length ?? 0;
-        job.summary = `Finished: ${n} parameter(s) processed in ${took}.`
-          + (skipped ? ` ${skipped} skipped: n/a in EUROMOD ${year}.` : '');
+        job.summary =
+          `Finished: ${n} parameter(s) processed in ${took}.` +
+          (skipped ? ` ${skipped} skipped: n/a in EUROMOD ${year}.` : '');
         job.log(`✓ finished (${took})`);
         if (job.progress) job.progress = { ...job.progress, done: job.progress.total, current: '', detail: 'done' };
       } else {
@@ -225,6 +224,7 @@
     await refresh();
   }
 </script>
+
 <section class="panel params">
   <div class="row filters">
     <input class="grow search" bind:value={search} placeholder="Search by name, label or description…" />
@@ -270,7 +270,15 @@
     <table>
       <thead>
         <tr>
-          <th class="pick"><input class="bigcheck" type="checkbox" checked={allFilteredSelected} onchange={toggleAll} title="Select all shown" /></th>
+          <th class="pick">
+            <input
+              class="bigcheck"
+              type="checkbox"
+              checked={allFilteredSelected}
+              onchange={toggleAll}
+              title="Select all shown"
+            />
+          </th>
           <th>Parameter</th>
           <th>Value in EUROMOD</th>
           <th>Last check</th>
@@ -295,13 +303,19 @@
             <td>
               <div class="pname">
                 {p.label ?? p.name ?? p.model_target}
-                {#if p.edit_count}<span class="badge new" title="Corrected in this app: part of the next EUROMOD export">corrected</span>{/if}
+                {#if p.edit_count}<span
+                    class="badge new"
+                    title="Corrected in this app: part of the next EUROMOD export"
+                  >
+                    corrected
+                  </span>{/if}
                 {#if group}
                   {@const m = membership(p, group)}
                   <span class="badge">band {m.index}{m.role ? ` · ${humanize(m.role)}` : ''}</span>
                 {/if}
               </div>
               <div class="muted small">
+                <!-- eslint-disable-next-line svelte/no-useless-mustaches -- {' · '} keeps the spaces round the separator -->
                 {countryName(p.country)}{#if p.label}{' · '}<span class="mono">{p.name ?? p.model_target}</span>{/if}
               </div>
             </td>
@@ -334,23 +348,42 @@
               <td colspan="4">
                 {#if p.description}<p>{p.description}</p>{/if}
                 <dl class="facts">
-                  <dt>Identifier</dt><dd class="mono">{p.model_target}</dd>
-                  {#if p.policy}<dt>Policy</dt><dd class="mono">{p.policy}</dd>{/if}
-                  <dt>Type</dt><dd>{humanize(p.value_type)}{p.unit ? ` · ${p.unit}` : ''}</dd>
-                  {#if p.category}<dt>Classification</dt><dd>{p.category}</dd>{/if}
+                  <dt>Identifier</dt>
+                  <dd class="mono">{p.model_target}</dd>
+                  {#if p.policy}<dt>Policy</dt>
+                    <dd class="mono">{p.policy}</dd>{/if}
+                  <dt>Type</dt>
+                  <dd>{humanize(p.value_type)}{p.unit ? ` · ${p.unit}` : ''}</dd>
+                  {#if p.category}<dt>Classification</dt>
+                    <dd>{p.category}</dd>{/if}
                   {#if p.groups?.length}
                     <dt>Groups</dt>
-                    <dd>{p.groups.map((g) => `${g.id} (${humanize(g.kind).toLowerCase()}, band ${g.index}${g.role ? ` · ${humanize(g.role).toLowerCase()}` : ''})`).join(', ')}</dd>
+                    <dd>
+                      {p.groups
+                        .map(
+                          (g) =>
+                            `${g.id} (${humanize(g.kind).toLowerCase()}, band ${g.index}${g.role ? ` · ${humanize(g.role).toLowerCase()}` : ''})`,
+                        )
+                        .join(', ')}
+                    </dd>
                   {/if}
                   {#if p.current_source_type === 'national_team'}
-                    <dt>Source</dt><dd>National team: not checked against legislation</dd>
+                    <dt>Source</dt>
+                    <dd>National team: not checked against legislation</dd>
                   {/if}
                   {#if p.last_run_id}
                     <dt>Last check</dt>
                     <dd>
-                      {p.last_model}{#if p.last_finished_at} · {p.last_finished_at}{/if}
+                      {p.last_model}{#if p.last_finished_at}
+                        · {p.last_finished_at}{/if}
                       {#if p.last_trace_id}
-                        · <button class="link" title="Open the agent trace in Phoenix" onclick={() => api.openExternal(traceUrl(p))}>trace ↗</button>
+                        · <button
+                          class="link"
+                          title="Open the agent trace in Phoenix"
+                          onclick={() => api.openExternal(traceUrl(p))}
+                        >
+                          trace ↗
+                        </button>
                       {/if}
                     </dd>
                   {/if}
@@ -412,7 +445,10 @@
           <input type="checkbox" bind:checked={force} />
           Re-check items already reviewed
         </label>
-        <label class="field check" title="By default, parameters EUROMOD holds as n/a in the chosen year (switched off, usually superseded) are skipped">
+        <label
+          class="field check"
+          title="By default, parameters EUROMOD holds as n/a in the chosen year (switched off, usually superseded) are skipped"
+        >
           <input type="checkbox" bind:checked={includeNa} />
           Also check parameters that are n/a in EUROMOD
         </label>
@@ -431,7 +467,10 @@
     <div class="progressbox">
       <JobProgress run={job} />
       {#if job.summary}
-        <p class="small">{job.summary} {#if !job.running}Results are in <button class="link" onclick={() => onopenitem?.(null)}>Review</button>.{/if}</p>
+        <p class="small">
+          {job.summary}
+          {#if !job.running}Results are in <button class="link" onclick={() => onopenitem?.(null)}>Review</button>.{/if}
+        </p>
       {/if}
       {#if job.error}<p class="callout err">{job.error}</p>{/if}
       <JobLog lines={job.lines} jobId={job.jobId} {active} folded />
@@ -440,10 +479,25 @@
 </section>
 
 <style>
-  .params { display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; overflow: hidden; }
-  .morefilters > summary, .runopts > summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; white-space: nowrap; }
-  .morefilters { position: relative; }
-  .morefilters-body, .runopts-body {
+  .params {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .morefilters > summary,
+  .runopts > summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  .morefilters {
+    position: relative;
+  }
+  .morefilters-body,
+  .runopts-body {
     position: absolute;
     z-index: 5;
     margin-top: 0.4rem;
@@ -457,28 +511,97 @@
     gap: 0.6rem;
     min-width: 18rem;
   }
-  .morefilters-body { right: 0; }
-  .runopts { position: relative; }
-  .runopts-body { bottom: 2.2rem; right: 0; }
-  .tablebox { flex: 1; min-height: 10rem; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
-  thead th { background: var(--panel-2); z-index: 1; }
-  tbody td { vertical-align: top; }
+  .morefilters-body {
+    right: 0;
+  }
+  .runopts {
+    position: relative;
+  }
+  .runopts-body {
+    bottom: 2.2rem;
+    right: 0;
+  }
+  .tablebox {
+    flex: 1;
+    min-height: 10rem;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  thead th {
+    background: var(--panel-2);
+    z-index: 1;
+  }
+  tbody td {
+    vertical-align: top;
+  }
   /* wide, easy-to-hit selection column */
-  th.pick, td.pick { width: 2.8rem; text-align: center; padding-left: 0.3rem; padding-right: 0.3rem; }
-  input.bigcheck { width: 1.25rem; height: 1.25rem; margin: 0; cursor: pointer; accent-color: var(--accent); }
-  tbody tr { cursor: pointer; }
-  tbody tr:hover td { background: var(--panel-2); }
-  tbody tr.picked td { background: var(--accent-soft); }
-  tbody tr.detail, tbody tr.detail td, tbody tr.detail:hover td { cursor: default; background: var(--panel); }
-  tr.expandedrow td { border-bottom: none; }
-  tr.detail td { padding-top: 0; }
-  tr.detail p { margin: 0.2rem 0 0.5rem; }
-  .pname { font-weight: 600; display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
-  .flag { color: var(--warn); margin-left: 0.2rem; }
-  .facts { display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 0.9rem; margin: 0 0 0.6rem; font-size: 0.88rem; }
-  .facts dt { color: var(--muted); }
-  .facts dd { margin: 0; }
-  .actions { white-space: nowrap; text-align: right; }
+  th.pick,
+  td.pick {
+    width: 2.8rem;
+    text-align: center;
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+  }
+  input.bigcheck {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+  tbody tr {
+    cursor: pointer;
+  }
+  tbody tr:hover td {
+    background: var(--panel-2);
+  }
+  tbody tr.picked td {
+    background: var(--accent-soft);
+  }
+  tbody tr.detail,
+  tbody tr.detail td,
+  tbody tr.detail:hover td {
+    cursor: default;
+    background: var(--panel);
+  }
+  tr.expandedrow td {
+    border-bottom: none;
+  }
+  tr.detail td {
+    padding-top: 0;
+  }
+  tr.detail p {
+    margin: 0.2rem 0 0.5rem;
+  }
+  .pname {
+    font-weight: 600;
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .flag {
+    color: var(--warn);
+    margin-left: 0.2rem;
+  }
+  .facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.2rem 0.9rem;
+    margin: 0 0 0.6rem;
+    font-size: 0.88rem;
+  }
+  .facts dt {
+    color: var(--muted);
+  }
+  .facts dd {
+    margin: 0;
+  }
+  .actions {
+    white-space: nowrap;
+    text-align: right;
+  }
   .runbar {
     display: flex;
     gap: 0.7rem;
@@ -488,9 +611,25 @@
     border-radius: 10px;
     background: var(--panel-2);
   }
-  .runbar.active { background: var(--accent-soft); }
-  .inline { flex-direction: row; align-items: center; gap: 0.4rem; }
-  .inline select { width: auto; }
-  .count { display: inline-flex; gap: 0.5rem; align-items: center; }
-  .progressbox { display: flex; flex-direction: column; gap: 0.4rem; }
+  .runbar.active {
+    background: var(--accent-soft);
+  }
+  .inline {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .inline select {
+    width: auto;
+  }
+  .count {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .progressbox {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
 </style>

@@ -29,13 +29,21 @@
         return;
       }
       ingests[key] = { phase: 'embedding', jobId: null, message: '' };
-      const embedded = await submitAndFollow('embed', {}, {
-        onSubmit: (id) => (ingests[key].jobId = id),
-      });
+      const embedded = await submitAndFollow(
+        'embed',
+        {},
+        {
+          onSubmit: (id) => (ingests[key].jobId = id),
+        },
+      );
       ingests[key] =
         embedded.status === 'succeeded'
           ? { phase: 'done', jobId: embedded.id, message: 'In the corpus and embedded — ask again.' }
-          : { phase: 'failed', jobId: embedded.id, message: `ingested, but embedding failed (full-text search still finds it): ${lastLine(embedded.error)}` };
+          : {
+              phase: 'failed',
+              jobId: embedded.id,
+              message: `ingested, but embedding failed (full-text search still finds it): ${lastLine(embedded.error)}`,
+            };
     } catch (e) {
       ingests[key] = { phase: 'failed', jobId: null, message: String(e) };
     }
@@ -88,8 +96,11 @@
 {/if}
 
 <style>
-  h3 { margin: 0.8rem 0 0.4rem; }
-  .disc, .web {
+  h3 {
+    margin: 0.8rem 0 0.4rem;
+  }
+  .disc,
+  .web {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -97,11 +108,29 @@
     padding: 0.5rem 0.7rem;
     margin-bottom: 0.5rem;
   }
-  .disc { display: grid; grid-template-columns: 1fr auto; gap: 0.3rem 0.6rem; }
-  .disc p { grid-column: 1 / -1; margin: 0; }
-  .disc .err { color: var(--err); }
-  .act { align-self: start; }
-  .web p { margin: 0.3rem 0; }
-  .url { word-break: break-all; }
-  .link { text-align: left; word-break: break-all; }
+  .disc {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.3rem 0.6rem;
+  }
+  .disc p {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  .disc .err {
+    color: var(--err);
+  }
+  .act {
+    align-self: start;
+  }
+  .web p {
+    margin: 0.3rem 0;
+  }
+  .url {
+    word-break: break-all;
+  }
+  .link {
+    text-align: left;
+    word-break: break-all;
+  }
 </style>

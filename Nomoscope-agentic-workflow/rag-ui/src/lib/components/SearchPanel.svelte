@@ -64,6 +64,17 @@
 {/each}
 
 <style>
-  form { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; margin-bottom: 0.6rem; }
-  .opts { grid-column: 1 / -1; display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
+  form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+  }
+  .opts {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
 </style>

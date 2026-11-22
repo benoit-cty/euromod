@@ -23,7 +23,10 @@ export function renderInline(escaped) {
     return `\u0000${codes.length - 1}\u0000`;
   });
   text = text
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, href) => `<a class="ext" href="${href}" data-href="${href}">${label}</a>`)
+    .replace(
+      /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+      (_, label, href) => `<a class="ext" href="${href}" data-href="${href}">${label}</a>`,
+    )
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[^*\w])\*([^*\s][^*]*)\*(?!\w)/g, '$1<em>$2</em>')
     .replace(/(^|[^_\w])_([^_\s][^_]*)_(?!\w)/g, '$1<em>$2</em>')
@@ -34,6 +37,7 @@ export function renderInline(escaped) {
         .map((n) => `<button type="button" class="cite" data-cite="${n}">${n}</button>`)
         .join(''),
     );
+  // eslint-disable-next-line no-control-regex -- NUL delimits the code-span placeholders
   return text.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[Number(i)]}</code>`);
 }
 
@@ -42,11 +46,18 @@ function isTableSeparator(line) {
 }
 
 function tableCells(line) {
-  return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+  return line
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((c) => c.trim());
 }
 
 export function renderMarkdown(source) {
-  const lines = String(source ?? '').replace(/\r\n?/g, '\n').split('\n');
+  const lines = String(source ?? '')
+    .replace(/\r\n?/g, '\n')
+    .split('\n');
   const out = [];
   let paragraph = [];
   let list = null; // { tag, items }
@@ -56,7 +67,10 @@ export function renderMarkdown(source) {
     paragraph = [];
   };
   const flushList = () => {
-    if (list) out.push(`<${list.tag}>${list.items.map((i) => `<li>${renderInline(escapeHtml(i))}</li>`).join('')}</${list.tag}>`);
+    if (list)
+      out.push(
+        `<${list.tag}>${list.items.map((i) => `<li>${renderInline(escapeHtml(i))}</li>`).join('')}</${list.tag}>`,
+      );
     list = null;
   };
   const flush = () => {

@@ -7,42 +7,42 @@
 :root {
   --font-body: 'Segoe UI', Tahoma, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   --font-mono: 'Fira Mono', ui-monospace, Consolas, monospace;
-  --bg: rgb(255, 255, 255);              /* background-color */
-  --panel: rgb(255, 255, 255);           /* tabs-active-background-color */
-  --panel-2: rgb(240, 240, 240);         /* table-readonly-background-color */
-  --border: rgb(214, 214, 214);          /* td-border-color */
-  --border-strong: rgb(199, 208, 211);   /* border-color */
+  --bg: rgb(255, 255, 255); /* background-color */
+  --panel: rgb(255, 255, 255); /* tabs-active-background-color */
+  --panel-2: rgb(240, 240, 240); /* table-readonly-background-color */
+  --border: rgb(214, 214, 214); /* td-border-color */
+  --border-strong: rgb(199, 208, 211); /* border-color */
   --text: rgb(0, 0, 0);
   --text-bright: rgb(0, 0, 0);
   --muted: rgb(90, 96, 102);
-  --accent: rgb(4, 82, 172);             /* kind-if-color */
+  --accent: rgb(4, 82, 172); /* kind-if-color */
   --accent-hover: rgb(11, 105, 212);
-  --accent-soft: rgb(234, 243, 255);     /* table-selected-background-color */
-  --focus: rgb(21, 156, 228);            /* td-focus-outline-color */
-  --selection: rgba(21, 156, 228, 0.30); /* cell-selection-color */
-  --current-row: rgba(21, 156, 228, 0.10);
+  --accent-soft: rgb(234, 243, 255); /* table-selected-background-color */
+  --focus: rgb(21, 156, 228); /* td-focus-outline-color */
+  --selection: rgba(21, 156, 228, 0.3); /* cell-selection-color */
+  --current-row: rgba(21, 156, 228, 0.1);
   --input-bg: rgb(242, 252, 255);
   --button-bg: rgb(245, 252, 255);
   --button-hover: rgb(239, 249, 253);
   --button-ok: #9dccfd;
   --button-delete: #f0a9a3;
-  --header-bg: rgb(222, 240, 248);       /* table-headers-background-color */
+  --header-bg: rgb(222, 240, 248); /* table-headers-background-color */
   --ok: rgb(46, 125, 50);
   --ok-soft: rgb(226, 243, 226);
   --warn: rgb(176, 90, 0);
   --warn-soft: rgb(255, 240, 220);
   --err: rgb(198, 40, 40);
   --err-soft: rgb(253, 230, 228);
-  --info: rgb(90, 47, 168);              /* kind-foreach-color */
+  --info: rgb(90, 47, 168); /* kind-foreach-color */
   --info-soft: rgb(240, 234, 252);
   --mark: rgb(255, 240, 120);
-  --answer: #f6c1b5;        /* sentence most likely answering a search */
-  --answer-soft: #fbe3dc;   /* close runner-up */
+  --answer: #f6c1b5; /* sentence most likely answering a search */
+  --answer-soft: #fbe3dc; /* close runner-up */
   --shadow: 1px 1px 3px rgba(0, 0, 0, 0.18);
   --radius: 5px;
   /* EUROMOD shell: menu strip, tabs, the brand star */
-  --strip: rgb(196, 208, 212);           /* menu-background-color */
-  --tab: rgb(222, 240, 248);             /* tabs-background-color */
+  --strip: rgb(196, 208, 212); /* menu-background-color */
+  --tab: rgb(222, 240, 248); /* tabs-background-color */
   --tab-hover: rgb(239, 249, 253);
   --brand-opacity: 1;
   --panel-glass: rgba(255, 255, 255, 0.78);
@@ -64,7 +64,7 @@ body.dark {
   --muted: rgb(118, 130, 140);
   --accent: rgb(74, 159, 255);
   --accent-hover: rgb(110, 180, 255);
-  --accent-soft: rgb(38, 52, 64);        /* flag-active-background-color */
+  --accent-soft: rgb(38, 52, 64); /* flag-active-background-color */
   --focus: rgb(21, 156, 228);
   --selection: rgba(21, 156, 228, 0.35);
   --current-row: rgba(21, 156, 228, 0.16);
@@ -99,21 +99,37 @@ body.dark {
 }
 
 /* Scrollbars, themed in one place as EUROMOD does. */
-html { scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
-::-webkit-scrollbar { width: 12px; height: 12px; background-color: var(--scrollbar-track); }
-::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background-color: var(--scrollbar-track); }
+html {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+  background-color: var(--scrollbar-track);
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background-color: var(--scrollbar-track);
+}
 ::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb);
   border: 2px solid transparent;
   border-radius: 6px;
   background-clip: padding-box;
 }
-::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover); }
-::selection { background: var(--selection); }
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+::selection {
+  background: var(--selection);
+}
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   margin: 0;
   height: 100%;
   font-family: var(--font-body);
@@ -124,13 +140,33 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-#app { height: 100%; }
+#app {
+  height: 100%;
+}
 
-h1, h2, h3 { margin: 0 0 0.5rem; font-weight: 600; color: var(--text-bright); }
-h1 { font-size: 1.35rem; letter-spacing: -0.01em; }
-h2 { font-size: 1.05rem; }
-h3 { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-p { margin: 0.3rem 0; }
+h1,
+h2,
+h3 {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+h1 {
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+}
+h2 {
+  font-size: 1.05rem;
+}
+h3 {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+p {
+  margin: 0.3rem 0;
+}
 
 button {
   font: inherit;
@@ -144,19 +180,58 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  transition: background 0.12s, border-color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
 }
-button:hover:not(:disabled) { background: var(--button-hover); box-shadow: 1px 1px var(--border-strong); }
-button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
-button:disabled { opacity: 0.45; cursor: default; }
+button:hover:not(:disabled) {
+  background: var(--button-hover);
+  box-shadow: 1px 1px var(--border-strong);
+}
+button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
 /* EUROMOD's dialog OK / Delete buttons: a pale fill under dark text. */
-button.primary { background: var(--button-ok); border-color: transparent; color: var(--text-bright); font-weight: 600; }
-button.primary:hover:not(:disabled) { background: var(--button-ok); opacity: 0.9; box-shadow: none; }
-button.danger { background: var(--button-delete); color: var(--text-bright); border-color: transparent; }
-button.danger:hover:not(:disabled) { background: var(--button-delete); opacity: 0.9; box-shadow: none; }
-button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
-button.ghost:hover:not(:disabled) { background: var(--button-hover); color: var(--text); border-color: var(--border-strong); }
-button.big { padding: 0.6rem 1.2rem; font-size: 1rem; }
+button.primary {
+  background: var(--button-ok);
+  border-color: transparent;
+  color: var(--text-bright);
+  font-weight: 600;
+}
+button.primary:hover:not(:disabled) {
+  background: var(--button-ok);
+  opacity: 0.9;
+  box-shadow: none;
+}
+button.danger {
+  background: var(--button-delete);
+  color: var(--text-bright);
+  border-color: transparent;
+}
+button.danger:hover:not(:disabled) {
+  background: var(--button-delete);
+  opacity: 0.9;
+  box-shadow: none;
+}
+button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+button.ghost:hover:not(:disabled) {
+  background: var(--button-hover);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+button.big {
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+}
 button.link {
   background: none;
   border: none;
@@ -167,7 +242,9 @@ button.link {
   font-size: 0.9rem;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   font: inherit;
   color: var(--text);
   background: var(--input-bg);
@@ -175,7 +252,13 @@ input, select, textarea {
   border-radius: 5px;
   padding: 0.3rem 0.5rem;
 }
-input:focus, select:focus, textarea:focus { outline: 2px solid var(--focus); outline-offset: -1px; border-color: var(--focus); }
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: -1px;
+  border-color: var(--focus);
+}
 
 .panel {
   background: var(--panel);
@@ -185,9 +268,24 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--focus); out
   box-shadow: var(--shadow);
 }
 
-table { border-collapse: collapse; width: 100%; }
-th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
-th { color: var(--text); font-weight: 600; font-size: 0.8rem; position: sticky; top: 0; background: var(--header-bg); }
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th,
+td {
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.8rem;
+  position: sticky;
+  top: 0;
+  background: var(--header-bg);
+}
 
 .badge {
   display: inline-block;
@@ -200,26 +298,65 @@ th { color: var(--text); font-weight: 600; font-size: 0.8rem; position: sticky; 
   color: var(--muted);
 }
 /* Tone badges, for anything that is not one of the pipeline's enums. */
-.badge.ok { background: var(--ok-soft); color: var(--ok); }
-.badge.warn { background: var(--warn-soft); color: var(--warn); }
-.badge.err { background: var(--err-soft); color: var(--err); }
-.badge.info { background: var(--info-soft); color: var(--info); }
+.badge.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.badge.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.badge.err {
+  background: var(--err-soft);
+  color: var(--err);
+}
+.badge.info {
+  background: var(--info-soft);
+  color: var(--info);
+}
 /* Source-trust class (ADR 0001): what a value rests on, never whether it may
    be accepted. */
-.badge.guidance { background: var(--warn-soft); color: var(--warn); }
-.badge.evidence { background: var(--ok-soft); color: var(--ok); }
-.badge.context  { background: var(--panel-2); color: var(--muted); }
+.badge.guidance {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.badge.evidence {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.badge.context {
+  background: var(--panel-2);
+  color: var(--muted);
+}
 
 /* Layout helpers: a wrapping row of controls, the one that takes the room,
    a push to the far end. */
-.row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-.row.bottom { align-items: end; }
-.row.between { justify-content: space-between; }
-.grow { flex: 1; min-width: 14rem; }
-.spacer { flex: 1; }
+.row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.row.bottom {
+  align-items: end;
+}
+.row.between {
+  justify-content: space-between;
+}
+.grow {
+  flex: 1;
+  min-width: 14rem;
+}
+.spacer {
+  flex: 1;
+}
 
 /* Figure tiles: a big number over its caption. */
-.stats { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.stats {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
 .stat {
   background: var(--panel-2);
   border: 1px solid var(--border);
@@ -227,15 +364,34 @@ th { color: var(--text); font-weight: 600; font-size: 0.8rem; position: sticky; 
   padding: 0.6rem 0.9rem;
   min-width: 7.5rem;
 }
-.stat.bad { border-color: var(--err); }
-.stat .num { font-size: 1.4rem; font-weight: 700; }
+.stat.bad {
+  border-color: var(--err);
+}
+.stat .num {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
 
-.muted { color: var(--muted); }
-.small { font-size: 0.85rem; }
-.mono { font-family: var(--font-mono); font-size: 0.85em; }
-.error { color: var(--err); }
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 0.85rem;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+.error {
+  color: var(--err);
+}
 
-mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2px; }
+mark {
+  background: var(--mark);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+}
 
 .empty-state {
   text-align: center;
@@ -246,7 +402,11 @@ mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2
   align-items: center;
   gap: 0.5rem;
 }
-.empty-state .big { font-size: 1.05rem; color: var(--text); font-weight: 600; }
+.empty-state .big {
+  font-size: 1.05rem;
+  color: var(--text);
+  font-weight: 600;
+}
 
 .callout {
   padding: 0.7rem 0.9rem;
@@ -254,12 +414,27 @@ mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2
   border-left: 3px solid var(--accent);
   background: var(--accent-soft);
 }
-.callout.warn { border-color: var(--warn); background: var(--warn-soft); }
-.callout.err { border-color: var(--err); background: var(--err-soft); }
-.callout.info { border-color: var(--info); background: var(--info-soft); }
-.callout.ok { border-color: var(--ok); background: var(--ok-soft); }
+.callout.warn {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+.callout.err {
+  border-color: var(--err);
+  background: var(--err-soft);
+}
+.callout.info {
+  border-color: var(--info);
+  background: var(--info-soft);
+}
+.callout.ok {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
 /* Callouts are how both apps say what went wrong: `callout err`, never bare red text. */
-.callout.small { padding: 0.4rem 0.7rem; font-size: 0.85rem; }
+.callout.small {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+}
 
 .spinner {
   display: inline-block;
@@ -271,6 +446,13 @@ mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 /* on a filled (primary) button */
-.spinner.light { border-color: var(--border-strong); border-top-color: var(--text-bright); }
+.spinner.light {
+  border-color: var(--border-strong);
+  border-top-color: var(--text-bright);
+}

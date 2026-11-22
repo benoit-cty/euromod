@@ -19,7 +19,10 @@ test('worker liveness is unknown until a status is in', () => {
 });
 
 test('only language models are offered', () => {
-  assert.deepEqual(llmModels(status).map((m) => m.model), ['azure_openai/gpt-5.6-luna', 'openrouter/minimax']);
+  assert.deepEqual(
+    llmModels(status).map((m) => m.model),
+    ['azure_openai/gpt-5.6-luna', 'openrouter/minimax'],
+  );
   assert.deepEqual(llmModels(null), []);
 });
 

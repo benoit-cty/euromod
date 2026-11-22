@@ -67,23 +67,51 @@ export function createJobRun({ fromLine = null, workerAlive = () => null } = {})
   };
 
   return {
-    get running() { return running; },
-    get jobId() { return jobId; },
-    get lines() { return lines; },
-    get progress() { return progress; },
-    set progress(value) { progress = value; },
-    get note() { return note; },
-    get pct() { return percentDone(progress); },
-    get summary() { return summary; },
-    set summary(value) { summary = value; },
-    get error() { return error; },
-    set error(value) { error = value; },
+    get running() {
+      return running;
+    },
+    get jobId() {
+      return jobId;
+    },
+    get lines() {
+      return lines;
+    },
+    get progress() {
+      return progress;
+    },
+    set progress(value) {
+      progress = value;
+    },
+    get note() {
+      return note;
+    },
+    get pct() {
+      return percentDone(progress);
+    },
+    get summary() {
+      return summary;
+    },
+    set summary(value) {
+      summary = value;
+    },
+    get error() {
+      return error;
+    },
+    set error(value) {
+      error = value;
+    },
     /** Milliseconds since the session started. */
-    get elapsed() { return running ? now - startedAt : 0; },
+    get elapsed() {
+      return running ? now - startedAt : 0;
+    },
     /** Milliseconds since the job last printed anything. */
-    get silent() { return running ? now - lastEventAt : 0; },
+    get silent() {
+      return running ? now - lastEventAt : 0;
+    },
     /** "3m 05s" since the session started. */
-    get took() { return formatDuration(Date.now() - startedAt); },
+    get took() {
+      return formatDuration(Date.now() - startedAt);
+    },
     log,
 
     /**

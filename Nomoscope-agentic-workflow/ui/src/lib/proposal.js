@@ -78,8 +78,7 @@ export function acceptGate(form, routing) {
     }
   }
   if (!form.legal_status) return { ok: false, reason: 'the legal status is missing' };
-  const hasSource =
-    form.source_type === 'national_team' || form.references.some((r) => r.supporting_extract.trim());
+  const hasSource = form.source_type === 'national_team' || form.references.some((r) => r.supporting_extract.trim());
   if (!hasSource) return { ok: false, reason: 'no reference quotes the law' };
   return { ok: true, reason: '' };
 }

@@ -12,8 +12,14 @@ const ROUTING = {
   unchanged: { label: 'No change', hint: 'The law confirms the value EUROMOD already holds.' },
   derived: { label: 'Calculated', hint: 'The value is computed from figures quoted from the law.' },
   not_found: { label: 'Not found', hint: 'No text in the library states this value.' },
-  provisional: { label: 'Needs newer law', hint: 'The evidence is probably last year’s value; this year’s act seems to be missing.' },
-  national_team_source: { label: 'National team', hint: 'Supplied by the national team, not derived from legislation.' },
+  provisional: {
+    label: 'Needs newer law',
+    hint: 'The evidence is probably last year’s value; this year’s act seems to be missing.',
+  },
+  national_team_source: {
+    label: 'National team',
+    hint: 'Supplied by the national team, not derived from legislation.',
+  },
 };
 
 const STATUS = {
@@ -38,7 +44,10 @@ const TRUST = {
 const AUTHENTICITY = {
   authentic: { label: 'Original', hint: 'The text as enacted, in its own language.' },
   official_translation: { label: 'Official translation', hint: 'A translation published by the authorities.' },
-  machine_translation: { label: 'Machine translation', hint: 'Translated by a language model: never quoted as evidence.' },
+  machine_translation: {
+    label: 'Machine translation',
+    hint: 'Translated by a language model: never quoted as evidence.',
+  },
 };
 
 const VERSION_STATUS = {

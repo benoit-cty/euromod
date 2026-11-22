@@ -123,7 +123,9 @@
             <span
               class="badge guidance"
               title="Every citation on this proposal comes from administrative guidance (a circular or doctrine), not from legislation."
-            >Guidance only</span>
+            >
+              Guidance only
+            </span>
           {/if}
           {#if item.status !== 'pending'}
             <span class="badge {item.status}">{statusLabel(item.status).label}</span>
@@ -133,14 +135,22 @@
 
       <RunSwitcher {item} {siblings} {onselectrun} />
 
-      <p class="callout {item.routing === 'not_found' ? 'err' : item.routing === 'unchanged' ? 'ok' : item.routing === 'provisional' ? 'info' : 'warn'} summary">
+      <p
+        class="callout {item.routing === 'not_found'
+          ? 'err'
+          : item.routing === 'unchanged'
+            ? 'ok'
+            : item.routing === 'provisional'
+              ? 'info'
+              : 'warn'} summary"
+      >
         {#if item.routing === 'provisional'}
-          The text found cannot be tied to {item.system_year ?? item.as_of?.slice(0, 4)}: the value shown is
-          probably <strong>last year’s</strong>. Nothing to accept yet. This year’s act is likely missing
-          from the library; add it under <em>Add sources</em>, then check the parameter again.
+          The text found cannot be tied to {item.system_year ?? item.as_of?.slice(0, 4)}: the value shown is probably
+          <strong>last year’s</strong>. Nothing to accept yet. This year’s act is likely missing from the library; add
+          it under <em>Add sources</em>, then check the parameter again.
         {:else if item.routing === 'not_found'}
-          The assistant could not find a text stating this value. Reject it, or send it to the national
-          team. If you know the law that sets it, add it under <em>Add sources</em> and check again.
+          The assistant could not find a text stating this value. Reject it, or send it to the national team. If you
+          know the law that sets it, add it under <em>Add sources</em> and check again.
         {:else}
           {outcome.hint}
         {/if}
@@ -154,12 +164,7 @@
         </div>
         <div class="arrow"><Icon name="arrow" size={22} /></div>
         <div class="value-card proposed">
-          <ValueView
-            title="Found in the law"
-            value={item.proposed_value}
-            other={item.current_value}
-            unit={item.unit}
-          />
+          <ValueView title="Found in the law" value={item.proposed_value} other={item.current_value} unit={item.unit} />
         </div>
       </div>
 
@@ -195,7 +200,14 @@
       </details>
 
       {#if form}
-        <ProposalEditor bind:form bind:open={editOpen} current={item.current_value} unit={item.unit} {dirty} onundo={resetForm} />
+        <ProposalEditor
+          bind:form
+          bind:open={editOpen}
+          current={item.current_value}
+          unit={item.unit}
+          {dirty}
+          onundo={resetForm}
+        />
       {/if}
 
       {#if lineage || traceUrl}
@@ -204,8 +216,8 @@
           <div class="body">
             {#if lineage}
               <p class="muted mono">
-                run {lineage.run_id} · model {lineage.model} · prompt v{lineage.prompt_version} ·
-                agent v{lineage.agent_version} · confidence {lineage.confidence ?? '—'}
+                run {lineage.run_id} · model {lineage.model} · prompt v{lineage.prompt_version} · agent v{lineage.agent_version}
+                · confidence {lineage.confidence ?? '—'}
               </p>
             {/if}
             <p class="muted mono">{item.model_target} · as of {item.as_of}</p>
@@ -256,18 +268,69 @@
 </section>
 
 <style>
-  .detail { display: flex; flex-direction: column; min-height: 0; padding: 0; overflow: hidden; }
-  .fill { flex: 1; justify-content: center; }
-  .scroll { overflow: auto; flex: 1; display: flex; flex-direction: column; gap: 0.9rem; padding: 1.1rem 1.2rem; }
-  header { display: flex; align-items: flex-start; gap: 0.8rem; justify-content: space-between; }
-  header h2 { margin: 0 0 0.1rem; font-size: 1.2rem; }
-  .badges { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end; }
-  .summary { margin: 0; }
-  .side-by-side { display: flex; gap: 0.6rem; align-items: stretch; flex-wrap: wrap; }
-  .value-card { flex: 1; min-width: 14rem; border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 1rem; }
-  .value-card.proposed { border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 40%, transparent); }
-  .arrow { display: flex; align-items: center; color: var(--muted); }
-  .quote h3 { margin-bottom: 0.3rem; }
+  .detail {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .fill {
+    flex: 1;
+    justify-content: center;
+  }
+  .scroll {
+    overflow: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 1.1rem 1.2rem;
+  }
+  header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    justify-content: space-between;
+  }
+  header h2 {
+    margin: 0 0 0.1rem;
+    font-size: 1.2rem;
+  }
+  .badges {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .summary {
+    margin: 0;
+  }
+  .side-by-side {
+    display: flex;
+    gap: 0.6rem;
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .value-card {
+    flex: 1;
+    min-width: 14rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+  }
+  .value-card.proposed {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
+  }
+  .arrow {
+    display: flex;
+    align-items: center;
+    color: var(--muted);
+  }
+  .quote h3 {
+    margin-bottom: 0.3rem;
+  }
   blockquote {
     margin: 0;
     padding: 0.7rem 0.9rem;
@@ -277,9 +340,33 @@
     font-size: 1rem;
     line-height: 1.55;
   }
-  .cite { margin-top: 0.35rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-  .issues { color: var(--err); margin: -0.4rem 0 0; font-size: 0.9rem; }
-  .checks { list-style: none; padding: 0; margin: 0.3rem 0; display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; }
-  .checks li::before { content: '✗ '; color: var(--err); }
-  .checks li.ok::before { content: '✓ '; color: var(--ok); }
+  .cite {
+    margin-top: 0.35rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .issues {
+    color: var(--err);
+    margin: -0.4rem 0 0;
+    font-size: 0.9rem;
+  }
+  .checks {
+    list-style: none;
+    padding: 0;
+    margin: 0.3rem 0;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+  }
+  .checks li::before {
+    content: '✗ ';
+    color: var(--err);
+  }
+  .checks li.ok::before {
+    content: '✓ ';
+    color: var(--ok);
+  }
 </style>

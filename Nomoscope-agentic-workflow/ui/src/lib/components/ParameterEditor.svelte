@@ -81,7 +81,7 @@
         try {
           await api.editParameter(param.model_target, field, value, note);
         } catch (e) {
-          throw new Error(`${field}: ${e.message ?? e}`);
+          throw new Error(`${field}: ${e.message ?? e}`, { cause: e });
         }
       }
       editing = false;
@@ -110,13 +110,17 @@
   function show(v) {
     if (v === null || v === undefined) return '—';
     if (typeof v === 'string') return v;
-    return Object.entries(v).map(([l, t]) => `${l}: ${t}`).join(' · ');
+    return Object.entries(v)
+      .map(([l, t]) => `${l}: ${t}`)
+      .join(' · ');
   }
 </script>
 
 <div class="editor">
   <div class="locked muted small">
-    <span title="identity — never editable">🔒 <span class="mono">{param.parameter_key ?? param.model_target}</span></span>
+    <span title="identity — never editable">
+      🔒 <span class="mono">{param.parameter_key ?? param.model_target}</span>
+    </span>
     <span title="values change only through a review decision">🔒 value in store</span>
   </div>
 
@@ -146,7 +150,10 @@
       </label>
     </div>
     {#if sourceType === 'national_team' && param.current_source_type !== 'national_team'}
-      <p class="warn small">“{humanize('national_team')}” routes this parameter around the pipeline: agent runs will no longer propose a value.</p>
+      <p class="warn small">
+        “{humanize('national_team')}” routes this parameter around the pipeline: agent runs will no longer propose a
+        value.
+      </p>
     {/if}
     {#each TEXT_FIELDS as f (f)}
       <label>
@@ -192,16 +199,61 @@
 </div>
 
 <style>
-  .editor { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.5rem; max-width: 60rem; }
-  .locked { display: flex; gap: 1.2rem; flex-wrap: wrap; }
-  .grid { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-  label { display: flex; flex-direction: column; gap: 0.2rem; color: var(--muted); }
-  label input, label textarea, label select { width: 100%; }
-  textarea { font: inherit; resize: vertical; }
-  .actions { display: flex; gap: 0.5rem; }
-  .warn { color: var(--err); margin: 0; }
-  .small { font-size: 0.8rem; }
-  .history { border-collapse: collapse; margin-top: 0.3rem; }
-  .history th, .history td { text-align: left; padding: 0.15rem 0.5rem; border-top: 1px solid var(--border); vertical-align: top; }
-  button { align-self: flex-start; }
+  .editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: 0.5rem;
+    max-width: 60rem;
+  }
+  .locked {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+  }
+  .grid {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    color: var(--muted);
+  }
+  label input,
+  label textarea,
+  label select {
+    width: 100%;
+  }
+  textarea {
+    font: inherit;
+    resize: vertical;
+  }
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .warn {
+    color: var(--err);
+    margin: 0;
+  }
+  .small {
+    font-size: 0.8rem;
+  }
+  .history {
+    border-collapse: collapse;
+    margin-top: 0.3rem;
+  }
+  .history th,
+  .history td {
+    text-align: left;
+    padding: 0.15rem 0.5rem;
+    border-top: 1px solid var(--border);
+    vertical-align: top;
+  }
+  button {
+    align-self: flex-start;
+  }
 </style>

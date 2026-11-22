@@ -85,15 +85,7 @@
     {value}
     oninput={(e) => (value = e.currentTarget.value.trim())}
   />
-  <button
-    type="button"
-    class="cal"
-    aria-label="Open calendar"
-    aria-expanded={open}
-    onclick={toggle}
-  >
-    🗓
-  </button>
+  <button type="button" class="cal" aria-label="Open calendar" aria-expanded={open} onclick={toggle}> 🗓 </button>
 
   {#if open}
     <div class="popover" class:up>
@@ -128,10 +120,23 @@
 </div>
 
 <style>
-  .date-field { position: relative; display: flex; gap: 0.25rem; }
-  .date-field input { flex: 1; min-width: 0; }
-  .date-field input.invalid { border-color: var(--err); color: var(--err); }
-  .cal { padding: 0 0.4rem; line-height: 1; }
+  .date-field {
+    position: relative;
+    display: flex;
+    gap: 0.25rem;
+  }
+  .date-field input {
+    flex: 1;
+    min-width: 0;
+  }
+  .date-field input.invalid {
+    border-color: var(--err);
+    color: var(--err);
+  }
+  .cal {
+    padding: 0 0.4rem;
+    line-height: 1;
+  }
   .popover {
     position: absolute;
     z-index: 20;
@@ -144,20 +149,55 @@
     box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
     width: 15rem;
   }
-  .popover.up { top: auto; bottom: calc(100% + 0.25rem); }
-  .nav { display: flex; align-items: center; justify-content: space-between; gap: 0.3rem; }
-  .nav span { font-size: 0.85rem; color: var(--text); }
-  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 0.4rem; }
-  .days .wd { text-align: center; font-size: 0.7rem; color: var(--muted); padding: 0.15rem 0; }
+  .popover.up {
+    top: auto;
+    bottom: calc(100% + 0.25rem);
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem;
+  }
+  .nav span {
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  .days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-top: 0.4rem;
+  }
+  .days .wd {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--muted);
+    padding: 0.15rem 0;
+  }
   .days button {
     padding: 0.2rem 0;
     font-size: 0.8rem;
     border-color: transparent;
     background: none;
   }
-  .days button:hover { background: var(--accent-soft); }
-  .days button.today { border-color: var(--border); }
-  .days button.selected { background: var(--accent); color: #fff; }
-  .foot { display: flex; gap: 0.3rem; margin-top: 0.4rem; }
-  .foot button { flex: 1; font-size: 0.8rem; }
+  .days button:hover {
+    background: var(--accent-soft);
+  }
+  .days button.today {
+    border-color: var(--border);
+  }
+  .days button.selected {
+    background: var(--accent);
+    color: #fff;
+  }
+  .foot {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+  }
+  .foot button {
+    flex: 1;
+    font-size: 0.8rem;
+  }
 </style>

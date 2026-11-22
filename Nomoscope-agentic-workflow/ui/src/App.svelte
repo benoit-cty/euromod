@@ -66,15 +66,59 @@
 
   const PAGES = [
     { id: 'home', icon: 'home', label: 'Overview', intro: 'Where things stand, and what to do next.' },
-    { id: 'review', icon: 'review', label: 'Review', intro: 'Check each value the assistant proposes against the law, then accept, correct or reject it.' },
-    { id: 'params', icon: 'list', label: 'Parameters', intro: 'Every EUROMOD parameter. Select some and ask the assistant to check them against this year’s law.' },
-    { id: 'database', icon: 'search', label: 'Legislation', intro: 'Search the library of laws and official texts the assistant reads.' },
-    { id: 'ingest', icon: 'plus', label: 'Add sources', intro: 'Add a law, circular or official document the library is missing.' },
+    {
+      id: 'review',
+      icon: 'review',
+      label: 'Review',
+      intro: 'Check each value the assistant proposes against the law, then accept, correct or reject it.',
+    },
+    {
+      id: 'params',
+      icon: 'list',
+      label: 'Parameters',
+      intro: 'Every EUROMOD parameter. Select some and ask the assistant to check them against this year’s law.',
+    },
+    {
+      id: 'database',
+      icon: 'search',
+      label: 'Legislation',
+      intro: 'Search the library of laws and official texts the assistant reads.',
+    },
+    {
+      id: 'ingest',
+      icon: 'plus',
+      label: 'Add sources',
+      intro: 'Add a law, circular or official document the library is missing.',
+    },
     { id: 'audit', icon: 'history', label: 'History', intro: 'Every decision taken, newest first.' },
-    { id: 'golden', icon: 'star', label: 'Golden set', expert: true, intro: 'Reference answers used to measure the assistant. Verify each drafted case.' },
-    { id: 'eval', icon: 'chart', label: 'Evaluation', expert: true, intro: 'How well the assistant scores against the golden set, by model and language.' },
-    { id: 'impact', icon: 'leaf', label: 'Impact', expert: true, intro: 'Estimated energy and carbon cost of the language-model calls.' },
-    { id: 'jobs', icon: 'activity', label: 'Jobs', expert: true, intro: 'Everything the worker has run or is running, with its log.' },
+    {
+      id: 'golden',
+      icon: 'star',
+      label: 'Golden set',
+      expert: true,
+      intro: 'Reference answers used to measure the assistant. Verify each drafted case.',
+    },
+    {
+      id: 'eval',
+      icon: 'chart',
+      label: 'Evaluation',
+      expert: true,
+      intro: 'How well the assistant scores against the golden set, by model and language.',
+    },
+    {
+      id: 'impact',
+      icon: 'leaf',
+      label: 'Impact',
+      expert: true,
+      intro: 'Estimated energy and carbon cost of the language-model calls.',
+    },
+    {
+      id: 'jobs',
+      icon: 'activity',
+      label: 'Jobs',
+      expert: true,
+      intro: 'Everything the worker has run or is running, with its log.',
+    },
   ];
   const page = $derived(PAGES.find((p) => p.id === tab) ?? PAGES[0]);
   const pendingCount = $derived(items.filter((i) => i.status === 'pending').length);
@@ -83,11 +127,7 @@
   // Every run of the selected parameter (newest first, as loadQueue sorts them):
   // the list collapses them to one row, the detail panel navigates between them.
   const siblings = $derived(
-    selected
-      ? items.filter(
-          (i) => i.country === selected.country && i.model_target === selected.model_target,
-        )
-      : [],
+    selected ? items.filter((i) => i.country === selected.country && i.model_target === selected.model_target) : [],
   );
 
   $effect(() => {
@@ -126,8 +166,7 @@
     queueLoading = false;
     try {
       const res = await api.phoenixProjects();
-      const project =
-        res.projects.find((p) => p.name === config.phoenix_project) ?? res.projects[0];
+      const project = res.projects.find((p) => p.name === config.phoenix_project) ?? res.projects[0];
       phoenixGid = project?.gid ?? '';
     } catch {
       phoenixGid = ''; // Phoenix links degrade to the projects page
@@ -167,7 +206,13 @@
       const updated = res.item;
       items = items.map((i) => (i.id === updated.id ? updated : i));
       error = '';
-      const verb = { accepted: 'Accepted', edited: 'Accepted with your edits', rejected: 'Rejected', escalated: 'Sent to the national team' }[action] ?? action;
+      const verb =
+        {
+          accepted: 'Accepted',
+          edited: 'Accepted with your edits',
+          rejected: 'Rejected',
+          escalated: 'Sent to the national team',
+        }[action] ?? action;
       statusMsg = `${verb}: ${updated.label ?? updated.model_target}`;
     } catch (e) {
       error = String(e);
@@ -298,12 +343,7 @@
           <Icon name="download" size={24} />
           <span>Export</span>
         </button>
-        <button
-          class="big-cmd"
-          onclick={reloadActive}
-          disabled={!reloaders[tab]}
-          title="Reload this page’s data"
-        >
+        <button class="big-cmd" onclick={reloadActive} disabled={!reloaders[tab]} title="Reload this page’s data">
           <Icon name="refresh" size={24} />
           <span>Refresh</span>
         </button>
@@ -331,81 +371,83 @@
   {/if}
 
   {#key dbGeneration}
-  <main hidden={tab !== 'home'} class="single">
-    <Home
-      bind:this={homePage}
-      {items}
-      loading={queueLoading}
-      reviewer={config.reviewer}
-      onnavigate={go}
-      onexport={exportChanges}
-    />
-  </main>
-  {#if visited.review}
-    <main class="split" hidden={tab !== 'review'}>
-      <QueueList {items} {facets} loading={queueLoading} {selectedId} onselect={(id) => (selectedId = id)} />
-      <DetailPanel
-        item={selected}
-        {siblings}
-        onselectrun={(id) => (selectedId = id)}
-        ondecide={decide}
-        phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
-        {phoenixGid}
+    <main hidden={tab !== 'home'} class="single">
+      <Home
+        bind:this={homePage}
+        {items}
+        loading={queueLoading}
+        reviewer={config.reviewer}
+        onnavigate={go}
+        onexport={exportChanges}
       />
     </main>
-  {/if}
-  {#if visited.params}
-    <main class="single" hidden={tab !== 'params'}>
-      <ParamsTab
-        bind:this={paramsTab}
-        phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
-        onopenitem={openReviewItem}
-        active={tab === 'params'}
-        onrunning={(v) => (paramsRunning = v)}
-      />
-    </main>
-  {/if}
-  {#if visited.audit}
-    <main class="single" hidden={tab !== 'audit'}>
-      <AuditLog {decisions} />
-    </main>
-  {/if}
-  {#if visited.database}
-    <main class="single" hidden={tab !== 'database'}>
-      <DatabaseTab bind:this={dbTab} dbUrl={config.db_url} onchangedb={changeDb} />
-    </main>
-  {/if}
-  {#if visited.ingest}
-    <main class="single" hidden={tab !== 'ingest'}>
-      <IngestTab />
-    </main>
-  {/if}
-  {#if visited.golden}
-    <main class="single" hidden={tab !== 'golden'}>
-      <GoldenTab bind:this={goldenTab} />
-    </main>
-  {/if}
-  {#if visited.eval}
-    <main class="single" hidden={tab !== 'eval'}>
-      <EvalTab bind:this={evalTab} dbUrl={config.db_url} onchangedb={changeDb} />
-    </main>
-  {/if}
-  {#if visited.impact}
-    <main class="single" hidden={tab !== 'impact'}>
-      <ImpactTab bind:this={impactTab} />
-    </main>
-  {/if}
-  {#if visited.jobs}
-    <main class="single" hidden={tab !== 'jobs'}>
-      <JobsTab bind:this={jobsTab} active={tab === 'jobs'} />
-    </main>
-  {/if}
+    {#if visited.review}
+      <main class="split" hidden={tab !== 'review'}>
+        <QueueList {items} {facets} loading={queueLoading} {selectedId} onselect={(id) => (selectedId = id)} />
+        <DetailPanel
+          item={selected}
+          {siblings}
+          onselectrun={(id) => (selectedId = id)}
+          ondecide={decide}
+          phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
+          {phoenixGid}
+        />
+      </main>
+    {/if}
+    {#if visited.params}
+      <main class="single" hidden={tab !== 'params'}>
+        <ParamsTab
+          bind:this={paramsTab}
+          phoenixEndpoint={config.phoenix_endpoint || 'http://localhost:6006'}
+          onopenitem={openReviewItem}
+          active={tab === 'params'}
+          onrunning={(v) => (paramsRunning = v)}
+        />
+      </main>
+    {/if}
+    {#if visited.audit}
+      <main class="single" hidden={tab !== 'audit'}>
+        <AuditLog {decisions} />
+      </main>
+    {/if}
+    {#if visited.database}
+      <main class="single" hidden={tab !== 'database'}>
+        <DatabaseTab bind:this={dbTab} dbUrl={config.db_url} onchangedb={changeDb} />
+      </main>
+    {/if}
+    {#if visited.ingest}
+      <main class="single" hidden={tab !== 'ingest'}>
+        <IngestTab />
+      </main>
+    {/if}
+    {#if visited.golden}
+      <main class="single" hidden={tab !== 'golden'}>
+        <GoldenTab bind:this={goldenTab} />
+      </main>
+    {/if}
+    {#if visited.eval}
+      <main class="single" hidden={tab !== 'eval'}>
+        <EvalTab bind:this={evalTab} dbUrl={config.db_url} onchangedb={changeDb} />
+      </main>
+    {/if}
+    {#if visited.impact}
+      <main class="single" hidden={tab !== 'impact'}>
+        <ImpactTab bind:this={impactTab} />
+      </main>
+    {/if}
+    {#if visited.jobs}
+      <main class="single" hidden={tab !== 'jobs'}>
+        <JobsTab bind:this={jobsTab} active={tab === 'jobs'} />
+      </main>
+    {/if}
   {/key}
 </AppShell>
 
 <style>
   /* What the review UI adds to the shared shell (@shared/shell.css). */
-  .tab.expert { font-style: italic; }
+  .tab.expert {
+    font-style: italic;
+  }
   .count {
     background: var(--accent);
     color: #fff;
@@ -416,23 +458,51 @@
     min-width: 1.4rem;
     text-align: center;
   }
-  .running-dot { color: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
-  @keyframes pulse { 50% { opacity: 0.25; } }
-  .group.page-group { flex: 1 1 18rem; min-width: 14rem; }
-  .page-intro { color: var(--muted); font-size: 0.85rem; }
+  .running-dot {
+    color: var(--accent);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    50% {
+      opacity: 0.25;
+    }
+  }
+  .group.page-group {
+    flex: 1 1 18rem;
+    min-width: 14rem;
+  }
+  .page-intro {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
 
-  main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-  main.single > :global(*) { flex: 1; min-height: 0; }
+  main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  main.single > :global(*) {
+    flex: 1;
+    min-height: 0;
+  }
   main.split {
     display: grid;
     grid-template-columns: minmax(360px, 2fr) 3fr;
     gap: 1rem;
   }
   /* display:grid/flex above would override the hidden attribute's default */
-  main[hidden] { display: none; }
+  main[hidden] {
+    display: none;
+  }
 
   @media (max-width: 1000px) {
-    .group.page-group { display: none; }
-    main.split { grid-template-columns: 1fr; overflow: auto; }
+    .group.page-group {
+      display: none;
+    }
+    main.split {
+      grid-template-columns: 1fr;
+      overflow: auto;
+    }
   }
 </style>

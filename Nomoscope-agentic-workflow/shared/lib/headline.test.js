@@ -5,7 +5,10 @@ import { headlineRuns, lexicalSpans, parseHeadline } from './headline.js';
 test('a headline parses into its plain text and the marked spans', () => {
   assert.deepEqual(parseHeadline('le <<HL>>taux<</HL>> du <<HL>>barème<</HL>>'), {
     plain: 'le taux du barème',
-    spans: [[3, 7], [11, 17]],
+    spans: [
+      [3, 7],
+      [11, 17],
+    ],
   });
   // an unclosed or empty mark is not a span
   assert.deepEqual(parseHeadline('a <<HL>>b').spans, []);

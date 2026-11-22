@@ -39,8 +39,23 @@
 {/if}
 
 <style>
-  .checks-line { display: flex; align-items: center; gap: 0.45rem; color: var(--ok); font-weight: 600; font-size: 0.92rem; }
-  .checks-line.bad { color: var(--warn); }
-  .issues { color: var(--err); margin: -0.4rem 0 0; font-size: 0.9rem; }
-  .issues li.note { color: var(--muted); }
+  .checks-line {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--ok);
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+  .checks-line.bad {
+    color: var(--warn);
+  }
+  .issues {
+    color: var(--err);
+    margin: -0.4rem 0 0;
+    font-size: 0.9rem;
+  }
+  .issues li.note {
+    color: var(--muted);
+  }
 </style>

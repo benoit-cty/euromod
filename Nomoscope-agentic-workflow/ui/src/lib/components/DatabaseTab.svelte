@@ -24,5 +24,11 @@
 </div>
 
 <style>
-  .db { overflow: auto; display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
+  .db {
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 0;
+  }
 </style>

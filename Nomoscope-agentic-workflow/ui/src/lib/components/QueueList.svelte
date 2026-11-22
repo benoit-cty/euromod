@@ -35,7 +35,7 @@
         if (!haystack.includes(needle)) return false;
       }
       return true;
-    })
+    }),
   );
 
   // `items` arrives newest-first, so the first run seen per parameter is the
@@ -111,13 +111,19 @@
 <section class="panel queue" bind:this={sectionEl}>
   <div class="segmented views" role="tablist">
     <button class:active={view === 'pending'} onclick={() => (view = 'pending')}>
-      To review <span class="count">{#if loading}<span class="spinner"></span>{:else}{counts.pending}{/if}</span>
+      To review <span class="count">
+        {#if loading}<span class="spinner"></span>{:else}{counts.pending}{/if}
+      </span>
     </button>
     <button class:active={view === 'decided'} onclick={() => (view = 'decided')}>
-      Decided <span class="count">{#if loading}<span class="spinner"></span>{:else}{counts.decided}{/if}</span>
+      Decided <span class="count">
+        {#if loading}<span class="spinner"></span>{:else}{counts.decided}{/if}
+      </span>
     </button>
     <button class:active={view === 'all'} onclick={() => (view = 'all')}>
-      All <span class="count">{#if loading}<span class="spinner"></span>{:else}{counts.all}{/if}</span>
+      All <span class="count">
+        {#if loading}<span class="spinner"></span>{:else}{counts.all}{/if}
+      </span>
     </button>
   </div>
 
@@ -149,7 +155,10 @@
           <div class="item-sub muted">
             {countryName(item.country)} · {year(item)}
             {#if row.runs.length > 1}
-              <span class="runs" title="This parameter was checked for {row.runs.length} years — switch between them on the right">
+              <span
+                class="runs"
+                title="This parameter was checked for {row.runs.length} years — switch between them on the right"
+              >
                 +{row.runs.length - 1} more year{row.runs.length > 2 ? 's' : ''}
               </span>
             {/if}
@@ -193,12 +202,37 @@
 </section>
 
 <style>
-  .queue { display: flex; flex-direction: column; min-height: 0; gap: 0.7rem; padding: 0.9rem; }
-  .views { align-self: flex-start; }
-  .filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-  .search { flex: 1; min-width: 9rem; }
-  .filters select { max-width: 11rem; }
-  .list { overflow: auto; flex: 1; display: flex; flex-direction: column; gap: 2px; margin: 0 -0.3rem; padding: 0 0.3rem; }
+  .queue {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 0.7rem;
+    padding: 0.9rem;
+  }
+  .views {
+    align-self: flex-start;
+  }
+  .filters {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .search {
+    flex: 1;
+    min-width: 9rem;
+  }
+  .filters select {
+    max-width: 11rem;
+  }
+  .list {
+    overflow: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0 -0.3rem;
+    padding: 0 0.3rem;
+  }
   .item {
     display: flex;
     justify-content: space-between;
@@ -211,19 +245,57 @@
     border-radius: 9px;
     padding: 0.6rem 0.7rem;
   }
-  .item:hover:not(:disabled) { background: var(--panel-2); border-color: transparent; }
+  .item:hover:not(:disabled) {
+    background: var(--panel-2);
+    border-color: transparent;
+  }
   /* The selected row doubles as the keyboard cursor, so it needs to read as
      more than the hover highlight. */
-  .item.selected, .item.selected:hover:not(:disabled) {
+  .item.selected,
+  .item.selected:hover:not(:disabled) {
     background: var(--accent-soft);
     border-color: var(--accent);
   }
-  .item-main { min-width: 0; flex: 1; }
-  .item-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .item-sub { font-size: 0.85rem; }
-  .item-side { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; flex: none; }
-  .flag { color: var(--warn); font-size: 0.75rem; font-weight: 600; }
-  .runs { margin-left: 0.3rem; font-size: 0.78rem; }
-  .foot { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
-  .inline { display: flex; align-items: center; gap: 0.3rem; white-space: nowrap; cursor: pointer; }
+  .item-main {
+    min-width: 0;
+    flex: 1;
+  }
+  .item-title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .item-sub {
+    font-size: 0.85rem;
+  }
+  .item-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+    flex: none;
+  }
+  .flag {
+    color: var(--warn);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .runs {
+    margin-left: 0.3rem;
+    font-size: 0.78rem;
+  }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+  }
+  .inline {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    cursor: pointer;
+  }
 </style>

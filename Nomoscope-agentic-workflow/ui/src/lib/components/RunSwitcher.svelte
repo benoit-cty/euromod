@@ -40,14 +40,27 @@
       class="step ghost"
       disabled={runIndex < 0 || runIndex >= siblings.length - 1}
       title="Older"
-      onclick={() => stepRun(1)}>›</button
+      onclick={() => stepRun(1)}
     >
+      ›
+    </button>
   </div>
 {/if}
 
 <style>
-  .runs { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; min-width: 0; }
-  .run-chips { display: flex; gap: 0.3rem; overflow-x: auto; padding-bottom: 0.15rem; }
+  .runs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    min-width: 0;
+  }
+  .run-chips {
+    display: flex;
+    gap: 0.3rem;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+  }
   .runs .chip {
     gap: 0.35rem;
     padding: 0.15rem 0.55rem;
@@ -57,7 +70,15 @@
     color: var(--muted);
     white-space: nowrap;
   }
-  .runs .chip.current { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
-  .runs .chip .year { font-variant-numeric: tabular-nums; }
-  .runs .step { padding: 0.05rem 0.45rem; }
+  .runs .chip.current {
+    border-color: var(--accent);
+    color: var(--text);
+    background: var(--accent-soft);
+  }
+  .runs .chip .year {
+    font-variant-numeric: tabular-nums;
+  }
+  .runs .step {
+    padding: 0.05rem 0.45rem;
+  }
 </style>

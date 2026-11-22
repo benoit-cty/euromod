@@ -44,7 +44,13 @@
             </div>
           {/each}
         {:else}
-          <button class="link small muted" onclick={(e) => { e.stopPropagation(); showSteps = true; }}>
+          <button
+            class="link small muted"
+            onclick={(e) => {
+              e.stopPropagation();
+              showSteps = true;
+            }}
+          >
             {turn.steps.length} tool call(s)
           </button>
         {/if}
@@ -56,10 +62,18 @@
         <span class="spinner"></span>
         {turn.status === 'queued' ? 'Waiting for the worker…' : 'Thinking…'}
         {#if turn.jobId}<span class="mono">job #{turn.jobId}</span>{/if}
-        <button class="small" onclick={(e) => { e.stopPropagation(); onCancel?.(); }}>Stop</button>
+        <button
+          class="small"
+          onclick={(e) => {
+            e.stopPropagation();
+            onCancel?.();
+          }}
+        >
+          Stop
+        </button>
       </div>
     {:else if turn.status === 'succeeded' && turn.result}
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -- markdown.js escapes everything before rendering -->
       <div class="md" onclick={onAnswerClick} role="presentation">{@html html}</div>
       {#if quotes.length}
         <div class="quotes small">
@@ -69,7 +83,10 @@
               class:bad={!q.verified}
               class:on={selected && selectedQuote === i}
               title={q.extract}
-              onclick={(e) => { e.stopPropagation(); onSelectQuote?.(i); }}
+              onclick={(e) => {
+                e.stopPropagation();
+                onSelectQuote?.(i);
+              }}
             >
               [{i + 1}] {q.citation ?? q.chunk_id.slice(0, 8)}{q.verified ? '' : ' ✗'}
             </button>
@@ -91,7 +108,9 @@
         <span>as of {turn.result.as_of}</span>
         {#if turn.result.usage?.requests}<span>{turn.result.usage.requests} model call(s)</span>{/if}
         {#if turn.jobId}<span class="mono">job #{turn.jobId}</span>{/if}
-        {#if turn.result.phoenix_trace_id}<span class="mono" title="Phoenix trace id">trace {turn.result.phoenix_trace_id.slice(0, 12)}</span>{/if}
+        {#if turn.result.phoenix_trace_id}<span class="mono" title="Phoenix trace id">
+            trace {turn.result.phoenix_trace_id.slice(0, 12)}
+          </span>{/if}
       </div>
     {:else}
       <p class="callout err small">
@@ -102,7 +121,9 @@
 </section>
 
 <style>
-  .turn { margin-bottom: 1.2rem; }
+  .turn {
+    margin-bottom: 1.2rem;
+  }
   .question {
     margin-left: auto;
     max-width: 80%;
@@ -122,14 +143,49 @@
     box-shadow: var(--shadow);
     padding: 0.55rem 0.85rem;
   }
-  .selected .answer { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-  .steps { margin-bottom: 0.35rem; }
-  .step { display: flex; gap: 0.4rem; color: var(--muted); }
-  .step.done .dot { color: var(--ok); }
-  .status { display: flex; align-items: center; gap: 0.5rem; }
-  .quotes { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem; }
-  .qchip { padding: 0.05rem 0.5rem; border-radius: 999px; font-size: 0.82em; }
-  .qchip.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
-  .qchip.bad { color: var(--err); }
-  .foot { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 0.4rem; }
+  .selected .answer {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .steps {
+    margin-bottom: 0.35rem;
+  }
+  .step {
+    display: flex;
+    gap: 0.4rem;
+    color: var(--muted);
+  }
+  .step.done .dot {
+    color: var(--ok);
+  }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .quotes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+  }
+  .qchip {
+    padding: 0.05rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.82em;
+  }
+  .qchip.on {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .qchip.bad {
+    color: var(--err);
+  }
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 0.4rem;
+  }
 </style>

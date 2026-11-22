@@ -8,7 +8,13 @@ const proposed = {
   legal_status: 'enacted_in_force',
   source_type: 'legislation',
   references: [
-    { title: 'CGI art. 197', jrc_database_id: 'c1', source_trust_class: 'evidence', supporting_extract: '25 %', extract_offsets: [3, 7] },
+    {
+      title: 'CGI art. 197',
+      jrc_database_id: 'c1',
+      source_trust_class: 'evidence',
+      supporting_extract: '25 %',
+      extract_offsets: [3, 7],
+    },
   ],
 };
 

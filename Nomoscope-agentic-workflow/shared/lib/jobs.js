@@ -70,7 +70,8 @@ export async function submitAndFollow(jobType, payload, handlers, pollMs, transp
 export function bindJobs(transport, pollMs = 1000) {
   return {
     followJob: (id, handlers = {}) => followJob(id, handlers, pollMs, transport),
-    submitAndFollow: (jobType, payload, handlers = {}) => submitAndFollow(jobType, payload, handlers, pollMs, transport),
+    submitAndFollow: (jobType, payload, handlers = {}) =>
+      submitAndFollow(jobType, payload, handlers, pollMs, transport),
   };
 }
 
@@ -103,6 +104,8 @@ export function summarize(status, took = '') {
 
 /** The last line of a job's error text, for an inline message. */
 export function lastLine(text) {
-  const lines = String(text ?? '').trim().split('\n');
+  const lines = String(text ?? '')
+    .trim()
+    .split('\n');
   return lines[lines.length - 1] || 'no error recorded';
 }

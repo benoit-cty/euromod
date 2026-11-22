@@ -140,7 +140,9 @@
                   aria-pressed={mode === item.value}
                   title={item.hint}
                   onclick={() => (mode = item.value)}
-                >{item.label}</button>
+                >
+                  {item.label}
+                </button>
               {/each}
             </div>
           </div>
@@ -165,7 +167,9 @@
     <div class="retrieval-summary">
       <strong>{results.results.length} result{results.results.length === 1 ? '' : 's'}</strong>
       {#if scoringCount > 0}
-        <span class="scoring"><span class="spinner" aria-hidden="true"></span> Highlighting the most relevant sentences…</span>
+        <span class="scoring">
+          <span class="spinner" aria-hidden="true"></span> Highlighting the most relevant sentences…
+        </span>
       {:else if results.results.length}
         <span class="legend" aria-label="Highlight legend">
           <span class="swatch best"></span> most likely answer
@@ -182,8 +186,15 @@
             <strong>{hit.citation ?? hit.context_header}</strong>
             <div class="hit-meta">
               <span class="badge">{countryName(hit.country)}</span>
-              <span class="badge" title={authenticityLabel(hit.authenticity).hint}>{langName(hit.lang)}{hit.authenticity !== 'authentic' ? ` · ${authenticityLabel(hit.authenticity).label}` : ''}</span>
-              <span class="badge {hit.version_status === 'in_force' ? 'pass' : 'pending'}" title={versionStatusLabel(hit.version_status).hint}>
+              <span class="badge" title={authenticityLabel(hit.authenticity).hint}>
+                {langName(hit.lang)}{hit.authenticity !== 'authentic'
+                  ? ` · ${authenticityLabel(hit.authenticity).label}`
+                  : ''}
+              </span>
+              <span
+                class="badge {hit.version_status === 'in_force' ? 'pass' : 'pending'}"
+                title={versionStatusLabel(hit.version_status).hint}
+              >
                 {versionStatusLabel(hit.version_status).label}
               </span>
               {#if hit.source_trust_class && hit.source_trust_class !== 'evidence'}
@@ -205,7 +216,9 @@
                 class:best={sentence.level === 'best'}
                 class:near={sentence.level === 'near'}
                 title={sentence.similarity != null ? `similarity ${formatFixed(sentence.similarity, 3)}` : undefined}
-              >{#each sentence.parts as part}{#if part.mark}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</span>
+              >
+                {#each sentence.parts as part}{#if part.mark}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}
+              </span>
             {/each}
           </div>
           <details class="why">
@@ -253,34 +266,150 @@
 {/if}
 
 <style>
-  .search-form { display: flex; flex-direction: column; gap: 0.8rem; }
-  .search-query { display: flex; gap: 0.6rem; align-items: center; position: relative; }
-  .search-icon { position: absolute; left: 0.85rem; color: var(--muted); display: flex; pointer-events: none; }
-  .query { flex: 1; min-height: 2.9rem; font-size: 1.05rem; padding-left: 2.6rem; border-radius: 10px; }
-  .search-options { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
-  .inline-field { flex-direction: row; align-items: center; gap: 0.5rem; }
-  .inline-field select, .inline-field input { width: auto; }
-  .options > summary { cursor: pointer; color: var(--accent); font-size: 0.9rem; }
-  .options[open] { flex-basis: 100%; }
-  .options-body { display: flex; gap: 1.2rem; flex-wrap: wrap; align-items: end; padding-top: 0.6rem; }
-  .results { display: flex; flex-direction: column; gap: 0.6rem; }
-  .retrieval-summary { display: flex; gap: 0.9rem; align-items: baseline; flex-wrap: wrap; color: var(--muted); }
-  .retrieval-summary strong { color: var(--text); }
-  .legend { display: inline-flex; gap: 0.35rem; align-items: center; font-size: 0.82rem; }
-  .legend mark { margin-left: 0.4rem; }
-  .swatch { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 3px; }
-  .swatch.best, .sentence.best { background: var(--answer); }
-  .swatch.near, .sentence.near { background: var(--answer-soft); }
-  .swatch.near { border: 1px solid var(--border); }
-  .sentence.best, .sentence.near { border-radius: 3px; box-shadow: 0 0 0 1px var(--answer-soft); }
-  .scoring { display: inline-flex; gap: 0.4rem; align-items: center; font-size: 0.85rem; }
-  .hit { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
-  .hit > summary { cursor: pointer; padding: 0.8rem 1rem; list-style: none; }
-  .hit > summary::-webkit-details-marker { display: none; }
-  .hit-title { display: flex; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; align-items: baseline; }
-  .hit-meta { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-  .hit-body { padding: 0 1rem 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
-  .why > summary { cursor: pointer; color: var(--accent); font-size: 0.85rem; }
+  .search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .search-query {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    position: relative;
+  }
+  .search-icon {
+    position: absolute;
+    left: 0.85rem;
+    color: var(--muted);
+    display: flex;
+    pointer-events: none;
+  }
+  .query {
+    flex: 1;
+    min-height: 2.9rem;
+    font-size: 1.05rem;
+    padding-left: 2.6rem;
+    border-radius: 10px;
+  }
+  .search-options {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .inline-field {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .inline-field select,
+  .inline-field input {
+    width: auto;
+  }
+  .options > summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 0.9rem;
+  }
+  .options[open] {
+    flex-basis: 100%;
+  }
+  .options-body {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    align-items: end;
+    padding-top: 0.6rem;
+  }
+  .results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .retrieval-summary {
+    display: flex;
+    gap: 0.9rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+    color: var(--muted);
+  }
+  .retrieval-summary strong {
+    color: var(--text);
+  }
+  .legend {
+    display: inline-flex;
+    gap: 0.35rem;
+    align-items: center;
+    font-size: 0.82rem;
+  }
+  .legend mark {
+    margin-left: 0.4rem;
+  }
+  .swatch {
+    display: inline-block;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 3px;
+  }
+  .swatch.best,
+  .sentence.best {
+    background: var(--answer);
+  }
+  .swatch.near,
+  .sentence.near {
+    background: var(--answer-soft);
+  }
+  .swatch.near {
+    border: 1px solid var(--border);
+  }
+  .sentence.best,
+  .sentence.near {
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px var(--answer-soft);
+  }
+  .scoring {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+  .hit {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .hit > summary {
+    cursor: pointer;
+    padding: 0.8rem 1rem;
+    list-style: none;
+  }
+  .hit > summary::-webkit-details-marker {
+    display: none;
+  }
+  .hit-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+  .hit-meta {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .hit-body {
+    padding: 0 1rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .why > summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 0.85rem;
+  }
   .score-breakdown {
     display: grid;
     grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 1.3fr) minmax(7rem, 0.5fr);
@@ -296,12 +425,27 @@
     padding: 0.55rem 0.7rem;
     border-right: 1px solid var(--border);
   }
-  .score-breakdown > div:last-child { border-right: 0; }
-  .score-breakdown span { color: var(--muted); font-size: 0.82rem; }
-  .score-breakdown .score-label { color: var(--text); font-weight: 600; }
-  .score-total { background: var(--panel-2); }
+  .score-breakdown > div:last-child {
+    border-right: 0;
+  }
+  .score-breakdown span {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+  .score-breakdown .score-label {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .score-total {
+    background: var(--panel-2);
+  }
   @media (max-width: 760px) {
-    .score-breakdown { grid-template-columns: 1fr; }
-    .score-breakdown > div { border-right: 0; border-bottom: 1px solid var(--border); }
+    .score-breakdown {
+      grid-template-columns: 1fr;
+    }
+    .score-breakdown > div {
+      border-right: 0;
+      border-bottom: 1px solid var(--border);
+    }
   }
 </style>

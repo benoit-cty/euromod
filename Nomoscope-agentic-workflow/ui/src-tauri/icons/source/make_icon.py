@@ -3,6 +3,7 @@
 Regenerate every size with:
     python3 src-tauri/icons/source/make_icon.py && npx tauri icon src-tauri/icons/source/icon-1024.png
 """
+
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont

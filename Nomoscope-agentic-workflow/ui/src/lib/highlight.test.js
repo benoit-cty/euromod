@@ -23,21 +23,24 @@ test('abbreviations and numbers do not split, sentence ends do', () => {
   const text = 'Voir art. 17 et n° 2025-07 du code. Le montant est fixé à 12,5 euros; Il est révisé.';
   assert.deepEqual(
     splitSentences(text).map((s) => s.text),
-    ['Voir art. 17 et n° 2025-07 du code.', 'Le montant est fixé à 12,5 euros;', 'Il est révisé.'].filter(
-      (s) => s.length >= 20 || true,
-    ).reduce((acc, s) => {
-      // "Il est révisé." is shorter than MIN_SENTENCE_CHARS and gets glued to the previous one.
-      if (s === 'Il est révisé.') acc[acc.length - 1] += ' ' + s;
-      else acc.push(s);
-      return acc;
-    }, []),
+    ['Voir art. 17 et n° 2025-07 du code.', 'Le montant est fixé à 12,5 euros;', 'Il est révisé.']
+      .filter((s) => s.length >= 20 || true)
+      .reduce((acc, s) => {
+        // "Il est révisé." is shorter than MIN_SENTENCE_CHARS and gets glued to the previous one.
+        if (s === 'Il est révisé.') acc[acc.length - 1] += ' ' + s;
+        else acc.push(s);
+        return acc;
+      }, []),
   );
 });
 
 test('lexical spans map headline markers back to content offsets', () => {
   const content = "l'allocation en faveur des demandeurs";
   const headline = `l'${MARK_START}allocation${MARK_END} en faveur des ${MARK_START}demandeurs${MARK_END}`;
-  assert.deepEqual(lexicalSpans(headline, content), [[2, 12], [27, 37]]);
+  assert.deepEqual(lexicalSpans(headline, content), [
+    [2, 12],
+    [27, 37],
+  ]);
   assert.deepEqual(lexicalSpans(headline, content + ' x'), [], 'mismatch loses the marks');
   assert.deepEqual(lexicalSpans(null, content), []);
 });
@@ -55,6 +58,19 @@ test('renderView cuts marks inside sentences', () => {
   const view = renderView(content, headline, [0.3, 0.7]);
   assert.equal(view.length, 2);
   assert.equal(view[1].level, 'best');
-  assert.deepEqual(view[0].parts.map((p) => [p.text, p.mark]), [['Alpha ', false], ['beta', true], [' gamma delta.', false]]);
-  assert.equal(view.flatMap((s) => s.parts).map((p) => p.text).join(''), content);
+  assert.deepEqual(
+    view[0].parts.map((p) => [p.text, p.mark]),
+    [
+      ['Alpha ', false],
+      ['beta', true],
+      [' gamma delta.', false],
+    ],
+  );
+  assert.equal(
+    view
+      .flatMap((s) => s.parts)
+      .map((p) => p.text)
+      .join(''),
+    content,
+  );
 });

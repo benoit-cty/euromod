@@ -12,10 +12,33 @@ import { countryName, routingLabel } from '../../../shared/lib/labels.js';
 // Official portals per country — the same list the scout searches
 // (scout.COUNTRY_SOURCES), with the law's language.
 export const COUNTRY_SOURCES = {
-  FR: { lang: 'French', portals: ['legifrance.gouv.fr (lois, décrets, arrêtés, codes, conventions collectives KALI)', 'bofip.impots.gouv.fr (doctrine)', 'legislation.lassuranceretraite.fr (Cnav circulars)', 'unedic.org (circulars)'] },
-  ES: { lang: 'Spanish', portals: ['boe.es (Boletín Oficial del Estado: consolidated legislation and the daily gazette)', 'the autonomous community’s own official bulletin for a regional parameter'] },
-  NL: { lang: 'Dutch', portals: ['wetten.overheid.nl (Basiswettenbestand)', 'zoek.officielebekendmakingen.nl (Staatscourant, Staatsblad)'] },
-  IE: { lang: 'English', portals: ['irishstatutebook.ie (Acts and Statutory Instruments)', 'gov.ie / revenue.ie (official rates published by the department)'] },
+  FR: {
+    lang: 'French',
+    portals: [
+      'legifrance.gouv.fr (lois, décrets, arrêtés, codes, conventions collectives KALI)',
+      'bofip.impots.gouv.fr (doctrine)',
+      'legislation.lassuranceretraite.fr (Cnav circulars)',
+      'unedic.org (circulars)',
+    ],
+  },
+  ES: {
+    lang: 'Spanish',
+    portals: [
+      'boe.es (Boletín Oficial del Estado: consolidated legislation and the daily gazette)',
+      'the autonomous community’s own official bulletin for a regional parameter',
+    ],
+  },
+  NL: {
+    lang: 'Dutch',
+    portals: ['wetten.overheid.nl (Basiswettenbestand)', 'zoek.officielebekendmakingen.nl (Staatscourant, Staatsblad)'],
+  },
+  IE: {
+    lang: 'English',
+    portals: [
+      'irishstatutebook.ie (Acts and Statutory Instruments)',
+      'gov.ie / revenue.ie (official rates published by the department)',
+    ],
+  },
   LT: { lang: 'Lithuanian', portals: ['e-tar.lt (Teisės aktų registras)', 'e-seimas.lrs.lt'] },
   BE: { lang: 'French and Dutch', portals: ['ejustice.just.fgov.be (Moniteur belge / Belgisch Staatsblad)'] },
 };
@@ -145,8 +168,7 @@ export function buildHandoffPrompt(item, context = null) {
   const read = uniqueCitations(item.retrieval_trace);
   if (read.length) {
     out.push(
-      `Texts it read (our corpus, ${read.length}): ${read.slice(0, 12).join('; ')}` +
-        (read.length > 12 ? '; …' : ''),
+      `Texts it read (our corpus, ${read.length}): ${read.slice(0, 12).join('; ')}` + (read.length > 12 ? '; …' : ''),
     );
   }
 

@@ -91,14 +91,12 @@
       c.error != null ||
       c.hallucination ||
       [c.routing_correct, c.value_correct, c.date_correct, c.citation_correct, c.supportedness, c.retrieval_hit].some(
-        (v) => v === false
+        (v) => v === false,
       )
     );
   }
 
-  const visibleCases = $derived(
-    (detail?.cases ?? []).filter((c) => !failuresOnly || caseFailed(c))
-  );
+  const visibleCases = $derived((detail?.cases ?? []).filter((c) => !failuresOnly || caseFailed(c)));
 </script>
 
 {#snippet mark(v)}
@@ -138,7 +136,9 @@
               <td class="mono">{run.agent_version}</td>
               <td>{run.countries.join(' ')}</td>
               <td>{run.cases}</td>
-              <td>{#if run.errors > 0}<span class="badge fail">{run.errors}</span>{:else}0{/if}</td>
+              <td>
+                {#if run.errors > 0}<span class="badge fail">{run.errors}</span>{:else}0{/if}
+              </td>
               {#each KPIS as k}<td>{pct(run[k.key])}</td>{/each}
               <td>{ms(run.avg_latency_ms)}</td>
               <td>{energy(run.energy_kwh)}</td>
@@ -154,8 +154,8 @@
     <h2>
       Run <span class="mono">{selectedRun.run_id}</span>
       <span class="muted">
-        {selectedRun.model_provider}/{selectedRun.model_name} · prompt {selectedRun.prompt_version} ·
-        agent {selectedRun.agent_version} · dataset {selectedRun.dataset_version}
+        {selectedRun.model_provider}/{selectedRun.model_name} · prompt {selectedRun.prompt_version} · agent {selectedRun.agent_version}
+        · dataset {selectedRun.dataset_version}
         {#if selectedRun.git_commit}· {selectedRun.git_commit.slice(0, 8)}{/if}
       </span>
     </h2>
@@ -241,8 +241,8 @@
           </summary>
           <div class="case-body">
             <p class="muted">
-              routing: expected <strong>{c.routing_expected}</strong> →
-              actual <strong>{c.routing_actual ?? '—'}</strong>
+              routing: expected <strong>{c.routing_expected}</strong> → actual
+              <strong>{c.routing_actual ?? '—'}</strong>
               {#if c.model_target}· target <span class="mono">{c.model_target}</span>{/if}
               {#if c.confidence != null}· confidence {formatFixed(c.confidence, 2)}{/if}
               {#if c.latency_ms != null}· {c.latency_ms} ms{/if}
@@ -259,21 +259,78 @@
 </section>
 
 <style>
-  .eval { overflow: auto; display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
-  label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }
-  label input { width: 100%; }
-  label.inline { display: inline-flex; flex-direction: row; align-items: center; gap: 0.35rem;
-    font-size: 0.8rem; font-weight: 400; margin-left: 0.8rem; }
-  label.inline input { width: auto; }
-  .runs tbody tr { cursor: pointer; }
-  .runs tbody tr:hover { background: var(--panel-2); }
-  .runs tbody tr.selected { background: var(--accent-soft); }
-  .tick.ok { color: var(--ok); }
-  .tick.bad { color: var(--err); font-weight: 700; }
-  .kpi-marks { display: inline-flex; gap: 0.5rem; align-items: baseline; color: var(--muted); font-size: 0.85em; }
-  details { border-top: 1px solid var(--border); padding: 0.5rem 0; }
-  summary { cursor: pointer; display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
-  .case-body { padding: 0.4rem 0 0 1rem; }
-  pre { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
-    padding: 0.6rem; overflow: auto; max-height: 24rem; white-space: pre-wrap; }
+  .eval {
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    min-height: 0;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    color: var(--muted);
+  }
+  label input {
+    width: 100%;
+  }
+  label.inline {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    margin-left: 0.8rem;
+  }
+  label.inline input {
+    width: auto;
+  }
+  .runs tbody tr {
+    cursor: pointer;
+  }
+  .runs tbody tr:hover {
+    background: var(--panel-2);
+  }
+  .runs tbody tr.selected {
+    background: var(--accent-soft);
+  }
+  .tick.ok {
+    color: var(--ok);
+  }
+  .tick.bad {
+    color: var(--err);
+    font-weight: 700;
+  }
+  .kpi-marks {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    color: var(--muted);
+    font-size: 0.85em;
+  }
+  details {
+    border-top: 1px solid var(--border);
+    padding: 0.5rem 0;
+  }
+  summary {
+    cursor: pointer;
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+  .case-body {
+    padding: 0.4rem 0 0 1rem;
+  }
+  pre {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem;
+    overflow: auto;
+    max-height: 24rem;
+    white-space: pre-wrap;
+  }
 </style>

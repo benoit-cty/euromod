@@ -13,13 +13,25 @@ function createWorker() {
 
   return {
     /** The raw status row set, null until the first answer. */
-    get status() { return status; },
-    get error() { return error; },
+    get status() {
+      return status;
+    },
+    get error() {
+      return error;
+    },
     /** true / false, null while unknown. */
-    get alive() { return anyAlive(status); },
-    get workers() { return status?.workers ?? []; },
-    get models() { return status?.models ?? []; },
-    get llmModels() { return llmModels(status); },
+    get alive() {
+      return anyAlive(status);
+    },
+    get workers() {
+      return status?.workers ?? [];
+    },
+    get models() {
+      return status?.models ?? [];
+    },
+    get llmModels() {
+      return llmModels(status);
+    },
 
     use(fetcher) {
       fetchStatus = fetcher;

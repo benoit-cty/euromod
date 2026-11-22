@@ -11,9 +11,15 @@ function createLibrary() {
   let inFlight = null;
 
   return {
-    get stats() { return stats; },
-    get error() { return error; },
-    get loading() { return loading; },
+    get stats() {
+      return stats;
+    },
+    get error() {
+      return error;
+    },
+    get loading() {
+      return loading;
+    },
 
     /** The statistics; read from the database the first time, or when `force`d. */
     load(force = false) {

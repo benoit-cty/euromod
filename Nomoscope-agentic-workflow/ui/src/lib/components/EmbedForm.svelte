@@ -28,8 +28,8 @@
 
 <div class="subform">
   <p class="muted">
-    Index the texts that are not searchable yet. Runs on the worker; needed after any import (adding a
-    document does it for you).
+    Index the texts that are not searchable yet. Runs on the worker; needed after any import (adding a document does it
+    for you).
   </p>
   <details class="more">
     <summary>Advanced <span class="hint">model, batch size, limit</span></summary>
@@ -55,6 +55,12 @@
 </div>
 
 <style>
-  .subform { display: flex; flex-direction: column; gap: 0.9rem; }
-  .subform > p.muted { margin: 0; }
+  .subform {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .subform > p.muted {
+    margin: 0;
+  }
 </style>

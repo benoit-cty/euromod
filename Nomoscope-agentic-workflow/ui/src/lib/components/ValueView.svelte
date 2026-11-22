@@ -59,20 +59,49 @@
     <dl>
       <dt>Valid</dt>
       <dd>{value.valid_from ?? '—'} → {value.valid_to ?? 'open-ended'}</dd>
-      {#if value.legal_status}<dt>Status</dt><dd>{humanize(value.legal_status)}</dd>{/if}
-      {#if value.source_type}<dt>Source</dt><dd>{humanize(value.source_type)}</dd>{/if}
-      {#if value.official_journal_date}<dt>Published</dt><dd>{value.official_journal_date}</dd>{/if}
+      {#if value.legal_status}<dt>Status</dt>
+        <dd>{humanize(value.legal_status)}</dd>{/if}
+      {#if value.source_type}<dt>Source</dt>
+        <dd>{humanize(value.source_type)}</dd>{/if}
+      {#if value.official_journal_date}<dt>Published</dt>
+        <dd>{value.official_journal_date}</dd>{/if}
     </dl>
   {/if}
 </div>
 
 <style>
-  .value-view { flex: 1; min-width: 14rem; }
-  .scalar { font-size: 1.6rem; font-weight: 600; padding: 0.3rem 0; }
-  .scalar .hint { font-size: 1rem; font-weight: 500; }
-  .diff { background: var(--warn-soft); color: var(--warn); border-radius: 4px; }
-  td.diff { font-weight: 600; }
-  dl { font-size: 0.88rem; display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.7rem; margin: 0.5rem 0 0; }
-  dt { color: var(--muted); }
-  dd { margin: 0; }
+  .value-view {
+    flex: 1;
+    min-width: 14rem;
+  }
+  .scalar {
+    font-size: 1.6rem;
+    font-weight: 600;
+    padding: 0.3rem 0;
+  }
+  .scalar .hint {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  .diff {
+    background: var(--warn-soft);
+    color: var(--warn);
+    border-radius: 4px;
+  }
+  td.diff {
+    font-weight: 600;
+  }
+  dl {
+    font-size: 0.88rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.15rem 0.7rem;
+    margin: 0.5rem 0 0;
+  }
+  dt {
+    color: var(--muted);
+  }
+  dd {
+    margin: 0;
+  }
 </style>

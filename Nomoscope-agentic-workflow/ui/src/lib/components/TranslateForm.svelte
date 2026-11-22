@@ -62,6 +62,12 @@
 </div>
 
 <style>
-  .subform { display: flex; flex-direction: column; gap: 0.9rem; }
-  .subform > p.muted { margin: 0; }
+  .subform {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .subform > p.muted {
+    margin: 0;
+  }
 </style>

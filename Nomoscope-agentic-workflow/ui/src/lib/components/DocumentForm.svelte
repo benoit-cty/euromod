@@ -24,26 +24,26 @@
     onerror = () => {},
   } = $props();
 
-  let docSource = $state('');          // URL or file path (on the worker's host)
+  let docSource = $state(''); // URL or file path (on the worker's host)
   let docJurisdiction = $state('FR'); // the store's codes, as the select offers them
   let docLang = $state('fr');
   let docTitle = $state('');
   let docKind = $state('circulaire');
   let docValidFrom = $state('');
-  let docImplements = $state('');      // '' = none
+  let docImplements = $state(''); // '' = none
   let implementsQuery = $state('');
   let implementsResults = $state([]);
   // jurisdiction -> { kind: { norm_level, source_trust_class } }, straight from
   // the ingester's own table (`route`), so the UI keeps no copy of the mapping.
   let kindTable = $state({});
-  let kindTableError = $state('');     // why the kinds could not be read
-  let routeOutcome = $state(null);     // { outcome, source, national_id, hint, ... }
+  let kindTableError = $state(''); // why the kinds could not be read
+  let routeOutcome = $state(null); // { outcome, source, national_id, hint, ... }
   let routing = $state(false);
 
   let docKinds = $derived(
     Object.keys(kindTable[docJurisdiction.toUpperCase()] ?? {}).length
       ? kindTable[docJurisdiction.toUpperCase()]
-      : (kindTable.DEFAULT ?? {})
+      : (kindTable.DEFAULT ?? {}),
   );
   let docTrustClass = $derived(docKinds[docKind]?.source_trust_class ?? '');
   // An adapter outcome supplies every field itself: the contributed fields are
@@ -54,15 +54,15 @@
       ? true
       : Boolean(
           docSource.trim() &&
-            docJurisdiction.trim() &&
-            docLang.trim() &&
-            docTitle.trim() &&
-            // A kind this jurisdiction actually offers: `circulaire` is not an
-            // ES label, and the CLI would refuse it after the run had started.
-            docKinds[docKind] &&
-            docValidFrom &&
-            routeOutcome?.outcome !== 'refused'
-        )
+          docJurisdiction.trim() &&
+          docLang.trim() &&
+          docTitle.trim() &&
+          // A kind this jurisdiction actually offers: `circulaire` is not an
+          // ES label, and the CLI would refuse it after the run had started.
+          docKinds[docKind] &&
+          docValidFrom &&
+          routeOutcome?.outcome !== 'refused',
+        ),
   );
 
   $effect(() => {
@@ -161,11 +161,16 @@
         command: 'document',
         args: [
           docSource.trim(),
-          '--jurisdiction', docJurisdiction.trim(),
-          '--lang', docLang.trim(),
-          '--title', docTitle.trim(),
-          '--kind', docKind,
-          '--valid-from', docValidFrom,
+          '--jurisdiction',
+          docJurisdiction.trim(),
+          '--lang',
+          docLang.trim(),
+          '--title',
+          docTitle.trim(),
+          '--kind',
+          docKind,
+          '--valid-from',
+          docValidFrom,
           ...(docImplements ? ['--implements', docImplements] : []),
           '--progress-json',
         ],
@@ -176,16 +181,11 @@
 
 <div class="subform">
   <p class="muted">
-    Paste a link (or a file path on the worker’s machine): PDF, web page, Markdown or text. We check it
-    first. If it is on an official legal portal, it is imported as a law instead.
+    Paste a link (or a file path on the worker’s machine): PDF, web page, Markdown or text. We check it first. If it is
+    on an official legal portal, it is imported as a law instead.
   </p>
   <div class="row">
-    <input
-      class="grow mono"
-      bind:value={docSource}
-      onchange={precheckSource}
-      placeholder="https://…"
-    />
+    <input class="grow mono" bind:value={docSource} onchange={precheckSource} placeholder="https://…" />
     <button onclick={precheckSource} disabled={running || !docSource.trim()}>
       {#if routing}<span class="spinner"></span> Checking…{:else}Check{/if}
     </button>
@@ -193,8 +193,10 @@
 
   {#if routeOutcome?.outcome === 'adapter'}
     <p class="callout ok">
-      Recognised as an official text from {routeOutcome.source}: it will be imported as a law
-      (<span class="mono">{routeOutcome.jurisdiction} {routeOutcome.national_id}</span>).
+      Recognised as an official text from {routeOutcome.source}: it will be imported as a law (<span class="mono">
+        {routeOutcome.jurisdiction}
+        {routeOutcome.national_id}
+      </span>).
     </p>
   {:else if routeOutcome?.outcome === 'refused'}
     <p class="callout err">{routeOutcome.hint}</p>
@@ -242,7 +244,9 @@
     {/if}
     {#if docTrustClass}
       <p class="small trust">
-        <span class="badge {docTrustClass}" title={trustLabel(docTrustClass).hint}>{trustLabel(docTrustClass).label}</span>
+        <span class="badge {docTrustClass}" title={trustLabel(docTrustClass).hint}>
+          {trustLabel(docTrustClass).label}
+        </span>
         <span class="muted">
           {docTrustClass === 'evidence'
             ? 'Will be treated as legislation.'
@@ -281,7 +285,9 @@
                 }}
               >
                 <span>{instrument.title ?? instrument.national_id}</span>
-                <span class="muted small"><span class="mono">{instrument.national_id}</span> · {humanize(instrument.instrument_type)}</span>
+                <span class="muted small">
+                  <span class="mono">{instrument.national_id}</span> · {humanize(instrument.instrument_type)}
+                </span>
               </button>
             {/each}
           </div>
@@ -295,10 +301,36 @@
 </div>
 
 <style>
-  .subform { display: flex; flex-direction: column; gap: 0.9rem; }
-  .subform > p.muted { margin: 0; }
-  .trust { display: flex; align-items: center; gap: 0.5rem; margin: 0; }
-  .results { display: flex; flex-direction: column; gap: 0.25rem; max-height: 14rem; overflow: auto; }
-  .result { flex-direction: column; align-items: flex-start; gap: 0.1rem; text-align: left; background: var(--panel-2); border-color: transparent; }
-  .result.chosen { border-color: var(--accent); }
+  .subform {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .subform > p.muted {
+    margin: 0;
+  }
+  .trust {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+  }
+  .results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    max-height: 14rem;
+    overflow: auto;
+  }
+  .result {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    text-align: left;
+    background: var(--panel-2);
+    border-color: transparent;
+  }
+  .result.chosen {
+    border-color: var(--accent);
+  }
 </style>

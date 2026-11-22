@@ -134,13 +134,17 @@
   <span
     class="badge {status}"
     title={job.progress?.phase === 'waiting' ? job.progress.detail : `${jobStatusLabel(status).hint} (${status})`}
-  >{jobStatusLabel(status).label}</span>
+  >
+    {jobStatusLabel(status).label}
+  </span>
 {/snippet}
 
 <section class="panel jobs">
   <div class="worker">
     {#if !worker.status}
-      <span class="muted">{worker.error ? `Worker status unavailable: ${worker.error}` : 'Reading worker status…'}</span>
+      <span class="muted">
+        {worker.error ? `Worker status unavailable: ${worker.error}` : 'Reading worker status…'}
+      </span>
     {:else if alive.length === 0}
       <span class="badge fail">no worker alive</span>
       <span class="muted">
@@ -156,7 +160,9 @@
       {/each}
     {/if}
     {#if worker.llmModels.length}
-      <span class="muted">· models: {worker.llmModels.map((m) => m.model + (m.is_default ? ' (default)' : '')).join(', ')}</span>
+      <span class="muted">
+        · models: {worker.llmModels.map((m) => m.model + (m.is_default ? ' (default)' : '')).join(', ')}
+      </span>
     {/if}
     <div class="spacer"></div>
     <button onclick={refresh}>Refresh</button>
@@ -168,7 +174,11 @@
     <div class="tablebox">
       <table>
         <thead>
-          <tr><th>#</th><th>Type</th><th>Status</th><th>What</th><th>By</th><th>Submitted</th><th>Took</th><th>Progress</th><th></th></tr>
+          <tr>
+            <th>#</th><th>Type</th><th>Status</th><th>What</th><th>By</th><th>Submitted</th><th>Took</th><th>
+              Progress
+            </th><th></th>
+          </tr>
         </thead>
         <tbody>
           {#each jobs as job (job.id)}
@@ -191,7 +201,11 @@
               </td>
             </tr>
           {:else}
-            <tr><td colspan="9" class="muted">No jobs yet — every run from the Ingest and Parameters tabs shows up here.</td></tr>
+            <tr>
+              <td colspan="9" class="muted">
+                No jobs yet — every run from the Ingest and Parameters tabs shows up here.
+              </td>
+            </tr>
           {/each}
         </tbody>
       </table>
@@ -220,26 +234,114 @@
 </section>
 
 <style>
-  .jobs { display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; overflow: hidden; }
-  .worker { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
-  .split { display: grid; grid-template-columns: 3fr 2fr; gap: 0.7rem; flex: 1; min-height: 0; }
-  .split > * { min-height: 0; }
-  .tablebox { overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
-  table { width: 100%; border-collapse: collapse; }
-  thead th { position: sticky; top: 0; background: var(--panel-2); text-align: left; padding: 0.4rem 0.6rem; z-index: 1; }
-  tbody td { padding: 0.3rem 0.6rem; border-top: 1px solid var(--border); vertical-align: top; }
-  tbody tr { cursor: pointer; }
-  tbody tr:hover { background: var(--panel-2); }
-  tbody tr.selected { background: var(--accent-soft); }
-  .small { font-size: 0.8rem; }
-  .badge.queued { background: var(--panel-2); color: var(--muted); }
-  .badge.running { background: var(--accent-soft); color: var(--accent); }
-  .badge.waiting { background: var(--warn-soft); color: var(--warn); }
-  .badge.succeeded { background: var(--ok-soft); color: var(--ok); }
-  .badge.failed, .badge.cancelled { background: var(--err-soft); color: var(--err); }
-  button.link { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0; font-size: 0.85rem; }
-  .detail { display: flex; flex-direction: column; gap: 0.4rem; overflow: hidden; }
-  .detail p { margin: 0; display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
-  pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 0.8rem; max-height: 10rem; overflow: auto; }
-  pre.err { color: var(--err); }
+  .jobs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .worker {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .split {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 0.7rem;
+    flex: 1;
+    min-height: 0;
+  }
+  .split > * {
+    min-height: 0;
+  }
+  .tablebox {
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--panel-2);
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    z-index: 1;
+  }
+  tbody td {
+    padding: 0.3rem 0.6rem;
+    border-top: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr {
+    cursor: pointer;
+  }
+  tbody tr:hover {
+    background: var(--panel-2);
+  }
+  tbody tr.selected {
+    background: var(--accent-soft);
+  }
+  .small {
+    font-size: 0.8rem;
+  }
+  .badge.queued {
+    background: var(--panel-2);
+    color: var(--muted);
+  }
+  .badge.running {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .badge.waiting {
+    background: var(--warn-soft);
+    color: var(--warn);
+  }
+  .badge.succeeded {
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+  .badge.failed,
+  .badge.cancelled {
+    background: var(--err-soft);
+    color: var(--err);
+  }
+  button.link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.85rem;
+  }
+  .detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    overflow: hidden;
+  }
+  .detail p {
+    margin: 0;
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+  pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.8rem;
+    max-height: 10rem;
+    overflow: auto;
+  }
+  pre.err {
+    color: var(--err);
+  }
 </style>

@@ -70,23 +70,15 @@
 
   // Energy in Wh below 1 kWh, else kWh; emissions in gCO2eq below 1 kg, else kg.
   const energyRange = (minKwh, maxKwh) =>
-    maxKwh < 1
-      ? `${fmt(minKwh * 1000)}–${fmt(maxKwh * 1000)} Wh`
-      : `${fmt(minKwh, 3)}–${fmt(maxKwh, 3)} kWh`;
+    maxKwh < 1 ? `${fmt(minKwh * 1000)}–${fmt(maxKwh * 1000)} Wh` : `${fmt(minKwh, 3)}–${fmt(maxKwh, 3)} kWh`;
   const gwpRange = (minKg, maxKg) =>
-    maxKg < 1
-      ? `${fmt(minKg * 1000)}–${fmt(maxKg * 1000)} gCO₂eq`
-      : `${fmt(minKg, 3)}–${fmt(maxKg, 3)} kgCO₂eq`;
+    maxKg < 1 ? `${fmt(minKg * 1000)}–${fmt(maxKg * 1000)} gCO₂eq` : `${fmt(minKg, 3)}–${fmt(maxKg, 3)} kgCO₂eq`;
 
   const mid = (lo, hi) => (lo + hi) / 2;
   // Illustrative orders of magnitude: ~12 Wh per smartphone full charge,
   // ~192 gCO2eq per km for an average petrol car.
-  const phoneCharges = $derived(
-    report ? mid(report.energy_kwh_min, report.energy_kwh_max) / 0.012 : 0
-  );
-  const carMeters = $derived(
-    report ? (mid(report.gwp_kgco2eq_min, report.gwp_kgco2eq_max) / 0.192) * 1000 : 0
-  );
+  const phoneCharges = $derived(report ? mid(report.energy_kwh_min, report.energy_kwh_max) / 0.012 : 0);
+  const carMeters = $derived(report ? (mid(report.gwp_kgco2eq_min, report.gwp_kgco2eq_max) / 0.192) * 1000 : 0);
 </script>
 
 <section class="panel impact">
@@ -117,8 +109,7 @@
   {#if report}
     {#if report.models.length === 0}
       <p class="muted">
-        No LLM spans with token counts found — only real (non-mock) runs traced to Phoenix
-        appear here.
+        No LLM spans with token counts found — only real (non-mock) runs traced to Phoenix appear here.
       </p>
     {:else}
       <h2>Estimated impact of traced LLM calls</h2>
@@ -141,8 +132,7 @@
         </div>
       </div>
       <p class="muted">
-        ≈ {fmt(phoneCharges, 1)} smartphone charges · ≈ {fmt(carMeters, 0)} m driven in an
-        average petrol car (midpoint estimates)
+        ≈ {fmt(phoneCharges, 1)} smartphone charges · ≈ {fmt(carMeters, 0)} m driven in an average petrol car (midpoint estimates)
       </p>
 
       <h3>By model</h3>
@@ -183,21 +173,42 @@
 
       <p class="muted footnote">
         Estimated with <a href="https://ecologits.ai" target="_blank" rel="noreferrer">EcoLogits</a>
-        from Phoenix-traced token counts (electricity mix: {report.electricity_mix_zone}).
-        Ranges reflect uncertainty about proprietary model architectures; energy scales with
-        output tokens, so prompt tokens are shown for context only. Totals cover estimated
-        models{#if report.not_estimated.length}; excluded: {report.not_estimated.join(', ')}{/if}.
+        from Phoenix-traced token counts (electricity mix: {report.electricity_mix_zone}). Ranges reflect uncertainty
+        about proprietary model architectures; energy scales with output tokens, so prompt tokens are shown for context
+        only. Totals cover estimated models{#if report.not_estimated.length}; excluded: {report.not_estimated.join(
+            ', ',
+          )}{/if}.
       </p>
     {/if}
   {:else if loading}
-    <p class="muted">Computing impact report on the worker{#if jobId != null} (job #{jobId}){/if}…</p>
+    <p class="muted">
+      Computing impact report on the worker{#if jobId != null}
+        (job #{jobId}){/if}…
+    </p>
   {/if}
 </section>
 
 <style>
-  .impact { overflow: auto; display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
-  label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }
-  .right { text-align: right; }
-  .footnote { max-width: 60rem; }
-  .footnote a { color: var(--accent); }
+  .impact {
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    min-height: 0;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    color: var(--muted);
+  }
+  .right {
+    text-align: right;
+  }
+  .footnote {
+    max-width: 60rem;
+  }
+  .footnote a {
+    color: var(--accent);
+  }
 </style>
