@@ -48,7 +48,6 @@ pub fn eval_runs(client: &mut Client) -> Result<Value, String> {
 
 /// Per-(language, country) KPI breakdown plus all case results for one run.
 pub fn eval_run_detail(client: &mut Client, run_pk: i64) -> Result<Value, String> {
-
     let summary = client
         .query(
             "SELECT language, country, cases::bigint AS cases, errors::bigint AS errors,
@@ -93,7 +92,9 @@ mod tests {
     /// stack; silently skipped when the DB is down or `init-db` hasn't run.
     #[test]
     fn eval_queries_smoke() {
-        let Ok(mut client) = crate::pg::connect(&url()) else { return };
+        let Ok(mut client) = crate::pg::connect(&url()) else {
+            return;
+        };
         let runs = match super::eval_runs(&mut client) {
             Ok(v) => v,
             Err(e) if e.contains("init-db") => return,

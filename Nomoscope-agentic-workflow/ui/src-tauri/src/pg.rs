@@ -17,7 +17,10 @@ use serde_json::{Map, Value};
 pub fn row_to_json(row: &Row) -> Result<Value, String> {
     let mut object = Map::with_capacity(row.len());
     for (i, column) in row.columns().iter().enumerate() {
-        object.insert(column.name().to_string(), cell(row, i, column.type_(), column.name())?);
+        object.insert(
+            column.name().to_string(),
+            cell(row, i, column.type_(), column.name())?,
+        );
     }
     Ok(Value::Object(object))
 }
@@ -28,8 +31,13 @@ pub fn rows_to_json(rows: &[Row]) -> Result<Vec<Value>, String> {
 }
 
 fn cell(row: &Row, i: usize, ty: &Type, name: &str) -> Result<Value, String> {
-    fn get<'a, T: postgres::types::FromSql<'a>>(row: &'a Row, i: usize, name: &str) -> Result<Option<T>, String> {
-        row.try_get::<_, Option<T>>(i).map_err(|e| format!("column {name}: {e}"))
+    fn get<'a, T: postgres::types::FromSql<'a>>(
+        row: &'a Row,
+        i: usize,
+        name: &str,
+    ) -> Result<Option<T>, String> {
+        row.try_get::<_, Option<T>>(i)
+            .map_err(|e| format!("column {name}: {e}"))
     }
     let value = match *ty {
         Type::BOOL => get::<bool>(row, i, name)?.map(Value::from),
@@ -38,13 +46,21 @@ fn cell(row: &Row, i: usize, ty: &Type, name: &str) -> Result<Value, String> {
         Type::INT8 => get::<i64>(row, i, name)?.map(Value::from),
         Type::FLOAT4 => get::<f32>(row, i, name)?.map(|v| Value::from(f64::from(v))),
         Type::FLOAT8 => get::<f64>(row, i, name)?.map(Value::from),
-        Type::TEXT | Type::VARCHAR | Type::BPCHAR | Type::NAME => get::<String>(row, i, name)?.map(Value::from),
+        Type::TEXT | Type::VARCHAR | Type::BPCHAR | Type::NAME => {
+            get::<String>(row, i, name)?.map(Value::from)
+        }
         Type::JSON | Type::JSONB => get::<Value>(row, i, name)?,
-        Type::TEXT_ARRAY | Type::VARCHAR_ARRAY => get::<Vec<Option<String>>>(row, i, name)?.map(Value::from),
+        Type::TEXT_ARRAY | Type::VARCHAR_ARRAY => {
+            get::<Vec<Option<String>>>(row, i, name)?.map(Value::from)
+        }
         Type::INT2_ARRAY => get::<Vec<Option<i16>>>(row, i, name)?.map(Value::from),
         Type::INT4_ARRAY => get::<Vec<Option<i32>>>(row, i, name)?.map(Value::from),
         Type::INT8_ARRAY => get::<Vec<Option<i64>>>(row, i, name)?.map(Value::from),
-        _ => return Err(format!("column {name}: type {ty} is not mapped to JSON (cast it ::text)")),
+        _ => {
+            return Err(format!(
+                "column {name}: type {ty} is not mapped to JSON (cast it ::text)"
+            ))
+        }
     };
     Ok(value.unwrap_or(Value::Null))
 }
@@ -85,7 +101,9 @@ mod tests {
     fn row_to_json_maps_by_type_and_null_is_null() {
         let url = std::env::var("WORKFLOW_DATABASE_URL")
             .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
-        let Ok(mut client) = super::connect(&url) else { return };
+        let Ok(mut client) = super::connect(&url) else {
+            return;
+        };
         let row = client
             .query_one(
                 "SELECT true AS b, 2::int2 AS s, 3::int4 AS i, 4::int8 AS l,
@@ -112,8 +130,12 @@ mod tests {
     fn describe_carries_the_server_message() {
         let url = std::env::var("WORKFLOW_DATABASE_URL")
             .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
-        let Ok(mut client) = super::connect(&url) else { return };
-        let err = client.query("SELECT * FROM no_such_relation_zz", &[]).unwrap_err();
+        let Ok(mut client) = super::connect(&url) else {
+            return;
+        };
+        let err = client
+            .query("SELECT * FROM no_such_relation_zz", &[])
+            .unwrap_err();
         let text = super::describe(err);
         assert!(text.contains("no_such_relation_zz"), "{text}");
     }

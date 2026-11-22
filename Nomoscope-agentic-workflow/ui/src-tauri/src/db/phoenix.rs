@@ -13,7 +13,9 @@ fn swap_database(db_url: &str, dbname: &str) -> String {
     let swapped = match base.rsplit_once('/') {
         // Guard against URLs with no db path: the part after the last '/'
         // must look like a db name, not `host:port` or `user@host`.
-        Some((head, tail)) if !tail.contains('@') && !tail.contains(':') && !head.ends_with(':') => {
+        Some((head, tail))
+            if !tail.contains('@') && !tail.contains(':') && !head.ends_with(':') =>
+        {
             format!("{head}/{dbname}")
         }
         _ => format!("{base}/{dbname}"),
@@ -56,7 +58,10 @@ mod tests {
             "postgresql://jrc:jrc@localhost:5434/phoenix"
         );
         assert_eq!(
-            super::swap_database("postgresql://jrc:jrc@localhost:5434/legislation?sslmode=disable", "phoenix"),
+            super::swap_database(
+                "postgresql://jrc:jrc@localhost:5434/legislation?sslmode=disable",
+                "phoenix"
+            ),
             "postgresql://jrc:jrc@localhost:5434/phoenix?sslmode=disable"
         );
         assert_eq!(

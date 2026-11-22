@@ -61,7 +61,6 @@ pub struct EncodePayload {
     pub model_id: Option<i32>,
 }
 
-
 /// The columns every job read returns, in one place so status/list agree.
 const JOB_COLUMNS: &str = "id, job_type, status, submitted_by,
         submitted_at::text AS submitted_at, started_at::text AS started_at,
@@ -70,7 +69,12 @@ const JOB_COLUMNS: &str = "id, job_type, status, submitted_by,
 
 /// Insert one job request. `submitted_by` is never set here: its default is
 /// `current_user`, which is also what the reviewer role's RLS policy checks.
-pub fn submit(client: &mut Client, job_type: &str, payload: &Value, priority: i16) -> Result<i64, String> {
+pub fn submit(
+    client: &mut Client,
+    job_type: &str,
+    payload: &Value,
+    priority: i16,
+) -> Result<i64, String> {
     let row = client
         .query_one(
             "INSERT INTO ops.jobs (job_type, payload, priority) VALUES ($1, $2, $3) RETURNING id",
@@ -82,13 +86,21 @@ pub fn submit(client: &mut Client, job_type: &str, payload: &Value, priority: i1
 
 pub fn submit_job(client: &mut Client, payload: &SubmitPayload) -> Result<Value, String> {
     let body = payload.payload.clone().unwrap_or_else(|| json!({}));
-    let id = submit(client, &payload.job_type, &body, payload.priority.unwrap_or(0))?;
+    let id = submit(
+        client,
+        &payload.job_type,
+        &body,
+        payload.priority.unwrap_or(0),
+    )?;
     Ok(json!({ "id": id }))
 }
 
 fn status_row(client: &mut Client, id: i64) -> Result<Value, String> {
     let row = client
-        .query_opt(&format!("SELECT {JOB_COLUMNS} FROM ops.jobs WHERE id = $1"), &[&id])
+        .query_opt(
+            &format!("SELECT {JOB_COLUMNS} FROM ops.jobs WHERE id = $1"),
+            &[&id],
+        )
         .map_err(|e| format!("job status query failed: {}", describe(e)))?
         .ok_or_else(|| format!("job {id} does not exist"))?;
     row_to_json(&row)
@@ -234,7 +246,9 @@ pub fn encode_query(client: &mut Client, payload: &EncodePayload) -> Result<Valu
                 "UPDATE ops.jobs SET cancel_requested = true WHERE id = $1 AND status IN ('queued','running')",
                 &[&id],
             );
-            return Err(format!("encode job {id} did not finish within 60 s (status {status})"));
+            return Err(format!(
+                "encode job {id} did not finish within 60 s (status {status})"
+            ));
         }
         std::thread::sleep(ENCODE_POLL);
     }
@@ -260,18 +274,23 @@ mod tests {
     /// stack. No worker is needed: the job stays queued and is cleaned up.
     #[test]
     fn job_round_trip_smoke() {
-        let Some(mut client) = test_client() else { return };
+        let Some(mut client) = test_client() else {
+            return;
+        };
         // A live worker would claim the job and race the assertions.
         if any_worker_alive(&mut client).unwrap_or(true) {
             eprintln!("skipped: a worker is running");
             return;
         }
 
-        let submitted = submit_job(&mut client, &SubmitPayload {
-            job_type: "impact".into(),
-            payload: Some(json!({ "project": "", "zone": "EEE", "_test": "zz_jobs_smoke" })),
-            priority: None,
-        })
+        let submitted = submit_job(
+            &mut client,
+            &SubmitPayload {
+                job_type: "impact".into(),
+                payload: Some(json!({ "project": "", "zone": "EEE", "_test": "zz_jobs_smoke" })),
+                priority: None,
+            },
+        )
         .unwrap();
         let id = submitted["id"].as_i64().expect("submit returns the new id");
 
@@ -279,7 +298,9 @@ mod tests {
         assert_eq!(status["status"], "queued");
         assert_eq!(status["job_type"], "impact");
         assert_eq!(status["priority"], 0);
-        assert!(status["submitted_by"].as_str().is_some_and(|u| !u.is_empty()));
+        assert!(status["submitted_by"]
+            .as_str()
+            .is_some_and(|u| !u.is_empty()));
         assert_eq!(status["payload"]["_test"], "zz_jobs_smoke");
 
         // events: cursor semantics — only rows after `after`, in id order
@@ -297,7 +318,14 @@ mod tests {
             .collect();
         let all = job_events(&mut client, &EventsPayload { id, after: None }).unwrap();
         assert_eq!(all["events"].as_array().unwrap().len(), 3);
-        let tail = job_events(&mut client, &EventsPayload { id, after: Some(ids[0]) }).unwrap();
+        let tail = job_events(
+            &mut client,
+            &EventsPayload {
+                id,
+                after: Some(ids[0]),
+            },
+        )
+        .unwrap();
         let lines: Vec<&str> = tail["events"]
             .as_array()
             .unwrap()
@@ -319,14 +347,18 @@ mod tests {
         assert!(ws["workers"].is_array());
         assert!(ws["models"].is_array());
 
-        client.execute("DELETE FROM ops.jobs WHERE id = $1", &[&id]).unwrap();
+        client
+            .execute("DELETE FROM ops.jobs WHERE id = $1", &[&id])
+            .unwrap();
     }
 
     /// Without a live worker, encode refuses immediately with the message the
     /// Database tab keys its full-text fallback on — and leaves no job behind.
     #[test]
     fn encode_refuses_without_a_worker() {
-        let Some(mut client) = test_client() else { return };
+        let Some(mut client) = test_client() else {
+            return;
+        };
         let alive = any_worker_alive(&mut client).unwrap();
         if alive {
             return; // a real worker is up: this test's premise does not hold
@@ -334,8 +366,15 @@ mod tests {
         // Other tests in this binary insert jobs concurrently, so count only
         // the row this call would have written, not the whole table.
         let query = format!("zz_encode_refusal_{}", std::process::id());
-        let error = encode_query(&mut client, &EncodePayload { query: query.clone(), sentences: None, model_id: None })
-            .unwrap_err();
+        let error = encode_query(
+            &mut client,
+            &EncodePayload {
+                query: query.clone(),
+                sentences: None,
+                model_id: None,
+            },
+        )
+        .unwrap_err();
         assert_eq!(error, NO_WORKER);
         let left_behind: i64 = client
             .query_one(

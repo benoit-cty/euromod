@@ -10,7 +10,6 @@ use serde_json::{json, Value};
 /// per-country readiness of the two non-legislative inputs (Country Report,
 /// enriched parameter store).
 pub fn stats(client: &mut Client) -> Result<Value, String> {
-
     let totals = client
         .query_one(
             "SELECT (SELECT count(*) FROM jurisdictions WHERE parent_id IS NULL) AS jurisdictions,
@@ -143,7 +142,10 @@ pub fn stats(client: &mut Client) -> Result<Value, String> {
     let mut inputs: Vec<Value> = Vec::new();
     for row in &country_reports {
         let (code, report) = split_key(row_to_json(row)?, "code");
-        let params = parameters.iter().find(|(c, _)| *c == code).map(|(_, p)| p.clone());
+        let params = parameters
+            .iter()
+            .find(|(c, _)| *c == code)
+            .map(|(_, p)| p.clone());
         inputs.push(json!({ "code": code, "country_report": report, "parameters": params }));
     }
     for (code, params) in parameters {

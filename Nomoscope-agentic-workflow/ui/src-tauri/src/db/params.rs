@@ -53,7 +53,10 @@ pub fn params_list(client: &mut Client) -> Result<Value, String> {
             &[],
         )
         .map_err(|e| {
-            format!("params query failed (has `nomoscope-workflow ingest-params` been run?): {}", describe(e))
+            format!(
+                "params query failed (has `nomoscope-workflow ingest-params` been run?): {}",
+                describe(e)
+            )
         })?;
 
     // The EUROMOD system years each country actually defines. The run form must
@@ -138,7 +141,12 @@ pub fn parameter_edits(client: &mut Client, model_target: &str) -> Result<Value,
              ORDER BY edited_at DESC, id DESC",
             &[&model_target],
         )
-        .map_err(|e| format!("edit history query failed (run `nomoscope-workflow init-param-db`?): {}", describe(e)))?;
+        .map_err(|e| {
+            format!(
+                "edit history query failed (run `nomoscope-workflow init-param-db`?): {}",
+                describe(e)
+            )
+        })?;
     Ok(json!(rows_to_json(&rows)?))
 }
 
@@ -173,16 +181,25 @@ mod tests {
     /// when the database is down or the params schema is absent.
     #[test]
     fn params_reads_smoke() {
-        let Ok(mut client) = crate::pg::connect(&url()) else { return };
-        if client.execute("SELECT 1 FROM params.review_decisions LIMIT 0", &[]).is_err() {
+        let Ok(mut client) = crate::pg::connect(&url()) else {
+            return;
+        };
+        if client
+            .execute("SELECT 1 FROM params.review_decisions LIMIT 0", &[])
+            .is_err()
+        {
             return;
         }
         let listed = super::params_list(&mut client).unwrap();
         assert!(listed["system_years"].is_object());
         if let Some(first) = listed["parameters"].as_array().unwrap().first() {
             let target = first["model_target"].as_str().unwrap().to_string();
-            assert!(super::parameter_context(&mut client, &target).unwrap()["parameters"].is_array());
-            assert!(super::parameter_edits(&mut client, &target).unwrap().is_array());
+            assert!(
+                super::parameter_context(&mut client, &target).unwrap()["parameters"].is_array()
+            );
+            assert!(super::parameter_edits(&mut client, &target)
+                .unwrap()
+                .is_array());
         }
         assert!(super::load_decisions(&mut client, 5).unwrap()["decisions"].is_array());
     }

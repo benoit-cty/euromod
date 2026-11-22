@@ -68,16 +68,23 @@ pub fn default_model_id(client: &mut Client) -> Result<i32, String> {
 /// query encoded by the worker (an `encode` job, with the corpus's default
 /// model); when no worker is alive the search degrades to full text and says
 /// so in `notice`, rather than failing.
-pub fn search(client: &mut Client, payload: &SearchPayload, default_limit: i64) -> Result<Value, String> {
+pub fn search(
+    client: &mut Client,
+    payload: &SearchPayload,
+    default_limit: i64,
+) -> Result<Value, String> {
     let mut mode = SearchMode::parse(payload.mode.as_deref().unwrap_or("hybrid"))?;
     let model_id = default_model_id(client)?;
     let mut notice: Option<String> = None;
     let query_vector = if mode.uses_vector() {
-        match crate::jobs::encode_query(client, &crate::jobs::EncodePayload {
-            query: payload.query.clone(),
-            sentences: None,
-            model_id: Some(model_id),
-        }) {
+        match crate::jobs::encode_query(
+            client,
+            &crate::jobs::EncodePayload {
+                query: payload.query.clone(),
+                sentences: None,
+                model_id: Some(model_id),
+            },
+        ) {
             Ok(result) => Some(
                 result
                     .get("halfvec")
@@ -139,8 +146,13 @@ pub fn search_articles(
     }
 
     // Transaction-local: the connection goes back to the pool afterwards.
-    let mut tx = client.build_transaction().read_only(true).start().map_err(describe)?;
-    tx.batch_execute("SET LOCAL statement_timeout = '30s'").map_err(describe)?;
+    let mut tx = client
+        .build_transaction()
+        .read_only(true)
+        .start()
+        .map_err(describe)?;
+    tx.batch_execute("SET LOCAL statement_timeout = '30s'")
+        .map_err(describe)?;
     let language_filter = languages.map(|values| values.to_vec());
     let use_full_text = mode.uses_full_text();
     let use_vector = mode.uses_vector();
@@ -230,8 +242,13 @@ pub fn search_articles(
 /// `seq` and we fall back to the full version text when there is none.
 pub fn chunk_renderings(client: &mut Client, chunk_id: &str) -> Result<Value, String> {
     // Transaction-local: the connection goes back to the pool afterwards.
-    let mut tx = client.build_transaction().read_only(true).start().map_err(describe)?;
-    tx.batch_execute("SET LOCAL statement_timeout = '15s'").map_err(describe)?;
+    let mut tx = client
+        .build_transaction()
+        .read_only(true)
+        .start()
+        .map_err(describe)?;
+    tx.batch_execute("SET LOCAL statement_timeout = '15s'")
+        .map_err(describe)?;
     let rows = tx
         .query(
             "SELECT t.id::text                     AS unit_text_id,

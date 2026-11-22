@@ -40,7 +40,13 @@ struct Inner {
 
 impl Db {
     pub fn new(url: String) -> Self {
-        Db { inner: Arc::new(Mutex::new(Inner { url, generation: 0, idle: Vec::new() })) }
+        Db {
+            inner: Arc::new(Mutex::new(Inner {
+                url,
+                generation: 0,
+                idle: Vec::new(),
+            })),
+        }
     }
 
     /// `WORKFLOW_DATABASE_URL`, else the dev stack's default.
@@ -50,7 +56,9 @@ impl Db {
 
     fn lock(&self) -> MutexGuard<'_, Inner> {
         // A panic while holding the lock leaves plain data behind: keep going.
-        self.inner.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+        self.inner
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 
     pub fn url(&self) -> String {
@@ -76,11 +84,19 @@ impl Db {
             let idle = self.lock().idle.pop();
             let Some(mut client) = idle else { break };
             if client.is_valid(VALIDATE_TIMEOUT).is_ok() {
-                return Ok(Pooled { client: Some(client), db: self.clone(), generation });
+                return Ok(Pooled {
+                    client: Some(client),
+                    db: self.clone(),
+                    generation,
+                });
             }
         }
         let client = connect(&url)?;
-        Ok(Pooled { client: Some(client), db: self.clone(), generation })
+        Ok(Pooled {
+            client: Some(client),
+            db: self.clone(),
+            generation,
+        })
     }
 }
 
@@ -106,7 +122,9 @@ impl DerefMut for Pooled {
 
 impl Drop for Pooled {
     fn drop(&mut self) {
-        let Some(client) = self.client.take() else { return };
+        let Some(client) = self.client.take() else {
+            return;
+        };
         if client.is_closed() {
             return;
         }
@@ -132,7 +150,7 @@ pub fn redact(url: &str) -> String {
     }
     url.split_whitespace()
         .map(|part| match part.split_once('=') {
-            Some((key, _)) if key == "password" => format!("password={MASK}"),
+            Some(("password", _)) => format!("password={MASK}"),
             _ => part.to_string(),
         })
         .collect::<Vec<_>>()
@@ -143,7 +161,9 @@ pub fn redact(url: &str) -> String {
 /// still stands in for it: the analyst can change the host or the database
 /// without retyping a password the webview never had.
 pub fn unredact(new: &str, current: &str) -> String {
-    let Some(password) = password_of(current) else { return new.to_string() };
+    let Some(password) = password_of(current) else {
+        return new.to_string();
+    };
     if let Some((scheme, rest)) = new.split_once("://") {
         let (authority, tail) = split_authority(rest);
         if let Some((userinfo, host)) = authority.rsplit_once('@') {
@@ -154,7 +174,13 @@ pub fn unredact(new: &str, current: &str) -> String {
         return new.to_string();
     }
     new.split_whitespace()
-        .map(|part| if part == format!("password={MASK}") { format!("password={password}") } else { part.to_string() })
+        .map(|part| {
+            if part == format!("password={MASK}") {
+                format!("password={password}")
+            } else {
+                part.to_string()
+            }
+        })
         .collect::<Vec<_>>()
         .join(" ")
 }
@@ -189,8 +215,14 @@ mod tests {
             redact("postgresql://jrc:s3cr/t@localhost:5434/legislation?sslmode=disable"),
             "postgresql://jrc:****@localhost:5434/legislation?sslmode=disable"
         );
-        assert_eq!(redact("postgresql://jrc@localhost/legislation"), "postgresql://jrc@localhost/legislation");
-        assert_eq!(redact("host=db user=ana password=pw dbname=x"), "host=db user=ana password=**** dbname=x");
+        assert_eq!(
+            redact("postgresql://jrc@localhost/legislation"),
+            "postgresql://jrc@localhost/legislation"
+        );
+        assert_eq!(
+            redact("host=db user=ana password=pw dbname=x"),
+            "host=db user=ana password=**** dbname=x"
+        );
     }
 
     #[test]
@@ -206,7 +238,10 @@ mod tests {
             "postgresql://ana:new@localhost/legislation"
         );
         assert_eq!(
-            unredact("host=db password=**** dbname=y", "host=db password=pw dbname=x"),
+            unredact(
+                "host=db password=**** dbname=y",
+                "host=db password=pw dbname=x"
+            ),
             "host=db password=pw dbname=y"
         );
     }
@@ -214,12 +249,19 @@ mod tests {
     /// Connections are reused, and a URL change drops the old database's.
     #[test]
     fn the_pool_reuses_connections_until_the_url_changes() {
-        let url = std::env::var("WORKFLOW_DATABASE_URL").unwrap_or_else(|_| DEFAULT_URL.to_string());
+        let url =
+            std::env::var("WORKFLOW_DATABASE_URL").unwrap_or_else(|_| DEFAULT_URL.to_string());
         if connect(&url).is_err() {
             return;
         }
         let db = Db::new(url.clone());
-        let pid = |db: &Db| -> i32 { db.client().unwrap().query_one("SELECT pg_backend_pid()", &[]).unwrap().get(0) };
+        let pid = |db: &Db| -> i32 {
+            db.client()
+                .unwrap()
+                .query_one("SELECT pg_backend_pid()", &[])
+                .unwrap()
+                .get(0)
+        };
         let first = pid(&db);
         assert_eq!(pid(&db), first, "the idle connection is reused");
         db.set_url(url);

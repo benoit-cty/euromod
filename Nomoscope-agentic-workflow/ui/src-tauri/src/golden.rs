@@ -24,12 +24,22 @@ pub struct GoldenVerifyPayload {
     pub note: Option<String>,
 }
 
-
 /// One case object from a row: the stored `case` with the identity and
 /// verdict columns laid over it (the columns win — they are what the eval
 /// run and the reviewer grant key on).
-pub fn merge_case(case: Value, id: &str, country: &str, language: &str, as_of: &str, verified: bool,
-    reviewed_by: Option<&str>, reviewed_at: Option<&str>, review_note: Option<&str>) -> Value {
+// One argument per eval.golden_cases column the case is merged with.
+#[allow(clippy::too_many_arguments)]
+pub fn merge_case(
+    case: Value,
+    id: &str,
+    country: &str,
+    language: &str,
+    as_of: &str,
+    verified: bool,
+    reviewed_by: Option<&str>,
+    reviewed_at: Option<&str>,
+    review_note: Option<&str>,
+) -> Value {
     let mut merged = if case.is_object() { case } else { json!({}) };
     merged["id"] = json!(id);
     merged["country"] = json!(country);
@@ -69,7 +79,11 @@ fn case_row(r: &postgres::Row) -> Value {
 /// columns the Parameters tab lists (db::params::params_list), but the value in
 /// force at `as_of` rather than the newest. A `group:<id>` target has no
 /// single parameter row: it is reported as such.
-fn parameter_summary(client: &mut Client, case: &Value, params_schema: bool) -> Result<Value, String> {
+fn parameter_summary(
+    client: &mut Client,
+    case: &Value,
+    params_schema: bool,
+) -> Result<Value, String> {
     let Some(target) = case.get("parameter_target").and_then(Value::as_str) else {
         return Ok(Value::Null);
     };
@@ -131,7 +145,12 @@ pub fn load_cases(client: &mut Client) -> Result<Value, String> {
             &format!("SELECT {CASE_COLUMNS} FROM eval.golden_cases ORDER BY country, id"),
             &[],
         )
-        .map_err(|e| format!("golden cases query failed (has `nomokrisis-eval init-db` been run?): {}", describe(e)))?;
+        .map_err(|e| {
+            format!(
+                "golden cases query failed (has `nomokrisis-eval init-db` been run?): {}",
+                describe(e)
+            )
+        })?;
     let params_schema: bool = client
         .query_one("SELECT to_regclass('params.parameters') IS NOT NULL", &[])
         .map_err(describe)?
@@ -159,7 +178,11 @@ pub fn load_cases(client: &mut Client) -> Result<Value, String> {
 /// so an evaluation run (verified-only by default) skips it either way while
 /// the audit trail keeps "a human said no" distinct from "nobody has looked".
 pub fn set_verified(client: &mut Client, payload: &GoldenVerifyPayload) -> Result<Value, String> {
-    let note = payload.note.as_deref().map(str::trim).filter(|n| !n.is_empty());
+    let note = payload
+        .note
+        .as_deref()
+        .map(str::trim)
+        .filter(|n| !n.is_empty());
     let row = client
         .query_opt(
             &format!(
@@ -186,7 +209,17 @@ mod tests {
             "id": "stale", "expected": { "routing": "changed", "value": 0.25 },
             "drafted_by": "openfisca@abc1234", "review_note": "old"
         });
-        let merged = merge_case(case, "fr_x_2025", "FR", "fr", "2025-06-01", false, Some("ben"), Some("2026-09-22 10:00:00+00"), None);
+        let merged = merge_case(
+            case,
+            "fr_x_2025",
+            "FR",
+            "fr",
+            "2025-06-01",
+            false,
+            Some("ben"),
+            Some("2026-09-22 10:00:00+00"),
+            None,
+        );
         assert_eq!(merged["id"], "fr_x_2025");
         assert_eq!(merged["as_of"], "2025-06-01");
         assert_eq!(merged["verified"], false);
@@ -205,13 +238,20 @@ mod tests {
     fn verdict_round_trip_smoke() {
         let url = std::env::var("WORKFLOW_DATABASE_URL")
             .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
-        let Ok(mut client) = crate::pg::connect(&url) else { return };
-        if client.execute("SELECT 1 FROM eval.golden_cases LIMIT 0", &[]).is_err() {
+        let Ok(mut client) = crate::pg::connect(&url) else {
+            return;
+        };
+        if client
+            .execute("SELECT 1 FROM eval.golden_cases LIMIT 0", &[])
+            .is_err()
+        {
             return; // `nomokrisis-eval init-db` not run (or old schema)
         }
         let id = "zz_golden_verdict_round_trip";
         let cleanup = |client: &mut Client| {
-            client.execute("DELETE FROM eval.golden_cases WHERE id = $1", &[&id]).unwrap();
+            client
+                .execute("DELETE FROM eval.golden_cases WHERE id = $1", &[&id])
+                .unwrap();
         };
         cleanup(&mut client);
         let case = json!({
@@ -228,33 +268,53 @@ mod tests {
             .unwrap();
 
         let loaded = load_cases(&mut client).unwrap();
-        let mine = loaded["cases"].as_array().unwrap().iter().find(|c| c["id"] == id).unwrap();
+        let mine = loaded["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["id"] == id)
+            .unwrap();
         assert_eq!(mine["verified"], false);
         assert!(mine["reviewed_by"].is_null());
-        assert_eq!(mine["_parameter"]["missing"], "euromod://ZZ/none/def_const/$missing");
+        assert_eq!(
+            mine["_parameter"]["missing"],
+            "euromod://ZZ/none/def_const/$missing"
+        );
 
-        let rejected = set_verified(&mut client, &GoldenVerifyPayload {
-            id: id.into(),
-            verified: false,
-            note: Some("threshold looks like the previous year".into()),
-        })
+        let rejected = set_verified(
+            &mut client,
+            &GoldenVerifyPayload {
+                id: id.into(),
+                verified: false,
+                note: Some("threshold looks like the previous year".into()),
+            },
+        )
         .unwrap();
         assert_eq!(rejected["case"]["verified"], false);
         let me: String = client.query_one("SELECT current_user", &[]).unwrap().get(0);
         assert_eq!(rejected["case"]["reviewed_by"], json!(me));
-        assert_eq!(rejected["case"]["review_note"], "threshold looks like the previous year");
+        assert_eq!(
+            rejected["case"]["review_note"],
+            "threshold looks like the previous year"
+        );
         assert_eq!(rejected["case"]["expected"]["value"], json!(0.25));
 
-        let accepted = set_verified(&mut client, &GoldenVerifyPayload {
-            id: id.into(),
-            verified: true,
-            note: Some("  ".into()),
-        })
+        let accepted = set_verified(
+            &mut client,
+            &GoldenVerifyPayload {
+                id: id.into(),
+                verified: true,
+                note: Some("  ".into()),
+            },
+        )
         .unwrap();
         assert_eq!(accepted["case"]["verified"], true);
         assert!(accepted["case"].get("review_note").is_none());
         let stored: Option<String> = client
-            .query_one("SELECT review_note FROM eval.golden_cases WHERE id = $1", &[&id])
+            .query_one(
+                "SELECT review_note FROM eval.golden_cases WHERE id = $1",
+                &[&id],
+            )
             .unwrap()
             .get(0);
         assert!(stored.is_none());
@@ -267,11 +327,23 @@ mod tests {
             )
             .unwrap();
         let loaded = load_cases(&mut client).unwrap();
-        let mine = loaded["cases"].as_array().unwrap().iter().find(|c| c["id"] == id).unwrap();
+        let mine = loaded["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["id"] == id)
+            .unwrap();
         assert_eq!(mine["_parameter"]["group"], "FR:tinkt_fr:tin_schedule");
 
-        let missing = set_verified(&mut client, &GoldenVerifyPayload { id: "zz_nope".into(), verified: true, note: None })
-            .unwrap_err();
+        let missing = set_verified(
+            &mut client,
+            &GoldenVerifyPayload {
+                id: "zz_nope".into(),
+                verified: true,
+                note: None,
+            },
+        )
+        .unwrap_err();
         assert!(missing.contains("does not exist"));
         cleanup(&mut client);
     }

@@ -18,7 +18,6 @@ pub struct ConversationPayload {
     pub conversation_id: String,
 }
 
-
 /// The caller's conversations, newest first: first question, turn count, last activity.
 pub fn list(client: &mut Client, payload: &ListPayload) -> Result<Value, String> {
     let limit = payload.limit.unwrap_or(40).clamp(1, 200);
@@ -96,7 +95,9 @@ mod tests {
     fn list_skips_a_null_conversation_id() {
         let url = std::env::var("WORKFLOW_DATABASE_URL")
             .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
-        let Ok(mut client) = crate::pg::connect(&url) else { return };
+        let Ok(mut client) = crate::pg::connect(&url) else {
+            return;
+        };
         let Ok(row) = client.query_one(
             "INSERT INTO ops.jobs (job_type, payload, status)
              VALUES ('chat', '{\"conversation_id\": null, \"_test\": \"zz_null_conversation\"}', 'cancelled')
@@ -107,9 +108,10 @@ mod tests {
         };
         let id: i64 = row.get(0);
         let listed = super::list(&mut client, &super::ListPayload { limit: Some(200) });
-        client.execute("DELETE FROM ops.jobs WHERE id = $1", &[&id]).unwrap();
-        assert!(listed
-            .unwrap()["conversations"]
+        client
+            .execute("DELETE FROM ops.jobs WHERE id = $1", &[&id])
+            .unwrap();
+        assert!(listed.unwrap()["conversations"]
             .as_array()
             .unwrap()
             .iter()

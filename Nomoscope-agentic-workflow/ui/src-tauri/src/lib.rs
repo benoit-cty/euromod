@@ -130,7 +130,7 @@ async fn get_env_config(db: State<'_, Db>) -> Result<Value, String> {
     let phoenix_project = std::env::var("PHOENIX_PROJECT_NAME")
         .unwrap_or_else(|_| "nomoscope-agentic-workflow".to_string());
     let db_url = pool::redact(&db.url());
-    let (reviewer, db_error) = match with_client(db, |client| pg::current_user(client)).await {
+    let (reviewer, db_error) = match with_client(db, pg::current_user).await {
         Ok(user) => (Some(user), None),
         Err(e) => (None, Some(e)),
     };
@@ -164,7 +164,10 @@ async fn golden_cases(db: State<'_, Db>) -> Result<Value, String> {
 }
 
 #[tauri::command]
-async fn set_golden_verified(db: State<'_, Db>, payload: GoldenVerifyPayload) -> Result<Value, String> {
+async fn set_golden_verified(
+    db: State<'_, Db>,
+    payload: GoldenVerifyPayload,
+) -> Result<Value, String> {
     with_client(db, move |client| golden::set_verified(client, &payload)).await
 }
 
@@ -242,14 +245,20 @@ async fn edit_parameter(db: State<'_, Db>, payload: EditPayload) -> Result<Value
 /// A parameter's metadata edit history, newest first.
 #[tauri::command]
 async fn parameter_edits(db: State<'_, Db>, payload: TargetPayload) -> Result<Value, String> {
-    with_client(db, move |client| db::params::parameter_edits(client, &payload.model_target)).await
+    with_client(db, move |client| {
+        db::params::parameter_edits(client, &payload.model_target)
+    })
+    .await
 }
 
 /// A parameter's texts and EUROMOD value history (or a schedule's members'),
 /// for the review page's hand-off prompt. Read-only.
 #[tauri::command]
 async fn parameter_context(db: State<'_, Db>, payload: TargetPayload) -> Result<Value, String> {
-    with_client(db, move |client| db::params::parameter_context(client, &payload.model_target)).await
+    with_client(db, move |client| {
+        db::params::parameter_context(client, &payload.model_target)
+    })
+    .await
 }
 
 /// Export the change set for EUROMOD — metadata edits and accepted value
@@ -294,12 +303,18 @@ async fn eval_runs(db: State<'_, Db>) -> Result<Value, String> {
 
 #[tauri::command]
 async fn eval_run_detail(db: State<'_, Db>, payload: EvalRunPayload) -> Result<Value, String> {
-    with_client(db, move |client| db::eval::eval_run_detail(client, payload.run_pk)).await
+    with_client(db, move |client| {
+        db::eval::eval_run_detail(client, payload.run_pk)
+    })
+    .await
 }
 
 /// Article search (`db::search::search`: encode on the worker, then `search_chunks`).
 #[tauri::command]
-async fn search_articles(db: State<'_, Db>, payload: db::search::SearchPayload) -> Result<Value, String> {
+async fn search_articles(
+    db: State<'_, Db>,
+    payload: db::search::SearchPayload,
+) -> Result<Value, String> {
     with_client(db, move |client| db::search::search(client, &payload, 25)).await
 }
 
@@ -307,7 +322,10 @@ async fn search_articles(db: State<'_, Db>, payload: db::search::SearchPayload) 
 /// worker. The Database tab uses it to tint, inside a hit, the sentence that
 /// most likely answers.
 #[tauri::command]
-async fn score_sentences(db: State<'_, Db>, payload: SentenceScorePayload) -> Result<Vec<f64>, String> {
+async fn score_sentences(
+    db: State<'_, Db>,
+    payload: SentenceScorePayload,
+) -> Result<Vec<f64>, String> {
     if payload.sentences.is_empty() {
         return Ok(Vec::new());
     }
@@ -334,16 +352,27 @@ async fn score_sentences(db: State<'_, Db>, payload: SentenceScorePayload) -> Re
         }
         similarities
             .iter()
-            .map(|v| v.as_f64().ok_or_else(|| "encode job returned a non-numeric similarity".to_string()))
+            .map(|v| {
+                v.as_f64()
+                    .ok_or_else(|| "encode job returned a non-numeric similarity".to_string())
+            })
             .collect()
     })
     .await
 }
 
 #[tauri::command]
-async fn search_instruments(db: State<'_, Db>, payload: InstrumentSearchPayload) -> Result<Value, String> {
+async fn search_instruments(
+    db: State<'_, Db>,
+    payload: InstrumentSearchPayload,
+) -> Result<Value, String> {
     with_client(db, move |client| {
-        db::corpus::search_instruments(client, &payload.country, &payload.query, payload.limit.unwrap_or(20))
+        db::corpus::search_instruments(
+            client,
+            &payload.country,
+            &payload.query,
+            payload.limit.unwrap_or(20),
+        )
     })
     .await
 }
@@ -355,7 +384,10 @@ async fn params_list(db: State<'_, Db>) -> Result<Value, String> {
 
 #[tauri::command]
 async fn chunk_renderings(db: State<'_, Db>, payload: ChunkPayload) -> Result<Value, String> {
-    with_client(db, move |client| db::search::chunk_renderings(client, &payload.chunk_id)).await
+    with_client(db, move |client| {
+        db::search::chunk_renderings(client, &payload.chunk_id)
+    })
+    .await
 }
 
 /// Phoenix lives in its own database on the same server, so this one

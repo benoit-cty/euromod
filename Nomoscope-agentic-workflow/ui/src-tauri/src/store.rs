@@ -12,8 +12,8 @@
 //! Items stay loosely typed (serde_json::Value) so the queue schema can evolve
 //! in the pipeline without lockstep releases of the UI.
 
-use chrono::Utc;
 use crate::pg::describe;
+use chrono::Utc;
 use postgres::Client;
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -28,8 +28,6 @@ pub struct Facets {
     pub statuses: Vec<String>,
     pub row_count: usize,
 }
-
-
 
 fn str_field(value: &Value, key: &str) -> String {
     value
@@ -193,7 +191,10 @@ pub fn compute_decision(
 
 fn read_item(client: &mut Client, item_id: &str) -> Result<Value, String> {
     let row = client
-        .query_opt("SELECT item FROM params.review_queue WHERE item_id = $1", &[&item_id])
+        .query_opt(
+            "SELECT item FROM params.review_queue WHERE item_id = $1",
+            &[&item_id],
+        )
         .map_err(|e| format!("review item read failed: {}", describe(e)))?
         .ok_or_else(|| format!("review item {item_id} is not in the queue"))?;
     Ok(row.get("item"))
@@ -218,11 +219,23 @@ pub fn prepare_decision(
 ) -> Result<(Value, Value), String> {
     let item = read_item(client, item_id)?;
     check_seen_run(&item, item_id, seen_run_id)?;
-    compute_decision(item, item_id, action, reviewer, note, edited_value, edited_fields)
+    compute_decision(
+        item,
+        item_id,
+        action,
+        reviewer,
+        note,
+        edited_value,
+        edited_fields,
+    )
 }
 
 /// Refuse a decision on a queue item whose run is not the one the reviewer saw.
-pub fn check_seen_run(item: &Value, item_id: &str, seen_run_id: Option<&str>) -> Result<(), String> {
+pub fn check_seen_run(
+    item: &Value,
+    item_id: &str,
+    seen_run_id: Option<&str>,
+) -> Result<(), String> {
     let queued = item.get("run_id").and_then(Value::as_str);
     match seen_run_id {
         Some(seen) if queued != Some(seen) => Err(format!(
@@ -236,7 +249,12 @@ pub fn check_seen_run(item: &Value, item_id: &str, seen_run_id: Option<&str>) ->
 /// Record the decision: one call, one transaction, audit row + queue item.
 /// Returns the audit row id, or null when that exact decision (item,
 /// decided_at) was already recorded — a replay is a no-op.
-pub fn commit_decision(client: &mut Client, item_id: &str, item: &Value, entry: &Value) -> Result<Value, String> {
+pub fn commit_decision(
+    client: &mut Client,
+    item_id: &str,
+    item: &Value,
+    entry: &Value,
+) -> Result<Value, String> {
     let row = client
         .query_one(
             "SELECT params.decide_review_item($1, $2::jsonb, $3::jsonb)",
@@ -285,23 +303,31 @@ pub fn export_records(client: &mut Client) -> Result<BTreeMap<String, Vec<Value>
         .map_err(|e| format!("export query failed: {}", describe(e)))?;
     let mut groups: BTreeMap<String, Vec<Value>> = BTreeMap::new();
     for r in &rows {
-        groups.entry(r.get::<_, String>("country")).or_default().push(json!({
-            "parameter_key": r.get::<_, Option<String>>("parameter_key"),
-            "model_target": r.get::<_, String>("model_target"),
-            "metadata": r.get::<_, Option<Value>>("metadata"),
-            "values": r.get::<_, Option<Value>>("values"),
-        }));
+        groups
+            .entry(r.get::<_, String>("country"))
+            .or_default()
+            .push(json!({
+                "parameter_key": r.get::<_, Option<String>>("parameter_key"),
+                "model_target": r.get::<_, String>("model_target"),
+                "metadata": r.get::<_, Option<Value>>("metadata"),
+                "values": r.get::<_, Option<Value>>("values"),
+            }));
     }
     Ok(groups)
 }
 
 /// Write `<CC>_changes_<date>.json` per country into `dir`: one JSON array of
 /// changed parameters each. Returns the paths written.
-pub fn write_export(dir: &Path, groups: &BTreeMap<String, Vec<Value>>, date: &str) -> Result<Vec<String>, String> {
+pub fn write_export(
+    dir: &Path,
+    groups: &BTreeMap<String, Vec<Value>>,
+    date: &str,
+) -> Result<Vec<String>, String> {
     let mut paths = Vec::new();
     for (country, records) in groups {
         let path: PathBuf = dir.join(format!("{country}_changes_{date}.json"));
-        let text = serde_json::to_string_pretty(&Value::Array(records.clone())).map_err(|e| e.to_string())?;
+        let text = serde_json::to_string_pretty(&Value::Array(records.clone()))
+            .map_err(|e| e.to_string())?;
         fs::write(&path, text + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
         paths.push(path.display().to_string());
     }
@@ -355,7 +381,16 @@ mod tests {
         edited_value: Option<&Value>,
         edited_fields: Option<&Value>,
     ) -> (Value, Value) {
-        compute_decision(item, "fr_test_2025", action, "ben", note, edited_value, edited_fields).unwrap()
+        compute_decision(
+            item,
+            "fr_test_2025",
+            action,
+            "ben",
+            note,
+            edited_value,
+            edited_fields,
+        )
+        .unwrap()
     }
 
     #[test]
@@ -363,8 +398,18 @@ mod tests {
         let (updated, entry) = decide(seed_item(), "accepted", Some("looks right"), None, None);
         assert_eq!(updated["status"], "accepted");
         assert_eq!(updated["decision"]["reviewer"], "ben");
-        assert_eq!(updated.pointer("/proposed_value/lineage/review_status").unwrap(), "accepted");
-        assert_eq!(updated.pointer("/proposed_record/values/0/lineage/reviewed_by").unwrap(), "ben");
+        assert_eq!(
+            updated
+                .pointer("/proposed_value/lineage/review_status")
+                .unwrap(),
+            "accepted"
+        );
+        assert_eq!(
+            updated
+                .pointer("/proposed_record/values/0/lineage/reviewed_by")
+                .unwrap(),
+            "ben"
+        );
         // the entry carries the keys decide_review_item reads, keyed on the
         // same instant as the item's decision block
         assert_eq!(entry["action"], "accepted");
@@ -379,16 +424,28 @@ mod tests {
 
     #[test]
     fn unknown_action_is_refused() {
-        let error = compute_decision(seed_item(), "x", "maybe", "ben", None, None, None).unwrap_err();
+        let error =
+            compute_decision(seed_item(), "x", "maybe", "ben", None, None, None).unwrap_err();
         assert!(error.contains("maybe"));
     }
 
     #[test]
     fn edited_value_replaces_proposal() {
         let (updated, entry) = decide(seed_item(), "edited", None, Some(&json!(0.25)), None);
-        assert_eq!(updated.pointer("/proposed_value/value").unwrap(), &json!(0.25));
-        assert_eq!(updated.pointer("/proposed_record/values/0/value").unwrap(), &json!(0.25));
-        assert_eq!(updated.pointer("/proposed_value/lineage/review_status").unwrap(), "accepted");
+        assert_eq!(
+            updated.pointer("/proposed_value/value").unwrap(),
+            &json!(0.25)
+        );
+        assert_eq!(
+            updated.pointer("/proposed_record/values/0/value").unwrap(),
+            &json!(0.25)
+        );
+        assert_eq!(
+            updated
+                .pointer("/proposed_value/lineage/review_status")
+                .unwrap(),
+            "accepted"
+        );
         assert_eq!(entry["edited_value"], json!(0.25));
     }
 
@@ -402,16 +459,44 @@ mod tests {
             "references": [ { "title": "JORF, art. 1", "supporting_extract": "le taux est de 30 %" } ],
             "lineage": { "review_status": "spoofed" },
         });
-        let (updated, _) = decide(seed_item(), "edited", None, Some(&json!(0.3)), Some(&fields));
+        let (updated, _) = decide(
+            seed_item(),
+            "edited",
+            None,
+            Some(&json!(0.3)),
+            Some(&fields),
+        );
 
         for base in ["/proposed_value", "/proposed_record/values/0"] {
-            assert_eq!(updated.pointer(&format!("{base}/valid_from")).unwrap(), "2026-01-01");
-            assert_eq!(updated.pointer(&format!("{base}/valid_to")).unwrap(), "2026-12-31");
-            assert_eq!(updated.pointer(&format!("{base}/legal_status")).unwrap(), "enacted_in_force");
-            assert_eq!(updated.pointer(&format!("{base}/references/0/title")).unwrap(), "JORF, art. 1");
-            assert_eq!(updated.pointer(&format!("{base}/value")).unwrap(), &json!(0.3));
+            assert_eq!(
+                updated.pointer(&format!("{base}/valid_from")).unwrap(),
+                "2026-01-01"
+            );
+            assert_eq!(
+                updated.pointer(&format!("{base}/valid_to")).unwrap(),
+                "2026-12-31"
+            );
+            assert_eq!(
+                updated.pointer(&format!("{base}/legal_status")).unwrap(),
+                "enacted_in_force"
+            );
+            assert_eq!(
+                updated
+                    .pointer(&format!("{base}/references/0/title"))
+                    .unwrap(),
+                "JORF, art. 1"
+            );
+            assert_eq!(
+                updated.pointer(&format!("{base}/value")).unwrap(),
+                &json!(0.3)
+            );
             // lineage is bookkeeping, never patched from the form
-            assert_eq!(updated.pointer(&format!("{base}/lineage/review_status")).unwrap(), "accepted");
+            assert_eq!(
+                updated
+                    .pointer(&format!("{base}/lineage/review_status"))
+                    .unwrap(),
+                "accepted"
+            );
         }
     }
 
@@ -426,7 +511,10 @@ mod tests {
             Some(&json!({ "legal_status": "enacted_in_force" })),
         );
         assert_eq!(updated["status"], "edited");
-        assert_eq!(updated.pointer("/proposed_value/value").unwrap(), &json!(0.4));
+        assert_eq!(
+            updated.pointer("/proposed_value/value").unwrap(),
+            &json!(0.4)
+        );
         assert_eq!(updated["decision"]["note"], "second look");
     }
 
@@ -445,12 +533,24 @@ mod tests {
     fn export_writes_one_array_per_country() {
         let dir = tempfile::tempdir().unwrap();
         let mut groups: BTreeMap<String, Vec<Value>> = BTreeMap::new();
-        groups.insert("FR".into(), vec![json!({ "information": { "country": "FR" } }), json!({ "b": 2 })]);
-        groups.insert("ES".into(), vec![json!({ "information": { "country": "ES" } })]);
+        groups.insert(
+            "FR".into(),
+            vec![
+                json!({ "information": { "country": "FR" } }),
+                json!({ "b": 2 }),
+            ],
+        );
+        groups.insert(
+            "ES".into(),
+            vec![json!({ "information": { "country": "ES" } })],
+        );
         let paths = write_export(dir.path(), &groups, "2026-09-22").unwrap();
         assert_eq!(paths.len(), 2);
         assert!(paths[0].ends_with("ES_changes_2026-09-22.json"));
-        let fr: Value = serde_json::from_str(&fs::read_to_string(dir.path().join("FR_changes_2026-09-22.json")).unwrap()).unwrap();
+        let fr: Value = serde_json::from_str(
+            &fs::read_to_string(dir.path().join("FR_changes_2026-09-22.json")).unwrap(),
+        )
+        .unwrap();
         assert_eq!(fr.as_array().unwrap().len(), 2);
         assert_eq!(fr[0]["information"]["country"], "FR");
     }
@@ -463,14 +563,29 @@ mod tests {
     fn decision_round_trip_smoke() {
         let url = std::env::var("WORKFLOW_DATABASE_URL")
             .unwrap_or_else(|_| "postgresql://jrc:jrc@localhost:5434/legislation".to_string());
-        let Ok(mut client) = crate::pg::connect(&url) else { return };
-        if client.execute("SELECT 1 FROM params.review_queue LIMIT 0", &[]).is_err() {
+        let Ok(mut client) = crate::pg::connect(&url) else {
+            return;
+        };
+        if client
+            .execute("SELECT 1 FROM params.review_queue LIMIT 0", &[])
+            .is_err()
+        {
             return; // `nomoscope-workflow init-param-db` not run (or old schema)
         }
         let item_id = "zz_store_decision_round_trip";
         let cleanup = |client: &mut Client| {
-            client.execute("DELETE FROM params.review_decisions WHERE item_id = $1", &[&item_id]).unwrap();
-            client.execute("DELETE FROM params.review_queue WHERE item_id = $1", &[&item_id]).unwrap();
+            client
+                .execute(
+                    "DELETE FROM params.review_decisions WHERE item_id = $1",
+                    &[&item_id],
+                )
+                .unwrap();
+            client
+                .execute(
+                    "DELETE FROM params.review_queue WHERE item_id = $1",
+                    &[&item_id],
+                )
+                .unwrap();
         };
         cleanup(&mut client);
         let mut seeded = seed_item();
@@ -487,38 +602,85 @@ mod tests {
 
         // the queue lists it, pending
         let queue = load_queue(&mut client).unwrap();
-        let listed = queue["items"].as_array().unwrap().iter().find(|i| i["id"] == item_id).unwrap();
+        let listed = queue["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|i| i["id"] == item_id)
+            .unwrap();
         assert_eq!(listed["status"], "pending");
 
         // a decision on a run the reviewer did not see is refused, by the UI and by the database
-        let stale = prepare_decision(&mut client, item_id, Some("run-0"), "accepted", "cargo-test", None, None, None);
+        let stale = prepare_decision(
+            &mut client,
+            item_id,
+            Some("run-0"),
+            "accepted",
+            "cargo-test",
+            None,
+            None,
+            None,
+        );
         assert!(stale.unwrap_err().contains("re-run since it was opened"));
-        let (stale_item, mut stale_entry) =
-            prepare_decision(&mut client, item_id, None, "accepted", "cargo-test", None, None, None).unwrap();
+        let (stale_item, mut stale_entry) = prepare_decision(
+            &mut client,
+            item_id,
+            None,
+            "accepted",
+            "cargo-test",
+            None,
+            None,
+            None,
+        )
+        .unwrap();
         stale_entry["run_id"] = json!("run-0");
         let refused = commit_decision(&mut client, item_id, &stale_item, &stale_entry).unwrap_err();
         assert!(refused.contains("re-run since it was opened"), "{refused}");
 
-        let (item, entry) =
-            prepare_decision(&mut client, item_id, None, "edited", "cargo-test", Some("smoke"), Some(&json!(0.25)), None).unwrap();
+        let (item, entry) = prepare_decision(
+            &mut client,
+            item_id,
+            None,
+            "edited",
+            "cargo-test",
+            Some("smoke"),
+            Some(&json!(0.25)),
+            None,
+        )
+        .unwrap();
         // nothing recorded yet
         let pending: String = client
-            .query_one("SELECT status FROM params.review_queue WHERE item_id = $1", &[&item_id])
+            .query_one(
+                "SELECT status FROM params.review_queue WHERE item_id = $1",
+                &[&item_id],
+            )
             .unwrap()
             .get(0);
         assert_eq!(pending, "pending");
 
         let first = commit_decision(&mut client, item_id, &item, &entry).unwrap();
-        assert!(first["id"].is_i64(), "first decision writes an audit row: {first}");
+        assert!(
+            first["id"].is_i64(),
+            "first decision writes an audit row: {first}"
+        );
         let again = commit_decision(&mut client, item_id, &item, &entry).unwrap();
-        assert!(again["id"].is_null(), "replaying the same decision is a no-op");
+        assert!(
+            again["id"].is_null(),
+            "replaying the same decision is a no-op"
+        );
 
         let row = client
-            .query_one("SELECT status, item FROM params.review_queue WHERE item_id = $1", &[&item_id])
+            .query_one(
+                "SELECT status, item FROM params.review_queue WHERE item_id = $1",
+                &[&item_id],
+            )
             .unwrap();
         assert_eq!(row.get::<_, String>("status"), "edited");
         let stored: Value = row.get("item");
-        assert_eq!(stored.pointer("/proposed_value/value").unwrap(), &json!(0.25));
+        assert_eq!(
+            stored.pointer("/proposed_value/value").unwrap(),
+            &json!(0.25)
+        );
 
         let decisions = client
             .query(
@@ -528,11 +690,20 @@ mod tests {
             .unwrap();
         assert_eq!(decisions.len(), 1);
         assert_eq!(decisions[0].get::<_, String>("action"), "edited");
-        assert_eq!(decisions[0].get::<_, Option<String>>("note").as_deref(), Some("smoke"));
+        assert_eq!(
+            decisions[0].get::<_, Option<String>>("note").as_deref(),
+            Some("smoke")
+        );
         // the server stamps current_user, whatever the entry said
         let me: String = client.query_one("SELECT current_user", &[]).unwrap().get(0);
-        assert_eq!(decisions[0].get::<_, Option<String>>("reviewer").as_deref(), Some(me.as_str()));
-        assert_eq!(decisions[0].get::<_, Option<Value>>("edited_value"), Some(json!(0.25)));
+        assert_eq!(
+            decisions[0].get::<_, Option<String>>("reviewer").as_deref(),
+            Some(me.as_str())
+        );
+        assert_eq!(
+            decisions[0].get::<_, Option<Value>>("edited_value"),
+            Some(json!(0.25))
+        );
 
         // the change set sees it, under its country: the edited value only
         let groups = export_records(&mut client).unwrap();

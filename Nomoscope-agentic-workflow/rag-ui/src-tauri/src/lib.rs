@@ -69,7 +69,7 @@ where
 #[tauri::command]
 async fn get_env_config(db: State<'_, Db>) -> Result<Value, String> {
     let db_url = pool::redact(&db.url());
-    let (user, db_error) = match with_client(db, |client| pg::current_user(client)).await {
+    let (user, db_error) = match with_client(db, pg::current_user).await {
         Ok(user) => (Some(user), None),
         Err(e) => (None, Some(e)),
     };
@@ -104,24 +104,36 @@ async fn cancel_job(db: State<'_, Db>, payload: JobPayload) -> Result<Value, Str
 }
 
 #[tauri::command]
-async fn list_conversations(db: State<'_, Db>, payload: conversations::ListPayload) -> Result<Value, String> {
+async fn list_conversations(
+    db: State<'_, Db>,
+    payload: conversations::ListPayload,
+) -> Result<Value, String> {
     with_client(db, move |client| conversations::list(client, &payload)).await
 }
 
 #[tauri::command]
-async fn conversation_turns(db: State<'_, Db>, payload: conversations::ConversationPayload) -> Result<Value, String> {
+async fn conversation_turns(
+    db: State<'_, Db>,
+    payload: conversations::ConversationPayload,
+) -> Result<Value, String> {
     with_client(db, move |client| conversations::turns(client, &payload)).await
 }
 
 /// Every language rendering of the version a chunk belongs to.
 #[tauri::command]
 async fn chunk_renderings(db: State<'_, Db>, payload: ChunkPayload) -> Result<Value, String> {
-    with_client(db, move |client| search::chunk_renderings(client, &payload.chunk_id)).await
+    with_client(db, move |client| {
+        search::chunk_renderings(client, &payload.chunk_id)
+    })
+    .await
 }
 
 /// Direct article search, no LLM: the review UI's own `search::search`.
 #[tauri::command]
-async fn search_articles(db: State<'_, Db>, payload: search::SearchPayload) -> Result<Value, String> {
+async fn search_articles(
+    db: State<'_, Db>,
+    payload: search::SearchPayload,
+) -> Result<Value, String> {
     with_client(db, move |client| search::search(client, &payload, 20)).await
 }
 
