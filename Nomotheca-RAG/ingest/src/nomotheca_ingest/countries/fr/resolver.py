@@ -24,8 +24,8 @@ from datetime import date
 from typing import Literal
 
 from nomotheca_ingest.core.browser import browser_available, with_browser
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 from nomotheca_ingest.core.db import connect
+from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 
 #: The DILA id shapes the FR adapter can fetch (KALI: collective agreements).
 DILA_ID = re.compile(r"\b(?:JORFTEXT|LEGIARTI|KALITEXT|KALIARTI)\d{12}\b")
@@ -39,8 +39,7 @@ ResolutionTier = Literal["url", "database", "http", "browser"]
 #: the whole point of the request is to be told where the ELI URL points.
 BROWSER_HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     ),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
@@ -125,8 +124,6 @@ def http_attempt(url: str, timeout: float = 20.0) -> tuple[EliResolution | None,
     if match:
         return EliResolution(national_id=match.group(0), tier="http"), response.status_code
     return None, response.status_code
-
-
 
 
 def resolve_in_browser(url: str, timeout_ms: int = 30000) -> EliResolution | None:

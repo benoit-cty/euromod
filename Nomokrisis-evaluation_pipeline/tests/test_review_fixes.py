@@ -1,9 +1,8 @@
 """Regressions from the 2026-09-08 eval review (eval-20260908T143801Z…luna)."""
 
-from nomoscope_workflow.schema import Lineage, ParameterValue
-
 from nomokrisis_eval.openfisca_golden import _is_pre_indexation_reference
 from nomokrisis_eval.scoring import _on_parameter_basis, values_equal
+from nomoscope_workflow.schema import Lineage, ParameterValue
 
 
 class _Item:

@@ -14,8 +14,9 @@ from __future__ import annotations
 import json
 import os
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any
 
 from opentelemetry import trace
 from opentelemetry.trace import Tracer
@@ -80,9 +81,7 @@ def _instrument_pydantic_ai(tracer_provider: Any) -> None:
 
     # replace_default_processor=False: phoenix's provider otherwise drops its
     # own OTLP export processor, and spans are created but never reach Phoenix.
-    tracer_provider.add_span_processor(
-        OpenInferenceSpanProcessor(), replace_default_processor=False
-    )
+    tracer_provider.add_span_processor(OpenInferenceSpanProcessor(), replace_default_processor=False)
     Agent.instrument_all()
 
 

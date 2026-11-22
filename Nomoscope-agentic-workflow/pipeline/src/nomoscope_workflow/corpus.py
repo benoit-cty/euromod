@@ -59,6 +59,7 @@ def version_provenance(conn: psycopg.Connection, chunk_id: str) -> dict | None:
     ).fetchone()
     return dict(row) if row else None
 
+
 # One version per article, not per (legal_unit, version) row. `validity @> as_of`
 # alone stops discriminating whenever the same article exists twice: Legifrance
 # mints a new consolidated text per amendment, and an article fetched standalone
@@ -100,6 +101,7 @@ live_version AS (
   ORDER BY i.id, coalesce(u.citation, u.id::text), lower(v.validity) DESC
 )"""
 
+
 def _fts_query(query: str) -> str:
     """OR-of-terms websearch query.
 
@@ -116,9 +118,7 @@ def connect(cfg: WorkflowConfig) -> psycopg.Connection:
     return psycopg.connect(cfg.database_url, row_factory=dict_row)
 
 
-def add_unseen(
-    candidates: Iterable[RetrievalHit], seen: set[str], cap: int | None = None
-) -> list[RetrievalHit]:
+def add_unseen(candidates: Iterable[RetrievalHit], seen: set[str], cap: int | None = None) -> list[RetrievalHit]:
     """The candidates whose chunk is not in `seen`, in order, at most `cap`.
 
     Each one kept is added to `seen`, so a chunk is offered once however many
@@ -190,7 +190,6 @@ def jurisdiction_scope(conn: psycopg.Connection, country: str, region: str | Non
     return scope
 
 
-
 def unit_chunks(conn: psycopg.Connection, chunk_id: str) -> list[RetrievalHit]:
     """ALL chunks of the unit text a chunk belongs to, in document order.
 
@@ -217,8 +216,6 @@ def unit_chunks(conn: psycopg.Connection, chunk_id: str) -> list[RetrievalHit]:
         {"chunk_id": chunk_id},
     )
     return [RetrievalHit(method="sibling", **row) for row in rows]
-
-
 
 
 def article_label(citation: str | None) -> str:

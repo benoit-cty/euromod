@@ -54,9 +54,15 @@ _PATTERNS: tuple[tuple[re.Pattern[str], IssueCode], ...] = (
     (re.compile(re.escape(CITATION_NOT_RETRIEVED)), IssueCode.CITATION_NOT_RETRIEVED),
     (re.compile(re.escape(NOT_VERBATIM) + "$"), IssueCode.NOT_VERBATIM),
     (re.compile(re.escape(MISQUOTE_HINT_PREFIX)), IssueCode.MISQUOTE_HINT),
-    (re.compile(re.escape(operand_not_retrieved("NAME")).replace("NAME", r"\w+") + "$"), IssueCode.OPERAND_NOT_RETRIEVED),
+    (
+        re.compile(re.escape(operand_not_retrieved("NAME")).replace("NAME", r"\w+") + "$"),
+        IssueCode.OPERAND_NOT_RETRIEVED,
+    ),
     (re.compile(re.escape(operand_not_verbatim("NAME")).replace("NAME", r"\w+") + "$"), IssueCode.OPERAND_NOT_VERBATIM),
-    (re.compile(re.escape(operand_hint("NAME", MISQUOTE_HINT_PREFIX)).replace("NAME", r"\w+")), IssueCode.OPERAND_MISQUOTE_HINT),
+    (
+        re.compile(re.escape(operand_hint("NAME", MISQUOTE_HINT_PREFIX)).replace("NAME", r"\w+")),
+        IssueCode.OPERAND_MISQUOTE_HINT,
+    ),
     (re.compile(re.escape(PREDATES_BUDGET_WINDOW)), IssueCode.PREDATES_BUDGET_WINDOW),
     (re.compile(re.escape(NEVER_NAMES_INCOME_YEAR)), IssueCode.NEVER_NAMES_INCOME_YEAR),
     (re.compile(re.escape(GUIDANCE_ONLY) + "$"), IssueCode.GUIDANCE_ONLY),

@@ -9,7 +9,7 @@ from nomotheca_ingest.countries.ie.adapter import IeAdapter
 from nomotheca_ingest.countries.ie.fetcher import url_for_ref
 from nomotheca_ingest.countries.ie.parser import parse_ie
 
-PAGE = """<html><head><title>  Social Welfare Consolidation Act 2005  | Law Reform</title></head><body>
+PAGE = b"""<html><head><title>  Social Welfare Consolidation Act 2005  | Law Reform</title></head><body>
 <p>Updated to 1 October 2026</p>
 <section class="part" id="PART3"><div class="title"><p>PART 3</p><p>Social Assistance</p></div>
 <div class="sect-tab"><img src="/images/bkmrk_sm.svg"><span>Section 142</span></div>
@@ -31,12 +31,14 @@ PAGE = """<html><head><title>  Social Welfare Consolidation Act 2005  | Law Refo
 <div class="annotations"><div class="f-note"><p class="shouldernote1">F1954</p>
 <p>Substituted (31.12.2025 to 7.01.2026) by Social Welfare Act 2025 (19/2025), s. 13(1).</p></div></div>
 </section></section>
-</body></html>""".encode()
+</body></html>"""
 
 
 def _parse():
     ref = IeAdapter().resolve(CitationRef(jurisdiction="IE", citation="2005/act/26/revised"), date(2025, 7, 1))[0]
-    snapshot = Snapshot(id=uuid4(), source_code=ref.source_code, url=url_for_ref(ref), content_hash="x", raw_content=PAGE)
+    snapshot = Snapshot(
+        id=uuid4(), source_code=ref.source_code, url=url_for_ref(ref), content_hash="x", raw_content=PAGE
+    )
     return ref, parse_ie(PAGE, ref, snapshot).instruments[0]
 
 

@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import psycopg
 from psycopg.types.json import Jsonb
@@ -117,9 +118,7 @@ class QueryEncoder:
 
     def _submit(self, conn: Any, query: str, model_id: int = 1) -> int:
         with conn.cursor() as cur:
-            cur.execute(
-                SUBMIT_SQL, (Jsonb({"query": query, "model_id": model_id}), ENCODE_JOB_PRIORITY)
-            )
+            cur.execute(SUBMIT_SQL, (Jsonb({"query": query, "model_id": model_id}), ENCODE_JOB_PRIORITY))
             row = cur.fetchone()
         if row is None:
             raise EncoderUnavailable("INSERT INTO ops.jobs returned no id")
@@ -144,9 +143,7 @@ class QueryEncoder:
                 self._cancel(conn, job_id)
                 alive = self.alive_workers(conn)
                 why = (
-                    f"worker(s) {', '.join(alive)} alive but busy"
-                    if alive
-                    else "no Nomergon worker is alive any more"
+                    f"worker(s) {', '.join(alive)} alive but busy" if alive else "no Nomergon worker is alive any more"
                 )
                 raise EncoderUnavailable(
                     f"encode job {job_id} still {status} after {timeout:g} s ({why}); "
@@ -158,9 +155,7 @@ class QueryEncoder:
     def _halfvec(job_id: int, result: Any) -> str:
         halfvec = result.get("halfvec") if isinstance(result, dict) else None
         if not isinstance(halfvec, str) or not halfvec:
-            raise EncoderUnavailable(
-                f"encode job {job_id} succeeded without a halfvec in its result: {result!r}"
-            )
+            raise EncoderUnavailable(f"encode job {job_id} succeeded without a halfvec in its result: {result!r}")
         return halfvec
 
     @staticmethod

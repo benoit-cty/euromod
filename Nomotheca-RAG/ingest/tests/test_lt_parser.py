@@ -5,12 +5,10 @@ from datetime import date
 from uuid import uuid4
 
 import pytest
-
+from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef
 from nomotheca_ingest.countries.lt.adapter import LtAdapter
 from nomotheca_ingest.countries.lt.parser import _header_official_nr, parse_tar_json
 from nomotheca_ingest.countries.lt.resolver import LtResolver
-from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef
-
 
 DOCUMENT_PAYLOAD = json.dumps(
     {
@@ -187,9 +185,7 @@ def test_adapter_expands_child_refs_into_work_items():
 
 
 def test_resolver_maps_known_citations_to_consolidation_index():
-    refs = LtResolver().resolve(
-        CitationRef(jurisdiction="LT", citation="GPMĮ 20 straipsnis"), date(2025, 6, 30)
-    )
+    refs = LtResolver().resolve(CitationRef(jurisdiction="LT", citation="GPMĮ 20 straipsnis"), date(2025, 6, 30))
     assert refs[0].source_id == "TAR.C677663D2202/asr"
     assert refs[0].source_code == "LT-TAR"
 

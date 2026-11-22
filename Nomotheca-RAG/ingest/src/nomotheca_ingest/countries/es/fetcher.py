@@ -61,8 +61,6 @@ def url_for_ref(ref: SourceRef) -> str:
     return instrument_url(ref.source_id)
 
 
-
-
 def fetch_boe(ref: SourceRef, http: SnapshotClient) -> Snapshot:
     """Fetch and archive a BOE payload, retrying transient upstream errors.
 

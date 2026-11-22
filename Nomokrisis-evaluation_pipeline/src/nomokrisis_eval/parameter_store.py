@@ -14,9 +14,7 @@ from collections.abc import Mapping
 from datetime import date
 
 import psycopg
-
-from nomoscope_workflow import routing
-from nomoscope_workflow import paramdb
+from nomoscope_workflow import paramdb, routing
 from nomoscope_workflow.schema import ParameterRecord, ParameterValue, Routing
 
 from .scoring import normalise_value, values_equal
@@ -31,7 +29,7 @@ def load_case_record(conn: psycopg.Connection, parameter_target: str) -> Paramet
     bracket schedule assembled from params.parameter_groups, anything else a
     model_target (or parameter_key) in params.parameters."""
     if parameter_target.startswith(GROUP_PREFIX):
-        return paramdb.load_group_record(conn, parameter_target[len(GROUP_PREFIX):])
+        return paramdb.load_group_record(conn, parameter_target[len(GROUP_PREFIX) :])
     return paramdb.load_record(conn, parameter_target)
 
 
@@ -118,8 +116,7 @@ def route_against_current(
         return None, "has no scalar and no raw string"
     if isinstance(held, str) and normalise_value(held, constants) is None:
         return None, (
-            f"cannot be normalised ({held!r}) "
-            "— set an explicit `routing:` in the selection file to include it"
+            f"cannot be normalised ({held!r}) — set an explicit `routing:` in the selection file to include it"
         )
     if values_equal(held, expected_value, constants):
         return Routing.UNCHANGED, None

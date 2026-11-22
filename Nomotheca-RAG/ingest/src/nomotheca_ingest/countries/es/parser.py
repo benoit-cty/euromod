@@ -27,10 +27,10 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 
+from nomotheca_ingest.core.ir import ParsedDoc, Snapshot, SourceRef
 from nomotheca_ingest.countries.es.boe import KNOWN_ACTS
 from nomotheca_ingest.countries.es.consolidated import parse_consolidated
 from nomotheca_ingest.countries.es.diario import parse_diario
-from nomotheca_ingest.core.ir import ParsedDoc, Snapshot, SourceRef
 
 __all__ = ["KNOWN_ACTS", "parse_boe_xml"]
 

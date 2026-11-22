@@ -11,7 +11,6 @@ import re
 from pathlib import Path
 
 import pytest
-
 from nomergon import jobs
 
 ROOT = Path(__file__).resolve().parents[2]

@@ -3,7 +3,7 @@
 from uuid import uuid4
 
 import pytest
-
+from nomotheca_ingest.core.ir import Snapshot, SourceRef
 from nomotheca_ingest.countries.ie.adapter import IeAdapter
 from nomotheca_ingest.countries.ie.fetcher import (
     act_eli,
@@ -13,13 +13,10 @@ from nomotheca_ingest.countries.ie.fetcher import (
     section_eli,
     url_for_ref,
 )
-from nomotheca_ingest.core.ir import Snapshot, SourceRef
 
 
 def _ref(source_id: str, source_type: str = "act", source_code: str = "IE-EISB") -> SourceRef:
-    return SourceRef(
-        jurisdiction="IE", source_code=source_code, source_id=source_id, source_type=source_type
-    )
+    return SourceRef(jurisdiction="IE", source_code=source_code, source_id=source_id, source_type=source_type)
 
 
 def test_act_url_follows_the_eli_pattern_for_whole_act_xml():

@@ -16,7 +16,6 @@ from nomoscope_workflow.schema import (
     Routing,
     SourceTrustClass,
 )
-
 from workflow_fixtures import _hit, _record
 
 

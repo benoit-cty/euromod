@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-
 from nomoscope_workflow import paramdb, values
 from nomoscope_workflow.paramdb import record_value
 from nomoscope_workflow.routing import (
@@ -23,7 +22,6 @@ from nomoscope_workflow.schema import (
     ParameterValue,
     ProposalDraft,
 )
-
 from workflow_fixtures import _record
 
 
@@ -41,9 +39,7 @@ def test_unchanged_routing_keeps_the_current_validity_window():
     # same value as the one in force -> no new period starts, whatever date the
     # model read off the (re-confirming) legal text
     current = ParameterValue(value=0.45, valid_from=date(2024, 1, 1))
-    proposed = ParameterValue(
-        value=0.45, valid_from=date(2025, 1, 1), valid_to=date(2025, 12, 31)
-    )
+    proposed = ParameterValue(value=0.45, valid_from=date(2025, 1, 1), valid_to=date(2025, 12, 31))
     kept = _unchanged_window(proposed, current)
     assert kept.valid_from == date(2024, 1, 1)
     assert kept.valid_to is None

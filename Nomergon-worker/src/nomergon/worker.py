@@ -83,12 +83,12 @@ class Heartbeat(threading.Thread):
                     if conn is None or conn.closed:
                         conn = db.connect(self.cfg.database_url)
                     db.heartbeat(conn, self.cfg.worker_id, self.current_job_id)
-                except Exception as exc:  # noqa: BLE001 - a missed beat is not fatal
+                except Exception as exc:
                     log.warning("heartbeat failed: %s", str(exc).splitlines()[0] if str(exc) else type(exc).__name__)
                     if conn is not None:
                         try:
                             conn.close()
-                        except Exception:  # noqa: BLE001
+                        except Exception:
                             pass
                         conn = None  # reconnect on the next beat
         finally:
@@ -125,24 +125,32 @@ def _finish_with_retry(
             if conn.closed:
                 conn = db.connect(cfg.database_url)
             if not db.finish_job(conn, job_id, outcome.status, outcome.result, outcome.error):
-                log.warning("job %s was no longer running; its final status (%s) was not recorded", job_id, outcome.status)
+                log.warning(
+                    "job %s was no longer running; its final status (%s) was not recorded", job_id, outcome.status
+                )
             return conn
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             log.warning(
                 "job %s: could not record final status %s (attempt %d/%d): %s",
-                job_id, outcome.status, attempt, FINISH_RETRY_ATTEMPTS, str(exc).splitlines()[0],
+                job_id,
+                outcome.status,
+                attempt,
+                FINISH_RETRY_ATTEMPTS,
+                str(exc).splitlines()[0],
             )
             try:
                 conn.close()
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
             try:
                 conn = db.connect(cfg.database_url)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
             if stop.wait(FINISH_RETRY_SECONDS):
                 break
-    log.error("job %s: final status %s never recorded; the stale-heartbeat rule will mark it failed", job_id, outcome.status)
+    log.error(
+        "job %s: final status %s never recorded; the stale-heartbeat rule will mark it failed", job_id, outcome.status
+    )
     return conn
 
 
@@ -169,12 +177,12 @@ class JobSlot(threading.Thread):
                         exclude_types=jobs.IN_PROCESS_JOB_TYPES,
                         singleton_types=jobs.SINGLETON_JOB_TYPES,
                     )
-                except Exception:  # noqa: BLE001 - keep polling through a DB hiccup
+                except Exception:
                     log.exception("%s: claim failed; retrying", self.name)
                     if conn is not None:
                         try:
                             conn.close()
-                        except Exception:  # noqa: BLE001
+                        except Exception:
                             pass
                     self.stop_event.wait(self.cfg.poll_seconds)
                     continue
@@ -190,7 +198,12 @@ class JobSlot(threading.Thread):
                     # on a fresh connection through a database outage rather than
                     # leave the job "running" with a live heartbeat.
                     conn = _finish_with_retry(conn, self.cfg, job_id, outcome, self.stop_event)
-                    log.info("job %s %s%s", job_id, outcome.status, f": {outcome.error.splitlines()[-1]}" if outcome.error else "")
+                    log.info(
+                        "job %s %s%s",
+                        job_id,
+                        outcome.status,
+                        f": {outcome.error.splitlines()[-1]}" if outcome.error else "",
+                    )
                 finally:
                     self.heartbeat.finished(job_id)
         finally:
@@ -243,7 +256,7 @@ def serve(cfg: WorkerConfig) -> None:
                     pruned = db.prune_events(conn, cfg.event_retention_days)
                     if pruned:
                         log.info("pruned %d job event(s) older than %d days", pruned, cfg.event_retention_days)
-                except Exception:  # noqa: BLE001
+                except Exception:
                     log.exception("event pruning failed")
             stop.wait(cfg.poll_seconds)
     finally:

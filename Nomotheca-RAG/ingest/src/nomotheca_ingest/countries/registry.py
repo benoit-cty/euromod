@@ -10,7 +10,6 @@ from nomotheca_ingest.countries.ie.adapter import IeAdapter
 from nomotheca_ingest.countries.lt.adapter import LtAdapter
 from nomotheca_ingest.countries.nl.adapter import NlAdapter
 
-
 _ADAPTERS: dict[str, type[CountryAdapter]] = {
     "ES": EsAdapter,
     "FR": FrAdapter,
@@ -27,9 +26,7 @@ def url_sources() -> dict[str, UrlSource]:
     with no `url_source` simply never claims one.
     """
     return {
-        code: adapter_type.url_source
-        for code, adapter_type in _ADAPTERS.items()
-        if adapter_type.url_source is not None
+        code: adapter_type.url_source for code, adapter_type in _ADAPTERS.items() if adapter_type.url_source is not None
     }
 
 

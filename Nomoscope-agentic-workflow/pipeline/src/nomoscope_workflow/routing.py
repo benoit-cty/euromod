@@ -14,6 +14,7 @@ from datetime import date, timedelta
 
 from .schema import Bracket, ParameterRecord, ParameterValue, ProposalDraft, Routing
 
+
 def _values_equal(a, b) -> bool:
     """Compare parameter values (scalar/bool/str/brackets) with float tolerance."""
     if isinstance(a, list) and isinstance(b, list):
@@ -62,9 +63,7 @@ def _unchanged_window(proposed: ParameterValue, current: ParameterValue) -> Para
     re-confirms the value, it does not restart it — everything else about the
     proposal (evidence, legal_status, OJ date) is kept as proposed.
     """
-    return proposed.model_copy(
-        update={"valid_from": current.valid_from, "valid_to": current.valid_to}
-    )
+    return proposed.model_copy(update={"valid_from": current.valid_from, "valid_to": current.valid_to})
 
 
 def _current_value(record: ParameterRecord, as_of: date) -> ParameterValue | None:
@@ -87,9 +86,7 @@ def _confirms_held(draft: ProposalDraft, held: ParameterValue | None) -> bool:
     return math.isclose(draft.value_scalar, float(value), rel_tol=1e-9, abs_tol=1e-12)
 
 
-def _merge_record(
-    record: ParameterRecord, proposed: ParameterValue, as_of: date, routing: Routing
-) -> ParameterRecord:
+def _merge_record(record: ParameterRecord, proposed: ParameterValue, as_of: date, routing: Routing) -> ParameterRecord:
     """The full record as it would look after acceptance (export-first write-back)."""
     merged = record.model_copy(deep=True)
     if routing == Routing.UNCHANGED:

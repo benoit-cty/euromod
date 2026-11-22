@@ -40,7 +40,7 @@ class SourceDocument:
         """The sha256 that decides "already present" and keys the version."""
         return content_hash(self.raw)
 
-    def archived_as(self, snapshot_id: UUID) -> "SourceDocument":
+    def archived_as(self, snapshot_id: UUID) -> SourceDocument:
         """The same document, now with the snapshot that proves it was archived."""
         return replace(self, snapshot_id=snapshot_id)
 

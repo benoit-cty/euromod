@@ -23,7 +23,7 @@ def test_every_sql_job_type_list_is_the_spec_table() -> None:
 
 
 def test_derived_lists() -> None:
-    assert jobs.JOB_TYPES == tuple(jobs.JOB_SPECS)
+    assert tuple(jobs.JOB_SPECS) == jobs.JOB_TYPES
     assert set(jobs.PAYLOAD_MODELS) == set(jobs.JOB_TYPES)
     assert jobs.IN_PROCESS_JOB_TYPES == ("encode",)
     assert jobs.SINGLETON_JOB_TYPES == ("embed", "translate", "translate-params")

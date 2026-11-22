@@ -8,7 +8,6 @@ from uuid import uuid4
 
 import psycopg
 import pytest
-
 from nomotheca_ingest.core.ir import (
     Authenticity,
     InstrumentIR,
@@ -37,14 +36,21 @@ def conn():
 def _doc(snapshot_id, valid_to=None, status=VersionStatus.IN_FORCE) -> ParsedDoc:
     ref = SourceRef(jurisdiction="FR", source_code="FR-LEGI", source_id="ZZTEST", source_type="instrument")
     version = VersionIR(
-        valid_from=date(2020, 1, 1), valid_to=valid_to, status=status,
-        source_version_id="ZZTEST-v1", fetch_snapshot_id=snapshot_id,
+        valid_from=date(2020, 1, 1),
+        valid_to=valid_to,
+        status=status,
+        source_version_id="ZZTEST-v1",
+        fetch_snapshot_id=snapshot_id,
         texts=[TextIR(lang="fr", authenticity=Authenticity.AUTHENTIC, content="Texte.")],
     )
     unit = UnitIR(path="art_1", unit_type="article", citation="ZZTEST art. 1", versions=[version])
     instrument = InstrumentIR(
-        jurisdiction="FR", source_code="FR-LEGI", instrument_type="loi", national_id="ZZTEST",
-        title={"fr": "Loi de test"}, units=[unit],
+        jurisdiction="FR",
+        source_code="FR-LEGI",
+        instrument_type="loi",
+        national_id="ZZTEST",
+        title={"fr": "Loi de test"},
+        units=[unit],
     )
     return ParsedDoc(ref=ref, instruments=[instrument])
 

@@ -8,7 +8,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-
+from nomotheca_ingest.core.routing import route_url
 from nomotheca_ingest.countries.base import UrlSource
 from nomotheca_ingest.countries.fr.adapter import ELI_HINT, FR_URL_SOURCE, WHOLE_CODE_HINT
 from nomotheca_ingest.countries.fr.resolver import (
@@ -16,7 +16,6 @@ from nomotheca_ingest.countries.fr.resolver import (
     resolve_legifrance_url,
 )
 from nomotheca_ingest.countries.registry import url_sources
-from nomotheca_ingest.core.routing import route_url
 
 ELI_URL = "https://www.legifrance.gouv.fr/eli/arrete/2020/12/28/CCPD2036946A/jo/texte"
 
@@ -152,9 +151,7 @@ def test_all_tiers_failing_resolves_to_nothing_not_to_a_guess() -> None:
 
 def test_a_resolved_url_routes_to_the_fr_adapter() -> None:
     resolution = EliResolution(national_id="JORFTEXT000042753489", tier="browser")
-    sources = {
-        "FR": replace(FR_URL_SOURCE, resolve=lambda url, database_url: resolution)
-    }
+    sources = {"FR": replace(FR_URL_SOURCE, resolve=lambda url, database_url: resolution)}
 
     outcome = route_url(ELI_URL, sources=sources)
 
@@ -200,12 +197,7 @@ def _scout_module() -> Path | None:
     """Locate the Nomoscope scout's source tables, if that package is checked out."""
     for ancestor in Path(__file__).resolve().parents:
         candidate = (
-            ancestor
-            / "Nomoscope-agentic-workflow"
-            / "pipeline"
-            / "src"
-            / "nomoscope_workflow"
-            / "scout_sources.py"
+            ancestor / "Nomoscope-agentic-workflow" / "pipeline" / "src" / "nomoscope_workflow" / "scout_sources.py"
         )
         if candidate.is_file():
             return candidate
@@ -267,9 +259,7 @@ def test_the_nomoscope_scout_copies_these_portals_without_altering_them() -> Non
         # never gap-fills (`no scout source rules for <CC>`), which is a missing
         # feature, not a contradiction.
         assert declared[country].domains == domains, f"{country}: scout domains differ from {scout}"
-        assert declared[country].id_pattern.pattern == id_pattern, (
-            f"{country}: scout id_pattern differs from {scout}"
-        )
+        assert declared[country].id_pattern.pattern == id_pattern, f"{country}: scout id_pattern differs from {scout}"
 
 
 def test_the_resolver_result_carries_an_id_and_a_tier_and_nothing_else() -> None:
@@ -293,12 +283,11 @@ def test_a_bare_nor_is_resolved_as_the_legifrance_url_it_names() -> None:
 
 def test_a_pasted_dila_id_needs_no_network_at_all() -> None:
     """The id is already there: no tier runs, so no request is ever made."""
+
     def explode(url):  # pragma: no cover - must never be called
         raise AssertionError("no tier should run when the id is already in the URL")
 
-    resolved = resolve_legifrance_url(
-        "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051168007", tiers=[explode]
-    )
+    resolved = resolve_legifrance_url("https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051168007", tiers=[explode])
 
     assert resolved.national_id == "JORFTEXT000051168007"
 
@@ -312,8 +301,7 @@ def test_the_browser_tier_runs_only_on_a_datadome_block(monkeypatch) -> None:
     monkeypatch.setattr(
         resolver,
         "resolve_in_browser",
-        lambda url: started.append(url)
-        or EliResolution(national_id="JORFTEXT000042753489", tier="browser"),
+        lambda url: started.append(url) or EliResolution(national_id="JORFTEXT000042753489", tier="browser"),
     )
     monkeypatch.setattr(resolver, "resolve_from_database", lambda url, db: None)
 

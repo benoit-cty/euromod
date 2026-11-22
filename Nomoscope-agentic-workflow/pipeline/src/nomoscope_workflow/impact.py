@@ -21,7 +21,6 @@ from datetime import datetime
 import psycopg
 from psycopg.rows import dict_row
 
-
 # EcoLogits provider keys, from its model registry.
 _ECOLOGITS_PROVIDERS = {"openai", "anthropic", "mistralai", "cohere", "google_genai", "huggingface_hub"}
 
@@ -160,9 +159,7 @@ def _value_range(metric) -> tuple[float, float]:
     return float(value), float(value)
 
 
-def compute_impact_report(
-    spans: list[dict], electricity_mix_zone: str = "EEE"
-) -> ImpactReport:
+def compute_impact_report(spans: list[dict], electricity_mix_zone: str = "EEE") -> ImpactReport:
     """Sum EcoLogits impact estimates over LLM spans, grouped by model."""
     from ecologits.tracers.utils import llm_impacts  # deferred: heavy registry load
 
@@ -170,9 +167,7 @@ def compute_impact_report(
     by_model: dict[str, ModelImpact] = {}
     for span in spans:
         provider, model = resolve_provider(span["provider"], span["model"])
-        agg = by_model.setdefault(
-            model, ModelImpact(model=model, provider=provider or (span["provider"] or "?"))
-        )
+        agg = by_model.setdefault(model, ModelImpact(model=model, provider=provider or (span["provider"] or "?")))
         agg.calls += 1
         agg.prompt_tokens += span["prompt_tokens"]
         agg.output_tokens += span["output_tokens"]
@@ -226,9 +221,7 @@ def build_report(
     return compute_impact_report(spans, electricity_mix_zone=electricity_mix_zone)
 
 
-def trace_impact(
-    phoenix_database_url: str, trace_id: str, electricity_mix_zone: str = "EEE"
-) -> dict | None:
+def trace_impact(phoenix_database_url: str, trace_id: str, electricity_mix_zone: str = "EEE") -> dict | None:
     """Scalar impact summary for a single trace (per-case eval metric).
 
     Energy/GWP are the midpoint of the EcoLogits min–max range so they can be

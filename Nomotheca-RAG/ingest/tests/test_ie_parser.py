@@ -11,12 +11,10 @@ from datetime import date
 from uuid import uuid4
 
 import pytest
-
+from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef
 from nomotheca_ingest.countries.ie.adapter import IeAdapter
 from nomotheca_ingest.countries.ie.parser import _effective_date, parse_ie
 from nomotheca_ingest.countries.ie.resolver import IeResolver
-from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef
-
 
 FINANCE_ACT_XML = b"""<?xml version="1.0"?>
 <act><metadata><title>FINANCE ACT 2024</title><number>43</number><year>2024</year>
@@ -325,8 +323,10 @@ def test_baseline_act_is_loaded_as_structure_not_as_in_force_text():
     # would run "SCHEDULE 2" into the title instead of it being dropped.
     schedule = units["sched_2"]
     assert schedule.citation == "Taxes Consolidation Act 1997, Sch. 2"
-    assert schedule.versions[0].texts[0].content.startswith(
-        "Schedule 2. Machinery for Assessment, Charge and Payment of Tax"
+    assert (
+        schedule.versions[0]
+        .texts[0]
+        .content.startswith("Schedule 2. Machinery for Assessment, Charge and Payment of Tax")
     )
 
 
@@ -362,9 +362,7 @@ def test_resolver_covers_the_budget_year_and_the_one_before_it():
     assert [ref.source_id for ref in refs] == ["index/2024", "index/2025"]
     assert {ref.source_code for ref in refs} == {"IE-OIREACHTAS"}
 
-    from_as_of = IeResolver().resolve(
-        CitationRef(jurisdiction="IE", citation="income tax bands"), date(2025, 6, 1)
-    )
+    from_as_of = IeResolver().resolve(CitationRef(jurisdiction="IE", citation="income tax bands"), date(2025, 6, 1))
     assert [ref.source_id for ref in from_as_of] == ["index/2024", "index/2025"]
 
 
@@ -385,9 +383,7 @@ def test_resolver_short_circuits_known_acts_and_explicit_ids(citation, expected)
 
 def test_effective_date_falls_back_to_enactment_without_a_stated_date():
     enacted = date(2024, 10, 28)
-    effective, basis, stated = _effective_date(
-        "This Act may be cited as the Social Welfare Act 2024.", enacted
-    )
+    effective, basis, stated = _effective_date("This Act may be cited as the Social Welfare Act 2024.", enacted)
     assert (effective, basis, stated) == (enacted, "enactment", [])
 
     effective, basis, _ = _effective_date(

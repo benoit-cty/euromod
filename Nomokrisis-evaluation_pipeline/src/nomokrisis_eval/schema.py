@@ -9,9 +9,8 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
-
 from nomoscope_workflow.schema import Bracket, Routing
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
 
 
 class Expected(BaseModel):
@@ -59,7 +58,11 @@ Difficulty = Literal["verbatim", "combine", "derive", "table"]
 #:                    (a code article referring to an arrêté)
 #:   unit_conversion  the law states one period, EUROMOD stores another
 Hazard = Literal[
-    "income_year", "mid_year_change", "budget_act_window", "cross_instrument", "unit_conversion",
+    "income_year",
+    "mid_year_change",
+    "budget_act_window",
+    "cross_instrument",
+    "unit_conversion",
     # A sibling region's act is in the corpus and states a near-identical
     # amount for ITS scheme: a proposal citing it passes the verbatim-extract
     # check and is still wrong (ADR 0003). Regional parameters only.

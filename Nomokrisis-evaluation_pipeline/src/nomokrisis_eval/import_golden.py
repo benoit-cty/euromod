@@ -30,19 +30,19 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import psycopg
 
 from .config import EVAL_ROOT, REPO_ROOT
+from .golden_drafting import entry_case_id
 from .golden_store import (
     restore_verdict,
     save_case,
     save_embedding_case,
     save_selection,
 )
-from .golden_drafting import entry_case_id
 from .parameter_store import GROUP_PREFIX
 from .schema import EmbeddingCase, GoldenCase
 
@@ -86,10 +86,7 @@ def read_selection_files(sources_dir: Path) -> list[tuple[str, str, dict, list[d
 
 
 def read_case_files(dataset_dir: Path) -> list[tuple[Path, dict]]:
-    return [
-        (path, json.loads(path.read_text(encoding="utf-8")))
-        for path in sorted(dataset_dir.rglob("*.json"))
-    ]
+    return [(path, json.loads(path.read_text(encoding="utf-8"))) for path in sorted(dataset_dir.rglob("*.json"))]
 
 
 def read_embedding_case_files(dataset_dir: Path) -> list[EmbeddingCase]:
@@ -130,9 +127,7 @@ def group_target_from_model_target(conn: psycopg.Connection, model_target: str) 
     return f"{GROUP_PREFIX}{row[0]}", None
 
 
-def target_from_parameter_file(
-    conn: psycopg.Connection, parameter_file: str
-) -> tuple[str | None, str | None]:
+def target_from_parameter_file(conn: psycopg.Connection, parameter_file: str) -> tuple[str | None, str | None]:
     """(target, warning) from the materialized parameter file, or (None, reason)."""
     path = REPO_ROOT / parameter_file
     if not path.exists():
@@ -144,9 +139,7 @@ def target_from_parameter_file(
     group_target, warning = group_target_from_model_target(conn, model_target)
     if group_target is not None:
         return group_target, warning
-    exists = conn.execute(
-        "SELECT 1 FROM params.parameters WHERE model_target = %s", (model_target,)
-    ).fetchone()
+    exists = conn.execute("SELECT 1 FROM params.parameters WHERE model_target = %s", (model_target,)).fetchone()
     if exists is None:
         warning = f"{model_target} not in params.parameters (ingest-params first)"
     return model_target, warning
@@ -185,9 +178,7 @@ def resolve_case(
             if target is not None:
                 report.note_resolution("materialized file")
         if target is None:
-            fallback = target_from_selection(
-                case_id, date.fromisoformat(data["as_of"]), data["country"], selections
-            )
+            fallback = target_from_selection(case_id, date.fromisoformat(data["as_of"]), data["country"], selections)
             if fallback is not None:
                 target, warning = fallback, None
                 report.note_resolution("selection entry")
@@ -230,7 +221,7 @@ def import_golden(
             if case.reviewed_by and case.reviewed_at is None:
                 # The file never recorded when the verdict was given; its
                 # mtime is the closest thing to it.
-                case.reviewed_at = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+                case.reviewed_at = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
             if not dry_run:
                 save_case(conn, case)
                 restore_verdict(conn, case)

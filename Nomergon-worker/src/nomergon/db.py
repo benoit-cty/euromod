@@ -118,7 +118,9 @@ def append_event(
     return int(row["id"])
 
 
-def append_events(conn: psycopg.Connection[Any], job_id: int, events: Sequence[tuple[str, str, dict[str, Any] | None]]) -> None:
+def append_events(
+    conn: psycopg.Connection[Any], job_id: int, events: Sequence[tuple[str, str, dict[str, Any] | None]]
+) -> None:
     """Insert several (stream, line, data) rows in one round trip."""
     if not events:
         return

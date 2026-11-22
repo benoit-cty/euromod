@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime, timezone
 
 import pytest
-
+from nomokrisis_eval.schema import Expected, GoldenCase
+from nomokrisis_eval.scoring import (
+    citation_matches,
+    normalise_value,
+    score_item,
+    values_equal,
+)
 from nomoscope_workflow.schema import (
     Bracket,
     CritiqueReport,
@@ -14,14 +20,6 @@ from nomoscope_workflow.schema import (
     RetrievalHit,
     ReviewItem,
     Routing,
-)
-
-from nomokrisis_eval.schema import Expected, GoldenCase
-from nomokrisis_eval.scoring import (
-    citation_matches,
-    normalise_value,
-    score_item,
-    values_equal,
 )
 
 
@@ -58,7 +56,7 @@ def make_item(
     return ReviewItem(
         id="fr_item",
         run_id="run",
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         country="FR",
         model_target="euromod://FR/tin_fr/def_const/$tinrt_top",
         as_of=date(2025, 6, 1),
@@ -71,15 +69,12 @@ def make_item(
             extract_offsets=extract_offsets,
             verdict=verdict,
         ),
-        retrieval_trace=(
-            [RetrievalHit(chunk_id="c1", citation=trace_citation)] if trace_citation else []
-        ),
+        retrieval_trace=([RetrievalHit(chunk_id="c1", citation=trace_citation)] if trace_citation else []),
     )
 
 
 def test_all_correct_scalar():
-    case = make_case(routing=Routing.CHANGED, value=0.45, valid_from=date(2025, 1, 1),
-                     citations=["CGI, art. 197"])
+    case = make_case(routing=Routing.CHANGED, value=0.45, valid_from=date(2025, 1, 1), citations=["CGI, art. 197"])
     r = score_item(case, make_item(routing=Routing.CHANGED))
     assert r.routing_correct and r.value_correct and r.date_correct
     assert r.citation_correct and r.supportedness and r.retrieval_hit
@@ -109,12 +104,11 @@ def test_hallucination_is_the_mechanical_leg_only():
     case = make_case(routing=Routing.CHANGED, value=0.45)
     r = score_item(
         case,
-        make_item(routing=Routing.CHANGED, citation_verified=False,
-                  extract_offsets=(0, 10), verdict="fail"),
+        make_item(routing=Routing.CHANGED, citation_verified=False, extract_offsets=(0, 10), verdict="fail"),
     )
     assert r.extract_verbatim is True
-    assert r.hallucination is False       # the quote is real…
-    assert r.supportedness is False       # …but the critique rejected it
+    assert r.hallucination is False  # the quote is real…
+    assert r.supportedness is False  # …but the critique rejected it
     assert r.critique_pass is False
 
 
@@ -125,14 +119,13 @@ def test_rejected_proposal_is_never_routing_or_value_correct():
     such verdicts separated two models on one run. The pipeline does not stand
     behind a rejected proposal, so neither does the score."""
     case = make_case(routing=Routing.UNCHANGED, value=0.45, citations=["CGI, art. 197"])
-    r = score_item(case, make_item(routing=Routing.UNCHANGED, verdict="fail",
-                                   citation_verified=False))
+    r = score_item(case, make_item(routing=Routing.UNCHANGED, verdict="fail", citation_verified=False))
     assert r.rejected is True
     assert r.routing_correct is False
     assert r.value_correct is False
-    assert r.routing_actual == "unchanged"     # what the pipeline emitted is kept
+    assert r.routing_actual == "unchanged"  # what the pipeline emitted is kept
     assert r.critique_pass is False
-    assert r.extract_verbatim is True          # the evidence legs still describe it
+    assert r.extract_verbatim is True  # the evidence legs still describe it
     assert r.abstained is False
 
     # A dated change the critique rejected loses the date leg too.
@@ -149,7 +142,7 @@ def test_abstention_is_flagged_apart_from_a_wrong_answer():
     case = make_case(routing=Routing.CHANGED, value=0.45, citations=["CGI, art. 197"])
     r = score_item(case, make_item(routing=Routing.NOT_FOUND, with_proposal=False))
     assert r.abstained is True
-    assert r.value_correct is False       # still counted against the value KPI
+    assert r.value_correct is False  # still counted against the value KPI
     assert r.hallucination is False
 
 
@@ -172,9 +165,7 @@ def test_bracket_comparison():
     proposed = [Bracket(threshold=0, rate=0.0), Bracket(threshold=11497, rate=0.11)]
     assert values_equal(proposed, expected)
     assert not values_equal([Bracket(threshold=0, rate=0.0)], expected)
-    assert not values_equal(
-        [Bracket(threshold=0, rate=0.0), Bracket(threshold=11294, rate=0.11)], expected
-    )
+    assert not values_equal([Bracket(threshold=0, rate=0.0), Bracket(threshold=11294, rate=0.11)], expected)
 
 
 def test_a_band_without_rate_equals_a_zero_rate_band():
@@ -203,8 +194,7 @@ def test_hallucination_flag():
 
 def test_missed_proposal_scores_false():
     case = make_case(routing=Routing.UNCHANGED, value=0.45, citations=["CGI, art. 197"])
-    r = score_item(case, make_item(routing=Routing.NOT_FOUND, with_proposal=False,
-                                   trace_citation=None))
+    r = score_item(case, make_item(routing=Routing.NOT_FOUND, with_proposal=False, trace_citation=None))
     assert r.value_correct is False
     assert r.citation_correct is False
     assert r.retrieval_hit is False
@@ -241,7 +231,7 @@ def test_percent_literals_read_as_rates():
     assert values_equal("4.1%", 0.041)
     assert values_equal("8.72%", "8.72%")
     assert values_equal(0.03, "3%")
-    assert not values_equal("4.1%", 4.1)      # a bare 4.1 is not the same rate
+    assert not values_equal("4.1%", 4.1)  # a bare 4.1 is not the same rate
     assert not values_equal("4.1%", "4.2%")
     assert normalise_value("%") is None
 

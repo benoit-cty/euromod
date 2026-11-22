@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from datetime import date
 
+from nomokrisis_eval import benchmark
+from nomokrisis_eval.schema import CaseResult, Expected, GoldenCase
+from nomokrisis_eval.scoring import score_item
 from nomoscope_workflow import paramdb
 from nomoscope_workflow.schema import (
     Lineage,
@@ -13,11 +16,6 @@ from nomoscope_workflow.schema import (
     Routing,
     SourceType,
 )
-
-from nomokrisis_eval import benchmark
-from nomokrisis_eval.schema import CaseResult, Expected, GoldenCase
-from nomokrisis_eval.scoring import score_item
-
 from test_scoring import make_item
 
 AS_OF = date(2025, 7, 1)
@@ -27,12 +25,17 @@ def record(*rows: tuple, source_type: SourceType | None = None) -> ParameterReco
     """rows: (valid_from, valid_to, value, raw)."""
     return ParameterRecord(
         information=ParameterInformation(
-            country="FR", model_target="euromod://FR/bhotn_fr/def_const/$x",
-            value_type="scalar", unit="currency",
+            country="FR",
+            model_target="euromod://FR/bhotn_fr/def_const/$x",
+            value_type="scalar",
+            unit="currency",
         ),
         values=[
             ParameterValue(
-                value=value, valid_from=start, valid_to=end, source_type=source_type,
+                value=value,
+                valid_from=start,
+                valid_to=end,
+                source_type=source_type,
                 lineage=Lineage(model_answer=raw) if raw else None,
             )
             for start, end, value, raw in rows
@@ -87,10 +90,15 @@ def test_mid_year_component_on_the_reference_date():
 
 def bench_case(value, accept=None, openfisca=None, routing=Routing.CHANGED) -> GoldenCase:
     return GoldenCase(
-        id="bench:FR:2025:x", country="FR", language="fr",
-        parameter_target="euromod://FR/bhotn_fr/def_const/$x", as_of=AS_OF,
+        id="bench:FR:2025:x",
+        country="FR",
+        language="fr",
+        parameter_target="euromod://FR/bhotn_fr/def_const/$x",
+        as_of=AS_OF,
         expected=Expected(
-            routing=routing, value=value, accept=accept,
+            routing=routing,
+            value=value,
+            accept=accept,
             openfisca={"value": openfisca} if openfisca is not None else None,
         ),
     )
@@ -121,8 +129,12 @@ def test_rejected_proposal_loses_the_alternative_too():
 
 def result(routing_expected: str, **kwargs) -> CaseResult:
     return CaseResult(
-        case_id="c", country="FR", language="fr", routing_expected=routing_expected,
-        model_target="euromod://FR/bhotn_fr/def_const/$x", **kwargs,
+        case_id="c",
+        country="FR",
+        language="fr",
+        routing_expected=routing_expected,
+        model_target="euromod://FR/bhotn_fr/def_const/$x",
+        **kwargs,
     )
 
 
@@ -137,7 +149,10 @@ def test_matrix_cells():
     ]
     summary = benchmark.summarize_benchmark(rows)
     assert summary["matrix"]["changed"] == {
-        "same value": 1, "kept Y-1 value": 1, "different value": 1, "not found": 1,
+        "same value": 1,
+        "kept Y-1 value": 1,
+        "different value": 1,
+        "not found": 1,
     }
     assert summary["matrix"]["kept"] == {"same value": 1}
     assert summary["not_legislative"] == {"routed as expected": 1}
@@ -158,13 +173,20 @@ def test_policy_of_a_ref():
 def test_euromod_off_the_law_is_its_own_column_and_success():
     rows = [
         result("changed", proposed_value=1.0, value_correct=True, routing_actual="changed"),
-        result("changed", proposed_value=151.80, value_correct=False, routing_actual="changed",
-               euromod_discrepancy="stated"),
+        result(
+            "changed",
+            proposed_value=151.80,
+            value_correct=False,
+            routing_actual="changed",
+            euromod_discrepancy="stated",
+        ),
         result("changed", proposed_value=1.0, value_correct=False, routing_actual="changed"),
     ]
     summary = benchmark.summarize_benchmark(rows)
     assert summary["matrix"]["changed"] == {
-        "same value": 1, "EUROMOD off the law": 1, "different value": 1,
+        "same value": 1,
+        "EUROMOD off the law": 1,
+        "different value": 1,
     }
     headline = summary["headline"]
     assert headline["correct (same value, or routed around as expected)"] == "33.3% (1/3)"
@@ -177,9 +199,11 @@ def test_panel_draw_keeps_the_country_mix_and_ignores_order():
         made = bench_case(1.0, routing=routing)
         return made.model_copy(update={"id": f"bench:FR:2025:{i:03d}"})
 
-    cases = [case(i, Routing.CHANGED) for i in range(18)] + [
-        case(i, Routing.UNCHANGED) for i in range(18, 111)
-    ] + [case(i, Routing.NATIONAL_TEAM_SOURCE) for i in range(111, 117)]
+    cases = (
+        [case(i, Routing.CHANGED) for i in range(18)]
+        + [case(i, Routing.UNCHANGED) for i in range(18, 111)]
+        + [case(i, Routing.NATIONAL_TEAM_SOURCE) for i in range(111, 117)]
+    )
     drawn = benchmark.stratified_sample(cases, 50, seed=1)
     mix = {}
     for c in drawn:

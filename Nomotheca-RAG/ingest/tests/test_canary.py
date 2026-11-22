@@ -7,7 +7,6 @@ from datetime import date
 
 import psycopg
 import pytest
-
 from nomotheca_ingest.core.canary import check_canaries, check_fact
 from nomotheca_ingest.core.ir import CanaryFact
 from nomotheca_ingest.countries.registry import jurisdictions

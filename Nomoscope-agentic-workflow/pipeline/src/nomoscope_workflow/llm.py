@@ -11,12 +11,14 @@ from __future__ import annotations
 import logging
 from datetime import date
 
+from nomos_llm.providers import *  # noqa: F403  (re-exported)
+from nomos_llm.providers import (
+    _AZURE_RESPONSES_DEPLOYMENT,  # noqa: F401
+    prompt_budget_chars,
+    run_agent,
+)
 from pydantic_ai.exceptions import UserError
 from tenacity import retry, retry_if_not_exception_type, stop_after_attempt, wait_random_exponential
-
-from nomos_llm.providers import *  # noqa: F401,F403  (re-exported)
-from nomos_llm.providers import _AZURE_RESPONSES_DEPLOYMENT  # noqa: F401
-from nomos_llm.providers import prompt_budget_chars, run_agent
 
 from . import prompts
 from .schema import CritiqueFindings, ParameterRecord, ProposalDraft, RetrievalHit
@@ -28,9 +30,13 @@ def _fitted(model: str, step: str, before: list[RetrievalHit], after: list[Retri
     if len(after) < len(before):
         log.warning(
             "%s: %d of %d retrieved chunks dropped to fit %s's context window",
-            step, len(before) - len(after), len(before), model,
+            step,
+            len(before) - len(after),
+            len(before),
+            model,
         )
     return after
+
 
 #: Retry transient provider failures only. A configuration error (an unknown
 #: provider, a missing key or base URL: `get_model` raises ValueError, and
@@ -81,9 +87,7 @@ def critique_with_llm(
             prompts.build_critique_user(record, as_of, draft, [], mechanical_notes)
         )
         cited = {draft.citation_chunk_id, *(op.citation_chunk_id for op in draft.operands or [])}
-        hits = _fitted(
-            model, "critique", hits, prompts.fit_hits(hits, budget - fixed, keep=cited - {None})
-        )
+        hits = _fitted(model, "critique", hits, prompts.fit_hits(hits, budget - fixed, keep=cited - {None}))
     return run_agent(
         model,
         prompts.CRITIQUE_SYSTEM,

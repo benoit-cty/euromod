@@ -10,8 +10,11 @@ from nomoscope_workflow.schema import ParameterInformation, ParameterRecord, Par
 def make_record() -> ParameterRecord:
     return ParameterRecord(
         information=ParameterInformation(
-            country="FR", model_target="euromod://FR/bhotn_fr/def_const/$bho_r0_amt1",
-            value_type="scalar", unit="currency", last_confirmed_valid_on=date(2025, 9, 1),
+            country="FR",
+            model_target="euromod://FR/bhotn_fr/def_const/$bho_r0_amt1",
+            value_type="scalar",
+            unit="currency",
+            last_confirmed_valid_on=date(2025, 9, 1),
         ),
         values=[
             ParameterValue(value=4949.0, valid_from=date(2023, 1, 1), valid_to=date(2023, 12, 31)),

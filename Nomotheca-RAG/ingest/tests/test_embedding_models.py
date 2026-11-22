@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from nomotheca_ingest.core.embedding_models import (
     DEFAULT_MODEL,
     MODELS,

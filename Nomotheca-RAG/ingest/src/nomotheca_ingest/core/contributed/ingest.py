@@ -13,8 +13,8 @@ from nomotheca_ingest.core import extract
 from nomotheca_ingest.core.contributed.fetch import SourceDocument, read_input
 from nomotheca_ingest.core.contributed.kinds import ContributedFields, stated_fields
 from nomotheca_ingest.core.db import connect, ensure_source, fetch_run
-from nomotheca_ingest.core.errors import RefusalError
 from nomotheca_ingest.core.documents import DocumentSpec, build_document
+from nomotheca_ingest.core.errors import RefusalError
 from nomotheca_ingest.core.ir import (
     IngestMode,
     InstrumentRelationIR,
@@ -26,7 +26,6 @@ from nomotheca_ingest.core.ir import (
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.reparse import ReparseStats, reload
 from nomotheca_ingest.core.routing import RouteKind, RouteOutcome
-
 
 ID_SYSTEM = "contributed"
 SOURCE_TYPE = "contributed_document"
@@ -62,9 +61,7 @@ class DocumentResult:
     implements: str | None = None
 
 
-def _ingest_through_adapter(
-    outcome: RouteOutcome, database_url: str, max_items: int
-) -> DocumentResult:
+def _ingest_through_adapter(outcome: RouteOutcome, database_url: str, max_items: int) -> DocumentResult:
     """Hand a known official source to the existing legislation ingester."""
     from nomotheca_ingest.core.pipeline import run_database_ingest
 
@@ -215,8 +212,7 @@ def ingest_document(
             report(
                 {
                     "phase": "adapter",
-                    "detail": f"{outcome.source_name}: {outcome.national_id} "
-                    f"(resolved by {outcome.resolved_by})",
+                    "detail": f"{outcome.source_name}: {outcome.national_id} (resolved by {outcome.resolved_by})",
                 }
             )
             return _ingest_through_adapter(outcome, database_url, max_items)
@@ -234,9 +230,7 @@ def ingest_document(
 
     report({"phase": "fetch", "detail": url or file_path or ""})
     document = read_input(url, file_path)
-    report(
-        {"phase": "archive", "detail": f"{len(document.raw)} bytes, {document.content_type}"}
-    )
+    report({"phase": "archive", "detail": f"{len(document.raw)} bytes, {document.content_type}"})
 
     def register_source(conn: psycopg.Connection) -> None:
         ensure_source(
@@ -249,9 +243,7 @@ def ingest_document(
             note="documents contributed by a reviewer from the validation UI or the CLI",
         )
 
-    with fetch_run(
-        database_url, fields.source_code, SKILL_VERSION, trigger, setup=register_source
-    ) as run:
+    with fetch_run(database_url, fields.source_code, SKILL_VERSION, trigger, setup=register_source) as run:
         result = DocumentResult(
             jurisdiction=fields.jurisdiction,
             source_code=fields.source_code,
@@ -370,8 +362,12 @@ def reparse_documents(
                 report({"phase": "skipped", "detail": f"{title}: no snapshot or no version"})
                 continue
             fields = ContributedFields(
-                jurisdiction=code, lang=lang, title=title, kind=meta["kind"],
-                valid_from=valid_from, implements=implements,
+                jurisdiction=code,
+                lang=lang,
+                title=title,
+                kind=meta["kind"],
+                valid_from=valid_from,
+                implements=implements,
             )
             document = SourceDocument(
                 raw=bytes(snap[1]),

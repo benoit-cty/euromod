@@ -11,12 +11,10 @@ from datetime import date
 from uuid import uuid4
 
 import pytest
-
+from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef
 from nomotheca_ingest.countries.es.adapter import EsAdapter
 from nomotheca_ingest.countries.es.parser import parse_boe_xml
 from nomotheca_ingest.countries.es.resolver import EsResolver
-from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef
-
 
 ACT_PAYLOAD = b"""<?xml version="1.0" encoding="utf-8"?>
 <response>

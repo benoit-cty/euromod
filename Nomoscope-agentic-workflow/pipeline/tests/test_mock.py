@@ -6,7 +6,6 @@ from datetime import date
 
 from nomoscope_workflow import mock
 from nomoscope_workflow.schema import Bracket
-
 from workflow_fixtures import FR_TEXT, _hit, _record
 
 

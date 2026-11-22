@@ -48,7 +48,8 @@ def test_a_citation_string_in_the_id_field_resolves_to_the_one_chunk_with_that_c
     # «1/ 730 de» for the chunk's «1/ 730e de». Resolved, the extract check
     # then fails on the right chunk and the retry is shown the passage.
     d622 = RetrievalHit(
-        chunk_id="50001fd2", citation="LEGITEXT000006073189, art. D622-7",
+        chunk_id="50001fd2",
+        citation="LEGITEXT000006073189, art. D622-7",
         content="égal à 1/ 730e de la moyenne",
     )
     other = RetrievalHit(chunk_id="dd6c8afa", citation="JORFTEXT000050854392, art. 1", content="3 925 euros")
@@ -57,5 +58,11 @@ def test_a_citation_string_in_the_id_field_resolves_to_the_one_chunk_with_that_c
     assert _resolve_chunk_id(hits, "JORFTEXT000050854392", "3 925 euros") == "dd6c8afa"
     assert _resolve_chunk_id(hits, "LEGITEXT000006073189, art. D622-8", "égal à 1/ 730 de") is None
     # two versions of the article retrieved: no guess
-    assert _resolve_chunk_id([d622, d622.model_copy(update={"chunk_id": "4097b979"})],
-                             "LEGITEXT000006073189, art. D622-7", "égal à 1/ 730 de") is None
+    assert (
+        _resolve_chunk_id(
+            [d622, d622.model_copy(update={"chunk_id": "4097b979"})],
+            "LEGITEXT000006073189, art. D622-7",
+            "égal à 1/ 730 de",
+        )
+        is None
+    )

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from nomotheca_ingest.core.rerankers import get_reranker
 from nomotheca_ingest.rerank import handle_request
 

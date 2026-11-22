@@ -10,7 +10,6 @@ from typing import Any
 
 import psycopg
 import pytest
-
 from nomotheca_mcp import encoder as encoder_module
 from nomotheca_mcp.encoder import (
     ALIVE_WORKERS_SQL,
@@ -23,11 +22,11 @@ from nomotheca_mcp.encoder import (
 
 
 class FakeCursor:
-    def __init__(self, conn: "FakeConnection") -> None:
+    def __init__(self, conn: FakeConnection) -> None:
         self._conn = conn
         self._rows: list[tuple] = []
 
-    def __enter__(self) -> "FakeCursor":
+    def __enter__(self) -> FakeCursor:
         return self
 
     def __exit__(self, *exc: object) -> None:

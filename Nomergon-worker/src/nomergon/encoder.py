@@ -35,7 +35,7 @@ def describe_device() -> str:
     if torch.cuda.is_available():
         try:
             return f"cuda:{torch.cuda.get_device_name(0)}"
-        except Exception:  # noqa: BLE001 - a broken driver reads as no GPU
+        except Exception:
             return "cpu"
     return "cpu"
 
@@ -73,7 +73,7 @@ def _close(conn: Any) -> None:
     if conn is not None:
         try:
             conn.close()
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
 
@@ -106,7 +106,7 @@ class EncodeLane(threading.Thread):
                     try:
                         conn = db.connect(self.cfg.database_url)
                         backoff = RECONNECT_MIN_SECONDS
-                    except Exception as exc:  # noqa: BLE001 - the database is down: wait for it
+                    except Exception as exc:
                         log.warning("encode lane: cannot connect (%s); retry in %.0fs", _first_line(exc), backoff)
                         self.stop_event.wait(backoff)
                         backoff = min(backoff * 2, RECONNECT_MAX_SECONDS)
@@ -117,7 +117,7 @@ class EncodeLane(threading.Thread):
                         self.stop_event.wait(self.cfg.encode_poll_seconds)
                         continue
                     self._answer(conn, job)
-                except Exception as exc:  # noqa: BLE001 - reconnect on the next turn
+                except Exception as exc:
                     log.warning("encode lane: database error (%s); reconnecting", _first_line(exc))
                     _close(conn)
                     conn = None
@@ -141,7 +141,7 @@ class EncodeLane(threading.Thread):
                 time.monotonic() - started,
             )
             return True
-        except Exception as exc:  # noqa: BLE001 - reported per job, retried later
+        except Exception as exc:
             self.load_error = f"{type(exc).__name__}: {exc}"
             log.error("encoder failed to load %s: %s", self.cfg.embedding_model_path, self.load_error)
             return False
@@ -166,7 +166,7 @@ class EncodeLane(threading.Thread):
 
             backend = self.backend if model_id == 1 else self._backend_for(model_id)
             response = handle_request(backend, payload)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             db.finish_job(conn, job_id, "failed", error=f"{type(exc).__name__}: {exc}")
             return
         db.finish_job(conn, job_id, "succeeded", result=response)

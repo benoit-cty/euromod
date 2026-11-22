@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime, timezone
 
 from nomokrisis_eval import runner
 from nomokrisis_eval.parameter_store import country_targets
@@ -34,10 +34,17 @@ def test_country_targets_reads_the_country_in_spine_order():
 
 def _manifest(dataset_version: str, blind_before: date | None = None) -> RunManifest:
     return RunManifest(
-        run_id="r", created_at=datetime.now(timezone.utc), as_of=date(2025, 7, 1),
-        model="mock/extractor", model_provider="mock", model_name="extractor",
-        prompt_version="p", agent_version="a", eval_version="e",
-        dataset_version=dataset_version, blind_before=blind_before,
+        run_id="r",
+        created_at=datetime.now(UTC),
+        as_of=date(2025, 7, 1),
+        model="mock/extractor",
+        model_provider="mock",
+        model_name="extractor",
+        prompt_version="p",
+        agent_version="a",
+        eval_version="e",
+        dataset_version=dataset_version,
+        blind_before=blind_before,
     )
 
 

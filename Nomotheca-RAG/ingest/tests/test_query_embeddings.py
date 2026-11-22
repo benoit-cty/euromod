@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from nomotheca_ingest.query_embeddings import handle_request
 
 
@@ -13,9 +12,7 @@ class FakeBackend:
     def encode(self, inputs):
         vectors = []
         for text in inputs:
-            if text == "query":
-                vectors.append([1.0, 0.0])
-            elif text == "same":
+            if text == "query" or text == "same":
                 vectors.append([1.0, 0.0])
             elif text == "orthogonal":
                 vectors.append([0.0, 1.0])
@@ -39,7 +36,9 @@ def test_empty_sentences_are_fine():
     assert handle_request(FakeBackend(), {"query": "query", "sentences": []}) == {"similarities": []}
 
 
-@pytest.mark.parametrize("request_", [{"query": "  "}, {"query": "query", "sentences": "not a list"}, {"query": "query", "sentences": [1]}])
+@pytest.mark.parametrize(
+    "request_", [{"query": "  "}, {"query": "query", "sentences": "not a list"}, {"query": "query", "sentences": [1]}]
+)
 def test_bad_requests_raise(request_):
     with pytest.raises(ValueError):
         handle_request(FakeBackend(), request_)

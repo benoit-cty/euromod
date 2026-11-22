@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from datetime import date
 
+from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 from nomotheca_ingest.countries.ie.fetcher import (
     ACT_INDEX_PREFIX,
     SOURCE_CODE_EISB,
@@ -12,8 +13,6 @@ from nomotheca_ingest.countries.ie.fetcher import (
 )
 from nomotheca_ingest.countries.ie.parser import BASELINE_ACTS
 from nomotheca_ingest.countries.ie.revised import SOURCE_CODE_LRC, is_revised
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
-
 
 # Curated aliases for the principal acts EUROMOD IE cites by name. Everything
 # else resolves through the Oireachtas act index for a year.

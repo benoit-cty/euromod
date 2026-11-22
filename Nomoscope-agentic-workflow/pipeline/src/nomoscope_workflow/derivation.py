@@ -13,10 +13,10 @@ import math
 import re
 from decimal import ROUND_HALF_UP, Decimal
 
-from . import issues as issue_text
 from . import idiom, quotes
-from .values import eval_arith
+from . import issues as issue_text
 from .schema import ParameterValue, ProposalDraft, RetrievalHit
+from .values import eval_arith
 
 #: Figures a derivation may use without quoting them: calendar and scaling
 #: constants (months, quarters, weeks, days in a year, percent, per mille).
@@ -26,6 +26,7 @@ from .schema import ParameterValue, ProposalDraft, RetrievalHit
 #: Everything else is a fact about the law and must be an operand quoted
 #: verbatim from a retrieved chunk — that is what keeps a derived value inside
 
+
 def round_half_up(value: float, digits: int) -> float:
     """Round half-up to `digits` decimals, as legal texts do (2.5 -> 3), via
     the exact decimal of the float's repr — the one rounding of this module."""
@@ -33,9 +34,7 @@ def round_half_up(value: float, digits: int) -> float:
 
 
 #: the anti-hallucination contract.
-DERIVATION_CONSTANTS = frozenset(
-    {1.0, 2.0, 3.0, 4.0, 6.0, 9.0, 12.0, 13.0, 52.0, 100.0, 365.0, 366.0, 1000.0}
-)
+DERIVATION_CONSTANTS = frozenset({1.0, 2.0, 3.0, 4.0, 6.0, 9.0, 12.0, 13.0, 52.0, 100.0, 365.0, 366.0, 1000.0})
 #: Most decimal places `round(x, n)` may keep. The precision is not a fact about
 #: the law the way a figure is: it is the rounding rule the text itself states —
 #: «Les taux ainsi appelés sont arrondis au centième» (AGIRC-ARRCO art. 36: 6,20 %
@@ -57,11 +56,7 @@ def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
         raise ValueError(f"derivation is not an arithmetic expression ({exc.msg})") from None
 
     def leaf(node: ast.AST) -> float:
-        if (
-            isinstance(node, ast.Constant)
-            and isinstance(node.value, (int, float))
-            and not isinstance(node.value, bool)
-        ):
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
             if float(node.value) not in DERIVATION_CONSTANTS:
                 raise ValueError(
                     f"bare figure {node.value} is not a quoted operand (only "
@@ -86,13 +81,9 @@ def evaluate_derivation(expression: str, operands: dict[str, float]) -> float:
                 and type(digits.value) is int
                 and 0 <= digits.value <= DERIVATION_MAX_DIGITS
             ):
-                raise ValueError(
-                    f"round's digits must be an integer literal from 0 to {DERIVATION_MAX_DIGITS}"
-                )
+                raise ValueError(f"round's digits must be an integer literal from 0 to {DERIVATION_MAX_DIGITS}")
             return round_half_up(ev(node.args[0]), digits.value)
-        raise ValueError(
-            "only + - * / and round(x, n) over operand names and calendar constants are allowed"
-        )
+        raise ValueError("only + - * / and round(x, n) over operand names and calendar constants are allowed")
 
     def ev(node: ast.AST) -> float:
         # The one arithmetic evaluator (values.eval_arith) with the
@@ -138,11 +129,7 @@ def _table_cells(run: str) -> list[str]:
     that is not three digits; «1 801,80» stays one number."""
     cells: list[list[str]] = []
     for token in re.split(r"[\s\u00a0\u202f]+", run):
-        joins = (
-            cells
-            and not re.search(r"[.,]\d+$", cells[-1][-1])
-            and re.fullmatch(r"\d{3}(?:[.,]\d+)?", token)
-        )
+        joins = cells and not re.search(r"[.,]\d+$", cells[-1][-1]) and re.fullmatch(r"\d{3}(?:[.,]\d+)?", token)
         if joins:
             cells[-1].append(token)
         else:
@@ -218,7 +205,9 @@ def _check_derivation(
     figures = (
         [f for band in draft.value_brackets for f in (band.threshold, band.rate, band.amount) if f is not None]
         if draft.value_brackets is not None
-        else [draft.value_scalar] if draft.value_scalar is not None else []
+        else [draft.value_scalar]
+        if draft.value_scalar is not None
+        else []
     )
     if not figures:
         return ["derivation: no value to derive"], [], None

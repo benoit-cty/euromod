@@ -10,21 +10,44 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-
 from nomoscope_workflow import retrieval
 from nomoscope_workflow.config import load_config
 
 AS_OF = date(2025, 6, 1)
 
 CASES = [
-    ("ES", "artículo 66.2 de la Ley 35/2006, del Impuesto sobre la Renta de las Personas Físicas, in the version applicable to 2025", "LIRPF Artículo 66"),
-    ("NL", "de tabel in artikel 2.10, eerste lid, van de Wet inkomstenbelasting 2001, zoals geldend voor 2025", "Wet IB 2001, artikel 2.10"),
-    ("FR", "article D. 633-3 du code de la sécurité sociale, in the version applicable to contribution periods beginning 1 January 2025", "LEGITEXT000006073189, art. D633-3"),
+    (
+        "ES",
+        "artículo 66.2 de la Ley 35/2006, del Impuesto sobre la Renta de las Personas Físicas, in the version applicable to 2025",
+        "LIRPF Artículo 66",
+    ),
+    (
+        "NL",
+        "de tabel in artikel 2.10, eerste lid, van de Wet inkomstenbelasting 2001, zoals geldend voor 2025",
+        "Wet IB 2001, artikel 2.10",
+    ),
+    (
+        "FR",
+        "article D. 633-3 du code de la sécurité sociale, in the version applicable to contribution periods beginning 1 January 2025",
+        "LEGITEXT000006073189, art. D633-3",
+    ),
     ("FR", "l'arrêté fixant le plafond de la sécurité sociale pour 2025", "JORFTEXT000050854392"),
     # 17 Nov panel: three acts titled «LIETUVOS RESPUBLIKOS» outranked the act named.
-    ("LT", "Lietuvos Respublikos išmokų vaikams įstatymo 6 straipsnis (2025-07-01 galiojusi suvestinė redakcija)", "IVĮ 6 straipsnis"),
-    ("LT", "Lietuvos Respublikos nedarbo socialinio draudimo įstatymo 8 straipsnis (2025-07-01 galiojusi suvestinė redakcija)", "NSDĮ 8 straipsnis"),
-    ("IE", "the provision of the Finance Act 2024 (or other 2025 Budget implementing legislation) amending section 461 of the Taxes Consolidation Act 1997 to set the personal tax credit", "Finance Act 2024, s. 3"),
+    (
+        "LT",
+        "Lietuvos Respublikos išmokų vaikams įstatymo 6 straipsnis (2025-07-01 galiojusi suvestinė redakcija)",
+        "IVĮ 6 straipsnis",
+    ),
+    (
+        "LT",
+        "Lietuvos Respublikos nedarbo socialinio draudimo įstatymo 8 straipsnis (2025-07-01 galiojusi suvestinė redakcija)",
+        "NSDĮ 8 straipsnis",
+    ),
+    (
+        "IE",
+        "the provision of the Finance Act 2024 (or other 2025 Budget implementing legislation) amending section 461 of the Taxes Consolidation Act 1997 to set the personal tax credit",
+        "Finance Act 2024, s. 3",
+    ),
 ]
 
 
@@ -72,9 +95,12 @@ def test_the_article_between_two_retrieved_ones_is_filled(conn):
         pytest.skip("the AGIRC-ARRCO ANI (KALI) is not ingested on this database")
     scope = retrieval.jurisdiction_scope(conn, "FR", None)
     (ani,) = retrieval.instruments_of_chunks(conn, held)
-    assert ani == conn.execute(
-        "SELECT id::text AS id FROM instruments WHERE national_id = 'KALITEXT000036731682'"
-    ).fetchone()["id"]
+    assert (
+        ani
+        == conn.execute("SELECT id::text AS id FROM instruments WHERE national_id = 'KALITEXT000036731682'").fetchone()[
+            "id"
+        ]
+    )
     hits = retrieval.gap_articles(conn, scope, "fr", date(2025, 7, 1), held)
     filled = [h.citation.rsplit(", ", 1)[-1] for h in hits]
     assert filled == ["art. 36", "art. 37"]
@@ -86,14 +112,19 @@ def test_an_order_published_later_in_the_system_year_is_retrieved(conn):
     # 3 Nov full run: all 17 bhoey_fr parameters not_found on 1 July 2025; the
     # barème is the arrêté du 31 juillet 2025, in force from 2 August.
     scope = retrieval.jurisdiction_scope(conn, "FR", None)
-    if conn.execute(
-        "SELECT 1 FROM instruments WHERE national_id = 'JORFTEXT000052019353'"
-    ).fetchone() is None:
+    if conn.execute("SELECT 1 FROM instruments WHERE national_id = 'JORFTEXT000052019353'").fetchone() is None:
         pytest.skip("the arrêté du 31 juillet 2025 is not ingested on this database")
     query = "valeur faciale TTC du chèque énergie RFR / UC"  # FTS leg only: no encoder in the test
     on_july = retrieval.hybrid_search(conn, scope, "fr", date(2025, 7, 1), query, 1, 15)
     later = retrieval.later_in_year(
-        conn, scope, "fr", date(2025, 7, 1), date(2025, 12, 31), query, 1, 15,
+        conn,
+        scope,
+        "fr",
+        date(2025, 7, 1),
+        date(2025, 12, 31),
+        query,
+        1,
+        15,
         known={h.chunk_id for h in on_july},
     )
     assert any(h.citation == "JORFTEXT000052019353, art. 2" for h in later), [h.citation for h in later]

@@ -5,10 +5,9 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-from pydantic_ai.messages import ModelRequest, ModelResponse
-
 from nomoscope_workflow import chat, quotes, retrieval
 from nomoscope_workflow.config import load_config
+from pydantic_ai.messages import ModelRequest, ModelResponse
 
 CHUNK_A = "11111111-1111-1111-1111-111111111111"
 CHUNK_B = "22222222-2222-2222-2222-222222222222"
@@ -60,7 +59,11 @@ def test_two_candidate_chunks_keep_the_quote_unverified(fake_verify) -> None:
 def test_history_carries_earlier_quotes_so_a_follow_up_can_name_them() -> None:
     messages = [
         chat.ChatMessage(role="user", content="barème ?"),
-        chat.ChatMessage(role="assistant", content="Voir [1].", quotes=[{"chunk_id": CHUNK_A, "citation": "CGI art. 197", "extract": "11 %"}]),
+        chat.ChatMessage(
+            role="assistant",
+            content="Voir [1].",
+            quotes=[{"chunk_id": CHUNK_A, "citation": "CGI art. 197", "extract": "11 %"}],
+        ),
     ]
     history = chat._history(messages)
     assert isinstance(history[0], ModelRequest) and isinstance(history[1], ModelResponse)

@@ -10,10 +10,8 @@ import typer
 from nomoscope_workflow.schema import system_year_anchor
 
 from .. import build_dataset as builder
-from .. import curated_golden
+from .. import curated_golden, golden_store, openfisca_golden
 from .. import db as evaldb
-from .. import golden_store
-from .. import openfisca_golden
 from ..config import load_eval_config
 from ..import_golden import (
     DEFAULT_DATASET_DIR,
@@ -121,9 +119,12 @@ def build_dataset_cmd(
     source_file: Path = typer.Argument(..., help="Trusted source document (country report excerpt, notes)"),
     country: str = typer.Option(..., "--country", help="ISO country code, e.g. FR"),
     as_of: str = typer.Option(..., "--as-of", help="Reference date, YYYY-MM-DD"),
-    language: str = typer.Option(None, "--language", help="Source-legislation language (default: country code lowercased)"),
+    language: str = typer.Option(
+        None, "--language", help="Source-legislation language (default: country code lowercased)"
+    ),
     target: list[str] = typer.Option(
-        None, "--target",
+        None,
+        "--target",
         help="Parameter(s) to draft: euromod://… or group:<group_id> in the params DB "
         "(default: every parameter of the country)",
     ),
@@ -191,8 +192,13 @@ def build_openfisca_dataset(
     with evaldb.connect(cfg.database_url) as conn:
         header, entries = _selection_or_exit(conn, country, "openfisca")
         outcomes = openfisca_golden.build_dataset(
-            conn, header, entries, anchor,
-            country=country.upper(), limit=limit, fill_from_links=fill,
+            conn,
+            header,
+            entries,
+            anchor,
+            country=country.upper(),
+            limit=limit,
+            fill_from_links=fill,
         )
     written = _echo_outcomes(outcomes, 10)
     typer.echo(
@@ -223,7 +229,11 @@ def build_curated_dataset(
     with evaldb.connect(cfg.database_url) as conn:
         header, entries = _selection_or_exit(conn, country, "curated")
         outcomes = curated_golden.build_dataset(
-            conn, header, entries, anchor, country=country.upper(),
+            conn,
+            header,
+            entries,
+            anchor,
+            country=country.upper(),
             selection_name=f"{country.lower()}.json",
         )
     written = _echo_outcomes(outcomes, 20)
@@ -251,9 +261,7 @@ def verify(
             if case is None:
                 typer.echo(f"  ! unknown case {case_id}")
                 continue
-            typer.echo(
-                f"  {'verified' if case.verified else 'unverified'} {case_id} by {case.reviewed_by}"
-            )
+            typer.echo(f"  {'verified' if case.verified else 'unverified'} {case_id} by {case.reviewed_by}")
 
 
 @app.command("list-cases")
@@ -268,8 +276,7 @@ def list_cases(
     for case in cases:
         flag = "✓" if case.verified else ("rejected" if case.reviewed_by else "draft")
         typer.echo(
-            f"{flag:<8} {case.country} {case.language} as_of={case.as_of} "
-            f"routing={case.expected.routing:<12} {case.id}"
+            f"{flag:<8} {case.country} {case.language} as_of={case.as_of} routing={case.expected.routing:<12} {case.id}"
         )
     typer.echo(f"{len(cases)} case(s), golden_set_hash={golden_store.golden_set_hash(cases)}")
 
@@ -310,18 +317,14 @@ def _selection_kind_or_exit(conn, country: str, kind: str | None) -> str:
     if not kinds:
         typer.echo(f"no golden selection for {country.upper()} in eval.golden_selections")
     else:
-        typer.echo(
-            f"{country.upper()} has both a {' and a '.join(kinds)} selection — say which with --kind"
-        )
+        typer.echo(f"{country.upper()} has both a {' and a '.join(kinds)} selection — say which with --kind")
     raise typer.Exit(1)
 
 
 @app.command("selection-export")
 def selection_export(
     country: str = typer.Argument(..., help="ISO country code, e.g. ES"),
-    kind: str = typer.Option(
-        None, "--kind", help="curated | openfisca (default: the one kind the country has)"
-    ),
+    kind: str = typer.Option(None, "--kind", help="curated | openfisca (default: the one kind the country has)"),
     out: Path = typer.Option(None, "--out", help="Write to this file instead of stdout"),
 ) -> None:
     """Write a golden selection row as the JSON file it used to be (golden_sources/<cc>.json).
@@ -343,7 +346,7 @@ def selection_export(
 
 @app.command("selection-import")
 def selection_import(
-    file: Path = typer.Argument(..., help="A selection JSON file (header keys + \"entries\")"),
+    file: Path = typer.Argument(..., help='A selection JSON file (header keys + "entries")'),
     country: str = typer.Option(None, "--country", help="Override the country the file states"),
     kind: str = typer.Option(None, "--kind", help="curated | openfisca (default: the file's `corpus`, else its name)"),
 ) -> None:
@@ -441,9 +444,7 @@ def label_cases(
             else:
                 mark = "*"
             flags = f" +{','.join(drafted.hazards)}" if drafted.hazards else ""
-            typer.echo(
-                f"{mark} {case.id:<52} {case.difficulty or '-':<9} -> {drafted.difficulty:<9}{flags}"
-            )
+            typer.echo(f"{mark} {case.id:<52} {case.difficulty or '-':<9} -> {drafted.difficulty:<9}{flags}")
             for reason in drafted.reasons:
                 typer.echo(f"      · {reason}")
             if mark == "*":
@@ -452,21 +453,19 @@ def label_cases(
                 locked.append(case)
 
         typer.echo(
-            "\ndifficulty: " + "  ".join(f"{k}={v}" for k, v in sorted(buckets.items()))
-            + "\nhazards:    " + ("  ".join(f"{k}={v}" for k, v in sorted(hazard_counts.items())) or "none")
+            "\ndifficulty: "
+            + "  ".join(f"{k}={v}" for k, v in sorted(buckets.items()))
+            + "\nhazards:    "
+            + ("  ".join(f"{k}={v}" for k, v in sorted(hazard_counts.items())) or "none")
         )
         # The drafter can see three hazards and is blind to three others; say so,
         # so a reviewer knows the flag list is a floor rather than a verdict.
-        typer.echo(
-            "not drafted (a human has to add these): mid_year_change, unit_conversion, "
-            "budget_act_window"
-        )
+        typer.echo("not drafted (a human has to add these): mid_year_change, unit_conversion, budget_act_window")
 
         if locked:
             typer.echo(
                 f"\n{len(locked)} case(s) marked '=' keep a label set by hand in "
-                "the selection and are left alone: "
-                + ", ".join(c.id for c in locked)
+                "the selection and are left alone: " + ", ".join(c.id for c in locked)
             )
         if not changed:
             typer.echo("\nevery case already carries its drafted label.")

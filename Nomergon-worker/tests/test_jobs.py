@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from nomergon import jobs
 from nomergon.config import WorkerConfig
 
@@ -25,7 +24,9 @@ def cfg(tmp_path: Path) -> WorkerConfig:
 
 
 def build(job_type: str, payload: dict, cfg: WorkerConfig, scratch_dir: Path | None = None) -> list[str]:
-    return jobs.build_command(job_type, jobs.parse_payload(job_type, payload), cfg, scratch_dir=scratch_dir or cfg.repo_root)
+    return jobs.build_command(
+        job_type, jobs.parse_payload(job_type, payload), cfg, scratch_dir=scratch_dir or cfg.repo_root
+    )
 
 
 def test_every_contract_job_type_has_a_payload_model() -> None:
@@ -76,7 +77,9 @@ def test_workflow_argv(cfg: WorkerConfig) -> None:
 
 
 def test_workflow_model_and_force(cfg: WorkerConfig) -> None:
-    argv = build("workflow", {"targets": ["euromod://FR/x"], "year": 2024, "model": "mock/extractor", "force": True}, cfg)
+    argv = build(
+        "workflow", {"targets": ["euromod://FR/x"], "year": 2024, "model": "mock/extractor", "force": True}, cfg
+    )
     assert argv[-5:] == ["--year", "2024", "--model", "mock/extractor", "--force"]
 
 
@@ -155,7 +158,13 @@ def test_ingest_typed_payloads(cfg: WorkerConfig) -> None:
         "implements": "JORFTEXT000051168007",
     }
     assert build("ingest", typed, cfg)[3:] == ["document", *DOCUMENT_ARGS, "--database-url", DB]
-    citation = {"command": "citation", "jurisdiction": "fr", "citation": "CGI art. 197", "as_of": "2025-06-01", "max_items": 50}
+    citation = {
+        "command": "citation",
+        "jurisdiction": "fr",
+        "citation": "CGI art. 197",
+        "as_of": "2025-06-01",
+        "max_items": 50,
+    }
     assert build("ingest", citation, cfg)[3:] == [
         "citation", "fr", "CGI art. 197", "2025-06-01", "--max-items", "50", "--database-url", DB,
     ]  # fmt: skip
@@ -163,7 +172,12 @@ def test_ingest_typed_payloads(cfg: WorkerConfig) -> None:
     assert build("ingest", {"command": "citation", "args": legacy}, cfg)[3:] == [
         "citation", *legacy, "--database-url", DB,
     ]  # fmt: skip
-    instrument = {"command": "instrument", "jurisdiction": "fr", "national_id": "KALITEXT000005678", "source_code": "FR-KALI"}
+    instrument = {
+        "command": "instrument",
+        "jurisdiction": "fr",
+        "national_id": "KALITEXT000005678",
+        "source_code": "FR-KALI",
+    }
     assert build("ingest", instrument, cfg)[3:] == [
         "instrument", "fr", "KALITEXT000005678", "--source-code", "FR-KALI", "--database-url", DB,
     ]  # fmt: skip
@@ -222,7 +236,9 @@ def test_ingest_files_only_from_the_document_dir(cfg: WorkerConfig, tmp_path: Pa
             jobs.build_command("ingest", payload, cfg, scratch_dir=tmp_path)
     cfg.document_dir = tmp_path / "contributed"
     inside = jobs.parse_payload("ingest", {"command": "route", "source": "ani-apec-2011.md"})
-    assert jobs.build_command("ingest", inside, cfg, scratch_dir=tmp_path)[4] == str((tmp_path / "contributed" / "ani-apec-2011.md").resolve())
+    assert jobs.build_command("ingest", inside, cfg, scratch_dir=tmp_path)[4] == str(
+        (tmp_path / "contributed" / "ani-apec-2011.md").resolve()
+    )
     for source in ("../.env", "/proc/self/environ"):
         outside = jobs.parse_payload("ingest", {"command": "route", "source": source})
         with pytest.raises(ValueError, match="under WORKER_DOCUMENT_DIR"):

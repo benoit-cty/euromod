@@ -5,10 +5,6 @@ from __future__ import annotations
 import re
 from datetime import date
 
-from nomotheca_ingest.countries.es.fetcher import SOURCE_CODE, fetch_boe
-from nomotheca_ingest.countries.es.parser import parse_boe_xml
-from nomotheca_ingest.countries.es.resolver import EsResolver, canary_facts
-from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
 from nomotheca_ingest.core.ir import (
     CanaryFact,
     CitationRef,
@@ -20,7 +16,10 @@ from nomotheca_ingest.core.ir import (
     WorkItem,
 )
 from nomotheca_ingest.core.snapshots import SnapshotClient
-
+from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
+from nomotheca_ingest.countries.es.fetcher import SOURCE_CODE, fetch_boe
+from nomotheca_ingest.countries.es.parser import parse_boe_xml
+from nomotheca_ingest.countries.es.resolver import EsResolver, canary_facts
 
 ES_URL_SOURCE = UrlSource(
     name="BOE",

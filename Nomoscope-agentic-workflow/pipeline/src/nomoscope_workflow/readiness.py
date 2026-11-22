@@ -56,7 +56,7 @@ ORDER BY count(c.id) DESC
 class ActStatus:
     """One finance-act vintage as seen by the corpus."""
 
-    vintage: int          # the year the act is FOR (LF pour <vintage>)
+    vintage: int  # the year the act is FOR (LF pour <vintage>)
     roles: tuple[str, ...]  # 'in_force' and/or 'income_year' — which parameters need it
     national_id: str | None = None
     title: str | None = None
@@ -73,9 +73,7 @@ class ActStatus:
         return self.chunks - self.embedded
 
 
-def finance_act_readiness(
-    conn: psycopg.Connection, country: str, year: int
-) -> list[ActStatus]:
+def finance_act_readiness(conn: psycopg.Connection, country: str, year: int) -> list[ActStatus]:
     """Corpus status of the finance-act vintages system year `year` needs.
 
     Empty list when no probe is configured for the country.
@@ -94,14 +92,10 @@ def vintages_for(year: int) -> list[tuple[int, tuple[str, ...]]]:
     return [(vintage, tuple(roles)) for vintage, roles in sorted(needs.items())]
 
 
-def _status(
-    conn: psycopg.Connection, country: str, pattern: str, vintage: int, roles: tuple[str, ...]
-) -> ActStatus:
+def _status(conn: psycopg.Connection, country: str, pattern: str, vintage: int, roles: tuple[str, ...]) -> ActStatus:
     status = ActStatus(vintage=vintage, roles=roles)
     with conn.cursor(row_factory=dict_row) as cur:
-        row = cur.execute(
-            _STATUS_SQL, {"country": country, "pattern": pattern.format(year=vintage)}
-        ).fetchone()
+        row = cur.execute(_STATUS_SQL, {"country": country, "pattern": pattern.format(year=vintage)}).fetchone()
     if row is not None:
         status.national_id = row["national_id"]
         status.title = row["title"]
@@ -112,9 +106,7 @@ def _status(
 
 def describe(status: ActStatus, income_year_params: int = 0) -> str:
     """One human-readable banner line for the CLI."""
-    need = " and ".join(
-        "in-force params" if role == "in_force" else "income-year params" for role in status.roles
-    )
+    need = " and ".join("in-force params" if role == "in_force" else "income-year params" for role in status.roles)
     head = f"  finance act for {status.vintage} ({need}): "
     if not status.present:
         line = head + "✗ not in corpus"

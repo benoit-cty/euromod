@@ -31,7 +31,13 @@ def test_embedding_process_stays_on_the_cpu_environment_by_default(tmp_path: Pat
 
     assert spec.cuda is False
     assert spec.command == [
-        "uv", "run", "--extra", "embeddings", "python", "-m", "nomotheca_ingest.query_embeddings",
+        "uv",
+        "run",
+        "--extra",
+        "embeddings",
+        "python",
+        "-m",
+        "nomotheca_ingest.query_embeddings",
     ]
     assert "UV_PROJECT_ENVIRONMENT" not in spec.env
 
@@ -90,16 +96,28 @@ def test_scout_ingest_uses_nomos_python(tmp_path: Path, monkeypatch) -> None:
     args = scout_ingest.instrument_args(cfg, "FR", "JORFTEXT000051168007")
     assert scout_ingest.run_ingest_cli(cfg, args, "JORFTEXT000051168007") is None
     assert calls[0]["command"] == [
-        "/opt/worker/bin/python", "-m", "nomotheca_ingest.cli",
-        "instrument", "fr", "JORFTEXT000051168007", "--database-url", "postgresql://u@h/db",
+        "/opt/worker/bin/python",
+        "-m",
+        "nomotheca_ingest.cli",
+        "instrument",
+        "fr",
+        "JORFTEXT000051168007",
+        "--database-url",
+        "postgresql://u@h/db",
     ]
     assert calls[0]["cwd"] == Path.cwd()
     assert "VIRTUAL_ENV" not in calls[0]["env"]
 
     assert scout_ingest.build_embeddings(cfg) is None
     assert calls[1]["command"] == [
-        "/opt/worker/bin/python", "-m", "nomotheca_ingest.cli", "embeddings", "build",
-        "--database-url", "postgresql://u@h/db", "--no-progress",
+        "/opt/worker/bin/python",
+        "-m",
+        "nomotheca_ingest.cli",
+        "embeddings",
+        "build",
+        "--database-url",
+        "postgresql://u@h/db",
+        "--no-progress",
     ]
 
 
@@ -111,7 +129,10 @@ def test_embedding_model_args_never_send_the_openvino_export_to_the_gpu(tmp_path
 
     assert _embedding_model_args(directory, cuda=True) == []
     assert _embedding_model_args(directory, cuda=False) == [
-        "--backend", "openvino", "--model-path", "models/bge-m3-openvino",
+        "--backend",
+        "openvino",
+        "--model-path",
+        "models/bge-m3-openvino",
     ]
 
     torch_model = directory / "models" / "bge-m3"

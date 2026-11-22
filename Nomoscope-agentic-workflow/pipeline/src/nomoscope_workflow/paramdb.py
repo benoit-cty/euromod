@@ -121,7 +121,7 @@ def normalise_value(value) -> tuple[float | None, str]:
 # literal and the IE export a few (`4.1%`); without reading them the store held
 # no scalar and a correct 0.495 proposal came back `changed`. The parser is
 # values.percent_literal, shared with the eval's scoring.
-from .values import percent_literal  # noqa: E402,F401
+from .values import percent_literal  # noqa: E402
 
 
 def derive_system_year(valid_from: str, valid_to: str | None) -> int | None:
@@ -174,9 +174,7 @@ def ingest_file(conn: psycopg.Connection, path: Path) -> dict:
             info = record["information"]
             parameter_id = _upsert_parameter(conn, info, str(path))
             stats["parameters"] += 1
-            stats["model_values"] += _replace_values(
-                conn, parameter_id, record.get("values", []), info
-            )
+            stats["model_values"] += _replace_values(conn, parameter_id, record.get("values", []), info)
             stats["usage_edges"] += _replace_usage(conn, parameter_id, info.get("usage") or {})
         for group in groups:
             _upsert_group(conn, group, str(path))
@@ -297,9 +295,7 @@ def _apply_curation_rule(
     if conn.execute(sql, (value, *extra, target, value)).fetchone() is not None:
         stats["updated"] += 1
         return
-    exists = conn.execute(
-        "SELECT 1 FROM params.parameters WHERE model_target = %s", (target,)
-    ).fetchone()
+    exists = conn.execute("SELECT 1 FROM params.parameters WHERE model_target = %s", (target,)).fetchone()
     if exists is None:
         stats["missing"].append(target)
     else:
@@ -440,9 +436,7 @@ def _upsert_group(conn: psycopg.Connection, group: dict, source_file: str) -> No
     )
 
 
-def _replace_values(
-    conn: psycopg.Connection, parameter_id: int, values: list[dict], info: dict | None = None
-) -> int:
+def _replace_values(conn: psycopg.Connection, parameter_id: int, values: list[dict], info: dict | None = None) -> int:
     conn.execute("DELETE FROM params.model_values WHERE parameter_id = %s", (parameter_id,))
     rows = []
     unit_probe = None
@@ -477,8 +471,7 @@ def _replace_values(
                 kind,
                 raw_euromod,
                 normalized.get("model_release") or parse_model_release(lineage.get("model")),
-                normalized.get("system_year")
-                or derive_system_year(value["valid_from"], value.get("valid_to")),
+                normalized.get("system_year") or derive_system_year(value["valid_from"], value.get("valid_to")),
                 value["valid_from"],
                 value.get("valid_to"),
                 value.get("legal_status"),
@@ -503,9 +496,7 @@ def _replace_values(
     # Stage B structured-unit hint, derived from unit + suffix — only when the
     # export did not already supply a received structured_unit.
     if not (info or {}).get("structured_unit"):
-        row = conn.execute(
-            "SELECT unit FROM params.parameters WHERE id = %s", (parameter_id,)
-        ).fetchone()
+        row = conn.execute("SELECT unit FROM params.parameters WHERE id = %s", (parameter_id,)).fetchone()
         conn.execute(
             "UPDATE params.parameters SET unit_structured = %s WHERE id = %s",
             (_jsonb(structured_unit(row[0], unit_probe)), parameter_id),
@@ -635,9 +626,7 @@ def dormant_in_year(record: ParameterRecord, year: int) -> bool:
     run's own year only. Expressions (`$PSS * 4`) are held values, not n/a.
     """
     start, end = date(year, 1, 1), date(year, 12, 31)
-    overlapping = [
-        v for v in record.values if v.valid_from <= end and (v.valid_to is None or v.valid_to >= start)
-    ]
+    overlapping = [v for v in record.values if v.valid_from <= end and (v.valid_to is None or v.valid_to >= start)]
     return all(_is_held_na(v) for v in overlapping)
 
 
@@ -684,8 +673,20 @@ def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
     ).fetchone()
     if row is None:
         raise KeyError(f"parameter not in params DB (see ingest-params): {target}")
-    (parameter_id, country, model_target, spine_order, value_type, unit,
-     label, short_label, description, explanation, last_confirmed, temporal_basis) = row
+    (
+        parameter_id,
+        country,
+        model_target,
+        spine_order,
+        value_type,
+        unit,
+        label,
+        short_label,
+        description,
+        explanation,
+        last_confirmed,
+        temporal_basis,
+    ) = row
 
     information = ParameterInformation(
         country=country,
@@ -702,8 +703,18 @@ def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
     )
 
     values: list[ParameterValue] = []
-    for (value_raw, value_numeric, value_kind, valid_from, valid_to, legal_status,
-         source_type, oj_date, references, lineage) in conn.execute(
+    for (
+        value_raw,
+        value_numeric,
+        value_kind,
+        valid_from,
+        valid_to,
+        legal_status,
+        source_type,
+        oj_date,
+        references,
+        lineage,
+    ) in conn.execute(
         """
         SELECT value_raw, value_numeric, value_kind, valid_from, valid_to, legal_status,
                source_type, official_journal_date, received_references, lineage
@@ -727,9 +738,7 @@ def load_record(conn: psycopg.Connection, target: str) -> ParameterRecord:
             values.append(ParameterValue(value=value_raw, **envelope))
         except Exception:
             # e.g. bracket lists with extra keys: keep the row, stringify the value
-            values.append(
-                ParameterValue(value=json.dumps(value_raw, ensure_ascii=False), **envelope)
-            )
+            values.append(ParameterValue(value=json.dumps(value_raw, ensure_ascii=False), **envelope))
 
     return ParameterRecord(information=information, values=values)
 
@@ -791,7 +800,7 @@ def load_group_record(conn: psycopg.Connection, group_id: str) -> ParameterRecor
     ).fetchone()
     if row is None:
         raise KeyError(f"parameter group not in params DB (see ingest-params): {group_id}")
-    group_id, country, kind, policy, components, instances = row
+    group_id, country, kind, policy, components, _instances = row
     if kind != "bracket_schedule":
         raise ValueError(f"{group_id}: only bracket_schedule groups assemble into a record, not {kind!r}")
 
@@ -811,9 +820,7 @@ def load_group_record(conn: psycopg.Connection, group_id: str) -> ParameterRecor
             """,
             (member[0],),
         ).fetchall()
-        bands.setdefault(int(component.get("band_index", 0)), {})[component.get("role")] = (
-            member[1], history
-        )
+        bands.setdefault(int(component.get("band_index", 0)), {})[component.get("role")] = (member[1], history)
 
     def value_on(history: list, on: date) -> float | None:
         for valid_from, valid_to, value in history:
@@ -821,12 +828,9 @@ def load_group_record(conn: psycopg.Connection, group_id: str) -> ParameterRecor
                 return value
         return None
 
-    starts = sorted({
-        valid_from
-        for roles in bands.values()
-        for _, history in roles.values()
-        for valid_from, _, _ in history
-    })
+    starts = sorted(
+        {valid_from for roles in bands.values() for _, history in roles.values() for valid_from, _, _ in history}
+    )
     ordered = sorted(bands)
     values: list[ParameterValue] = []
     for i, start in enumerate(starts):
@@ -850,7 +854,8 @@ def load_group_record(conn: psycopg.Connection, group_id: str) -> ParameterRecor
 
     members = ", ".join(
         f"band {band_index} {role}={bands[band_index][role][0]}"
-        for band_index in ordered for role in sorted(bands[band_index])
+        for band_index in ordered
+        for role in sorted(bands[band_index])
     )
     label, description = _group_texts(conn, bands, ordered, group_id, LANG_BY_COUNTRY.get(country, "en"))
     information = ParameterInformation(
@@ -1086,4 +1091,3 @@ def record_run_safe(
 # decision through the SQL function params.decide_review_item(), which appends
 # the audit row AND updates the params.review_queue item in one transaction.
 # ---------------------------------------------------------------------------
-

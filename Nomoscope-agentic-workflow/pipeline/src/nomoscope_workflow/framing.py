@@ -127,9 +127,7 @@ def frame_query(cfg: WorkflowConfig, record: ParameterRecord, as_of: date) -> di
     try:
         if ident:
             with retrieval.connect(cfg) as conn:
-                cr_hits = retrieval.country_report_search(
-                    conn, info.country, as_of, " ".join(ident), k=5
-                )
+                cr_hits = retrieval.country_report_search(conn, info.country, as_of, " ".join(ident), k=5)
             cr_terms = retrieval.cr_enrichment_terms(cr_hits, ident, query)
             cr_headings = [h.citation for h in cr_hits if h.citation]
     except Exception:  # no CR corpus / DB hiccup -> frame works as before

@@ -42,15 +42,13 @@ import time
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import psycopg
-from psycopg.rows import dict_row
-
 from nomoscope_workflow import regions, retrieval
-from nomoscope_workflow.config import PLACEHOLDER_MODEL_ID
-from nomoscope_workflow.config import WorkflowConfig
+from nomoscope_workflow.config import PLACEHOLDER_MODEL_ID, WorkflowConfig
 from nomoscope_workflow.schema import RetrievalHit
+from psycopg.rows import dict_row
 
 from . import eval_version
 from .config import EvalConfig, git_commit
@@ -90,11 +88,14 @@ candidate AS MATERIALIZED (
 )
 """
 
-_CANDIDATES_SQL = _CANDIDATE_CTE + """
+_CANDIDATES_SQL = (
+    _CANDIDATE_CTE
+    + """
 SELECT count(*)::int AS chunks, count(e.chunk_id)::int AS embedded
 FROM candidate c
 LEFT JOIN embeddings e ON e.chunk_id = c.chunk_id AND e.model_id = %(model_id)s
 """
+)
 
 METHODS = ("fts", "vector", "hybrid", "rerank", "pool")
 
@@ -114,9 +115,7 @@ def vector_search(
     The database's search_chunks() with its FTS leg off — the same candidate
     set (live version, scope, trust class) as production retrieval.
     """
-    return retrieval.hybrid_search(
-        conn, country, lang, as_of, query, model_id, k, query_vector, use_fts=False
-    )
+    return retrieval.hybrid_search(conn, country, lang, as_of, query, model_id, k, query_vector, use_fts=False)
 
 
 def first_relevant_rank(expected_citations: list[str], hits: list[RetrievalHit]) -> int | None:
@@ -154,9 +153,7 @@ def rerank_hits(query: str, hits: list[RetrievalHit], reranker: str) -> list[Ret
 
     if not hits:
         return []
-    scores = query_encoder.rerank(
-        query, [f"{hit.context_header or ''}\n{hit.content or ''}" for hit in hits], reranker
-    )
+    scores = query_encoder.rerank(query, [f"{hit.context_header or ''}\n{hit.content or ''}" for hit in hits], reranker)
     order = sorted(range(len(hits)), key=lambda i: -scores[i])
     return [hits[i] for i in order]
 
@@ -173,13 +170,10 @@ def run_embedding_eval(
     """Score every case under fts / vector / hybrid; returns (manifest, results)."""
     from nomoscope_workflow import query_encoder  # deferred: spawns a subprocess lazily
 
-    run_id = (
-        f"embeval-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}"
-        f"-m{embedding_model_id}-{uuid.uuid4().hex[:6]}"
-    )
+    run_id = f"embeval-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-m{embedding_model_id}-{uuid.uuid4().hex[:6]}"
     manifest = {
         "run_id": run_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "embedding_model_id": embedding_model_id,
         "embedding_model": _model_name(cfg.database_url, embedding_model_id),
         "k": k,
@@ -235,9 +229,7 @@ def run_embedding_eval(
                 if embedding_model_id == PLACEHOLDER_MODEL_ID or qvec is not None:
                     vec_hits = vector_search(*common, embedding_model_id, k, qvec)
                     result.ranks["vector"] = first_relevant_rank(case.expected_citations, vec_hits)
-                    hyb_hits = retrieval.hybrid_search(
-                        *common, model_id=embedding_model_id, k=k, query_vector=qvec
-                    )
+                    hyb_hits = retrieval.hybrid_search(*common, model_id=embedding_model_id, k=k, query_vector=qvec)
                     result.ranks["hybrid"] = first_relevant_rank(case.expected_citations, hyb_hits)
                     if reranker:
                         pool = retrieval.hybrid_search(
@@ -272,8 +264,7 @@ def summarize_embedding(results: list[EmbeddingCaseResult]) -> dict[str, dict[st
     for lang, rows in sorted(by_lang.items()):
         k = rows[0].k
         table[lang] = {
-            method: rank_metrics([r.ranks[method] for r in rows if method in r.ranks], k)
-            for method in METHODS
+            method: rank_metrics([r.ranks[method] for r in rows if method in r.ranks], k) for method in METHODS
         }
     return table
 
@@ -288,9 +279,12 @@ def _model_name(database_url: str, model_id: int) -> str | None:
 # Cases derived from the golden set
 # --------------------------------------------------------------------------- #
 
-_UNITS_IN_SCOPE_SQL = _CANDIDATE_CTE + """
+_UNITS_IN_SCOPE_SQL = (
+    _CANDIDATE_CTE
+    + """
 SELECT DISTINCT citation, context_header FROM candidate WHERE citation IS NOT NULL
 """
+)
 
 #: Routings with no evidence to find: `derived` short-circuits before retrieval,
 #: `national_team_source` routes around the pipeline.
@@ -324,9 +318,7 @@ def resolve_citations(
     citation match, when there is one, wins over containment); one that
     resolves to more than MAX_UNITS_PER_CITATION units is too coarse to rank.
     """
-    rows = conn.execute(
-        _UNITS_IN_SCOPE_SQL, {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of}
-    ).fetchall()
+    rows = conn.execute(_UNITS_IN_SCOPE_SQL, {"jurisdictions": jurisdictions, "lang": lang, "as_of": as_of}).fetchall()
     resolved: dict[str, None] = {}
     for exp in expected:
         # Exact first: containment lets "CGI, art. 197" claim "CGI, art. 197 A".
@@ -381,7 +373,7 @@ def cases_from_golden(
             scope = retrieval.jurisdiction_scope(conn, country, region)
             framed = framing.frame_query(wf_cfg, record, case.as_of)
             expected = resolve_citations(conn, list(case.expected.citations), scope, lang, as_of)
-        except Exception as exc:  # noqa: BLE001 - report it, keep building the rest
+        except Exception as exc:
             params_conn.rollback()
             conn.rollback()
             out.skipped[case.id] = f"{exc.__class__.__name__}: {exc}"
@@ -403,8 +395,7 @@ def cases_from_golden(
                 expected_citations=expected,
                 verified=case.verified,
                 drafted_by=f"golden:{case.id}",
-                notes=f"framed from {case.parameter_target}; golden citations: "
-                + "; ".join(case.expected.citations),
+                notes=f"framed from {case.parameter_target}; golden citations: " + "; ".join(case.expected.citations),
             )
         )
     return out
@@ -442,9 +433,7 @@ def compare_runs(runs: list[dict], method: str = "vector") -> list[dict[str, str
     for run in runs:
         manifest = run["manifest"]
         name = manifest.get("embedding_model") or f"model {manifest['embedding_model_id']}"
-        results = [
-            EmbeddingCaseResult.model_validate(r) for r in run["results"] if r["case_id"] in shared
-        ]
+        results = [EmbeddingCaseResult.model_validate(r) for r in run["results"] if r["case_id"] in shared]
         groups: dict[str, list[EmbeddingCaseResult]] = defaultdict(list)
         for result in results:
             groups[result.language].append(result)
@@ -455,4 +444,3 @@ def compare_runs(runs: list[dict], method: str = "vector") -> list[dict[str, str
             if metrics:
                 rows.append({"model": name, "lang": lang, **metrics})
     return rows
-

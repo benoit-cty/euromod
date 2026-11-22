@@ -104,9 +104,7 @@ class ChatAnswer(BaseModel):
 
     answer: str = Field(description="Markdown answer; cite quote i as [i]")
     quotes: list[Quote] = Field(default_factory=list)
-    web_urls: list[str] = Field(
-        default_factory=list, description="URLs from web_search results the answer mentions"
-    )
+    web_urls: list[str] = Field(default_factory=list, description="URLs from web_search results the answer mentions")
 
 
 class ChatMessage(BaseModel):
@@ -238,8 +236,14 @@ def search_legislation(
     countries = _countries(deps, country)
     k = max(1, min(int(k), 15))
     per_country = k if len(countries) == 1 else max(2, k // 2)
-    emit({"event": "tool", "status": "start", "tool": "search_legislation",
-          "args": {"query": query, "countries": countries, "region": region, "language": language, "as_of": day}})
+    emit(
+        {
+            "event": "tool",
+            "status": "start",
+            "tool": "search_legislation",
+            "args": {"query": query, "countries": countries, "region": region, "language": language, "as_of": day},
+        }
+    )
     if query not in deps.vectors:
         deps.vectors[query] = (
             query_encoder.encode(query, deps.cfg.database_url, deps.cfg.embedding_model_id)
@@ -250,13 +254,26 @@ def search_legislation(
     for code in countries:
         lang = "en" if language == "en" else retrieval.LANG_BY_COUNTRY.get(code, "en")
         hits = retrieval.hybrid_search(
-            deps.conn, _scope(deps, code, region), lang, day, query,
-            deps.cfg.embedding_model_id, per_country, deps.vectors[query],
+            deps.conn,
+            _scope(deps, code, region),
+            lang,
+            day,
+            query,
+            deps.cfg.embedding_model_id,
+            per_country,
+            deps.vectors[query],
         )
         rows += [deps.register(hit, code) for hit in hits]
     rows.sort(key=lambda r: -(deps.sources[r["chunk_id"]].get("score") or 0))
-    emit({"event": "tool", "status": "done", "tool": "search_legislation",
-          "summary": f"{len(rows)} passage(s)", "chunk_ids": [r["chunk_id"] for r in rows]})
+    emit(
+        {
+            "event": "tool",
+            "status": "done",
+            "tool": "search_legislation",
+            "summary": f"{len(rows)} passage(s)",
+            "chunk_ids": [r["chunk_id"] for r in rows],
+        }
+    )
     return [_hit_for_model(r) for r in rows]
 
 
@@ -275,13 +292,26 @@ def find_article(
     code = _countries(deps, country)[0] if (country or deps.country) else None
     if code is None:
         raise ModelRetry("find_article needs a country")
-    emit({"event": "tool", "status": "start", "tool": "find_article",
-          "args": {"reference": reference, "country": code, "as_of": day}})
+    emit(
+        {
+            "event": "tool",
+            "status": "start",
+            "tool": "find_article",
+            "args": {"reference": reference, "country": code, "as_of": day},
+        }
+    )
     lang = retrieval.LANG_BY_COUNTRY.get(code, "en")
     hits = retrieval.locate_named_units(deps.conn, [code], lang, day, reference)
     rows = [deps.register(hit, code) for hit in hits]
-    emit({"event": "tool", "status": "done", "tool": "find_article",
-          "summary": f"{len(rows)} passage(s)", "chunk_ids": [r["chunk_id"] for r in rows]})
+    emit(
+        {
+            "event": "tool",
+            "status": "done",
+            "tool": "find_article",
+            "summary": f"{len(rows)} passage(s)",
+            "chunk_ids": [r["chunk_id"] for r in rows],
+        }
+    )
     return [_hit_for_model(r) for r in rows]
 
 
@@ -302,9 +332,15 @@ def read_article(ctx: RunContext[ChatDeps], chunk_id: str) -> dict[str, Any]:
     country = deps.sources.get(chunk_id, {}).get("country")
     rows = [deps.register(hit, country) for hit in hits]
     provenance = retrieval.version_provenance(deps.conn, chunk_id) or {}
-    emit({"event": "tool", "status": "done", "tool": "read_article",
-          "summary": f"{rows[0]['citation'] or 'article'} — {len(rows)} chunk(s)",
-          "chunk_ids": [r["chunk_id"] for r in rows]})
+    emit(
+        {
+            "event": "tool",
+            "status": "done",
+            "tool": "read_article",
+            "summary": f"{rows[0]['citation'] or 'article'} — {len(rows)} chunk(s)",
+            "chunk_ids": [r["chunk_id"] for r in rows],
+        }
+    )
     return {
         "citation": rows[0]["citation"],
         "validity": rows[0]["validity"],
@@ -332,8 +368,14 @@ def web_search(
     code = _countries(deps, country)[0] if (country or deps.country) else None
     rules = scout.COUNTRY_SOURCES.get(code or "")
     domains = list(rules.domains) if rules and official_only else []
-    emit({"event": "tool", "status": "start", "tool": "web_search",
-          "args": {"query": query, "country": code, "domains": domains}})
+    emit(
+        {
+            "event": "tool",
+            "status": "start",
+            "tool": "web_search",
+            "args": {"query": query, "country": code, "domains": domains},
+        }
+    )
     try:
         results = scout.web_search(deps.cfg.tavily_api_key, query, domains)
     except scout.WebSearchUnavailable as exc:
@@ -344,8 +386,7 @@ def web_search(
 
     pattern = rules.id_pattern if rules else None
     ids_by_url = {
-        r.get("url", ""): list(dict.fromkeys(pattern.findall(r.get("url", "")))) if pattern else []
-        for r in results
+        r.get("url", ""): list(dict.fromkeys(pattern.findall(r.get("url", "")))) if pattern else [] for r in results
     }
     all_ids = [i for ids in ids_by_url.values() for i in ids]
     known = scout.known_instruments(deps.cfg, all_ids, rules.known_key) if all_ids else set()
@@ -361,17 +402,26 @@ def web_search(
         deps.web_results.setdefault(url, row)
         for i in ids_by_url[url]:
             if i not in known and code:
-                deps.discoveries.setdefault(i, {
-                    "country": code,
-                    "instrument_id": i,
-                    "ingest_id": i + rules.ingest_suffix,
-                    "title": row["title"],
-                    "url": url,
-                })
+                deps.discoveries.setdefault(
+                    i,
+                    {
+                        "country": code,
+                        "instrument_id": i,
+                        "ingest_id": i + rules.ingest_suffix,
+                        "title": row["title"],
+                        "url": url,
+                    },
+                )
         out.append(row)
-    emit({"event": "tool", "status": "done", "tool": "web_search",
-          "summary": f"{len(out)} result(s), {sum(1 for i in all_ids if i not in known)} act(s) not in the corpus",
-          "urls": [r["url"] for r in out]})
+    emit(
+        {
+            "event": "tool",
+            "status": "done",
+            "tool": "web_search",
+            "summary": f"{len(out)} result(s), {sum(1 for i in all_ids if i not in known)} act(s) not in the corpus",
+            "urls": [r["url"] for r in out],
+        }
+    )
     return {
         "results": out,
         "note": "Leads only. Acts with in_corpus=false can be ingested by the analyst; do not quote web text as evidence.",
@@ -426,8 +476,7 @@ def _validate(ctx: RunContext[ChatDeps], output: ChatAnswer) -> ChatAnswer:
     if ctx.retry >= 1:
         return output
     bad = [
-        i + 1 for i, q in enumerate(output.quotes)
-        if not resolve_quote(ctx.deps.conn, q, ctx.deps.sources)["verified"]
+        i + 1 for i, q in enumerate(output.quotes) if not resolve_quote(ctx.deps.conn, q, ctx.deps.sources)["verified"]
     ]
     if bad:
         raise ModelRetry(
@@ -452,8 +501,11 @@ def _mock_model() -> FunctionModel:
         returns = [p for p in last.parts if isinstance(p, ToolReturnPart)] if isinstance(last, ModelRequest) else []
         if not returns:
             question = next(
-                p.content for m in reversed(messages) if isinstance(m, ModelRequest)
-                for p in m.parts if isinstance(p, UserPromptPart)
+                p.content
+                for m in reversed(messages)
+                if isinstance(m, ModelRequest)
+                for p in m.parts
+                if isinstance(p, UserPromptPart)
             )
             return ModelResponse(parts=[ToolCallPart("search_legislation", {"query": str(question), "k": 3})])
         hits = returns[0].content if isinstance(returns[0].content, list) else []
@@ -521,7 +573,13 @@ def run_turn(cfg: WorkflowConfig, request: ChatRequest) -> dict[str, Any]:
     question = request.messages[-1].content
     with retrieval.connect(cfg) as conn:
         conn.read_only = True
-        deps = ChatDeps(cfg=cfg, conn=conn, as_of=as_of, country=(request.country or None) and request.country.upper(), web=request.web)
+        deps = ChatDeps(
+            cfg=cfg,
+            conn=conn,
+            as_of=as_of,
+            country=(request.country or None) and request.country.upper(),
+            web=request.web,
+        )
         result = agent.run_sync(
             question,
             deps=deps,

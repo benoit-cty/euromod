@@ -5,12 +5,10 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-
-from nomoscope_workflow.schema import Routing, TemporalBasis
-
 from nomokrisis_eval.labels import draft_labels, instrument_of, is_formula
-from nomokrisis_eval.summary import summarize
 from nomokrisis_eval.schema import CaseResult, Expected, GoldenCase
+from nomokrisis_eval.summary import summarize
+from nomoscope_workflow.schema import Routing, TemporalBasis
 
 
 def make_case(**kwargs) -> GoldenCase:
@@ -68,7 +66,10 @@ def test_labels_never_read_a_run():
     import inspect
 
     assert set(inspect.signature(draft_labels).parameters) == {
-        "value", "citations", "temporal_basis", "is_bracket_table",
+        "value",
+        "citations",
+        "temporal_basis",
+        "is_bracket_table",
     }
 
 
@@ -78,9 +79,7 @@ def test_labels_never_read_a_run():
 
 
 def test_income_year_hazard_is_orthogonal_to_the_rung():
-    drafted = draft_labels(
-        value=1.0, citations=["CGI, art. 197"], temporal_basis=TemporalBasis.INCOME_YEAR
-    )
+    drafted = draft_labels(value=1.0, citations=["CGI, art. 197"], temporal_basis=TemporalBasis.INCOME_YEAR)
     assert drafted.difficulty == "verbatim"
     assert drafted.hazards == ["income_year"]
 
@@ -119,8 +118,7 @@ def test_readiness_states():
 
     # corpus-first: an uningested source is the stronger, positively established
     # fact, so it wins over "we never wrote down a citation".
-    no_corpus = make_case(expected=Expected(routing=Routing.UNCHANGED, value=1.0),
-                          corpus_available=False)
+    no_corpus = make_case(expected=Expected(routing=Routing.UNCHANGED, value=1.0), corpus_available=False)
     assert no_corpus.readiness == "no_corpus"
 
 
@@ -148,16 +146,14 @@ def make_result(**kwargs) -> CaseResult:
 
 def test_summarize_splits_ready_from_unready_and_breaks_down_only_the_ready():
     results = [
-        make_result(case_id="a", readiness="ready", difficulty="verbatim",
-                    routing_correct=True, hazards=["income_year"]),
-        make_result(case_id="b", readiness="ready", difficulty="combine",
-                    routing_correct=False),
+        make_result(
+            case_id="a", readiness="ready", difficulty="verbatim", routing_correct=True, hazards=["income_year"]
+        ),
+        make_result(case_id="b", readiness="ready", difficulty="combine", routing_correct=False),
         # Unready cases drag the headline down and must not land in any bucket:
         # they fail for a reason that has nothing to do with their rung.
-        make_result(case_id="c", readiness="no_corpus", difficulty="verbatim",
-                    routing_correct=False),
-        make_result(case_id="d", readiness="undocumented", difficulty="verbatim",
-                    routing_correct=False),
+        make_result(case_id="c", readiness="no_corpus", difficulty="verbatim", routing_correct=False),
+        make_result(case_id="d", readiness="undocumented", difficulty="verbatim", routing_correct=False),
     ]
     table = summarize(results)
 
@@ -189,6 +185,5 @@ def test_summarize_falls_back_for_results_written_before_readiness_existed():
 
 def test_summarize_hides_a_lone_difficulty_bucket():
     """One rung compares with nothing; printing it just adds a row."""
-    results = [make_result(case_id="a", readiness="ready", difficulty="verbatim",
-                           routing_correct=True)]
+    results = [make_result(case_id="a", readiness="ready", difficulty="verbatim", routing_correct=True)]
     assert not any(k.startswith("difficulty:") for k in summarize(results))

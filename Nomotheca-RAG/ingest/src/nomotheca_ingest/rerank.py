@@ -34,9 +34,7 @@ class CrossEncoderReranker:
         if self._torch is not None:
             raise_for_unsupported_cuda_arch(self._torch, self.device)
         self.batch_size = batch_size
-        self.model = sentence_transformers.CrossEncoder(
-            spec.hf_id, device=self.device, max_length=spec.max_length
-        )
+        self.model = sentence_transformers.CrossEncoder(spec.hf_id, device=self.device, max_length=spec.max_length)
 
     def score(self, query: str, passages: list[str]) -> list[float]:
         pairs = [self.spec.pair(query, passage) for passage in passages]

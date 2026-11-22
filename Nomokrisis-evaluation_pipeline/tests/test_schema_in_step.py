@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 from nomokrisis_eval.db import RESULT_COLUMNS, SCHEMA_SQL
 from nomokrisis_eval.schema import CaseResult
 
@@ -56,26 +58,40 @@ def test_findings_and_fts_only_cases_are_counted_by_both_summaries(db, monkeypat
     """euromod_discrepancy and vector_leg live only in `details`; the view reads them there."""
     from datetime import date, datetime, timezone
 
+    from conftest import TEST_PREFIX
     from nomokrisis_eval import db as evaldb
     from nomokrisis_eval.schema import RunManifest
     from nomokrisis_eval.summary import summarize
 
-    from conftest import TEST_PREFIX
-
     _applied_schema(db)
     manifest = RunManifest(
-        run_id=TEST_PREFIX + "kpi_step", created_at=datetime.now(timezone.utc), as_of=date(2025, 7, 1),
-        model="mock/extractor", model_provider="mock", model_name="extractor",
-        prompt_version="p", agent_version="a", eval_version="e", dataset_version="d",
+        run_id=TEST_PREFIX + "kpi_step",
+        created_at=datetime.now(UTC),
+        as_of=date(2025, 7, 1),
+        model="mock/extractor",
+        model_provider="mock",
+        model_name="extractor",
+        prompt_version="p",
+        agent_version="a",
+        eval_version="e",
+        dataset_version="d",
     )
     # insert_run/upsert_result commit; keep everything in the test transaction.
     monkeypatch.setattr(db, "commit", lambda: None)
     run_pk = evaldb.insert_run(db, manifest)
     results = [
-        CaseResult(case_id="a", country="FR", language="fr", routing_expected="unchanged",
-                   value_correct=False, euromod_discrepancy="stated", vector_leg=False),
-        CaseResult(case_id="b", country="FR", language="fr", routing_expected="unchanged",
-                   value_correct=True, vector_leg=True),
+        CaseResult(
+            case_id="a",
+            country="FR",
+            language="fr",
+            routing_expected="unchanged",
+            value_correct=False,
+            euromod_discrepancy="stated",
+            vector_leg=False,
+        ),
+        CaseResult(
+            case_id="b", country="FR", language="fr", routing_expected="unchanged", value_correct=True, vector_leg=True
+        ),
     ]
     for result in results:
         evaldb.upsert_result(db, run_pk, result)

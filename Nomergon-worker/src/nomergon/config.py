@@ -13,8 +13,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
+from nomoscope_workflow.config import DEFAULT_DATABASE_URL
 
-from nomoscope_workflow.config import DEFAULT_DATABASE_URL  # noqa: E402  (the one default)
 BGE_M3_MODEL = "BAAI/bge-m3"
 EMBEDDING_MODEL_NAME = "bge-m3"
 

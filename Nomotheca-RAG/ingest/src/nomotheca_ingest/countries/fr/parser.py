@@ -8,7 +8,6 @@ from datetime import date
 from html import unescape
 from typing import Any
 
-from nomotheca_ingest.core.text import path_token
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
     ParsedDoc,
@@ -19,7 +18,7 @@ from nomotheca_ingest.core.ir import (
     UnitIR,
     VersionIR,
 )
-
+from nomotheca_ingest.core.text import path_token
 
 #: instrument_type of every KALI text: the base agreement, its avenants and
 #: délibérations alike (the DILA nature — «Accord national interprofessionnel»,
@@ -153,7 +152,7 @@ def _parse_article(data: dict[str, Any], ref: SourceRef, snapshot: Snapshot) -> 
                 valid_from=valid_from,
                 valid_to=valid_to,
                 source_version_id=ref.source_id,
-            eli_version=_eli_alias(meta_commun) or meta_commun.get("ID_ELI"),
+                eli_version=_eli_alias(meta_commun) or meta_commun.get("ID_ELI"),
                 citation_label=citation,
                 fetch_snapshot_id=snapshot.id,
                 texts=[TextIR(lang="fr", content=content, content_html=html)],
@@ -198,7 +197,13 @@ def _recent_versions(data: dict[str, Any], own_id: str) -> list[dict[str, str]]:
         ends = _parse_date(link.get("@fin"))
         if not source_id or source_id == own_id or (ends is not None and ends <= VERSION_HISTORY_FROM):
             continue
-        children.append({"source_id": source_id, "source_type": "article", "title": f"art. {link.get('@num') or ''} (version {link.get('@debut')})"})
+        children.append(
+            {
+                "source_id": source_id,
+                "source_type": "article",
+                "title": f"art. {link.get('@num') or ''} (version {link.get('@debut')})",
+            }
+        )
     return children
 
 
@@ -217,11 +222,13 @@ def _child_refs(data: dict[str, Any]) -> list[dict[str, str]]:
         for item in _as_list(struct.get(key)):
             source_id = item.get("@id")
             if source_id:
-                children.append({
-                    "source_id": source_id,
-                    "source_type": source_type,
-                    "title": item.get("#text") or item.get("@num") or source_id,
-                })
+                children.append(
+                    {
+                        "source_id": source_id,
+                        "source_type": source_type,
+                        "title": item.get("#text") or item.get("@num") or source_id,
+                    }
+                )
     return children
 
 

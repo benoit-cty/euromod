@@ -21,15 +21,6 @@ import xml.etree.ElementTree as ET
 from datetime import date, datetime
 from typing import Any
 
-from nomotheca_ingest.countries.ie.fetcher import (
-    ACT_INDEX_PREFIX,
-    SOURCE_CODE_EISB,
-    act_eli,
-    section_eli,
-)
-from nomotheca_ingest.countries.ie.revised import is_revised, parse_revised
-from nomotheca_ingest.countries.ie.si import is_si, parse_si
-from nomotheca_ingest.core.text import UniqueCitations, month_names, path_token, pipe_rows
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
     ParsedDoc,
@@ -40,7 +31,15 @@ from nomotheca_ingest.core.ir import (
     VersionIR,
     VersionStatus,
 )
-
+from nomotheca_ingest.core.text import UniqueCitations, month_names, path_token, pipe_rows
+from nomotheca_ingest.countries.ie.fetcher import (
+    ACT_INDEX_PREFIX,
+    SOURCE_CODE_EISB,
+    act_eli,
+    section_eli,
+)
+from nomotheca_ingest.countries.ie.revised import is_revised, parse_revised
+from nomotheca_ingest.countries.ie.si import is_si, parse_si
 
 # Start of the EUROMOD policy window. Consolidation acts are ingested as
 # as-enacted baselines and their validity is closed here — see BASELINE_ACTS.
@@ -83,18 +82,29 @@ _STATUTEBOOK_ELI_RE = re.compile(r"eli/(\d{4}/act/\d+)")
 # them — which is what the section says — with the full set kept on the version.
 _COMMENCEMENT_ANCHOR_RE = re.compile(r"comes? into operation")
 _COMMENCEMENT_DATE_RE = re.compile(r"\bon (?:the )?(\d{1,2})(?:st|nd|rd|th)? (\w+),? (\d{4})\b")
-_YEAR_OF_ASSESSMENT_RE = re.compile(
-    r"(?:[Aa]s respects|applies (?:for|as respects)) the year of assessment (\d{4})"
-)
+_YEAR_OF_ASSESSMENT_RE = re.compile(r"(?:[Aa]s respects|applies (?:for|as respects)) the year of assessment (\d{4})")
 _MONTHS = month_names(["en"])
 
 # Print typography carried as elements rather than characters.
 _ENTITIES = {
-    "euro": "€", "pound": "£", "emdash": "—", "endash": "–",
-    "odq": "“", "cdq": "”", "osq": "‘", "csq": "’",
-    "afada": "á", "Afada": "Á", "efada": "é", "Efada": "É",
-    "ifada": "í", "Ifada": "Í", "ofada": "ó", "Ofada": "Ó",
-    "ufada": "ú", "Ufada": "Ú",
+    "euro": "€",
+    "pound": "£",
+    "emdash": "—",
+    "endash": "–",
+    "odq": "“",
+    "cdq": "”",
+    "osq": "‘",
+    "csq": "’",
+    "afada": "á",
+    "Afada": "Á",
+    "efada": "é",
+    "Efada": "É",
+    "ifada": "í",
+    "Ifada": "Í",
+    "ofada": "ó",
+    "Ofada": "Ó",
+    "ufada": "ú",
+    "Ufada": "Ú",
 }
 _DROPPED = frozenset({"graphic", "hr1", "marker"})
 
@@ -515,8 +525,4 @@ def _normalize_space(value: str) -> str:
 
 def act_index_child_metadata(child: dict[str, Any]) -> dict[str, Any]:
     """Return the ref metadata a discovered act carries into its own fetch."""
-    return {
-        key: child[key]
-        for key in ("short_title", "short_title_ga", "date_signed")
-        if child.get(key)
-    }
+    return {key: child[key] for key in ("short_title", "short_title_ga", "date_signed") if child.get(key)}

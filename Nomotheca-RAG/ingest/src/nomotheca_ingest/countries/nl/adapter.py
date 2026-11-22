@@ -5,10 +5,6 @@ from __future__ import annotations
 import re
 from datetime import date
 
-from nomotheca_ingest.countries.nl.fetcher import fetch_bwb
-from nomotheca_ingest.countries.nl.parser import parse_bwb_xml
-from nomotheca_ingest.countries.nl.resolver import NlResolver, canary_facts
-from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
 from nomotheca_ingest.core.ir import (
     CanaryFact,
     CitationRef,
@@ -19,7 +15,10 @@ from nomotheca_ingest.core.ir import (
     SourceRef,
 )
 from nomotheca_ingest.core.snapshots import SnapshotClient
-
+from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
+from nomotheca_ingest.countries.nl.fetcher import fetch_bwb
+from nomotheca_ingest.countries.nl.parser import parse_bwb_xml
+from nomotheca_ingest.countries.nl.resolver import NlResolver, canary_facts
 
 NL_URL_SOURCE = UrlSource(
     name="wetten.overheid.nl",

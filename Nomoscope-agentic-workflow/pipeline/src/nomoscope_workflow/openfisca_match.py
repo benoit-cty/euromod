@@ -111,8 +111,15 @@ def fingerprint_candidates(
                 },
             ).fetchall()
             for (
-                parameter_id, model_target, external_parameter_id, path, component,
-                used_factor, year_offset, matched, em_years,
+                parameter_id,
+                model_target,
+                external_parameter_id,
+                path,
+                component,
+                used_factor,
+                year_offset,
+                matched,
+                em_years,
             ) in rows:
                 candidate = LinkCandidate(
                     parameter_id=parameter_id,
@@ -126,22 +133,24 @@ def fingerprint_candidates(
                     euromod_years=em_years,
                     score=round(matched / em_years, 4) if em_years else 0.0,
                     note=(
-                        None if used_factor == 1 and year_offset == 0
+                        None
+                        if used_factor == 1 and year_offset == 0
                         else f"factor {used_factor:g}, year offset {year_offset:+d}"
                     ),
                 )
                 key = (parameter_id, external_parameter_id, component)
                 current = best.get(key)
                 if current is None or (candidate.score, candidate.matched_years) > (
-                    current.score, current.matched_years
+                    current.score,
+                    current.matched_years,
                 ):
                     best[key] = candidate
-    return sorted(
-        best.values(), key=lambda c: (-c.score, -c.matched_years, c.model_target, c.path)
-    )
+    return sorted(best.values(), key=lambda c: (-c.score, -c.matched_years, c.model_target, c.path))
 
 
-def seed_links(conn: psycopg.Connection, path: Path, country: str, kind: str = "openfisca") -> tuple[list[LinkCandidate], list[str]]:
+def seed_links(
+    conn: psycopg.Connection, path: Path, country: str, kind: str = "openfisca"
+) -> tuple[list[LinkCandidate], list[str]]:
     """Curated pairs from a JSON file: `{"entries": [{model_target, openfisca_path, ...}]}`.
 
     Entries naming a parameter that is not in params.parameters (the handful of
@@ -162,9 +171,7 @@ def seed_links(conn: psycopg.Connection, path: Path, country: str, kind: str = "
         if not target:
             skipped.append(f"{entry.get('parameter_file')}: file-only parameter, not in params.parameters")
             continue
-        row = conn.execute(
-            "SELECT id FROM params.parameters WHERE model_target = %s", (target,)
-        ).fetchone()
+        row = conn.execute("SELECT id FROM params.parameters WHERE model_target = %s", (target,)).fetchone()
         if row is None:
             skipped.append(f"{target}: not in params.parameters")
             continue
@@ -218,8 +225,14 @@ def store_links(conn: psycopg.Connection, links: list[LinkCandidate]) -> int:
                 WHERE params.parameter_links.validated_by IS NULL
                 """,
                 (
-                    link.parameter_id, link.external_parameter_id, link.component,
-                    link.match_method, link.score, link.factor, link.year_offset, link.note,
+                    link.parameter_id,
+                    link.external_parameter_id,
+                    link.component,
+                    link.match_method,
+                    link.score,
+                    link.factor,
+                    link.year_offset,
+                    link.note,
                 ),
             ).rowcount
     return written

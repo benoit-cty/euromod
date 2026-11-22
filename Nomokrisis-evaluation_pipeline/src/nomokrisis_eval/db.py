@@ -124,13 +124,38 @@ def set_run_status(conn: psycopg.Connection, run_pk: int, status: str) -> None:
 #: `details` holds the whole CaseResult as well (what `load_results` reads back);
 #: these are its queryable projection for the views and the UI.
 RESULT_COLUMNS = (
-    "case_id", "country", "language", "model_target", "difficulty", "hazards",
-    "source_class", "routing_expected", "routing_actual", "routing_correct",
-    "value_correct", "date_correct", "citation_correct", "extract_verbatim",
-    "supportedness", "critique_pass", "hallucination", "retrieval_hit", "abstained",
-    "guidance_only", "corpus_available", "readiness", "confidence", "latency_ms",
-    "error", "phoenix_trace_id", "llm_calls", "tokens_prompt", "tokens_completion",
-    "energy_kwh", "gwp_kgco2eq", "impact_estimated",
+    "case_id",
+    "country",
+    "language",
+    "model_target",
+    "difficulty",
+    "hazards",
+    "source_class",
+    "routing_expected",
+    "routing_actual",
+    "routing_correct",
+    "value_correct",
+    "date_correct",
+    "citation_correct",
+    "extract_verbatim",
+    "supportedness",
+    "critique_pass",
+    "hallucination",
+    "retrieval_hit",
+    "abstained",
+    "guidance_only",
+    "corpus_available",
+    "readiness",
+    "confidence",
+    "latency_ms",
+    "error",
+    "phoenix_trace_id",
+    "llm_calls",
+    "tokens_prompt",
+    "tokens_completion",
+    "energy_kwh",
+    "gwp_kgco2eq",
+    "impact_estimated",
 )
 
 _UPSERT_RESULT_SQL = (
@@ -145,9 +170,7 @@ _UPSERT_RESULT_SQL = (
 )
 
 
-def upsert_result(
-    conn: psycopg.Connection, run_pk: int, result: CaseResult, review_item: dict | None = None
-) -> None:
+def upsert_result(conn: psycopg.Connection, run_pk: int, result: CaseResult, review_item: dict | None = None) -> None:
     """One eval.results row per (run, case), written the moment the case is
     scored — the crash-safety that results.jsonl used to give. `review_item`
     is the ReviewItem dump so `rescore` can replay scoring without tokens; a
@@ -221,25 +244,20 @@ def list_runs(conn: psycopg.Connection, limit: int | None = None) -> list[dict]:
             "status": row["status"],
             # A run written before run_cases existed has no frozen list; it
             # was stored whole, so it is complete by construction.
-            "complete": row["status"] == "complete"
-            or (row["total"] > 0 and row["done"] >= row["total"]),
+            "complete": row["status"] == "complete" or (row["total"] > 0 and row["done"] >= row["total"]),
         }
         for row in rows
     ]
 
 
 def load_run_cases(conn: psycopg.Connection, run_pk: int) -> list[GoldenCase]:
-    rows = conn.execute(
-        'SELECT "case" FROM eval.run_cases WHERE run_pk = %s ORDER BY case_id', (run_pk,)
-    ).fetchall()
+    rows = conn.execute('SELECT "case" FROM eval.run_cases WHERE run_pk = %s ORDER BY case_id', (run_pk,)).fetchall()
     return [GoldenCase.model_validate(row[0]) for row in rows]
 
 
 def load_results(conn: psycopg.Connection, run_pk: int) -> list[CaseResult]:
     """Every result scored so far, from the full CaseResult dump in `details`."""
-    rows = conn.execute(
-        "SELECT details FROM eval.results WHERE run_pk = %s ORDER BY id", (run_pk,)
-    ).fetchall()
+    rows = conn.execute("SELECT details FROM eval.results WHERE run_pk = %s ORDER BY id", (run_pk,)).fetchall()
     return [CaseResult.model_validate(row[0]) for row in rows if row[0]]
 
 
@@ -272,8 +290,7 @@ def fetch_difficulty(conn: psycopg.Connection, run_pks: list[int]) -> list[dict]
         return []
     with conn.cursor(row_factory=dict_row) as cur:
         return cur.execute(
-            "SELECT * FROM eval.run_difficulty WHERE run_pk = ANY(%s) "
-            "ORDER BY run_pk, language, difficulty",
+            "SELECT * FROM eval.run_difficulty WHERE run_pk = ANY(%s) ORDER BY run_pk, language, difficulty",
             (run_pks,),
         ).fetchall()
 
@@ -284,8 +301,7 @@ def fetch_hazards(conn: psycopg.Connection, run_pks: list[int]) -> list[dict]:
         return []
     with conn.cursor(row_factory=dict_row) as cur:
         return cur.execute(
-            "SELECT * FROM eval.run_hazards WHERE run_pk = ANY(%s) "
-            "ORDER BY run_pk, language, hazard",
+            "SELECT * FROM eval.run_hazards WHERE run_pk = ANY(%s) ORDER BY run_pk, language, hazard",
             (run_pks,),
         ).fetchall()
 

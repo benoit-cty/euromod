@@ -9,7 +9,6 @@ from datetime import date, timedelta
 
 import psycopg
 
-from .schema import RetrievalHit
 from . import idiom
 from .corpus import (
     CHUNK_JOINS,
@@ -22,6 +21,7 @@ from .corpus import (
     scope_codes,
 )
 from .locate import _citation_pattern
+from .schema import RetrievalHit
 
 _CODE_ARTICLE_REF = idiom.FR_CODE_ARTICLE_REF
 #: Explicit references followed per article (regulatory R./D. ones first:
@@ -168,7 +168,9 @@ def cross_referenced_articles(
             own = article_label(row["citation"]) if row["is_code"] else ""
             refs = [
                 (iid, token)
-                for iid, token in _code_refs(row["content"] or "", row["instrument_id"] if row["is_code"] else None, codes)
+                for iid, token in _code_refs(
+                    row["content"] or "", row["instrument_id"] if row["is_code"] else None, codes
+                )
                 if not (iid == row["instrument_id"] and token == own)
             ]
             refs.sort(key=lambda r: r[1][0] == "L")  # stable: R./D. first, text order kept
@@ -182,8 +184,7 @@ def cross_referenced_articles(
             chapter = re.fullmatch(r"L(\d+)-\d+", own)
             if hop == 0 and chapter:
                 lookups += [
-                    (row["instrument_id"], rf"art\. {kind}{chapter.group(1)}-1($|[^0-9])")
-                    for kind in ("R", "D")
+                    (row["instrument_id"], rf"art\. {kind}{chapter.group(1)}-1($|[^0-9])") for kind in ("R", "D")
                 ]
         frontier = []
         if lookups:
@@ -318,9 +319,9 @@ def same_act_articles(conn: psycopg.Connection, lang: str, chunk_ids: list[str])
         _SAME_ACT_UNITS_SQL,
         {
             "lang": lang,
-            "instrument_ids": [l[0] for l in lookups],
-            "patterns": [l[1] for l in lookups],
-            "dates": [l[2] for l in lookups],
+            "instrument_ids": [lookup[0] for lookup in lookups],
+            "patterns": [lookup[1] for lookup in lookups],
+            "dates": [lookup[2] for lookup in lookups],
         },
     )
     seen = set(chunk_ids)
@@ -356,12 +357,13 @@ def _same_act_citing(conn: psycopg.Connection, lang: str, rows: list[dict], seen
         _SAME_ACT_CITING_SQL,
         {
             "lang": lang,
-            "instrument_ids": [l[0] for l in lookups],
-            "patterns": [l[1] for l in lookups],
-            "dates": [l[2] for l in lookups],
-            "owns": [l[3] for l in lookups],
+            "instrument_ids": [lookup[0] for lookup in lookups],
+            "patterns": [lookup[1] for lookup in lookups],
+            "dates": [lookup[2] for lookup in lookups],
+            "owns": [lookup[3] for lookup in lookups],
         },
     )
+
     def distance(hit: dict) -> tuple[int, int]:
         # Nearest article first: the rule for art. 35 sits in art. 36, not in
         # art. 13 or 49, which name it too.
@@ -514,12 +516,17 @@ def implementing_acts(
     # An act already retrieved still brings its nearest chunks: the
     # instruction's «Textes de référence» chunk ranked, its ceilings did not.
     instruments = list(dict.fromkeys(row["instrument_id"] for row in matched))
-    found = add_unseen(
-        located({c: v for c, v in row.items() if c != "instrument_id"} for row in matched), known
-    )[:IMPLEMENTING_MAX]
+    found = add_unseen(located({c: v for c, v in row.items() if c != "instrument_id"} for row in matched), known)[
+        :IMPLEMENTING_MAX
+    ]
     if query_vector is not None:
         for instrument in instruments[:IMPLEMENTING_NEAREST_ACTS]:
-            params = {**base, "instrument_id": instrument, "qvec": query_vector, "model_id": model_id,
-                      "k": IMPLEMENTING_NEAREST + 1}
+            params = {
+                **base,
+                "instrument_id": instrument,
+                "qvec": query_vector,
+                "model_id": model_id,
+                "k": IMPLEMENTING_NEAREST + 1,
+            }
             found += add_unseen(located(fetch_dicts(conn, _ACT_NEAREST_SQL, params)), known, IMPLEMENTING_NEAREST)
     return found

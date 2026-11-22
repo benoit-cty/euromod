@@ -27,7 +27,9 @@ def test_enrichment_requires_ident_match_in_heading() -> None:
     hits = [
         _hit("CR FR Y16, §Income test"),
         _hit('CR FR Y16, §5.4 General Social contribution — **tscxc_s** ("Contribution Sociale Généralisée", CSG)'),
-        _hit('CR FR Y16, §Differential contribution on high income — tinto01_s ("Contribution différentielle sur les hauts revenus", CDHR) [pp. 110-111]'),
+        _hit(
+            'CR FR Y16, §Differential contribution on high income — tinto01_s ("Contribution différentielle sur les hauts revenus", CDHR) [pp. 110-111]'
+        ),
     ]
     terms = cr_enrichment_terms(hits, ["tin", "tinrt", "cdhr"], "CDHR rate")
     assert "différentielle" in terms and "revenus" in terms

@@ -16,8 +16,14 @@ from .schema import CaseResult
 
 #: KPIs reported per language, in the order the console prints them.
 KPIS = [
-    "routing_correct", "value_correct", "date_correct", "citation_correct",
-    "extract_verbatim", "supportedness", "critique_pass", "hallucination",
+    "routing_correct",
+    "value_correct",
+    "date_correct",
+    "citation_correct",
+    "extract_verbatim",
+    "supportedness",
+    "critique_pass",
+    "hallucination",
     "retrieval_hit",
 ]
 
@@ -50,14 +56,34 @@ COUNT_COLUMNS = {
 #: eval.run_summary columns with no Python twin: the run's identity, the
 #: ready-only rates (Python prints a whole `<lang> (ready)` row instead), the
 #: guidance share (ADR 0001 evidence, not a KPI), latency and impact.
-SQL_ONLY_COLUMNS = frozenset({
-    "run_pk", "run_id", "created_at", "as_of", "model_provider", "model_name",
-    "prompt_version", "agent_version", "dataset_version", "critique_model",
-    "resolved_model", "resolved_critique_model", "language", "country",
-    "routing_pct_ready", "value_pct_ready", "citation_pct_ready",
-    "guidance_only_cases", "guidance_only_pct", "avg_latency_ms",
-    "tokens_prompt", "tokens_completion", "energy_kwh", "gwp_kgco2eq",
-})
+SQL_ONLY_COLUMNS = frozenset(
+    {
+        "run_pk",
+        "run_id",
+        "created_at",
+        "as_of",
+        "model_provider",
+        "model_name",
+        "prompt_version",
+        "agent_version",
+        "dataset_version",
+        "critique_model",
+        "resolved_model",
+        "resolved_critique_model",
+        "language",
+        "country",
+        "routing_pct_ready",
+        "value_pct_ready",
+        "citation_pct_ready",
+        "guidance_only_cases",
+        "guidance_only_pct",
+        "avg_latency_ms",
+        "tokens_prompt",
+        "tokens_completion",
+        "energy_kwh",
+        "gwp_kgco2eq",
+    }
+)
 
 
 def _rate(rows: list[CaseResult], kpi: str) -> str:

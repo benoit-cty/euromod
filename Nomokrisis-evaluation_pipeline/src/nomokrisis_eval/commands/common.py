@@ -16,15 +16,17 @@ app = typer.Typer(no_args_is_help=True, add_completion=False)
 
 def verbose_option():
     """`--verbose/--quiet`, shared by every command that runs cases."""
-    return typer.Option(
-        False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case"
-    )
+    return typer.Option(False, "--verbose/--quiet", "-v", help="Also mirror every workflow step of every case")
 
 
 def concurrency_option():
     """`-j`, shared by every command that runs cases."""
     return typer.Option(
-        4, "--concurrency", "-j", min=1, envvar="EVAL_CONCURRENCY",
+        4,
+        "--concurrency",
+        "-j",
+        min=1,
+        envvar="EVAL_CONCURRENCY",
         help="Cases run at once (each case is mostly waiting on the LLM)",
     )
 

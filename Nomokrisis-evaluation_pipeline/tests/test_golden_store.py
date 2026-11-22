@@ -7,16 +7,13 @@ import json
 from datetime import date
 
 import pytest
-from typer.testing import CliRunner
-from pydantic import ValidationError
-
-from nomoscope_workflow.schema import Routing
-
+from conftest import TEST_PREFIX
 from nomokrisis_eval import golden_store
 from nomokrisis_eval.cli import app
 from nomokrisis_eval.schema import EmbeddingCase, Expected, GoldenCase
-
-from conftest import TEST_PREFIX
+from nomoscope_workflow.schema import Routing
+from pydantic import ValidationError
+from typer.testing import CliRunner
 
 
 def make_case(case_id: str = TEST_PREFIX + "fr_pss", value=47100.0, **kwargs) -> GoldenCase:
@@ -77,7 +74,10 @@ def test_selection_identity_reads_the_header_then_the_filename():
     assert golden_store.selection_identity({}, "golden_sources/openfisca_fr.json") == ("FR", "openfisca")
     assert golden_store.selection_identity({}, "/tmp/lt.json") == ("LT", "curated")
     # the header's country wins over the filename; an unknown `corpus` falls back to the name
-    assert golden_store.selection_identity({"country": "ES", "corpus": "hand"}, "openfisca_fr.json") == ("ES", "openfisca")
+    assert golden_store.selection_identity({"country": "ES", "corpus": "hand"}, "openfisca_fr.json") == (
+        "ES",
+        "openfisca",
+    )
     with pytest.raises(ValueError, match="country"):
         golden_store.selection_identity({"corpus": "curated"})
 
@@ -169,7 +169,7 @@ def test_a_failed_verdict_reset_leaves_the_old_ground_truth(db, monkeypatch):
 def test_selection_round_trip(db):
     header = {"country": "ZZ", "language": "zz", "corpus": "curated", "description": "test"}
     entries = [{"model_target": "euromod://ZZ/x_zz/def_const/$x", "expected_value": 1.0}]
-    with pytest.raises(KeyError, match="import-golden|ZZ"):
+    with pytest.raises(KeyError, match=r"import-golden|ZZ"):
         golden_store.load_selection(db, "ZZ", "curated")
     golden_store.save_selection(db, "zz", "curated", {**header, "entries": ["ignored"]}, entries)
     got_header, got_entries = golden_store.load_selection(db, "ZZ", "curated")
@@ -187,9 +187,9 @@ def test_selection_kinds_lists_what_the_country_has(db):
     assert golden_store.selection_kinds(db, "zz") == ["openfisca"]
     golden_store.save_selection(db, "ZZ", "curated", header, [{"model_target": "t"}])
     assert golden_store.selection_kinds(db, "ZZ") == ["openfisca", "curated"]
-    assert [(r["country"], r["kind"], r["entries"]) for r in golden_store.list_selections(db) if r["country"] == "ZZ"] == [
-        ("ZZ", "curated", 1), ("ZZ", "openfisca", 0)
-    ]
+    assert [
+        (r["country"], r["kind"], r["entries"]) for r in golden_store.list_selections(db) if r["country"] == "ZZ"
+    ] == [("ZZ", "curated", 1), ("ZZ", "openfisca", 0)]
 
 
 def test_selection_export_import_round_trip_through_the_cli(db, tmp_path):

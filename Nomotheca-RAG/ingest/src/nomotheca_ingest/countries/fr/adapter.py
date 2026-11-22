@@ -5,15 +5,6 @@ from __future__ import annotations
 import re
 from datetime import date
 
-from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
-from nomotheca_ingest.countries.fr.fetcher import fetch_direct_id
-from nomotheca_ingest.countries.fr.kali import fetch_kali
-from nomotheca_ingest.countries.fr.parser import parse_dila_json
-from nomotheca_ingest.countries.fr.resolver import (
-    FrResolver,
-    canary_facts,
-    resolve_legifrance_url,
-)
 from nomotheca_ingest.core.ir import (
     CanaryFact,
     CitationRef,
@@ -24,6 +15,15 @@ from nomotheca_ingest.core.ir import (
     SourceRef,
 )
 from nomotheca_ingest.core.snapshots import SnapshotClient
+from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
+from nomotheca_ingest.countries.fr.fetcher import fetch_direct_id
+from nomotheca_ingest.countries.fr.kali import fetch_kali
+from nomotheca_ingest.countries.fr.parser import parse_dila_json
+from nomotheca_ingest.countries.fr.resolver import (
+    FrResolver,
+    canary_facts,
+    resolve_legifrance_url,
+)
 
 DILA_ID = re.compile(r"\b(?:LEGI|JORF|KALI)(?:ARTI|TEXT|SCTA)\d{12}\b")
 

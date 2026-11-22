@@ -65,9 +65,7 @@ def search_legislation(
     """
     with _connect() as conn:
         model_id = default_model_id(conn)
-        query_vector = (
-            encoder.encode_literal(query, model_id) if mode in {"hybrid", "vector"} else None
-        )
+        query_vector = encoder.encode_literal(query, model_id) if mode in {"hybrid", "vector"} else None
         hits = search(
             conn,
             query=query,
@@ -84,11 +82,7 @@ def search_legislation(
         "mode": mode,
         "filters": {"country": country, "as_of": as_of, "languages": languages},
         "model_id": model_id if query_vector else None,
-        "ranking": (
-            "RRF(k=60) over full-text and vector ranks, vector top 3 guaranteed"
-            if mode == "hybrid"
-            else mode
-        ),
+        "ranking": ("RRF(k=60) over full-text and vector ranks, vector top 3 guaranteed" if mode == "hybrid" else mode),
         "result_count": len(hits),
         "results": [asdict(hit) for hit in hits],
     }

@@ -30,7 +30,7 @@ retrieval eval) — and register on the one app in `commands.common`.
 
 from __future__ import annotations
 
-from .commands import golden, runs, embeddings  # noqa: F401, I001 - registration order is help order
+from .commands import embeddings, golden, runs  # noqa: F401 - registration order is help order
 from .commands.common import app
 
 __all__ = ["app"]

@@ -15,10 +15,9 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from nomotheca_ingest.countries.lt.fetcher import CONSOLIDATION_INDEX_SUFFIX, ORIGINAL_TEXT_SUFFIX
-from nomotheca_ingest.core.text import path_token
 from nomotheca_ingest.core.ir import InstrumentIR, ParsedDoc, Snapshot, SourceRef, TextIR, UnitIR, VersionIR
-
+from nomotheca_ingest.core.text import path_token
+from nomotheca_ingest.countries.lt.fetcher import CONSOLIDATION_INDEX_SUFFIX, ORIGINAL_TEXT_SUFFIX
 
 # Consolidations whose validity ended before this date are skipped at expansion
 # time: TAR keeps every consolidation since 2014, EUROMOD needs the 2022+ window.

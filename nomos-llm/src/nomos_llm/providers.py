@@ -98,9 +98,7 @@ def prompt_budget_chars(model: str) -> int | None:
     return int(room * CHARS_PER_TOKEN)
 
 
-def model_settings(
-    model: str, temperature: float | None = None, timeout: float | None = None
-) -> ModelSettings:
+def model_settings(model: str, temperature: float | None = None, timeout: float | None = None) -> ModelSettings:
     """The request settings every LLM call uses, in one place (the timeout
     included — `run_agent` used to add it afterwards).
 
@@ -143,8 +141,7 @@ def get_model(model: str):
         deployment = name or os.environ.get("AZURE_OPENAI_DEPLOYMENT", "")
         if not deployment:
             raise ValueError(
-                "azure_openai/ needs a deployment name after the slash "
-                "(or AZURE_OPENAI_DEPLOYMENT as a default)"
+                "azure_openai/ needs a deployment name after the slash (or AZURE_OPENAI_DEPLOYMENT as a default)"
             )
         if uses_responses_api(model):
             from pydantic_ai.models.openai import OpenAIResponsesModel
@@ -176,9 +173,7 @@ def get_model(model: str):
             raise ValueError("jrc/ needs the served model name after the slash")
         return OpenAIChatModel(
             name,
-            provider=OpenAIProvider(
-                base_url=base_url, api_key=os.environ.get("JRC_LLM_API_KEY") or "unset"
-            ),
+            provider=OpenAIProvider(base_url=base_url, api_key=os.environ.get("JRC_LLM_API_KEY") or "unset"),
         )
     raise ValueError(
         f"Unknown provider prefix in {model!r}; expected one of "

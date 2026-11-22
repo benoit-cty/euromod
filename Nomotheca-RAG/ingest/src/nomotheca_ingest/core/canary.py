@@ -45,7 +45,7 @@ GROUP BY u.citation
 class CanaryResult:
     jurisdiction: str
     fact: CanaryFact
-    matched: str | None       # the citation found (or the act's first unit)
+    matched: str | None  # the citation found (or the act's first unit)
     latest_start: date | None
 
     @property

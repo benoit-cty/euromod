@@ -20,6 +20,8 @@ from psycopg.conninfo import make_conninfo
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
+from nomotheca_ingest.core.db import connect
+
 # The model/hardware half, re-exported: other packages (the worker's encode
 # lane) import the backend from here.
 from nomotheca_ingest.core.embedding_backend import (  # noqa: F401
@@ -49,7 +51,6 @@ from nomotheca_ingest.core.embedding_backend import (  # noqa: F401
 from nomotheca_ingest.core.embedding_models import DEFAULT_MODEL, EmbeddingModelSpec, get_model
 from nomotheca_ingest.core.progress import BatchStats, ProgressCallback, emit
 from nomotheca_ingest.core.text import sha256_hex
-from nomotheca_ingest.core.db import connect
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,7 +60,6 @@ class ChunkForEmbedding:
     id: UUID
     input_text: str
     input_hash: str
-
 
 
 # ---------------------------------------------------------------------------
@@ -124,7 +124,7 @@ def embedding_build_lock(conninfo: str, on_wait: LockWaitCallback | None = None)
     polls rather than blocking in ``pg_advisory_lock`` so a change of holder
     is reported too. Released when the block ends (its connection closes).
     """
-    global _embedding_lock_conn  # noqa: PLW0603 - one lock per process
+    global _embedding_lock_conn
     if _embedding_lock_conn is not None:
         yield
         return
@@ -188,8 +188,14 @@ def build_embeddings(
     """
     scope = {"authentic_only": authentic_only, "langs": langs, "in_force_on": in_force_on}
     run = lambda: _build(  # noqa: E731
-        conn, backend, model_id=model_id, batch_size=batch_size, limit=limit, dry_run=dry_run,
-        progress=progress, **scope,
+        conn,
+        backend,
+        model_id=model_id,
+        batch_size=batch_size,
+        limit=limit,
+        dry_run=dry_run,
+        progress=progress,
+        **scope,
     )
     if dry_run or not lock:
         return run()

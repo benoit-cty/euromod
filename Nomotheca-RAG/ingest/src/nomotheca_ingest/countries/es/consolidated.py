@@ -7,6 +7,8 @@ import xml.etree.ElementTree as ET
 from datetime import date
 from typing import Any
 
+from nomotheca_ingest.core.ir import ParsedDoc, Snapshot, SourceRef, TextIR, UnitIR, VersionIR
+from nomotheca_ingest.core.text import UniqueCitations
 from nomotheca_ingest.countries.es.boe import (
     ContainerStack,
     _citation,
@@ -22,8 +24,6 @@ from nomotheca_ingest.countries.es.boe import (
     child_path,
     short_citation_for,
 )
-from nomotheca_ingest.core.ir import ParsedDoc, Snapshot, SourceRef, TextIR, UnitIR, VersionIR
-from nomotheca_ingest.core.text import UniqueCitations
 
 
 def parse_consolidated(root: ET.Element, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:

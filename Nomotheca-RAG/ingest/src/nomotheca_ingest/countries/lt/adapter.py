@@ -5,10 +5,6 @@ from __future__ import annotations
 import re
 from datetime import date
 
-from nomotheca_ingest.countries.lt.fetcher import fetch_tar
-from nomotheca_ingest.countries.lt.parser import parse_tar_json
-from nomotheca_ingest.countries.lt.resolver import LtResolver, canary_facts
-from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
 from nomotheca_ingest.core.ir import (
     CanaryFact,
     CitationRef,
@@ -19,7 +15,10 @@ from nomotheca_ingest.core.ir import (
     SourceRef,
 )
 from nomotheca_ingest.core.snapshots import SnapshotClient
-
+from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
+from nomotheca_ingest.countries.lt.fetcher import fetch_tar
+from nomotheca_ingest.countries.lt.parser import parse_tar_json
+from nomotheca_ingest.countries.lt.resolver import LtResolver, canary_facts
 
 LT_URL_SOURCE = UrlSource(
     name="e-seimas / e-tar",

@@ -23,8 +23,6 @@ The rules that matter (ADR 0001, and the spec's Implementation Decisions):
 
 from __future__ import annotations
 
-from nomotheca_ingest.core.errors import RefusalError
-from nomotheca_ingest.core.ir import NormLevel
 from nomotheca_ingest.core.contributed.fetch import (
     BROWSER_USER_AGENT,
     SourceDocument,
@@ -59,12 +57,14 @@ from nomotheca_ingest.core.contributed.kinds import (
     stated_fields,
     trust_class_for,
 )
+from nomotheca_ingest.core.errors import RefusalError
+from nomotheca_ingest.core.ir import NormLevel
 
 __all__ = [
     "BROWSER_USER_AGENT",
+    "DEFAULT_KINDS",
     "ID_SYSTEM",
     "IMPLEMENTS_RELATION",
-    "DEFAULT_KINDS",
     "SKILL_VERSION",
     "SOURCE_TYPE",
     "TRUST_CLASS_BY_LEVEL",

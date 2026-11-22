@@ -10,7 +10,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-
+from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef
 from nomotheca_ingest.countries.es.adapter import EsAdapter
 from nomotheca_ingest.countries.es.parser import KNOWN_ACTS, parse_boe_xml
 from nomotheca_ingest.countries.es.regions import (
@@ -24,11 +24,14 @@ from nomotheca_ingest.countries.es.resolver import (
     EsResolver,
     boe_id_from_eli,
 )
-from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef
 
 DB_DIR = Path(__file__).resolve().parents[2] / "db"
 STATE_ACTS = {
-    "BOE-A-2006-20764", "BOE-A-2007-6820", "BOE-A-2015-11724", "BOE-A-2021-21007", "BOE-A-2025-2576",
+    "BOE-A-2006-20764",
+    "BOE-A-2007-6820",
+    "BOE-A-2015-11724",
+    "BOE-A-2021-21007",
+    "BOE-A-2025-2576",
 }
 
 
@@ -46,8 +49,25 @@ def test_the_table_covers_the_nineteen_communities_with_unique_keys():
     assert all(re.fullmatch(r"ES\d{2}", ac.nuts2) for ac in AUTONOMOUS_COMMUNITIES)
     # The two digits EUROMOD embeds in parameter names, exactly the NUTS-2 set.
     assert {ac.nuts2[2:] for ac in AUTONOMOUS_COMMUNITIES} == {
-        "11", "12", "13", "21", "22", "23", "24", "30", "41", "42", "43",
-        "51", "52", "53", "61", "62", "63", "64", "70",
+        "11",
+        "12",
+        "13",
+        "21",
+        "22",
+        "23",
+        "24",
+        "30",
+        "41",
+        "42",
+        "43",
+        "51",
+        "52",
+        "53",
+        "61",
+        "62",
+        "63",
+        "64",
+        "70",
     }
     assert by_code("es-cn").nuts2 == "ES70"
 
@@ -63,9 +83,7 @@ def _sql_rows(path: Path) -> dict[str, dict]:
     return rows
 
 
-@pytest.mark.parametrize(
-    "sql", [DB_DIR / "seed.sql", DB_DIR / "migrations" / "0002_es_autonomous_communities.sql"]
-)
+@pytest.mark.parametrize("sql", [DB_DIR / "seed.sql", DB_DIR / "migrations" / "0002_es_autonomous_communities.sql"])
 def test_the_sql_mirrors_carry_exactly_the_table(sql: Path):
     """seed.sql and the migration are generated from the table; a hand edit on
     either side must fail here rather than desynchronise retrieval scoping."""
@@ -86,34 +104,39 @@ def test_the_sql_mirrors_carry_exactly_the_table(sql: Path):
 
 
 def test_the_eli_segment_places_an_act_before_the_departamento_text():
-    assert jurisdiction_for(
-        url_eli="https://www.boe.es/eli/es-ga/dlg/2011/07/28/1",
-        departamento="Whatever BOE wrote",
-        ambito_codigo="2",
-        default="ES",
-    ) == "ES-GA"
+    assert (
+        jurisdiction_for(
+            url_eli="https://www.boe.es/eli/es-ga/dlg/2011/07/28/1",
+            departamento="Whatever BOE wrote",
+            ambito_codigo="2",
+            default="ES",
+        )
+        == "ES-GA"
+    )
 
 
 def test_the_departamento_text_is_the_fallback_and_is_accent_insensitive():
-    assert jurisdiction_for(
-        url_eli=None, departamento="Comunidad Autonoma de Aragon", ambito_codigo="2", default="ES"
-    ) == "ES-AR"
+    assert (
+        jurisdiction_for(url_eli=None, departamento="Comunidad Autonoma de Aragon", ambito_codigo="2", default="ES")
+        == "ES-AR"
+    )
 
 
 def test_state_acts_keep_the_default_jurisdiction():
-    assert jurisdiction_for(
-        url_eli="https://www.boe.es/eli/es/l/2006/11/28/35",
-        departamento="Jefatura del Estado",
-        ambito_codigo="1",
-        default="ES",
-    ) == "ES"
+    assert (
+        jurisdiction_for(
+            url_eli="https://www.boe.es/eli/es/l/2006/11/28/35",
+            departamento="Jefatura del Estado",
+            ambito_codigo="1",
+            default="ES",
+        )
+        == "ES"
+    )
 
 
 def test_an_unplaceable_autonomous_act_is_refused_rather_than_filed_under_es():
     with pytest.raises(ValueError, match="unknown region"):
-        jurisdiction_for(
-            url_eli=None, departamento="Comunidad Autónoma de Atlantis", ambito_codigo="2", default="ES"
-        )
+        jurisdiction_for(url_eli=None, departamento="Comunidad Autónoma de Atlantis", ambito_codigo="2", default="ES")
 
 
 # ---------------------------------------------------------------------------
@@ -191,7 +214,9 @@ def test_a_regional_act_is_filed_under_its_community_with_a_region_qualified_cit
     ],
 )
 def test_region_qualified_aliases_resolve(citation: str, expected: str):
-    refs = EsResolver(eli_lookup=_offline_eli).resolve(CitationRef(jurisdiction="ES", citation=citation), date(2025, 7, 1))
+    refs = EsResolver(eli_lookup=_offline_eli).resolve(
+        CitationRef(jurisdiction="ES", citation=citation), date(2025, 7, 1)
+    )
     assert [ref.source_id for ref in refs] == [expected]
 
 
@@ -245,7 +270,7 @@ def test_a_published_but_unconsolidated_eli_is_refused_with_its_boe_id():
     not consolidate them (/con is a 404 page), and the consolidated API 404s
     on their id. The refusal names the id so the operator knows what exists."""
     assert boe_id_from_eli("es-as/l/2024/12/27/8", _offline_eli) == ("BOE-A-2025-3124", False)
-    with pytest.raises(ValueError, match="BOE-A-2025-3124.*not consolidate"):
+    with pytest.raises(ValueError, match=r"BOE-A-2025-3124.*not consolidate"):
         EsResolver(eli_lookup=_offline_eli).resolve(
             CitationRef(jurisdiction="ES", citation="https://www.boe.es/eli/es-as/l/2024/12/27/8"), date(2025, 7, 1)
         )

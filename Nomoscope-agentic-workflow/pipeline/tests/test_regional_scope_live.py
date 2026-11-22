@@ -16,7 +16,6 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-
 from nomoscope_workflow import retrieval
 from nomoscope_workflow.config import load_config
 from nomoscope_workflow.regions import region_key

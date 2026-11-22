@@ -7,11 +7,9 @@ import json
 from pathlib import Path
 
 import pytest
-
+from conftest import TEST_PREFIX
 from nomokrisis_eval import golden_store
 from nomokrisis_eval.import_golden import import_golden, read_selection_files
-
-from conftest import TEST_PREFIX
 
 EVAL_ROOT = Path(__file__).resolve().parents[1]
 
@@ -64,7 +62,10 @@ def temp_golden(tmp_path: Path) -> Path:
 
 
 def test_selection_files_read_kind_and_header():
-    rows = {(country, kind): (header, entries) for country, kind, header, entries in read_selection_files(EVAL_ROOT / "golden_sources")}
+    rows = {
+        (country, kind): (header, entries)
+        for country, kind, header, entries in read_selection_files(EVAL_ROOT / "golden_sources")
+    }
     assert ("FR", "openfisca") in rows and ("FR", "curated") in rows
     header, entries = rows[("FR", "openfisca")]
     assert "entries" not in header and header["corpus"] == "openfisca" and entries

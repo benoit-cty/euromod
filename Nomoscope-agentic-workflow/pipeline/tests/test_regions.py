@@ -1,7 +1,6 @@
 """Region key and jurisdiction scope (ADR 0003)."""
 
 import pytest
-
 from nomoscope_workflow import retrieval
 from nomoscope_workflow.regions import region_key
 

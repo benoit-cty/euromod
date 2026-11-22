@@ -5,9 +5,8 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from textual.widgets import Button, Input, Select
-
 from nomotheca_ingest.tui import DEFAULT_DATABASE_URL, PipelineTui, _format_fetch_progress
+from textual.widgets import Button, Input, Select
 
 
 def test_pipeline_tui_mounts_run_button() -> None:
@@ -97,8 +96,15 @@ def test_pipeline_reports_each_fetch(monkeypatch) -> None:
 
     class Adapter:
         def fetch(self, r, http):
-            return Snapshot(id=uuid4(), source_code=r.source_code, url=f"https://x.test/{r.source_id}", http_status=200,
-                            content_type="text/plain", content_hash="0" * 64, raw_content=b"x")
+            return Snapshot(
+                id=uuid4(),
+                source_code=r.source_code,
+                url=f"https://x.test/{r.source_id}",
+                http_status=200,
+                content_type="text/plain",
+                content_hash="0" * 64,
+                raw_content=b"x",
+            )
 
         def parse(self, raw, r, snapshot):
             return ParsedDoc(ref=r, instruments=[])

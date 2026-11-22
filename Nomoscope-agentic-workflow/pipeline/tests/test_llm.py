@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from nomoscope_workflow.llm import get_model
 
 

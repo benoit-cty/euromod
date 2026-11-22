@@ -9,8 +9,8 @@ from datetime import date
 
 import psycopg
 
-from .schema import RetrievalHit
 from .corpus import CHUNK_JOINS, HIT_COLUMNS, _fts_query, fetch_dicts
+from .schema import RetrievalHit
 
 _CR_SEARCH_SQL = f"""
 SELECT {HIT_COLUMNS},
@@ -61,15 +61,11 @@ def euromod_ident_tokens(model_target: str) -> list[str]:
     # [a-z0-9]+ (not \w+): underscores must split, 'tinrt_cdhr' -> tinrt, cdhr
     raw = re.findall(r"[a-z0-9]+", model_target.lower())
     country = raw[1] if len(raw) > 1 and len(raw[1]) == 2 else None
-    tokens = dict.fromkeys(
-        t for t in raw if len(t) >= 3 and not t.isdigit() and t not in _IDENT_NOISE and t != country
-    )
+    tokens = dict.fromkeys(t for t in raw if len(t) >= 3 and not t.isdigit() and t not in _IDENT_NOISE and t != country)
     return list(tokens)
 
 
-def cr_enrichment_terms(
-    hits: list[RetrievalHit], ident_tokens: list[str], base_query: str, cap: int = 12
-) -> list[str]:
+def cr_enrichment_terms(hits: list[RetrievalHit], ident_tokens: list[str], base_query: str, cap: int = 12) -> list[str]:
     """Harvest query-enrichment words from Country Report section headings.
 
     Precision gate: only the FIRST hit whose heading shares a token with the
@@ -88,8 +84,8 @@ def cr_enrichment_terms(
         if not ident & set(re.findall(r"[a-z0-9]+", heading.lower())):
             continue
         text = heading.split("§", 1)[-1]
-        text = re.sub(r"\[.*?\]", "", text)          # page refs: [pp. 110-111]
-        text = re.sub(r"^[\d.\s]+", "", text)         # leading section numbering
+        text = re.sub(r"\[.*?\]", "", text)  # page refs: [pp. 110-111]
+        text = re.sub(r"^[\d.\s]+", "", text)  # leading section numbering
         for word in re.findall(r"\w+", text):
             lower = word.lower()
             if len(word) < 3 or any(c.isdigit() for c in word) or "_" in word:

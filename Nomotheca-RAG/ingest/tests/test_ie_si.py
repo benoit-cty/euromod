@@ -3,12 +3,11 @@
 import uuid
 from datetime import date
 
-from nomotheca_ingest.core.ir import Snapshot, SourceRef
+from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef
 from nomotheca_ingest.countries.ie.adapter import IE_URL_SOURCE
 from nomotheca_ingest.countries.ie.fetcher import url_for_ref
 from nomotheca_ingest.countries.ie.resolver import IeResolver
 from nomotheca_ingest.countries.ie.si import parse_si
-from nomotheca_ingest.core.ir import CitationRef
 
 P = '<tr><td></td><td></td><td valign="top"><p style="display:block;{style}">{text}</p>'
 PAGE = (
@@ -17,8 +16,13 @@ PAGE = (
     + P.format(style="text-align:center;", text="ARRANGEMENT OF ARTICLES")
     + P.format(style="", text="1. Citation.")
     + P.format(style="", text="2. Commencement.")
-    + P.format(style="", text="I, A MINISTER, in exercise of the powers conferred on me, hereby make the following Regulations:")
-    + P.format(style="", text="1. These Regulations may be cited as the Social Welfare (Income Limit) Regulations 2025.")
+    + P.format(
+        style="",
+        text="I, A MINISTER, in exercise of the powers conferred on me, hereby make the following Regulations:",
+    )
+    + P.format(
+        style="", text="1. These Regulations may be cited as the Social Welfare (Income Limit) Regulations 2025."
+    )
     + P.format(style="", text="2. These Regulations come into operation on the 1st day of January 2025.")
     + P.format(style="", text="Income limit")
     + P.format(style="", text="3. (1) The weekly income limit is &euro;400.")
@@ -36,8 +40,13 @@ PAGE = (
 
 def _parse():
     ref = SourceRef(jurisdiction="IE", source_code="IE-EISB", source_id="2025/si/9", source_type="statutory_instrument")
-    snapshot = Snapshot(id=uuid.uuid4(), source_code="IE-EISB", url="https://www.irishstatutebook.ie/x",
-                        content_hash="x", raw_content=PAGE)
+    snapshot = Snapshot(
+        id=uuid.uuid4(),
+        source_code="IE-EISB",
+        url="https://www.irishstatutebook.ie/x",
+        content_hash="x",
+        raw_content=PAGE,
+    )
     return parse_si(PAGE, ref, snapshot).instruments[0]
 
 
@@ -71,4 +80,6 @@ def test_the_id_resolves_and_fetches_the_print_page():
     (ref,) = IeResolver().resolve(CitationRef(jurisdiction="IE", citation="2017/si/56"), date(2025, 7, 1))
     assert ref.source_type == "statutory_instrument"
     assert url_for_ref(ref) == "https://www.irishstatutebook.ie/eli/2017/si/56/made/en/print"
-    assert IE_URL_SOURCE.id_pattern.findall("https://www.irishstatutebook.ie/eli/2017/si/56/made/en/html") == ["2017/si/56"]
+    assert IE_URL_SOURCE.id_pattern.findall("https://www.irishstatutebook.ie/eli/2017/si/56/made/en/html") == [
+        "2017/si/56"
+    ]

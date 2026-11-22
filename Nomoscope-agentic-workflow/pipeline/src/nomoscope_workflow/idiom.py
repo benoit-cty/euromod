@@ -46,9 +46,21 @@ FR_APPLICABILITY = re.compile(
 #: were refused for it.
 NUMBER_WORDS: dict[str, dict[str, float]] = {
     "fr": {
-        "deux": 2.0, "trois": 3.0, "quatre": 4.0, "cinq": 5.0, "six": 6.0, "sept": 7.0,
-        "huit": 8.0, "neuf": 9.0, "dix": 10.0, "onze": 11.0, "douze": 12.0,
-        "double": 2.0, "triple": 3.0, "moitié": 0.5, "quart": 0.25,
+        "deux": 2.0,
+        "trois": 3.0,
+        "quatre": 4.0,
+        "cinq": 5.0,
+        "six": 6.0,
+        "sept": 7.0,
+        "huit": 8.0,
+        "neuf": 9.0,
+        "dix": 10.0,
+        "onze": 11.0,
+        "douze": 12.0,
+        "double": 2.0,
+        "triple": 3.0,
+        "moitié": 0.5,
+        "quart": 0.25,
     },
     "en": {"two": 2.0, "three": 3.0, "four": 4.0, "five": 5.0, "half": 0.5, "twice": 2.0},
 }

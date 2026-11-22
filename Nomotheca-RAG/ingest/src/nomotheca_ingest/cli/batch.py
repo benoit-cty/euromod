@@ -12,6 +12,7 @@ from typing import Annotated
 import typer
 
 from nomotheca_ingest.cli._app import DatabaseUrl, embeddings_app, translate_app
+from nomotheca_ingest.core.db import connect
 from nomotheca_ingest.core.embedding_models import MODELS, get_model
 from nomotheca_ingest.core.embeddings import (
     DEFAULT_MAX_SEQ_LENGTH,
@@ -30,7 +31,6 @@ from nomotheca_ingest.core.translate import (
     build_translations,
     count_texts_needing_translation,
 )
-from nomotheca_ingest.core.db import connect
 
 
 @embeddings_app.command("models")
@@ -95,7 +95,9 @@ def build_chunk_embeddings(
         typer.Option("--encode-batch-size", min=1, help="Texts per forward pass; defaults to --batch-size."),
     ] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Count stale chunks without writing embeddings.")] = False,
-    show_progress: Annotated[bool, typer.Option("--progress/--no-progress", help="Show live embedding progress.")] = True,
+    show_progress: Annotated[
+        bool, typer.Option("--progress/--no-progress", help="Show live embedding progress.")
+    ] = True,
     progress_json: Annotated[
         bool,
         typer.Option("--progress-json", help="Emit '@progress {json}' lines for wrapping UIs."),
@@ -175,8 +177,7 @@ def build_chunk_embeddings(
         elapsed = time.monotonic() - started
         if dry_run:
             typer.echo(
-                f"scanned={stats.scanned} would_embed={stats.done} "
-                f"model_id={model_id} backend={backend} dry_run=True"
+                f"scanned={stats.scanned} would_embed={stats.done} model_id={model_id} backend={backend} dry_run=True"
             )
         else:
             typer.echo(
@@ -242,7 +243,9 @@ def run_translations(
             "default EUROMOD_TRANSLATE_MODEL, else WORKFLOW_MODEL, from the root .env.",
         ),
     ] = None,
-    target_lang: Annotated[str, typer.Option("--target-lang", help="Target language (must exist in lang_fts_config).")] = DEFAULT_TARGET_LANG,
+    target_lang: Annotated[
+        str, typer.Option("--target-lang", help="Target language (must exist in lang_fts_config).")
+    ] = DEFAULT_TARGET_LANG,
     limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
     request_timeout: Annotated[
         float | None,
@@ -252,8 +255,12 @@ def run_translations(
             help="Per-provider-request timeout in seconds. Use 0 to disable.",
         ),
     ] = DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS,
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Count untranslated texts without calling the LLM.")] = False,
-    show_progress: Annotated[bool, typer.Option("--progress/--no-progress", help="Show live translation progress.")] = True,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Count untranslated texts without calling the LLM.")
+    ] = False,
+    show_progress: Annotated[
+        bool, typer.Option("--progress/--no-progress", help="Show live translation progress.")
+    ] = True,
     progress_json: Annotated[
         bool,
         typer.Option("--progress-json", help="Emit '@progress {json}' lines for wrapping UIs."),

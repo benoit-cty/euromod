@@ -21,7 +21,6 @@ from nomoscope_workflow.temporal import (
     _later_until,
     _retrieval_as_of,
 )
-
 from workflow_fixtures import _hit, _record
 
 
@@ -51,7 +50,9 @@ def test_start_of_year_retrieves_on_1_january_and_ignores_later_versions():
 
 def test_income_year_mock_backdates_valid_from_to_income_year_start():
     record = _record(
-        "bracket_schedule", "/1", [Bracket(threshold=0, rate=0.0)],
+        "bracket_schedule",
+        "/1",
+        [Bracket(threshold=0, rate=0.0)],
         temporal_basis=TemporalBasis.INCOME_YEAR,
     )
     # version consolidated 2025-02-14 (LF 2025) -> proposal back-dated to the
@@ -78,9 +79,7 @@ def test_income_year_date_issues():
     cdhr = "Le I s'applique à compter de l'imposition des revenus de l'année 2025."
     assert _income_year_date_issues(date(2025, 1, 1), date(2025, 2, 15), 2025, cdhr) == ([], False)
     # ...but a text naming some OTHER year does not exempt
-    issues, provisional = _income_year_date_issues(
-        date(2025, 1, 1), date(2025, 2, 15), 2025, "revenus de l'année 2024"
-    )
+    issues, provisional = _income_year_date_issues(date(2025, 1, 1), date(2025, 2, 15), 2025, "revenus de l'année 2024")
     assert provisional
     # no cited version validity -> only the back-dating check applies
     assert _income_year_date_issues(date(2025, 1, 1), None, 2025) == ([], False)
@@ -108,8 +107,7 @@ def test_cross_article_year_proof_reads_a_terminal_applicability_clause():
     FR barème case refused because of it."""
     lf_art2 = (
         "I. - Le code général des impôts est ainsi modifié : B. - Le I de l'article 197 "
-        "est ainsi modifié : a) le montant « 11 294 € » est remplacé par « 11 497 € » ; "
-        + "b) " + "x" * 5000 + " ; "
+        "est ainsi modifié : a) le montant « 11 294 € » est remplacé par « 11 497 € » ; " + "b) " + "x" * 5000 + " ; "
         "II. - Les A et B du I s'appliquent à l'impôt sur le revenu dû au titre de "
         "l'année 2024 et des années suivantes."
     )

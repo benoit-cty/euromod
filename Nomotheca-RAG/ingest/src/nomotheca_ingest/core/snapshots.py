@@ -12,7 +12,6 @@ import httpx
 from nomotheca_ingest.core.ir import Snapshot, SourceRef
 from nomotheca_ingest.core.text import sha256_hex
 
-
 #: Default User-Agent for every archive-first fetch, wherever it starts.
 USER_AGENT = "nomotheca-legislation-ingest/0.1"
 

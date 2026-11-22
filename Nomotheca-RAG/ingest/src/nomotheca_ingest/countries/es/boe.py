@@ -12,10 +12,9 @@ import xml.etree.ElementTree as ET
 from datetime import date, datetime
 from typing import Any
 
-from nomotheca_ingest.countries.es.regions import jurisdiction_for
 from nomotheca_ingest.core.ir import InstrumentIR, SourceRef, UnitIR
 from nomotheca_ingest.core.text import fold_accents, path_token, pipe_rows
-
+from nomotheca_ingest.countries.es.regions import jurisdiction_for
 
 # Short citation labels for the acts EUROMOD ES cites most, keyed by BOE id.
 # Used to build unit citations ("LIRPF Artículo 63"); acts outside the table
@@ -173,6 +172,7 @@ def _instrument_metadata(metadatos: ET.Element, numero_oficial: str) -> dict[str
 def _render_table(table: ET.Element) -> list[str]:
     """Render a table as pipe-separated rows, keeping figures with columns."""
     return pipe_rows([_normalize_space(_element_text(cell)) for cell in row] for row in table.iter("tr"))
+
 
 def _element_text(element: ET.Element) -> str:
     """Collect an element's text, treating ``<br/>`` as a word separator.

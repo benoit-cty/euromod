@@ -129,9 +129,7 @@ def _render(node: _Node, parts: list[str], skip_sections: bool) -> None:
         if skip_sections and child.tag == "section":
             continue
         if child.tag == "table":
-            rows = pipe_rows(
-                [" ".join(_text(cell).split()) for cell in _cells(row)] for row in _rows(child)
-            )
+            rows = pipe_rows([" ".join(_text(cell).split()) for cell in _cells(row)] for row in _rows(child))
             parts.append("\n" + "\n".join(rows) + "\n")
             continue
         block = child.tag in _BLOCK_TAGS
@@ -288,8 +286,13 @@ class _Builder:
         if title is not None:
             body = body.removeprefix(_text(title)).strip()
         self._emit(
-            node, parent_path, titles, unit_type="section", token=f"sect_{path_token(number)}",
-            citation=f"{self.title}, s. {number}", heading=heading,
+            node,
+            parent_path,
+            titles,
+            unit_type="section",
+            token=f"sect_{path_token(number)}",
+            citation=f"{self.title}, s. {number}",
+            heading=heading,
             content=f"Section {number}. {heading}\n{body}".strip(),
             eli=f"{LRC_BASE}/eli/{self.act_id}/section/{number}/revised/en/html",
             national_id=f"{self.act_id}/revised/section/{number}",
@@ -306,9 +309,13 @@ class _Builder:
         self._ordinal += 1
         self.units.append(
             UnitIR(
-                unit_type="schedule", path=path, ordinal=self._ordinal, parent_path=parent_path,
+                unit_type="schedule",
+                path=path,
+                ordinal=self._ordinal,
+                parent_path=parent_path,
                 citation=self._citations.claim(f"{self.title}, Sch. {label}"),
-                is_container=True, metadata={"heading": heading},
+                is_container=True,
+                metadata={"heading": heading},
             )
         )
         self.walk(node, path, [*_maybe(_title_node(node))], f"Sch. {label}, ")
@@ -320,9 +327,16 @@ class _Builder:
         name = "Sch." if kind == "schedule" else kind.capitalize()
         body = _text(node)
         self._emit(
-            node, parent_path, titles, unit_type="schedule", token=f"{kind[:5]}_{path_token(label)}",
-            citation=f"{self.title}, {prefix}{name} {label}", heading=heading, content=body,
-            eli=None, national_id=f"{self.act_id}/revised/{path_token(prefix + name + ' ' + label)}",
+            node,
+            parent_path,
+            titles,
+            unit_type="schedule",
+            token=f"{kind[:5]}_{path_token(label)}",
+            citation=f"{self.title}, {prefix}{name} {label}",
+            heading=heading,
+            content=body,
+            eli=None,
+            national_id=f"{self.act_id}/revised/{path_token(prefix + name + ' ' + label)}",
         )
 
     def _emit(self, node, parent_path, titles, *, unit_type, token, citation, heading, content, eli, national_id):

@@ -13,9 +13,7 @@ the caller gets None and falls back to its refusal.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Literal, TypeVar
-
-T = TypeVar("T")
+from typing import Any, Literal
 
 Engine = Literal["chromium", "firefox"]
 
@@ -29,7 +27,7 @@ def browser_available() -> bool:
     return True
 
 
-def with_browser(engine: Engine, action: Callable[[Any], T]) -> T | None:
+def with_browser[T](engine: Engine, action: Callable[[Any], T]) -> T | None:
     """Launch a headless ``engine``, run ``action(browser)``, always close it.
 
     None when Playwright is absent or anything in the browser fails: a page

@@ -10,11 +10,10 @@ from __future__ import annotations
 import json
 import os
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime, timezone
 
 import psycopg
 import pytest
-
 from nomoscope_workflow import paramdb, queue_store
 from nomoscope_workflow.config import WorkflowConfig, load_config
 from nomoscope_workflow.schema import (
@@ -33,9 +32,7 @@ DATABASE_URL = os.environ.get("WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@loc
 
 def _load_item(conn, item_id: str):
     """One queue item by id, or None (test helper)."""
-    row = conn.execute(
-        "SELECT status, item FROM params.review_queue WHERE item_id = %s", (item_id,)
-    ).fetchone()
+    row = conn.execute("SELECT status, item FROM params.review_queue WHERE item_id = %s", (item_id,)).fetchone()
     return queue_store._from_row(*row) if row else None
 
 
@@ -71,7 +68,7 @@ def _item(target: str, status: ItemStatus = ItemStatus.PENDING, run_id: str = "r
     return ReviewItem(
         id=queue_store.item_id("FR", target, 2025),
         run_id=run_id,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         country="FR",
         model_target=target,
         as_of=date(2025, 7, 1),
@@ -150,7 +147,7 @@ def scratch_parameter(conn, scratch_target):
     parameter_id = conn.execute(
         "INSERT INTO params.parameters (country, model_target, parameter_key, value_type, unit, "
         "unit_structured, label, source_file) VALUES ('FR', %s, %s, 'scalar', 'currency', "
-        "'{\"quantity\": \"money\", \"currency\": \"EUR\"}', '{\"en\": \"Old label\"}', 'test') RETURNING id",
+        '\'{"quantity": "money", "currency": "EUR"}\', \'{"en": "Old label"}\', \'test\') RETURNING id',
         (scratch_target, scratch_target.removeprefix("euromod://").replace("/", ":")),
     ).fetchone()[0]
     conn.execute(
@@ -182,12 +179,17 @@ def test_edit_parameter_applies_audits_and_exports_the_net_change(conn, scratch_
         "SELECT unit, unit_structured, label FROM params.parameters WHERE model_target = %s", (target,)
     ).fetchone()
     assert (unit, structured, label) == ("/1", {"quantity": "rate", "scale": "/1"}, {"en": "New label"})
-    assert conn.execute(
-        "SELECT source_type FROM params.model_values v JOIN params.parameters p ON p.id = v.parameter_id "
-        "WHERE p.model_target = %s", (target,)
-    ).fetchone()[0] == "national_team"
-    reviewer = conn.execute("SELECT DISTINCT reviewer FROM params.parameter_edits WHERE model_target = %s",
-                            (target,)).fetchall()
+    assert (
+        conn.execute(
+            "SELECT source_type FROM params.model_values v JOIN params.parameters p ON p.id = v.parameter_id "
+            "WHERE p.model_target = %s",
+            (target,),
+        ).fetchone()[0]
+        == "national_team"
+    )
+    reviewer = conn.execute(
+        "SELECT DISTINCT reviewer FROM params.parameter_edits WHERE model_target = %s", (target,)
+    ).fetchall()
     assert reviewer == [(conn.info.user,)]  # the login, via session_user
 
     change = _change(conn, target)
@@ -246,9 +248,7 @@ def test_edit_parameter_refuses_an_unknown_parameter(conn):
 
 def test_sql_unit_vocabulary_matches_known_units(conn):
     """edit_parameter hard-codes the vocabulary; it must not drift from KNOWN_UNITS."""
-    source = conn.execute(
-        "SELECT prosrc FROM pg_proc WHERE proname = 'edit_parameter'"
-    ).fetchone()[0]
+    source = conn.execute("SELECT prosrc FROM pg_proc WHERE proname = 'edit_parameter'").fetchone()[0]
     for unit in paramdb.KNOWN_UNITS:
         assert f"'{unit}'" in source
     for source_type in SourceType:
@@ -259,7 +259,7 @@ def test_decide_review_item_records_the_decision_and_updates_the_item(conn, scra
     """The UI's decide path: one SQL call, audit row + queue update, idempotent on decided_at."""
     item = _item(scratch_target)
     assert queue_store.write_item(conn, item)
-    decided_at = datetime(2026, 9, 22, 10, 0, tzinfo=timezone.utc)
+    decided_at = datetime(2026, 9, 22, 10, 0, tzinfo=UTC)
     decided = item.model_copy(
         update={"status": ItemStatus.ACCEPTED, "decision": Decision(action=ItemStatus.ACCEPTED, decided_at=decided_at)}
     )
@@ -290,9 +290,10 @@ def test_decide_review_item_records_the_decision_and_updates_the_item(conn, scra
     stored = _load_item(conn, item.id)
     assert stored.status == ItemStatus.ACCEPTED
     assert stored.decision is not None and stored.decision.action == ItemStatus.ACCEPTED
-    assert conn.execute(
-        "SELECT status FROM params.review_queue WHERE item_id = %s", (item.id,)
-    ).fetchone()[0] == "accepted"
+    assert (
+        conn.execute("SELECT status FROM params.review_queue WHERE item_id = %s", (item.id,)).fetchone()[0]
+        == "accepted"
+    )
 
     # the same decision again (same decided_at) is a no-op on the audit table
     with conn.transaction():
@@ -301,9 +302,9 @@ def test_decide_review_item_records_the_decision_and_updates_the_item(conn, scra
             (item.id, psycopg.types.json.Jsonb(decided.model_dump(mode="json")), psycopg.types.json.Jsonb(entry)),
         ).fetchone()
     assert again is None
-    assert conn.execute(
-        "SELECT count(*) FROM params.review_decisions WHERE item_id = %s", (item.id,)
-    ).fetchone()[0] == 1
+    assert (
+        conn.execute("SELECT count(*) FROM params.review_decisions WHERE item_id = %s", (item.id,)).fetchone()[0] == 1
+    )
 
     # a decided item is now immutable to a re-run
     assert not queue_store.write_item(conn, _item(scratch_target, run_id="run-9"))

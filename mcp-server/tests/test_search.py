@@ -3,7 +3,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
-
 from nomotheca_mcp.search import _SEARCH_SQL, search
 
 
@@ -53,8 +52,14 @@ def test_country_reports_are_never_returned() -> None:
         pytest.skip("database not reachable")
     with conn:
         hits = search(
-            conn, query="EUROMOD simulates the income tax", mode="full_text",
-            query_vector=None, model_id=1, country="FR", languages=["en"], limit=20,
+            conn,
+            query="EUROMOD simulates the income tax",
+            mode="full_text",
+            query_vector=None,
+            model_id=1,
+            country="FR",
+            languages=["en"],
+            limit=20,
         )
     assert hits
     assert all(hit.source_trust_class != "context" for hit in hits)

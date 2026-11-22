@@ -13,7 +13,6 @@ from datetime import date
 from nomotheca_ingest.core.errors import RefusalError
 from nomotheca_ingest.core.ir import ContributedKinds, NormLevel, SourceTrustClass
 
-
 #: Source-trust class per level (ADR 0001). Everything with statute-level
 #: authority is evidence, and so is a collective agreement (ADR 0006): where
 #: one sets a rate it is the source of truth like a law; guidance and — deliberately — "other" are guidance,

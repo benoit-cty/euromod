@@ -70,10 +70,15 @@ def _derived(**overrides) -> ProposalDraft:
         supporting_extract="6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83",
         derivation="a / b",
         operands=[
-            Operand(name="a", value=347.83, citation_chunk_id="akw",
-                    supporting_extract="6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83"),
-            Operand(name="b", value=286.45, citation_chunk_id="akw",
-                    supporting_extract="jonger is dan 6 jaar: € 286,45"),
+            Operand(
+                name="a",
+                value=347.83,
+                citation_chunk_id="akw",
+                supporting_extract="6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83",
+            ),
+            Operand(
+                name="b", value=286.45, citation_chunk_id="akw", supporting_extract="jonger is dan 6 jaar: € 286,45"
+            ),
         ],
     )
     draft.update(overrides)

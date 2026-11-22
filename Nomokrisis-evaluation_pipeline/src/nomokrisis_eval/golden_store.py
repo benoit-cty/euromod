@@ -69,7 +69,7 @@ def load_cases(
         params.append([c.upper() for c in countries])
     if languages:
         clauses.append("language = ANY(%s)")
-        params.append([l.lower() for l in languages])
+        params.append([lang.lower() for lang in languages])
     if verified_only:
         clauses.append("verified")
     where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
@@ -119,9 +119,7 @@ def delete_case(conn: psycopg.Connection, case_id: str) -> bool:
     return bool(deleted)
 
 
-def set_verified(
-    conn: psycopg.Connection, case_id: str, verified: bool, note: str | None = None
-) -> GoldenCase | None:
+def set_verified(conn: psycopg.Connection, case_id: str, verified: bool, note: str | None = None) -> GoldenCase | None:
     """The human gate. Reviewer identity is the connection's `current_user`
     (per-analyst logins, ADR 0004) — never a value the caller passes in.
     Returns the updated case, or None for an unknown id."""
@@ -238,9 +236,7 @@ def load_selection(conn: psycopg.Connection, country: str, kind: str) -> tuple[d
     return dict(header), list(entries)
 
 
-def save_selection(
-    conn: psycopg.Connection, country: str, kind: str, header: dict, entries: list[dict]
-) -> None:
+def save_selection(conn: psycopg.Connection, country: str, kind: str, header: dict, entries: list[dict]) -> None:
     if kind not in SELECTION_KINDS:
         raise ValueError(f"selection kind must be one of {SELECTION_KINDS}, not {kind!r}")
     header = {k: v for k, v in header.items() if k != "entries"}
@@ -269,9 +265,7 @@ def list_selections(conn: psycopg.Connection) -> list[dict]:
 
 def selection_kinds(conn: psycopg.Connection, country: str) -> list[str]:
     """The kinds of selection a country has rows for, in SELECTION_KINDS order."""
-    rows = conn.execute(
-        "SELECT kind FROM eval.golden_selections WHERE country = %s", (country.upper(),)
-    ).fetchall()
+    rows = conn.execute("SELECT kind FROM eval.golden_selections WHERE country = %s", (country.upper(),)).fetchall()
     present = {row[0] for row in rows}
     return [kind for kind in SELECTION_KINDS if kind in present]
 
@@ -323,14 +317,12 @@ def load_embedding_cases(
         params.append([c.upper() for c in countries])
     if languages:
         clauses.append("language = ANY(%s)")
-        params.append([l.lower() for l in languages])
+        params.append([lang.lower() for lang in languages])
     if verified_only:
         clauses.append("verified")
     where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
     with conn.cursor(row_factory=dict_row) as cur:
-        rows = cur.execute(
-            f'SELECT "case", verified FROM eval.embedding_cases {where} ORDER BY id', params
-        ).fetchall()
+        rows = cur.execute(f'SELECT "case", verified FROM eval.embedding_cases {where} ORDER BY id', params).fetchall()
     return [EmbeddingCase.model_validate({**row["case"], "verified": row["verified"]}) for row in rows]
 
 
@@ -381,7 +373,4 @@ def golden_set_hash(cases: Iterable[GoldenCase]) -> str:
 
 
 def embedding_set_hash(cases: Iterable[EmbeddingCase]) -> str:
-    return _set_hash(
-        (case.id, case.model_dump(mode="json", exclude={"verified"}, exclude_none=True))
-        for case in cases
-    )
+    return _set_hash((case.id, case.model_dump(mode="json", exclude={"verified"}, exclude_none=True)) for case in cases)

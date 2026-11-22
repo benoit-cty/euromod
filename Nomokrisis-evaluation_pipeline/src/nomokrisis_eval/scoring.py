@@ -92,9 +92,7 @@ def citation_matches(expected: str, candidate: str | None) -> bool:
     while start != -1:
         before = b[start - 1] if start else ""
         after = b[start + len(a)] if start + len(a) < len(b) else ""
-        if not (before.isdigit() and a[0].isdigit()) and not (
-            after.isdigit() and a[-1].isdigit()
-        ):
+        if not (before.isdigit() and a[0].isdigit()) and not (after.isdigit() and a[-1].isdigit()):
             return True
         start = b.find(a, start + 1)
     return False
@@ -192,9 +190,7 @@ def score_item(
         routing_correct=item.routing == expected.routing,
         item_id=item.id,
         phoenix_trace_id=item.phoenix_trace_id,
-        confidence=(
-            proposed.lineage.confidence if proposed is not None and proposed.lineage else None
-        ),
+        confidence=(proposed.lineage.confidence if proposed is not None and proposed.lineage else None),
         expected_value=_dump(expected.value),
         proposed_value=_dump(proposed.value) if proposed is not None else None,
         corpus_available=case.corpus_available,
@@ -213,9 +209,7 @@ def score_item(
 def _score_value(result: CaseResult, expected, proposed, on_basis, constants) -> None:
     """value_correct (incl. accepted alternatives) and the OpenFisca comparison."""
     if expected.value is not None:
-        result.value_correct = proposed is not None and values_equal(
-            on_basis, expected.value, constants
-        )
+        result.value_correct = proposed is not None and values_equal(on_basis, expected.value, constants)
         if proposed is not None and not result.value_correct and expected.accept:
             result.value_correct = result.value_alternative = any(
                 values_equal(on_basis, alternative, constants) for alternative in expected.accept
@@ -229,10 +223,9 @@ def _score_value(result: CaseResult, expected, proposed, on_basis, constants) ->
         if proposed is not None:
             result.openfisca_agrees = values_equal(on_basis, reference, constants)
         if expected.value is not None:
-            result.euromod_openfisca_agree = values_equal(
-                expected.value, reference, constants
-            ) or any(values_equal(a, reference, constants) for a in expected.accept or [])
-
+            result.euromod_openfisca_agree = values_equal(expected.value, reference, constants) or any(
+                values_equal(a, reference, constants) for a in expected.accept or []
+            )
 
 
 def _score_date(result: CaseResult, expected, item: ReviewItem, proposed) -> None:
@@ -249,7 +242,6 @@ def _score_date(result: CaseResult, expected, item: ReviewItem, proposed) -> Non
         result.date_correct = proposed is not None and proposed.valid_from == expected.valid_from
 
 
-
 def _score_evidence(result: CaseResult, expected, item: ReviewItem, proposed) -> None:
     # The evidence legs are only meaningful when the pipeline is looking for
     # evidence. On a `derived` verdict `pipeline._derived_refs` short-circuits to
@@ -264,9 +256,7 @@ def _score_evidence(result: CaseResult, expected, item: ReviewItem, proposed) ->
     both_derived = expected.routing == Routing.DERIVED == item.routing
     if expected.citations and not both_derived:
         result.citation_correct = proposed is not None and any(
-            citation_matches(exp, ref.title)
-            for exp in expected.citations
-            for ref in proposed.references
+            citation_matches(exp, ref.title) for exp in expected.citations for ref in proposed.references
         )
         result.retrieval_hit = any(
             citation_matches(exp, hit.citation) or citation_matches(exp, hit.context_header)
@@ -277,7 +267,6 @@ def _score_evidence(result: CaseResult, expected, item: ReviewItem, proposed) ->
     ranked = {hit.method for hit in item.retrieval_trace} & {"hybrid", "vector", "fts"}
     if ranked:
         result.vector_leg = ranked != {"fts"}
-
 
 
 def _score_critique(result: CaseResult, expected, item: ReviewItem, proposed, on_basis, constants) -> None:
@@ -299,12 +288,7 @@ def _score_critique(result: CaseResult, expected, item: ReviewItem, proposed, on
         # `unchanged`. What the pipeline does not stand behind cannot be
         # credited on routing, value or date; the evidence legs above keep
         # scoring, since they describe the rejected proposal itself.
-        if (
-            result.value_correct is False
-            and verbatim
-            and result.critique_pass
-            and expected.value is not None
-        ):
+        if result.value_correct is False and verbatim and result.critique_pass and expected.value is not None:
             result.euromod_discrepancy = law_vs_euromod(on_basis, expected.value, item, constants)
         if critique is not None and critique.verdict == "fail":
             result.rejected = True
@@ -318,7 +302,6 @@ def _score_critique(result: CaseResult, expected, item: ReviewItem, proposed, on
         # wrong answer. It still scores False on value/date/citation, so keep
         # the flag to tell "refused to guess" apart from "guessed wrong".
         result.abstained = item.routing == Routing.NOT_FOUND
-
 
 
 def _held_unit(value: float) -> float | None:

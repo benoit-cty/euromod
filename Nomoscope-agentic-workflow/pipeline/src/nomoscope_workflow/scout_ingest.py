@@ -16,6 +16,8 @@ from .config import WorkflowConfig
 from .query_encoder import EmbeddingProcess, embedding_process, ingest_dir, nomos_python
 
 INGEST_TIMEOUT = 600  # a single arrêté is seconds; a loi de finances, minutes
+
+
 # The embedding pass covers the whole backlog of unembedded chunks, not just the
 # scouted instrument (the CLI has no per-instrument scope), and BGE-M3 on CPU
 # runs at roughly one chunk per second — a freshly ingested loi de finances
@@ -45,10 +47,7 @@ def known_instruments(cfg: WorkflowConfig, ids: list[str], known_key: str | None
         "UNION SELECT national_id FROM legal_units WHERE national_id = ANY(%(ids)s)"
     )
     if known_key:
-        sql += (
-            " UNION SELECT metadata->>%(key)s FROM instruments "
-            "WHERE metadata->>%(key)s = ANY(%(ids)s)"
-        )
+        sql += " UNION SELECT metadata->>%(key)s FROM instruments WHERE metadata->>%(key)s = ANY(%(ids)s)"
     # No except: a database error used to return the empty set, so every
     # candidate was re-ingested (code audit 4). The ingest needs the same DB.
     with psycopg.connect(cfg.database_url) as conn:
@@ -84,9 +83,7 @@ def _launch(spec: EmbeddingProcess, what: str, timeout: int, timeout_note: str =
     timeout `"<what> timed out after <n>s<note>"`.
     """
     try:
-        proc = subprocess.run(
-            spec.command, cwd=spec.cwd, env=spec.env, capture_output=True, text=True, timeout=timeout
-        )
+        proc = subprocess.run(spec.command, cwd=spec.cwd, env=spec.env, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         return f"{what} timed out after {timeout}s{timeout_note}"
     if proc.returncode != 0:

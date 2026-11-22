@@ -7,7 +7,6 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-
 from nomotheca_ingest.core.contributed import (
     DEFAULT_KINDS,
     RefusalError,

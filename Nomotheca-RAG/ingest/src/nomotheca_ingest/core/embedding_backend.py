@@ -8,9 +8,9 @@ loop that feeds it is `core.embeddings`.
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Sequence
 from importlib import import_module
-import sys
 from types import ModuleType
 from typing import Any, Protocol
 
@@ -20,7 +20,6 @@ from nomotheca_ingest.core.embedding_models import (
     EmbeddingModelSpec,
     fit_dimension,
 )
-
 
 BGE_M3_MODEL = DEFAULT_MODEL.hf_id
 BGE_M3_DIM = STORED_DIM
@@ -40,8 +39,7 @@ CUDA_BF16_MIN_CAPABILITY = (8, 0)
 #: an attention matrix the card cannot hold.
 DEFAULT_MAX_SEQ_LENGTH = 8192
 CUDA_INSTALL_HINT = (
-    "Install the CUDA build in its own environment: "
-    "UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda"
+    "Install the CUDA build in its own environment: UV_PROJECT_ENVIRONMENT=.venv-cuda uv sync --extra embeddings-cuda"
 )
 
 

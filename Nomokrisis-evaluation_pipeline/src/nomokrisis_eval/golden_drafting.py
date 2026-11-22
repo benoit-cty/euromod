@@ -26,7 +26,6 @@ from dataclasses import dataclass, field
 from datetime import date
 
 import psycopg
-
 from nomoscope_workflow import paramdb
 from nomoscope_workflow.queue_store import slugify
 from nomoscope_workflow.schema import ParameterRecord
@@ -125,7 +124,7 @@ def resolve_corpus_available(entry: dict, derived: bool | None = None) -> bool |
     """`corpus_available` for an entry's case: the selection's explicit value
     when it states one (it knows more than any reference list), else what the
     drafter derived (None = never established)."""
-    return entry["corpus_available"] if "corpus_available" in entry else derived
+    return entry.get("corpus_available", derived)
 
 
 def golden_case(
@@ -193,9 +192,7 @@ def save_outcome(conn: psycopg.Connection, outcome: DraftOutcome) -> bool:
     return True
 
 
-def retire_skipped(
-    conn: psycopg.Connection, outcomes: list[DraftOutcome], as_of: date, country: str
-) -> None:
+def retire_skipped(conn: psycopg.Connection, outcomes: list[DraftOutcome], as_of: date, country: str) -> None:
     """Delete the case row of an entry that stopped drafting this run.
 
     An entry can stop producing a case because the world changed under it — the

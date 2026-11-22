@@ -5,11 +5,6 @@ from __future__ import annotations
 import re
 from datetime import date
 
-from nomotheca_ingest.countries.ie.fetcher import SOURCE_CODE_EISB, fetch_ie
-from nomotheca_ingest.countries.ie.parser import act_index_child_metadata, parse_ie
-from nomotheca_ingest.countries.ie.revised import SOURCE_CODE_LRC, is_revised
-from nomotheca_ingest.countries.ie.resolver import IeResolver, canary_facts
-from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
 from nomotheca_ingest.core.ir import (
     CanaryFact,
     CitationRef,
@@ -20,7 +15,11 @@ from nomotheca_ingest.core.ir import (
     SourceRef,
 )
 from nomotheca_ingest.core.snapshots import SnapshotClient
-
+from nomotheca_ingest.countries.base import BaseAdapter, UrlSource
+from nomotheca_ingest.countries.ie.fetcher import SOURCE_CODE_EISB, fetch_ie
+from nomotheca_ingest.countries.ie.parser import act_index_child_metadata, parse_ie
+from nomotheca_ingest.countries.ie.resolver import IeResolver, canary_facts
+from nomotheca_ingest.countries.ie.revised import SOURCE_CODE_LRC, is_revised
 
 IE_URL_SOURCE = UrlSource(
     name="electronic Irish Statute Book",

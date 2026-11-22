@@ -12,7 +12,6 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
 from nomotheca_ingest.core.chunker import chunk_text
-from nomotheca_ingest.core.text import sha256_hex
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
     InstrumentRelationIR,
@@ -21,6 +20,7 @@ from nomotheca_ingest.core.ir import (
     UnitIR,
     VersionIR,
 )
+from nomotheca_ingest.core.text import sha256_hex
 
 
 @dataclass(slots=True)
@@ -32,7 +32,7 @@ class LoadStats:
     versions: int = 0
     texts: int = 0
     chunks: int = 0
-    retained_chunks: int = 0   # cited chunks past the new end of a shrunken text
+    retained_chunks: int = 0  # cited chunks past the new end of a shrunken text
     relations: int = 0
 
     @classmethod
@@ -77,9 +77,7 @@ class LegislationLoader:
             self._replace_relations(doc, loaded, stats)
         return stats
 
-    def _replace_relations(
-        self, doc: ParsedDoc, loaded: dict[str, UUID], stats: LoadStats
-    ) -> None:
+    def _replace_relations(self, doc: ParsedDoc, loaded: dict[str, UUID], stats: LoadStats) -> None:
         """Restate this document's relations, one edge type at a time.
 
         Restated rather than accumulated: re-running a document with a
@@ -100,17 +98,14 @@ class LegislationLoader:
         for (from_id, relation_type), relations in grouped.items():
             with self.conn.cursor() as cur:
                 cur.execute(
-                    "DELETE FROM instrument_relations "
-                    "WHERE from_instrument_id = %s AND relation_type = %s",
+                    "DELETE FROM instrument_relations WHERE from_instrument_id = %s AND relation_type = %s",
                     (from_id, relation_type),
                 )
             for relation in relations:
                 self._insert_relation(from_id, doc.ref.jurisdiction, relation)
                 stats.relations += 1
 
-    def _insert_relation(
-        self, from_id: UUID, jurisdiction: str, relation: InstrumentRelationIR
-    ) -> None:
+    def _insert_relation(self, from_id: UUID, jurisdiction: str, relation: InstrumentRelationIR) -> None:
         """Write one provenance edge.
 
         A target that is not in the corpus yet is kept as free text, so the
@@ -320,8 +315,7 @@ class LegislationLoader:
 
         with self.conn.cursor() as cur:
             cur.execute(
-                "SELECT id FROM legal_unit_versions "
-                "WHERE legal_unit_id = %s AND lower(validity) = %s",
+                "SELECT id FROM legal_unit_versions WHERE legal_unit_id = %s AND lower(validity) = %s",
                 (unit_id, version.valid_from),
             )
             row = cur.fetchone()
@@ -559,9 +553,6 @@ def _context_header(instrument: InstrumentIR, unit: UnitIR, version: VersionIR, 
     """Build the breadcrumb header stored beside retrieval chunks."""
     title = instrument.title.get(lang) or next(iter(instrument.title.values()))
     return f"{title} > {unit.citation} (vig. {version.valid_from.isoformat()})"
-
-
-
 
 
 def _rough_token_count(value: str) -> int:

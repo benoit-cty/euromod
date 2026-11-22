@@ -6,10 +6,10 @@ import re
 from collections.abc import Callable
 from datetime import date
 
+from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
+from nomotheca_ingest.core.text import fold_accents
 from nomotheca_ingest.countries.es.fetcher import SOURCE_CODE
 from nomotheca_ingest.countries.es.parser import KNOWN_ACTS
-from nomotheca_ingest.core.text import fold_accents
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 
 
 def _fold(value: str) -> str:
@@ -95,9 +95,7 @@ BOE_ID_RE = re.compile(r"\b(?:BOE-[A-Z]|(?:BO[A-Z]{1,3}|DO[A-Z]{1,2})-[a-z])-\d{
 # ``https://www.boe.es/eli/es-cn/l/2022/12/19/5/con``. BOE's ELI pages are the
 # one working programmatic lookup left — the open-data search is dead — and
 # the ``/con`` form resolves only when BOE consolidates the act.
-ELI_PATH_RE = re.compile(
-    r"eli/(es(?:-[a-z]{2})?/[a-z]+/\d{4}/\d{2}/\d{2}/\d+)(?:/con)?\b", re.IGNORECASE
-)
+ELI_PATH_RE = re.compile(r"eli/(es(?:-[a-z]{2})?/[a-z]+/\d{4}/\d{2}/\d{2}/\d+)(?:/con)?\b", re.IGNORECASE)
 _ELI_TITLE_RE = re.compile(rb"<title>\s*(BOE-A-\d{4}-\d+)")
 _OFFICIAL_NUMBER_RE = re.compile(r"\b(\d{1,3}/\d{4})\b")
 

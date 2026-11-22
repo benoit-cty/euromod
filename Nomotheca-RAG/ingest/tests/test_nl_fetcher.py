@@ -3,7 +3,7 @@
 from uuid import uuid4
 
 import pytest
-
+from nomotheca_ingest.core.ir import Snapshot, SourceRef
 from nomotheca_ingest.countries.nl.fetcher import (
     XML_HEADERS,
     fetch_bwb,
@@ -12,7 +12,6 @@ from nomotheca_ingest.countries.nl.fetcher import (
     toestand_url,
     url_for_ref,
 )
-from nomotheca_ingest.core.ir import Snapshot, SourceRef
 
 
 def _ref(source_id: str, source_type: str = "instrument") -> SourceRef:

@@ -6,7 +6,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-
 # Nomoscope-agentic-workflow/ directory (this file lives in pipeline/src/nomoscope_workflow/).
 WORKFLOW_ROOT = Path(__file__).resolve().parents[3]
 
@@ -16,7 +15,8 @@ def _env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 
 
-from nomos_llm.env import DEFAULT_DATABASE_URL, load_env_file  # noqa: E402,F401  (re-exported)
+from nomos_llm.env import DEFAULT_DATABASE_URL, load_env_file  # noqa: E402  (re-exported)
+
 #: The in-SQL deterministic embedder of the seed demo corpus (seed.sql's
 #: `placeholder_embedding`): queries are embedded in SQL, never by an encoder.
 PLACEHOLDER_MODEL_ID = 99
@@ -61,9 +61,7 @@ def load_config() -> WorkflowConfig:
     container's env_file are never overridden by a stray file on disk.
     """
     load_env_file()
-    database_url = _env(
-        "WORKFLOW_DATABASE_URL", DEFAULT_DATABASE_URL
-    )
+    database_url = _env("WORKFLOW_DATABASE_URL", DEFAULT_DATABASE_URL)
     return WorkflowConfig(
         database_url=database_url,
         model=_env("WORKFLOW_MODEL", DEFAULT_MODEL),
@@ -73,9 +71,7 @@ def load_config() -> WorkflowConfig:
         retrieval_k=int(_env("WORKFLOW_RETRIEVAL_K", "15")),
         phoenix_endpoint=_env("PHOENIX_COLLECTOR_ENDPOINT", "http://localhost:6006"),
         phoenix_project=_env("PHOENIX_PROJECT_NAME", "nomoscope-agentic-workflow"),
-        phoenix_database_url=_env(
-            "PHOENIX_DATABASE_URL", database_url.rsplit("/", 1)[0] + "/phoenix"
-        ),
+        phoenix_database_url=_env("PHOENIX_DATABASE_URL", database_url.rsplit("/", 1)[0] + "/phoenix"),
         electricity_mix_zone=_env("ECOLOGITS_ELECTRICITY_MIX_ZONE", "EEE"),
         tracing_enabled=_env("WORKFLOW_TRACING", "true").lower() != "false",
         scout=_env("WORKFLOW_SCOUT", "off").lower(),

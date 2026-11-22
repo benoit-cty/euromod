@@ -147,12 +147,7 @@ def test_a_heading_with_nothing_under_it_is_not_a_unit() -> None:
 
 def test_an_empty_heading_keeps_its_place_when_it_has_text_below_it() -> None:
     """Pruning is about text, not about a section having a body of its own."""
-    page = (
-        "<h1>Circulaire</h1>\n"
-        "<h2>Chapitre I</h2>\n"
-        "<h3>Article 1</h3>\n"
-        "Le montant est de 31,97 EUR.\n"
-    )
+    page = "<h1>Circulaire</h1>\n<h2>Chapitre I</h2>\n<h3>Article 1</h3>\nLe montant est de 31,97 EUR.\n"
 
     ir = _build(page, "html")
     by_path = {u.path: u for u in ir.units}
@@ -218,7 +213,9 @@ def test_a_repeated_column_header_is_not_a_section_and_citations_stay_unique() -
 
 
 def test_two_headings_alike_get_two_citations() -> None:
-    ir = _build("1. Objet\nPremier objet du texte.\n2. Champ\nDu texte.\n1. Objet\nSecond objet, en annexe.\n", "numbered")
+    ir = _build(
+        "1. Objet\nPremier objet du texte.\n2. Champ\nDu texte.\n1. Objet\nSecond objet, en annexe.\n", "numbered"
+    )
 
     citations = [u.citation for u in ir.units]
     assert len(citations) == len(set(citations)) == 3

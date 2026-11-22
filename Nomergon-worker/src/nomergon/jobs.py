@@ -435,7 +435,14 @@ class DraftGoldenPayload(_Payload):
         if self.source == "document":
             # The text goes through a file under the job's scratch directory.
             path = write_document_text(self.text or "", scratch_dir)
-            argv = _python(EVAL_MODULE) + ["build-dataset", str(path), "--country", self.country, "--as-of", str(self.as_of)]
+            argv = _python(EVAL_MODULE) + [
+                "build-dataset",
+                str(path),
+                "--country",
+                self.country,
+                "--as-of",
+                str(self.as_of),
+            ]
             if self.language:
                 argv += ["--language", self.language]
             for target in self.targets:
@@ -543,7 +550,9 @@ class JobSpec:
 JOB_SPECS: dict[str, JobSpec] = {
     spec.name: spec
     for spec in (
-        JobSpec("workflow", WorkflowPayload, "Agentic workflow run (run-targets / run-country)", "pipeline", "result_line"),
+        JobSpec(
+            "workflow", WorkflowPayload, "Agentic workflow run (run-targets / run-country)", "pipeline", "result_line"
+        ),
         JobSpec("ingest", IngestPayload, "Legislation or contributed-document ingest", "ingest", "result_line"),
         JobSpec("embed", EmbedPayload, "Embed the chunks with no vector", "ingest", "progress", singleton=True),
         JobSpec("translate", TranslatePayload, "Machine-translate unit texts", "ingest", "progress", singleton=True),

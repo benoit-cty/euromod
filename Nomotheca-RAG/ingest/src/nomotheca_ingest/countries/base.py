@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Callable, Protocol
+from typing import Protocol
 
 from nomotheca_ingest.core.ir import (
     CanaryFact,
@@ -141,10 +142,7 @@ class BaseAdapter:
         return {}
 
     def child_reason(self, doc: ParsedDoc, child: dict) -> str:
-        return (
-            f"{doc.ref.source_id} contains {child['source_type']} "
-            f"{child.get('title') or child['source_id']}"
-        )
+        return f"{doc.ref.source_id} contains {child['source_type']} {child.get('title') or child['source_id']}"
 
     def source_ref_from_url(self, url: str, source_code: str) -> SourceRef | None:
         return None

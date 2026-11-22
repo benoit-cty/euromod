@@ -20,6 +20,7 @@ from .schema import (
     start_of_year_as_of,
 )
 
+
 def _later_until(record: ParameterRecord, as_of: date) -> date | None:
     """How far past as_of retrieval looks for versions of the same system year.
 
@@ -49,9 +50,7 @@ def _retrieval_as_of(record: ParameterRecord, as_of: date) -> date:
     return as_of
 
 
-def _consolidated_in_force(
-    provenance: dict | None, retrieval_as_of: date, income_year: int, article_text: str
-) -> bool:
+def _consolidated_in_force(provenance: dict | None, retrieval_as_of: date, income_year: int, article_text: str) -> bool:
     """Is the cited text a consolidated code article in force on the retrieval date?
 
     France assesses income year Y in Y+1, and the code article as consolidated
@@ -128,12 +127,7 @@ def _income_year_date_issues(
         )
     window = date(income_year, 12, 1)
     names_year = re.search(rf"\b{income_year}\b", cited_text) is not None
-    if (
-        version_start is not None
-        and version_start < window
-        and not names_year
-        and not consolidated_in_force
-    ):
+    if version_start is not None and version_start < window and not names_year and not consolidated_in_force:
         provisional = True
         issues.append(
             f"cited version in force since {version_start.isoformat()} predates the "

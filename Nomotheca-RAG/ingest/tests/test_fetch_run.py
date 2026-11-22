@@ -11,7 +11,6 @@ import os
 
 import psycopg
 import pytest
-
 from nomotheca_ingest.core.db import fetch_run
 from nomotheca_ingest.core.ir import SourceRef, Trigger
 
@@ -38,12 +37,8 @@ def test_a_failed_run_keeps_its_row_and_snapshot(db_available):
                 raise RuntimeError("parser broke")
     try:
         with psycopg.connect(DB_URL) as conn:
-            status, stats = conn.execute(
-                "SELECT status, stats FROM fetch_runs WHERE id = %s", (run_id,)
-            ).fetchone()
-            snapshots = conn.execute(
-                "SELECT metadata FROM fetch_snapshots WHERE run_id = %s", (run_id,)
-            ).fetchall()
+            status, stats = conn.execute("SELECT status, stats FROM fetch_runs WHERE id = %s", (run_id,)).fetchone()
+            snapshots = conn.execute("SELECT metadata FROM fetch_snapshots WHERE run_id = %s", (run_id,)).fetchall()
         assert status == "failed"
         assert stats["error"] == "parser broke"
         assert len(snapshots) == 1
@@ -64,7 +59,16 @@ def test_reparse_reads_the_stored_source_ref(monkeypatch):
 
     stored = {"jurisdiction": "NL", "source_code": "NL-BWB", "source_id": "BWBR0011353", "source_type": "instrument"}
     rows = [
-        (uuid4(), "https://repository.officiele-overheidspublicaties.nl/x.xml", 200, "text/xml", "0" * 64, b"<x/>", "NL-BWB", stored),
+        (
+            uuid4(),
+            "https://repository.officiele-overheidspublicaties.nl/x.xml",
+            200,
+            "text/xml",
+            "0" * 64,
+            b"<x/>",
+            "NL-BWB",
+            stored,
+        ),
         (uuid4(), "https://example.invalid/old", 200, "text/xml", "0" * 64, b"<x/>", "NL-BWB", None),
     ]
 
@@ -79,6 +83,7 @@ def test_reparse_reads_the_stored_source_ref(monkeypatch):
             class R:
                 def fetchall(self_inner):
                     return rows
+
             return R()
 
     parsed = []

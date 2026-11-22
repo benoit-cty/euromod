@@ -31,8 +31,11 @@ def test_article_tokens_follow_each_country_idiom():
 
 
 def test_an_article_number_belongs_to_the_code_named_after_it():
-    codes = {"css": "code de la sécurité sociale", "cgi": "code général des impôts",
-             "cgi3": "code général des impôts, annexe iii"}
+    codes = {
+        "css": "code de la sécurité sociale",
+        "cgi": "code général des impôts",
+        "cgi3": "code général des impôts, annexe iii",
+    }
     text = (
         "Le plafond prévu au dernier alinéa de l'article L. 531-2 du code de la sécurité sociale "
         "et au premier alinéa de l'article L. 531-3 du même code. Voir l'article 46 quater-0 YE "
@@ -54,7 +57,10 @@ def test_a_list_of_articles_takes_the_code_named_at_its_end():
     refs = _code_refs(text, None, codes)
     assert ("css", "R522-2") in refs and ("css", "L381-1") in refs
     # prose between the number and the code: not a list, no reference
-    assert _code_refs("l'article R. 522-2 dont il est question plus loin dans le code de la sécurité sociale", None, codes) == []
+    assert (
+        _code_refs("l'article R. 522-2 dont il est question plus loin dans le code de la sécurité sociale", None, codes)
+        == []
+    )
 
 
 def test_an_article_naming_another_of_its_own_act_is_followed():
@@ -87,9 +93,19 @@ def test_an_agreement_article_brings_the_nearest_article_that_names_it():
 
         def fetchall(self):
             def hit(n, content):
-                return {"ord": 1, "chunk_id": f"c{n}", "citation": f"{ani}{n}", "context_header": "",
-                        "content": content, "lang": "fr", "validity": "[2019-01-01,)",
-                        "version_status": "in_force", "source_trust_class": "evidence", "score": 0.0}
+                return {
+                    "ord": 1,
+                    "chunk_id": f"c{n}",
+                    "citation": f"{ani}{n}",
+                    "context_header": "",
+                    "content": content,
+                    "lang": "fr",
+                    "validity": "[2019-01-01,)",
+                    "version_status": "in_force",
+                    "source_trust_class": "evidence",
+                    "score": 0.0,
+                }
+
             return [
                 hit(13, "les taux fixés à l'article 35 et à l'article 36"),
                 hit(49, "selon l'article 35"),
@@ -97,7 +113,14 @@ def test_an_agreement_article_brings_the_nearest_article_that_names_it():
                 hit(60, "l'article 35 de la loi n° 2020-1 ne s'applique pas"),
             ]
 
-    rows = [{"chunk_id": "c35", "citation": f"{ani}35", "instrument_id": "i", "valid_from": date(2019, 1, 1),
-             "content": "taux de calcul des points"}]
+    rows = [
+        {
+            "chunk_id": "c35",
+            "citation": f"{ani}35",
+            "instrument_id": "i",
+            "valid_from": date(2019, 1, 1),
+            "content": "taux de calcul des points",
+        }
+    ]
     found = _same_act_citing(_Conn(), "fr", rows, {"c35"})
     assert [h.citation.rsplit(" ", 1)[-1] for h in found] == ["36", "49"]

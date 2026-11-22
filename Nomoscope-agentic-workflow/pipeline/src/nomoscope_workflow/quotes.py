@@ -16,6 +16,7 @@ audit 2.1).
 from __future__ import annotations
 
 import difflib
+import itertools
 import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
@@ -42,9 +43,7 @@ def hit_by_id(hits: Sequence[Quotable], chunk_id: str | None):
     return next((h for h in hits if h.chunk_id == chunk_id), None)
 
 
-def verify_extract(
-    conn: psycopg.Connection, chunk_id: str, extract: str
-) -> tuple[int, int] | None:
+def verify_extract(conn: psycopg.Connection, chunk_id: str, extract: str) -> tuple[int, int] | None:
     """Locate a supposedly-verbatim extract inside the cited chunk.
 
     Returns (char_start, char_end) offsets into unit_texts.content — the
@@ -57,9 +56,7 @@ def verify_extract(
     never ignored: «25 %» must not match two table cells «2» and «5».
     Punctuation at the quote's two ends is not part of the check either.
     """
-    row = conn.execute(
-        "SELECT content, char_start FROM chunks WHERE id = %s::uuid", (chunk_id,)
-    ).fetchone()
+    row = conn.execute("SELECT content, char_start FROM chunks WHERE id = %s::uuid", (chunk_id,)).fetchone()
     if row is None or not extract:
         return None
     span = quote_span(row["content"], extract)
@@ -94,9 +91,18 @@ def quote_span(content: str, extract: str) -> tuple[int, int] | None:
 #: punctuation mark still match one for one.
 _TYPOGRAPHY = str.maketrans(
     {
-        "’": "'", "‘": "'", "ʼ": "'", "′": "'",
-        "“": '"', "”": '"', "„": '"',
-        "‐": "-", "‑": "-", "–": "-", "—": "-", "−": "-",
+        "’": "'",
+        "‘": "'",
+        "ʼ": "'",
+        "′": "'",
+        "“": '"',
+        "”": '"',
+        "„": '"',
+        "‐": "-",
+        "‑": "-",
+        "–": "-",
+        "—": "-",
+        "−": "-",
     }
 )
 #: A line break the model wrote as the two characters backslash-n (it copies a
@@ -113,7 +119,7 @@ def _split_word_pattern(extract: str) -> str:
     """`extract` as a regex in which whitespace may also fall between two letters."""
     parts: list[str] = []
     for word in extract.split():
-        letters = [re.escape(c) + (r"\s*" if c.isalpha() and n.isalpha() else "") for c, n in zip(word, word[1:])]
+        letters = [re.escape(c) + (r"\s*" if c.isalpha() and n.isalpha() else "") for c, n in itertools.pairwise(word)]
         parts.append("".join(letters) + re.escape(word[-1]))
     return r"\s+".join(parts)
 
@@ -278,8 +284,6 @@ def misquoted_only(issues: list[str]) -> bool:
     The extract check itself is unchanged.
     """
     objections = [
-        i
-        for i in issues
-        if not i.startswith("note:") and issue_text.code_of(i) not in issue_text.INFORMATIONAL
+        i for i in issues if not i.startswith("note:") and issue_text.code_of(i) not in issue_text.INFORMATIONAL
     ]
     return bool(objections) and all(issue_text.code_of(i) in issue_text.MISQUOTE for i in objections)

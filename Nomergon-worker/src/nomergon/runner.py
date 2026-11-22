@@ -87,7 +87,7 @@ def _write(what: str, fn: Any, *args: Any) -> bool:
     try:
         fn(*args)
         return True
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         log.warning("%s not recorded: %s", what, str(exc).splitlines()[0] if str(exc) else type(exc).__name__)
         return False
 
@@ -142,7 +142,7 @@ def run_job(
         cwd = jobs.package_dir(job_type, cfg)
         argv = jobs.build_command(job_type, payload, cfg, scratch_dir=scratch)
         return _run_subprocess(conn, cfg, job_id, job_type, argv, cwd, stop)
-    except Exception as exc:  # noqa: BLE001 - the job must end in a final state
+    except Exception as exc:
         log.exception("job %s crashed the runner", job_id)
         _note(conn, job_id, f"runner error: {exc}")
         return JobOutcome("failed", error=f"runner error: {exc}")
@@ -331,7 +331,7 @@ def _outcome(
         return JobOutcome("failed", error=error)
     try:
         result = jobs.extract_result(job_type, result_line=capture.result_line, last_progress=capture.last_progress)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return JobOutcome("failed", error=f"could not read the job's result: {exc}")
     return JobOutcome("succeeded", result=result)
 
@@ -339,7 +339,7 @@ def _outcome(
 def _cancel_requested(conn: psycopg.Connection[Any], job_id: int) -> bool:
     try:
         return db.cancel_requested(conn, job_id)
-    except Exception as exc:  # noqa: BLE001 - an unreadable flag is "not cancelled"
+    except Exception as exc:
         log.warning("job %s cancel flag unreadable: %s", job_id, str(exc).splitlines()[0])
         return False
 

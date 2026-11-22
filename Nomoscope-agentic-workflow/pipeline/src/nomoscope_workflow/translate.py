@@ -59,16 +59,18 @@ class TranslationBatch(BaseModel):
     translations: list[ParameterTranslation]
 
 
-def pending(
-    conn: psycopg.Connection, country: str, lang: str, force: bool = False
-) -> list[dict]:
+def pending(conn: psycopg.Connection, country: str, lang: str, force: bool = False) -> list[dict]:
     """Parameters of a country with English text but no MT rendering in lang yet."""
-    condition = "" if force else """
+    condition = (
+        ""
+        if force
+        else """
         AND NOT EXISTS (
             SELECT 1 FROM params.parameter_texts t
             WHERE t.parameter_id = p.id AND t.lang = %(lang)s
               AND t.origin = 'machine_translation'
         )"""
+    )
     rows = conn.execute(
         f"""
         SELECT p.id, p.model_target,
@@ -84,20 +86,14 @@ def pending(
         """,
         {"country": country, "lang": lang},
     ).fetchall()
-    return [
-        dict(zip(("id", "model_target", "label", "short_label", "description"), row))
-        for row in rows
-    ]
+    return [dict(zip(("id", "model_target", "label", "short_label", "description"), row)) for row in rows]
 
 
 @retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(3), reraise=True)
 def translate_batch(model: str, country: str, lang: str, items: list[dict]) -> TranslationBatch:
     """One structured-output LLM call translating a batch of parameters."""
     payload = "\n\n".join(
-        f"index: {i}\n"
-        f"label: {item['label']}\n"
-        f"short_label: {item['short_label']}\n"
-        f"description: {item['description']}"
+        f"index: {i}\nlabel: {item['label']}\nshort_label: {item['short_label']}\ndescription: {item['description']}"
         for i, item in enumerate(items)
     )
     return run_agent(
@@ -172,9 +168,7 @@ def translate_country(
                 if item is None:
                     stats["mismatches"] += 1
                     continue
-                stats["texts"] += store(
-                    conn, item["id"], lang, translation, engine=model, source=item
-                )
+                stats["texts"] += store(conn, item["id"], lang, translation, engine=model, source=item)
                 stats["parameters"] += 1
         conn.commit()
         echo(f"{country}: {min(start + batch_size, len(todo))}/{len(todo)} parameters translated")

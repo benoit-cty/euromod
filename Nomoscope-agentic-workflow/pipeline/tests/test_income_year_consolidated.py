@@ -9,7 +9,7 @@ own wrong number and EUROMOD identifiers.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime, timezone
 
 from nomoscope_workflow.pipeline import (
     _clean_query_text,
@@ -26,7 +26,7 @@ def _prov(validity: str, instrument_type: str = "code", retrieved: str = "2026-0
         "instrument_type": instrument_type,
         "validity": validity,
         "open_ended": validity.endswith(",)"),
-        "retrieved_at": datetime.fromisoformat(retrieved).replace(tzinfo=timezone.utc),
+        "retrieved_at": datetime.fromisoformat(retrieved).replace(tzinfo=UTC),
     }
 
 

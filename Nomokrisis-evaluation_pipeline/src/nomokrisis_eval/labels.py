@@ -42,9 +42,7 @@ _FORMULA_RE = re.compile(r"[$*/+]|(?<=\d)\s*-\s*(?=\d)")
 #: `artikel` (NL), `artículo` (ES). Without the Dutch form "WKB, artikel 1" and
 #: "WKB, artikel 2" counted as two instruments and every two-pinpoint NL case
 #: drafted `combine` + `cross_instrument`.
-_INSTRUMENT_RE = re.compile(
-    r"^(.*?)(?:,\s*(?:art|article|artikel|art[ií]culo|§|sec|s)\b.*)?$", re.IGNORECASE
-)
+_INSTRUMENT_RE = re.compile(r"^(.*?)(?:,\s*(?:art|article|artikel|art[ií]culo|§|sec|s)\b.*)?$", re.IGNORECASE)
 
 
 @dataclass
@@ -102,10 +100,7 @@ def draft_labels(
         reasons.append(f"ground truth cites {len(instruments)} distinct instruments")
     else:
         difficulty = "verbatim"
-        reasons.append(
-            "one instrument, a literal value — nothing here says it takes more than "
-            "reading one provision"
-        )
+        reasons.append("one instrument, a literal value — nothing here says it takes more than reading one provision")
 
     if str(getattr(temporal_basis, "value", temporal_basis)) == TemporalBasis.INCOME_YEAR.value:
         hazards.append("income_year")

@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import importlib.util
-from pathlib import Path
 import sys
+from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 import pytest
-
-from nomotheca_ingest.core.progress import ProgressCallback
 from nomotheca_ingest.core.embeddings import (
     BGE_M3_DIM,
     EMBEDDING_BACKENDS,
@@ -25,6 +23,7 @@ from nomotheca_ingest.core.embeddings import (
     resolve_torch_device,
     sentence_transformer_load_kwargs,
 )
+from nomotheca_ingest.core.progress import ProgressCallback
 
 
 def load_openvino_export_script() -> ModuleType:
@@ -63,13 +62,13 @@ def test_halfvec_literal_rejects_wrong_dimension() -> None:
 class _FakeCursor:
     """Cursor stub serving the candidate scan and recording embedding inserts."""
 
-    def __init__(self, conn: "_FakeConn", *, dict_rows: bool) -> None:
+    def __init__(self, conn: _FakeConn, *, dict_rows: bool) -> None:
         self._conn = conn
         self._dict_rows = dict_rows
         self._rows: list[dict[str, object]] = []
         self.rowcount = -1
 
-    def __enter__(self) -> "_FakeCursor":
+    def __enter__(self) -> _FakeCursor:
         return self
 
     def __exit__(self, *exc: object) -> None:
@@ -235,7 +234,7 @@ class _FakeVector:
     def __init__(self, values: list[float]) -> None:
         self._values = values
 
-    def astype(self, _dtype: object) -> "_FakeVector":
+    def astype(self, _dtype: object) -> _FakeVector:
         return self
 
     def tolist(self) -> list[float]:

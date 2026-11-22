@@ -9,9 +9,8 @@ from datetime import date
 import typer
 from nomoscope_workflow.tracing import set_progress
 
-from .. import benchmark
+from .. import benchmark, golden_store
 from .. import db as evaldb
-from .. import golden_store
 from ..config import EvalConfig, load_eval_config
 from ..runner import (
     execute_run,
@@ -31,13 +30,18 @@ from .common import app, concurrency_option, emit_progress, emit_result, parse_d
 @app.command()
 def run(
     as_of: str = typer.Option(
-        ..., "--as-of",
+        ...,
+        "--as-of",
         help="The run's reference date, YYYY-MM-DD (recorded on the run; each case runs on its own as_of)",
     ),
-    model: str = typer.Option(..., "--model", help="Provider-prefixed model, e.g. anthropic/claude-sonnet-5 or mock/extractor"),
+    model: str = typer.Option(
+        ..., "--model", help="Provider-prefixed model, e.g. anthropic/claude-sonnet-5 or mock/extractor"
+    ),
     country: list[str] = typer.Option(None, "--country", help="Restrict to country code(s)"),
     language: list[str] = typer.Option(None, "--language", help="Restrict to language(s)"),
-    verified_only: bool = typer.Option(True, "--verified-only/--include-drafts", help="Evaluate only human-verified cases"),
+    verified_only: bool = typer.Option(
+        True, "--verified-only/--include-drafts", help="Evaluate only human-verified cases"
+    ),
     notes: str = typer.Option(None, "--notes"),
     verbose: bool = verbose_option(),
     concurrency: int = concurrency_option(),
@@ -66,14 +70,23 @@ def run(
 
 @app.command("run-benchmark")
 def run_benchmark(
-    country: str = typer.Argument(..., help="ISO country code, e.g. FR — or `panel`, the shared 200-case panel (50 each of FR, ES, IE, LT), or a comma list (FR,LT) for a panel of those"),
+    country: str = typer.Argument(
+        ...,
+        help="ISO country code, e.g. FR — or `panel`, the shared 200-case panel (50 each of FR, ES, IE, LT), or a comma list (FR,LT) for a panel of those",
+    ),
     year: int = typer.Option(..., "--year", help="System year to find, starting blind from the year before"),
-    model: str = typer.Option(..., "--model", help="Provider-prefixed model, e.g. azure_openai/gpt-5.6-luna or mock/extractor"),
+    model: str = typer.Option(
+        ..., "--model", help="Provider-prefixed model, e.g. azure_openai/gpt-5.6-luna or mock/extractor"
+    ),
     sample: int = typer.Option(None, "--sample", help="Run N parameters drawn at random"),
     seed: int = typer.Option(None, "--seed", help="Seed for --sample (reproducible draw)"),
     exclude_policy: list[str] = typer.Option(None, "--exclude-policy", help="Skip a whole policy, e.g. tco_fr"),
     target: list[str] = typer.Option(None, "--target", help="Only these refs (model_target or group:<id>)"),
-    per_country: int = typer.Option(benchmark.PANEL_PER_COUNTRY, "--per-country", help="Panel only: parameters drawn per country, in its own mix of changed and unchanged"),
+    per_country: int = typer.Option(
+        benchmark.PANEL_PER_COUNTRY,
+        "--per-country",
+        help="Panel only: parameters drawn per country, in its own mix of changed and unchanged",
+    ),
     notes: str = typer.Option(None, "--notes"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Build and list the cases, run nothing"),
     verbose: bool = verbose_option(),
@@ -97,19 +110,28 @@ def run_benchmark(
             if sample is not None or target:
                 raise typer.BadParameter("--sample and --target do not apply to a panel; use --per-country")
             countries = (
-                benchmark.PANEL_COUNTRIES if country.lower() == "panel"
+                benchmark.PANEL_COUNTRIES
+                if country.lower() == "panel"
                 else tuple(c.strip().upper() for c in country.split(",") if c.strip())
             )
             build = benchmark.build_panel(
-                conn, year, countries=countries, per_country=per_country,
+                conn,
+                year,
+                countries=countries,
+                per_country=per_country,
                 seed=benchmark.PANEL_SEED if seed is None else seed,
                 exclude_policies=exclude_policy or None,
             )
             country = "panel " + "+".join(countries)
         else:
             build = benchmark.build_cases(
-                conn, country, year, sample=sample, seed=seed,
-                exclude_policies=exclude_policy or None, targets=target or None,
+                conn,
+                country,
+                year,
+                sample=sample,
+                seed=seed,
+                exclude_policies=exclude_policy or None,
+                targets=target or None,
             )
         routings = Counter(c.expected.routing.value for c in build.cases)
         typer.echo(
@@ -135,7 +157,11 @@ def run_benchmark(
         if not build.cases:
             raise typer.Exit(1)
         manifest = start_run(
-            conn, cfg, build.cases, benchmark.anchor_date(year), model,
+            conn,
+            cfg,
+            build.cases,
+            benchmark.anchor_date(year),
+            model,
             notes=notes or f"benchmark {country.upper()} {year - 1}->{year}",
             blind_before=date(year, 1, 1),
         )
@@ -162,8 +188,7 @@ def _echo_benchmark(results: list[CaseResult]) -> None:
         typer.echo("\n  per country")
         for cc, row in summary["by_country"].items():
             typer.echo(
-                f"    {cc}  ready to accept {row['ready to accept']:<18} "
-                f"wrong proposals {row['wrong proposals']}"
+                f"    {cc}  ready to accept {row['ready to accept']:<18} wrong proposals {row['wrong proposals']}"
             )
     if summary["arbitration"]:
         typer.echo("\n  disagreements")
@@ -172,7 +197,8 @@ def _echo_benchmark(results: list[CaseResult]) -> None:
     typer.echo("\n  per policy")
     for policy, counts in summary["by_policy"].items():
         typer.echo(
-            f"    {policy:<14} " + "  ".join(f"{k}={v}" for k, v in sorted(counts.items(), key=lambda kv: kv[0] != 'cases'))
+            f"    {policy:<14} "
+            + "  ".join(f"{k}={v}" for k, v in sorted(counts.items(), key=lambda kv: kv[0] != "cases"))
         )
 
 
@@ -191,8 +217,7 @@ def benchmark_report(
         run_pk, manifest = loaded
         results = evaldb.load_results(conn, run_pk)
     typer.echo(
-        f"run {manifest.run_id}  model={manifest.model}  blind_before={manifest.blind_before}"
-        f"  {len(results)} result(s)"
+        f"run {manifest.run_id}  model={manifest.model}  blind_before={manifest.blind_before}  {len(results)} result(s)"
     )
     _echo_benchmark(results)
 
@@ -299,10 +324,7 @@ def _progress_callbacks(verbose: bool, concurrency: int = 1):
         elapsed = time.perf_counter() - state["start"]
         eta = elapsed / state["completed"] * (total - index)
         prefix = f"[{index:>3}/{total}] {case.id:<46} " if split else ""
-        typer.echo(
-            f"{prefix}{_result_line(result)}  {(result.latency_ms or 0) / 1000:5.1f}s"
-            f"  eta {_fmt_duration(eta)}"
-        )
+        typer.echo(f"{prefix}{_result_line(result)}  {(result.latency_ms or 0) / 1000:5.1f}s  eta {_fmt_duration(eta)}")
 
     return on_case_start, on_case_done
 
@@ -326,8 +348,14 @@ def _execute_and_report(
 
     try:
         results = execute_run(
-            conn, cfg, manifest, cases, done,
-            on_case_start=on_case_start, on_case_done=on_done, concurrency=concurrency,
+            conn,
+            cfg,
+            manifest,
+            cases,
+            done,
+            on_case_start=on_case_start,
+            on_case_done=on_done,
+            concurrency=concurrency,
         )
     except KeyboardInterrupt:
         scored = len(evaldb.load_results(conn, evaldb.load_run(conn, manifest.run_id)[0]))
@@ -371,11 +399,7 @@ def rescore(
         typer.echo(f"run {manifest.run_id}  model={manifest.model}  cases={len(results)}")
         for key in sorted(set(before) | set(after)):
             old_kpis, new_kpis = before.get(key, {}), after.get(key, {})
-            changes = [
-                f"{k}: {old_kpis.get(k, '-')} -> {v}"
-                for k, v in new_kpis.items()
-                if old_kpis.get(k) != v
-            ]
+            changes = [f"{k}: {old_kpis.get(k, '-')} -> {v}" for k, v in new_kpis.items() if old_kpis.get(k) != v]
             typer.echo(f"  [{key}] " + ("  ".join(changes) if changes else "unchanged"))
 
         if not write:
@@ -400,16 +424,14 @@ def report(
     if not rows:
         typer.echo("No evaluation runs stored yet.")
         return
+
     def pct(value) -> str:
         return "-" if value is None else f"{value}%"
 
     def impact(row) -> str:
         if row.get("energy_kwh") is None:
             return "  energy=n/a"  # model absent from the EcoLogits registry
-        return (
-            f"  energy={row['energy_kwh'] * 1000:.1f}Wh"
-            f"  co2={row['gwp_kgco2eq'] * 1000:.1f}g"
-        )
+        return f"  energy={row['energy_kwh'] * 1000:.1f}Wh  co2={row['gwp_kgco2eq'] * 1000:.1f}g"
 
     def readiness(row) -> str:
         """The golden-set caveat, printed only when it applies: how many cases
@@ -448,10 +470,7 @@ def report(
     def breakdown(row, label: str, source: list[dict], key: str) -> str:
         """One indented line per bucket, ready cases only. Silent when a single
         bucket holds everything — a lone rung compares with nothing."""
-        buckets = [
-            b for b in source
-            if b["run_pk"] == row["run_pk"] and b["language"] == row["language"]
-        ]
+        buckets = [b for b in source if b["run_pk"] == row["run_pk"] and b["language"] == row["language"]]
         if len(buckets) < 2 and label == "difficulty":
             return ""
         return "".join(
@@ -468,9 +487,7 @@ def report(
         # that measured an FTS-only pipeline for some of its cases.
         off_law = row.get("euromod_discrepancies") or 0
         fts_only = row.get("fts_only_cases") or 0
-        extra = (f"  euromod_off_law={off_law}" if off_law else "") + (
-            f"  fts_only={fts_only}" if fts_only else ""
-        )
+        extra = (f"  euromod_off_law={off_law}" if off_law else "") + (f"  fts_only={fts_only}" if fts_only else "")
         typer.echo(
             f"{row['created_at']:%Y-%m-%d %H:%M}  {row['model_provider']}/{row['model_name']}"
             f"  [{row['language']}/{row['country']}]  cases={row['cases']}"

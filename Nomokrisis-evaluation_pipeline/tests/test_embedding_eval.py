@@ -9,12 +9,11 @@ from __future__ import annotations
 
 from datetime import date
 
-from nomoscope_workflow.schema import RetrievalHit
-
 from nomokrisis_eval.embedding_eval import first_relevant_rank, rank_metrics
 from nomokrisis_eval.golden_store import embedding_set_hash
 from nomokrisis_eval.schema import EmbeddingCase
 from nomokrisis_eval.scoring import citation_equal
+from nomoscope_workflow.schema import RetrievalHit
 
 
 def _hit(citation: str) -> RetrievalHit:
@@ -83,23 +82,25 @@ class _Rows:
 def test_resolve_citations_prefers_the_exact_article():
     from nomokrisis_eval.embedding_eval import resolve_citations
 
-    conn = _Rows([
-        ("CGI, art. 197", "Code général des impôts > CGI, art. 197"),
-        ("CGI, art. 197 A", "Code général des impôts > CGI, art. 197 A"),
-        ("Wet IB 2001, artikel 2.10a", "Wet inkomstenbelasting 2001 > artikel 2.10a"),
-    ])
+    conn = _Rows(
+        [
+            ("CGI, art. 197", "Code général des impôts > CGI, art. 197"),
+            ("CGI, art. 197 A", "Code général des impôts > CGI, art. 197 A"),
+            ("Wet IB 2001, artikel 2.10a", "Wet inkomstenbelasting 2001 > artikel 2.10a"),
+        ]
+    )
     assert resolve_citations(conn, ["CGI, art. 197"], ["FR"], "fr", date(2025, 7, 1)) == ["CGI, art. 197"]
     # No exact match: the main eval's containment rule, against the header too.
-    assert resolve_citations(conn, ["artikel 2.10a"], ["NL"], "nl", date(2025, 6, 1)) == [
-        "Wet IB 2001, artikel 2.10a"
-    ]
+    assert resolve_citations(conn, ["artikel 2.10a"], ["NL"], "nl", date(2025, 6, 1)) == ["Wet IB 2001, artikel 2.10a"]
 
 
 def test_resolve_citations_drops_instrument_level_citations():
     from nomokrisis_eval.embedding_eval import resolve_citations
 
-    conn = _Rows([(f"VSDĮ {n} straipsnis", f"VSDĮ > {n} straipsnis") for n in range(1, 10)]
-                 + [("GPMĮ 6 straipsnis", "GPMĮ > 6 straipsnis")])
+    conn = _Rows(
+        [(f"VSDĮ {n} straipsnis", f"VSDĮ > {n} straipsnis") for n in range(1, 10)]
+        + [("GPMĮ 6 straipsnis", "GPMĮ > 6 straipsnis")]
+    )
     # "VSDĮ" names every article of the act: any hit would count, so it is dropped.
     assert resolve_citations(conn, ["VSDĮ", "GPMĮ 6 straipsnis"], ["LT"], "lt", date(2025, 6, 1)) == [
         "GPMĮ 6 straipsnis"
@@ -111,8 +112,14 @@ def _run(model: str, model_id: int, ranks: dict[str, int | None]) -> dict:
         "run_id": f"run-{model}",
         "manifest": {"embedding_model": model, "embedding_model_id": model_id},
         "results": [
-            {"case_id": case_id, "country": "FR", "language": "fr", "corpus_lang": "fr", "k": 15,
-             "ranks": {"vector": rank}}
+            {
+                "case_id": case_id,
+                "country": "FR",
+                "language": "fr",
+                "corpus_lang": "fr",
+                "k": 15,
+                "ranks": {"vector": rank},
+            }
             for case_id, rank in ranks.items()
         ],
     }
@@ -121,10 +128,12 @@ def _run(model: str, model_id: int, ranks: dict[str, int | None]) -> dict:
 def test_compare_runs_scores_only_the_cases_every_run_has():
     from nomokrisis_eval.embedding_eval import compare_runs
 
-    rows = compare_runs([
-        _run("bge-m3", 1, {"a": 1, "b": None, "c": 2}),
-        _run("qwen3", 2, {"a": 2, "b": 1}),  # never asked c
-    ])
+    rows = compare_runs(
+        [
+            _run("bge-m3", 1, {"a": 1, "b": None, "c": 2}),
+            _run("qwen3", 2, {"a": 2, "b": 1}),  # never asked c
+        ]
+    )
     by_model = {(r["model"], r["lang"]): r for r in rows}
     assert by_model[("bge-m3", "all")]["cases"] == "2"
     assert by_model[("bge-m3", "all")]["hit@1"] == "50%"
@@ -133,9 +142,8 @@ def test_compare_runs_scores_only_the_cases_every_run_has():
 
 
 def test_rerank_hits_reorders_by_score(monkeypatch):
-    from nomoscope_workflow import query_encoder
-
     from nomokrisis_eval.embedding_eval import rerank_hits
+    from nomoscope_workflow import query_encoder
 
     monkeypatch.setattr(query_encoder, "rerank", lambda q, passages, model: [0.1, 0.9, 0.5])
     hits = [_hit("CGI, art. 1"), _hit("CGI, art. 197"), _hit("CGI, art. 2")]

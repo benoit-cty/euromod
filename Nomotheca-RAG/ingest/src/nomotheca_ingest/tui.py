@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import os
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from functools import partial
-import os
 from pathlib import Path
-import re
 from threading import Thread
 from traceback import format_exc
 from uuid import UUID, uuid4
@@ -20,7 +20,6 @@ from nomotheca_ingest.core.ir import IngestMode, SourceRef, Trigger
 from nomotheca_ingest.core.loader import LoadStats
 from nomotheca_ingest.core.pipeline import FetchEvent, PipelineResult, ingest, run_database_ingest
 from nomotheca_ingest.core.snapshots import SnapshotClient
-
 
 DEFAULT_DATABASE_URL = os.getenv("EUROMOD_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation")
 
@@ -136,10 +135,17 @@ class PipelineTui(App):
                     classes="field",
                 )
             with Horizontal():
-                yield Input(value="JORFTEXT000051168007", placeholder="DILA id or citation", id="identifier", classes="field")
+                yield Input(
+                    value="JORFTEXT000051168007", placeholder="DILA id or citation", id="identifier", classes="field"
+                )
                 yield Input(value="2025-06-01", placeholder="As-of date", id="as_of", classes="field")
             with Horizontal():
-                yield Input(value="", placeholder="Source code (blank: the adapter's default)", id="source_code", classes="field")
+                yield Input(
+                    value="",
+                    placeholder="Source code (blank: the adapter's default)",
+                    id="source_code",
+                    classes="field",
+                )
                 yield Input(value="500", placeholder="Max source items", id="max_items", classes="field")
             with Horizontal():
                 yield Input(

@@ -47,9 +47,13 @@ class AutonomousCommunity(NamedTuple):
 AUTONOMOUS_COMMUNITIES: tuple[AutonomousCommunity, ...] = (
     AutonomousCommunity("ES-AN", "ES61", "Andalucía", "Comunidad Autónoma de Andalucía", ("es",)),
     AutonomousCommunity("ES-AR", "ES24", "Aragón", "Comunidad Autónoma de Aragón", ("es",)),
-    AutonomousCommunity("ES-AS", "ES12", "Principado de Asturias", "Comunidad Autónoma del Principado de Asturias", ("es",)),
+    AutonomousCommunity(
+        "ES-AS", "ES12", "Principado de Asturias", "Comunidad Autónoma del Principado de Asturias", ("es",)
+    ),
     AutonomousCommunity("ES-CB", "ES13", "Cantabria", "Comunidad Autónoma de Cantabria", ("es",)),
-    AutonomousCommunity("ES-CL", "ES41", "Castilla y León", "Comunidad de Castilla y León", ("es",)),  # read off BOCL-h-2013-90254
+    AutonomousCommunity(
+        "ES-CL", "ES41", "Castilla y León", "Comunidad de Castilla y León", ("es",)
+    ),  # read off BOCL-h-2013-90254
     AutonomousCommunity("ES-CM", "ES42", "Castilla-La Mancha", "Comunidad Autónoma de Castilla-La Mancha", ("es",)),
     AutonomousCommunity("ES-CN", "ES70", "Canarias", "Comunidad Autónoma de Canarias", ("es",)),
     AutonomousCommunity("ES-CT", "ES51", "Cataluña", "Comunidad Autónoma de Cataluña", ("es", "ca")),

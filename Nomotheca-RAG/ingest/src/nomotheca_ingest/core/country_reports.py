@@ -28,8 +28,8 @@ from nomotheca_ingest.core.ir import (
     SourceTrustClass,
     Trigger,
 )
-from nomotheca_ingest.core.text import sha256_hex
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
+from nomotheca_ingest.core.text import sha256_hex
 
 INSTRUMENT_TYPE = "country_report"
 ID_SYSTEM = "euromod_cr"
@@ -89,9 +89,7 @@ def parse_country_report(
     )
 
 
-def _write_file_snapshot(
-    conn: psycopg.Connection, run_id: UUID, source_code: str, path: Path, content: bytes
-) -> UUID:
+def _write_file_snapshot(conn: psycopg.Connection, run_id: UUID, source_code: str, path: Path, content: bytes) -> UUID:
     """Archive the Markdown file bytes as the version's provenance snapshot."""
     row = conn.execute(
         """
@@ -134,9 +132,7 @@ def ingest_country_report(
             note="non-legislative corpus: excluded from evidence retrieval",
         )
 
-    with fetch_run(
-        database_url, source_code, SKILL_VERSION, Trigger.BULK_SEED, setup=register_source
-    ) as run:
+    with fetch_run(database_url, source_code, SKILL_VERSION, Trigger.BULK_SEED, setup=register_source) as run:
         snapshot_id = _write_file_snapshot(run.archive, run.id, source_code, file_path, raw)
         instrument = parse_country_report(
             raw.decode("utf-8"), jurisdiction, vintage, source_code, valid_from, snapshot_id, lang

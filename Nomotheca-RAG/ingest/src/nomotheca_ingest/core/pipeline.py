@@ -7,12 +7,12 @@ from dataclasses import dataclass, field
 from datetime import date
 from uuid import UUID
 
-from nomotheca_ingest.countries.registry import get_adapter
 from nomotheca_ingest.core.db import connect, fetch_run
 from nomotheca_ingest.core.ir import CitationRef, IngestMode, ParsedDoc, Snapshot, SourceRef, Trigger, WorkItem
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.reparse import ReparseStats, reload
 from nomotheca_ingest.core.snapshots import SnapshotClient
+from nomotheca_ingest.countries.registry import get_adapter
 
 
 @dataclass(slots=True)
@@ -190,11 +190,7 @@ def reparse_snapshots(
         for row in rows:
             snapshot_id, url, status, ctype, chash, raw, source_code, stored_ref = row
             stats.snapshots += 1
-            ref = (
-                SourceRef.model_validate(stored_ref)
-                if stored_ref
-                else adapter.source_ref_from_url(url, source_code)
-            )
+            ref = SourceRef.model_validate(stored_ref) if stored_ref else adapter.source_ref_from_url(url, source_code)
             if ref is None:
                 stats.skipped += 1
                 continue

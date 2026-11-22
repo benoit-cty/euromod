@@ -98,7 +98,8 @@ def test_a_failing_database_does_not_kill_the_job(tmp_path, monkeypatch):
     cfg = WorkerConfig(repo_root=tmp_path, database_url="postgresql://x/y", worker_id="t", models=[])
     monkeypatch.setattr(runner.jobs, "package_dir", lambda *_a, **_k: tmp_path)
     monkeypatch.setattr(
-        runner.jobs, "build_command",
+        runner.jobs,
+        "build_command",
         lambda *_a, **_k: [sys.executable, "-c", "print('@progress {\"done\": 1}'); print('@result {\"ok\": true}')"],
     )
     monkeypatch.setattr(runner.jobs, "parse_payload", lambda *_a, **_k: {})

@@ -12,7 +12,6 @@ import re
 from pathlib import Path
 
 import pytest
-
 from nomoscope_workflow.corpus import LANG_BY_COUNTRY
 from nomoscope_workflow.scout_sources import COUNTRY_SOURCES
 

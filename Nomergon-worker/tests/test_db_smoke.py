@@ -14,7 +14,6 @@ from pathlib import Path
 
 import psycopg
 import pytest
-
 from nomergon import client, db, jobs, runner
 from nomergon.config import DEFAULT_DATABASE_URL, WorkerConfig
 
@@ -25,7 +24,7 @@ def _reachable() -> bool:
     try:
         with psycopg.connect(DATABASE_URL, connect_timeout=2):
             return True
-    except Exception:  # noqa: BLE001
+    except Exception:
         return False
 
 
@@ -38,9 +37,9 @@ def conn():
     db.apply_schema(connection)
     # These tests claim the oldest queued job and fail stale running ones: on
     # a database with a live queue they would take (and break) real jobs.
-    live = connection.execute(
-        "SELECT count(*) AS n FROM ops.jobs WHERE status IN ('queued', 'running')"
-    ).fetchone()["n"]
+    live = connection.execute("SELECT count(*) AS n FROM ops.jobs WHERE status IN ('queued', 'running')").fetchone()[
+        "n"
+    ]
     if live:
         connection.close()
         pytest.skip(f"{live} live job(s) queued/running at {DATABASE_URL}; smoke tests would claim them")
@@ -114,7 +113,6 @@ def test_cancel_of_a_queued_job_is_immediate(conn) -> None:
     assert not client.cancel(conn, job_id)
 
 
-
 def test_finish_job_never_overwrites_a_final_status(conn) -> None:
     """The stale-heartbeat rule marked it failed: a late finish from the slot is ignored."""
     with conn.transaction():  # never visible queued to a live worker
@@ -170,9 +168,9 @@ def test_subprocess_output_streams_into_events(conn, cfg: WorkerConfig, tmp_path
     script = (
         "import sys\n"
         "print('line one')\n"
-        "print('@progress {\"phase\": \"half\", \"done\": 1}')\n"
+        'print(\'@progress {"phase": "half", "done": 1}\')\n'
         "print('oops', file=sys.stderr)\n"
-        "print('@result {\"item_ids\": [\"FR_x_2025\"]}')\n"
+        'print(\'@result {"item_ids": ["FR_x_2025"]}\')\n'
     )
     outcome = runner._run_subprocess(conn, cfg, job_id, "workflow", [sys.executable, "-c", script], tmp_path, None)
     assert outcome.status == "succeeded"

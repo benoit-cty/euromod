@@ -1,9 +1,10 @@
 """URL-building, header, and retry tests for the Spanish BOE fetcher."""
 
+from typing import ClassVar
 from uuid import uuid4
 
 import pytest
-
+from nomotheca_ingest.core.ir import Snapshot, SourceRef
 from nomotheca_ingest.countries.es.fetcher import (
     XML_HEADERS,
     diario_url,
@@ -11,7 +12,6 @@ from nomotheca_ingest.countries.es.fetcher import (
     instrument_url,
     url_for_ref,
 )
-from nomotheca_ingest.core.ir import Snapshot, SourceRef
 
 
 def _ref(source_id: str = "BOE-A-2006-20764") -> SourceRef:
@@ -20,9 +20,7 @@ def _ref(source_id: str = "BOE-A-2006-20764") -> SourceRef:
 
 def test_instrument_url_targets_the_consolidated_api():
     url = instrument_url("BOE-A-2006-20764")
-    assert url == (
-        "https://www.boe.es/datosabiertos/api/legislacion-consolidada/id/BOE-A-2006-20764"
-    )
+    assert url == ("https://www.boe.es/datosabiertos/api/legislacion-consolidada/id/BOE-A-2006-20764")
 
 
 def test_url_for_ref_uses_the_bare_boe_id():
@@ -83,7 +81,7 @@ def test_snapshot_client_merges_adapter_headers_over_the_user_agent():
     class _Response:
         status_code = 200
         content = b"<response/>"
-        headers = {"content-type": "application/xml"}
+        headers: ClassVar[dict[str, str]] = {"content-type": "application/xml"}
         url = "https://example.test"
 
     class _HttpxClient:

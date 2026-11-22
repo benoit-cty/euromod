@@ -35,15 +35,11 @@ def _submit(database_url: str, payload: dict, timeout: float, poll: float) -> di
             if status in ("failed", "cancelled"):
                 raise RuntimeError(error or f"encode job {job_id} {status}")
             if time.monotonic() >= deadline:
-                raise TimeoutError(
-                    f"encode job {job_id} still {status} after {timeout:.0f}s (no worker alive?)"
-                )
+                raise TimeoutError(f"encode job {job_id} still {status} after {timeout:.0f}s (no worker alive?)")
             time.sleep(poll)
 
 
-def encode_via_jobs(
-    database_url: str, query: str, timeout: float = 60.0, poll: float = 0.1, model_id: int = 1
-) -> str:
+def encode_via_jobs(database_url: str, query: str, timeout: float = 60.0, poll: float = 0.1, model_id: int = 1) -> str:
     """halfvec literal for `query` under embedding model `model_id`, computed by the worker.
 
     The default model is left out of the payload, so a worker that predates

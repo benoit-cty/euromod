@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from nomoscope_workflow.config import DEFAULT_DATABASE_URL, load_env_file
-
 import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from nomoscope_workflow.config import DEFAULT_DATABASE_URL, load_env_file
 
 # Nomokrisis-evaluation_pipeline/ (this file lives in src/nomokrisis_eval/).
 EVAL_ROOT = Path(__file__).resolve().parents[2]
@@ -42,7 +41,10 @@ def git_commit() -> str | None:
     try:
         return subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            cwd=REPO_ROOT, capture_output=True, text=True, check=True,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
         ).stdout.strip()
     except Exception:
         return None

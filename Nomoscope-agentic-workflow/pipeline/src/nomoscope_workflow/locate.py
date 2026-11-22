@@ -9,8 +9,8 @@ from datetime import date, timedelta
 
 import psycopg
 
+from .corpus import _LIVE_VERSION_CTE, HIT_COLUMNS, Scope, _fts_query, fetch_dicts, scope_codes
 from .schema import RetrievalHit
-from .corpus import HIT_COLUMNS, Scope, _LIVE_VERSION_CTE, _fts_query, fetch_dicts, scope_codes
 
 # ---------------------------------------------------------------------------
 # Locating a source the analyst named
@@ -89,6 +89,7 @@ def named_acts(candidates: list[dict], limit: int = NAMED_ACT_LIMIT) -> list[dic
             kept.append(candidate)
     return kept[:limit]
 
+
 _NAMED_UNIT_SQL = f"""
 WITH {_LIVE_VERSION_CTE}
 SELECT {HIT_COLUMNS},
@@ -134,6 +135,7 @@ WHERE j.code = ANY(%(jurisdictions)s::text[]) AND i.source_trust_class <> 'conte
 ORDER BY score DESC
 LIMIT %(k)s
 """
+
 
 def _entered_since(validity: str | None, since: date) -> bool:
     """Whether a '[2025-04-01,)' daterange starts on or after `since`."""
@@ -412,5 +414,7 @@ def locate_named_units(
     # PAJE arrêté of December 2024 is recent, and the ceiling table of
     # instruction DSS/2B/2024/181 the need asked for never came back.
     room = k if not recent_found else RECENT_EXTRA
-    found += [RetrievalHit(method="located", **row) for row in recent[: max(0, min(room, k + RECENT_EXTRA - len(found)))]]
+    found += [
+        RetrievalHit(method="located", **row) for row in recent[: max(0, min(room, k + RECENT_EXTRA - len(found)))]
+    ]
     return found

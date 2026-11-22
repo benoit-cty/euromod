@@ -31,8 +31,8 @@ from psycopg.types.json import Jsonb
 
 from nomotheca_ingest.core.chunker import chunk_text
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
-from nomotheca_ingest.core.text import sha256_hex
 from nomotheca_ingest.core.progress import BatchStats, ProgressCallback, emit
+from nomotheca_ingest.core.text import sha256_hex
 
 #: A version needs a translation when it has no target-language row, or when
 #: its machine translation was made from another state of this source text.
@@ -104,7 +104,9 @@ class TranslationBackend(Protocol):
 class LLMTranslationBackend:
     """Translate through nomos_llm.providers's provider-prefixed PydanticAI agents."""
 
-    def __init__(self, model: str, *, request_timeout: float | None = DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS) -> None:
+    def __init__(
+        self, model: str, *, request_timeout: float | None = DEFAULT_TRANSLATION_REQUEST_TIMEOUT_SECONDS
+    ) -> None:
         """Load .env credentials and keep the provider-prefixed model name."""
         try:
             from nomos_llm.env import load_env_file
@@ -129,9 +131,7 @@ class LLMTranslationBackend:
 
         @retry(wait=wait_random_exponential(min=1, max=30), stop=stop_after_attempt(3), reraise=True)
         def _invoke() -> str:
-            return self._run_agent(
-                self.engine, system, text, temperature=0.0, timeout=self._request_timeout
-            ).strip()
+            return self._run_agent(self.engine, system, text, temperature=0.0, timeout=self._request_timeout).strip()
 
         return _invoke()
 
@@ -240,9 +240,7 @@ def iter_texts_needing_translation(
             )
 
 
-def translate_content(
-    backend: TranslationBackend, content: str, source_lang: str, target_lang: str
-) -> str:
+def translate_content(backend: TranslationBackend, content: str, source_lang: str, target_lang: str) -> str:
     """Translate a full text, splitting long content into newline-aware segments.
 
     When the source is already in the target language (e.g. English-authentic

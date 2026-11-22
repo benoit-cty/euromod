@@ -58,9 +58,7 @@ def _json_safe(value):
 
 def _git(repo: Path, *args: str) -> str | None:
     try:
-        out = subprocess.run(
-            ["git", "-C", str(repo), *args], capture_output=True, text=True, timeout=10
-        )
+        out = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, timeout=10)
         return out.stdout.strip() or None
     except Exception:
         return None
@@ -92,9 +90,7 @@ def ingest_corpus(
             (kind, country, repo_url, commit, license),
         ).fetchone()[0]
         # Re-ingest replaces the corpus wholesale (children cascade).
-        conn.execute(
-            "DELETE FROM params.external_parameters WHERE corpus_id = %s", (corpus_id,)
-        )
+        conn.execute("DELETE FROM params.external_parameters WHERE corpus_id = %s", (corpus_id,))
         for i, path in enumerate(files, 1):
             try:
                 doc = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -104,17 +100,13 @@ def ingest_corpus(
             if not isinstance(doc, dict) or not ("values" in doc or "brackets" in doc):
                 stats["skipped_files"] += 1  # node-level description files
                 continue
-            _ingest_parameter(
-                conn, corpus_id, path.relative_to(parameters_dir), doc, stats
-            )
+            _ingest_parameter(conn, corpus_id, path.relative_to(parameters_dir), doc, stats)
             if i % 500 == 0:
                 echo(f"{country}/{kind}: {i}/{len(files)} files processed")
     return stats
 
 
-def _ingest_parameter(
-    conn: psycopg.Connection, corpus_id: int, rel_path: Path, doc: dict, stats: dict
-) -> None:
+def _ingest_parameter(conn: psycopg.Connection, corpus_id: int, rel_path: Path, doc: dict, stats: dict) -> None:
     dotted = str(rel_path.with_suffix("")).replace("/", ".")
     metadata = dict(doc.get("metadata") or {})
     reference = metadata.pop("reference", None)
@@ -166,14 +158,10 @@ def _ingest_parameter(
                 value_rows,
             )
     stats["values"] += len(value_rows)
-    stats["references"] += _ingest_references(
-        conn, external_parameter_id, reference, oj_dates
-    )
+    stats["references"] += _ingest_references(conn, external_parameter_id, reference, oj_dates)
 
 
-def _series_rows(
-    external_parameter_id: int, component: str, series: dict, out: list[tuple]
-) -> None:
+def _series_rows(external_parameter_id: int, component: str, series: dict, out: list[tuple]) -> None:
     if not isinstance(series, dict):
         return
     for key, entry in series.items():

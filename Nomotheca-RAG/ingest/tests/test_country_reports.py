@@ -100,9 +100,5 @@ def test_duplicate_headings_get_unique_paths() -> None:
 def test_versions_dedupe_key_is_stable() -> None:
     """Re-ingesting the same vintage must reuse versions, not stack overlaps."""
     ir = _parse()
-    ids = {
-        v.source_version_id
-        for u in ir.units
-        for v in u.versions
-    }
+    ids = {v.source_version_id for u in ir.units for v in u.versions}
     assert ids == {"CR-FR-Y16@2022-01-01"}

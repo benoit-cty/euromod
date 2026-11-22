@@ -79,8 +79,6 @@ def url_for_ref(ref: SourceRef) -> str:
     return act_url(ref.source_id)
 
 
-
-
 def fetch_ie(ref: SourceRef, http: SnapshotClient) -> Snapshot:
     """Fetch and archive an Irish payload, retrying transient upstream errors."""
     url = url_for_ref(ref)

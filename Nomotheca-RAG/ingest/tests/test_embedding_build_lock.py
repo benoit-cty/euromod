@@ -12,7 +12,6 @@ import time
 
 import psycopg
 import pytest
-
 from nomotheca_ingest.cli import batch as cli
 from nomotheca_ingest.core import embeddings
 

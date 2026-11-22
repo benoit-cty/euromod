@@ -13,14 +13,13 @@ from __future__ import annotations
 
 from datetime import date
 
-from nomoscope_workflow.schema import Lineage, ParameterValue, Routing, income_year_for
-
 from nomokrisis_eval.golden_drafting import case_slug as _case_slug
-from nomokrisis_eval.parameter_store import route_against_current
 from nomokrisis_eval.openfisca_golden import (
     schedule_at,
     value_at,
 )
+from nomokrisis_eval.parameter_store import route_against_current
+from nomoscope_workflow.schema import Lineage, ParameterValue, Routing, income_year_for
 
 
 class _Cursor:
@@ -89,9 +88,7 @@ def test_schedule_at_drops_abolished_bands_and_dates_from_the_newest_component()
 
 
 def test_case_slug_drops_the_country_and_function_noise():
-    assert (
-        _case_slug("euromod://FR/tinkt_fr/def_const/$tin_upthres1", "FR") == "tinkt_tin_upthres1"
-    )
+    assert _case_slug("euromod://FR/tinkt_fr/def_const/$tin_upthres1", "FR") == "tinkt_tin_upthres1"
     assert _case_slug("euromod://FR/SetDefault_fr/def_const/$MinWage", "FR") == "setdefault_minwage"
 
 

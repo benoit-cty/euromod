@@ -20,25 +20,26 @@ import time
 import uuid
 from collections.abc import Callable
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import psycopg
-
 from nomoscope_workflow import AGENT_VERSION, paramdb
-from nomoscope_workflow.config import WorkflowConfig, load_config as load_workflow_config
+from nomoscope_workflow.config import WorkflowConfig
+from nomoscope_workflow.config import load_config as load_workflow_config
 from nomoscope_workflow.impact import trace_impact
 from nomoscope_workflow.pipeline import run_parameter
 from nomoscope_workflow.prompts import PROMPT_VERSION
 from nomoscope_workflow.schema import ParameterRecord, ReviewItem
 from nomoscope_workflow.tracing import setup_tracing
 
-from . import eval_version
 from . import db as evaldb
+from . import eval_version
 from .config import EvalConfig, git_commit
 from .golden_store import golden_set_hash, load_cases
 from .parameter_store import db_constants, load_case_record
 from .schema import CaseResult, GoldenCase, RunManifest
 from .scoring import score_item
+
 
 def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
@@ -113,10 +114,10 @@ def start_run(
     `submitted_by` = current_user, `dataset_version` = the golden set hash of
     exactly these cases) and freeze the case list into eval.run_cases."""
     provider, _, model_name = model.partition("/")
-    run_id = f"eval-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}-{_slug(model_name or provider)}-{uuid.uuid4().hex[:6]}"
+    run_id = f"eval-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{_slug(model_name or provider)}-{uuid.uuid4().hex[:6]}"
     manifest = RunManifest(
         run_id=run_id,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         status="running",
         as_of=as_of,
         model=model,
@@ -140,9 +141,7 @@ def start_run(
     return loaded[1] if loaded else manifest
 
 
-def resume_run(
-    conn: psycopg.Connection, run_id: str
-) -> tuple[RunManifest, list[GoldenCase], list[CaseResult]]:
+def resume_run(conn: psycopg.Connection, run_id: str) -> tuple[RunManifest, list[GoldenCase], list[CaseResult]]:
     """Reload an interrupted run from the tables: its manifest, its frozen case
     list, and what it already scored. Raises LookupError if it cannot be resumed."""
     loaded = evaldb.load_run(conn, run_id)
@@ -151,9 +150,7 @@ def resume_run(
     run_pk, manifest = loaded
     cases = evaldb.load_run_cases(conn, run_pk)
     if not cases:
-        raise LookupError(
-            f"run {run_id} predates resumable runs (no rows in eval.run_cases) — start a new run"
-        )
+        raise LookupError(f"run {run_id} predates resumable runs (no rows in eval.run_cases) — start a new run")
     return manifest, cases, evaldb.load_results(conn, run_pk)
 
 
@@ -228,15 +225,23 @@ def execute_run(
     evaldb.set_run_status(conn, run_pk, "running")
     try:
         results = _score_pending(
-            conn, cfg, manifest, run_pk, cases, done_results,
-            on_case_start, on_case_done, run_case, concurrency,
+            conn,
+            cfg,
+            manifest,
+            run_pk,
+            cases,
+            done_results,
+            on_case_start,
+            on_case_done,
+            run_case,
+            concurrency,
         )
     except Exception:
         try:
             conn.rollback()
             evaldb.set_run_status(conn, run_pk, "failed")
             manifest.status = "failed"
-        except Exception:  # noqa: BLE001 - the original error is the one to raise
+        except Exception:
             pass
         raise
     evaldb.set_run_status(conn, run_pk, "complete")
@@ -275,8 +280,13 @@ def _score_pending(
         if run_case is not None:
             return run_case(wf_cfg, tracer, record, case, case.as_of)
         return run_parameter(
-            wf_cfg, tracer, record, case.as_of,
-            force=True, parameter_ref=case.parameter_target, enqueue=False,
+            wf_cfg,
+            tracer,
+            record,
+            case.as_of,
+            force=True,
+            parameter_ref=case.parameter_target,
+            enqueue=False,
         )
 
     def timed(record: ParameterRecord, case: GoldenCase) -> tuple[ReviewItem | None, BaseException | None, float]:
@@ -296,9 +306,7 @@ def _score_pending(
             result = _error_result(case, exc or RuntimeError("no review item"))
         result.latency_ms = int((time.perf_counter() - started) * 1000)
         results.append(result)
-        evaldb.upsert_result(
-            conn, run_pk, result, item.model_dump(mode="json") if item is not None else None
-        )
+        evaldb.upsert_result(conn, run_pk, result, item.model_dump(mode="json") if item is not None else None)
         if on_case_done:
             on_case_done(len(results), total, case, result)
 
@@ -339,11 +347,10 @@ def _score_pending(
             pool.shutdown(wait=False, cancel_futures=True)
             raise
 
-    if not manifest.model.startswith("mock") and pending:
-        if _attach_impact(results, wf_cfg):
-            for result in results:
-                if result.llm_calls is not None:
-                    evaldb.upsert_result(conn, run_pk, result)
+    if not manifest.model.startswith("mock") and pending and _attach_impact(results, wf_cfg):
+        for result in results:
+            if result.llm_calls is not None:
+                evaldb.upsert_result(conn, run_pk, result)
     return results
 
 
@@ -387,8 +394,14 @@ def rescore_run(conn: psycopg.Connection, run_id: str) -> tuple[RunManifest, lis
         item = ReviewItem.model_validate(item_dump)
         result = score_item(case, item, constants_of(case))
         for measured in (
-            "latency_ms", "phoenix_trace_id", "llm_calls", "tokens_prompt",
-            "tokens_completion", "energy_kwh", "gwp_kgco2eq", "impact_estimated",
+            "latency_ms",
+            "phoenix_trace_id",
+            "llm_calls",
+            "tokens_prompt",
+            "tokens_completion",
+            "energy_kwh",
+            "gwp_kgco2eq",
+            "impact_estimated",
         ):
             setattr(result, measured, getattr(before, measured))
         rescored.append(result)

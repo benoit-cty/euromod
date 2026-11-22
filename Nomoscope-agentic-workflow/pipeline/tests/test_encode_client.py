@@ -16,7 +16,6 @@ import uuid
 
 import psycopg
 import pytest
-
 from nomoscope_workflow import encode_client, query_encoder
 
 DATABASE_URL = os.environ.get("WORKFLOW_DATABASE_URL", "postgresql://jrc:jrc@localhost:5434/legislation")
@@ -65,9 +64,7 @@ def test_encode_via_jobs_returns_the_halfvec_the_worker_wrote(conn, marker):
         assert encode_client.encode_via_jobs(DATABASE_URL, marker, timeout=5, poll=0.02) == "[0.1,0.2]"
     finally:
         worker.join()
-    job = conn.execute(
-        "SELECT priority, payload FROM ops.jobs WHERE payload ->> 'query' = %s", (marker,)
-    ).fetchone()
+    job = conn.execute("SELECT priority, payload FROM ops.jobs WHERE payload ->> 'query' = %s", (marker,)).fetchone()
     assert job == (encode_client.ENCODE_PRIORITY, {"query": marker})
 
 

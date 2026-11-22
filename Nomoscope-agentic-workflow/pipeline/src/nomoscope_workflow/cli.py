@@ -193,7 +193,7 @@ def run_targets(
                 records.append((target, _load_target(conn, target)))
             except (KeyError, ValueError) as exc:
                 typer.echo(str(exc))
-                raise typer.Exit(1)
+                raise typer.Exit(1) from exc
     records, skipped = _skip_dormant(records, anchor.year, include_na)
     item_ids = _run_records(cfg, records, anchor, model, force) if records else []
     _result_line({"item_ids": item_ids, "skipped_na": skipped})
@@ -221,9 +221,7 @@ def run_country(
     anchor = system_year_anchor(year)
     records: list[tuple[str, ParameterRecord]] = []
     with paramdb.connect(cfg) as conn:
-        refs = paramdb.country_targets(conn, country) + [
-            f"group:{g}" for g in paramdb.country_groups(conn, country)
-        ]
+        refs = paramdb.country_targets(conn, country) + [f"group:{g}" for g in paramdb.country_groups(conn, country)]
         if not refs:
             typer.echo(f"No parameters for {country.upper()} in the params DB (see ingest-params).")
             raise typer.Exit(1)
@@ -371,9 +369,7 @@ def match_openfisca(
     factors: str = typer.Option(
         "1", "--factors", help="Comma-separated scales to try (euromod = factor * external), e.g. 1,3,4,8"
     ),
-    seed: Path = typer.Option(
-        None, "--seed", help="JSON file of curated pairs, stored as match_method='manual'"
-    ),
+    seed: Path = typer.Option(None, "--seed", help="JSON file of curated pairs, stored as match_method='manual'"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Print candidates without writing"),
     limit: int = typer.Option(30, "--limit", help="Candidates to print (0 = all)"),
 ) -> None:
@@ -395,9 +391,11 @@ def match_openfisca(
             for message in skipped:
                 typer.echo(f"  ~ skipped {message}")
         # Curated pairs win over a fingerprint for the same (parameter, component).
-        curated_keys = {(l.parameter_id, l.external_parameter_id, l.component) for l in curated}
+        curated_keys = {(link.parameter_id, link.external_parameter_id, link.component) for link in curated}
         links = curated + [
-            l for l in links if (l.parameter_id, l.external_parameter_id, l.component) not in curated_keys
+            link
+            for link in links
+            if (link.parameter_id, link.external_parameter_id, link.component) not in curated_keys
         ]
         for link in links[: limit or None]:
             typer.echo(
@@ -434,8 +432,14 @@ def translate_params(
     with paramdb.connect(cfg) as conn:
         paramdb.require_schema(conn)
         stats = translate.translate_country(
-            conn, chosen, country.upper(), lang,
-            batch_size=batch_size, limit=limit, force=force, echo=typer.echo,
+            conn,
+            chosen,
+            country.upper(),
+            lang,
+            batch_size=batch_size,
+            limit=limit,
+            force=force,
+            echo=typer.echo,
         )
     typer.echo(
         f"{stats['parameters']} parameter(s) translated, {stats['texts']} text rows written"
@@ -474,7 +478,9 @@ def impact(
     since: str = typer.Option(None, "--since", help="Only spans on/after this ISO date/datetime"),
     until: str = typer.Option(None, "--until", help="Only spans before this ISO date/datetime"),
     zone: str = typer.Option(None, "--zone", help="EcoLogits electricity mix zone (default: config, EEE)"),
-    json_output: bool = typer.Option(False, "--json", help="Machine-readable output: exactly one `@result {json}` line (the worker's job result)"),
+    json_output: bool = typer.Option(
+        False, "--json", help="Machine-readable output: exactly one `@result {json}` line (the worker's job result)"
+    ),
 ) -> None:
     """Estimate the environmental impact of traced LLM calls (EcoLogits over Phoenix spans)."""
     from . import impact as impact_mod
@@ -493,9 +499,7 @@ def impact(
     if not report.models:
         typer.echo("No LLM spans with token counts found (mock runs carry none).")
         return
-    typer.echo(
-        f"{'model':<36} {'calls':>6} {'out tok':>9} {'energy (kWh)':>16} {'GWP (gCO2eq)':>16}"
-    )
+    typer.echo(f"{'model':<36} {'calls':>6} {'out tok':>9} {'energy (kWh)':>16} {'GWP (gCO2eq)':>16}")
     for m in report.models:
         if m.estimated:
             energy = f"{m.energy_kwh_min:.4f}–{m.energy_kwh_max:.4f}"
@@ -510,10 +514,7 @@ def impact(
     )
     typer.echo(f"electricity mix zone: {report.electricity_mix_zone}")
     if report.not_estimated:
-        typer.echo(
-            "not estimated (model missing from the EcoLogits registry): "
-            + ", ".join(report.not_estimated)
-        )
+        typer.echo("not estimated (model missing from the EcoLogits registry): " + ", ".join(report.not_estimated))
 
 
 if __name__ == "__main__":

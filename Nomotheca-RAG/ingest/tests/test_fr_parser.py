@@ -4,14 +4,16 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+from nomotheca_ingest.core.ir import Snapshot, SourceRef
 from nomotheca_ingest.countries.fr.adapter import FrAdapter
 from nomotheca_ingest.countries.fr.parser import parse_dila_json
-from nomotheca_ingest.core.ir import Snapshot, SourceRef
 
 
 def test_jorf_text_parses_instrument_and_child_refs() -> None:
     """A JORF text root exposes the bill instrument and structural worklist."""
-    ref = SourceRef(jurisdiction="FR", source_code="FR-LEGI", source_id="JORFTEXT000051168007", source_type="instrument")
+    ref = SourceRef(
+        jurisdiction="FR", source_code="FR-LEGI", source_id="JORFTEXT000051168007", source_type="instrument"
+    )
     doc = parse_dila_json(
         """
         {
@@ -53,9 +55,11 @@ def test_jorf_text_parses_instrument_and_child_refs() -> None:
 
 def test_fr_adapter_expands_jorf_child_refs() -> None:
     """The French adapter turns parsed child refs into source work items."""
-    ref = SourceRef(jurisdiction="FR", source_code="FR-LEGI", source_id="JORFTEXT000051168007", source_type="instrument")
+    ref = SourceRef(
+        jurisdiction="FR", source_code="FR-LEGI", source_id="JORFTEXT000051168007", source_type="instrument"
+    )
     doc = parse_dila_json(
-      '{"META": {"META_COMMUN": {"ID": "JORFTEXT000051168007"}}, "STRUCT": {"LIEN_SECTION_TA": {"@id": "JORFSCTA000051168011"}}}'.encode(),
+        b'{"META": {"META_COMMUN": {"ID": "JORFTEXT000051168007"}}, "STRUCT": {"LIEN_SECTION_TA": {"@id": "JORFSCTA000051168011"}}}',
         ref,
         _snapshot(ref),
     )
@@ -112,7 +116,12 @@ def test_fr_adapter_rebuilds_source_ref_from_snapshot_url() -> None:
         "FR-LEGI",
     )
     assert (ref.source_id, ref.source_type, ref.source_code) == ("LEGIARTI000051200465", "article", "FR-LEGI")
-    assert adapter.source_ref_from_url("https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051168007", "FR-LEGI").source_type == "instrument"
+    assert (
+        adapter.source_ref_from_url(
+            "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051168007", "FR-LEGI"
+        ).source_type
+        == "instrument"
+    )
     assert adapter.source_ref_from_url("https://example.org/report.pdf", "FR-LEGI") is None
 
 
@@ -135,27 +144,35 @@ def test_a_jorf_circular_is_guidance_in_its_text_and_its_articles() -> None:
 
     from nomotheca_ingest.core.ir import SourceTrustClass
 
-    text_ref = SourceRef(jurisdiction="FR", source_code="FR-LEGI", source_id="JORFTEXT000000604169", source_type="instrument")
+    text_ref = SourceRef(
+        jurisdiction="FR", source_code="FR-LEGI", source_id="JORFTEXT000000604169", source_type="instrument"
+    )
     text = parse_dila_json(
-        json.dumps({
-            "META": {
-                "META_COMMUN": {"ID": "JORFTEXT000000604169", "NATURE": "CIRCULAIRE"},
-                "META_SPEC": {"META_TEXTE_VERSION": {"TITREFULL": "Circulaire du 30 juin 2005"}},
+        json.dumps(
+            {
+                "META": {
+                    "META_COMMUN": {"ID": "JORFTEXT000000604169", "NATURE": "CIRCULAIRE"},
+                    "META_SPEC": {"META_TEXTE_VERSION": {"TITREFULL": "Circulaire du 30 juin 2005"}},
+                }
             }
-        }).encode(),
+        ).encode(),
         text_ref,
         _snapshot(text_ref),
     )
     assert text.instruments[0].source_trust_class == SourceTrustClass.GUIDANCE
 
-    article_ref = SourceRef(jurisdiction="FR", source_code="FR-LEGI", source_id="JORFARTI000000604170", source_type="article")
+    article_ref = SourceRef(
+        jurisdiction="FR", source_code="FR-LEGI", source_id="JORFARTI000000604170", source_type="article"
+    )
     article = parse_dila_json(
-        json.dumps({
-            "NUM": "1",
-            "META": {"META_SPEC": {"META_ARTICLE": {"DATE_DEBUT": "2005-07-01"}}},
-            "CONTEXTE": {"TEXTE": {"@cid": "JORFTEXT000000604169", "@nature": "CIRCULAIRE"}},
-            "BLOC_TEXTUEL": {"CONTENU": "<p>Texte.</p>"},
-        }).encode(),
+        json.dumps(
+            {
+                "NUM": "1",
+                "META": {"META_SPEC": {"META_ARTICLE": {"DATE_DEBUT": "2005-07-01"}}},
+                "CONTEXTE": {"TEXTE": {"@cid": "JORFTEXT000000604169", "@nature": "CIRCULAIRE"}},
+                "BLOC_TEXTUEL": {"CONTENU": "<p>Texte.</p>"},
+            }
+        ).encode(),
         article_ref,
         _snapshot(article_ref),
     )

@@ -141,9 +141,7 @@ def embedding_process(directory: Path | None, module: str, *args: str) -> Embedd
     env["PYTHONUNBUFFERED"] = "1"
     python = nomos_python()
     if python:
-        return EmbeddingProcess(
-            command=[python, "-m", module, *args], env=env, cuda=False, cwd=Path.cwd()
-        )
+        return EmbeddingProcess(command=[python, "-m", module, *args], env=env, cuda=False, cwd=Path.cwd())
     if directory is None:
         raise RuntimeError("could not locate Nomotheca-RAG/ingest (set EUROMOD_INGEST_DIR or NOMOS_PYTHON)")
     cuda_environment = directory / CUDA_ENVIRONMENT
@@ -177,9 +175,7 @@ def _start(model_id: int = DEFAULT_MODEL_ID) -> subprocess.Popen:
         flush=True,
     )
     started = time.monotonic()
-    process = _spawn_ready(
-        "nomotheca_ingest.query_embeddings", "--model", str(model_id), what="encoder"
-    )
+    process = _spawn_ready("nomotheca_ingest.query_embeddings", "--model", str(model_id), what="encoder")
     print(f"[retrieval] query encoder ready ({time.monotonic() - started:.0f}s)", flush=True)
     return process
 
@@ -197,9 +193,7 @@ def _encode_subprocess(query: str, model_id: int = DEFAULT_MODEL_ID) -> str:
     return response["halfvec"]
 
 
-def encode(
-    query: str, database_url: str | None = None, model_id: int = DEFAULT_MODEL_ID
-) -> str | None:
+def encode(query: str, database_url: str | None = None, model_id: int = DEFAULT_MODEL_ID) -> str | None:
     """halfvec literal for a query under embedding model `model_id`, or None
     when the encoder is unavailable.
 

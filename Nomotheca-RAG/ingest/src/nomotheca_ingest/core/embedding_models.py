@@ -34,8 +34,7 @@ STORED_DIM = 1024
 #: query language. Written for what the framing step actually sends: a
 #: parameter's native-language label and description, not a question.
 LEGAL_RETRIEVAL_TASK = (
-    "Given the description of a tax-benefit parameter, retrieve the article of national "
-    "legislation that sets its value"
+    "Given the description of a tax-benefit parameter, retrieve the article of national legislation that sets its value"
 )
 
 

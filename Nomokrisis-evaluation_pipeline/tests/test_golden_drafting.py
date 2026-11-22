@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from datetime import date
 
+from nomokrisis_eval import openfisca_golden as og
+from nomokrisis_eval.build_dataset import DraftedTruth, to_golden_case
+from nomokrisis_eval.golden_drafting import entry_case_id, golden_case_id
 from nomoscope_workflow.schema import (
     Bracket,
     ParameterInformation,
@@ -12,10 +15,6 @@ from nomoscope_workflow.schema import (
     Routing,
     SourceType,
 )
-
-from nomokrisis_eval import openfisca_golden as og
-from nomokrisis_eval.build_dataset import DraftedTruth, to_golden_case
-from nomokrisis_eval.golden_drafting import entry_case_id, golden_case_id
 
 AS_OF = date(2025, 7, 1)
 GROUP = "FR:tinkt_fr:tin_schedule"
@@ -61,9 +60,7 @@ def test_an_openfisca_group_entry_without_id_drafts_the_id_retirement_looks_for(
     entry = {"group_id": GROUP, "openfisca_path": "impot_revenu.bareme", "component": "brackets"}
     monkeypatch.setattr(og, "load_record", lambda conn, e: (_group_record(), f"group:{GROUP}"))
     monkeypatch.setattr(og, "external_parameter", lambda *a, **k: {"id": 1, "commit": "abc1234"})
-    monkeypatch.setattr(
-        og, "schedule_at", lambda *a: ([Bracket(threshold=0.0, rate=0.0)], date(2025, 1, 1))
-    )
+    monkeypatch.setattr(og, "schedule_at", lambda *a: ([Bracket(threshold=0.0, rate=0.0)], date(2025, 1, 1)))
     monkeypatch.setattr(og, "references_at", lambda *a: [])
     monkeypatch.setattr(og, "is_annually_indexed", lambda *a: False)
 

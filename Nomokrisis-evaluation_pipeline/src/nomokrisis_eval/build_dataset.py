@@ -16,14 +16,13 @@ from __future__ import annotations
 
 from datetime import date
 
-from pydantic import BaseModel, ConfigDict
-
 from nomoscope_workflow.llm import run_agent
 from nomoscope_workflow.schema import Bracket, ParameterRecord, Routing
+from pydantic import BaseModel, ConfigDict
 
 from .golden_drafting import golden_case_id
-from .parameter_store import GROUP_PREFIX, current_value
 from .labels import draft_labels
+from .parameter_store import GROUP_PREFIX, current_value
 from .schema import Expected, GoldenCase
 from .scoring import values_equal
 
@@ -64,9 +63,7 @@ def check_builder_model(model: str) -> str:
     fabricated ground truth into the golden set."""
     provider = model.partition("/")[0]
     if not provider or "/" not in model:
-        raise ValueError(
-            f"builder model must be provider-prefixed (anthropic/…, azure_openai/…, jrc/…), not {model!r}"
-        )
+        raise ValueError(f"builder model must be provider-prefixed (anthropic/…, azure_openai/…, jrc/…), not {model!r}")
     if provider == "mock":
         raise ValueError(
             f"refusing to draft golden cases with {model!r}: a mock model cannot read the "

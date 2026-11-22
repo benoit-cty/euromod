@@ -37,7 +37,9 @@ def chunk_text(content: str, context_header: str, max_chars: int = 6_000) -> lis
             split_at = content.rfind("\n", start, end)
             if split_at > start:
                 end = split_at
-        chunks.append(ChunkIR(seq=seq, char_start=start, char_end=end, content=content[start:end], context_header=context_header))
+        chunks.append(
+            ChunkIR(seq=seq, char_start=start, char_end=end, content=content[start:end], context_header=context_header)
+        )
         start = end
         while start < len(content) and content[start] == "\n":
             start += 1

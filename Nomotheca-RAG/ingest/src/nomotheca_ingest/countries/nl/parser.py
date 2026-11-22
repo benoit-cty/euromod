@@ -19,7 +19,6 @@ import xml.etree.ElementTree as ET
 from datetime import date
 from typing import Any
 
-from nomotheca_ingest.core.text import path_token, pipe_rows
 from nomotheca_ingest.core.ir import (
     InstrumentIR,
     ParsedDoc,
@@ -30,7 +29,7 @@ from nomotheca_ingest.core.ir import (
     VersionIR,
     VersionStatus,
 )
-
+from nomotheca_ingest.core.text import path_token, pipe_rows
 
 # BWB's sentinel for "no end date", on both the validity and the view axis.
 OPEN_ENDED = "9999-12-31"
@@ -73,9 +72,7 @@ CONTAINER_TAGS = ("boek", "deel", "titeldeel", "hoofdstuk", "afdeling", "paragra
 
 # Subtrees that carry publication bookkeeping rather than legal text. Dropping
 # them is what keeps ~1300 <publicatie> blocks out of the retrieval chunks.
-_SKIP_TAGS = frozenset(
-    {"meta-data", "bwb-inputbestand", "bwb-wijzigingen", "redactionele-correcties", "redactie"}
-)
+_SKIP_TAGS = frozenset({"meta-data", "bwb-inputbestand", "bwb-wijzigingen", "redactionele-correcties", "redactie"})
 
 
 def parse_bwb_xml(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
@@ -256,6 +253,7 @@ def _article_units(root: ET.Element, bwb_id: str, short: str, snapshot: Snapshot
 
 def _iter_articles(root: ET.Element):
     """Yield every <artikel> with the titles of the containers above it."""
+
     def walk(node: ET.Element, containers: dict[str, str]):
         for child in node:
             if child.tag in _SKIP_TAGS:
@@ -346,9 +344,7 @@ def _table_rows(table: ET.Element) -> list[str]:
     check workable: the LLM's supporting_extract has to match this text
     character for character.
     """
-    return pipe_rows(
-        ([_inline_text(entry) for entry in row.findall("entry")] for row in table.iter("row")), edges=True
-    )
+    return pipe_rows(([_inline_text(entry) for entry in row.findall("entry")] for row in table.iter("row")), edges=True)
 
 
 def _inline_text(node: ET.Element | None) -> str:

@@ -8,12 +8,10 @@ from datetime import date
 from uuid import uuid4
 
 import pytest
-
+from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef, VersionStatus
 from nomotheca_ingest.countries.nl.adapter import NlAdapter
 from nomotheca_ingest.countries.nl.parser import parse_bwb_xml, select_toestanden
 from nomotheca_ingest.countries.nl.resolver import NlResolver
-from nomotheca_ingest.core.ir import CitationRef, Snapshot, SourceRef, VersionStatus
-
 
 # Four zicht generations of one validity window plus neighbours, as BWB serves
 # them: same geldigheid, different knowledge. Deliberately out of document order.
@@ -50,7 +48,7 @@ MANIFEST_PAYLOAD = b"""<?xml version="1.0" encoding="utf-8"?>
 # Art. 2.10 (the box 1 tariff table) and a repealed neighbour, with the
 # publication metadata BWB attaches to every element left in place so the
 # parser is exercised against the noise it has to drop.
-TOESTAND_PAYLOAD = """<?xml version="1.0" encoding="UTF-8"?>
+TOESTAND_PAYLOAD = b"""<?xml version="1.0" encoding="UTF-8"?>
 <toestand bwb-id="BWBR0011353" inwerkingtreding="2025-01-01">
   <wetgeving soort="wet" xml:lang="nl">
     <intitule ondertekening_bron="2000-05-11" publicatie_bron="2000-05-30"
@@ -117,7 +115,7 @@ TOESTAND_PAYLOAD = """<?xml version="1.0" encoding="UTF-8"?>
     </wet-besluit>
   </wetgeving>
 </toestand>
-""".encode()
+"""
 
 
 def _ref(source_id: str, source_type: str) -> SourceRef:
@@ -265,11 +263,11 @@ def test_adapter_expands_child_refs_into_work_items():
     adapter = NlAdapter()
     doc = parse_bwb_xml(MANIFEST_PAYLOAD, _ref("BWBR0011353", "version_index"), _snapshot())
     work = adapter.expand(doc)
-    assert [item.ref.source_id for item in work] == [
-        child["source_id"] for child in doc.metadata["child_refs"]
-    ]
+    assert [item.ref.source_id for item in work] == [child["source_id"] for child in doc.metadata["child_refs"]]
     assert all(item.ref.source_code == "NL-BWB" for item in work)
-    assert adapter.expand(parse_bwb_xml(TOESTAND_PAYLOAD, _ref("BWBR0011353/2025-01-01_0", "toestand"), _snapshot())) == []
+    assert (
+        adapter.expand(parse_bwb_xml(TOESTAND_PAYLOAD, _ref("BWBR0011353/2025-01-01_0", "toestand"), _snapshot())) == []
+    )
 
 
 @pytest.mark.parametrize(
@@ -290,10 +288,8 @@ def test_resolver_maps_known_citations_to_the_version_index(citation, expected):
 
 
 def test_resolver_points_unknown_citations_at_the_sru_lookup():
-    with pytest.raises(ValueError, match="zoekservice.overheid.nl"):
-        NlResolver().resolve(
-            CitationRef(jurisdiction="NL", citation="Wet op de dierenbescherming"), date(2025, 6, 30)
-        )
+    with pytest.raises(ValueError, match=r"zoekservice\.overheid\.nl"):
+        NlResolver().resolve(CitationRef(jurisdiction="NL", citation="Wet op de dierenbescherming"), date(2025, 6, 30))
 
 
 def test_canary_asserts_the_2025_three_band_schedule():

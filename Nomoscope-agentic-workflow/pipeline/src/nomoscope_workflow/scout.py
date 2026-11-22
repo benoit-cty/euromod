@@ -147,7 +147,7 @@ class ScoutResult:
         }
 
 
-def merge_results(results: list["ScoutResult"]) -> "ScoutResult":
+def merge_results(results: list[ScoutResult]) -> ScoutResult:
     """Fold every gap-fill round of one run into the single ScoutResult the
     ReviewItem carries, keeping each round's fields in order."""
     if not results:
@@ -165,10 +165,7 @@ def merge_results(results: list["ScoutResult"]) -> "ScoutResult":
     return merged
 
 
-
-def _rank_candidates(
-    cfg: WorkflowConfig, info, candidates: list[str], titles: dict[str, str]
-) -> list[str]:
+def _rank_candidates(cfg: WorkflowConfig, info, candidates: list[str], titles: dict[str, str]) -> list[str]:
     """LLM-select which candidate instruments actually set this parameter.
 
     Search results routinely include similarly-named acts (resource ceilings
@@ -194,7 +191,6 @@ def _rank_candidates(
     return picked + [i for i in candidates if i not in picked]
 
 
-
 #: Cap on how much of the analyst's account is quoted into the scout prompt.
 #: Its reasoning can run long; the useful part — the act it names — is at the front.
 _NEED_CHARS = 400
@@ -210,10 +206,7 @@ def _evidence_block(needs: list[str], known_citations: list[str] | None) -> str:
     parts = []
     if needs:
         listing = "\n".join(f"- {need[:_NEED_CHARS]}" for need in needs[:5])
-        parts.append(
-            "\n\nThe analyst who read the retrieved extracts reported these missing "
-            f"source(s):\n{listing}"
-        )
+        parts.append(f"\n\nThe analyst who read the retrieved extracts reported these missing source(s):\n{listing}")
     if known_citations:
         held = ", ".join(dict.fromkeys(known_citations))[:800]
         parts.append(f"\n\nAlready in the database (do NOT hunt these): {held}")
@@ -316,8 +309,7 @@ def run(
             label=instrument_id + suffix,
             args=scout_ingest.instrument_args(cfg, info.country, instrument_id + suffix),
             announce=(
-                f"{instrument_id}{suffix} "
-                f"(archive-first: fetch → snapshot → parse → chunk; up to {INGEST_TIMEOUT}s)"
+                f"{instrument_id}{suffix} (archive-first: fetch → snapshot → parse → chunk; up to {INGEST_TIMEOUT}s)"
             ),
         )
         for instrument_id in to_ingest
@@ -419,14 +411,22 @@ def _guidance_jobs(
             key=document.url,
             label=document.title,
             args=[
-                "document", document.url,
-                "--database-url", cfg.database_url,
-                "--jurisdiction", country,
-                "--lang", retrieval.LANG_BY_COUNTRY.get(country, "en"),
-                "--title", document.title,
-                "--kind", document.kind,
-                "--valid-from", document.valid_from.isoformat(),
-                "--trigger", "cache_miss",
+                "document",
+                document.url,
+                "--database-url",
+                cfg.database_url,
+                "--jurisdiction",
+                country,
+                "--lang",
+                retrieval.LANG_BY_COUNTRY.get(country, "en"),
+                "--title",
+                document.title,
+                "--kind",
+                document.kind,
+                "--valid-from",
+                document.valid_from.isoformat(),
+                "--trigger",
+                "cache_miss",
             ],
             announce=f"{document.title} as {document.kind} (guidance)",
         )

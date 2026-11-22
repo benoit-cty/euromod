@@ -8,7 +8,6 @@ import tarfile
 from uuid import uuid4
 
 import pytest
-
 from nomotheca_ingest.core.ir import Snapshot, SourceRef, SourceTrustClass
 from nomotheca_ingest.countries.fr import kali
 from nomotheca_ingest.countries.fr.adapter import FR_URL_SOURCE, FrAdapter
@@ -52,7 +51,7 @@ TEXT_VERSION = """<?xml version="1.0" encoding="UTF-8"?>
 </TEXTE_VERSION>
 """.encode()
 
-TEXT_STRUCT = """<?xml version="1.0" encoding="UTF-8"?>
+TEXT_STRUCT = b"""<?xml version="1.0" encoding="UTF-8"?>
 <TEXTEKALI>
 <META><META_COMMUN><ID>KALITEXT000036731682</ID><NATURE>Accord national interprofessionnel</NATURE></META_COMMUN></META>
 <STRUCT>
@@ -60,7 +59,7 @@ TEXT_STRUCT = """<?xml version="1.0" encoding="UTF-8"?>
 <LIEN_SECTION_TA cid="KALISCTA000036731704" debut="2019-01-01" etat="VIGUEUR_ETEN" fin="2999-01-01" id="KALISCTA000036731704" niv="1">Chapitre III Cotisations et recouvrement</LIEN_SECTION_TA>
 </STRUCT>
 </TEXTEKALI>
-""".encode()
+"""
 
 
 def _parse(source_id: str, payload: bytes):
@@ -126,9 +125,9 @@ def test_kali_ids_are_their_own_source_and_whole_conventions_are_refused():
     adapter = FrAdapter()
     assert adapter.source_code_for("KALITEXT000036731682") == "FR-KALI"
     assert adapter.source_code_for("LEGIARTI000051521140") == "FR-LEGI"
-    assert FR_URL_SOURCE.id_pattern.findall(
-        "https://www.legifrance.gouv.fr/conv_coll/id/KALIARTI000036731900"
-    ) == ["KALIARTI000036731900"]
+    assert FR_URL_SOURCE.id_pattern.findall("https://www.legifrance.gouv.fr/conv_coll/id/KALIARTI000036731900") == [
+        "KALIARTI000036731900"
+    ]
     pattern, _hint = FR_URL_SOURCE.refusals[1]
     assert pattern.search("https://www.legifrance.gouv.fr/conv_coll/id/KALICONT000046709421")
     rebuilt = adapter.source_ref_from_url(kali_url("KALIARTI000036731900", "20250713-140000"), "FR-KALI")
@@ -182,8 +181,8 @@ def test_a_version_replaced_the_day_it_started_is_skipped():
 def test_an_annex_article_is_qualified_by_its_annex():
     in_annex = ARTICLE_37.replace(
         b"</TITRE_TXT>",
-        b"</TITRE_TXT><TM><TITRE_TM id=\"KALISCTA1\">Annexes</TITRE_TM><TM>"
-        b"<TITRE_TM id=\"KALISCTA2\">Annexe A Sp\xc3\xa9cificit\xc3\xa9s propres</TITRE_TM></TM></TM>",
+        b'</TITRE_TXT><TM><TITRE_TM id="KALISCTA1">Annexes</TITRE_TM><TM>'
+        b'<TITRE_TM id="KALISCTA2">Annexe A Sp\xc3\xa9cificit\xc3\xa9s propres</TITRE_TM></TM></TM>',
     )
     (unit,) = _parse("KALIARTI000036731900", document_json([in_annex])).instruments[0].units
     assert unit.path == "annexe_a_art_37"

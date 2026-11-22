@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-
 from nomoscope_workflow.derivation import (
     DERIVATION_CONSTANTS,
     _check_derivation,
@@ -21,7 +20,6 @@ from nomoscope_workflow.schema import (
     ParameterValue,
     ProposalDraft,
 )
-
 from workflow_fixtures import AKW_TEXT, _derived, _hit, _verify_in
 
 
@@ -66,27 +64,43 @@ def test_derivation_rounds_where_the_text_says_so():
 
 def test_derivation_rejects_an_operand_the_extract_does_not_state():
     hits = [_hit(chunk_id="akw", content=AKW_TEXT)]
-    draft = _derived(operands=[
-        Operand(name="a", value=347.83, citation_chunk_id="akw",
-                supporting_extract="6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83"),
-        Operand(name="b", value=286.45, citation_chunk_id="akw",
-                supporting_extract="12 jaar en ouder, maar jonger is dan 18 jaar: € 409,21"),
-    ])
+    draft = _derived(
+        operands=[
+            Operand(
+                name="a",
+                value=347.83,
+                citation_chunk_id="akw",
+                supporting_extract="6 jaar of ouder, maar jonger is dan 12 jaar: € 347,83",
+            ),
+            Operand(
+                name="b",
+                value=286.45,
+                citation_chunk_id="akw",
+                supporting_extract="12 jaar en ouder, maar jonger is dan 18 jaar: € 409,21",
+            ),
+        ]
+    )
     issues, _, _ = _check_derivation(draft, hits, _verify_in(hits))
     assert issues[0] == "derivation: operand b's extract does not state 286.45"
     # The retry is shown where the chunk does state it (CSS D. 622-7's «1/ 730e»
     # was a sentence away from the one the model quoted twice).
-    assert issues[1] == "derivation: operand b: its chunk states 286.45 in «jonger is dan 6 jaar: € 286,45» — quote that"
+    assert (
+        issues[1] == "derivation: operand b: its chunk states 286.45 in «jonger is dan 6 jaar: € 286,45» — quote that"
+    )
 
 
 def test_derivation_rejects_a_paraphrased_operand_and_an_unretrieved_chunk():
     hits = [_hit(chunk_id="akw", content=AKW_TEXT)]
-    draft = _derived(operands=[
-        Operand(name="a", value=347.83, citation_chunk_id="akw",
-                supporting_extract="between 6 and 12 years: € 347,83"),
-        Operand(name="b", value=286.45, citation_chunk_id="elsewhere",
-                supporting_extract="jonger dan 6 jaar: € 286,45"),
-    ])
+    draft = _derived(
+        operands=[
+            Operand(
+                name="a", value=347.83, citation_chunk_id="akw", supporting_extract="between 6 and 12 years: € 347,83"
+            ),
+            Operand(
+                name="b", value=286.45, citation_chunk_id="elsewhere", supporting_extract="jonger dan 6 jaar: € 286,45"
+            ),
+        ]
+    )
     issues, offsets, _ = _check_derivation(draft, hits, _verify_in(hits))
     assert offsets == [None, None]
     assert any("not a verbatim quote" in i for i in issues)
@@ -122,8 +136,14 @@ def test_a_schedule_may_derive_one_of_its_figures():
         Operand(name="a", value=0.0035, citation_chunk_id="ani", supporting_extract="au taux de 0,35 %"),
         Operand(name="b", value=0.4, citation_chunk_id="ani", supporting_extract="40 % à la charge des salariés"),
     ]
-    good = _derived(value_scalar=None, value_brackets=[Bracket(threshold=0.0, rate=0.0014)],
-                    derivation="a * b", operands=ops, supporting_extract="au taux de 0,35 %", citation_chunk_id="ani")
+    good = _derived(
+        value_scalar=None,
+        value_brackets=[Bracket(threshold=0.0, rate=0.0014)],
+        derivation="a * b",
+        operands=ops,
+        supporting_extract="au taux de 0,35 %",
+        citation_chunk_id="ani",
+    )
     assert _check_derivation(good, hits, _verify_in(hits))[0] == []
     wrong = good.model_copy(update={"value_brackets": [Bracket(threshold=0.0, rate=0.0035)]})
     issues, _, _ = _check_derivation(wrong, hits, _verify_in(hits))
@@ -197,8 +217,14 @@ def test_the_derivation_result_is_rounded_not_the_typed_figure():
     _round_like_held("ratio", ratio, None, 347.83 / 286.45)
     assert ratio.value_scalar == 347.83 / 286.45
     # Not derived, no precision: nothing to change.
-    assert _round_like_held("/1", ProposalDraft(found=True, value_scalar=0.0675),
-                            ParameterValue(value=0.068, valid_from=date(2024, 1, 1))) is None
+    assert (
+        _round_like_held(
+            "/1",
+            ProposalDraft(found=True, value_scalar=0.0675),
+            ParameterValue(value=0.068, valid_from=date(2024, 1, 1)),
+        )
+        is None
+    )
 
 
 def test_months_either_side_of_a_mid_year_revaluation_may_appear_unquoted():

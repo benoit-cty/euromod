@@ -9,10 +9,10 @@ from datetime import date
 from .regions import region_key
 from .routing import current_value
 from .schema import (
-    TemporalBasis,
     ParameterRecord,
     ProposalDraft,
     RetrievalHit,
+    TemporalBasis,
     income_year_for,
     start_of_year_as_of,
 )
@@ -259,13 +259,13 @@ def _parameter_block(record: ParameterRecord, as_of: date) -> str:
             f"income. valid_from must be {year}-01-01. Prefer the version enacted for income year "
             f"{year}. A finance-act article in force since early {year} or before states the "
             f"schedule for {year - 1} income — if only that is available, the act for {year} income "
-            f"is not yet in the corpus. A CONSOLIDATED code article (\"CGI, art. …\") in force on "
+            f'is not yet in the corpus. A CONSOLIDATED code article ("CGI, art. …") in force on '
             f"1 July {year + 1} is the text applied to {year} income even when its version started "
             f"years earlier: the value did not change, cite it with valid_from {year}-01-01. When "
             f"several extracts state the same value, CITE one from "
             f"the article whose text names income year {year} (typically the finance-act article: "
             f"its applicability clause, e.g. \"à compter de l'imposition des revenus de l'année "
-            f"{year}\", may sit in a DIFFERENT extract than the value — that is fine: cite the "
+            f'{year}", may sit in a DIFFERENT extract than the value — that is fine: cite the '
             f"value-stating extract of that article) rather than a consolidated code article that "
             f"names no year. Do NOT require a single extract to contain both the value and the "
             f"year: one extract stating the value plus another extract of the same act naming "
@@ -338,11 +338,7 @@ def build_proposal_user(
     feedback: str | None = None,
 ) -> str:
     """User message for the proposal step; feedback carries a failed critique on retries."""
-    message = (
-        _parameter_block(record, as_of)
-        + "\n\nRetrieved legal extracts:\n\n"
-        + _hits_block(hits)
-    )
+    message = _parameter_block(record, as_of) + "\n\nRetrieved legal extracts:\n\n" + _hits_block(hits)
     if feedback:
         message += (
             "\n\nYour previous proposal was rejected by review. "

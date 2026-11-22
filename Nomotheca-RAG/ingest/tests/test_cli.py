@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import json
 
-from typer.testing import CliRunner
-
 from nomotheca_ingest.cli import PROGRESS_PREFIX, app
+from typer.testing import CliRunner
 
 # Rich truncates long option names at the default 80-column width; render help
 # wide so assertions see full flag names regardless of how many options exist.
@@ -41,7 +40,7 @@ def test_translation_json_progress_emits_prefixed_json(capsys) -> None:
 
     out = capsys.readouterr().out.strip()
     assert out.startswith(PROGRESS_PREFIX)
-    payload = json.loads(out[len(PROGRESS_PREFIX):])
+    payload = json.loads(out[len(PROGRESS_PREFIX) :])
     assert payload == {
         "task": "translate",
         "phase": "translated",
@@ -63,7 +62,7 @@ def test_embedding_json_progress_skips_per_chunk_candidate_events(capsys) -> Non
 
     lines = capsys.readouterr().out.strip().splitlines()
     assert len(lines) == 1
-    payload = json.loads(lines[0][len(PROGRESS_PREFIX):])
+    payload = json.loads(lines[0][len(PROGRESS_PREFIX) :])
     assert payload["task"] == "embeddings"
     assert payload["done"] == 16
     assert payload["total"] == 100
@@ -89,6 +88,7 @@ def test_embedding_progress_status_mentions_encoding_batch() -> None:
 
     assert "encoding batch=16" in status
     assert "embedded=16" in status
+
 
 def test_document_help_exposes_the_reviewer_fields() -> None:
     """A reviewer at the command line has every field the UI form has."""
@@ -118,9 +118,7 @@ def _route_result(output: str) -> dict:
 
 def test_route_prints_exactly_one_result_line() -> None:
     """The UI's pre-check reads it as the job's result and decides what to show."""
-    result = CliRunner().invoke(
-        app, ["route", "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051168007"]
-    )
+    result = CliRunner().invoke(app, ["route", "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051168007"])
 
     assert result.exit_code == 0
     payload = _route_result(result.output)
@@ -143,9 +141,7 @@ def test_route_carries_the_prefill_suggestions_for_a_contributed_document(tmp_pa
 
 
 def test_route_refuses_a_whole_legifrance_code_with_a_hint() -> None:
-    result = CliRunner().invoke(
-        app, ["route", "https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006069577"]
-    )
+    result = CliRunner().invoke(app, ["route", "https://www.legifrance.gouv.fr/codes/texte_lc/LEGITEXT000006069577"])
 
     payload = _route_result(result.output)
     assert payload["outcome"] == "refused"

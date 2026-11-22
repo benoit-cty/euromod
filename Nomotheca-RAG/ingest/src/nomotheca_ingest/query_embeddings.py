@@ -8,8 +8,8 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from nomotheca_ingest.core.embedding_models import DEFAULT_MODEL, EmbeddingModelSpec, get_model
 from nomotheca_ingest.core.embedding_backend import SentenceTransformerBackend, torch_module
+from nomotheca_ingest.core.embedding_models import DEFAULT_MODEL, EmbeddingModelSpec, get_model
 from nomotheca_ingest.core.embeddings import halfvec_literal
 
 

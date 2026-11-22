@@ -23,7 +23,7 @@ def _cfg() -> WorkerConfig:
 def _connect(cfg: WorkerConfig):
     try:
         return db.connect(cfg.database_url)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         typer.echo(f"cannot connect to {redact_url(cfg.database_url)}: {exc}", err=True)
         raise typer.Exit(2) from None
 
@@ -42,7 +42,8 @@ def serve(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Debug logging"),
 ) -> None:
     """Run the worker: claim jobs, run them, keep BGE-M3 warm for encode jobs."""
-    from .worker import configure_logging, serve as _serve
+    from .worker import configure_logging
+    from .worker import serve as _serve
 
     configure_logging(logging.DEBUG if verbose else logging.INFO)
     _serve(_cfg())

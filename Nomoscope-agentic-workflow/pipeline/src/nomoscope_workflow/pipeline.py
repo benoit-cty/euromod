@@ -15,34 +15,16 @@ import dataclasses
 import json
 import re
 import uuid
-from datetime import date, datetime, timezone
 from collections.abc import Callable, Iterable
 from contextlib import nullcontext
 from dataclasses import dataclass
+from datetime import UTC, date, datetime
 from typing import TypedDict
 
 from opentelemetry.trace import Tracer
 
 from . import AGENT_VERSION, issues, llm, mock, paramdb, queue_store, quotes, retrieval, scout
 from .config import WorkflowConfig
-from .prompts import PROMPT_VERSION
-from .schema import (
-    CritiqueFindings,
-    CritiqueReport,
-    Lineage,
-    ParameterRecord,
-    ParameterValue,
-    ProposalDraft,
-    Reference,
-    RetrievalHit,
-    ReviewItem,
-    Routing,
-    SourceType,
-    SourceTrustClass,
-    TemporalBasis,
-    income_year_for,
-)
-from .tracing import progress, set_output, step_span
 from .derivation import (  # noqa: F401  (re-exported for callers and tests)
     DERIVATION_CONSTANTS,
     DERIVATION_MAX_DIGITS,
@@ -55,7 +37,8 @@ from .derivation import (  # noqa: F401  (re-exported for callers and tests)
     evaluate_derivation,
 )
 from .framing import _clean_query_text, frame_query  # noqa: F401
-from .routing import (  # noqa: F401
+from .prompts import PROMPT_VERSION
+from .routing import (
     _confirms_held,
     _current_value,
     _derived_refs,
@@ -64,13 +47,30 @@ from .routing import (  # noqa: F401
     _unchanged_window,
     _values_equal,
 )
-from .temporal import (  # noqa: F401
+from .schema import (
+    CritiqueFindings,
+    CritiqueReport,
+    Lineage,
+    ParameterRecord,
+    ParameterValue,
+    ProposalDraft,
+    Reference,
+    RetrievalHit,
+    ReviewItem,
+    Routing,
+    SourceTrustClass,
+    SourceType,
+    TemporalBasis,
+    income_year_for,
+)
+from .temporal import (
     _consolidated_in_force,
     _cross_article_year_proof,
     _income_year_date_issues,
     _later_until,
     _retrieval_as_of,
 )
+from .tracing import progress, set_output, step_span
 
 MAX_PROPOSAL_ATTEMPTS = 2
 
@@ -81,9 +81,7 @@ MAX_PROPOSAL_ATTEMPTS = 2
 GUIDANCE_ONLY_ISSUE = issues.GUIDANCE_ONLY
 
 
-def cited_classes(
-    draft: ProposalDraft | None, hits: list[RetrievalHit]
-) -> list[SourceTrustClass]:
+def cited_classes(draft: ProposalDraft | None, hits: list[RetrievalHit]) -> list[SourceTrustClass]:
     """Source-trust class of every retrieved chunk the draft actually cites."""
     if draft is None or not draft.citation_chunk_id:
         return []
@@ -185,9 +183,7 @@ class StepContext:
     cfg: WorkflowConfig
     tracer: Tracer
     proposer: Callable[[ParameterRecord, date, list[RetrievalHit], str | None], ProposalDraft]
-    critic: Callable[
-        [ParameterRecord, date, ProposalDraft, list[RetrievalHit], list[str] | None], CritiqueFindings
-    ]
+    critic: Callable[[ParameterRecord, date, ProposalDraft, list[RetrievalHit], list[str] | None], CritiqueFindings]
     #: Deterministic proposer (mock): no retry, no gap-fill (offline, repeatable).
     deterministic: bool = False
 
@@ -205,9 +201,7 @@ def step_context(cfg: WorkflowConfig, tracer: Tracer) -> StepContext:
     return StepContext(
         cfg=cfg,
         tracer=tracer,
-        proposer=lambda record, as_of, hits, feedback: llm.propose_with_llm(
-            cfg.model, record, as_of, hits, feedback
-        ),
+        proposer=lambda record, as_of, hits, feedback: llm.propose_with_llm(cfg.model, record, as_of, hits, feedback),
         critic=lambda record, as_of, draft, hits, notes: llm.critique_with_llm(
             cfg.critique_model, record, as_of, draft, hits, notes
         ),
@@ -220,6 +214,7 @@ def frame(ctx: StepContext, state: WorkflowState) -> dict:
     with step_span(ctx.tracer, "frame", input_value={"model_target": record.information.model_target}) as span:
         set_output(span, framed)
     return {"query": framed["query"], "citations": framed["citations"], "attempts": 0}
+
 
 def _held_patterns(record: ParameterRecord, as_of: date) -> list[str]:
     """What to search recent amending texts for: the figures of the value held."""
@@ -250,7 +245,12 @@ def retrieve(ctx: StepContext, state: WorkflowState) -> dict:
             # the country alone, so regional acts stay out of their runs.
             scope = retrieval.record_scope(conn, info)
             hits = retrieval.retrieve(
-                conn, ctx.cfg, scope, retrieval_as_of, state["query"], state["citations"],
+                conn,
+                ctx.cfg,
+                scope,
+                retrieval_as_of,
+                state["query"],
+                state["citations"],
                 later_until=_later_until(state["record"], state["as_of"]),
                 held_patterns=_held_patterns(state["record"], state["as_of"]),
             )
@@ -261,6 +261,7 @@ def retrieve(ctx: StepContext, state: WorkflowState) -> dict:
             span.set_attribute(f"retrieval.documents.{i}.document.content", hit.content[:500])
         set_output(span, [h.model_dump(mode="json", exclude={"content"}) for h in hits])
     return {"hits": hits, "jurisdictions": scope}
+
 
 def propose(ctx: StepContext, state: WorkflowState) -> dict:
     record, as_of, hits = state["record"], state["as_of"], state["hits"]
@@ -281,6 +282,7 @@ def propose(ctx: StepContext, state: WorkflowState) -> dict:
         draft = ctx.proposer(record, as_of, hits, feedback)
         set_output(span, draft)
     return {"draft": draft, "attempts": state.get("attempts", 0) + 1}
+
 
 def critique(ctx: StepContext, state: WorkflowState) -> dict:
     """The mechanical checks and the critic, merged into one CritiqueReport.
@@ -340,9 +342,7 @@ def _check_derived(db, state: WorkflowState, draft, hits, report: CritiqueReport
             derivation_issues, report.operand_offsets, note = _check_derivation(
                 draft,
                 hits,
-                lambda chunk_id, extract: quotes.verify_extract(
-                    conn, chunk_id, extract
-                ),
+                lambda chunk_id, extract: quotes.verify_extract(conn, chunk_id, extract),
             )
         if derivation_issues:
             report.citation_verified = False
@@ -401,9 +401,7 @@ def _check_dates(
         # take as_of.year here while the check above took the income
         # year, so the proof hunted for a year the act never names.
         income_year = income_year_for(as_of.year)
-        consolidated = _consolidated_in_force(
-            provenance, retrieval_as_of, income_year, article_text
-        )
+        consolidated = _consolidated_in_force(provenance, retrieval_as_of, income_year, article_text)
         date_issues, provisional = _income_year_date_issues(
             draft.valid_from, version_start, income_year, article_text, consolidated
         )
@@ -429,12 +427,7 @@ def _check_dates(
             # ordinary critique failure, retriable with feedback.
             cited_citation = cited.citation if cited else None
             alt = next(
-                (
-                    h
-                    for h in hits
-                    if h.citation != cited_citation
-                    and re.search(rf"\b{income_year}\b", h.content or "")
-                ),
+                (h for h in hits if h.citation != cited_citation and re.search(rf"\b{income_year}\b", h.content or "")),
                 None,
             )
             if alt is not None:
@@ -504,13 +497,10 @@ def _check_dates(
         if draft.valid_from is None and _confirms_held(draft, _current_value(record, as_of)):
             report.dates_consistent = True
             report.issues.append(
-                "note: no valid_from given; the value is the one already held, "
-                "and a confirmation carries no start date"
+                "note: no valid_from given; the value is the one already held, and a confirmation carries no start date"
             )
         if not report.dates_consistent:
-            report.issues.append(
-                "valid_from missing or inconsistent with legal_status/as_of"
-            )
+            report.issues.append("valid_from missing or inconsistent with legal_status/as_of")
         elif later:
             version_start = retrieval.validity_start(cited.validity)
             mech_notes.append(
@@ -572,25 +562,17 @@ def _critique(ctx: StepContext, state: WorkflowState, db) -> dict:
             # whatever date the proposal gives it: tscersi_rate2 (0.07) and
             # tscer_red_coef2 (0.3233) were right and refused on the 5 Nov
             # run for a valid_from the critique would have dated otherwise.
-            confirms_held = findings.citation_supports_value and _confirms_held(
-                draft, _current_value(record, as_of)
-            )
+            confirms_held = findings.citation_supports_value and _confirms_held(draft, _current_value(record, as_of))
             if confirms_held and not findings.dates_consistent:
                 report.issues.append(
-                    "note: the value is the one already held; the start-date objection "
-                    "does not block a confirmation"
+                    "note: the value is the one already held; the start-date objection does not block a confirmation"
                 )
             report.dates_consistent = report.dates_consistent and (
                 findings.dates_consistent or income_year_dates_proven or confirms_held
             )
             report.values_sane = report.values_sane and findings.values_sane
 
-            if (
-                report.schema_valid
-                and report.citation_verified
-                and report.dates_consistent
-                and report.values_sane
-            ):
+            if report.schema_valid and report.citation_verified and report.dates_consistent and report.values_sane:
                 report.verdict = "pass"
         set_output(span, report)
     if extra_hits:
@@ -598,6 +580,7 @@ def _critique(ctx: StepContext, state: WorkflowState, db) -> dict:
         # (and the reviewer's source view) can see the applicability clause.
         return {"critique": report, "hits": hits, "draft": draft}
     return {"critique": report, "draft": draft}
+
 
 def diff(ctx: StepContext, state: WorkflowState) -> dict:
     record, as_of, draft = state["record"], state["as_of"], state.get("draft")
@@ -634,7 +617,7 @@ def diff(ctx: StepContext, state: WorkflowState) -> dict:
             id=queue_store.item_id(info.country, info.model_target, as_of.year),
             run_id=state["run_id"],
             phoenix_trace_id=state.get("phoenix_trace_id"),
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             country=info.country,
             model_target=info.model_target,
             as_of=as_of,
@@ -647,12 +630,9 @@ def diff(ctx: StepContext, state: WorkflowState) -> dict:
             proposed_value=proposed_value,
             critique=report,
             guidance_only=guidance_only(
-                reference.source_trust_class
-                for reference in (proposed_value.references if proposed_value else [])
+                reference.source_trust_class for reference in (proposed_value.references if proposed_value else [])
             ),
-            retrieval_trace=[
-                h.model_copy(update={"content": ""}) for h in state.get("hits", [])
-            ],
+            retrieval_trace=[h.model_copy(update={"content": ""}) for h in state.get("hits", [])],
             proposed_record=proposed_record,
             parameter_ref=state.get("parameter_ref"),
             derived_from=state.get("derived_from") or None,
@@ -666,6 +646,7 @@ def diff(ctx: StepContext, state: WorkflowState) -> dict:
         set_output(span, {"routing": routing, "item_id": item.id})
     return {"routing": routing, "item": item}
 
+
 def enqueue(ctx: StepContext, state: WorkflowState) -> dict:
     item = state["item"]
     # Keep full source texts on the item so the UI can show the cited law
@@ -673,9 +654,7 @@ def enqueue(ctx: StepContext, state: WorkflowState) -> dict:
     item = item.model_copy(update={"retrieval_trace": state.get("hits", [])})
     wanted = state.get("enqueue", True)
     written = False
-    with step_span(
-        ctx.tracer, "enqueue", input_value={"item_id": item.id, "enqueue": wanted}
-    ) as span:
+    with step_span(ctx.tracer, "enqueue", input_value={"item_id": item.id, "enqueue": wanted}) as span:
         if wanted:
             # The queue is rows in params.review_queue (ADR 0004); a DB that
             # refuses the write fails the run — there is no file to fall
@@ -684,6 +663,7 @@ def enqueue(ctx: StepContext, state: WorkflowState) -> dict:
                 written = queue_store.write_item(conn, item, force=state.get("force", False))
         set_output(span, {"written": written})
     return {"item": item, "enqueued": written}
+
 
 def _retry_proposal(ctx: StepContext, state: WorkflowState) -> bool:
     report = state.get("critique")
@@ -702,6 +682,7 @@ def _retry_proposal(ctx: StepContext, state: WorkflowState) -> bool:
         )
         and not ctx.deterministic  # the mock extractor is deterministic; retrying can't help
     )
+
 
 def _scout_needs(ctx: StepContext, state: WorkflowState) -> list[str]:
     """What the last proposal said it lacked, best first.
@@ -723,6 +704,7 @@ def _scout_needs(ctx: StepContext, state: WorkflowState) -> list[str]:
     if not needs and report is not None:
         needs += [i for i in report.issues if not i.startswith("model:")][:2]
     return needs
+
 
 def scout_step(ctx: StepContext, state: WorkflowState, round_index: int) -> dict:
     record, as_of = state["record"], state["as_of"]
@@ -757,6 +739,7 @@ def scout_step(ctx: StepContext, state: WorkflowState, round_index: int) -> dict
         "scout_attempted": set(state.get("scout_attempted", ())) | set(result.candidate_ids),
     }
 
+
 def locate_step(ctx: StepContext, state: WorkflowState) -> dict:
     """Look the last round's needs up in the corpus we hold; a state delta
     that carries "hits" only when new chunks arrived.
@@ -777,7 +760,11 @@ def locate_step(ctx: StepContext, state: WorkflowState) -> dict:
         input_value={"needs": last.needs, "round": last.round},
     ) as span:
         located_hits, citations = scout.locate(
-            ctx.cfg, record, state.get("retrieval_as_of", as_of), last.needs, known,
+            ctx.cfg,
+            record,
+            state.get("retrieval_as_of", as_of),
+            last.needs,
+            known,
             later_until=_later_until(record, as_of),
         )
         rounds = [*state["scout_rounds"][:-1], dataclasses.replace(last, located=citations)]
@@ -788,12 +775,14 @@ def locate_step(ctx: StepContext, state: WorkflowState) -> dict:
         delta["hits"] = [*located_hits, *state.get("hits", [])]
     return delta
 
+
 def _propose_and_critique(ctx: StepContext, state: WorkflowState) -> None:
     while True:
         state.update(propose(ctx, state))
         state.update(critique(ctx, state))
         if not _retry_proposal(ctx, state):
             break
+
 
 def invoke(ctx: StepContext, state: WorkflowState) -> WorkflowState:
     state = dict(state)
@@ -808,9 +797,7 @@ def invoke(ctx: StepContext, state: WorkflowState) -> WorkflowState:
     # Without this the run costs a full propose+critique and a scout attempt
     # only for diff to discard the result at the very end.
     if current is not None and current.source_type == SourceType.NATIONAL_TEAM:
-        with step_span(
-            ctx.tracer, "national_team_source", input_value={"as_of": as_of.isoformat()}
-        ) as span:
+        with step_span(ctx.tracer, "national_team_source", input_value={"as_of": as_of.isoformat()}) as span:
             set_output(span, {"routing": Routing.NATIONAL_TEAM_SOURCE})
         state.update({"hits": [], "citations": [], "attempts": 0})
         state.update(diff(ctx, state))
@@ -863,7 +850,6 @@ def invoke(ctx: StepContext, state: WorkflowState) -> WorkflowState:
     state.update(diff(ctx, state))
     state.update(enqueue(ctx, state))
     return state
-
 
 
 def build_workflow(cfg: WorkflowConfig, tracer: Tracer):
@@ -957,9 +943,9 @@ def run_parameter(
     scores items without ever touching the review queue.
     """
     info = record.information
-    run_id = f"{datetime.now(timezone.utc):%Y-%m-%dT%H:%MZ}#{info.country.lower()}-{uuid.uuid4().hex[:6]}"
+    run_id = f"{datetime.now(UTC):%Y-%m-%dT%H:%MZ}#{info.country.lower()}-{uuid.uuid4().hex[:6]}"
     workflow = build_workflow(cfg, tracer)
-    started_at = datetime.now(timezone.utc)
+    started_at = datetime.now(UTC)
     with step_span(
         tracer,
         f"parameter_update {info.model_target}",
@@ -993,7 +979,5 @@ def run_parameter(
         )
         set_output(span, {"routing": result["routing"], "item_id": result["item"].id})
     item: ReviewItem = result["item"]
-    paramdb.record_run_safe(
-        cfg, item, PROMPT_VERSION, AGENT_VERSION, started_at, datetime.now(timezone.utc)
-    )
+    paramdb.record_run_safe(cfg, item, PROMPT_VERSION, AGENT_VERSION, started_at, datetime.now(UTC))
     return item

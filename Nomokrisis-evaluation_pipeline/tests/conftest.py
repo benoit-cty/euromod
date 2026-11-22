@@ -5,7 +5,6 @@ eval tables; otherwise they are skipped, never failed."""
 from __future__ import annotations
 
 import pytest
-
 from nomokrisis_eval.config import load_eval_config
 
 TEST_PREFIX = "zz_test_"

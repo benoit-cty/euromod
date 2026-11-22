@@ -32,7 +32,7 @@ import tarfile
 import tempfile
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -87,9 +87,7 @@ def tree_paths(source_id: str) -> list[str]:
 def element_to_dict(element: ET.Element) -> Any:
     """Convert one DILA XML element to the Tricoteuses JSON shape."""
     if element.tag in HTML_ELEMENTS:
-        inner = (element.text or "") + "".join(
-            ET.tostring(child, encoding="unicode") for child in element
-        )
+        inner = (element.text or "") + "".join(ET.tostring(child, encoding="unicode") for child in element)
         return inner.strip()
     node: dict[str, Any] = {f"@{key}": value for key, value in element.attrib.items()}
     for child in element:
@@ -184,9 +182,7 @@ class KaliStore:
     def _fresh(self) -> bool:
         checked = self.state().get("checked_at")
         return bool(
-            checked
-            and self.tree.exists()
-            and datetime.now(timezone.utc) - datetime.fromisoformat(checked) < SYNC_INTERVAL
+            checked and self.tree.exists() and datetime.now(UTC) - datetime.fromisoformat(checked) < SYNC_INTERVAL
         )
 
     def ensure_current(self) -> None:
@@ -220,7 +216,7 @@ class KaliStore:
                 self._apply(f"KALI_{stamp}.tar.gz")
                 state["applied"] = stamp
                 report["increments"].append(stamp)
-        state["checked_at"] = datetime.now(timezone.utc).isoformat()
+        state["checked_at"] = datetime.now(UTC).isoformat()
         self.root.mkdir(parents=True, exist_ok=True)
         self.state_path.write_text(json.dumps(state))
         return report
@@ -235,7 +231,9 @@ class KaliStore:
         """Download one dump and write its kept members over the local tree."""
         self.root.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(dir=self.root, suffix=".tar.gz") as handle:
-            with httpx.stream("GET", self.base_url + name, timeout=self.timeout_seconds, follow_redirects=True) as response:
+            with httpx.stream(
+                "GET", self.base_url + name, timeout=self.timeout_seconds, follow_redirects=True
+            ) as response:
                 response.raise_for_status()
                 for block in response.iter_bytes(1 << 20):
                     handle.write(block)

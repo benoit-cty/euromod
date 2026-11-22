@@ -22,7 +22,6 @@ from dataclasses import dataclass
 from datetime import date
 from uuid import UUID
 
-from nomotheca_ingest.core.text import UniqueCitations, fold_accents, month_alternation
 from nomotheca_ingest.core.ir import (
     Authenticity,
     InstrumentIR,
@@ -31,6 +30,7 @@ from nomotheca_ingest.core.ir import (
     UnitIR,
     VersionIR,
 )
+from nomotheca_ingest.core.text import UniqueCitations, fold_accents, month_alternation
 
 #: Named heading syntaxes. A pattern must expose a ``text`` group plus one of
 #: ``marker`` (repeat count is the level), ``level`` (the level itself) or
@@ -51,9 +51,7 @@ HEADING_PATTERNS: dict[str, re.Pattern[str]] = {
     # number: a table row is not a heading («19 212,03 € 1 601 €», the couple
     # ceiling of Cnav circular 2025-13, became section 19 and was pruned with
     # its figure).
-    "numbered": re.compile(
-        r"^\s*(?P<text>(?P<number>\d+(?:\.\d+){0,4})\.?\s+[^\W\d_].*?)\s*$"
-    ),
+    "numbered": re.compile(r"^\s*(?P<text>(?P<number>\d+(?:\.\d+){0,4})\.?\s+[^\W\d_].*?)\s*$"),
 }
 
 #: Patterns whose headings are body text, kept as their unit's first line. A
@@ -72,9 +70,9 @@ class Heading:
 
     level: int
     text: str
-    line_idx: int       # line index of the heading itself
+    line_idx: int  # line index of the heading itself
     content_start: int  # line index of the first body line after the heading
-    content_end: int    # line index one past the last body line
+    content_end: int  # line index one past the last body line
 
 
 def heading_pattern(pattern: str | re.Pattern[str]) -> re.Pattern[str]:
@@ -174,6 +172,7 @@ def drop_table_rows(headings: list[Heading], lines: list[str], lang: str = "fr")
     footnote, which the vector leg never ranked for the schedule it states).
     Rows stay in the text of the section around them.
     """
+
     def body(h: Heading) -> int:
         return sum(len(line.strip()) for line in lines[h.content_start : h.content_end])
 
@@ -208,9 +207,9 @@ def drop_table_rows(headings: list[Heading], lines: list[str], lang: str = "fr")
             rows.add(i)
             continue
         nxt = headings[i + 1] if i + 1 < len(headings) else None
-        if (nxt is None or nxt.level <= h.level) and body(h) < TABLE_ROW_MAX_BODY:
-            rows.add(i)
-        elif i - 1 in rows and word(headings[i - 1]) == word(h):
+        if ((nxt is None or nxt.level <= h.level) and body(h) < TABLE_ROW_MAX_BODY) or (
+            i - 1 in rows and word(headings[i - 1]) == word(h)
+        ):
             rows.add(i)
     if not rows:
         return headings
@@ -287,9 +286,7 @@ class DocumentSpec:
                 valid_from=self.valid_from,
                 source_version_id=self.key,
                 fetch_snapshot_id=self.snapshot_id,
-                texts=[
-                    TextIR(lang=self.lang, authenticity=Authenticity.AUTHENTIC, content=content, content_html=html)
-                ],
+                texts=[TextIR(lang=self.lang, authenticity=Authenticity.AUTHENTIC, content=content, content_html=html)],
             )
         ]
 

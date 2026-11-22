@@ -191,7 +191,13 @@ class RetrievalHit(BaseModel):
     # "later_in_year": ranked like hybrid, but a version that enters into force
     # after the reference date and within the system year (retrieval.later_in_year).
     method: Literal[
-        "citation", "fts", "vector", "hybrid", "country_report", "sibling", "located",
+        "citation",
+        "fts",
+        "vector",
+        "hybrid",
+        "country_report",
+        "sibling",
+        "located",
         "later_in_year",
     ] = "hybrid"
     #: Read from the instrument the chunk belongs to. Defaults to evidence so

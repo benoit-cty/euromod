@@ -75,8 +75,6 @@ def url_for_ref(ref: SourceRef) -> str:
     return manifest_url(source_id)
 
 
-
-
 def fetch_bwb(ref: SourceRef, http: SnapshotClient) -> Snapshot:
     """Fetch and archive a BWB payload, retrying transient upstream errors."""
     url = url_for_ref(ref)

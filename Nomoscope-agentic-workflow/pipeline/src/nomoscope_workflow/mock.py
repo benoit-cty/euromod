@@ -97,15 +97,13 @@ def propose_with_mock(
 
     if info.value_type in ("bracket", "bracket_schedule") and bands:
         draft.found = True
-        draft.value_brackets = [Bracket(threshold=0, rate=0.0)] + [
-            Bracket(threshold=t, rate=r) for t, r in bands
-        ]
+        draft.value_brackets = [Bracket(threshold=0, rate=0.0)] + [Bracket(threshold=t, rate=r) for t, r in bands]
         draft.confidence = 0.9
     elif info.value_type == "scalar" and info.unit == "/1":
         # Demo heuristic: a scalar rate parameter takes the top schedule rate;
         # bands only, so incidental percentages elsewhere in the article don't win.
         if bands:
-            top_threshold, top_rate = max(bands, key=lambda band: band[1])
+            _top_threshold, top_rate = max(bands, key=lambda band: band[1])
             draft.found = True
             draft.value_scalar = top_rate
             draft.confidence = 0.75
@@ -121,9 +119,7 @@ def propose_with_mock(
     if draft.found and span:
         draft.supporting_extract = hit.content[span[0] : span[1]]
     if not draft.found:
-        draft.reasoning = (
-            f"mock extractor found no {info.value_type} value in chunk {hit.chunk_id}"
-        )
+        draft.reasoning = f"mock extractor found no {info.value_type} value in chunk {hit.chunk_id}"
     return draft
 
 

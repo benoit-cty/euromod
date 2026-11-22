@@ -39,7 +39,6 @@ from collections.abc import Mapping
 from datetime import date
 
 import psycopg
-
 from nomoscope_workflow.schema import (
     Bracket,
     Routing,
@@ -80,8 +79,12 @@ def external_parameter(conn: psycopg.Connection, country: str, path: str, kind: 
     if row is None:
         return None
     return {
-        "id": row[0], "value_kind": row[1], "unit": row[2],
-        "short_label": row[3], "description": row[4], "commit": row[5],
+        "id": row[0],
+        "value_kind": row[1],
+        "unit": row[2],
+        "short_label": row[3],
+        "description": row[4],
+        "commit": row[5],
     }
 
 
@@ -127,9 +130,7 @@ def is_annually_indexed(
     return bool(row and row[0] >= min_changes)
 
 
-def schedule_at(
-    conn: psycopg.Connection, external_parameter_id: int, on: date
-) -> tuple[list[Bracket], date | None]:
+def schedule_at(conn: psycopg.Connection, external_parameter_id: int, on: date) -> tuple[list[Bracket], date | None]:
     """The whole bracket schedule in force at `on`, band by band.
 
     Bands are reconstructed from the flattened `brackets[i].<field>` series,
@@ -172,9 +173,7 @@ def schedule_at(
     return schedule, latest
 
 
-def references_at(
-    conn: psycopg.Connection, external_parameter_id: int, on: date
-) -> list[dict]:
+def references_at(conn: psycopg.Connection, external_parameter_id: int, on: date) -> list[dict]:
     """References attached to the value point in force at `on` (plus undated ones)."""
     rows = conn.execute(
         """
@@ -210,9 +209,7 @@ def resolve_citation(conn: psycopg.Connection, national_id: str) -> str | None:
     matched by containment, so `JORFTEXT000053508155` matches the pinpoint
     `JORFTEXT000053508155, art. 4` the pipeline proposes.
     """
-    row = conn.execute(
-        "SELECT citation FROM legal_units WHERE national_id = %s LIMIT 1", (national_id,)
-    ).fetchone()
+    row = conn.execute("SELECT citation FROM legal_units WHERE national_id = %s LIMIT 1", (national_id,)).fetchone()
     if row:
         return row[0]
     row = conn.execute(
@@ -225,9 +222,7 @@ def resolve_citation(conn: psycopg.Connection, national_id: str) -> str | None:
     ).fetchone()
     if row:
         return row[0]
-    row = conn.execute(
-        "SELECT national_id FROM instruments WHERE national_id = %s LIMIT 1", (national_id,)
-    ).fetchone()
+    row = conn.execute("SELECT national_id FROM instruments WHERE national_id = %s LIMIT 1", (national_id,)).fetchone()
     return row[0] if row else None
 
 
@@ -276,9 +271,8 @@ def draft_case(
     else:
         value, source_date = value_at(conn, external["id"], component, target_date)
         if value is None:
-            outcome.skipped = (
-                f"no value in force at {target_date} for {entry['openfisca_path']}"
-                + (f" :: {component}" if component != "value" else "")
+            outcome.skipped = f"no value in force at {target_date} for {entry['openfisca_path']}" + (
+                f" :: {component}" if component != "value" else ""
             )
             return outcome
         expected_value = value * factor
@@ -342,8 +336,7 @@ def draft_case(
         + (f" :: {component}" if component != "value" else "")
         + (f" x{factor:g}" if factor != 1 else ""),
         f"openfisca value at {target_date}: {raw} (change point {source_date})",
-        f"euromod value in force at {as_of}: "
-        + (f"{current.value} from {current.valid_from}" if current else "none"),
+        f"euromod value in force at {as_of}: " + (f"{current.value} from {current.valid_from}" if current else "none"),
         f"link: {entry.get('match_method', 'manual')}"
         + (f" score {entry['score']:.2f}" if entry.get("score") is not None else ""),
     ]
@@ -385,7 +378,12 @@ def draft_case(
     outcome.warnings.extend(unresolved)
 
     outcome.case = golden_case(
-        entry, record, parameter_target, as_of, country, language,
+        entry,
+        record,
+        parameter_target,
+        as_of,
+        country,
+        language,
         Expected(routing=routing, value=expected_value, valid_from=valid_from, citations=citations),
         corpus_available=corpus_available,
         drafted_by=f"openfisca@{(external['commit'] or 'unknown')[:7]}",

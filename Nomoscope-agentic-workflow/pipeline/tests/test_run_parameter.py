@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-
 from nomoscope_workflow.config import WorkflowConfig
 from nomoscope_workflow.pipeline import run_parameter
 from nomoscope_workflow.schema import (
@@ -39,15 +38,21 @@ def test_run_parameter_takes_a_record_and_can_skip_the_queue(capsys):
     """
     record = ParameterRecord(
         information=ParameterInformation(
-            country="FR", model_target="euromod://FR/nt_fr/def_const/$nt_test",
-            value_type="scalar", unit="/1",
+            country="FR",
+            model_target="euromod://FR/nt_fr/def_const/$nt_test",
+            value_type="scalar",
+            unit="/1",
         ),
         values=[ParameterValue(value=0.45, valid_from=date(2024, 1, 1), source_type=SourceType.NATIONAL_TEAM)],
     )
     cfg = _offline_cfg()
     item = run_parameter(
-        cfg, setup_tracing(cfg), record, date(2025, 7, 1),
-        parameter_ref="euromod://FR/nt_fr/def_const/$nt_test", enqueue=False,
+        cfg,
+        setup_tracing(cfg),
+        record,
+        date(2025, 7, 1),
+        parameter_ref="euromod://FR/nt_fr/def_const/$nt_test",
+        enqueue=False,
     )
     assert item.routing == Routing.NATIONAL_TEAM_SOURCE
     assert item.id == "fr_euromod_fr_nt_fr_def_const_nt_test_2025"
@@ -57,13 +62,18 @@ def test_run_parameter_takes_a_record_and_can_skip_the_queue(capsys):
     assert "not recorded" in capsys.readouterr().out  # record_run_safe stayed best-effort
 
     # parameter_ref defaults to the record's model_target
-    assert run_parameter(cfg, setup_tracing(cfg), record, date(2025, 7, 1), enqueue=False).parameter_ref == record.information.model_target
+    assert (
+        run_parameter(cfg, setup_tracing(cfg), record, date(2025, 7, 1), enqueue=False).parameter_ref
+        == record.information.model_target
+    )
 
 
 def test_run_parameter_with_enqueue_fails_when_the_queue_is_unreachable():
     """The queue is rows: no DB, no item — never a silent file fallback."""
     record = ParameterRecord(
-        information=ParameterInformation(country="FR", model_target="euromod://FR/test", value_type="scalar", unit="/1"),
+        information=ParameterInformation(
+            country="FR", model_target="euromod://FR/test", value_type="scalar", unit="/1"
+        ),
         values=[ParameterValue(value=0.45, valid_from=date(2024, 1, 1), source_type=SourceType.NATIONAL_TEAM)],
     )
     cfg = _offline_cfg()

@@ -22,15 +22,13 @@ from datetime import date
 import psycopg
 
 from . import query_encoder
-from .quotes import closest_passage, quote_span, verify_extract  # noqa: F401  (re-exported)
 from .config import PLACEHOLDER_MODEL_ID, WorkflowConfig
-from .schema import ParameterRecord, RetrievalHit
 from .corpus import (  # noqa: F401  (re-exported: retrieval is the facade)
+    _LIVE_VERSION_CTE,
     CHUNK_JOINS,
     HIT_COLUMNS,
     LANG_BY_COUNTRY,
     Scope,
-    _LIVE_VERSION_CTE,
     _fts_query,
     add_unseen,
     connect,
@@ -70,6 +68,8 @@ from .locate import (  # noqa: F401
     instruments_of_chunks,
     locate_named_units,
 )
+from .quotes import closest_passage, quote_span, verify_extract  # noqa: F401  (re-exported)
+from .schema import ParameterRecord, RetrievalHit
 
 _CITATION_SQL = f"""
 WITH {_LIVE_VERSION_CTE}
@@ -199,9 +199,7 @@ def retrieve(
         if cfg.embedding_model_id != PLACEHOLDER_MODEL_ID
         else None
     )
-    for hit in hybrid_search(
-        conn, country, lang, as_of, query, cfg.embedding_model_id, cfg.retrieval_k, query_vector
-    ):
+    for hit in hybrid_search(conn, country, lang, as_of, query, cfg.embedding_model_id, cfg.retrieval_k, query_vector):
         merged.setdefault(hit.chunk_id, hit)
     hits = list(merged.values())[: cfg.retrieval_k]
     hits += cross_referenced_articles(conn, country, lang, as_of, [h.chunk_id for h in hits])
@@ -210,12 +208,27 @@ def retrieve(
     )
     if later_until is not None and later_until > as_of:
         hits += later_in_year(
-            conn, country, lang, as_of, later_until, query, cfg.embedding_model_id,
-            cfg.retrieval_k, query_vector, known={h.chunk_id for h in hits},
+            conn,
+            country,
+            lang,
+            as_of,
+            later_until,
+            query,
+            cfg.embedding_model_id,
+            cfg.retrieval_k,
+            query_vector,
+            known={h.chunk_id for h in hits},
         )
     hits += held_value_passages(
-        conn, country, lang, as_of, later_until or as_of, held_patterns,
-        cfg.embedding_model_id, query_vector, known={h.chunk_id for h in hits},
+        conn,
+        country,
+        lang,
+        as_of,
+        later_until or as_of,
+        held_patterns,
+        cfg.embedding_model_id,
+        query_vector,
+        known={h.chunk_id for h in hits},
     )
     hits += same_act_articles(conn, lang, [h.chunk_id for h in hits])
     return hits
@@ -301,15 +314,11 @@ def locate_sources(
             seen,
         )
         for need in needs[:5]:
-            found = locate_named_units(
-                conn, scope, lang, as_of, need, held_instrument_ids=held
-            )
+            found = locate_named_units(conn, scope, lang, as_of, need, held_instrument_ids=held)
             if later_until is not None and later_until > as_of:
                 found += [
                     hit.model_copy(update={"method": "later_in_year"})
-                    for hit in locate_named_units(
-                        conn, scope, lang, later_until, need, held_instrument_ids=held
-                    )
+                    for hit in locate_named_units(conn, scope, lang, later_until, need, held_instrument_ids=held)
                     if (validity_start(hit.validity) or date.min) > as_of
                 ]
             hits += add_unseen(found, seen)

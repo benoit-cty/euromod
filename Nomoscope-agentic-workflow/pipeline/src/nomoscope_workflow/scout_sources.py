@@ -12,6 +12,7 @@ import re
 from dataclasses import dataclass
 from datetime import date
 
+
 @dataclass(frozen=True)
 class CountrySource:
     """One country's discovery rules (see the table below for each field)."""
@@ -249,12 +250,25 @@ _MONTHS = {
     "FR": {
         name: number
         for number, name in enumerate(
-            ("janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet",
-             "aout", "septembre", "octobre", "novembre", "decembre"),
+            (
+                "janvier",
+                "fevrier",
+                "mars",
+                "avril",
+                "mai",
+                "juin",
+                "juillet",
+                "aout",
+                "septembre",
+                "octobre",
+                "novembre",
+                "decembre",
+            ),
             start=1,
         )
     },
 }
+
 
 @dataclass(frozen=True)
 class GuidanceDocument:

@@ -36,20 +36,58 @@ CONTENT_TYPE_BY_SUFFIX = {
 #: Page furniture: never part of the document, whatever the page looks like.
 CHROME_TAGS = frozenset(
     {
-        "script", "style", "noscript", "nav", "header", "footer", "aside", "form",
-        "svg", "template",
+        "script",
+        "style",
+        "noscript",
+        "nav",
+        "header",
+        "footer",
+        "aside",
+        "form",
+        "svg",
+        "template",
         # A <label> captions a form control ("Permalien du document :"), never
         # document prose — BOFiP puts its permalink field inside the article.
-        "label", "button", "select", "textarea",
+        "label",
+        "button",
+        "select",
+        "textarea",
     }
 )
 
 #: Tags that end a line of text when the tree is flattened.
 BLOCK_TAGS = frozenset(
     {
-        "p", "div", "section", "article", "main", "li", "ul", "ol", "dl", "dt", "dd",
-        "table", "thead", "tbody", "tr", "td", "th", "blockquote", "pre", "br", "hr",
-        "h1", "h2", "h3", "h4", "h5", "h6", "figure", "figcaption", "address",
+        "p",
+        "div",
+        "section",
+        "article",
+        "main",
+        "li",
+        "ul",
+        "ol",
+        "dl",
+        "dt",
+        "dd",
+        "table",
+        "thead",
+        "tbody",
+        "tr",
+        "td",
+        "th",
+        "blockquote",
+        "pre",
+        "br",
+        "hr",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "figure",
+        "figcaption",
+        "address",
     }
 )
 
@@ -63,9 +101,7 @@ _MONTHS = month_names()
 
 _ISO_DATE = re.compile(r"\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b")
 _DMY_DATE = re.compile(r"\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})\b")
-_NAMED_MONTH_DATE = re.compile(
-    r"\b(\d{1,2})(?:er)?\s+(" + month_alternation() + r")\s+(20\d{2})\b", re.IGNORECASE
-)
+_NAMED_MONTH_DATE = re.compile(r"\b(\d{1,2})(?:er)?\s+(" + month_alternation() + r")\s+(20\d{2})\b", re.IGNORECASE)
 _YEAR = re.compile(r"\b(19[89]\d|20\d{2})\b")
 
 
@@ -395,9 +431,7 @@ def _is_bare_link_block(node: _Node) -> bool:
     text = _node_text(node)
     if not text or len(text) > 120 or any(mark in text for mark in ".;:!?"):
         return False
-    links = " ".join(
-        _node_text(link) for link in _descendants(node) if link.tag == "a"
-    )
+    links = " ".join(_node_text(link) for link in _descendants(node) if link.tag == "a")
     return bool(links) and re.sub(r"\s+", "", links) == re.sub(r"\s+", "", text)
 
 

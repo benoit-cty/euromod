@@ -86,9 +86,7 @@ def _from_row(status: str, item: dict) -> ReviewItem:
     return loaded
 
 
-def load_items(
-    conn: psycopg.Connection, country: str | None = None, status: str | None = None
-) -> list[ReviewItem]:
+def load_items(conn: psycopg.Connection, country: str | None = None, status: str | None = None) -> list[ReviewItem]:
     """Queue items, newest first, optionally filtered by country and/or status."""
     clauses, params = [], []
     if country:
@@ -115,7 +113,7 @@ def export_change_set(conn: psycopg.Connection) -> dict[str, list[dict]]:
     """
     exported: dict[str, list[dict]] = {}
     rows = conn.execute(
-        "SELECT country, model_target, parameter_key, metadata, \"values\" "
+        'SELECT country, model_target, parameter_key, metadata, "values" '
         "FROM params.euromod_change_set ORDER BY country, model_target"
     ).fetchall()
     for country, model_target, parameter_key, metadata, values in rows:

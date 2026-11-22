@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from datetime import date
 
+from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 from nomotheca_ingest.countries.nl.fetcher import sru_search_url
 from nomotheca_ingest.countries.nl.parser import KNOWN_ACTS
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
-
 
 # Reverse alias lookup: BWB id and short citation label -> BWB id.
 _ALIASES: dict[str, str] = {}

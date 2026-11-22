@@ -3,7 +3,7 @@
 from uuid import uuid4
 
 import pytest
-
+from nomotheca_ingest.core.ir import Snapshot, SourceRef
 from nomotheca_ingest.countries.lt.fetcher import (
     consolidation_index_url,
     consolidation_url,
@@ -11,7 +11,6 @@ from nomotheca_ingest.countries.lt.fetcher import (
     fetch_tar,
     url_for_ref,
 )
-from nomotheca_ingest.core.ir import Snapshot, SourceRef
 
 
 def _ref(source_id: str, source_type: str = "instrument") -> SourceRef:
@@ -21,7 +20,7 @@ def _ref(source_id: str, source_type: str = "instrument") -> SourceRef:
 def test_document_url_targets_dokumentas_with_quoted_id():
     url = document_url("TAR.C677663D2202")
     assert url.startswith("https://get.data.gov.lt/datasets/gov/lrsk/teises_aktai/Dokumentas?")
-    assert 'dokumento_id=%22TAR.C677663D2202%22' in url
+    assert "dokumento_id=%22TAR.C677663D2202%22" in url
 
 
 def test_consolidation_index_url_selects_light_fields_sorted():
@@ -34,8 +33,8 @@ def test_consolidation_index_url_selects_light_fields_sorted():
 
 def test_consolidation_url_filters_both_ids():
     url = consolidation_url("TAR.C677663D2202", "ExnKtBqZbP")
-    assert 'dokumento_id=%22TAR.C677663D2202%22' in url
-    assert 'suvestines_id=%22ExnKtBqZbP%22' in url
+    assert "dokumento_id=%22TAR.C677663D2202%22" in url
+    assert "suvestines_id=%22ExnKtBqZbP%22" in url
 
 
 def test_url_for_ref_dispatches_on_source_id_shape():
@@ -43,7 +42,7 @@ def test_url_for_ref_dispatches_on_source_id_shape():
     index_url = url_for_ref(_ref("TAR.C677663D2202/asr", "consolidation_index"))
     assert "sort(galioja_nuo)" in index_url
     consolidation = url_for_ref(_ref("TAR.C677663D2202/ExnKtBqZbP", "consolidation"))
-    assert 'suvestines_id=%22ExnKtBqZbP%22' in consolidation
+    assert "suvestines_id=%22ExnKtBqZbP%22" in consolidation
 
 
 class _FlakyClient:

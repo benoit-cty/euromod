@@ -41,7 +41,6 @@ from collections.abc import Mapping
 from datetime import date
 
 import psycopg
-
 from nomoscope_workflow.schema import Bracket, Routing, SourceType, TemporalBasis
 
 from .golden_drafting import (
@@ -85,8 +84,7 @@ def _period_ambiguous(current_value, expected_value, constants: Mapping[str, obj
         return False
     monthly = with_period[0].monthly()
     return any(
-        math.isclose(monthly / factor, without[0].magnitude, rel_tol=1e-6)
-        for factor in PERIOD_TO_MONTHLY.values()
+        math.isclose(monthly / factor, without[0].magnitude, rel_tol=1e-6) for factor in PERIOD_TO_MONTHLY.values()
     )
 
 
@@ -162,9 +160,7 @@ def draft_case(
             "and the income-year start is not derivable from the selection"
         )
 
-    if routing == Routing.NATIONAL_TEAM_SOURCE and (
-        current is None or current.source_type != SourceType.NATIONAL_TEAM
-    ):
+    if routing == Routing.NATIONAL_TEAM_SOURCE and (current is None or current.source_type != SourceType.NATIONAL_TEAM):
         outcome.warnings.append(
             "expects national_team_source but the store does not flag the parameter "
             f"(source_type={getattr(current, 'source_type', None)}) — add it to "
@@ -184,9 +180,7 @@ def draft_case(
         )
         outcome.warnings.append("value leg not scored (no expected_value in the selection)")
     if not entry.get("citations"):
-        outcome.warnings.append(
-            "no citations: the citation leg is unscored until the source act is ingested"
-        )
+        outcome.warnings.append("no citations: the citation leg is unscored until the source act is ingested")
     if entry.get("note"):
         note_parts.append(entry["note"])
     note_parts.extend(f"drafting warning: {warning}" for warning in outcome.warnings)
@@ -199,7 +193,12 @@ def draft_case(
             "from the 'source in corpus' KPI slice"
         )
     outcome.case = golden_case(
-        entry, record, parameter_target, as_of, country, language,
+        entry,
+        record,
+        parameter_target,
+        as_of,
+        country,
+        language,
         Expected(
             routing=routing,
             value=expected_value if scored else None,
@@ -234,8 +233,13 @@ def build_dataset(
     outcomes: list[DraftOutcome] = []
     for entry in entries:
         outcome = draft_case(
-            conn, entry, as_of, country, language,
-            selection_name=selection_name, constants=constants,
+            conn,
+            entry,
+            as_of,
+            country,
+            language,
+            selection_name=selection_name,
+            constants=constants,
         )
         outcomes.append(outcome)
         save_outcome(conn, outcome)

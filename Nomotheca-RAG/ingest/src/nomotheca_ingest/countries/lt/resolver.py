@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from datetime import date
 
+from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
 from nomotheca_ingest.countries.lt.fetcher import CONSOLIDATION_INDEX_SUFFIX
 from nomotheca_ingest.countries.lt.parser import KNOWN_ACTS
-from nomotheca_ingest.core.ir import CanaryFact, CitationRef, SourceRef
-
 
 # Reverse alias lookup: official number and short label -> dokumento_id.
 _ALIASES: dict[str, str] = {}

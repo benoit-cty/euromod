@@ -9,13 +9,12 @@ build with `--backend torch` from the CUDA environment instead (see the
 from __future__ import annotations
 
 import argparse
+import sys
 from importlib import import_module
 from pathlib import Path
-import sys
 from typing import Any
 
 from nomotheca_ingest.core.embedding_backend import processor_kwargs_for
-
 
 TORCH_EXPORT_DEVICE = "cpu"
 OPENVINO_EXPORT_DEVICE = "CPU"
@@ -37,12 +36,20 @@ def main() -> None:
     """Export a Hugging Face/SentenceTransformers model to OpenVINO IR."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-model", default="BAAI/bge-m3", help="Source model id or local Torch model directory.")
-    parser.add_argument("--output-dir", default="models/bge-m3-openvino", help="Directory for the exported OpenVINO model.")
+    parser.add_argument(
+        "--output-dir", default="models/bge-m3-openvino", help="Directory for the exported OpenVINO model."
+    )
     parser.add_argument("--device", default="CPU", help="OpenVINO target used for export validation, usually CPU.")
     parser.add_argument("--strict-device", action="store_true", help="Fail if validation cannot compile on --device.")
-    parser.add_argument("--trust-remote-code", action="store_true", help="Forward trust_remote_code to sentence-transformers.")
-    parser.add_argument("--fix-mistral-regex", action="store_true", help="Forward fix_mistral_regex=True to the tokenizer.")
-    parser.add_argument("--slow-tokenizer", action="store_true", help="Use the slow tokenizer; may require sentencepiece.")
+    parser.add_argument(
+        "--trust-remote-code", action="store_true", help="Forward trust_remote_code to sentence-transformers."
+    )
+    parser.add_argument(
+        "--fix-mistral-regex", action="store_true", help="Forward fix_mistral_regex=True to the tokenizer."
+    )
+    parser.add_argument(
+        "--slow-tokenizer", action="store_true", help="Use the slow tokenizer; may require sentencepiece."
+    )
     args = parser.parse_args()
 
     try:

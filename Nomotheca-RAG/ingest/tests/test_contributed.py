@@ -6,7 +6,6 @@ from datetime import date
 from uuid import uuid4
 
 import pytest
-
 from nomotheca_ingest.core.contributed import (
     ContributedFields,
     NormLevel,
@@ -25,7 +24,6 @@ from nomotheca_ingest.core.contributed import (
 )
 from nomotheca_ingest.core.extract import suggested_valid_from
 from nomotheca_ingest.core.ir import Authenticity, SourceTrustClass
-
 from pdf_fixture import make_pdf
 
 MARKDOWN = b"""\
@@ -42,10 +40,7 @@ Il s'applique aux allocataires.
 Le montant journalier est porte a 31,97 EUR.
 """
 
-PLAIN_TEXT = (
-    "Le montant journalier de l'allocation est porte a 31,97 EUR "
-    "au 1er avril 2025.\n"
-).encode("utf-8")
+PLAIN_TEXT = b"Le montant journalier de l'allocation est porte a 31,97 EUR au 1er avril 2025.\n"
 
 HTML_PAGE = b"""<html><head><title>BOFiP - IR - Bareme d'imposition</title></head><body>
 <nav><a href="/">Accueil</a> <a href="/doc">Documentation fiscale</a></nav>
@@ -191,10 +186,7 @@ def test_html_keeps_the_main_block_and_drops_the_chrome() -> None:
     assert "Mentions legales" not in body
     # The page as fetched is kept once, beside the first unit text.
     html_columns = [
-        text.content_html
-        for unit in instrument.units
-        for version in unit.versions
-        for text in version.texts
+        text.content_html for unit in instrument.units for version in unit.versions for text in version.texts
     ]
     assert html_columns.count(HTML_PAGE.decode()) == 1
 
@@ -306,9 +298,7 @@ def test_the_file_name_is_the_last_resort_title(tmp_path) -> None:
 
 def test_a_date_in_a_title_or_a_url_prefills_the_validity_date() -> None:
     assert suggested_valid_from("Circulaire du 1er avril 2025", None) == date(2025, 4, 1)
-    assert suggested_valid_from(None, "https://x/eli/arrete/2020/12/28/CCPD2036946A/jo/texte") == date(
-        2020, 12, 28
-    )
+    assert suggested_valid_from(None, "https://x/eli/arrete/2020/12/28/CCPD2036946A/jo/texte") == date(2020, 12, 28)
     assert suggested_valid_from("no date at all here", None) is None
 
 
@@ -399,7 +389,7 @@ def test_the_declaration_reads_its_own_kind() -> None:
     """A kind is a kind *in a jurisdiction*, so the value answers for both."""
     fields = _stated()
 
-    assert fields.jurisdiction == "FR"        # normalised once, not at call sites
+    assert fields.jurisdiction == "FR"  # normalised once, not at call sites
     assert fields.norm_level == NormLevel.ADMINISTRATIVE_GUIDANCE
     assert fields.source_trust_class == SourceTrustClass.GUIDANCE
     assert fields.source_code == "FR-CONTRIB"
@@ -454,11 +444,12 @@ def test_a_documents_identity_follows_its_bytes() -> None:
 def test_a_pdf_url_answered_with_a_security_page_is_retried_in_a_browser(monkeypatch) -> None:
     """sante.gouv.fr: httpx gets «Vérification de sécurité», Firefox gets the PDF."""
     import httpx
-
     from nomotheca_ingest.core.contributed import fetch as contributed
 
     page = b"<html><title>V\xc3\xa9rification de s\xc3\xa9curit\xc3\xa9</title></html>"
-    transport = httpx.MockTransport(lambda request: httpx.Response(200, content=page, headers={"content-type": "text/html"}))
+    transport = httpx.MockTransport(
+        lambda request: httpx.Response(200, content=page, headers={"content-type": "text/html"})
+    )
     real_client = httpx.Client
     monkeypatch.setattr(httpx, "Client", lambda **kw: real_client(transport=transport, **kw))
     calls: list[str] = []
@@ -475,11 +466,12 @@ def test_a_pdf_url_answered_with_a_security_page_is_retried_in_a_browser(monkeyp
 def test_a_pdf_url_no_browser_can_fetch_is_refused(monkeypatch) -> None:
     """AGS: the 2025 rate PDF answered with the press-release listing page."""
     import httpx
-
     from nomotheca_ingest.core.contributed import fetch as contributed
 
     page = b"<html><title>Communiqu\xc3\xa9s de presse</title></html>"
-    transport = httpx.MockTransport(lambda request: httpx.Response(200, content=page, headers={"content-type": "text/html"}))
+    transport = httpx.MockTransport(
+        lambda request: httpx.Response(200, content=page, headers={"content-type": "text/html"})
+    )
     real_client = httpx.Client
     monkeypatch.setattr(httpx, "Client", lambda **kw: real_client(transport=transport, **kw))
     monkeypatch.setattr(contributed, "fetch_in_browser", lambda url: None)

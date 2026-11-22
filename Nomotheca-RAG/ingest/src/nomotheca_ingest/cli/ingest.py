@@ -10,11 +10,11 @@ from typing import Annotated
 import typer
 
 from nomotheca_ingest.cli._app import DatabaseUrl, app
+from nomotheca_ingest.core.db import connect
 from nomotheca_ingest.core.ir import IngestMode, Trigger
 from nomotheca_ingest.core.loader import LegislationLoader, LoadStats
 from nomotheca_ingest.core.pipeline import PipelineResult, run_database_ingest
 from nomotheca_ingest.core.progress import emit_json
-from nomotheca_ingest.core.db import connect
 
 
 @app.command()
@@ -228,7 +228,9 @@ def document(
     title: Annotated[str | None, typer.Option("--title", help="Document title.")] = None,
     kind: Annotated[
         str | None,
-        typer.Option("--kind", help="Kind in the country's own words: loi, decret, arrete, circulaire, doctrine, other."),
+        typer.Option(
+            "--kind", help="Kind in the country's own words: loi, decret, arrete, circulaire, doctrine, other."
+        ),
     ] = None,
     valid_from: Annotated[
         str | None, typer.Option("--valid-from", help="Date the document is in force from (required).")
@@ -287,9 +289,7 @@ def document(
                 "source_code": result.source_code,
                 "national_id": result.national_id,
                 "kind": result.kind,
-                "source_trust_class": (
-                    result.source_trust_class.value if result.source_trust_class else None
-                ),
+                "source_trust_class": (result.source_trust_class.value if result.source_trust_class else None),
                 "implements": result.implements,
                 "units": result.units,
                 "versions": result.versions,
@@ -310,9 +310,7 @@ def route(
     source: Annotated[
         str, typer.Argument(help="URL, or path to a file, to classify. Omit for the kinds table only.")
     ] = "",
-    database_url: Annotated[
-        str | None, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")
-    ] = None,
+    database_url: Annotated[str | None, typer.Option("--database-url", "-d", envvar="EUROMOD_DATABASE_URL")] = None,
 ) -> None:
     """Print, as one `@result {json}` line, whether a URL is a contributed document or an official act.
 
@@ -321,9 +319,8 @@ def route(
     or show a refusal hint. With no source it answers with the kinds table
     alone — what the contributed-document form needs to render itself.
     """
-    from nomotheca_ingest.core.contributed import TRUST_CLASS_BY_LEVEL, kinds_by_jurisdiction
+    from nomotheca_ingest.core.contributed import TRUST_CLASS_BY_LEVEL, kinds_by_jurisdiction, suggest
     from nomotheca_ingest.core.contributed import route as route_source
-    from nomotheca_ingest.core.contributed import suggest
     from nomotheca_ingest.core.routing import RouteOutcome
 
     url, file_path = _document_source(source)

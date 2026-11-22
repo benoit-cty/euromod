@@ -20,9 +20,7 @@ def list_embedding_cases(
     """List the embedding (retrieval) evaluation set (eval.embedding_cases)."""
     cfg = load_eval_config()
     with evaldb.connect(cfg.database_url) as conn:
-        cases = golden_store.load_embedding_cases(
-            conn, countries=country or None, verified_only=verified_only
-        )
+        cases = golden_store.load_embedding_cases(conn, countries=country or None, verified_only=verified_only)
     for case in cases:
         flag = "✓" if case.verified else "draft"
         corpus = case.corpus_lang or case.language
@@ -31,9 +29,7 @@ def list_embedding_cases(
             f"{flag:<6} {case.country} {xling:<6} as_of={case.as_of} "
             f"expects={'; '.join(case.expected_citations)}  {case.id}"
         )
-    typer.echo(
-        f"{len(cases)} case(s), dataset_version={golden_store.embedding_set_hash(cases)}"
-    )
+    typer.echo(f"{len(cases)} case(s), dataset_version={golden_store.embedding_set_hash(cases)}")
 
 
 @app.command("build-embedding-cases")
@@ -59,9 +55,7 @@ def build_embedding_cases(
     cfg = load_eval_config()
     wf_cfg = load_workflow_config()
     with evaldb.connect(cfg.database_url) as conn:
-        golden = golden_store.load_cases(
-            conn, countries=country or None, verified_only=not include_drafts
-        )
+        golden = golden_store.load_cases(conn, countries=country or None, verified_only=not include_drafts)
         # The retrieval helpers read rows by column name.
         with psycopg.connect(cfg.database_url, row_factory=dict_row) as corpus:
             derived = cases_from_golden(conn, corpus, wf_cfg, golden)
@@ -74,10 +68,7 @@ def build_embedding_cases(
     for case_id, reason in derived.skipped.items():
         typer.echo(f"  skip {case_id}: {reason}")
     verb = "would write" if dry_run else "wrote"
-    typer.echo(
-        f"{verb} {len(derived.cases)} case(s) from {len(golden)} golden case(s); "
-        f"{len(derived.skipped)} skipped"
-    )
+    typer.echo(f"{verb} {len(derived.cases)} case(s) from {len(golden)} golden case(s); {len(derived.skipped)} skipped")
     emit_result({"cases": len(derived.cases), "skipped": len(derived.skipped)})
 
 
@@ -134,17 +125,20 @@ def run_embeddings(
     language: list[str] = typer.Option(None, "--language", help="Restrict to query language(s)"),
     k: int = typer.Option(10, "--k", help="Rank cutoff for hit@k / MRR"),
     embedding_model_id: int = typer.Option(
-        1, "--embedding-model-id",
+        1,
+        "--embedding-model-id",
         help="embeddings.model_id to evaluate: an ingest registry id (`nomotheca-ingest embeddings models`; "
         "1 = BGE-M3), whose chunk vectors must be built; 99 = in-SQL placeholder demo embedder",
     ),
     verified_only: bool = typer.Option(
-        False, "--verified-only/--include-drafts",
+        False,
+        "--verified-only/--include-drafts",
         help="Restrict to human-verified cases (drafts included by default — this eval is diagnostic, not the contractual KPI freeze)",
     ),
     notes: str = typer.Option(None, "--notes"),
     reranker: str = typer.Option(
-        None, "--reranker",
+        None,
+        "--reranker",
         help="Also score a cross-encoder over the hybrid candidates (bge-reranker-v2-m3 | qwen3-reranker-0.6b)",
     ),
     rerank_pool: int = typer.Option(50, "--rerank-pool", help="Hybrid candidates handed to the reranker"),
@@ -165,8 +159,13 @@ def run_embeddings(
         raise typer.Exit(1)
 
     manifest, results = run_embedding_eval(
-        cfg, cases, k=k, embedding_model_id=embedding_model_id, notes=notes,
-        reranker=reranker, rerank_pool=rerank_pool,
+        cfg,
+        cases,
+        k=k,
+        embedding_model_id=embedding_model_id,
+        notes=notes,
+        reranker=reranker,
+        rerank_pool=rerank_pool,
     )
     with evaldb.connect(cfg.database_url) as conn:
         evaldb.insert_embedding_run(conn, manifest, results)

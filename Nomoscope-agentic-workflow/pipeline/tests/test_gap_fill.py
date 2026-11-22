@@ -60,19 +60,25 @@ def test_gap_fill_triggers_on_a_source_availability_failure():
 
 
 def test_a_misquote_alone_earns_the_extra_attempt():
-    assert misquoted_only([
-        "derivation: operand d's extract is not a verbatim quote of its chunk",
-        "derivation: operand d: the cited chunk reads: «3° A 16,5 % du montant forfaitaire» — quote it exactly",
-        "note: derived — a * b",
-    ])
-    assert misquoted_only([
-        "supporting_extract is not a verbatim quote of the cited chunk",
-        "the cited chunk reads: «… 0,72 % …» — quote it exactly as written, without correcting it",
-    ])
-    assert not misquoted_only([
-        "supporting_extract is not a verbatim quote of the cited chunk",
-        "citation_supports_value: the cited amendment does not state the first-band rate",
-    ])
+    assert misquoted_only(
+        [
+            "derivation: operand d's extract is not a verbatim quote of its chunk",
+            "derivation: operand d: the cited chunk reads: «3° A 16,5 % du montant forfaitaire» — quote it exactly",
+            "note: derived — a * b",
+        ]
+    )
+    assert misquoted_only(
+        [
+            "supporting_extract is not a verbatim quote of the cited chunk",
+            "the cited chunk reads: «… 0,72 % …» — quote it exactly as written, without correcting it",
+        ]
+    )
+    assert not misquoted_only(
+        [
+            "supporting_extract is not a verbatim quote of the cited chunk",
+            "citation_supports_value: the cited amendment does not state the first-band rate",
+        ]
+    )
     assert not misquoted_only(["note: derived — a * b"])
 
 

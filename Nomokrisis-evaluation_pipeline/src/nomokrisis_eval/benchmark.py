@@ -32,11 +32,9 @@ from dataclasses import dataclass, field
 from datetime import date
 
 import psycopg
-
 from nomoscope_workflow import paramdb, retrieval
 from nomoscope_workflow.routing import derived_refs as _derived_refs
 from nomoscope_workflow.schema import (
-    system_year_anchor,
     Bracket,
     ParameterRecord,
     Routing,
@@ -44,13 +42,13 @@ from nomoscope_workflow.schema import (
     TemporalBasis,
     income_year_for,
     start_of_year_as_of,
+    system_year_anchor,
 )
 
 from .openfisca_golden import external_parameter, schedule_at, value_at
 from .parameter_store import GROUP_PREFIX, comparable, current_value, db_constants, load_case_record
 from .schema import CaseResult, Expected, GoldenCase
 from .scoring import normalise_value, values_equal
-
 
 CASE_PREFIX = "bench"
 
@@ -136,9 +134,7 @@ def expected_routing(
     return Routing.CHANGED
 
 
-def openfisca_reference(
-    conn: psycopg.Connection, record: ParameterRecord, as_of: date
-) -> dict | None:
+def openfisca_reference(conn: psycopg.Connection, record: ParameterRecord, as_of: date) -> dict | None:
     """The linked OpenFisca value on the date the case is about.
 
     One link per parameter: a human-validated one first, then the best score.
@@ -258,8 +254,7 @@ def build_cases(
     """
     country = country.upper()
     refs = targets or (
-        paramdb.country_targets(conn, country)
-        + [f"{GROUP_PREFIX}{g}" for g in paramdb.country_groups(conn, country)]
+        paramdb.country_targets(conn, country) + [f"{GROUP_PREFIX}{g}" for g in paramdb.country_groups(conn, country)]
     )
     excluded = {p.casefold() for p in exclude_policies or []}
     constants = db_constants(conn, country, anchor_date(year))
@@ -360,7 +355,7 @@ def group_members(conn: psycopg.Connection, country: str) -> dict[str, str]:
 def _policy(ref: str) -> str:
     """'euromod://FR/tco_fr/def_const/$x' -> 'tco_fr'; 'group:FR:tinkt_fr:…' -> 'tinkt_fr'."""
     if ref.startswith(GROUP_PREFIX):
-        parts = ref[len(GROUP_PREFIX):].split(":")
+        parts = ref[len(GROUP_PREFIX) :].split(":")
         return parts[1].casefold() if len(parts) > 1 else ""
     parts = ref.split("/")
     return parts[3].casefold() if len(parts) > 3 else ""
@@ -378,8 +373,13 @@ EUROMOD_CHANGED, EUROMOD_KEPT, NOT_LEGISLATIVE = "changed", "kept", "not_legisla
 #: law states and the workflow proposed the law's (scoring.law_vs_euromod) —
 #: a finding, counted as a success beside "same value", never merged into it.
 OUTCOMES = (
-    "same value", "EUROMOD off the law", "different value", "kept Y-1 value",
-    "not found", "rejected", "error",
+    "same value",
+    "EUROMOD off the law",
+    "different value",
+    "kept Y-1 value",
+    "not found",
+    "rejected",
+    "error",
 )
 
 
@@ -442,9 +442,7 @@ def summarize_benchmark(results: list[CaseResult]) -> dict:
         counts = by_policy.setdefault(policy, Counter())
         counts["cases"] += 1
         if side == NOT_LEGISLATIVE:
-            not_legislative[
-                "routed as expected" if result.routing_correct else f"routed {result.routing_actual}"
-            ] += 1
+            not_legislative["routed as expected" if result.routing_correct else f"routed {result.routing_actual}"] += 1
             counts["not legislative"] += 1
             continue
         answer = outcome(result)
@@ -456,21 +454,15 @@ def summarize_benchmark(results: list[CaseResult]) -> dict:
     changed, kept = matrix[EUROMOD_CHANGED], matrix[EUROMOD_KEPT]
     scored = [r for r in results if euromod_side(r) != NOT_LEGISLATIVE]
     answered = [
-        r for r in scored
-        if outcome(r) in ("same value", "EUROMOD off the law", "different value", "kept Y-1 value")
+        r for r in scored if outcome(r) in ("same value", "EUROMOD off the law", "different value", "kept Y-1 value")
     ]
     findings = [r for r in results if outcome(r) == "EUROMOD off the law"]
     # A national_team_source / derived parameter has no value to match: routed
     # around as expected, the workflow did exactly what it should.
-    correct = sum(
-        1 for r in results
-        if r.value_correct or (euromod_side(r) == NOT_LEGISLATIVE and r.routing_correct)
-    )
+    correct = sum(1 for r in results if r.value_correct or (euromod_side(r) == NOT_LEGISLATIVE and r.routing_correct))
     mid_year = [r for r in scored if "mid_year_change" in r.hazards]
     with_openfisca = [r for r in scored if r.openfisca_value is not None]
-    ready = sum(
-        counts[o] for counts in (changed, kept) for o in ("same value", "EUROMOD off the law")
-    )
+    ready = sum(counts[o] for counts in (changed, kept) for o in ("same value", "EUROMOD off the law"))
     wrong = sum(counts[o] for counts in (changed, kept) for o in ("different value", "kept Y-1 value"))
     headline = {
         "parameters": len(results),
@@ -495,9 +487,7 @@ def summarize_benchmark(results: list[CaseResult]) -> dict:
         "precision": _pct(sum(1 for r in answered if r.value_correct), len(answered)),
         "unchanged confirmed": _pct(kept["same value"], sum(kept.values())),
         "mid-year accepted on the point value": sum(1 for r in mid_year if r.value_alternative),
-        "EUROMOD = OpenFisca": _pct(
-            sum(1 for r in with_openfisca if r.euromod_openfisca_agree), len(with_openfisca)
-        ),
+        "EUROMOD = OpenFisca": _pct(sum(1 for r in with_openfisca if r.euromod_openfisca_agree), len(with_openfisca)),
     }
     by_country: dict[str, dict] = {}
     for country in sorted({r.country for r in results if r.country}):

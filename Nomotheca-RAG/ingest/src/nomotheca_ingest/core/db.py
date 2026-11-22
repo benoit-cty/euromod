@@ -43,7 +43,13 @@ class PostgresSnapshotStore:
                 RETURNING id
                 """,
                 (
-                    self.run_id, source_id, url, status_code, content_type, content_hash, content,
+                    self.run_id,
+                    source_id,
+                    url,
+                    status_code,
+                    content_type,
+                    content_hash,
+                    content,
                     Jsonb({"source_ref": ref.model_dump(mode="json")}),
                 ),
             )
@@ -76,9 +82,7 @@ def ensure_source(
     file-fed corpora (Country Reports, contributed documents) mint theirs on
     first use, so no seed change is needed before a reviewer's first upload.
     """
-    row = conn.execute(
-        "SELECT id FROM jurisdictions WHERE code = %s", (jurisdiction.upper(),)
-    ).fetchone()
+    row = conn.execute("SELECT id FROM jurisdictions WHERE code = %s", (jurisdiction.upper(),)).fetchone()
     if row is None:
         msg = f"Unknown jurisdiction: {jurisdiction} (seed it before ingesting for it)"
         raise ValueError(msg)
