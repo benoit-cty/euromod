@@ -1,0 +1,10 @@
+# Bulk reformat commits, skipped by git blame
+# Run this command once you have initialized your repository:
+# git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Python linting
+dd1bda5749b5bf13dd086c2360619f90f38f5248
+# Rust lint
+9639bd2355f81118899b1eaa9d0347efbe7504f4
+# JS and Svelte Linting
+87d425525a94226616ce33c108187229f67c51ac
