@@ -105,10 +105,17 @@ def select_toestanden(payload: bytes, targets: tuple[date, ...] = POLICY_DATES) 
 
     The toestand still in force (open-ended validity) is always included, so the
     corpus holds the current law even between policy dates.
+
+    A toestand whose XML item BWB marks ``_deleted="true"`` is never taken: the
+    repository answers its URL with a 301 to itself, and one dead child failed
+    the whole act (Regeling zorgverzekering, 23 Nov 2026: most of its 2025
+    toestanden withdrawn). When no live toestand covers a target date, the
+    first live one starting later in the same year stands in for it -- each
+    article still carries its own inwerkingtreding, so no validity is invented.
     """
     root = ET.fromstring(payload)
     expressions = [_expression(node) for node in root.findall("expression")]
-    expressions = [item for item in expressions if item["label"] and item["start"]]
+    expressions = [item for item in expressions if item["label"] and item["start"] and not item["deleted"]]
 
     labels: list[str] = []
     wanted = [target.isoformat() for target in targets]
@@ -116,14 +123,18 @@ def select_toestanden(payload: bytes, targets: tuple[date, ...] = POLICY_DATES) 
     for target in wanted:
         candidates = [item for item in expressions if item["start"] <= target <= item["end"]]
         if not candidates:
-            continue
+            later = [item for item in expressions if target < item["start"] and item["start"][:4] == target[:4]]
+            if not later:
+                continue
+            first_start = min(item["start"] for item in later)
+            candidates = [item for item in later if item["start"] == first_start]
         current = max(candidates, key=lambda item: item["zicht_start"])
         if current["label"] not in labels:
             labels.append(current["label"])
     return labels
 
 
-def _expression(node: ET.Element) -> dict[str, str]:
+def _expression(node: ET.Element) -> dict[str, Any]:
     """Read one manifest expression's two temporal axes."""
     meta = node.find("metadata")
     read = (lambda tag: (meta.findtext(tag) or "").strip()) if meta is not None else (lambda tag: "")
@@ -133,6 +144,7 @@ def _expression(node: ET.Element) -> dict[str, str]:
         "end": read("einddatum") or OPEN_ENDED,
         "zicht_start": read("zichtdatum_start"),
         "zicht_end": read("zichtdatum_eind") or OPEN_ENDED,
+        "deleted": any(item.get("_deleted") == "true" for item in node.iter("item")),
     }
 
 

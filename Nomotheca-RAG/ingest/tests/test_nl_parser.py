@@ -156,6 +156,37 @@ def test_select_toestanden_skips_dates_no_expression_covers():
     assert select_toestanden(MANIFEST_PAYLOAD, (date(1999, 1, 1),)) == ["2026-02-21_0"]
 
 
+def _expr(label: str, start: str, end: str, deleted: str = "false") -> str:
+    return (
+        f'<expression label="{label}"><metadata>'
+        f"<datum_inwerkingtreding>{start}</datum_inwerkingtreding><einddatum>{end}</einddatum>"
+        f"<zichtdatum_start>{start}</zichtdatum_start><zichtdatum_eind>9999-12-31</zichtdatum_eind>"
+        f'</metadata><manifestation label="xml"><item label="BWBR0018715_{label}.xml" _deleted="{deleted}" />'
+        f"</manifestation></expression>"
+    )
+
+
+# Regeling zorgverzekering as served on 23 Nov 2026: BWB withdrew most 2025
+# toestanden (item _deleted="true") and answers their URL with a 301 to itself.
+DELETED_MANIFEST = (
+    '<work label="BWBR0018715">'
+    + _expr("2024-12-18_0", "2024-12-18", "2024-12-31")
+    + _expr("2025-01-01_0", "2025-01-01", "2025-01-10", deleted="true")
+    + _expr("2025-06-01_0", "2025-06-01", "9999-12-31", deleted="true")
+    + _expr("2025-06-01_1", "2025-06-01", "2025-06-04")
+    + _expr("2025-07-01_0", "2025-07-01", "2025-11-19", deleted="true")
+    + _expr("2026-01-01_0", "2026-01-01", "2026-11-19", deleted="true")
+    + _expr("2026-11-20_0", "2026-11-20", "9999-12-31")
+    + "</work>"
+).encode()
+
+
+def test_select_toestanden_never_picks_a_deleted_item():
+    # A deleted toestand is a redirect loop; one dead child failed the whole act.
+    labels = select_toestanden(DELETED_MANIFEST, (date(2024, 12, 20), date(2025, 1, 1), date(2026, 1, 1)))
+    assert labels == ["2024-12-18_0", "2025-06-01_1", "2026-11-20_0"]
+
+
 def test_manifest_parses_into_toestand_child_refs():
     doc = parse_bwb_xml(MANIFEST_PAYLOAD, _ref("BWBR0011353", "version_index"), _snapshot())
     assert doc.instruments == []
