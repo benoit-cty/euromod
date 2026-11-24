@@ -63,6 +63,23 @@ NUMBER_WORDS: dict[str, dict[str, float]] = {
         "quart": 0.25,
     },
     "en": {"two": 2.0, "three": 3.0, "four": 4.0, "five": 5.0, "half": 0.5, "twice": 2.0},
+    # «108% van het twaalfvoud van het … bedrag per maand» (Wet op het
+    # kindgebonden budget art. 1): the 24 Nov NL run refused 1,08 × 12 × 2.191,80
+    # because the operand 12 was "not stated".
+    "nl": {
+        "twee": 2.0,
+        "drie": 3.0,
+        "vier": 4.0,
+        "vijf": 5.0,
+        "zes": 6.0,
+        "twaalf": 12.0,
+        "tweemaal": 2.0,
+        "driemaal": 3.0,
+        "viermaal": 4.0,
+        "twaalfvoud": 12.0,
+        "dubbele": 2.0,
+        "helft": 0.5,
+    },
 }
 #: Every language's words: an extract is checked whatever its language.
 ALL_NUMBER_WORDS: dict[str, float] = {w: v for words in NUMBER_WORDS.values() for w, v in words.items()}

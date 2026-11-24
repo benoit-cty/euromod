@@ -103,12 +103,17 @@ COUNTRY_SOURCES: dict[str, CountrySource] = {
         # it rate-limits plain clients, but the scout only harvests BWB ids from
         # the URLs, it never reads the page. The repository host Nomotheca
         # actually fetches from serves no search results, so it is not listed.
-        domains=("wetten.overheid.nl",),
+        # officielebekendmakingen.nl is the Staatscourant's portal: what a
+        # Minister only announces (the half-yearly «Mededeling … gewijzigde
+        # bedragen»: gross AOW and Anw amounts) is never consolidated in BWB.
+        domains=("wetten.overheid.nl", "officielebekendmakingen.nl"),
         # The BWB regulation id, as it appears both in the plain path
         # (/BWBR0011353/2025-01-01) and in the Juriconnect form
         # (/jci1.3:c:BWBR0011353&artikel=2.10&z=2025-01-01). BWBV… ids are
-        # treaties, deliberately excluded.
-        id_pattern=re.compile(r"\bBWBR\d{7}\b"),
+        # treaties, deliberately excluded. Or a Staatscourant publication
+        # (/stcrt-2024-39288.html); the ingester reads regulations and notices
+        # and refuses the rest of what the Staatscourant prints.
+        id_pattern=re.compile(r"\b(?:BWBR\d{7}|stcrt-\d{4}-\d+(?:-n\d+)?)\b"),
         # Dutch fiscal values are usually fixed by the annual Belastingplan or by
         # a December bijstellingsregeling in the Staatscourant, not by the
         # substantive act itself.
@@ -174,7 +179,11 @@ ID_HINTS = {
     ),
     "NL": (
         "for the Netherlands the BWBR####### identifier shown in wetten.overheid.nl "
-        "URLs — either /BWBR0011353/<date> or the Juriconnect form jci1.3:c:BWBR0011353"
+        "URLs — either /BWBR0011353/<date> or the Juriconnect form jci1.3:c:BWBR0011353 — "
+        "or, for an amount a Minister only announces in the Staatscourant (the half-yearly "
+        "«Mededeling … gewijzigde bedragen in enkele wetten, besluiten en regelingen»: gross AOW "
+        "and Anw amounts, daglonen), the stcrt-<year>-<number> id of its "
+        "zoek.officielebekendmakingen.nl URL (stcrt-2024-39288)"
     ),
     "IE": (
         "for Ireland the eISB ELI act id — the <year>/act/<number> path segment of "

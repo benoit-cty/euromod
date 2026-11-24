@@ -292,8 +292,8 @@ def _round_like_held(
     The law states the operands, the administration publishes the rounded
     result (the CAF's PAJE ceiling 29 169 × 1,8 = 52 504,2 is published as
     52 504; RSA 646,52 × 1,8 = 1 163,736 is paid as 1 163,74), and the
-    rounding rule itself is rarely in the corpus. A `/1` rate held with four
-    or more decimals is rounded to as many (AGIRC-ARRCO art. 36: «arrondis au
+    rounding rule itself is rarely in the corpus. A `/1` rate or a `ratio` held
+    with four or more decimals is rounded to as many (AGIRC-ARRCO art. 36: «arrondis au
     centième», 12,954 % → 12,95 %, held 0.1295; three tscerpi rates of the
     5 Nov run were 0.12954 / 0.047244); a coarser rate is left alone, since
     0.0675 is a real change from a held 0.068. Returns the reviewer's note
@@ -307,10 +307,17 @@ def _round_like_held(
     """
     if draft.value_scalar is None:
         return None
-    if unit == "/1":
+    if unit in ("/1", "ratio"):
+        # A ratio is a derived quotient by nature: NL `$bfa_mult2` = 347,83 /
+        # 286,45 = 1.21428, held 1.2143, was routed `changed` for the fifth decimal.
         digits = _rate_digits(held)
     elif unit.startswith("currency"):
         digits = _held_digits(held)
+        # A sum or difference of stated amounts is exact to the cent: there is
+        # nothing to round. NL `$hbo_minbasA` = 238,01 - 1,82 - 37,14 = 199,05
+        # was cut to 199 because EUROMOD held 192.00 the year before.
+        if digits == 0 and draft.derivation and not re.search(r"[*/]", draft.derivation):
+            digits = 2
     else:
         digits = None
     if digits is None:

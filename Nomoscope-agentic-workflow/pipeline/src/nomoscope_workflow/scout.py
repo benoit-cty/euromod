@@ -170,7 +170,13 @@ def _rank_candidates(cfg: WorkflowConfig, info, candidates: list[str], titles: d
 
     Search results routinely include similarly-named acts (resource ceilings
     vs the contribution ceiling); with the ingest cap, arrival order would
-    pick the wrong ones. Selected ids first, unselected kept as fallback.
+    pick the wrong ones. Selected ids first; a search result the selection
+    turned down is dropped. Until 24 Nov 2026 it was kept as a fallback and
+    filled the ingest slots: the NL run of 23 Nov ingested 96 acts that way,
+    most of them unrelated (Wet dieren and Burgerlijk Wetboek Boek 8 for a
+    pension schedule) -- minutes per parameter and noise for every later
+    search. An id the model named itself has no search title to judge and is
+    kept, after the selected ones.
     """
     listing = "\n".join(f"- {i}: {titles.get(i) or '(no title)'}" for i in candidates)
     try:
@@ -188,7 +194,7 @@ def _rank_candidates(cfg: WorkflowConfig, info, candidates: list[str], titles: d
     except Exception:
         return candidates
     picked = [i for i in selection.instrument_ids if i in candidates]
-    return picked + [i for i in candidates if i not in picked]
+    return picked + [i for i in candidates if i not in picked and i not in titles]
 
 
 #: Cap on how much of the analyst's account is quoted into the scout prompt.

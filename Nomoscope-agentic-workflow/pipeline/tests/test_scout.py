@@ -276,3 +276,17 @@ def test_tavily_432_latches_by_status_code(monkeypatch):
         with pytest.raises(web.WebSearchUnavailable):
             web.web_search("k", "q", [])
     assert calls == ["q"]  # latched: no second request
+
+
+def test_scout_drops_search_results_the_selection_turned_down(monkeypatch):
+    """Unselected search results used to fill the ingest slots as a fallback
+    (NL, 23 Nov 2026: Wet dieren ingested for an occupational-pension schedule)."""
+    info = _record("scalar", "currency/year", 17000.0).information
+    titles = {"BWBR0050536": "Regeling vaststelling standaardpremie 2025", "BWBR0030250": "Wet dieren"}
+    candidates = ["BWBR0030250", "BWBR0018451", "BWBR0050536"]  # 18451: named by the model, no search title
+    monkeypatch.setattr(
+        scout_mod.llm, "run_agent", lambda *a, **k: scout_mod.ScoutSelection(instrument_ids=["BWBR0050536"])
+    )
+    cfg = WorkflowConfig(database_url="postgresql://u@h/db")
+
+    assert scout_mod._rank_candidates(cfg, info, candidates, titles) == ["BWBR0050536", "BWBR0018451"]

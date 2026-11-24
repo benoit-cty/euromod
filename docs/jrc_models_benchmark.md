@@ -657,7 +657,13 @@ uv run nomokrisis-eval run-benchmark panel --year 2025 --model <proposer>
 ```
 
 The report adds one line per country. Only GPT has been run on the panel so
-far (§10.6). The Netherlands can be added with `run-benchmark FR,ES,IE,LT,NL`.
+far (§10.6).
+
+**The Netherlands joined the panel on 24 Nov 2026** (§10.11): 50 parameters
+drawn the same way, 38 changed, 10 unchanged, 2 new. The draw is made per
+country, so the 200 cases of the other four are unchanged and
+`run-benchmark panel` now runs 250. `run-benchmark NL, --year 2025` runs the
+Dutch 50 alone.
 
 ### 10.3 Three fixes for the right values that were being refused
 
@@ -1045,3 +1051,140 @@ probable EUROMOD errors above. The largest groups left are the HAP
 thresholds and deduction (set by a scheme, not by an S.I.), one-off lump
 sums and the energy credit (Budget measures), and the standard rate band
 and the employer PRSI schedule (in the corpus, still not found).
+
+### 10.11 The Netherlands joins the panel (24 Nov 2026)
+
+**The 50 parameters.** The Dutch benchmark has 126 cases for 2025 (96
+changed, 25 unchanged, 4 new, 1 not legislative). The panel takes 50 of them
+with the fixed stratified draw of §10.2: 38 changed, 10 unchanged, 2 new,
+over 14 policies (tax credits 9, social assistance 6, general constants 6,
+health-care allowance 5, housing benefit 4, child budget 4, income tax 3,
+others 13). Three in four Dutch parameters change each year, the highest
+share of the five countries, because most amounts are indexed.
+
+**Results, GPT (gpt-6-luna, checked by gpt-6.1-sol).**
+
+| Run | Ready to accept | Wrong proposals | Left to the analyst |
+|---|---|---|---|
+| Baseline, prompt 0.15.0 (run 247) | 54 % (27/50) | 5 of 32 | 18 |
+| After the fixes below, prompt 0.16.0 (run 253) | 64 % (32/50) | 3 of 35 | 15 |
+| With the Staatscourant (run 260) | **66 % (33/50)** | 3 of 36 | 14 |
+
+Run 248, between the two, lost 5 cases to Azure rate limits (HTTP 429) and is
+not a measurement. Run 253 used 2 cases at a time instead of 4.
+
+**What was wrong, and what was changed.**
+
+- **Indexed amounts were missing from the corpus.** A Dutch act keeps the
+  base figure the legislator wrote, and a ministerial order replaces it each
+  January and July. The law database (BWB) prints the amount in force as an
+  editors' note: «per uur € 10,60 [per 1 januari 2025: € 14,06]». The parser
+  dropped these notes. The minimum wage was proposed at € 1.653,60, its 2020
+  base, and the check accepted it. The notes are now kept, marked `[Red: …]`.
+- **Annexes were not loaded.** The childcare-allowance income table is
+  bijlage I of the Besluit kinderopvangtoeslag. Annexes are now units like
+  articles (193 loaded; registers over 120 000 characters are left out).
+- **Only the 1 January version of each act was held.** The January text was
+  then presented as in force all year. GPT knows the bijstand norm is raised
+  on 1 July and refused the January amount. The 1 July versions are now
+  loaded too.
+- **EUROMOD NL holds the January amount** of everything indexed twice a year
+  (bijstand couple norm: 1.922,07 on 1 January 2025, 1.955,80 on 1 July;
+  EUROMOD holds 1922.07). Those 26 parameters, and 7 thresholds the law
+  itself builds on the January minimum wage, are now read on 1 January
+  (`start_of_year`, as for a few French parameters).
+- **Every older version of an article was shown to the model as
+  "repealed".** It is now shown as "superseded" when it has an end date.
+- **Two rounding errors.** A ratio is rounded to the decimals EUROMOD holds
+  (1.21428 against 1.2143 counted as a change). A sum of stated amounts is
+  not rounded to whole euros (199,05 was cut to 199).
+- **The web search ingested unrelated acts.** Search results that the
+  selection step had rejected were still ingested as a fallback: 96 acts in
+  the Dutch run of 23 Nov, most of them unrelated (the animals act, the
+  civil code books 5 and 8). They are now dropped.
+
+**The other four countries on the same code (run 261, 24 Nov).** The prompt
+changed (0.16.0: the editors' note, "superseded"), and so did the web
+search, the rounding and the lookup of named sources, so the 200 cases of
+France, Spain, Ireland and Lithuania were run again with GPT-6 Luna and
+compared case by case with each country's latest earlier run.
+
+| Country | Earlier run | Ready to accept, before | Run 261 | Wrong proposals, before | Run 261 |
+|---|---|---|---|---|---|
+| Spain | 241 (18 Nov) | 57 % (28/49) | 65 % (32/49) | 4 of 32 | 2 of 34 |
+| France | 235 (17 Nov) | 84 % (41/49) | 76 % (37/49) | 4 of 45 | 6 of 43 |
+| Ireland | 244 (19 Nov) | 32 % (15/47) | 40 % (19/47) | 3 of 18 | 3 of 22 |
+| Lithuania | 235 (17 Nov) | 89 % (42/47) | 87 % (41/47) | 0 of 42 | 0 of 41 |
+| Total | | 126 of 192 | 129 of 192 | 11 | 11 |
+
+No case was lost to the changes of 23–24 Nov. France lost five cases and
+gained one:
+
+- Two (`$bunmt_bonus3`, `$tscsepi_farmers_rate3`) already differed between
+  runs 234 and 235: run-to-run noise.
+- `$tpr_threshold4`: same texts retrieved, and the model now refuses the
+  2024 table as evidence for 2025.
+- `$tscxcnkrd_dedyem_rate` (deductible CSG, proposed 5,1 points instead of
+  6,8): the web search of 18 Nov ingested the 2016 and 2017 versions of
+  BOI-RSA-BASE-30-30. The corpus now holds three superseded versions of that
+  commentary, each shown as in force with no end date, and they take 8 of
+  the 15 search results. A later version of a BOFiP document does not close
+  the earlier one.
+- `$bched_lim1` (school allowance ceiling, proposed 35 004 instead of
+  28 444): same texts retrieved in both runs. The model took the table of
+  §1.1 of instruction DSS/2B/2024/181, which belongs to one territorial
+  part of the instruction; the parser keeps «1.1» and loses the part
+  heading above it (the instruction has two §3.1, two §3.2 and two §3.3).
+
+The last two are proposals supported by guidance only, and shown as such to
+the reviewer.
+
+**The 18 cases not ready in run 253.**
+
+| Group | Cases | Why |
+|---|---|---|
+| EUROMOD's value is the doubtful one | 2 | The income-tax schedule group in the export lacks the first band's upper limit, so the expected second band starts at 0; the agent proposes 38 441, as in Wet IB 2001 art. 2.10. The maximum premium wage is € 75.864 in the 2025 regulation; EUROMOD holds 75 860. |
+| Tax credits above pension age | 4 | The reduced credits are computed from the general credit and the premium rates; no act states them. One wrong proposal (the general schedule offered for the pension-age one, passed by the check). |
+| Constants of the model | 4 | Average health premium, sick-pay day counts, `$mc_my`: not legislation. Left unflagged for the national team to decide. |
+| Abolished scheme | 2 | The ouderentoeslag ended in 2016; EUROMOD keeps its last amounts. |
+| Amounts not in the acts held | 3 | AOW pension, maximum daily wage and Wlz premium rate: no text held stated them. See the Staatscourant paragraph below for what became of each. |
+| Health-care allowance, derived | 3 | Income ceilings and flat amounts computed from four figures in three acts; the agent does not assemble them. |
+
+Without the two cases where EUROMOD is doubtful and the six that are not
+legislation, the agent is ready on 32 of 42.
+
+**Also found in the Dutch 2025 model.** Four social-assistance amounts are
+typed with a space, «1345. 45#m» and «1293. 21#m», and cannot be read as
+numbers; they are left out of the benchmark. In the full-country run of
+23 Nov the agent proposed 1 345,45 for them.
+
+**The Staatscourant as a source (run 260).** BWB holds consolidated
+regulations only. What a Minister announces is published in the Staatscourant
+alone: the half-yearly «Mededeling … gewijzigde bedragen» states the gross AOW
+pension and the Anw benefits, and a regulation's explanatory note sometimes
+gives a figure no article states. The Dutch adapter now reads these
+publications (`cli instrument nl stcrt-2024-39288`): a notice is cut into its
+lettered sections, a regulation into its articles and annexes, and the
+explanatory note is filed apart as guidance. Twenty SZW publications of
+2023–2025 were loaded, and the web search may now find others on
+officielebekendmakingen.nl (it loaded seven during the runs).
+
+The gain is one case net, not the five expected:
+
+| Parameter | Result | Why |
+|---|---|---|
+| Wlz premium rate (9,65 %) | Now ready | The rate is in a 2018 regulation that BWB does hold; it had never been loaded. The lookup of a named source now also returns the regulations made under the named article («bedoeld in artikel 11, derde lid, van de Wet financiering sociale verzekeringen»). |
+| AOW pension, single and couple; Anw benefit | Still not found | The notice states the gross pension (€ 1.580,92). EUROMOD holds the amount with holiday allowance (1 683,38), and no official text found states the holiday allowance. The agent says so and proposes nothing. |
+| Maximum daily wage (290,67) | Still not found | The explanatory note states it. GPT does not accept that the model's "ceiling on employer sick pay" is that amount; the link is Burgerlijk Wetboek 7:629, which is in the corpus. |
+| Average health premium | New proposal, counted wrong | The note to the 2025 standard-premium regulation states the estimated average premium, € 1.880; EUROMOD holds 1 905. The proposal is labelled "guidance only". Which figure EUROMOD intends is for the national team. |
+
+Two other cases moved between run 253 and run 260 without a change that
+explains them (one gained, one lost): the run-to-run noise is about one
+case in 50. A third fix came from reading run 259: «het twaalfvoud» now
+states the operand 12 of a calculation.
+
+**Next for the Netherlands.** The holiday allowances of the AOW and the Anw
+(the SVB publishes them; no dated official document found yet). Then the
+three models on the Dutch 50. For France: close an earlier version of a
+BOFiP document when a later one is held, and keep the part heading of an
+instruction whose section numbers start over.

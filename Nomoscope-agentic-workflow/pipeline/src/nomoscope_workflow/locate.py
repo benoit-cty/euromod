@@ -164,6 +164,57 @@ LIMIT %(k)s
 """
 
 
+#: Chunks of other acts kept for naming the article a need names (step 2b).
+DELEGATED_MAX = 3
+
+# Step 2b: the texts of OTHER acts, in force on as_of, that name this article
+# of this act in one clause — «artikel 11, derde lid, van de Wet financiering
+# sociale verzekeringen», «section 461 of the Taxes Consolidation Act 1997».
+# Ranked on the need's words, then newest first.
+_DELEGATED_SQL = f"""
+WITH {_LIVE_VERSION_CTE}
+SELECT {HIT_COLUMNS},
+       ts_rank_cd(ch.tsv, websearch_to_tsquery(ch.search_config, %(fts_q)s), 1|32)::float8 AS score
+FROM chunks ch
+JOIN unit_texts t          ON t.id = ch.unit_text_id
+JOIN legal_unit_versions v ON v.id = t.version_id
+JOIN live_version lv       ON lv.version_id = v.id
+JOIN legal_units u         ON u.id = v.legal_unit_id
+JOIN instruments i         ON i.id = u.instrument_id
+WHERE t.lang = %(lang)s
+  AND i.id <> %(instrument_id)s::uuid
+  AND ch.content ~* %(pattern)s
+ORDER BY score DESC, lower(v.validity) DESC
+LIMIT %(k)s
+"""
+
+
+def _delegation_patterns(token: str, title: str, need: str) -> list[str]:
+    """POSIX regexes for «<article> … of <act>» in one clause, the tightest first.
+
+    When the need itself spells the clause («artikel 11, derde lid, van de Wet
+    financiering sociale verzekeringen») that exact wording is tried before the
+    loose form: art. 11 has three paragraphs, each with its own regulation,
+    and the loose form returned the AOW and Anw premium articles (first and
+    second paragraph) for a need about the third.
+    """
+    words = r"\s+".join(re.escape(word) for word in title.split())
+    head = r"\m" + re.escape(token) + r"($|[^0-9A-Za-z.\-])"
+    patterns = []
+    clause = re.search(re.escape(token) + r"(?![0-9A-Za-z.\-])([^.;]{0,80}?)" + re.escape(title), need, re.IGNORECASE)
+    if clause and clause.group(1).strip(" ,"):
+        between = r"\s+".join(re.escape(word) for word in clause.group(1).split())
+        patterns.append(r"\m" + re.escape(token) + r"\s*" + between + r"\s*" + words)
+    # The paragraph named right after the number, wherever the title stands
+    # in the need: «Wet financiering sociale verzekeringen, artikel 11, derde lid, …».
+    after = re.search(re.escape(token) + r"(?![0-9A-Za-z.\-])[\s,]*(\w+\s+\w+)", need, re.IGNORECASE)
+    if after:
+        qualifier = r"\s+".join(re.escape(word) for word in after.group(1).split())
+        patterns.append(r"\m" + re.escape(token) + r"[\s,]*" + qualifier + r"\M[^.;]{0,80}" + words)
+    patterns.append(head + r"[^.;]{0,80}" + words)
+    return list(dict.fromkeys(patterns))
+
+
 #: Most articles a gap may hold for `gap_articles` to fill it.
 GAP_MAX_ARTICLES = 3
 
@@ -316,6 +367,16 @@ def locate_named_units(
     2. the article — every legal unit whose citation carries an article number
        the need spells out, scoped to those acts when any matched (fallback for
        the ES paragraph idiom: «66.2» is article 66);
+    2b. the acts made under that article — up to DELEGATED_MAX chunks of other
+       acts whose text names the article of the named act («Het
+       premiepercentage, bedoeld in artikel 11, derde lid, van de Wet
+       financiering sociale verzekeringen, wordt … vastgesteld op 9,65%»).
+       The need said «de ministeriële regeling tot vaststelling van het
+       premiepercentage … op grond van artikel 11, derde lid, van de Wet
+       financiering sociale verzekeringen»: the lookup returned art. 11
+       itself, already retrieved, and the Regeling vaststelling
+       premiepercentage Wlz (0.72 on its title, behind three statutes the
+       need mentions) was never read (24 Nov 2026, NL Wlz rate not_found);
     3. failing an article, the analyst's own words searched inside each named
        act alone (FTS), two chunks per act — «Finance Act 2024 … personal tax
        credit» finds s. 3 without knowing its number.
@@ -387,6 +448,26 @@ def locate_named_units(
             head = re.match(r"[A-Za-z]?\d+", token)
             if head and head.group(0) != token:
                 lookup(head.group(0), scoped=True)
+    delegated: dict[str, RetrievalHit] = {}
+    if hits:
+        for act in acts:
+            title = (act.get("title_search") or "").strip()
+            if len(title.split()) < 2:
+                continue  # a one-word title would match half the corpus
+            for token in tokens:
+                for pattern in _delegation_patterns(token, title, need):
+                    params = {
+                        **base,
+                        "instrument_id": act["instrument_id"],
+                        "pattern": pattern,
+                        "fts_q": _fts_query(need),
+                        "k": DELEGATED_MAX,
+                    }
+                    rows = [r for r in fetch_dicts(conn, _DELEGATED_SQL, params) if r["chunk_id"] not in hits]
+                    for row in rows:
+                        delegated.setdefault(row["chunk_id"], RetrievalHit(method="located", **row))
+                    if rows:
+                        break
     if not hits and search_acts:
         for act in search_acts:
             # The act's own title words match all of its chunks: search the
@@ -407,6 +488,11 @@ def locate_named_units(
     since = as_of - RECENT_LOOKBACK
     recent_found = any(_entered_since(h.validity, since) for h in hits.values())
     found = list(hits.values())[:k]
+    # Slots of their own: the named article fills k by itself when several
+    # acts carry that number.
+    ranked = sorted(delegated.values(), key=lambda h: h.score or 0.0, reverse=True)
+    found += ranked[:DELEGATED_MAX]
+    hits.update(delegated)
     params = {**base, "since": since, "k": k}
     recent = [r for r in fetch_dicts(conn, _RECENT_FTS_SQL, params) if r["chunk_id"] not in hits]
     # Nothing recent found: this year's texts fill the slots. Something

@@ -250,3 +250,27 @@ def test_a_header_fragment_is_not_the_act_named():
     # An act named by number stays, whatever its title.
     numbered = [act("X-493", "LIETUVOS RESPUBLIKOS", by_number=True), *candidates[2:]]
     assert named_acts(numbered)[0]["instrument_id"] == "X-493"
+
+
+def test_the_act_made_under_a_named_article_is_located_too(conn):
+    """24 Nov 2026: the need named Wfsv art. 11(3), the 9,65 % is in the regulation made under it."""
+    need = (
+        "De ministeriële regeling tot vaststelling van het premiepercentage voor de verzekering langdurige "
+        "zorg (WLZ) voor 2025, vastgesteld op grond van artikel 11, derde lid, van de Wet financiering "
+        "sociale verzekeringen."
+    )
+    scope = retrieval.jurisdiction_scope(conn, "NL", None)
+    hits = retrieval.locate_named_units(conn, scope, "nl", date(2025, 7, 1), need)
+    citations = [h.citation or "" for h in hits]
+    if not any("premiepercentage Wlz" in c for c in citations) and not _held(conn, "BWBR0041685"):
+        pytest.skip("the Regeling vaststelling premiepercentage Wlz is not ingested on this database")
+    assert "Wfsv, artikel 11" in citations, citations
+    assert "Regeling vaststelling premiepercentage Wlz, artikel 1" in citations, citations
+    # The same article named without saying what is wanted: the paragraph in the need decides.
+    bare = "Wet financiering sociale verzekeringen, artikel 11, derde lid, geconsolideerde tekst zoals geldend op 1 juli 2025"
+    hits = retrieval.locate_named_units(conn, scope, "nl", date(2025, 7, 1), bare)
+    assert "Regeling vaststelling premiepercentage Wlz, artikel 1" in [h.citation for h in hits]
+
+
+def _held(conn, national_id: str) -> bool:
+    return conn.execute("SELECT 1 FROM instruments WHERE national_id = %s", (national_id,)).fetchone() is not None

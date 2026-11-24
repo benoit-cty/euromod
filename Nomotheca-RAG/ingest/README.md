@@ -56,7 +56,7 @@ member state is an adapter and not an edit to the router:
 | outcome | what happens |
 | --- | --- |
 | `contributed` | fetched, archived, parsed, loaded as the reviewer's document |
-| `adapter` | handed to that country's adapter by national id — ES `BOE-A-…`, NL `BWBR…`, IE `<year>/act/<n>`, LT `TAR.…`/32-hex, FR `JORFTEXT…`/`LEGIARTI…` |
+| `adapter` | handed to that country's adapter by national id — ES `BOE-A-…`, NL `BWBR…` or a Staatscourant `stcrt-<year>-<n>`, IE `<year>/act/<n>`, LT `TAR.…`/32-hex, FR `JORFTEXT…`/`LEGIARTI…` |
 | `refused` | a hint saying what to do instead — a whole Légifrance code (`LEGITEXT…`) or an unresolvable official URL |
 
 **Kinds and the source-trust class.** The reviewer states the kind in their own

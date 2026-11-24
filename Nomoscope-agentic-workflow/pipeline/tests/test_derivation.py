@@ -197,6 +197,12 @@ def test_a_derived_amount_is_rounded_like_the_amount_held():
     assert fine.value_scalar == 0.0472
     coarse = ProposalDraft(found=True, value_scalar=0.0675)
     assert _round_like_held("/1", coarse, held(0.068)) is None and coarse.value_scalar == 0.0675
+    # A sum of stated amounts is exact: no rounding to the whole units held.
+    floor = ProposalDraft(found=True, value_scalar=199.05, derivation="a - b - c")
+    assert _round_like_held("currency/month", floor, held(192.0), 199.05) is None and floor.value_scalar == 199.05
+    # A ratio follows the same rule: NL $bfa_mult2 = 347,83 / 286,45, held 1.2143.
+    mult = ProposalDraft(found=True, value_scalar=1.21428)
+    assert _round_like_held("ratio", mult, held(1.2143), 1.2142782335486124) and mult.value_scalar == 1.2143
 
 
 def test_the_derivation_result_is_rounded_not_the_typed_figure():
@@ -235,6 +241,7 @@ def test_a_figure_spelt_out_in_words_is_stated():
     assert _extract_states("dans la limite de trois fois ce plafond", 3.0)
     assert _extract_states("égal à la moitié du montant du plafond annuel", 0.5)
     assert not _extract_states("dans la limite de trois fois ce plafond", 4.0)
+    assert _extract_states("108% van het twaalfvoud van het voor de maand januari geldende bedrag per maand", 12.0)
 
 
 def test_a_multiplier_is_stated_by_the_increase_it_applies():

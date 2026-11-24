@@ -17,7 +17,7 @@ from .schema import (
     start_of_year_as_of,
 )
 
-PROMPT_VERSION = "0.15.0"
+PROMPT_VERSION = "0.16.0"
 
 PROPOSAL_SYSTEM = """\
 You are a legal analyst updating tax-benefit policy parameters for the EUROMOD microsimulation model.
@@ -67,6 +67,14 @@ Rules:
 - Several extracts may state this value for different periods (annual implementing acts are
   common): choose the one whose period covers the reference date. Never prefer an extract
   merely because it matches the current value — detecting a change IS the job.
+- EDITORIAL NOTE OF THE LAW DATABASE. In a consolidated Dutch text, «per uur € 10,60 [Red: per
+  1 januari 2025: € 14,06]» means: the act still prints its base figure (€ 10,60), and an
+  indexation order has put the note's amount (€ 14,06) in its place from the date the note
+  names. The amount in force is the note's, never the base figure before it. Quote the passage
+  with its note, and use the note's date as valid_from.
+- The status line of an extract reads "superseded" when a later version of the same article has
+  replaced it since. The text was the law for the whole validity shown: it is the right source
+  when that validity covers the reference date.
 - Extracts marked "LATER IN THE SYSTEM YEAR" are versions entering into force after the reference
   date but within the same year, which the EUROMOD system year describes as a whole. Prefer an
   extract in force on the reference date. Use a later one when none of those states the value —
@@ -127,6 +135,10 @@ each producing one boolean (true = the check passes):
    arithmetic; your check is then whether the operands are the figures the parameter's
    definition calls for and the formula is the right one (the right two amounts in a ratio, the
    right base plus the right increment) — NOT whether the value appears literally.
+   A figure inside «[Red: per 1 januari 2025: € 14,06]» is the law database's note of the
+   indexed amount in force from that date; the figure printed before the note is the act's
+   base amount, no longer in force: a proposal or an operand taken from the base figure fails
+   this check, one taken from the note in force on the reference date passes it.
 2. dates_consistent — valid_from is compatible with the cited version's validity window
    and the reference date. An extract marked "LATER IN THE SYSTEM YEAR" may set the value for
    the whole system year: a valid_from before its version start is consistent when the text
@@ -177,13 +189,30 @@ Be strict on real errors: silent errors here reach a human reviewer as trusted d
 """
 
 
+def _status(hit: RetrievalHit) -> str | None:
+    """The version status as the prompt shows it.
+
+    The loader closes a version when a later one of the same article arrives
+    and marks it `repealed` (`loader._chain_versions`), so every version but
+    the latest carries that status — the 2025 text of WML art. 8, validity
+    [2025-01-01,2026-01-01), read "status: repealed" and the proposer set it
+    aside as «marked repealed» (NL, 23 Nov 2026). A version with an end date
+    was the law until then: it is shown as superseded.
+    """
+    validity = hit.validity or ""
+    closed = validity.endswith(")") and not validity.endswith(",)")
+    if hit.version_status == "repealed" and closed:
+        return "superseded"
+    return hit.version_status
+
+
 def _hits_block(hits: list[RetrievalHit]) -> str:
     """Render retrieved chunks for the prompt."""
     parts = []
     for hit in hits:
         parts.append(
             f"[chunk_id: {hit.chunk_id}]\n"
-            f"citation: {hit.citation} | validity: {hit.validity} | status: {hit.version_status} "
+            f"citation: {hit.citation} | validity: {hit.validity} | status: {_status(hit)} "
             f"| lang: {hit.lang}"
             f"{' | LATER IN THE SYSTEM YEAR' if hit.method == 'later_in_year' else ''}\n"
             f"{hit.content}"

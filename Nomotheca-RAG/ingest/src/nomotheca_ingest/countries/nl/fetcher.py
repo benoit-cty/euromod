@@ -10,6 +10,8 @@ Source ids used by this adapter:
 
 - ``BWBR0011353``                 -> the act's version index (``manifest.xml``)
 - ``BWBR0011353/2025-01-01_0``    -> one dated consolidation (a ``toestand``)
+- ``stcrt-2024-39288``            -> one Staatscourant publication as published
+  (``NL-STCRT``, see ``staatscourant.py``), on the same repository host
 
 The label after the slash is BWB's own ``{inwerkingtreding}_{zicht generation}``
 expression label, not a version number -- see ``parser.select_toestanden``.
@@ -21,6 +23,7 @@ import urllib.parse
 from typing import TYPE_CHECKING
 
 from nomotheca_ingest.core.snapshots import get_with_retries
+from nomotheca_ingest.countries.nl.staatscourant import is_stcrt, stcrt_url
 
 if TYPE_CHECKING:
     from nomotheca_ingest.core.ir import Snapshot, SourceRef
@@ -69,6 +72,8 @@ def sru_search_url(query: str, max_records: int = 50) -> str:
 def url_for_ref(ref: SourceRef) -> str:
     """Map an NL source reference onto the URL that serves it."""
     source_id = ref.source_id
+    if is_stcrt(source_id):
+        return stcrt_url(source_id)
     if "/" in source_id:
         bwb_id, label = source_id.split("/", 1)
         return toestand_url(bwb_id, label)
@@ -82,6 +87,6 @@ def fetch_bwb(ref: SourceRef, http: SnapshotClient) -> Snapshot:
     if snapshot.http_status != 200:
         # Failing here keeps an error page's HTML from reaching the XML parser
         # as an opaque ParseError.
-        msg = f"BWB fetch failed with HTTP {snapshot.http_status} after retries: {url}"
+        msg = f"NL fetch failed with HTTP {snapshot.http_status} after retries: {url}"
         raise RuntimeError(msg)
     return snapshot

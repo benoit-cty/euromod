@@ -278,9 +278,11 @@ def build_cases(
     return build
 
 
-#: The shared panel: the four countries every model is compared on, 50
+#: The shared panel: the five countries every model is compared on, 50
 #: parameters each. One fixed draw, so two runs differ by the model alone.
-PANEL_COUNTRIES = ("FR", "ES", "IE", "LT")
+#: The draw is per country: adding NL (24 Nov 2026) left the other 200 cases
+#: as they were, and `run-benchmark NL,` runs its 50 alone.
+PANEL_COUNTRIES = ("FR", "ES", "IE", "LT", "NL")
 PANEL_PER_COUNTRY = 50
 PANEL_SEED = 2025
 
@@ -323,8 +325,7 @@ def build_panel(
 
     Same cases as `build_cases` (blind Y-1 -> Y, EUROMOD's own Y value as
     ground truth), a stratified draw per country. With the defaults it is the
-    200-case panel of FR, ES, IE and LT — one run costs about what a
-    Lithuanian full-country run does, and every model sees the same cases as
+    250-case panel of FR, ES, IE, LT and NL, and every model sees the same cases as
     long as the parameter store is unchanged (the run records the hash of the
     cases it froze).
     """

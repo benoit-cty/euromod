@@ -273,6 +273,89 @@ def test_article_text_renders_the_tariff_table_with_figures_intact():
     assert "jci1.3" not in content
 
 
+# WML art. 8 as BWB serves it for 2025 (trimmed): the act keeps the base amount
+# and the editors' note carries the amount the indexation regeling put in force.
+INDEXED_PAYLOAD = b"""<?xml version="1.0" encoding="UTF-8"?>
+<toestand bwb-id="BWBR0002638" inwerkingtreding="2025-01-01">
+  <wetgeving soort="wet" xml:lang="nl">
+    <citeertitel status="officieel">Wet minimumloon en minimumvakantiebijslag</citeertitel>
+    <wet-besluit>
+      <artikel bwb-ng-variabel-deel="/HoofdstukII/Artikel8" versie-id="30364432" inwerking="2025-01-01"
+        label="Artikel 8" status="goed">
+        <kop><label>Artikel</label><nr status="officieel">8</nr></kop>
+        <lid><lidnr>1</lidnr><al>Het minimumloon bedraagt:</al>
+          <lijst>
+            <li><li.nr>a.</li.nr><al>voor de toepassing van deze wet: per uur &#8364; 10,60<redactie
+              type="extra">per 1 januari 2025: &#8364; 14,06</redactie>;</al></li>
+            <li><li.nr>b.</li.nr><al>over elke uitbetalingstermijn van een maand &#8364; 1.653,60<redactie
+              type="extra">per 1 januari 2025: &#8364; 2.191,80</redactie>;</al></li>
+            <li><li.nr>c.</li.nr><al><redactie type="vervanging">Vervallen</redactie></al></li>
+          </lijst>
+        </lid>
+      </artikel>
+    </wet-besluit>
+  </wetgeving>
+</toestand>
+"""
+
+
+def test_article_text_keeps_the_editors_indexed_amount():
+    doc = parse_bwb_xml(INDEXED_PAYLOAD, _ref("BWBR0002638/2025-01-01_0", "toestand"), _snapshot())
+    content = doc.instruments[0].units[0].versions[0].texts[0].content
+
+    # The amount in force is the note's, not the base figure the act still prints.
+    assert "per uur € 10,60 [Red: per 1 januari 2025: € 14,06];" in content
+    assert "een maand € 1.653,60 [Red: per 1 januari 2025: € 2.191,80];" in content
+    # The "Vervallen" placeholder of a repealed element stays out.
+    assert "Vervallen" not in content
+
+
+# Besluit kinderopvangtoeslag, bijlage I (trimmed): art. 6 points at the table,
+# the income bands are in the annex.
+ANNEX_PAYLOAD = b"""<?xml version="1.0" encoding="UTF-8"?>
+<toestand bwb-id="BWBR0017321" inwerkingtreding="2025-01-01">
+  <wetgeving soort="AMvB" xml:lang="nl">
+    <citeertitel status="officieel">Besluit kinderopvangtoeslag</citeertitel>
+    <wet-besluit>
+      <artikel bwb-ng-variabel-deel="/Hoofdstuk2/Artikel6" versie-id="1" inwerking="2025-01-01" label="Artikel 6">
+        <kop><label>Artikel</label><nr>6</nr></kop>
+        <al>De hoogte van de kinderopvangtoeslag volgt uit de tabel in bijlage I.</al>
+      </artikel>
+    </wet-besluit>
+    <bijlage bwb-ng-variabel-deel="/BijlageI" versie-id="30349342" inwerking="2025-01-01" label="Bijlage I"
+      bron="Stb.2024-273" status="goed">
+      <kop><label>Bijlage</label><nr status="officieel">I</nr><titel>behorende bij artikel 6</titel></kop>
+      <table><title>Kinderopvangtoeslagtabel 2025</title><tgroup cols="3"><tbody>
+        <row><entry><al>54.222</al></entry><entry><al>63.144</al></entry><entry><al>80,3%</al></entry></row>
+      </tbody></tgroup></table>
+    </bijlage>
+    <bijlage bwb-ng-variabel-deel="/BijlageII" versie-id="2" inwerking="2025-01-01" label="Bijlage II">
+      <kop><label>Bijlage</label><nr>II</nr></kop>
+      <al>REGISTER</al>
+    </bijlage>
+  </wetgeving>
+</toestand>
+""".replace(b"REGISTER", b"geneesmiddel " * 12_000)
+
+
+def test_an_annex_is_a_unit_with_its_table_and_caption():
+    doc = parse_bwb_xml(ANNEX_PAYLOAD, _ref("BWBR0017321/2025-01-01_0", "toestand"), _snapshot())
+    units = doc.instruments[0].units
+
+    # The 156 kB register of bijlage II is not a rule and is left out.
+    assert [u.citation for u in units] == [
+        "Besluit kinderopvangtoeslag, artikel 6",
+        "Besluit kinderopvangtoeslag, bijlage I",
+    ]
+    annex = units[1]
+    assert annex.unit_type == "bijlage"
+    assert annex.versions[0].source_version_id == "30349342"
+    assert annex.versions[0].valid_from == date(2025, 1, 1)
+    content = annex.versions[0].texts[0].content
+    assert content.startswith("Bijlage I. behorende bij artikel 6\nKinderopvangtoeslagtabel 2025\n")
+    assert "| 54.222 | 63.144 | 80,3% |" in content
+
+
 def test_article_text_language_is_dutch():
     doc = parse_bwb_xml(TOESTAND_PAYLOAD, _ref("BWBR0011353/2025-01-01_0", "toestand"), _snapshot())
     assert doc.instruments[0].units[0].versions[0].texts[0].lang == "nl"

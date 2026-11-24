@@ -72,7 +72,7 @@ def run(
 def run_benchmark(
     country: str = typer.Argument(
         ...,
-        help="ISO country code, e.g. FR — or `panel`, the shared 200-case panel (50 each of FR, ES, IE, LT), or a comma list (FR,LT) for a panel of those",
+        help="ISO country code, e.g. FR — or `panel`, the shared 250-case panel (50 each of FR, ES, IE, LT, NL), or a comma list (FR,LT — `NL,` for one country's 50) for a panel of those",
     ),
     year: int = typer.Option(..., "--year", help="System year to find, starting blind from the year before"),
     model: str = typer.Option(
@@ -96,7 +96,7 @@ def run_benchmark(
     against EUROMOD Y and OpenFisca Y (see `benchmark`).
 
     `run-benchmark panel --year 2025 --model …` runs the shared panel instead:
-    the same 200 cases for every model (`benchmark.build_panel`; --seed
+    the same 250 cases for every model (`benchmark.build_panel`; --seed
     changes the draw, which makes it another dataset).
 
     A normal evaluation run with `blind_before` = 1 January of Y: resumable

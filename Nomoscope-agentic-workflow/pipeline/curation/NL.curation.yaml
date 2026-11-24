@@ -12,15 +12,16 @@
 # survives `docker compose down -v`, is reviewable in git, and can say *why*
 # each parameter is flagged.
 #
-# temporal_basis: deliberately no section. Every NL parameter is `in_force`:
+# temporal_basis: no income-year section. NL tax parameters are `in_force`:
 # Dutch income tax is assessed on the calendar year (Wet IB 2001 art. 2.3 /
 # art. 3.1: the belastbaar inkomen of a kalenderjaar), and the annual
 # Belastingplan and the December bijstellingsregeling rewrite the amounts in
 # the acts with effect from 1 January of the system year. EUROMOD system year Y
 # states the law of year Y — no FR-style income-year offset. Do not add one to
-# compensate for BWB's bitemporal `zicht` axis or for the 1 July semi-annual
-# indexation of the WML, AKW, Participatiewet and AOW amounts: those are
-# valid_from / mid-year questions, not basis questions.
+# compensate for BWB's bitemporal `zicht` axis. The amounts indexed on 1 January
+# AND 1 July (WML, AKW, Participatiewet, AOW, Anw, maximum dagloon) are
+# `start_of_year` since 24 Nov 2026 — see the section below: EUROMOD holds
+# their January amount, and the corpus now holds both versions of each year.
 #
 # Tax-rate basis, decided here (Netherlands_sources_analysis.md §6.3): the
 # export's first-band rate `$tin_br1` holds the TAX component only (8.17 % in
@@ -45,6 +46,76 @@
 #     the per-COICOP implicit rates below are.
 
 country: NL
+
+temporal_basis:
+  - basis: start_of_year
+    note: >-
+      The minimum wage and the amounts coupled to it are indexed on 1 January
+      and on 1 July, and EUROMOD NL holds the January amount: a 1 July change
+      never appears in that system year. Evidence is EUROMOD's own history
+      against BWB. Participatiewet art. 21 (couple norm): 1.834,04 on 1 Jan
+      2024, 1.869,21 on 1 July 2024, 1.922,07 on 1 Jan 2025, 1.955,80 on
+      1 July 2025, 2.002,13 on 1 Jan 2026 — EUROMOD 2024..2026 holds 1834.04 /
+      1922.07 / 2002.13. AKW art. 12 (under 6): 286,45 on 1 Jan 2025, 291,49
+      on 1 July 2025, 295,07 on 1 Jan 2026 — EUROMOD holds 286.45 / 295.07.
+      WML art. 8(1)(b), the editors' note: 2.191,80 on 1 Jan 2025, 2.245,80
+      on 1 July 2025, 2.294,40 on 1 Jan 2026 — EUROMOD holds 2191.80 /
+      2294.40 (its 2024 value, 2133.59, is the one exception: the 1 July 2024
+      amount is 2.133,60). On the 1 July reference date the proposer was
+      offered the January text as if in force all year, and refused it when it
+      knew of the July uprating (panel baseline, 24 Nov 2026). The AOW, Anw
+      and maximum-dagloon amounts follow the same two indexation dates
+      (AOW art. 9, Anw art. 17, Wfsv art. 17) and are listed on that ground;
+      their amounts are in Staatscourant regelingen the corpus does not hold,
+      so EUROMOD's January reading is not verified for them here.
+    targets:
+      - euromod://NL/bsanet_nl/def_const/$bsa_couple_noch_nonret_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_couple_noch_ret_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_couple_noch_youth1_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_couple_noch_youth_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_couple_nonret_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_couple_ret_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_couple_youth1_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_couple_youth_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_loneparent_lone_nonret_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_loneparent_nonret_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_loneparent_ret_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_loneparent_youth_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_norm_amt_1
+      - euromod://NL/bsanet_nl/def_const/$bsa_norm_amt_2
+      - euromod://NL/bsanet_nl/def_const/$bsa_single_lone_nonret_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_single_nonret_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_single_ret_amt
+      - euromod://NL/bsanet_nl/def_const/$bsa_single_youth_amt
+      - euromod://NL/bfa_nl/def_const/$bfa_bchqtr_amt
+      - euromod://NL/constdef_nl/def_const/$MinWage_m
+      - euromod://NL/yem_nl/def_const/$MinWage_m
+      - euromod://NL/constdef_nl/def_const/$EI_maxdwag
+      - euromod://NL/sickcomp_nl/def_const/$bhl_max_amt
+      - euromod://NL/poa_nl/def_const/$poa_couple
+      - euromod://NL/poa_nl/def_const/$poa_single
+      - euromod://NL/psu_nl/def_const/$psu_base
+
+  - basis: start_of_year
+    note: >-
+      Zorgtoeslag and kindgebonden budget amounts built on the drempelinkomen,
+      which the law itself fixes on the January minimum wage: «108% van het
+      twaalfvoud van het bedrag, genoemd in artikel 8, eerste lid, onderdeel
+      b, van de Wet minimumloon en minimumvakantiebijslag, zoals dat geldt
+      voor de maand januari van het berekeningsjaar» (Wet op de zorgtoeslag
+      art. 1). They are calendar-year amounts, so the value on 1 January is
+      the value of the year; with the 1 July reference date retrieval offered
+      WML art. 8 as indexed on 1 July (2.245,80) and the proposer rightly
+      refused to compute a January-based threshold from it (panel round 2,
+      24 Nov 2026). EUROMOD 2025 holds 28406 = 1,08 x 12 x 2.191,80.
+    targets:
+      - euromod://NL/bhlmt_nl/def_const/$bhlmt_B_amt
+      - euromod://NL/bhlmt_nl/def_const/$bhlmt_C_amt
+      - euromod://NL/bhlmt_nl/def_const/$bhlmt_D_amt
+      - euromod://NL/bhlmt_nl/def_const/$bhlmt_inclim_couple
+      - euromod://NL/bhlmt_nl/def_const/$bhlmt_inclim_single
+      - euromod://NL/chall_nl/def_const/$chall_B1
+      - euromod://NL/chall_nl/def_const/$chall_B2
 
 source_type:
   - type: national_team

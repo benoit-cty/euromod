@@ -34,17 +34,19 @@ from nomotheca_ingest.core.text import path_token, pipe_rows
 # BWB's sentinel for "no end date", on both the validity and the view axis.
 OPEN_ENDED = "9999-12-31"
 
-# EUROMOD policy dates sampled from each act's version history. One toestand
-# per system-year boundary, rather than all 733: because each article records
-# its own inwerkingtreding, the validity loaded is still the true legal start
-# date and not the sampling date. Extend this list to widen the window.
-POLICY_DATES: tuple[date, ...] = (
-    date(2022, 1, 1),
-    date(2023, 1, 1),
-    date(2024, 1, 1),
-    date(2025, 1, 1),
-    date(2026, 1, 1),
-)
+# EUROMOD policy dates sampled from each act's version history. Two toestanden
+# per system year, rather than all 733: because each article records its own
+# inwerkingtreding, the validity loaded is still the true legal start date and
+# not the sampling date. Extend this list to widen the window.
+#
+# 1 July is sampled as well as 1 January since 24 Nov 2026: the minimum wage
+# and every amount coupled to it (Participatiewet norms, AKW, AOW, Anw) are
+# indexed on both dates. With January alone the January text was held as in
+# force until the next January, which is false from 1 July on -- and a model
+# that knows of the July uprating refused the January amount for that reason.
+# EUROMOD NL holds the January amounts: those parameters are curated
+# `start_of_year` (curation/NL.curation.yaml), not answered by a wrong validity.
+POLICY_DATES: tuple[date, ...] = tuple(date(year, month, 1) for year in range(2022, 2027) for month in (1, 7))
 
 # Short citation labels for the acts EUROMOD NL cites most, keyed by BWB id.
 # Curated rather than read from the payload because the citeertitel changes over
@@ -73,6 +75,26 @@ CONTAINER_TAGS = ("boek", "deel", "titeldeel", "hoofdstuk", "afdeling", "paragra
 # Subtrees that carry publication bookkeeping rather than legal text. Dropping
 # them is what keeps ~1300 <publicatie> blocks out of the retrieval chunks.
 _SKIP_TAGS = frozenset({"meta-data", "bwb-inputbestand", "bwb-wijzigingen", "redactionele-correcties", "redactie"})
+
+# BWB's editors annotate the text with <redactie> notes. `vervanging` is the
+# placeholder "Vervallen" of a repealed element (19 000 of them) and stays out.
+# `extra` is kept, marked `[Red: …]`: it is where an indexed amount lives. The
+# act keeps the base figure the legislator wrote and a ministerial regeling in
+# the Staatscourant -- which BWB does not consolidate -- replaces it each
+# January and July: WML art. 8 reads «per uur € 10,60» with the note «per
+# 1 januari 2025: € 14,06», and «€ 1.653,60» with «per 1 januari 2025:
+# € 2.191,80». Until 24 Nov 2026 the notes were dropped: the minimum wage, and
+# every zorgtoeslag / kindgebonden budget threshold derived from it, was
+# not_found or offered at its 2020 base.
+_KEPT_REDACTIE = frozenset({"extra", "noodwetgeving"})
+
+
+def _redactie_note(node: ET.Element) -> str:
+    """`[Red: …]` for an editorial note worth keeping, else ''."""
+    if node.get("type") not in _KEPT_REDACTIE:
+        return ""
+    text = re.sub(r"\s+", " ", "".join(node.itertext())).strip()
+    return f" [Red: {text}]" if text else ""
 
 
 def parse_bwb_xml(payload: bytes, ref: SourceRef, snapshot: Snapshot) -> ParsedDoc:
@@ -217,18 +239,44 @@ def _intitule_attr(wetgeving: ET.Element, name: str) -> str | None:
     return intitule.get(name) if intitule is not None else None
 
 
+# An annex longer than this is a register, not a rule: bijlage 1 of the
+# Regeling zorgverzekering lists every reimbursed medicine in 4.9 MB of text.
+# The tables EUROMOD reads (kinderopvangtoeslag, 20 kB) are far below it.
+MAX_ANNEX_CHARS = 120_000
+
+
 def _article_units(root: ET.Element, bwb_id: str, short: str, snapshot: Snapshot) -> list[UnitIR]:
-    """Build one UnitIR per <artikel>, carrying its own version identity."""
+    """Build one UnitIR per <artikel> or <bijlage>, carrying its own version identity.
+
+    An annex is a unit like an article: BWB versions it the same way
+    (`versie-id`, `inwerking`, `status`), and it is where a decree puts its
+    table -- Besluit kinderopvangtoeslag art. 6 says «de tabel in bijlage I»
+    and the income bands are there. Until 24 Nov 2026 annexes were not loaded.
+    """
     units: list[UnitIR] = []
+    seen: dict[str, int] = {}
     for ordinal, (article, containers) in enumerate(_iter_articles(root), start=1):
+        annex = article.tag == "bijlage"
         number = _article_number(article)
-        if not number:
+        if not number and not annex:
             continue
-        citation = f"{short}, artikel {number}"
+        if annex:
+            citation = f"{short}, bijlage {number}".rstrip()
+            # Two annexes may share a label ("Bijlage"); a citation is a key.
+            seen[citation] = seen.get(citation, 0) + 1
+            if seen[citation] > 1:
+                number = f"{number} ({seen[citation]})".strip()
+                citation = f"{short}, bijlage {number}"
+            text = _annex_text(article, number)
+            if len(text) > MAX_ANNEX_CHARS:
+                continue
+        else:
+            citation = f"{short}, artikel {number}"
+            text = _article_text(article, number)
         # bwb-ng-variabel-deel is BWB's own structural path ("/Hoofdstuk2/
         # Afdeling2.3/Artikel2.10"), reused as the ltree path so subtree
         # queries follow the act's real structure.
-        path = _ltree_path(article.get("bwb-ng-variabel-deel"), number)
+        path = _ltree_path(article.get("bwb-ng-variabel-deel"), f"Bijlage{number}" if annex else number)
         inwerking = _parse_date(article.get("inwerking"))
         if inwerking is None:
             # Articles enacted but not yet commenced (status="nogniet") carry no
@@ -237,11 +285,11 @@ def _article_units(root: ET.Element, bwb_id: str, short: str, snapshot: Snapshot
             continue
         units.append(
             UnitIR(
-                unit_type="artikel",
+                unit_type="bijlage" if annex else "artikel",
                 path=path,
                 citation=citation,
                 ordinal=ordinal,
-                national_id=f"{bwb_id}-{number}",
+                national_id=f"{bwb_id}-bijlage-{number}" if annex else f"{bwb_id}-{number}",
                 metadata={key: value for key, value in containers.items() if value},
                 versions=[
                     VersionIR(
@@ -255,7 +303,7 @@ def _article_units(root: ET.Element, bwb_id: str, short: str, snapshot: Snapshot
                         citation_label=citation,
                         fetch_snapshot_id=snapshot.id,
                         amendment_note=_amendment_note(article),
-                        texts=[TextIR(lang="nl", content=_article_text(article, number))],
+                        texts=[TextIR(lang="nl", content=text)],
                     )
                 ],
             )
@@ -264,13 +312,14 @@ def _article_units(root: ET.Element, bwb_id: str, short: str, snapshot: Snapshot
 
 
 def _iter_articles(root: ET.Element):
-    """Yield every <artikel> with the titles of the containers above it."""
+    """Yield every <artikel>, and every <bijlage> that is not itself made of
+    articles, with the titles of the containers above it."""
 
     def walk(node: ET.Element, containers: dict[str, str]):
         for child in node:
             if child.tag in _SKIP_TAGS:
                 continue
-            if child.tag == "artikel":
+            if child.tag == "artikel" or (child.tag == "bijlage" and child.find(".//artikel") is None):
                 yield child, containers
             elif child.tag in CONTAINER_TAGS:
                 nested = {**containers, child.tag: _heading(child)}
@@ -298,7 +347,7 @@ def _article_number(article: ET.Element) -> str:
         if number:
             return number
     label = article.get("label") or ""
-    return label.removeprefix("Artikel").strip()
+    return label.removeprefix("Artikel").removeprefix("Bijlage").strip()
 
 
 def _article_text(article: ET.Element, number: str) -> str:
@@ -309,18 +358,35 @@ def _article_text(article: ET.Element, number: str) -> str:
     return "\n".join([header, *_blocks(article)]).strip()
 
 
+def _annex_text(annex: ET.Element, number: str) -> str:
+    """Render one annex as plain text, its table rows one per line."""
+    kop = annex.find("kop")
+    title = _inline_text(kop.find("titel")) if kop is not None else ""
+    header = f"Bijlage {number}".rstrip() + "." + (f" {title}" if title else "")
+    return "\n".join([header, *_blocks(annex)]).strip()
+
+
 def _blocks(node: ET.Element) -> list[str]:
     """Flatten an element's legal content into text blocks."""
     blocks: list[str] = []
     for child in node:
         tag = child.tag
+        if tag == "redactie":
+            note = _redactie_note(child).strip()
+            if note:
+                blocks.append(note)
+            continue
         if tag in _SKIP_TAGS or tag in {"kop", "lidnr", "li.nr"}:
             continue
-        if tag == "al":
+        if tag in {"al", "tussenkop"}:
             text = _inline_text(child)
             if text:
                 blocks.append(text)
         elif tag == "table":
+            # The caption names the table and its year («Kinderopvangtoeslagtabel 2025»).
+            caption = _inline_text(child.find("title"))
+            if caption:
+                blocks.append(caption)
             blocks.extend(_table_rows(child))
         elif tag == "plaatje":
             # A statutory formula published as a picture (Participatiewet
@@ -369,7 +435,9 @@ def _inline_text(node: ET.Element | None) -> str:
         if element.text:
             parts.append(element.text)
         for child in element:
-            if child.tag not in _SKIP_TAGS:
+            if child.tag == "redactie":
+                parts.append(_redactie_note(child))
+            elif child.tag not in _SKIP_TAGS:
                 walk(child)
             if child.tail:
                 parts.append(child.tail)
