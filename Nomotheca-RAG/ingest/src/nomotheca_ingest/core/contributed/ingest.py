@@ -12,6 +12,7 @@ import psycopg
 from nomotheca_ingest.core import extract
 from nomotheca_ingest.core.contributed.fetch import SourceDocument, read_input
 from nomotheca_ingest.core.contributed.kinds import ContributedFields, stated_fields
+from nomotheca_ingest.core.contributed.series import chain_editions
 from nomotheca_ingest.core.db import connect, ensure_source, fetch_run
 from nomotheca_ingest.core.documents import DocumentSpec, build_document
 from nomotheca_ingest.core.errors import RefusalError
@@ -296,6 +297,7 @@ def ingest_document(
             doc = parse_document(document, fields)
             report({"phase": "load", "detail": document.national_id})
             stats: LoadStats = LegislationLoader(conn).load(doc)
+            chain_editions(conn)
         report({"phase": "done", "detail": f"{stats.chunks} chunks"})
         result.units = stats.units
         result.versions = stats.versions
@@ -381,4 +383,7 @@ def reparse_documents(
             after = sum(1 for unit in doc.instruments[0].units)
             report({"phase": "reparsed", "detail": f"{title}: {before} -> {after} units"})
             done.append((title, before, after))
+        closed = chain_editions(conn)  # a reload reopens the editions it replaced
+        if closed:
+            report({"phase": "chained", "detail": f"{closed} versions closed by a later edition"})
     return done

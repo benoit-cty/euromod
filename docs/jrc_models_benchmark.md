@@ -1185,6 +1185,21 @@ states the operand 12 of a calculation.
 
 **Next for the Netherlands.** The holiday allowances of the AOW and the Anw
 (the SVB publishes them; no dated official document found yet). Then the
-three models on the Dutch 50. For France: close an earlier version of a
-BOFiP document when a later one is held, and keep the part heading of an
-instruction whose section numbers start over.
+three models on the Dutch 50.
+
+**The two French causes, fixed on 24 Nov.** An earlier edition of a BOFiP
+document now ends where the next edition held begins. A section of a
+numbered document now opens on the headings above it, parts included
+(«II - LE DÉPARTEMENT DE MAYOTTE»), and is cited with its part. All
+contributed documents were reparsed and embedded again. The latest BOFiP
+edition of BOI-RSA-BASE-30-30 is the 2017 one, which BOFiP has not updated:
+it still reads 5,1 points where the tax code says 6,8.
+
+Run 262 (24 Nov, GPT-6 Luna) then ran every French parameter EUROMOD holds
+a 2025 value for, 345 cases: 83 % ready to accept (282 of 340), 14 wrong
+proposals of 296, 17 cases where EUROMOD is one unit off the law. On the 50
+panel cases inside it, 42 of 49 are ready (37 in run 261, 41 in run 235)
+and 3 proposals are wrong (6 in run 261). Both cases above are right again:
+`$bched_lim1` 28 444 and `$tscxcnkrd_dedyem_rate` 0.068, from the law.
+`$tpr_threshold4`, `$bsa00_hp_amt5` and `$bhl_max_amt3` were gained as
+well; `$bunmt_bonus3` is still unstable (refused by the critique).

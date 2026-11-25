@@ -254,3 +254,79 @@ def test_numbered_sections_keep_their_place_before_a_footnote_run() -> None:
 
     assert [u.path for u in ir.units] == ["sec_1", "sec_2"]
     assert "Décret du 28 mars" in ir.units[1].versions[0].texts[0].content
+
+
+_PARTS = (
+    "INSTRUCTION relative aux plafonds de ressources.\n"
+    "I - LA MÉTROPOLE, LA GUADELOUPE,\nLA GUYANE ET LA RÉUNION\n\n"
+    "1 - LE COMPLÉMENT FAMILIAL\n"
+    "1.1 Plafonds de ressources applicables au complément familial\n"
+    "Plafond de base : 21 880 euros, pour la période du 1er janvier au 31 décembre 2025.\n"
+    "4 - L’ALLOCATION DE RENTRÉE SCOLAIRE\n"
+    "Le plafond applicable à l'allocation de rentrée scolaire est de 28 444 euros pour un enfant.\n"
+    "II - LE DÉPARTEMENT DE MAYOTTE\n\n"
+    "1 - L’ALLOCATION DE RENTRÉE SCOLAIRE ET LE COMPLÉMENT FAMILIAL\n"
+    "1.1 Plafonds de ressources applicables pour l'attribution de l'allocation de rentrée\n"
+    "Plafond de base : 31 821 euros ; un enfant : 35 004 euros.\n"
+)
+
+
+def test_a_section_says_which_part_of_the_document_it_belongs_to() -> None:
+    """Instruction DSS/2B/2024/181: Mayotte's «1.1» was a root section like the
+    mainland's, and its ceiling was proposed as the national one."""
+    ir = _build(_PARTS, "numbered")
+    units = {unit.path: unit for unit in ir.units}
+
+    mayotte = units["part_ii.sec_1.sec_1_1"]
+    text = mayotte.versions[0].texts[0].content
+    assert text.startswith("II - LE DÉPARTEMENT DE MAYOTTE\n\n1 - L’ALLOCATION DE RENTRÉE SCOLAIRE")
+    assert "35 004" in text
+    assert "§II - 1.1 Plafonds" in mayotte.citation
+
+    mainland = units["part_i.sec_1.sec_1_1"]
+    assert mainland.versions[0].texts[0].content.startswith("I - LA MÉTROPOLE, LA GUADELOUPE,\nLA GUYANE ET LA RÉUNION")
+    assert "§I - 1.1 Plafonds" in mainland.citation
+    assert "28 444" in units["part_i.sec_4"].versions[0].texts[0].content
+    assert len({unit.citation for unit in ir.units}) == len(ir.units)
+
+
+def test_a_heading_with_no_text_of_its_own_is_carried_by_its_sub_sections() -> None:
+    ir = _build(_PARTS, "numbered")
+    units = {unit.path: unit for unit in ir.units}
+    for title_only in ("part_i", "part_ii", "part_i.sec_1", "part_ii.sec_1"):
+        assert units[title_only].versions == []
+        assert units[title_only].is_container
+
+
+def test_a_section_opens_on_the_numbered_headings_above_it() -> None:
+    text = (
+        "2. Montant maximal de l'ASI lorsque le conjoint ne bénéficie ni de l'ASI ni de l'Aspa, "
+        "à compter du 1er avril 2025, selon la situation du foyer et sous réserve des ressources, "
+        "dans les conditions que la présente circulaire rappelle.\n"
+        "2.1 Personne seule : 1 034,28 euros par mois.\n"
+    )
+    ir = _build(text, "numbered")
+    units = {unit.path: unit for unit in ir.units}
+    child = units["sec_2.sec_2_1"].versions[0].texts[0].content
+    assert child.startswith("2. Montant maximal de l'ASI")
+    assert child.endswith("2.1 Personne seule : 1 034,28 euros par mois.")
+    assert units["sec_2"].versions  # a heading that is a sentence of the text keeps its own unit
+
+
+def test_roman_numerals_after_numbered_sections_are_not_parts() -> None:
+    """Cnav circular 2024/23: the worked example «I. Première partie du calcul»
+    is annexed after sections 1 to 4, and section 5 follows it."""
+    text = (
+        "1. Rappel sur les taux\nLe taux global est de 12,3 % pour les ventes.\n"
+        "I. Première partie du calcul\nLe forfait est retenu pour l'année.\n"
+        "II. Deuxième partie du calcul\nLes droits sont déterminés.\n"
+        "5. La date d’application des mesures\nCes mesures s'appliquent au 1er juillet 2024.\n"
+    )
+    ir = _build(text, "numbered")
+    assert [unit.path for unit in ir.units] == ["sec_1", "sec_5"]
+    assert "Deuxième partie du calcul" in ir.units[0].versions[0].texts[0].content
+
+
+def test_a_lone_roman_numeral_is_not_a_part() -> None:
+    ir = _build("I. Dupont a signé la circulaire.\n1. Objet\nLe texte fixe les montants de l'année.\n", "numbered")
+    assert [unit.path for unit in ir.units] == ["preamble", "sec_1"]

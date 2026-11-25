@@ -50,9 +50,21 @@ HEADING_PATTERNS: dict[str, re.Pattern[str]] = {
     # 'sec_2_1_3' rather than a slug of the wording. A letter must follow the
     # number: a table row is not a heading («19 212,03 € 1 601 €», the couple
     # ceiling of Cnav circular 2025-13, became section 19 and was pruned with
-    # its figure).
-    "numbered": re.compile(r"^\s*(?P<text>(?P<number>\d+(?:\.\d+){0,4})\.?\s+[^\W\d_].*?)\s*$"),
+    # its figure). A dash may stand between number and title («2 - LE
+    # COMPLÉMENT FAMILIAL», the chapter headings of a DSS instruction).
+    "numbered": re.compile(r"^\s*(?P<text>(?P<number>\d+(?:\.\d+){0,4})(?:\.?\s+|\s*[-–—]\s+)[^\W\d_].*?)\s*$"),
 }
+
+#: A part heading of a numbered document: «II - LE DÉPARTEMENT DE MAYOTTE».
+_PART_RE = re.compile(r"^\s*(?P<text>(?P<roman>[IVX]{1,5})\s*[-–—.]\s+[^\W\d_].*?)\s*$")
+_ROMAN = {"I": 1, "V": 5, "X": 10}
+
+#: The level of a part heading, above every numbered section (level 1 and up).
+PART_LEVEL = 0
+
+#: A heading with less text than this before its first sub-heading is a title
+#: only: it gets no text of its own and is carried whole by its sub-sections.
+TITLE_ONLY_MAX = 200
 
 #: Patterns whose headings are body text, kept as their unit's first line. A
 #: numbered paragraph is a sentence of the document («2. Montant maximal de
@@ -126,6 +138,53 @@ def find_headings(lines: list[str], pattern: str | re.Pattern[str]) -> list[Head
     return found
 
 
+def _roman(numeral: str) -> int:
+    total = 0
+    for char, nxt in zip(numeral, numeral[1:] + " ", strict=True):
+        value = _ROMAN[char]
+        total += -value if nxt != " " and _ROMAN[nxt] > value else value
+    return total
+
+
+def find_parts(lines: list[str]) -> list[Heading]:
+    """The parts of a numbered document: «I - …», «II - …», in that order.
+
+    Instruction DSS/2B/2024/181 gives the family-benefit ceilings of the
+    mainland under «I - LA MÉTROPOLE, LA GUADELOUPE, …» and those of Mayotte
+    under «II - LE DÉPARTEMENT DE MAYOTTE», and numbers the sections of each
+    part from 1. With the part headings read as body text, Mayotte's «1.1
+    Plafonds … de l'allocation de rentrée scolaire» (35 004 € for one child)
+    was a root section like any other and was proposed as the national
+    ceiling (28 444 €). A roman numeral is a part only in sequence — I, then
+    II, then III — and only when the document has at least two: a lone «I.»
+    or a «V.» out of order is an initial or a list item.
+    """
+    parts: list[Heading] = []
+    for idx, line in enumerate(lines):
+        match = _PART_RE.match(line)
+        if match and _roman(match.group("roman")) == len(parts) + 1:
+            parts.append(Heading(PART_LEVEL, match.group("text").strip(), idx, idx + 1, len(lines)))
+    return parts if len(parts) >= 2 else []
+
+
+def with_parts(headings: list[Heading], lines: list[str]) -> list[Heading]:
+    """Numbered headings and part headings in document order, bodies re-cut.
+
+    Parts are the document's top level or they are nothing: roman numerals
+    that come after numbered sections («I. Première partie du calcul» in the
+    worked example annexed to Cnav circular 2024/23, after its sections 1 to
+    4) stay body text, or section 5 would be filed under the example.
+    """
+    parts = find_parts(lines)
+    if not parts or any(h.line_idx < parts[0].line_idx for h in headings):
+        return headings
+    part_lines = {p.line_idx for p in parts}
+    merged = sorted([h for h in headings if h.line_idx not in part_lines] + parts, key=lambda h: h.line_idx)
+    for i, h in enumerate(merged):
+        h.content_end = merged[i + 1].line_idx if i + 1 < len(merged) else len(lines)
+    return merged
+
+
 def _date_or_year_re(lang: str) -> re.Pattern[str]:
     """A day and a month name of the document's language (or English), or a
     year: «31 décembre 2025», «1er avril», «2024 des plafonds»."""
@@ -180,8 +239,8 @@ def drop_table_rows(headings: list[Heading], lines: list[str], lang: str = "fr")
         rest = _LEADING_NUM_RE.sub("", h.text, count=1).strip()
         return rest.split()[0].lower()[:5] if rest else ""
 
-    def bare(h: Heading) -> bool:  # «1 enfant», not «1. Objet», «2.1 …» or «1) …»
-        return re.match(r"\s*\d+\s", lines[h.line_idx]) is not None
+    def bare(h: Heading) -> bool:  # «1 enfant», not «1. Objet», «2.1 …», «1) …» or «1 - TITRE»
+        return re.match(r"\s*\d+\s+(?![-–—]\s)", lines[h.line_idx]) is not None
 
     rows: set[int] = set()
     runs: list[list[tuple[int, int]]] = []  # (heading index, number) per run of bare numbers
@@ -316,7 +375,7 @@ def build_document(
     lines = text.splitlines()
     headings = find_headings(lines, compiled)
     if heading_is_body:
-        headings = drop_table_rows(headings, lines, spec.lang)
+        headings = with_parts(drop_table_rows(headings, lines, spec.lang), lines)
 
     title = spec.title
     if title_from_heading:
@@ -397,18 +456,28 @@ def _section_units(
     used_paths: set[str],
 ) -> list[UnitIR]:
     """One unit per heading at or below the section level, nested by level,
-    with de-duplicated ltree paths and unique citations."""
+    with de-duplicated ltree paths and unique citations.
+
+    Where the heading is body text (a numbered document), a section opens on
+    the headings above it: «2.1 Personne seule : 1 034,28 €» says nothing
+    without «2. Montant maximal de l'ASI …», and a section of part II must
+    say so. A heading with no text before its first sub-heading is a title
+    only — it gets no text of its own, its sub-sections carry it — and a
+    section under a part is cited with the part's numeral («§II - 1.1 …»).
+    """
     units: list[UnitIR] = []
     citations = UniqueCitations(max_len=200)
-    stack: list[tuple[int, str]] = []  # (level, path) ancestor stack
+    stack: list[tuple[int, str, str, str]] = []  # (level, path, carried text, part numeral)
     child_counts: dict[str | None, int] = {}
-    for heading in headings:
+    for position, heading in enumerate(headings):
         if heading.level < section_level:
             continue
         while stack and stack[-1][0] >= heading.level:
             stack.pop()
         parent_path = stack[-1][1] if stack else None
-        base = slugify(heading.text)
+        is_part = heading_is_body and heading.level == PART_LEVEL
+        part = _PART_RE.match(heading.text).group("roman") if is_part else (stack[-1][3] if stack else "")
+        base = f"part_{part.lower()}" if is_part else slugify(heading.text)
         path = f"{parent_path}.{base}" if parent_path else base
         bump = 2
         while path in used_paths:
@@ -421,18 +490,26 @@ def _section_units(
 
         start = heading.line_idx if heading_is_body else heading.content_start
         content = "\n".join(lines[start : heading.content_end]).strip()
+        carried = ""
+        if heading_is_body:
+            nxt = headings[position + 1] if position + 1 < len(headings) else None
+            title_only = nxt is not None and nxt.level > heading.level and len(content) < TITLE_ONLY_MAX
+            carried = content if title_only else heading.text
+            above = [entry[2] for entry in stack]
+            content = "" if title_only else "\n\n".join([*above, content])
+        label = f"{part} - {heading.text}" if part and not is_part else heading.text
         units.append(
             UnitIR(
                 unit_type=unit_types.get(heading.level, default_unit_type),
                 path=path,
-                citation=citations.claim(f"{spec.citation_prefix}, §{heading.text}"),
+                citation=citations.claim(f"{spec.citation_prefix}, §{label}"),
                 ordinal=ordinal,
                 parent_path=parent_path,
                 versions=spec.versions(content),
                 metadata={"heading_level": heading.level},
             )
         )
-        stack.append((heading.level, path))
+        stack.append((heading.level, path, carried, part))
     return units
 
 
